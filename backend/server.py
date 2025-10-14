@@ -216,6 +216,38 @@ async def get_customer_history(customer_id: str):
         "invoices": [Invoice(**i) for i in invoices]
     }
 
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    """Delete a customer and all related data"""
+    try:
+        customer = await db.customers.find_one({"id": customer_id})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Delete all vehicles associated with this customer
+        await db.vehicles.delete_many({"customerId": customer_id})
+        
+        # Delete all invoices associated with this customer
+        await db.invoices.delete_many({"customerId": customer_id})
+        
+        # Delete loyalty points
+        await db.loyalty_points.delete_many({"customerId": customer_id})
+        await db.loyalty_transactions.delete_many({"customerId": customer_id})
+        
+        # Delete maintenance reminders
+        await db.maintenance_reminders.delete_many({"customerId": customer_id})
+        
+        # Delete the customer
+        result = await db.customers.delete_one({"id": customer_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        return {"message": "Customer and all related data deleted successfully", "deleted_id": customer_id}
+    except Exception as e:
+        logger.error(f"Error deleting customer: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============ Technician APIs ============
 @api_router.get("/technicians", response_model=List[Technician])
 async def get_technicians():

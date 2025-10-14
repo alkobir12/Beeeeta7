@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/customers', label: 'العملاء', icon: Users },
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
     { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
-    { path: '/workshop-profile', label: 'ملف الورشة', icon: Building2 },
+    { path: '/profile', label: 'ملف الورشة', icon: Building2 },
   ];
 
   const handleNavigate = (path) => {

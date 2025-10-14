@@ -39,17 +39,14 @@ TEST_CUSTOMER_DATA = {
 
 TEST_VEHICLE_DATA = {
     "plateNumber": "ABC-1234",
-    "make": "Toyota",
+    "brand": "Toyota",
     "model": "Camry",
     "year": 2020,
     "color": "White",
-    "mileage": 45000,
     "customerName": "Ahmed Al-Rashid",
     "customerPhone": "+966501234567",
     "customerEmail": "ahmed.rashid@email.com",
-    "services": ["Oil Change", "Brake Inspection"],
-    "issues": "Regular maintenance check",
-    "status": "in_progress"
+    "services": ["Oil Change", "Brake Inspection"]
 }
 
 TEST_CUSTOMER_DATA_2 = {

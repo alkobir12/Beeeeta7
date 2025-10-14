@@ -159,6 +159,28 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     
     return Vehicle(**vehicle)
 
+@api_router.delete("/vehicles/{vehicle_id}")
+async def delete_vehicle(vehicle_id: str):
+    """Delete a vehicle and its related invoices"""
+    try:
+        vehicle = await db.vehicles.find_one({"id": vehicle_id})
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+        # Delete related invoices
+        await db.invoices.delete_many({"vehicleId": vehicle_id})
+        
+        # Delete the vehicle
+        result = await db.vehicles.delete_one({"id": vehicle_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+        return {"message": "Vehicle deleted successfully", "deleted_id": vehicle_id}
+    except Exception as e:
+        logger.error(f"Error deleting vehicle: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============ Customer APIs ============
 @api_router.get("/customers", response_model=List[Customer])
 async def get_customers(search: Optional[str] = None):

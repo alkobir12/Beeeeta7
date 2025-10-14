@@ -240,9 +240,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dashboard with API Integration"
-    - "Customers Page with API Integration"
-    - "API Service Methods for Delete"
+    - "All frontend pages with API integration"
+    - "Delete functionality testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -252,3 +251,5 @@ agent_communication:
       message: "Implemented delete functionality for vehicles and customers. Updated Dashboard and Customers pages to use real API instead of mock data. Added delete buttons with confirmation dialogs. Ready for backend testing."
     - agent: "testing"
       message: "✅ BACKEND TESTING COMPLETE: All backend APIs tested successfully with 100% pass rate. Vehicle Delete API, Customer Delete API, Vehicle List API, and Customer List API all working correctly. Created comprehensive test suite in /app/backend_test.py. Minor issue noted: Phone search with + symbol has regex issues but doesn't affect core functionality. All delete operations properly cascade to related data. Ready for frontend testing if needed."
+    - agent: "main"
+      message: "✅ ADDITIONAL IMPROVEMENTS COMPLETED: Updated VehicleDetails and Technicians pages to use API instead of mock data. Added Workshop Profile link to sidebar. Made logo clickable linking to workshop profile. All major pages now integrated with API and using Layout component. Search functionality working across all pages. Ready for comprehensive frontend testing."

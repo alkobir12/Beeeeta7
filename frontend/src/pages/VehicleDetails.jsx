@@ -50,26 +50,56 @@ const VehicleDetails = () => {
     }
   };
 
-  if (!vehicle) {
+  const handleStatusUpdate = async () => {
+    try {
+      await vehicleAPI.update(id, {
+        status,
+        notes,
+        technicianId: assignedTech
+      });
+      toast({
+        title: 'تم التحديث',
+        description: 'تم تحديث حالة المركبة بنجاح. سيتم إرسال إشعار للعميل.',
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating vehicle:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحديث المركبة",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center" dir="rtl">
-        <Card className="shadow-lg">
-          <CardContent className="p-12 text-center">
-            <Car className="mx-auto text-slate-300 mb-4" size={64} />
-            <p className="text-slate-500 text-lg">المركبة غير موجودة</p>
-            <Button onClick={() => navigate('/')} className="mt-4">العودة للرئيسية</Button>
-          </CardContent>
-        </Card>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">جاري التحميل...</p>
+          </div>
+        </div>
+      </Layout>
     );
   }
 
-  const handleStatusUpdate = () => {
-    toast({
-      title: 'تم التحديث',
-      description: 'تم تحديث حالة المركبة بنجاح. سيتم إرسال إشعار للعميل.',
-    });
-  };
+  if (!vehicle) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center" dir="rtl">
+          <Card className="shadow-lg">
+            <CardContent className="p-12 text-center">
+              <Car className="mx-auto text-slate-300 mb-4" size={64} />
+              <p className="text-slate-500 text-lg">المركبة غير موجودة</p>
+              <Button onClick={() => navigate('/')} className="mt-4">العودة للرئيسية</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   const handleNotify = () => {
     toast({

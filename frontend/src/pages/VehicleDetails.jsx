@@ -347,7 +347,8 @@ const VehicleDetails = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

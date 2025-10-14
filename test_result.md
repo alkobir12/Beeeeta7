@@ -170,7 +170,7 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "Updated Dashboard to fetch vehicles and technicians from API. Added delete button for each vehicle. Added loading state."
+          comment: "Updated Dashboard to fetch vehicles and technicians from API. Added delete button for each vehicle with confirmation dialog. Added loading state. Search and filter functionality working with API data."
 
   - task: "Customers Page with API Integration"
     implemented: true
@@ -182,7 +182,31 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "Updated Customers page to fetch from API. Added delete and view buttons for each customer. Added loading state. Search functionality integrated with API."
+          comment: "Updated Customers page to fetch from API. Added delete and view buttons for each customer with confirmation dialog. Added loading state. Search functionality integrated with API. Wrapped with Layout component."
+
+  - task: "VehicleDetails Page with API Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/VehicleDetails.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated VehicleDetails to fetch from API instead of mock data. Status updates now save to backend. Added loading state. Wrapped with Layout component."
+
+  - task: "Technicians Page with API Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Technicians.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated Technicians page to fetch from API instead of mock data. Added loading state. Wrapped with Layout component. Search functionality working."
 
   - task: "API Service Methods for Delete"
     implemented: true
@@ -195,6 +219,18 @@ frontend:
         - working: "NA"
           agent: "main"
           comment: "Added delete methods to vehicleAPI and customerAPI"
+
+  - task: "Sidebar Navigation Updates"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/Sidebar.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added Workshop Profile link to sidebar. Made logo/header clickable linking to workshop profile page."
 
 metadata:
   created_by: "main_agent"

@@ -1,20 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { technicians } from '../mock/data';
-import { Wrench, Search, Phone, Star, ArrowRight, CheckCircle } from 'lucide-react';
+import { Wrench, Search, Phone, Star, CheckCircle } from 'lucide-react';
+import { technicianAPI } from '../services/api';
+import { useToast } from '../hooks/use-toast';
+import Layout from '../components/Layout';
 
 const Technicians = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [technicians, setTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTechnicians();
+  }, []);
+
+  const fetchTechnicians = async () => {
+    try {
+      setLoading(true);
+      const response = await technicianAPI.getAll();
+      setTechnicians(response.data);
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل الفنيين",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTechnicians = technicians.filter(tech => 
-    tech.name.includes(searchQuery) || 
-    tech.specialty.includes(searchQuery)
+    tech.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (tech.specialty && tech.specialty.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">جاري التحميل...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">

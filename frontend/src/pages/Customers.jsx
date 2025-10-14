@@ -1,20 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { customers } from '../mock/data';
-import { Users, Search, Phone, Mail, Calendar, Car, ArrowRight } from 'lucide-react';
+import { Users, Search, Phone, Mail, Calendar, Car, ArrowRight, Trash2, Eye } from 'lucide-react';
+import { customerAPI } from '../services/api';
+import { useToast } from '../hooks/use-toast';
+import Layout from '../components/Layout';
 
 const Customers = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCustomers = customers.filter(customer => 
-    customer.name.includes(searchQuery) || 
-    customer.phone.includes(searchQuery)
-  );
+  useEffect(() => {
+    fetchCustomers();
+  }, [searchQuery]);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await customerAPI.getAll(searchQuery);
+      setCustomers(response.data);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل العملاء",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId, e) => {
+    e.stopPropagation();
+    if (!window.confirm('هل أنت متأكد من حذف هذا العميل؟ سيتم حذف جميع البيانات المرتبطة به.')) {
+      return;
+    }
+    
+    try {
+      await customerAPI.delete(customerId);
+      toast({
+        title: "نجح",
+        description: "تم حذف العميل بنجاح"
+      });
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف العميل",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredCustomers = customers;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">

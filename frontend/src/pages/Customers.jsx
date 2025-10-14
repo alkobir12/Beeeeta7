@@ -62,18 +62,25 @@ const Customers = () => {
 
   const filteredCustomers = customers;
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">جاري التحميل...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
+    <Layout>
+      <div className="min-h-screen" dir="rtl">
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="hover:bg-slate-100 transition-colors"
-          >
-            <ArrowRight size={20} />
-          </Button>
           <div>
             <h1 className="text-4xl font-bold text-slate-800 mb-2">قائمة العملاء</h1>
             <p className="text-slate-600">إدارة بيانات العملاء</p>

@@ -10,7 +10,9 @@ import {
   Brain, 
   BarChart3,
   Package,
-  X
+  X,
+  Building2,
+  Settings
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -24,6 +26,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/customers', label: 'العملاء', icon: Users },
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
     { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
+    { path: '/workshop-profile', label: 'ملف الورشة', icon: Building2 },
   ];
 
   const handleNavigate = (path) => {

@@ -14,6 +14,7 @@ export const vehicleAPI = {
   },
   getById: (id) => axios.get(`${API}/vehicles/${id}`),
   update: (id, data) => axios.put(`${API}/vehicles/${id}`, data),
+  delete: (id) => axios.delete(`${API}/vehicles/${id}`),
   track: (trackingLink) => axios.get(`${API}/vehicles/track/${trackingLink}`)
 };
 

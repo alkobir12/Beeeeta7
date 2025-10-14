@@ -1,17 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { vehicles, technicians, customers, statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, Filter } from 'lucide-react';
+import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, Trash2 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { vehicleAPI, technicianAPI } from '../services/api';
+import { useToast } from '../hooks/use-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [vehicles, setVehicles] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [vehiclesRes, techniciansRes] = await Promise.all([
+        vehicleAPI.getAll(),
+        technicianAPI.getAll()
+      ]);
+      setVehicles(vehiclesRes.data);
+      setTechnicians(techniciansRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل البيانات",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId, e) => {
+    e.stopPropagation();
+    if (!window.confirm('هل أنت متأكد من حذف هذه المركبة؟')) {
+      return;
+    }
+    
+    try {
+      await vehicleAPI.delete(vehicleId);
+      toast({
+        title: "نجح",
+        description: "تم حذف المركبة بنجاح"
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف المركبة",
+        variant: "destructive"
+      });
+    }
+  };
 
   const stats = {
     totalVehicles: vehicles.length,
@@ -21,11 +75,24 @@ const Dashboard = () => {
   };
 
   const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = vehicle.plateNumber.includes(searchQuery) || 
-                         vehicle.customerName.includes(searchQuery);
+    const matchesSearch = vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         vehicle.customerName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === 'all' || vehicle.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">جاري التحميل...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

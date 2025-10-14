@@ -51,7 +51,10 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div>
+            <div 
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => handleNavigate('/workshop-profile')}
+            >
               <h2 className="text-2xl font-bold text-slate-800">ورشتي</h2>
               <p className="text-sm text-slate-500">نظام الإدارة</p>
             </div>

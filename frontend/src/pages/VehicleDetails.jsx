@@ -1,22 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { vehicles, statusSteps, getStatusLabel, getStatusColor, technicians } from '../mock/data';
+import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { vehicleAPI, technicianAPI } from '../services/api';
+import Layout from '../components/Layout';
 
 const VehicleDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const vehicle = vehicles.find(v => v.id === id);
-  const [status, setStatus] = useState(vehicle?.status || 'diagnosis');
-  const [notes, setNotes] = useState(vehicle?.notes || '');
-  const [assignedTech, setAssignedTech] = useState(vehicle?.technicianId || '');
+  const [vehicle, setVehicle] = useState(null);
+  const [technicians, setTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState('diagnosis');
+  const [notes, setNotes] = useState('');
+  const [assignedTech, setAssignedTech] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [vehicleRes, techniciansRes] = await Promise.all([
+        vehicleAPI.getById(id),
+        technicianAPI.getAll()
+      ]);
+      setVehicle(vehicleRes.data);
+      setTechnicians(techniciansRes.data);
+      setStatus(vehicleRes.data.status || 'diagnosis');
+      setNotes(vehicleRes.data.notes || '');
+      setAssignedTech(vehicleRes.data.technicianId || '');
+    } catch (error) {
+      console.error('Error fetching vehicle:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل بيانات المركبة",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!vehicle) {
     return (

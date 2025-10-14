@@ -56,17 +56,11 @@ const Technicians = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
+    <Layout>
+      <div className="min-h-screen" dir="rtl">
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="hover:bg-slate-100 transition-colors"
-          >
-            <ArrowRight size={20} />
-          </Button>
           <div>
             <h1 className="text-4xl font-bold text-slate-800 mb-2">قائمة الفنيين</h1>
             <p className="text-slate-600">إدارة ومتابعة الفنيين</p>

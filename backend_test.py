@@ -57,17 +57,14 @@ TEST_CUSTOMER_DATA_2 = {
 
 TEST_VEHICLE_DATA_2 = {
     "plateNumber": "XYZ-5678",
-    "make": "Honda",
+    "brand": "Honda",
     "model": "Accord",
     "year": 2019,
     "color": "Black",
-    "mileage": 38000,
     "customerName": "Fatima Al-Zahra",
     "customerPhone": "+966507654321",
     "customerEmail": "fatima.zahra@email.com",
-    "services": ["Engine Diagnostic"],
-    "issues": "Engine warning light",
-    "status": "pending"
+    "services": ["Engine Diagnostic"]
 }
 
 class APITester:

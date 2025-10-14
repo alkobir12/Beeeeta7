@@ -176,16 +176,16 @@ class APITester:
         except Exception as e:
             self.log_result("Vehicle List API - Search by Customer", False, str(e))
 
-        # Test 4: Filter by status
+        # Test 4: Filter by status (using default status "diagnosis")
         try:
-            response = self.session.get(f"{API_URL}/vehicles?status=in_progress")
+            response = self.session.get(f"{API_URL}/vehicles?status=diagnosis")
             if response.status_code == 200:
                 vehicles = response.json()
-                all_in_progress = all(v['status'] == 'in_progress' for v in vehicles)
-                if all_in_progress and len(vehicles) > 0:
+                all_diagnosis = all(v['status'] == 'diagnosis' for v in vehicles)
+                if all_diagnosis and len(vehicles) > 0:
                     self.log_result("Vehicle List API - Status Filter", True)
                 else:
-                    self.log_result("Vehicle List API - Status Filter", False, f"Filter not working correctly, found {len(vehicles)} vehicles")
+                    self.log_result("Vehicle List API - Status Filter", False, f"Filter not working correctly, found {len(vehicles)} vehicles with correct status")
             else:
                 self.log_result("Vehicle List API - Status Filter", False, f"Status: {response.status_code}")
         except Exception as e:

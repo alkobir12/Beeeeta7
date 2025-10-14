@@ -191,7 +191,8 @@ const Customers = () => {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

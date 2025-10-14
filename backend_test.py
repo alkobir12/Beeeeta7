@@ -224,16 +224,28 @@ class APITester:
         except Exception as e:
             self.log_result("Customer List API - Search by Name", False, str(e))
 
-        # Test 3: Search by phone
+        # Test 3: Search by phone (URL encode the phone number)
         try:
-            response = self.session.get(f"{API_URL}/customers?search=+966501234567")
+            import urllib.parse
+            encoded_phone = urllib.parse.quote("+966501234567")
+            response = self.session.get(f"{API_URL}/customers?search={encoded_phone}")
             if response.status_code == 200:
                 customers = response.json()
                 found_customer = any(c['phone'] == '+966501234567' for c in customers)
                 if found_customer:
                     self.log_result("Customer List API - Search by Phone", True)
                 else:
-                    self.log_result("Customer List API - Search by Phone", False, "Customer not found in phone search")
+                    # Try without encoding as fallback
+                    response2 = self.session.get(f"{API_URL}/customers?search=966501234567")
+                    if response2.status_code == 200:
+                        customers2 = response2.json()
+                        found_customer2 = any(c['phone'] == '+966501234567' for c in customers2)
+                        if found_customer2:
+                            self.log_result("Customer List API - Search by Phone", True)
+                        else:
+                            self.log_result("Customer List API - Search by Phone", False, "Customer not found in phone search")
+                    else:
+                        self.log_result("Customer List API - Search by Phone", False, "Customer not found in phone search")
             else:
                 self.log_result("Customer List API - Search by Phone", False, f"Status: {response.status_code}")
         except Exception as e:

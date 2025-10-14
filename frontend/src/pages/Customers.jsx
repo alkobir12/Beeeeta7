@@ -125,7 +125,7 @@ const Customers = () => {
             <Card key={customer.id} className="shadow-md hover:shadow-xl transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-6 flex-1">
                     <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-full">
                       <Users className="text-white" size={28} />
                     </div>
@@ -146,27 +146,35 @@ const Customers = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{customer.totalVisits}</p>
+                      <p className="text-2xl font-bold text-blue-600">{customer.totalVisits || 0}</p>
                       <p className="text-xs text-slate-500">الزيارات</p>
                     </div>
                     <div className="text-left">
                       <p className="text-sm text-slate-500 mb-1">آخر زيارة</p>
-                      <p className="text-sm font-semibold text-slate-700">{new Date(customer.lastVisit).toLocaleDateString('ar-SA')}</p>
+                      <p className="text-sm font-semibold text-slate-700">
+                        {customer.lastVisit ? new Date(customer.lastVisit).toLocaleDateString('ar-SA') : 'لا توجد'}
+                      </p>
                     </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <p className="text-sm text-slate-600 mb-2">المركبات:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {customer.vehicles.map((vehicle, idx) => (
-                      <Badge key={idx} className="bg-slate-100 text-slate-700 border-slate-300">
-                        <Car size={14} className="ml-1" />
-                        {vehicle}
-                      </Badge>
-                    ))}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/customer/${customer.id}`)}
+                        className="hover:bg-blue-50"
+                      >
+                        <Eye size={16} />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => handleDeleteCustomer(customer.id, e)}
+                        className="hover:bg-red-600"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

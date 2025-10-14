@@ -111,7 +111,8 @@ const VehicleDetails = () => {
   const currentStepIndex = statusSteps.findIndex(s => s.key === status);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
+    <Layout>
+      <div className="min-h-screen" dir="rtl">
       <div className="container mx-auto p-6 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">

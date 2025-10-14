@@ -26,7 +26,8 @@ export const customerAPI = {
     return axios.get(`${API}/customers`, { params });
   },
   getById: (id) => axios.get(`${API}/customers/${id}`),
-  getHistory: (id) => axios.get(`${API}/customers/${id}/history`)
+  getHistory: (id) => axios.get(`${API}/customers/${id}/history`),
+  delete: (id) => axios.delete(`${API}/customers/${id}`)
 };
 
 // ============ Technician APIs ============

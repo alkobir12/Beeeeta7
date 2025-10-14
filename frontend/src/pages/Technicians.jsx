@@ -203,7 +203,8 @@ const Technicians = () => {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

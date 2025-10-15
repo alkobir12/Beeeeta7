@@ -37,6 +37,7 @@ function App() {
             <Route path="/parts" element={<PartsInventory />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/archive" element={<VehicleArchive />} />
+            <Route path="/services" element={<ServicesManagement />} />
             <Route path="/profile" element={<WorkshopProfile />} />
           </Routes>
           <AIHelper />

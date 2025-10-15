@@ -47,8 +47,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteVehicle = async (vehicleId, e) => {
-    e.stopPropagation();
+  const handleDeleteVehicle = async (vehicleId) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه المركبة؟')) {
       return;
     }
@@ -68,6 +67,30 @@ const Dashboard = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleStatusUpdate = async (vehicleId, newStatus) => {
+    try {
+      await vehicleAPI.update(vehicleId, { status: newStatus });
+      toast({
+        title: "نجح",
+        description: "تم تحديث الحالة بنجاح"
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحديث الحالة",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openQuickActions = (vehicle, e) => {
+    e.stopPropagation();
+    setSelectedVehicle(vehicle);
+    setShowQuickActions(true);
   };
 
   const stats = {

@@ -12,7 +12,7 @@ import {
   Package,
   X,
   Building2,
-  Settings
+  Truck
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -23,6 +23,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
     { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
     { path: '/parts', label: 'المخزون', icon: Package },
+    { path: '/suppliers', label: 'الموردين', icon: Truck },
     { path: '/customers', label: 'العملاء', icon: Users },
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
     { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },

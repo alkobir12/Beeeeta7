@@ -49,14 +49,17 @@ class VehicleUpdate(BaseModel):
     parts: Optional[List[str]] = None
 
 # ============ Customer Models ============
-class Customer(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+class CustomerBase(BaseModel):
     name: str
     phone: str
     email: Optional[str] = None
+
+class Customer(CustomerBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     vehicles: List[str] = []  # رقم اللوحات
     totalVisits: int = 0
     lastVisit: Optional[datetime] = None
+    createdAt: Optional[datetime] = None
     
     class Config:
         json_encoders = {

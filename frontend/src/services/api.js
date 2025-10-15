@@ -20,6 +20,7 @@ export const vehicleAPI = {
 
 // ============ Customer APIs ============
 export const customerAPI = {
+  create: (data) => axios.post(`${API}/customers`, data),
   getAll: (search) => {
     const params = {};
     if (search) params.search = search;
@@ -27,6 +28,7 @@ export const customerAPI = {
   },
   getById: (id) => axios.get(`${API}/customers/${id}`),
   getHistory: (id) => axios.get(`${API}/customers/${id}/history`),
+  update: (id, data) => axios.put(`${API}/customers/${id}`, data),
   delete: (id) => axios.delete(`${API}/customers/${id}`)
 };
 

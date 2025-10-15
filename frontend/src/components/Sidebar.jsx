@@ -13,7 +13,8 @@ import {
   X,
   Building2,
   Truck,
-  Archive
+  Archive,
+  FileText
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {

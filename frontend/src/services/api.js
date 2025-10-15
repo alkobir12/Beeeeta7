@@ -81,11 +81,22 @@ export const transactionAPI = {
   }
 };
 
-// ============ AI Assistant APIs ============
+// ============ AI APIs ============
 export const aiAPI = {
-  chat: (message, sessionId) => 
-    axios.post(`${API}/ai/chat`, { message, sessionId }),
-  getSession: (sessionId) => axios.get(`${API}/ai/sessions/${sessionId}`)
+  chat: (message, sessionId) => axios.post(`${API}/ai-bots/workshop-assistant/chat`, null, {
+    params: { message, session_id: sessionId }
+  }),
+  enhancedChat: (message, sessionId, vehicleInfo) => axios.post(`${API}/ai/enhanced-chat`, {
+    message,
+    session_id: sessionId,
+    vehicle_info: vehicleInfo
+  }),
+  addSolution: (solutionData) => axios.post(`${API}/ai/add-solution`, solutionData),
+  searchSolutions: (query, vehicleInfo, problemType) => axios.get(`${API}/ai/search-solutions`, {
+    params: { query, vehicle_info: vehicleInfo, problem_type: problemType }
+  }),
+  getCommonProblems: () => axios.get(`${API}/ai/common-problems`),
+  initializeKnowledgeBase: () => axios.post(`${API}/ai/initialize-knowledge-base`)
 };
 
 // ============ File Upload APIs ============

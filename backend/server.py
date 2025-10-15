@@ -674,6 +674,15 @@ app.include_router(api_router)
 app.include_router(extended_router)  # Extended features
 app.include_router(advanced_router)  # Advanced features (Store, CEO, Support)
 
+# Import and include AI Enhanced router
+try:
+    from routes_ai_enhanced import router as ai_enhanced_router, set_db as set_ai_db
+    set_ai_db(db)
+    app.include_router(ai_enhanced_router)
+    logger.info("✅ AI Enhanced router loaded")
+except Exception as e:
+    logger.warning(f"⚠️  AI Enhanced router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

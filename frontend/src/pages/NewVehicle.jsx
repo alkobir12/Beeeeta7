@@ -98,17 +98,11 @@ const NewVehicle = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
+    <Layout>
+      <div className="min-h-screen" dir="rtl">
       <div className="container mx-auto p-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="hover:bg-slate-100 transition-colors"
-          >
-            <ArrowRight size={20} />
-          </Button>
           <div>
             <h1 className="text-3xl font-bold text-slate-800">استقبال مركبة جديدة</h1>
             <p className="text-slate-600">تعبئة بيانات المركبة والعميل</p>

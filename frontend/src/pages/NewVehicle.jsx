@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,19 +7,25 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Phone, Wrench } from 'lucide-react';
-import { services, technicians } from '../mock/data';
 import { useToast } from '../hooks/use-toast';
 import { Checkbox } from '../components/ui/checkbox';
+import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
+import Layout from '../components/Layout';
 
 const NewVehicle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [services, setServices] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
   const [formData, setFormData] = useState({
     plateNumber: '',
     brand: '',
     model: '',
-    year: '',
+    year: new Date().getFullYear(),
     color: '',
+    vin: '',
+    fileNumber: '',
     customerName: '',
     customerPhone: '',
     customerEmail: '',
@@ -28,11 +34,28 @@ const NewVehicle = () => {
     notes: ''
   });
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [servicesRes, techniciansRes] = await Promise.all([
+        serviceAPI.getAll(),
+        technicianAPI.getAll()
+      ]);
+      setServices(servicesRes.data);
+      setTechnicians(techniciansRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.plateNumber || !formData.customerName || !formData.customerPhone) {
+    if (!formData.plateNumber || !formData.customerName || !formData.customerPhone || !formData.brand || !formData.model) {
       toast({
         title: 'خطأ',
         description: 'الرجاء تعبئة جميع الحقول المطلوبة',
@@ -41,14 +64,28 @@ const NewVehicle = () => {
       return;
     }
 
-    toast({
-      title: 'تم بنجاح',
-      description: 'تم استقبال المركبة بنجاح. سيتم إرسال رابط التتبع للعميل.',
-    });
+    try {
+      setLoading(true);
+      await vehicleAPI.create(formData);
+      
+      toast({
+        title: 'تم بنجاح',
+        description: 'تم استقبال المركبة بنجاح. سيتم إرسال رابط التتبع للعميل.',
+      });
 
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating vehicle:', error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل في إضافة المركبة. حاول مرة أخرى.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleServiceToggle = (serviceId) => {

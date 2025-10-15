@@ -3,12 +3,13 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Car, Search, Calendar, User, Phone, FileText, Eye, Trash2, Filter } from 'lucide-react';
+import { Car, Search, Calendar, User, Phone, FileText, Eye, Trash2, Filter, MoreVertical } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { vehicleAPI } from '../services/api';
 import { getStatusLabel, getStatusColor } from '../mock/data';
+import VehicleQuickActions from '../components/VehicleQuickActions';
 
 const VehicleArchive = () => {
   const { toast } = useToast();

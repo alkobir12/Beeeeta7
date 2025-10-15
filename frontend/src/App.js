@@ -18,6 +18,7 @@ import Suppliers from "./pages/Suppliers";
 import VehicleArchive from "./pages/VehicleArchive";
 import ServicesManagement from "./pages/ServicesManagement";
 import Templates from "./pages/Templates";
+import Settings from "./pages/Settings";
 import AIHelper from "./components/AIHelper";
 
 function App() {

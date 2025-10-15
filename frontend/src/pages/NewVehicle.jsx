@@ -175,6 +175,26 @@ const NewVehicle = () => {
                     className="border-slate-300 focus:border-blue-500 transition-colors"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="vin" className="text-slate-700 mb-2 block">رقم الهيكل (VIN)</Label>
+                  <Input
+                    id="vin"
+                    placeholder="رقم الهيكل (اختياري)"
+                    value={formData.vin}
+                    onChange={(e) => setFormData({...formData, vin: e.target.value})}
+                    className="border-slate-300 focus:border-blue-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fileNumber" className="text-slate-700 mb-2 block">رقم الملف</Label>
+                  <Input
+                    id="fileNumber"
+                    placeholder="رقم الملف (اختياري)"
+                    value={formData.fileNumber}
+                    onChange={(e) => setFormData({...formData, fileNumber: e.target.value})}
+                    className="border-slate-300 focus:border-blue-500 transition-colors"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

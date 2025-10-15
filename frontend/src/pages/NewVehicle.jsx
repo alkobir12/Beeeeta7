@@ -91,14 +91,22 @@ const NewVehicle = () => {
     }
   };
 
-  const handleServiceToggle = (serviceId) => {
+  const handleServiceToggle = (serviceName) => {
     setFormData(prev => ({
       ...prev,
-      services: prev.services.includes(serviceId)
-        ? prev.services.filter(id => id !== serviceId)
-        : [...prev.services, serviceId]
+      services: prev.services.includes(serviceName)
+        ? prev.services.filter(name => name !== serviceName)
+        : [...prev.services, serviceName]
     }));
   };
+  
+  const categories = ['all', ...new Set(services.map(s => s.category))];
+  
+  const filteredServices = services.filter(service => {
+    const matchesSearch = service.name.toLowerCase().includes(serviceSearch.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <Layout>

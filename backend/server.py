@@ -13,7 +13,7 @@ import shutil
 
 from models import (
     Vehicle, VehicleCreate, VehicleUpdate,
-    Customer, Technician, Service,
+    Customer, CustomerBase, Technician, Service,
     Part, PartCreate, PartUpdate,
     Invoice, InvoiceCreate,
     Transaction, TransactionCreate,

@@ -20,6 +20,8 @@ const VehicleArchive = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   useEffect(() => {
     fetchVehicles();

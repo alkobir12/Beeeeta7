@@ -314,10 +314,20 @@ const NewVehicle = () => {
           <div className="flex gap-4">
             <Button 
               type="submit"
+              disabled={loading}
               className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <Save className="ml-2" size={20} />
-              حفظ واستقبال المركبة
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  جاري الحفظ...
+                </span>
+              ) : (
+                <>
+                  <Save className="ml-2" size={20} />
+                  حفظ واستقبال المركبة
+                </>
+              )}
             </Button>
             <Button 
               type="button"
@@ -330,7 +340,8 @@ const NewVehicle = () => {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

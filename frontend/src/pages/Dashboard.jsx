@@ -269,12 +269,12 @@ const Dashboard = () => {
                       {getStatusLabel(vehicle.status)}
                     </Badge>
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       size="sm"
-                      onClick={(e) => handleDeleteVehicle(vehicle.id, e)}
-                      className="hover:bg-red-600"
+                      onClick={(e) => openQuickActions(vehicle, e)}
+                      className="hover:bg-slate-100"
                     >
-                      <Trash2 size={16} />
+                      <MoreVertical size={16} />
                     </Button>
                   </div>
                 </div>

@@ -23,6 +23,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
     { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
+    { path: '/services', label: 'الخدمات', icon: Wrench },
     { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
     { path: '/parts', label: 'المخزون', icon: Package },
     { path: '/suppliers', label: 'الموردين', icon: Truck },

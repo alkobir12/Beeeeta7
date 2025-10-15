@@ -22,15 +22,18 @@ const AIHelper = () => {
     setLoading(true);
 
     try {
-      const response = await aiAPI.chat(message, sessionId);
+      // Use enhanced AI endpoint
+      const response = await aiAPI.enhancedChat(message, sessionId);
       
       if (!sessionId) {
-        setSessionId(response.data.sessionId);
+        setSessionId(response.data.session_id);
       }
 
       const aiMessage = {
         role: 'assistant',
-        content: response.data.response
+        content: response.data.response,
+        knowledgeBaseUsed: response.data.knowledge_base_used,
+        relevantSolutions: response.data.relevant_solutions
       };
       
       setMessages(prev => [...prev, aiMessage]);

@@ -25,6 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
     { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
     { path: '/services', label: 'الخدمات', icon: Wrench },
+    { path: '/templates', label: 'النماذج', icon: FileText },
     { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
     { path: '/parts', label: 'المخزون', icon: Package },
     { path: '/suppliers', label: 'الموردين', icon: Truck },

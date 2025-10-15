@@ -292,6 +292,14 @@ const Customers = () => {
                         <Eye size={16} />
                       </Button>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditForm(customer)}
+                        className="hover:bg-green-50"
+                      >
+                        <Edit size={16} />
+                      </Button>
+                      <Button
                         variant="destructive"
                         size="sm"
                         onClick={(e) => handleDeleteCustomer(customer.id, e)}

@@ -15,6 +15,7 @@ import Analytics from "./pages/Analytics";
 import PartsInventory from "./pages/PartsInventory";
 import WorkshopProfile from "./pages/WorkshopProfile";
 import Suppliers from "./pages/Suppliers";
+import VehicleArchive from "./pages/VehicleArchive";
 import AIHelper from "./components/AIHelper";
 
 function App() {

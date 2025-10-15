@@ -11,11 +11,13 @@ class VehicleBase(BaseModel):
     year: int
     color: str
     vin: Optional[str] = None  # رقم الهيكل اختياري
+    fileNumber: Optional[str] = None  # رقم الملف
     customerName: str
     customerPhone: str
     customerEmail: Optional[str] = None
     services: List[str] = []
     technicianId: Optional[str] = None
+    technicianName: Optional[str] = None
     notes: Optional[str] = None
 
 class VehicleCreate(VehicleBase):

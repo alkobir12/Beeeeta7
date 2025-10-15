@@ -33,6 +33,7 @@ function App() {
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/parts" element={<PartsInventory />} />
+            <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/profile" element={<WorkshopProfile />} />
           </Routes>
           <AIHelper />

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Users, Search, Phone, Mail, Calendar, Car, ArrowRight, Trash2, Eye } from 'lucide-react';
+import { Users, Search, Phone, Mail, Calendar, Car, ArrowRight, Trash2, Eye, Plus } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import Layout from '../components/Layout';

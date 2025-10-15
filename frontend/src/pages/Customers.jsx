@@ -15,10 +15,18 @@ const Customers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
 
   useEffect(() => {
     fetchCustomers();
-  }, [searchQuery]);
+  }, []);
 
   const fetchCustomers = async () => {
     try {

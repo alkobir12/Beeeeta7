@@ -140,12 +140,77 @@ const Customers = () => {
       <div className="min-h-screen" dir="rtl">
       <div className="container mx-auto p-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-slate-800 mb-2">قائمة العملاء</h1>
             <p className="text-slate-600">إدارة بيانات العملاء</p>
           </div>
+          <Button
+            onClick={() => {
+              setShowAddForm(true);
+              setEditingCustomer(null);
+              setFormData({ name: '', phone: '', email: '', address: '' });
+            }}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus size={20} className="ml-2" />
+            إضافة عميل
+          </Button>
         </div>
+
+        {/* Add/Edit Form */}
+        {(showAddForm || editingCustomer) && (
+          <Card className="mb-6 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4">
+                {editingCustomer ? 'تعديل عميل' : 'إضافة عميل جديد'}
+              </h3>
+              <form onSubmit={editingCustomer ? handleEditCustomer : handleAddCustomer} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    placeholder="الاسم *"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required
+                  />
+                  <Input
+                    placeholder="رقم الجوال *"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    required
+                  />
+                  <Input
+                    placeholder="البريد الإلكتروني"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  />
+                  <Input
+                    placeholder="العنوان"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                    {editingCustomer ? 'تحديث' : 'حفظ'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setEditingCustomer(null);
+                      setFormData({ name: '', phone: '', email: '', address: '' });
+                    }}
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

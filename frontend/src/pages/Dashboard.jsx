@@ -19,6 +19,8 @@ const Dashboard = () => {
   const [vehicles, setVehicles] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   useEffect(() => {
     fetchData();

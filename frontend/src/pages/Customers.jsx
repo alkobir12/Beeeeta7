@@ -45,6 +45,58 @@ const Customers = () => {
     }
   };
 
+  const handleAddCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      await customerAPI.create(formData);
+      toast({
+        title: "نجح",
+        description: "تم إضافة العميل بنجاح"
+      });
+      setShowAddForm(false);
+      setFormData({ name: '', phone: '', email: '', address: '' });
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إضافة العميل",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      await customerAPI.update(editingCustomer.id, formData);
+      toast({
+        title: "نجح",
+        description: "تم تحديث العميل بنجاح"
+      });
+      setEditingCustomer(null);
+      setFormData({ name: '', phone: '', email: '', address: '' });
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحديث العميل",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openEditForm = (customer) => {
+    setEditingCustomer(customer);
+    setFormData({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || '',
+      address: customer.address || ''
+    });
+  };
+
   const handleDeleteCustomer = async (customerId, e) => {
     e.stopPropagation();
     if (!window.confirm('هل أنت متأكد من حذف هذا العميل؟ سيتم حذف جميع البيانات المرتبطة به.')) {

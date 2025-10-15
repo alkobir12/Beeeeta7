@@ -12,7 +12,8 @@ import {
   Package,
   X,
   Building2,
-  Truck
+  Truck,
+  Archive
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
+    { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
     { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
     { path: '/parts', label: 'المخزون', icon: Package },
     { path: '/suppliers', label: 'الموردين', icon: Truck },

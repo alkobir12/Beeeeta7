@@ -182,6 +182,22 @@ async def delete_vehicle(vehicle_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============ Customer APIs ============
+@api_router.post("/customers", response_model=Customer)
+async def create_customer(customer: CustomerBase):
+    """Create a new customer"""
+    try:
+        customer_dict = customer.dict()
+        customer_dict["id"] = str(uuid.uuid4())
+        customer_dict["createdAt"] = datetime.utcnow()
+        customer_dict["totalVisits"] = 0
+        customer_dict["lastVisit"] = None
+        
+        await db.customers.insert_one(customer_dict)
+        return Customer(**customer_dict)
+    except Exception as e:
+        logger.error(f"Error creating customer: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/customers", response_model=List[Customer])
 async def get_customers(search: Optional[str] = None):
     try:
@@ -204,6 +220,25 @@ async def get_customer(customer_id: str):
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     return Customer(**customer)
+
+@api_router.put("/customers/{customer_id}", response_model=Customer)
+async def update_customer(customer_id: str, update_data: CustomerBase):
+    """Update customer information"""
+    try:
+        customer = await db.customers.find_one({"id": customer_id})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        
+        if update_dict:
+            await db.customers.update_one({"id": customer_id}, {"$set": update_dict})
+            customer = await db.customers.find_one({"id": customer_id})
+        
+        return Customer(**customer)
+    except Exception as e:
+        logger.error(f"Error updating customer: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/customers/{customer_id}/history")
 async def get_customer_history(customer_id: str):

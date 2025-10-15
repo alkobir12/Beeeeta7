@@ -33,6 +33,9 @@ const NewVehicle = () => {
     technicianId: '',
     notes: ''
   });
+  
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     fetchData();

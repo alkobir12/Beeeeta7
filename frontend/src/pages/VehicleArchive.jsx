@@ -358,27 +358,14 @@ const VehicleArchive = () => {
                         {getStatusLabel(vehicle.status)}
                       </Badge>
                       
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/vehicle/${vehicle.id}`);
-                          }}
-                          className="hover:bg-blue-50"
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={(e) => handleDelete(vehicle.id, e)}
-                          className="hover:bg-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => openQuickActions(vehicle, e)}
+                        className="hover:bg-slate-100"
+                      >
+                        <MoreVertical size={16} />
+                      </Button>
                     </div>
                   </div>
 

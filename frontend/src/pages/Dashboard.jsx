@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, Trash2 } from 'lucide-react';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, Trash2, MoreVertical } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
+import VehicleQuickActions from '../components/VehicleQuickActions';
 
 const Dashboard = () => {
   const navigate = useNavigate();

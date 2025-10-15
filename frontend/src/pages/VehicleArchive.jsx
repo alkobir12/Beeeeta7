@@ -398,6 +398,20 @@ const VehicleArchive = () => {
           )}
         </div>
       </div>
+
+      {/* Quick Actions Modal */}
+      {selectedVehicle && (
+        <VehicleQuickActions
+          isOpen={showQuickActions}
+          onClose={() => {
+            setShowQuickActions(false);
+            setSelectedVehicle(null);
+          }}
+          vehicle={selectedVehicle}
+          onStatusUpdate={(newStatus) => handleStatusUpdate(selectedVehicle.id, newStatus)}
+          onDelete={() => handleDelete(selectedVehicle.id)}
+        />
+      )}
     </Layout>
   );
 };

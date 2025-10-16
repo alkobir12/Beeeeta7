@@ -206,11 +206,11 @@ backend:
 
   - task: "Approvals & Reports API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
@@ -221,6 +221,9 @@ backend:
         - working: "NA"
           agent: "main"
           comment: "HARDENED: Added 7-day expiry, revocation flag, extended statuses (approved/rejected/deferred/requote), responder phone, admin list + revoke endpoint, and expiry checks on public endpoints. Frontend ApprovalPublic updated to 4 decision options and phone field. Request Approval now shows expiry info. Needs retesting."
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE APPROVALS LIFECYCLE TESTING COMPLETE: All requested flows tested successfully (11/11 tests passed). (1) POST /api/approvals creates approvals with 7-day expiry and ISO expiresAt format. (2) GET /api/approvals/public/{token} returns approval data when not expired/revoked. (3) POST /api/approvals/public/{token}/respond works with all extended statuses (approved/deferred/requote/rejected) and accepts name/phone/notes parameters, sets respondedAt timestamp. (4) Idempotency confirmed - repeat responses still return document. (5) PUT /api/approvals/{id}/revoke works, subsequent GET returns 410. (6) Expiry check with expiresInDays=0 returns 410 on public access. (7) GET /api/approvals?vehicle_id= filters correctly with proper ISO date serialization and no _id fields. Fixed incomplete respond_public_approval function and DiagnosisReport model validation during testing. All serialization and 404/410 behaviors working correctly."
 
   - task: "Vehicle Tracking API"
     implemented: true

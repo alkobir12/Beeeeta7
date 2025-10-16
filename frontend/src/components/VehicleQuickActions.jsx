@@ -138,7 +138,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink}`;
       const msg = `السلام عليكم ${vehicle?.customerName}\nرابط تتبع مركبتك: ${trackingLink}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
       const phone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
-      if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      if (phone) {
+        const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+        if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
+      }
       setNewStatus('quotation');
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر إرسال طلب الاعتماد', variant: 'destructive' });

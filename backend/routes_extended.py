@@ -4,7 +4,6 @@ from typing import List, Optional
 import uuid
 
 from models_extended import (
-    Appointment, AppointmentCreate,
     Employee, EmployeeCreate, SalaryPayment, AdvancePayment,
     LoyaltyPoints, PointsTransaction, Coupon,
     MaintenanceReminder, Warranty, WarrantyClaim,

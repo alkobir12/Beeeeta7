@@ -1090,6 +1090,11 @@ class APITester:
         self.test_approval_request_api()
         self.test_vehicle_tracking_api()
         
+        # Run NEW Business Accounts and Operations tests
+        self.test_business_accounts_api()
+        self.test_operations_api()
+        self.test_services_count()
+        
         # Cleanup
         self.cleanup()
         

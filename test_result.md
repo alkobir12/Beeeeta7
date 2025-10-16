@@ -225,6 +225,18 @@ backend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE APPROVALS LIFECYCLE TESTING COMPLETE: All requested flows tested successfully (11/11 tests passed). (1) POST /api/approvals creates approvals with 7-day expiry and ISO expiresAt format. (2) GET /api/approvals/public/{token} returns approval data when not expired/revoked. (3) POST /api/approvals/public/{token}/respond works with all extended statuses (approved/deferred/requote/rejected) and accepts name/phone/notes parameters, sets respondedAt timestamp. (4) Idempotency confirmed - repeat responses still return document. (5) PUT /api/approvals/{id}/revoke works, subsequent GET returns 410. (6) Expiry check with expiresInDays=0 returns 410 on public access. (7) GET /api/approvals?vehicle_id= filters correctly with proper ISO date serialization and no _id fields. Fixed incomplete respond_public_approval function and DiagnosisReport model validation during testing. All serialization and 404/410 behaviors working correctly."
 
+  - task: "Auto-Approval Workflow"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ AUTO-APPROVAL WORKFLOW HEALTH CHECK COMPLETE: All 4 requested scenarios tested successfully (11/11 tests passed). A) Vehicle creation auto-approval: POST /api/vehicles creates pending approval with APR- token and ~7 days expiry, GET /api/approvals?vehicle_id returns pending records, GET /api/approvals/public/{token} returns 200 OK. B) Quotation auto-create-if-missing: PUT /api/vehicles/{id} status=quotation creates new pending approval when missing, verified via GET endpoints. C) Auto-revoke on final statuses: PUT /api/vehicles/{id} status=approved/ready/delivered revokes pending approvals (revoked=true), GET /api/approvals/public/{token} returns 410. D) Approvals respond API non-regression: All extended statuses (approved/deferred/requote/rejected) work with name/phone/notes parameters. All auto-management workflows functioning correctly as specified."
+
   - task: "Vehicle Tracking API"
     implemented: true
     working: true

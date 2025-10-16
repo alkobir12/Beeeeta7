@@ -33,7 +33,7 @@ const ApprovalPublic = () => {
   const respond = async (status) => {
     try {
       setSending(true);
-      await axios.post(`${API_URL}/approvals/public/${token}/respond`, null, { params: { status, name, notes } });
+      await axios.post(`${API_URL}/approvals/public/${token}/respond`, null, { params: { status, name, phone, notes } });
       await load();
     } catch (e) {
       setError('تعذر إرسال الرد');

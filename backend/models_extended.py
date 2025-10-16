@@ -140,9 +140,15 @@ class ApprovalRequest(BaseModel):
     customerId: str
     title: str
     amount: float
-    status: str = "pending"  # pending, approved, rejected
+    status: str = "pending"  # pending, approved, rejected, deferred, requote
     token: str = Field(default_factory=lambda: str(uuid.uuid4()))
     createdAt: datetime = Field(default_factory=datetime.utcnow)
+    expiresAt: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=7))
+    revoked: bool = False
+    respondedAt: Optional[datetime] = None
+    responderName: Optional[str] = None
+    responderPhone: Optional[str] = None
+    notes: Optional[str] = None
 
 # App Settings Model
 class AppSettings(BaseModel):

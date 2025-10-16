@@ -4,12 +4,13 @@ from typing import List, Optional
 import uuid
 
 from models_extended import (
+    Appointment, AppointmentCreate,
     Employee, EmployeeCreate, SalaryPayment, AdvancePayment,
     LoyaltyPoints, PointsTransaction, Coupon,
     MaintenanceReminder, Warranty, WarrantyClaim,
     Supplier, PurchaseOrder, WorkshopProfile,
     TemplateDoc, DiagnosisReport, ApprovalRequest, AppSettings,
-    Account, Budget, BusinessAccount, Operation, OperationItem
+    Account, Budget, BusinessAccount, Operation, OperationItem, CustomerReceipt
 )
 
 # Router
@@ -18,50 +19,9 @@ router = APIRouter(prefix="/api")
 # Database will be injected from server.py
 db = None
 
-# ============ Customer Receipts (توريد العملاء) ============
-from models_extended import CustomerReceipt
-
-@router.post("/customer-receipts", response_model=CustomerReceipt)
-async def create_customer_receipt(payload: dict):
-    try:
-        receipt = CustomerReceipt(
-            customerId=payload['customerId'],
-            accountId=payload.get('accountId'),
-            amount=float(payload['amount']),
-            paymentMethod=payload.get('paymentMethod', 'cash'),
-            reference=payload.get('reference'),
-            notes=payload.get('notes')
-        )
-        await db.customer_receipts.insert_one(receipt.dict())
-        # Post as income transaction tagged optional accountId
-        await db.transactions.insert_one({
-            "id": str(uuid.uuid4()),
-            "type": "income",
-            "category": "customer_receipt",
-            "amount": receipt.amount,
-            "description": f"Customer receipt {receipt.id}",
-            "paymentMethod": receipt.paymentMethod,
-            "reference": receipt.reference,
-            "date": receipt.date,
-            "accountId": receipt.accountId
-        })
-        return receipt
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/customer-receipts")
-async def list_customer_receipts(customer_id: Optional[str] = None, account_id: Optional[str] = None):
-    query = {}
-    if customer_id:
-        query['customerId'] = customer_id
-    if account_id:
-        query['accountId'] = account_id
-    rows = await db.customer_receipts.find(query).sort("date", -1).to_list(1000)
-    # Normalize
-    for r in rows:
-        r.pop('_id', None)
-    return rows
-
+def set_db(database):
+    global db
+    db = database
 
 # ============ Budgets (ميزانيات متعددة لكل فرع) ============
 @router.post("/budgets", response_model=Budget)
@@ -90,11 +50,89 @@ async def list_budgets(account_id: Optional[str] = None, period: Optional[str] =
     rows = await db.budgets.find(query).sort("period", -1).to_list(1000)
     return [Budget(**{k: v for k, v in r.items() if k != '_id'}) for r in rows]
 
+@router.get("/budgets/{budget_id}/report")
+async def budget_report(budget_id: str, format: Optional[str] = None):
+    b = await db.budgets.find_one({"id": budget_id})
+    if not b:
+        raise HTTPException(status_code=404, detail="Budget not found")
+    account_id = b.get('accountId')
+    period = b.get('period')  # 'YYYY-MM'
+    try:
+        start = datetime.fromisoformat(period + "-01")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid budget period")
+    # Compute month end by next month - 1 second
+    if start.month == 12:
+        next_month = datetime(start.year + 1, 1, 1)
+    else:
+        next_month = datetime(start.year, start.month + 1, 1)
+    end = next_month
 
+    tx_query = {"date": {"$gte": start, "$lt": end}}
+    if account_id:
+        tx_query['accountId'] = account_id
 
-def set_db(database):
-    global db
-    db = database
+    transactions = await db.transactions.find(tx_query).to_list(10000)
+    for t in transactions:
+        t.pop('_id', None)
+
+    income_actual = sum(t['amount'] for t in transactions if t.get('type') == 'income')
+    expense_actual = sum(t['amount'] for t in transactions if t.get('type') == 'expense')
+    profit_actual = income_actual - expense_actual
+
+    income_target = float(b.get('incomeTarget', 0) or 0)
+    expense_target = float(b.get('expenseTarget', 0) or 0)
+
+    income_pct = (income_actual / income_target * 100) if income_target > 0 else None
+    expense_pct = (expense_actual / expense_target * 100) if expense_target > 0 else None
+
+    # Breakdown by category
+    by_category = {}
+    for t in transactions:
+        cat = t.get('category') or 'other'
+        by_category.setdefault(cat, {"income": 0.0, "expense": 0.0})
+        if t.get('type') == 'income':
+            by_category[cat]['income'] += t.get('amount', 0)
+        else:
+            by_category[cat]['expense'] += t.get('amount', 0)
+
+    payload = {
+        "budget": {k: v for k, v in b.items() if k != '_id'},
+        "period": period,
+        "accountId": account_id,
+        "summary": {
+            "incomeActual": income_actual,
+            "expenseActual": expense_actual,
+            "profitActual": profit_actual,
+            "incomeTarget": income_target,
+            "expenseTarget": expense_target,
+            "incomeAchievedPct": income_pct,
+            "expenseAchievedPct": expense_pct
+        },
+        "breakdown": by_category,
+        "transactions": transactions
+    }
+
+    if format == 'html':
+        html = f"""
+<!DOCTYPE html><html dir='rtl'><head><meta charset='UTF-8'><title>تقرير الميزانية - {period}</title>
+<style>body{{font-family:Tahoma,Arial;}} .box{{border:1px solid #ddd;padding:12px;margin:8px 0;border-radius:8px}} .row{{display:flex;gap:16px}} .col{{flex:1}} table{{width:100%;border-collapse:collapse}} td,th{{border:1px solid #ddd;padding:6px;text-align:right}}</style>
+</head><body>
+<h2>تقرير الميزانية ({period})</h2>
+<div class='row'>
+  <div class='col box'><b>الإيرادات الفعلية:</b> {income_actual:,.2f} ر.س<br/><b>الهدف:</b> {income_target:,.2f} ر.س<br/>{('تحقق: ' + str(round(income_pct,1)) + '%') if income_pct is not None else ''}</div>
+  <div class='col box'><b>المصروفات الفعلية:</b> {expense_actual:,.2f} ر.س<br/><b>الهدف:</b> {expense_target:,.2f} ر.س<br/>{('تحقق: ' + str(round(expense_pct,1)) + '%') if expense_pct is not None else ''}</div>
+  <div class='col box'><b>الربح الفعلي:</b> {profit_actual:,.2f} ر.س</div>
+</div>
+<h3>تفصيل حسب التصنيف</h3>
+<table><thead><tr><th>التصنيف</th><th>إيرادات</th><th>مصروفات</th></tr></thead><tbody>
+{''.join(f"<tr><td>{cat}</td><td>{vals['income']:,.2f}</td><td>{vals['expense']:,.2f}</td></tr>" for cat, vals in by_category.items())}
+</tbody></table>
+</body></html>
+"""
+        return html
+
+    return payload
 
 # ============ Business Accounts (فروع منفصلة) ============
 @router.post("/biz-accounts", response_model=BusinessAccount)
@@ -177,4 +215,275 @@ async def list_operations(account_id: Optional[str] = None, type: Optional[str] 
     # Normalize
     return [Operation(**{k: v for k, v in r.items() if k != '_id'}) for r in rows]
 
-# ... باقي المسارات كما هي (مواعيد/موظفين/ولاء/كوبونات/ضمان/موردين/بروفايل/قوالب/إعدادات/تقارير/اعتمادات)
+# ============ Customer Receipts (توريد العملاء) ============
+@router.post("/customer-receipts", response_model=CustomerReceipt)
+async def create_customer_receipt(payload: dict):
+    try:
+        receipt = CustomerReceipt(
+            customerId=payload['customerId'],
+            accountId=payload.get('accountId'),
+            amount=float(payload['amount']),
+            paymentMethod=payload.get('paymentMethod', 'cash'),
+            reference=payload.get('reference'),
+            notes=payload.get('notes')
+        )
+        await db.customer_receipts.insert_one(receipt.dict())
+        # Post as income transaction tagged optional accountId
+        await db.transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "type": "income",
+            "category": "customer_receipt",
+            "amount": receipt.amount,
+            "description": f"Customer receipt {receipt.id}",
+            "paymentMethod": receipt.paymentMethod,
+            "reference": receipt.reference,
+            "date": receipt.date,
+            "accountId": receipt.accountId
+        })
+        return receipt
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/customer-receipts")
+async def list_customer_receipts(customer_id: Optional[str] = None, account_id: Optional[str] = None):
+    query = {}
+    if customer_id:
+        query['customerId'] = customer_id
+    if account_id:
+        query['accountId'] = account_id
+    rows = await db.customer_receipts.find(query).sort("date", -1).to_list(1000)
+    # Normalize
+    for r in rows:
+        r.pop('_id', None)
+    return rows
+
+# ============ Workshop Profile APIs ============
+@router.get("/profile", response_model=WorkshopProfile)
+async def get_workshop_profile():
+    profile = await db.workshop_profile.find_one({"id": "workshop_profile"})
+    if not profile:
+        # Create default profile
+        default_profile = WorkshopProfile(
+            name="ورشتي",
+            phone="0501001220",
+            whatsapp="966501001220",
+            address="المملكة العربية السعودية",
+            city="الرياض"
+        )
+        await db.workshop_profile.insert_one(default_profile.dict())
+        return default_profile
+    return WorkshopProfile(**profile)
+
+@router.put("/profile")
+async def update_workshop_profile(profile: WorkshopProfile):
+    profile.updatedAt = datetime.utcnow()
+    await db.workshop_profile.update_one(
+        {"id": "workshop_profile"},
+        {"$set": profile.dict()},
+        upsert=True
+    )
+    return profile
+
+# ============ Templates APIs ============
+@router.get("/templates")
+async def get_templates():
+    templates = await db.templates.find().to_list(1000)
+    # Return both html and content for frontend compatibility
+    for t in templates:
+        # Remove MongoDB _id field
+        if '_id' in t:
+            del t['_id']
+        # Convert datetime objects
+        if 'updatedAt' in t and hasattr(t['updatedAt'], 'isoformat'):
+            t['updatedAt'] = t['updatedAt'].isoformat()
+        if 'html' in t and 'content' not in t:
+            t['content'] = t['html']
+    return templates
+
+@router.post("/templates")
+async def create_template(payload: dict):
+    # payload may contain name, type, content(html), styles, language
+    tpl = TemplateDoc(
+        name=payload.get('name', 'Template'),
+        type=payload.get('type', 'invoice'),
+        language=payload.get('language', 'ar'),
+        html=payload.get('content') or payload.get('html') or ''
+    )
+    data = tpl.dict()
+    # Keep original fields for compatibility
+    data['content'] = data['html']
+    data['styles'] = payload.get('styles', '')
+    # Convert datetime objects for JSON serialization
+    if 'updatedAt' in data and hasattr(data['updatedAt'], 'isoformat'):
+        data['updatedAt'] = data['updatedAt'].isoformat()
+    
+    # Create a copy for database insertion (with original datetime)
+    db_data = tpl.dict()
+    db_data['content'] = db_data['html']
+    db_data['styles'] = payload.get('styles', '')
+    
+    await db.templates.insert_one(db_data)
+    return data
+
+@router.put("/templates/{template_id}")
+async def update_template(template_id: str, payload: dict):
+    update = {
+        "name": payload.get('name'),
+        "type": payload.get('type'),
+        "language": payload.get('language', 'ar'),
+        "html": payload.get('content') or payload.get('html')
+    }
+    # Clean None
+    update = {k: v for k, v in update.items() if v is not None}
+    if 'html' in update:
+        update['content'] = update['html']
+    if 'styles' in payload:
+        update['styles'] = payload['styles']
+    await db.templates.update_one({"id": template_id}, {"$set": update})
+    updated = await db.templates.find_one({"id": template_id})
+    if not updated:
+        raise HTTPException(status_code=404, detail="Template not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in updated:
+        del updated['_id']
+    if 'updatedAt' in updated and hasattr(updated['updatedAt'], 'isoformat'):
+        updated['updatedAt'] = updated['updatedAt'].isoformat()
+    return updated
+
+@router.delete("/templates/{template_id}")
+async def delete_template(template_id: str):
+    res = await db.templates.delete_one({"id": template_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"message": "deleted"}
+
+# ============ Settings APIs ============
+@router.get("/settings")
+async def get_settings():
+    s = await db.settings.find_one({"id": "app_settings"})
+    if not s:
+        # defaults aligned with user: SAR, no tax
+        defaults = AppSettings().dict()
+        # Also include UI expected fields with sane defaults
+        defaults.update({
+            "workshopName": "ورشتي",
+            "workshopPhone": "",
+            "workshopWhatsapp": "",
+            "workshopEmail": "",
+            "workshopAddress": "",
+            "workshopCity": "",
+            "taxNumber": "",
+            "logoUrl": "",
+            "defaultTemplate": "invoice",
+            "printHeaderFooter": True,
+            "printLogo": True,
+            "printWatermark": False,
+            "paperSize": "A4",
+            "printOrientation": "portrait",
+            "smsEnabled": False,
+            "whatsappEnabled": True,
+            "emailEnabled": False,
+            "notifyOnNewVehicle": True,
+            "notifyOnStatusChange": True,
+            "notifyOnPayment": True,
+            "language": "ar",
+            "dateFormat": "DD/MM/YYYY",
+            "timeFormat": "12",
+            "timezone": "Asia/Riyadh",
+            "requireLogin": False,
+            "sessionTimeout": 60,
+            "backupEnabled": True,
+            "backupFrequency": "daily"
+        })
+        await db.settings.insert_one(defaults)
+        return defaults
+    # Remove MongoDB _id field and convert datetime objects
+    if '_id' in s:
+        del s['_id']
+    if 'updatedAt' in s and hasattr(s['updatedAt'], 'isoformat'):
+        s['updatedAt'] = s['updatedAt'].isoformat()
+    return s
+
+@router.post("/settings")
+async def save_settings(payload: dict):
+    payload['updatedAt'] = datetime.utcnow()
+    payload['id'] = 'app_settings'
+    await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
+    return payload
+
+# ============ Diagnosis Reports & Approvals ============
+@router.post("/reports/diagnosis")
+async def create_diagnosis_report(payload: dict):
+    # payload: vehicleId, customerId, title, summary, items[{name, qty, price, total}], subtotal, total
+    token = f"REP-{str(uuid.uuid4())[:8].upper()}"
+    report = DiagnosisReport(
+        token=token,
+        vehicleId=payload.get('vehicleId'),
+        customerId=payload.get('customerId'),
+        title=payload.get('title', 'تقرير تشخيص'),
+        summary=payload.get('summary', ''),
+        items=payload.get('items', []),
+        subtotal=payload.get('subtotal', 0.0),
+        total=payload.get('total', 0.0)
+    )
+    await db.diagnosis_reports.insert_one(report.dict())
+    return report.dict()
+
+@router.get("/reports/public/{token}")
+async def get_public_report(token: str):
+    rep = await db.diagnosis_reports.find_one({"token": token})
+    if not rep:
+        raise HTTPException(status_code=404, detail="Report not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in rep:
+        del rep['_id']
+    if 'createdAt' in rep and hasattr(rep['createdAt'], 'isoformat'):
+        rep['createdAt'] = rep['createdAt'].isoformat()
+    return rep
+
+@router.post("/approvals")
+async def create_approval_request(payload: dict):
+    # payload: vehicleId, customerId, title, amount
+    token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+    req = ApprovalRequest(
+        token=token,
+        vehicleId=payload.get('vehicleId'),
+        customerId=payload.get('customerId'),
+        title=payload.get('title', 'طلب اعتماد'),
+        amount=float(payload.get('amount', 0))
+    )
+    await db.approval_requests.insert_one(req.dict())
+    return req.dict()
+
+@router.get("/approvals/public/{token}")
+async def get_public_approval(token: str):
+    req = await db.approval_requests.find_one({"token": token})
+    if not req:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in req:
+        del req['_id']
+    if 'respondedAt' in req and hasattr(req['respondedAt'], 'isoformat'):
+        req['respondedAt'] = req['respondedAt'].isoformat()
+    return req
+
+@router.post("/approvals/public/{token}/respond")
+async def respond_public_approval(token: str, status: str, name: Optional[str] = None, notes: Optional[str] = None):
+    if status not in ("approved", "rejected"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    update = {
+        "status": status,
+        "respondedAt": datetime.utcnow(),
+        "responderName": name,
+        "notes": notes
+    }
+    res = await db.approval_requests.update_one({"token": token}, {"$set": update})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    updated = await db.approval_requests.find_one({"token": token})
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in updated:
+        del updated['_id']
+    if 'respondedAt' in updated and hasattr(updated['respondedAt'], 'isoformat'):
+        updated['respondedAt'] = updated['respondedAt'].isoformat()
+    return updated

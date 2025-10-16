@@ -135,6 +135,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const { data } = await axios.post(`${API_URL}/approvals`, payload);
       toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
       const approvalLink = `${window.location.origin}/approval/${data.token}`;
+      if (data.expiresAt) {
+        toast({ title: 'صلاحية الرابط', description: `ينتهي خلال 7 أيام (${new Date(data.expiresAt).toLocaleString('ar-SA')})` });
+      }
       const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink}`;
       const msg = `السلام عليكم ${vehicle?.customerName}\nرابط تتبع مركبتك: ${trackingLink}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
       const phone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');

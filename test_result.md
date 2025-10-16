@@ -484,6 +484,9 @@ frontend:
           agent: "main"
           comment: "Updated CustomerTracking to use real vehicle data via tracking link API. Shows proper error for invalid links. Integrated with backend tracking API."
         - working: true
+    - agent: "main"
+      message: "Production activation requested by user: applying settings, seeding clone-basics, seeding print templates, creating indexes. No UI changes. Proceeding with backend actions via testing agent."
+
           agent: "testing"
           comment: "✅ PASSED: CustomerTracking page working correctly. Invalid tracking links (/track/invalid123) show proper error card with Arabic message 'رابط غير صحيح - الرجاء التحقق من رابط التتبع'. Error handling is working as expected. Page layout and styling are correct with proper RTL support."
 

@@ -367,7 +367,16 @@ const Templates = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/templates`);
-      setTemplates(response.data);
+      const list = response.data || [];
+      if (!Array.isArray(list) || list.length === 0) {
+        setTemplates([
+          { id: '1', ...defaultTemplates.invoice },
+          { id: '2', ...defaultTemplates.diagnosis },
+          { id: '3', ...defaultTemplates.quotation }
+        ]);
+      } else {
+        setTemplates(list);
+      }
     } catch (error) {
       console.error('Error fetching templates:', error);
       // If no templates, use defaults

@@ -191,10 +191,10 @@ async def seed_database():
     print("✅ Added workshop profile")
     
     print("\n✨ Database seeding completed successfully!")
-    print(f"📊 Summary:")
+    print("📊 Summary:")
     print(f"   - Services: {len(services)}")
     print(f"   - Technicians: {len(technicians)}")
-    print(f"   - Workshop Profile: 1")
+    print("   - Workshop Profile: 1")
     
     client.close()
 

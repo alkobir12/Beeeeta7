@@ -592,6 +592,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Business document models backend health check completed successfully"
     - "All high priority tasks completed successfully"
   stuck_tasks: []
   test_all: false

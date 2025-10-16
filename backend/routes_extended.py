@@ -9,7 +9,8 @@ from models_extended import (
     LoyaltyPoints, PointsTransaction, Coupon,
     MaintenanceReminder, Warranty, WarrantyClaim,
     Supplier, PurchaseOrder, WorkshopProfile,
-    TemplateDoc, DiagnosisReport, ApprovalRequest, AppSettings
+    TemplateDoc, DiagnosisReport, ApprovalRequest, AppSettings,
+    Account, Budget
 )
 
 # Router

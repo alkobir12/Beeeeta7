@@ -41,6 +41,7 @@ function App() {
             <Route path="/archive" element={<VehicleArchive />} />
             <Route path="/services" element={<ServicesManagement />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<WorkshopProfile />} />
           </Routes>
           <AIHelper />

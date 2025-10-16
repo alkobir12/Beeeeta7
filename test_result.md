@@ -402,9 +402,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Business Accounts (separate branches) APIs and UI"
-    - "Operations (Purchase/Sale) APIs and inventory tie-in"
-    - "Services list >150 and manual service pricing in NewVehicle"
+    - "Budget Report API - COMPLETED"
+    - "Customer Receipts API - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

@@ -336,6 +336,12 @@ async def get_templates():
     templates = await db.templates.find().to_list(1000)
     # Return both html and content for frontend compatibility
     for t in templates:
+        # Remove MongoDB _id field
+        if '_id' in t:
+            del t['_id']
+        # Convert datetime objects
+        if 'updatedAt' in t and hasattr(t['updatedAt'], 'isoformat'):
+            t['updatedAt'] = t['updatedAt'].isoformat()
         if 'html' in t and 'content' not in t:
             t['content'] = t['html']
     return templates

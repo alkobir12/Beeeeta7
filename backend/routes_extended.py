@@ -486,6 +486,44 @@ async def respond_public_approval(token: str, status: str, name: Optional[str] =
     valid_status = ("approved", "rejected", "deferred", "requote")
     if status not in valid_status:
         raise HTTPException(status_code=400, detail="Invalid status")
+    
+    # Find the approval request
+    req = await db.approval_requests.find_one({"token": token})
+    if not req:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    
+    now = datetime.utcnow()
+    # Check expiry/revocation
+    if req.get('revoked'):
+        raise HTTPException(status_code=410, detail="Link revoked")
+    if req.get('expiresAt') and req['expiresAt'] < now:
+        raise HTTPException(status_code=410, detail="Link expired")
+    
+    # Update the approval with response
+    update_data = {
+        "status": status,
+        "respondedAt": now,
+        "responderName": name,
+        "responderPhone": phone,
+        "notes": notes
+    }
+    
+    await db.approval_requests.update_one({"token": token}, {"$set": update_data})
+    
+    # Get updated document
+    updated_req = await db.approval_requests.find_one({"token": token})
+    if not updated_req:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in updated_req:
+        del updated_req['_id']
+    if 'respondedAt' in updated_req and hasattr(updated_req['respondedAt'], 'isoformat'):
+        updated_req['respondedAt'] = updated_req['respondedAt'].isoformat()
+    if 'expiresAt' in updated_req and hasattr(updated_req['expiresAt'], 'isoformat'):
+        updated_req['expiresAt'] = updated_req['expiresAt'].isoformat()
+    
+    return updated_req
 
 # ============ Approval Admin Utilities (revoke/regenerate/list) ============
 @router.put("/approvals/{approval_id}/revoke")

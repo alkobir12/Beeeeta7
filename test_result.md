@@ -484,6 +484,9 @@ frontend:
           agent: "testing"
           comment: "✅ PASS: Dashboard cards are clickable and functional. Total vehicles, In progress, and Ready cards respond to clicks. Technicians card navigates correctly to /technicians page. All 4 stat cards working as expected."
 
+    - agent: "main"
+      message: "Fix print blank page: Updated VehicleQuickActions to wrap HTML into a full A4 document if template lacks <html> tag, use about:blank and onload print with Safari fallback."
+
   - task: "Vehicle Quick Actions Modal"
     implemented: true
     working: "NA"

@@ -62,6 +62,7 @@ import CustomerReceipts from "./pages/CustomerReceipts";
         <Toaster />
       </div>
     </ThemeProvider>
+            <Route path="/customer-receipts" element={<CustomerReceipts />} />
   );
 }
 

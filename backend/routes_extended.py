@@ -538,6 +538,36 @@ async def get_settings():
             "workshopAddress": "",
             "workshopCity": "",
             "taxNumber": "",
+            "logoUrl": "",
+            "defaultTemplate": "invoice",
+            "printHeaderFooter": True,
+            "printLogo": True,
+            "printWatermark": False,
+            "paperSize": "A4",
+            "printOrientation": "portrait",
+            "smsEnabled": False,
+            "whatsappEnabled": True,
+            "emailEnabled": False,
+            "notifyOnNewVehicle": True,
+            "notifyOnStatusChange": True,
+            "notifyOnPayment": True,
+            "language": "ar",
+            "dateFormat": "DD/MM/YYYY",
+            "timeFormat": "12",
+            "timezone": "Asia/Riyadh",
+            "requireLogin": False,
+            "sessionTimeout": 60,
+            "backupEnabled": True,
+            "backupFrequency": "daily"
+        })
+        await db.settings.insert_one(defaults)
+        return defaults
+    # Remove MongoDB _id field and convert datetime objects
+    if '_id' in s:
+        del s['_id']
+    if 'updatedAt' in s and hasattr(s['updatedAt'], 'isoformat'):
+        s['updatedAt'] = s['updatedAt'].isoformat()
+    return s
 
 # ============ Seeding: Clone-like data (no UI) ============
 from datetime import timedelta

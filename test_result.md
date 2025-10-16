@@ -637,13 +637,13 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 7
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Business document models backend health check completed successfully"
-    - "All high priority tasks completed successfully"
+    - "Backend health check for new endpoints completed successfully"
+    - "All high priority backend tasks completed successfully"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

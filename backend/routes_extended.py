@@ -459,11 +459,19 @@ async def get_public_approval(token: str):
     req = await db.approval_requests.find_one({"token": token})
     if not req:
         raise HTTPException(status_code=404, detail="Approval not found")
+    now = datetime.utcnow()
+    # Check expiry/revocation
+    if req.get('revoked'):
+        raise HTTPException(status_code=410, detail="Link revoked")
+    if req.get('expiresAt') and req['expiresAt'] < now:
+        raise HTTPException(status_code=410, detail="Link expired")
     # Remove MongoDB _id field and convert datetime
     if '_id' in req:
         del req['_id']
     if 'respondedAt' in req and hasattr(req['respondedAt'], 'isoformat'):
         req['respondedAt'] = req['respondedAt'].isoformat()
+    if 'expiresAt' in req and hasattr(req['expiresAt'], 'isoformat'):
+        req['expiresAt'] = req['expiresAt'].isoformat()
     return req
 
 @router.post("/approvals/public/{token}/respond")

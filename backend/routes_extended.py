@@ -380,6 +380,11 @@ async def update_template(template_id: str, payload: dict):
     updated = await db.templates.find_one({"id": template_id})
     if not updated:
         raise HTTPException(status_code=404, detail="Template not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in updated:
+        del updated['_id']
+    if 'updatedAt' in updated and hasattr(updated['updatedAt'], 'isoformat'):
+        updated['updatedAt'] = updated['updatedAt'].isoformat()
     return updated
 
 @router.delete("/templates/{template_id}")

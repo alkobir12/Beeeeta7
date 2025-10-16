@@ -221,6 +221,7 @@ class CustomerReceipt(BaseModel):
     date: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 # ======== Document Linking & Activity =========
 class DocumentRef(BaseModel):

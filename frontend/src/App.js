@@ -26,6 +26,7 @@ import BusinessAccounts from "./pages/BusinessAccounts";
 import Operations from "./pages/Operations";
 import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
+import CustomerReceipts from "./pages/CustomerReceipts";
 
 function App() {
   return (

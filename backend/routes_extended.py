@@ -423,6 +423,11 @@ async def get_settings():
         })
         await db.settings.insert_one(defaults)
         return defaults
+    # Remove MongoDB _id field and convert datetime objects
+    if '_id' in s:
+        del s['_id']
+    if 'updatedAt' in s and hasattr(s['updatedAt'], 'isoformat'):
+        s['updatedAt'] = s['updatedAt'].isoformat()
     return s
 
 @router.post("/settings")

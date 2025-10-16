@@ -21,6 +21,7 @@ const ApprovalPublic = () => {
     try {
       const res = await axios.get(`${API_URL}/approvals/public/${token}`);
       setData(res.data);
+      setError('');
     } catch (e) {
       setError('رابط غير صحيح أو انتهت صلاحيته');
     } finally {

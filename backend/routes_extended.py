@@ -33,7 +33,8 @@ async def create_business_account(acc: BusinessAccount):
 async def list_business_accounts(active_only: bool = True):
     query = {"isActive": True} if active_only else {}
     rows = await db.business_accounts.find(query).to_list(1000)
-    return [BusinessAccount(**r) for r in rows]
+    # Normalize
+    return [BusinessAccount(**{k: v for k, v in r.items() if k != '_id'}) for r in rows]
 
 @router.put("/biz-accounts/{acc_id}")
 async def update_business_account(acc_id: str, payload: dict):
@@ -42,6 +43,7 @@ async def update_business_account(acc_id: str, payload: dict):
     doc = await db.business_accounts.find_one({"id": acc_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Account not found")
+    doc.pop('_id', None)
     return BusinessAccount(**doc)
 
 # ============ Operations (Purchase/Sale) ============
@@ -74,7 +76,7 @@ async def create_operation(payload: dict):
                 elif op.type == 'sale':
                     await db.parts.update_one({"id": i.itemId}, {"$inc": {"quantity": -i.quantity}})
 
-        # Accounting transaction
+        # Accounting transaction with accountId
         await db.transactions.insert_one({
             "id": str(uuid.uuid4()),
             "type": 'income' if op.type == 'sale' else 'expense',
@@ -83,7 +85,8 @@ async def create_operation(payload: dict):
             "description": f"{op.type} operation for account {op.accountId}",
             "paymentMethod": op.paymentMethod,
             "reference": op.id,
-            "date": datetime.utcnow()
+            "date": datetime.utcnow(),
+            "accountId": op.accountId
         })
 
         return op
@@ -98,7 +101,7 @@ async def list_operations(account_id: Optional[str] = None, type: Optional[str] 
     if type:
         query['type'] = type
     rows = await db.operations.find(query).sort("date", -1).to_list(1000)
-    return [Operation(**r) for r in rows]
+    # Normalize
+    return [Operation(**{k: v for k, v in r.items() if k != '_id'}) for r in rows]
 
-# ============ باقي المسارات (موجودة مسبقاً) ============
-# يحتفظ الملف بباقي المسارات كما تم بناؤها سابقاً (مواعيد/موظفين/ولاء/كوبونات/ضمان/موردين/بروفايل/قوالب/إعدادات/تقارير/اعتمادات)
+# ... باقي المسارات كما هي (مواعيد/موظفين/ولاء/كوبونات/ضمان/موردين/بروفايل/قوالب/إعدادات/تقارير/اعتمادات)

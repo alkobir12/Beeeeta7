@@ -2549,10 +2549,91 @@ class APITester:
         return self.test_results['failed'] == 0
 
     def test_production_activation_endpoints(self):
-        """Test the two specific production activation endpoints"""
-        print("\n🚀 Testing Production Activation Endpoints...")
+        """Test production activation steps end-to-end (backend only, no UI):
+        1) POST /api/settings with sample workshop info and dynamic menuConfig. Expect 200 and persisted values.
+        2) POST /api/seed/clone-basics to create accounts/budgets/transactions. Expect accounts and budgets in response.
+        3) POST /api/seed/print-templates to seed all templates. Expect {added: [...]}.
+        4) POST /api/admin/create-indexes to ensure indexes created.
+        5) Verify GET /api/settings returns menuConfig and updated fields.
+        6) Verify GET /api/biz-accounts returns 3 accounts.
+        """
+        print("\n🚀 Testing Production Activation Steps End-to-End...")
         
-        # Test 1: POST /api/seed/print-templates
+        # Step 1: POST /api/settings with sample workshop info and dynamic menuConfig
+        sample_settings = {
+            "workshopName": "ورشة الإنتاج التجريبية",
+            "workshopPhone": "+966501234567",
+            "workshopWhatsapp": "+966501234567",
+            "workshopEmail": "info@workshop-test.com",
+            "workshopAddress": "شارع الملك فهد، الرياض",
+            "workshopCity": "الرياض",
+            "currency": "SAR",
+            "taxEnabled": True,
+            "taxRate": 15.0,
+            "taxNumber": "123456789012345",
+            "language": "ar",
+            "timezone": "Asia/Riyadh",
+            "menuConfig": {
+                "inventoryGrouped": True,
+                "items": [
+                    {"path": "/", "label": "لوحة التحكم", "enabled": True},
+                    {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
+                    {"path": "/analytics", "label": "التحليلات", "enabled": True},
+                    {"path": "/customers", "label": "العملاء", "enabled": True},
+                    {"path": "/technicians", "label": "الفنيين", "enabled": True},
+                    {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
+                    {"path": "/profile", "label": "ملف الورشة", "enabled": True},
+                    {"path": "/business-accounts", "label": "الفروع", "enabled": True},
+                    {"group": True, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
+                        {"path": "/suppliers", "label": "الموردين", "enabled": True},
+                        {"path": "/operations", "label": "عمليات شراء/بيع", "enabled": True},
+                        {"path": "/services", "label": "الخدمات", "enabled": True}
+                    ]}
+                ]
+            }
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/settings", json=sample_settings)
+            if response.status_code == 200:
+                result = response.json()
+                if (result.get('workshopName') == sample_settings['workshopName'] and 
+                    result.get('currency') == 'SAR' and
+                    result.get('taxEnabled') == True and
+                    'menuConfig' in result):
+                    self.log_result("Step 1: POST /api/settings", True)
+                else:
+                    self.log_result("Step 1: POST /api/settings", False, "Settings not persisted correctly")
+            else:
+                self.log_result("Step 1: POST /api/settings", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Step 1: POST /api/settings", False, str(e))
+
+        # Step 2: POST /api/seed/clone-basics to create accounts/budgets/transactions
+        try:
+            response = self.session.post(f"{API_URL}/seed/clone-basics")
+            if response.status_code == 200:
+                result = response.json()
+                accounts = result.get('accounts', [])
+                budgets = result.get('budgets', [])
+                status = result.get('status')
+                
+                if (len(accounts) == 3 and len(budgets) == 3 and status == 'ok'):
+                    # Verify account names
+                    account_names = [acc.get('name') for acc in accounts]
+                    expected_names = ['Main Workshop', 'Family', 'Personal']
+                    if all(name in account_names for name in expected_names):
+                        self.log_result("Step 2: POST /api/seed/clone-basics", True)
+                    else:
+                        self.log_result("Step 2: POST /api/seed/clone-basics", False, f"Unexpected account names: {account_names}")
+                else:
+                    self.log_result("Step 2: POST /api/seed/clone-basics", False, f"Expected 3 accounts and budgets, got {len(accounts)} accounts, {len(budgets)} budgets")
+            else:
+                self.log_result("Step 2: POST /api/seed/clone-basics", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Step 2: POST /api/seed/clone-basics", False, str(e))
+
+        # Step 3: POST /api/seed/print-templates to seed all templates
         try:
             response = self.session.post(f"{API_URL}/seed/print-templates")
             if response.status_code == 200:
@@ -2564,31 +2645,70 @@ class APITester:
                     
                     # Either adds new templates or returns empty list if already exists
                     if len(added_types) == 0:
-                        self.log_result("Production Activation - Seed Print Templates", True, "Templates already exist (empty added list)")
+                        self.log_result("Step 3: POST /api/seed/print-templates", True, "Templates already exist (idempotent)")
                     elif all(t in expected_types for t in added_types):
-                        self.log_result("Production Activation - Seed Print Templates", True, f"Added {len(added_types)} templates: {added_types}")
+                        self.log_result("Step 3: POST /api/seed/print-templates", True, f"Added {len(added_types)} templates")
                     else:
-                        self.log_result("Production Activation - Seed Print Templates", False, f"Unexpected template types added: {added_types}")
+                        self.log_result("Step 3: POST /api/seed/print-templates", False, f"Unexpected template types: {added_types}")
                 else:
-                    self.log_result("Production Activation - Seed Print Templates", False, "Response missing 'added' field or not a list")
+                    self.log_result("Step 3: POST /api/seed/print-templates", False, "Response missing 'added' field")
             else:
-                self.log_result("Production Activation - Seed Print Templates", False, f"Status: {response.status_code}")
+                self.log_result("Step 3: POST /api/seed/print-templates", False, f"Status: {response.status_code}")
         except Exception as e:
-            self.log_result("Production Activation - Seed Print Templates", False, str(e))
+            self.log_result("Step 3: POST /api/seed/print-templates", False, str(e))
 
-        # Test 2: POST /api/admin/create-indexes
+        # Step 4: POST /api/admin/create-indexes to ensure indexes created
         try:
             response = self.session.post(f"{API_URL}/admin/create-indexes")
             if response.status_code == 200:
                 result = response.json()
                 if result.get('status') == 'ok':
-                    self.log_result("Production Activation - Create Database Indexes", True)
+                    self.log_result("Step 4: POST /api/admin/create-indexes", True)
                 else:
-                    self.log_result("Production Activation - Create Database Indexes", False, f"Unexpected response: {result}")
+                    self.log_result("Step 4: POST /api/admin/create-indexes", False, f"Unexpected response: {result}")
             else:
-                self.log_result("Production Activation - Create Database Indexes", False, f"Status: {response.status_code}")
+                self.log_result("Step 4: POST /api/admin/create-indexes", False, f"Status: {response.status_code}")
         except Exception as e:
-            self.log_result("Production Activation - Create Database Indexes", False, str(e))
+            self.log_result("Step 4: POST /api/admin/create-indexes", False, str(e))
+
+        # Step 5: Verify GET /api/settings returns menuConfig and updated fields
+        try:
+            response = self.session.get(f"{API_URL}/settings")
+            if response.status_code == 200:
+                result = response.json()
+                if (result.get('workshopName') == sample_settings['workshopName'] and 
+                    'menuConfig' in result and
+                    result.get('currency') == 'SAR' and
+                    result.get('taxEnabled') == True):
+                    self.log_result("Step 5: GET /api/settings verification", True)
+                else:
+                    self.log_result("Step 5: GET /api/settings verification", False, "Settings not properly persisted")
+            else:
+                self.log_result("Step 5: GET /api/settings verification", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Step 5: GET /api/settings verification", False, str(e))
+
+        # Step 6: Verify GET /api/biz-accounts returns 3 accounts
+        try:
+            response = self.session.get(f"{API_URL}/biz-accounts")
+            if response.status_code == 200:
+                accounts = response.json()
+                if isinstance(accounts, list) and len(accounts) >= 3:
+                    # Check for expected account names
+                    account_names = [acc.get('name') for acc in accounts]
+                    expected_names = ['Main Workshop', 'Family', 'Personal']
+                    found_names = [name for name in expected_names if name in account_names]
+                    
+                    if len(found_names) >= 3:
+                        self.log_result("Step 6: GET /api/biz-accounts verification", True, f"Found {len(accounts)} accounts")
+                    else:
+                        self.log_result("Step 6: GET /api/biz-accounts verification", False, f"Missing expected accounts, found: {account_names}")
+                else:
+                    self.log_result("Step 6: GET /api/biz-accounts verification", False, f"Expected >=3 accounts, got {len(accounts) if isinstance(accounts, list) else 'not a list'}")
+            else:
+                self.log_result("Step 6: GET /api/biz-accounts verification", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Step 6: GET /api/biz-accounts verification", False, str(e))
 
     def run_production_activation_tests(self):
         """Run only the production activation tests as requested"""

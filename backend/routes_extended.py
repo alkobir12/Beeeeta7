@@ -486,6 +486,41 @@ async def respond_public_approval(token: str, status: str, name: Optional[str] =
     valid_status = ("approved", "rejected", "deferred", "requote")
     if status not in valid_status:
         raise HTTPException(status_code=400, detail="Invalid status")
+
+# ============ Approval Admin Utilities (revoke/regenerate/list) ============
+@router.put("/approvals/{approval_id}/revoke")
+async def revoke_approval_link(approval_id: str):
+    res = await db.approval_requests.update_one({"id": approval_id}, {"$set": {"revoked": True}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    doc = await db.approval_requests.find_one({"id": approval_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    doc.pop('_id', None)
+    if 'respondedAt' in doc and hasattr(doc['respondedAt'], 'isoformat'):
+        doc['respondedAt'] = doc['respondedAt'].isoformat()
+    if 'expiresAt' in doc and hasattr(doc['expiresAt'], 'isoformat'):
+        doc['expiresAt'] = doc['expiresAt'].isoformat()
+    return doc
+
+@router.get("/approvals")
+async def list_approvals(vehicle_id: Optional[str] = None, customer_id: Optional[str] = None, status: Optional[str] = None):
+    query = {}
+    if vehicle_id:
+        query['vehicleId'] = vehicle_id
+    if customer_id:
+        query['customerId'] = customer_id
+    if status:
+        query['status'] = status
+    rows = await db.approval_requests.find(query).sort("createdAt", -1).to_list(1000)
+    for r in rows:
+        r.pop('_id', None)
+        if 'respondedAt' in r and hasattr(r['respondedAt'], 'isoformat'):
+            r['respondedAt'] = r['respondedAt'].isoformat()
+        if 'expiresAt' in r and hasattr(r['expiresAt'], 'isoformat'):
+            r['expiresAt'] = r['expiresAt'].isoformat()
+    return rows
+
     # Validate link is active
     req = await db.approval_requests.find_one({"token": token})
     if not req:

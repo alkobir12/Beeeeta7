@@ -373,11 +373,15 @@ async def create_diagnosis_case(payload: dict = Body(...)):
 @router.get("/diagnosis-cases")
 async def list_diagnosis_cases(vehicle_id: Optional[str] = None, customer_id: Optional[str] = None, status: Optional[str] = None):
     q = {}
-    if vehicle_id: q['vehicleId'] = vehicle_id
-    if customer_id: q['customerId'] = customer_id
-    if status: q['status'] = status
+    if vehicle_id:
+        q['vehicleId'] = vehicle_id
+    if customer_id:
+        q['customerId'] = customer_id
+    if status:
+        q['status'] = status
     rows = await db.diagnosis_cases.find(q).sort("createdAt", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 @router.post("/quotes", response_model=PricingQuote)

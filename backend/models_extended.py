@@ -302,7 +302,3 @@ class AppSettings(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
-
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}

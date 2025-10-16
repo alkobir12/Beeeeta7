@@ -758,6 +758,218 @@ async def create_approval_request(payload: dict):
         token=token,
         vehicleId=payload.get('vehicleId'),
         customerId=payload.get('customerId'),
+
+# ============ Purchase Orders CRUD ============
+@router.post("/purchase-orders")
+async def create_purchase_order(payload: dict = Body(...)):
+    try:
+        from models_extended import PurchaseOrder
+        po = PurchaseOrder(
+            supplierId=payload['supplierId'],
+            orderTotal=float(payload.get('orderTotal', 0)),
+            status=payload.get('status', 'pending'),
+            items=payload.get('items', [])
+        )
+        await db.purchase_orders.insert_one(po.dict())
+        await db.document_activities.insert_one(DocumentActivity(docType='purchase_order', docId=po.id, action='created').dict())
+        return {k: v for k, v in po.dict().items() if k != '_id'}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/purchase-orders")
+async def list_purchase_orders(supplier_id: Optional[str] = None, status: Optional[str] = None):
+    q = {}
+    if supplier_id:
+        q['supplierId'] = supplier_id
+    if status:
+        q['status'] = status
+    rows = await db.purchase_orders.find(q).sort("orderDate", -1).to_list(1000)
+    for r in rows:
+        r.pop('_id', None)
+    return rows
+
+@router.get("/purchase-orders/{po_id}")
+async def get_purchase_order(po_id: str):
+    doc = await db.purchase_orders.find_one({"id": po_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    doc.pop('_id', None)
+    return doc
+
+@router.put("/purchase-orders/{po_id}")
+async def update_purchase_order(po_id: str, payload: dict = Body(...)):
+    update = {k: v for k, v in payload.items() if v is not None}
+    await db.purchase_orders.update_one({"id": po_id}, {"$set": update})
+    doc = await db.purchase_orders.find_one({"id": po_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    doc.pop('_id', None)
+    await db.document_activities.insert_one(DocumentActivity(docType='purchase_order', docId=po_id, action='updated', meta=update).dict())
+    return doc
+
+@router.delete("/purchase-orders/{po_id}")
+async def delete_purchase_order(po_id: str):
+    res = await db.purchase_orders.delete_one({"id": po_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    return {"deleted": True, "id": po_id}
+
+# Link vendor bill to purchase order dependency if present
+async def _link_bill_dependency(bill):
+    try:
+        if bill.get('purchaseOrderId'):
+            dep = DocumentDependency(
+                fromDoc=DocumentRef(docType='purchase_order', docId=bill['purchaseOrderId']),
+                toDoc=DocumentRef(docType='vendor_bill', docId=bill['id']),
+                relation='fulfills'
+            )
+            await db.document_dependencies.insert_one(dep.dict())
+    except Exception:
+        pass
+
+# ============ Print Placeholders Schema ============
+@router.get("/print/placeholders")
+async def get_print_placeholders(doc_type: str):
+    common = {
+        "{{WORKSHOP_NAME}}": "ورشتي",
+        "{{WORKSHOP_ADDRESS}}": "الرياض",
+        "{{WORKSHOP_PHONE}}": "0500000000",
+        "{{TAX_NUMBER}}": "",
+        "{{DATE}}": datetime.utcnow().date().isoformat(),
+    }
+    customer = {
+        "{{CUSTOMER_NAME}}": "أحمد",
+        "{{CUSTOMER_PHONE}}": "0551234567",
+        "{{CUSTOMER_EMAIL}}": "",
+        "{{CUSTOMER_ADDRESS}}": "الرياض",
+    }
+    vehicle = {
+        "{{VEHICLE_PLATE}}": "ABC-1234",
+        "{{VEHICLE_MODEL}}": "Toyota Camry",
+        "{{VEHICLE_YEAR}}": "2020",
+        "{{VEHICLE_COLOR}}": "White",
+        "{{VEHICLE_VIN}}": "VIN123456",
+        "{{FILE_NUMBER}}": "F-0001",
+    }
+    totals = {
+        "{{SUBTOTAL}}": "0.00",
+        "{{DISCOUNT}}": "0.00",
+        "{{TAX}}": "0.00",
+        "{{TOTAL}}": "0.00",
+    }
+    items = [
+        {"{{ITEM_NAME}}": "زيت مكينة", "{{ITEM_QTY}}": "1", "{{ITEM_PRICE}}": "100.00", "{{ITEM_TOTAL}}": "100.00"}
+    ]
+
+    mapping = {
+        "invoice": {**common, **customer, **vehicle, **totals, "items": items, "{{INVOICE_NUMBER}}": "INV-2025"},
+        "quote": {**common, **customer, **vehicle, **totals, "items": items, "{{QUOTE_REF}}": "Q-1001"},
+        "diagnosis": {**common, **customer, **vehicle, "{{DIAGNOSIS_DATE}}": datetime.utcnow().date().isoformat(), "{{TECHNICIAN_NAME}}": "فني"},
+        "purchase_order": {**common, "items": items, "{{PO_NUMBER}}": "PO-0001"},
+        "vendor_bill": {**common, "items": items, "{{BILL_REF}}": "B-0001"},
+        "receipt": {**common, **customer, "{{RECEIPT_REF}}": "RC-0001", "{{AMOUNT}}": "0.00"}
+    }
+    if doc_type not in mapping:
+        raise HTTPException(status_code=400, detail="Unsupported doc_type")
+    return mapping[doc_type]
+
+# ============ Seed default print templates (if missing) ============
+@router.post("/seed/print-templates")
+async def seed_print_templates():
+    templates = await db.templates.find().to_list(1000)
+    existing_types = set([t.get('type') for t in templates])
+    to_seed = [
+        ("invoice", "فاتورة"),
+        ("diagnosis", "تقرير تشخيص"),
+        ("quote", "عرض سعر"),
+        ("purchase_order", "أمر شراء"),
+        ("vendor_bill", "فاتورة مورد"),
+        ("receipt", "سند قبض")
+    ]
+    added = []
+    for t_type, t_name in to_seed:
+        if t_type not in existing_types:
+            html = f"<!DOCTYPE html><html dir='rtl'><head><meta charset='UTF-8'><title>{t_name}</title></head><body><h2 style='text-align:center'>{t_name}</h2><p>{{{{WORKSHOP_NAME}}}}</p><hr/></body></html>"
+            doc = {
+                "id": str(uuid.uuid4()),
+                "name": t_name,
+                "type": t_type,
+                "language": "ar",
+                "html": html,
+                "content": html,
+                "isActive": True
+            }
+            await db.templates.insert_one(doc)
+            added.append(t_type)
+    return {"added": added}
+
+# ============ Import Skeletons (JSON rows, no UI) ============
+@router.post("/import/services")
+async def import_services(payload: dict = Body(...)):
+    rows = payload.get('rows', [])
+    from models import Service
+    created = 0
+    for r in rows:
+        try:
+            s = Service(name=r['name'], category=r.get('category','عام'), price=float(r.get('price',0)), duration=int(r.get('duration',30)))
+            await db.services.insert_one(s.dict())
+            created += 1
+        except Exception:
+            continue
+    return {"created": created}
+
+@router.post("/import/customers")
+async def import_customers(payload: dict = Body(...)):
+    rows = payload.get('rows', [])
+    from models import Customer
+    created = 0
+    for r in rows:
+        try:
+            c = Customer(name=r['name'], phone=r['phone'], email=r.get('email'))
+            await db.customers.insert_one(c.dict())
+            created += 1
+        except Exception:
+            continue
+    return {"created": created}
+
+@router.post("/import/transactions")
+async def import_transactions(payload: dict = Body(...)):
+    rows = payload.get('rows', [])
+    created = 0
+    for r in rows:
+        try:
+            await db.transactions.insert_one({
+                "id": str(uuid.uuid4()),
+                "type": r['type'],
+                "category": r.get('category','other'),
+                "amount": float(r['amount']),
+                "description": r.get('description',''),
+                "date": datetime.fromisoformat(r.get('date')) if r.get('date') else datetime.utcnow(),
+                "accountId": r.get('accountId')
+            })
+            created += 1
+        except Exception:
+            continue
+    return {"created": created}
+
+# ============ Admin: Create Indexes ============
+@router.post("/admin/create-indexes")
+async def create_indexes():
+    try:
+        await db.approval_requests.create_index("token", unique=True)
+        await db.approval_requests.create_index("vehicleId")
+        await db.transactions.create_index([("date", 1)])
+        await db.transactions.create_index([("accountId", 1)])
+        await db.vehicles.create_index("customerId")
+        await db.quotes.create_index("customerId")
+        await db.sales_orders.create_index("customerId")
+        await db.vendor_bills.create_index("supplierId")
+        await db.document_dependencies.create_index([("fromDoc.docId", 1)])
+        await db.document_dependencies.create_index([("toDoc.docId", 1)])
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         title=payload.get('title', 'طلب اعتماد'),
         amount=float(payload.get('amount', 0))
     )

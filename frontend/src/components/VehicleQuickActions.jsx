@@ -115,7 +115,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تجهيز التقرير</title><style>body{font-family:Tahoma,Arial;padding:20px} .muted{color:#666}</style></head><body><h3>جاري تجهيز تقرير التشخيص...</h3><p class="muted">يرجى الانتظار</p></body></html>`);
       win.document.close();
 
-      const { data: templates } = await axios.get(`${API_URL}/templates`);
+      const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const diag = (templates || []).find(t => (t.type === 'diagnosis'));
       const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
       // Replace content with final HTML

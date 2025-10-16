@@ -369,6 +369,54 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Activities API working correctly. Creating documents (quotes, diagnosis cases, sales orders, vendor bills) automatically logs DocumentActivity entries. GET /api/activities?doc_type=quote returns log entries with proper docType, docId, action='created' fields. All responses have no _id fields and proper date serialization."
 
+  - task: "Seed Clone Basics API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: POST /api/seed/clone-basics endpoint working correctly. Creates 3 accounts (Main Workshop, Family, Personal), 3 budgets for current month, and sample transactions. Returns proper JSON structure with accounts, budgets, and status='ok'. Idempotent operation safe to call multiple times."
+
+  - task: "Business Accounts List API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: GET /api/biz-accounts endpoint working correctly. Successfully lists three accounts (Main Workshop, Family, Personal) after seed operation. Returns proper JSON array with account details including id, name, code, currency fields."
+
+  - task: "Budgets Filter API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: GET /api/budgets?account_id=<family_id> endpoint working correctly. Successfully returns budget for current month when filtered by Family account ID. Proper JSON response with budget details including period, incomeTarget, expenseTarget fields."
+
+  - task: "CEO AI Analysis Multi API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: POST /api/ceo/ai-analysis-multi endpoint working correctly. Successfully processes three account IDs and returns account metrics (income, expenses, profit, profitMargin) and combined totals. AI field may be null if no API key available, which is acceptable. All JSON responses properly serialized without _id fields and with proper date formatting."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

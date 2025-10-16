@@ -553,6 +553,8 @@ async def list_approvals(vehicle_id: Optional[str] = None, customer_id: Optional
     rows = await db.approval_requests.find(query).sort("createdAt", -1).to_list(1000)
     for r in rows:
         r.pop('_id', None)
+        if 'createdAt' in r and hasattr(r['createdAt'], 'isoformat'):
+            r['createdAt'] = r['createdAt'].isoformat()
         if 'respondedAt' in r and hasattr(r['respondedAt'], 'isoformat'):
             r['respondedAt'] = r['respondedAt'].isoformat()
         if 'expiresAt' in r and hasattr(r['expiresAt'], 'isoformat'):

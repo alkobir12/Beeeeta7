@@ -684,8 +684,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend health check for new endpoints completed successfully"
-    - "All high priority backend tasks completed successfully"
+    - "Production activation end-to-end workflow completed successfully"
+    - "All backend production activation steps tested and working"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

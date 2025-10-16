@@ -497,6 +497,11 @@ async def get_public_approval(token: str):
     req = await db.approval_requests.find_one({"token": token})
     if not req:
         raise HTTPException(status_code=404, detail="Approval not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in req:
+        del req['_id']
+    if 'respondedAt' in req and hasattr(req['respondedAt'], 'isoformat'):
+        req['respondedAt'] = req['respondedAt'].isoformat()
     return req
 
 @router.post("/approvals/public/{token}/respond")

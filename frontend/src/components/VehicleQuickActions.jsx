@@ -154,14 +154,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const diag = (templates || []).find(t => (t.type === 'diagnosis'));
       const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
-      // Replace content with final HTML
-      const hasHtmlTag = /<html[\s\S]*>/i.test(html || '');
-      const content = hasHtmlTag ? html : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تقرير تشخيص</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial;padding:8mm}</style></head><body>${html || ''}<script>window.onload=function(){try{window.focus();window.print();}catch(e){}};<\/script></body></html>`;
-      // Use Blob URL to avoid document.write timing issues
-      const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      try { win.location.href = url; } catch(_) { /* fallback below */ }
-      setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 800);
+      // Fallback to iframe printing to avoid popup lifecycle issues
+      try { printViaIframe(html, 'تقرير تشخيص'); } catch(_) {}
+      try { if (win && !win.closed) win.close(); } catch(_) {}
     } catch (e) {
       if (win) {
         try {

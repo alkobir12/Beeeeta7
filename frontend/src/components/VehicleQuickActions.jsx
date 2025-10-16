@@ -43,13 +43,53 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-  const handlePrintReport = () => {
-    toast({
-      title: "جاري الطباعة",
-      description: "يتم تحضير التقرير..."
-    });
-    window.print();
+  const fillTemplate = (html, invoiceLike) => {
+    try {
+      const workshopName = 'ورشتي';
+      let output = html || '';
+      const replacements = {
+        '{{WORKSHOP_NAME}}': workshopName,
+        '{{WORKSHOP_ADDRESS}}': '',
+        '{{WORKSHOP_PHONE}}': vehicle?.customerPhone || '',
+        '{{TAX_NUMBER}}': '',
+        '{{INVOICE_NUMBER}}': invoiceLike?.invoiceNumber || '',
+        '{{INVOICE_DATE}}': new Date().toLocaleDateString('ar-SA'),
+        '{{CUSTOMER_NAME}}': vehicle?.customerName || '',
+        '{{CUSTOMER_PHONE}}': vehicle?.customerPhone || '',
+        '{{CUSTOMER_EMAIL}}': '',
+        '{{VEHICLE_PLATE}}': vehicle?.plateNumber || '',
+        '{{VEHICLE_MODEL}}': `${vehicle?.brand || ''} ${vehicle?.model || ''}`,
+        '{{VEHICLE_YEAR}}': vehicle?.year?.toString() || '',
+        '{{DIAGNOSIS_DATE}}': new Date().toLocaleDateString('ar-SA'),
+        '{{TECHNICIAN_NAME}}': vehicle?.technicianName || ''
+      };
+      Object.keys(replacements).forEach(k => {
+        output = output.split(k).join(replacements[k]);
+      });
+      output = output.replace('{{TOTAL}}', invoiceLike?.total?.toFixed?.(2) || '0.00');
+      return output;
+    } catch (e) {
+      return html;
+    }
   };
+
+  const handlePrintReport = async () => {
+    try {
+      setLoading(true);
+      const { data: templates } = await axios.get(`${API_URL}/templates`);
+      const diag = (templates || []).find(t => (t.type === 'diagnosis'));
+      const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 300);
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل تجهيز التقرير', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handlePrintInvoice = () => {
     toast({

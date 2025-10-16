@@ -523,8 +523,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "VehicleQuickActions print flows: API calls not being made despite popup windows opening"
-    - "Templates API integration issue in print functions"
+    - "VehicleQuickActions print flows: Popup windows not persisting for content loading"
+    - "Browser popup handling issue preventing template content display"
   stuck_tasks:
     - "Vehicle Quick Actions Modal"
   test_all: false

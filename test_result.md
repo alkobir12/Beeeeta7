@@ -309,6 +309,66 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Customer Receipts API working correctly. POST /api/customer-receipts creates receipts with customerId and optional accountId. GET /api/customer-receipts filters correctly by customer_id and account_id parameters. Automatically creates income transaction with category=customer_receipt and proper accountId linking. All CRUD operations and filtering functionality verified."
 
+  - task: "Diagnosis Cases API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Diagnosis Cases API working correctly. POST /api/diagnosis-cases creates cases with vehicleId, customerId, title, findings array, and media attachments. GET /api/diagnosis-cases filters correctly by vehicle_id parameter. All responses have no _id fields and proper date serialization. Document activity logging working correctly."
+
+  - task: "Pricing Quotes API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Pricing Quotes API working correctly. POST /api/quotes with items array (service & part), discount/tax computes totals correctly (subtotal=195, total=204.25 with discount/tax). Links to diagnosis via diagnosisCaseId creates dependency in /api/dependencies with derived_from relation. GET /api/quotes filters by customer_id & status parameters. All responses properly serialized without _id fields."
+
+  - task: "Sales Orders API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Sales Orders API working correctly. POST /api/sales referencing quoteId creates derived_from dependency correctly in /api/dependencies. Totals computation working (subtotal=150, total=172.5 with tax). GET /api/sales filters by vehicle_id parameter. All responses have proper date serialization and no _id fields."
+
+  - task: "Vendor Bills API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Vendor Bills API working correctly. POST /api/vendor-bills with supplierId and items creates bills with correct totals computation (subtotal=550, total=632.5 with tax). GET /api/vendor-bills filters by supplier_id parameter. All responses properly serialized without _id fields and with proper date handling."
+
+  - task: "Activities API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Activities API working correctly. Creating documents (quotes, diagnosis cases, sales orders, vendor bills) automatically logs DocumentActivity entries. GET /api/activities?doc_type=quote returns log entries with proper docType, docId, action='created' fields. All responses have no _id fields and proper date serialization."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

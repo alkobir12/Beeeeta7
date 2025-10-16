@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { BarChart3, Sparkles } from 'lucide-react';
+import { BarChart3, Sparkles, Plus } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CEO = () => {
   const [loading, setLoading] = useState(false);
-  const [answer, setAnswer] = useState(null);
+  const [answer, setAnswer] = useState('');
   const [metrics, setMetrics] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAcc, setSelectedAcc] = useState('');
+  const [form, setForm] = useState({ name: '', code: '', currency: 'SAR' });
+
+  const loadAccounts = async () => {
+    const res = await axios.get(`${API_URL}/biz-accounts`);
+    setAccounts(res.data || []);
+    if (!selectedAcc && (res.data || []).length > 0) setSelectedAcc(res.data[0].id);
+  };
+
+  useEffect(() => { loadAccounts(); }, []);
+
+  const addAccount = async (e) => {
+    e.preventDefault();
+    await axios.post(`${API_URL}/biz-accounts`, { ...form, isActive: true });
+    setForm({ name: '', code: '', currency: 'SAR' });
+    await loadAccounts();
+  };
+
+  const toggleActive = async (acc) => {
+    await axios.put(`${API_URL}/biz-accounts/${acc.id}`, { isActive: !acc.isActive });
+    await loadAccounts();
+  };
 
   const askAI = async () => {
     try {
       setLoading(true);
-      const res = await axios.post(`${API_URL}/ceo/ai-analysis`, null, { params: { question: 'كيف يبدو أداء الورشة هذا الشهر؟' }});
+      const res = await axios.post(`${API_URL}/ceo/ai-analysis`, null, { params: { question: 'كيف يبدو أداء الورشة هذا الشهر؟', account_id: selectedAcc || undefined }});
       setAnswer(res.data.response);
       setMetrics(res.data.metrics);
     } catch (e) {
@@ -30,18 +55,54 @@ const CEO = () => {
     <Layout>
       <div className="min-h-screen" dir="rtl">
         <div className="container mx-auto p-6">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold text-slate-800 mb-2">لوحة المدير التنفيذي</h1>
-              <p className="text-slate-600">نظرة عليا وتحليلات ذكية</p>
+              <p className="text-slate-600">إدارة الفروع والتحليلات الذكية</p>
             </div>
-            <Button onClick={askAI} className="bg-purple-600 hover:bg-purple-700" disabled={loading}>
-              <Sparkles size={18} className="ml-2" />
-              {loading ? 'جاري التحليل...' : 'تحليل ذكي (AI)'}
-            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Accounts Management */}
+          <Card className="mb-6 shadow-lg">
+            <CardHeader className="bg-gradient-to-l from-blue-50 to-transparent">
+              <CardTitle className="flex items-center gap-2"><Plus size={18}/> الحسابات/الفروع</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <form onSubmit={addAccount} className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <Input placeholder="الاسم" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} required/>
+                <Input placeholder="الكود" value={form.code} onChange={e=>setForm({...form, code: e.target.value})} required/>
+                <Input placeholder="العملة" value={form.currency} onChange={e=>setForm({...form, currency: e.target.value})} />
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">إضافة</Button>
+                <Select value={selectedAcc} onValueChange={setSelectedAcc}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الفرع للتحليل" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </form>
+              <div className="space-y-2">
+                {accounts.map(acc => (
+                  <div key={acc.id} className="flex items-center justify-between p-3 rounded border">
+                    <div>
+                      <div className="font-bold">{acc.name}</div>
+                      <div className="text-sm text-slate-500">{acc.code} • {acc.currency}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={acc.isActive ? 'default' : 'secondary'}>{acc.isActive ? 'مفعل' : 'معطّل'}</Badge>
+                      <Button variant="outline" onClick={()=>toggleActive(acc)}>{acc.isActive ? 'تعطيل' : 'تفعيل'}</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Metrics & AI */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <Card className="shadow-lg">
               <CardHeader className="bg-gradient-to-l from-green-50">
                 <CardTitle>الإيرادات</CardTitle>
@@ -70,15 +131,19 @@ const CEO = () => {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><BarChart3 size={20} /> تحليل AI</CardTitle>
+              <CardTitle className="flex items-center gap-2"><BarChart3 size={20} /> تحليل AI {selectedAcc ? `— ${accounts.find(a=>a.id===selectedAcc)?.name || ''}` : ''}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
+              <Button onClick={askAI} className="bg-purple-600 hover:bg-purple-700 mb-4" disabled={loading}>
+                <Sparkles size={18} className="ml-2" />
+                {loading ? 'جاري التحليل...' : 'تحليل ذكي (AI)'}
+              </Button>
               {answer ? (
                 <div className="prose prose-slate rtl text-slate-800 whitespace-pre-wrap leading-8">
                   {answer}
                 </div>
               ) : (
-                <div className="text-slate-500">اضغط "تحليل ذكي" لعرض توصيات المدير التنفيذي.</div>
+                <div className="text-slate-500">اختر فرعًا (اختياري) ثم اضغط تحليل ذكي لعرض توصيات المدير التنفيذي.</div>
               )}
             </CardContent>
           </Card>

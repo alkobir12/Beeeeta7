@@ -485,6 +485,9 @@ frontend:
           comment: "✅ PASS: Dashboard cards are clickable and functional. Total vehicles, In progress, and Ready cards respond to clicks. Technicians card navigates correctly to /technicians page. All 4 stat cards working as expected."
 
     - agent: "main"
+      message: "Added new backend models and endpoints: diagnosis-cases, quotes, sales (sales orders), vendor-bills, dependencies, activities. Implemented document linking and activity logging. Fix lint issues. Requesting backend health check on new routes."
+
+    - agent: "main"
       message: "Fix print blank page: Updated VehicleQuickActions to wrap HTML into a full A4 document if template lacks <html> tag, use about:blank and onload print with Safari fallback."
 
   - task: "Vehicle Quick Actions Modal"

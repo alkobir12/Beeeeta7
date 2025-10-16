@@ -356,6 +356,153 @@ async def delete_template(template_id: str):
         raise HTTPException(status_code=404, detail="Template not found")
     return {"message": "deleted"}
 
+# ============ New Business Documents CRUD ============
+from fastapi import Body
+from models_extended import (
+    DiagnosisCase, PricingQuote, SalesOrder, VendorBill,
+    DocumentDependency, DocumentRef, DocumentActivity, QuoteItem, BillItem
+)
+
+@router.post("/diagnosis-cases", response_model=DiagnosisCase)
+async def create_diagnosis_case(payload: dict = Body(...)):
+    case = DiagnosisCase(**payload)
+    await db.diagnosis_cases.insert_one(case.dict())
+    await db.document_activities.insert_one(DocumentActivity(docType='diagnosis_case', docId=case.id, action='created').dict())
+    return case
+
+@router.get("/diagnosis-cases")
+async def list_diagnosis_cases(vehicle_id: Optional[str] = None, customer_id: Optional[str] = None, status: Optional[str] = None):
+    q = {}
+    if vehicle_id: q['vehicleId'] = vehicle_id
+    if customer_id: q['customerId'] = customer_id
+    if status: q['status'] = status
+    rows = await db.diagnosis_cases.find(q).sort("createdAt", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+@router.post("/quotes", response_model=PricingQuote)
+async def create_quote(payload: dict = Body(...)):
+    items = [QuoteItem(**i) for i in payload.get('items', [])]
+    subtotal = sum(i.quantity * i.price for i in items)
+    total = subtotal - float(payload.get('discount', 0 or 0)) + float(payload.get('tax', 0 or 0))
+    quote = PricingQuote(
+        vehicleId=payload['vehicleId'],
+        customerId=payload['customerId'],
+        diagnosisCaseId=payload.get('diagnosisCaseId'),
+        items=items, subtotal=subtotal, discount=float(payload.get('discount', 0)),
+        tax=float(payload.get('tax', 0)), total=total, status=payload.get('status','draft'),
+        validityDate=payload.get('validityDate'), reference=payload.get('reference')
+    )
+    await db.quotes.insert_one(quote.dict())
+    await db.document_activities.insert_one(DocumentActivity(docType='quote', docId=quote.id, action='created').dict())
+    # Link to diagnosis if provided
+    if quote.diagnosisCaseId:
+        dep = DocumentDependency(
+            fromDoc=DocumentRef(docType='diagnosis_case', docId=quote.diagnosisCaseId),
+            toDoc=DocumentRef(docType='quote', docId=quote.id),
+            relation='derived_from'
+        )
+        await db.document_dependencies.insert_one(dep.dict())
+    return quote
+
+@router.get("/quotes")
+async def list_quotes(customer_id: Optional[str] = None, vehicle_id: Optional[str] = None, status: Optional[str] = None):
+    q = {}
+    if customer_id: q['customerId'] = customer_id
+    if vehicle_id: q['vehicleId'] = vehicle_id
+    if status: q['status'] = status
+    rows = await db.quotes.find(q).sort("createdAt", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+@router.post("/sales", response_model=SalesOrder)
+async def create_sales_order(payload: dict = Body(...)):
+    items = [QuoteItem(**i) for i in payload.get('items', [])]
+    subtotal = sum(i.quantity * i.price for i in items)
+    total = subtotal + float(payload.get('tax', 0))
+    so = SalesOrder(
+        vehicleId=payload.get('vehicleId'), customerId=payload.get('customerId'),
+        quoteId=payload.get('quoteId'), items=items, subtotal=subtotal, tax=float(payload.get('tax', 0)),
+        total=total, status=payload.get('status', 'draft'), notes=payload.get('notes')
+    )
+    await db.sales_orders.insert_one(so.dict())
+    await db.document_activities.insert_one(DocumentActivity(docType='sales_order', docId=so.id, action='created').dict())
+    # Link if from quote
+    if so.quoteId:
+        dep = DocumentDependency(
+            fromDoc=DocumentRef(docType='quote', docId=so.quoteId),
+            toDoc=DocumentRef(docType='sales_order', docId=so.id),
+            relation='derived_from'
+        )
+        await db.document_dependencies.insert_one(dep.dict())
+    return so
+
+@router.get("/sales")
+async def list_sales(customer_id: Optional[str] = None, vehicle_id: Optional[str] = None, status: Optional[str] = None):
+    q = {}
+    if customer_id: q['customerId'] = customer_id
+    if vehicle_id: q['vehicleId'] = vehicle_id
+    if status: q['status'] = status
+    rows = await db.sales_orders.find(q).sort("date", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+@router.post("/vendor-bills", response_model=VendorBill)
+async def create_vendor_bill(payload: dict = Body(...)):
+    items = [BillItem(**i) for i in payload.get('items', [])]
+    subtotal = sum(i.quantity * i.price for i in items)
+    total = subtotal + float(payload.get('tax', 0))
+    bill = VendorBill(
+        supplierId=payload['supplierId'], purchaseOrderId=payload.get('purchaseOrderId'),
+        items=items, subtotal=subtotal, tax=float(payload.get('tax', 0)), total=total,
+        currency=payload.get('currency','SAR'), dueDate=payload.get('dueDate'),
+        status=payload.get('status','draft'), reference=payload.get('reference')
+    )
+    await db.vendor_bills.insert_one(bill.dict())
+    await db.document_activities.insert_one(DocumentActivity(docType='vendor_bill', docId=bill.id, action='created').dict())
+    return bill
+
+@router.get("/vendor-bills")
+async def list_vendor_bills(supplier_id: Optional[str] = None, status: Optional[str] = None):
+    q = {}
+    if supplier_id: q['supplierId'] = supplier_id
+    if status: q['status'] = status
+    rows = await db.vendor_bills.find(q).sort("date", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+@router.post("/dependencies", response_model=DocumentDependency)
+async def create_dependency(payload: dict = Body(...)):
+    dep = DocumentDependency(
+        fromDoc=DocumentRef(**payload['fromDoc']),
+        toDoc=DocumentRef(**payload['toDoc']),
+        relation=payload['relation']
+    )
+    await db.document_dependencies.insert_one(dep.dict())
+    return dep
+
+@router.get("/dependencies")
+async def list_dependencies(doc_type: Optional[str] = None, doc_id: Optional[str] = None):
+    q = {}
+    if doc_type and doc_id:
+        q = {"$or": [
+            {"fromDoc.docType": doc_type, "fromDoc.docId": doc_id},
+            {"toDoc.docType": doc_type, "toDoc.docId": doc_id}
+        ]}
+    rows = await db.document_dependencies.find(q).sort("createdAt", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+@router.get("/activities")
+async def list_activities(doc_type: Optional[str] = None, doc_id: Optional[str] = None):
+    q = {}
+    if doc_type: q['docType'] = doc_type
+    if doc_id: q['docId'] = doc_id
+    rows = await db.document_activities.find(q).sort("date", -1).to_list(1000)
+    for r in rows: r.pop('_id', None)
+    return rows
+
+
 # ============ Settings APIs ============
 @router.get("/settings")
 async def get_settings():

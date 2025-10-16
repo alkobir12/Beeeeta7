@@ -560,7 +560,25 @@ async def get_settings():
             "requireLogin": False,
             "sessionTimeout": 60,
             "backupEnabled": True,
-            "backupFrequency": "daily"
+            "backupFrequency": "daily",
+            "menuConfig": {
+                "inventoryGrouped": True,
+                "items": [
+                    {"path": "/", "label": "لوحة التحكم", "enabled": True},
+                    {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
+                    {"path": "/analytics", "label": "التحليلات", "enabled": True},
+                    {"path": "/customers", "label": "العملاء", "enabled": True},
+                    {"path": "/technicians", "label": "الفنيين", "enabled": True},
+                    {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
+                    {"path": "/profile", "label": "ملف الورشة", "enabled": True},
+                    {"path": "/business-accounts", "label": "الفروع", "enabled": True},
+                    {"group": true, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
+                        {"path": "/suppliers", "label": "الموردين", "enabled": True},
+                        {"path": "/operations", "label": "عمليات شراء/بيع", "enabled": True},
+                        {"path": "/services", "label": "الخدمات", "enabled": True}
+                    ]}
+                ]
+            }
         })
         await db.settings.insert_one(defaults)
         return defaults

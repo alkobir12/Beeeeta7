@@ -48,7 +48,14 @@ const ApprovalPublic = () => {
   }
 
   if (error || !data) {
-    return <div className="min-h-screen flex items-center justify-center" dir="rtl">{error || 'حدث خطأ'}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" dir="rtl">
+        <div className="max-w-md text-center bg-white shadow rounded p-6">
+          <div className="text-lg font-bold mb-2">{error || 'حدث خطأ'}</div>
+          <div className="text-slate-500 text-sm">تحقق من أن الرابط صحيح وغير منتهي الصلاحية. إذا استمرت المشكلة تواصل مع الورشة.</div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -19,6 +19,35 @@ router = APIRouter(prefix="/api")
 # Database will be injected from server.py
 db = None
 
+# ============ Budgets (ميزانيات متعددة لكل فرع) ============
+@router.post("/budgets", response_model=Budget)
+async def create_budget(payload: dict):
+    try:
+        budget = Budget(
+            accountId=payload['accountId'],
+            period=payload['period'],
+            allocations=payload.get('allocations', []),
+            incomeTarget=float(payload.get('incomeTarget', 0)),
+            expenseTarget=float(payload.get('expenseTarget', 0)),
+            notes=payload.get('notes')
+        )
+        await db.budgets.insert_one(budget.dict())
+        return budget
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/budgets", response_model=List[Budget])
+async def list_budgets(account_id: Optional[str] = None, period: Optional[str] = None):
+    query = {}
+    if account_id:
+        query['accountId'] = account_id
+    if period:
+        query['period'] = period
+    rows = await db.budgets.find(query).sort("period", -1).to_list(1000)
+    return [Budget(**{k: v for k, v in r.items() if k != '_id'}) for r in rows]
+
+
+
 def set_db(database):
     global db
     db = database

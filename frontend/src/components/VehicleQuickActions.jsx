@@ -91,12 +91,21 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
 
-  const handlePrintInvoice = () => {
-    toast({
-      title: "جاري الطباعة",
-      description: "يتم تحضير الفاتورة..."
-    });
-    window.open(`/invoice/${vehicle?.id}`, '_blank');
+  const handlePrintInvoice = async () => {
+    try {
+      setLoading(true);
+      const { data: templates } = await axios.get(`${API_URL}/templates`);
+      const inv = (templates || []).find(t => (t.type === 'invoice'));
+      const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 300);
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل تجهيز الفاتورة', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestApproval = () => {

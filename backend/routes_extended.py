@@ -448,11 +448,15 @@ async def create_sales_order(payload: dict = Body(...)):
 @router.get("/sales")
 async def list_sales(customer_id: Optional[str] = None, vehicle_id: Optional[str] = None, status: Optional[str] = None):
     q = {}
-    if customer_id: q['customerId'] = customer_id
-    if vehicle_id: q['vehicleId'] = vehicle_id
-    if status: q['status'] = status
+    if customer_id:
+        q['customerId'] = customer_id
+    if vehicle_id:
+        q['vehicleId'] = vehicle_id
+    if status:
+        q['status'] = status
     rows = await db.sales_orders.find(q).sort("date", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 @router.post("/vendor-bills", response_model=VendorBill)

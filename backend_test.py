@@ -1960,6 +1960,13 @@ class APITester:
         self.test_operations_api()
         self.test_services_count()
         
+        # Run NEW Business Document Model Tests (as requested in review)
+        self.test_diagnosis_cases_api()
+        self.test_pricing_quotes_api()
+        self.test_sales_orders_api()
+        self.test_vendor_bills_api()
+        self.test_activities_api()
+        
         # Cleanup
         self.cleanup()
         

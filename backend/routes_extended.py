@@ -412,11 +412,15 @@ async def create_quote(payload: dict = Body(...)):
 @router.get("/quotes")
 async def list_quotes(customer_id: Optional[str] = None, vehicle_id: Optional[str] = None, status: Optional[str] = None):
     q = {}
-    if customer_id: q['customerId'] = customer_id
-    if vehicle_id: q['vehicleId'] = vehicle_id
-    if status: q['status'] = status
+    if customer_id:
+        q['customerId'] = customer_id
+    if vehicle_id:
+        q['vehicleId'] = vehicle_id
+    if status:
+        q['status'] = status
     rows = await db.quotes.find(q).sort("createdAt", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 @router.post("/sales", response_model=SalesOrder)

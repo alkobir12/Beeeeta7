@@ -288,8 +288,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All frontend pages with API integration"
-    - "Delete functionality testing"
+    - "Settings API & Page integration"
+    - "Templates CRUD & Printing correctness"
+    - "Vehicle Quick Actions: approval + diagnosis report + WhatsApp share + tracking"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

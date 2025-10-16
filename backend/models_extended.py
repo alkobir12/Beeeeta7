@@ -178,21 +178,27 @@ class BusinessAccount(BaseModel):
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
 # Operation and Operation Item Models
+class OperationItem(BaseModel):
+    itemType: str  # "part", "service"
+    itemId: Optional[str] = None
+    name: str
+    quantity: int
+    price: float
+    total: float
+
 class Operation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     accountId: str
     type: str  # "purchase", "sale"
-    amount: float
-    description: Optional[str] = None
+    partnerType: Optional[str] = None
+    partnerName: Optional[str] = None
+    partnerId: Optional[str] = None
+    items: List[OperationItem] = []
+    subtotal: float = 0.0
+    total: float = 0.0
+    paymentMethod: str = "cash"
+    notes: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
-
-class OperationItem(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    operationId: str
-    partId: str
-    quantity: int
-    unitPrice: float
-    totalPrice: float
 
 class CustomerReceipt(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

@@ -432,6 +432,354 @@ class APITester:
             except:
                 pass
 
+    def test_settings_api(self):
+        """Test GET/POST /api/settings"""
+        print("\n⚙️ Testing Settings API...")
+        
+        # Test 1: GET settings (should return defaults on fresh DB)
+        try:
+            response = self.session.get(f"{API_URL}/settings")
+            if response.status_code == 200:
+                settings = response.json()
+                if settings.get('currency') == 'SAR' and settings.get('taxEnabled') == False:
+                    self.log_result("Settings API - GET defaults", True)
+                else:
+                    self.log_result("Settings API - GET defaults", False, f"Expected currency=SAR, taxEnabled=false, got currency={settings.get('currency')}, taxEnabled={settings.get('taxEnabled')}")
+            else:
+                self.log_result("Settings API - GET defaults", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Settings API - GET defaults", False, str(e))
+
+        # Test 2: POST settings (persist payload)
+        test_settings = {
+            "currency": "USD",
+            "taxEnabled": True,
+            "workshopName": "Test Workshop",
+            "taxRate": 15.0
+        }
+        try:
+            response = self.session.post(f"{API_URL}/settings", json=test_settings)
+            if response.status_code == 200:
+                self.log_result("Settings API - POST update", True)
+                
+                # Test 3: GET updated settings
+                response2 = self.session.get(f"{API_URL}/settings")
+                if response2.status_code == 200:
+                    updated_settings = response2.json()
+                    if (updated_settings.get('currency') == 'USD' and 
+                        updated_settings.get('taxEnabled') == True and
+                        updated_settings.get('workshopName') == 'Test Workshop'):
+                        self.log_result("Settings API - GET updated values", True)
+                    else:
+                        self.log_result("Settings API - GET updated values", False, f"Settings not persisted correctly")
+                else:
+                    self.log_result("Settings API - GET updated values", False, f"Status: {response2.status_code}")
+            else:
+                self.log_result("Settings API - POST update", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Settings API - POST update", False, str(e))
+
+    def test_templates_crud_api(self):
+        """Test Templates CRUD operations"""
+        print("\n📄 Testing Templates CRUD API...")
+        
+        # Test 1: POST /api/templates (create template)
+        template_data = {
+            "name": "Test Invoice Template",
+            "type": "invoice",
+            "content": "<html><body><h1>Test Template</h1></body></html>",
+            "language": "ar"
+        }
+        template_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/templates", json=template_data)
+            if response.status_code == 200:
+                template = response.json()
+                template_id = template.get('id')
+                if (template.get('name') == template_data['name'] and 
+                    template.get('type') == template_data['type'] and
+                    template.get('content') == template_data['content']):
+                    self.log_result("Templates API - POST create", True)
+                else:
+                    self.log_result("Templates API - POST create", False, "Template data not saved correctly")
+            else:
+                self.log_result("Templates API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Templates API - POST create", False, str(e))
+
+        # Test 2: GET /api/templates (list templates)
+        try:
+            response = self.session.get(f"{API_URL}/templates")
+            if response.status_code == 200:
+                templates = response.json()
+                if isinstance(templates, list) and len(templates) > 0:
+                    found_template = any(t.get('name') == template_data['name'] for t in templates)
+                    # Check if content/html is present
+                    has_content = any('content' in t or 'html' in t for t in templates)
+                    if found_template and has_content:
+                        self.log_result("Templates API - GET list", True)
+                    else:
+                        self.log_result("Templates API - GET list", False, f"Template not found or missing content field")
+                else:
+                    self.log_result("Templates API - GET list", False, "No templates returned")
+            else:
+                self.log_result("Templates API - GET list", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Templates API - GET list", False, str(e))
+
+        # Test 3: PUT /api/templates/{id} (update template)
+        if template_id:
+            update_data = {
+                "name": "Updated Test Template",
+                "type": "quotation",
+                "content": "<html><body><h1>Updated Template</h1></body></html>"
+            }
+            try:
+                response = self.session.put(f"{API_URL}/templates/{template_id}", json=update_data)
+                if response.status_code == 200:
+                    updated_template = response.json()
+                    if (updated_template.get('name') == update_data['name'] and 
+                        updated_template.get('type') == update_data['type']):
+                        self.log_result("Templates API - PUT update", True)
+                    else:
+                        self.log_result("Templates API - PUT update", False, "Template not updated correctly")
+                else:
+                    self.log_result("Templates API - PUT update", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Templates API - PUT update", False, str(e))
+
+        # Test 4: DELETE /api/templates/{id} (delete template)
+        if template_id:
+            try:
+                response = self.session.delete(f"{API_URL}/templates/{template_id}")
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('message') == 'deleted':
+                        self.log_result("Templates API - DELETE", True)
+                    else:
+                        self.log_result("Templates API - DELETE", False, "Unexpected response format")
+                else:
+                    self.log_result("Templates API - DELETE", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Templates API - DELETE", False, str(e))
+
+    def test_services_crud_api(self):
+        """Test Services CRUD operations"""
+        print("\n🔧 Testing Services CRUD API...")
+        
+        # Test 1: POST /api/services (create service)
+        service_data = {
+            "id": str(uuid.uuid4()),
+            "name": "Oil Change Service",
+            "category": "maintenance",
+            "price": 150.0,
+            "duration": 60,
+            "description": "Complete oil change service"
+        }
+        service_id = service_data['id']
+        
+        try:
+            response = self.session.post(f"{API_URL}/services", json=service_data)
+            if response.status_code == 200:
+                service = response.json()
+                if (service.get('name') == service_data['name'] and 
+                    service.get('price') == service_data['price']):
+                    self.log_result("Services API - POST create", True)
+                else:
+                    self.log_result("Services API - POST create", False, "Service data not saved correctly")
+            else:
+                self.log_result("Services API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Services API - POST create", False, str(e))
+
+        # Test 2: PUT /api/services/{id} (update service price)
+        try:
+            update_data = {"price": 200.0}
+            response = self.session.put(f"{API_URL}/services/{service_id}", json=update_data)
+            if response.status_code == 200:
+                updated_service = response.json()
+                if updated_service.get('price') == 200.0:
+                    self.log_result("Services API - PUT update price", True)
+                else:
+                    self.log_result("Services API - PUT update price", False, f"Price not updated, got {updated_service.get('price')}")
+            else:
+                self.log_result("Services API - PUT update price", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Services API - PUT update price", False, str(e))
+
+        # Test 3: DELETE /api/services/{id} (delete service)
+        try:
+            response = self.session.delete(f"{API_URL}/services/{service_id}")
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('message') == 'deleted':
+                    self.log_result("Services API - DELETE", True)
+                else:
+                    self.log_result("Services API - DELETE", False, "Unexpected response format")
+            else:
+                self.log_result("Services API - DELETE", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Services API - DELETE", False, str(e))
+
+    def test_diagnosis_report_api(self):
+        """Test Diagnosis Report & Public View"""
+        print("\n📋 Testing Diagnosis Report API...")
+        
+        # Create a test vehicle first for the report
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Diagnosis Report API - Setup", False, "Failed to create test vehicle")
+            return
+
+        # Test 1: POST /api/reports/diagnosis (create report)
+        report_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "title": "Engine Diagnosis Report",
+            "summary": "Engine needs oil change and filter replacement",
+            "items": [
+                {"name": "Oil Change", "qty": 1, "price": 150.0, "total": 150.0},
+                {"name": "Oil Filter", "qty": 1, "price": 50.0, "total": 50.0}
+            ],
+            "subtotal": 200.0,
+            "total": 200.0
+        }
+        report_token = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/reports/diagnosis", json=report_data)
+            if response.status_code == 200:
+                report = response.json()
+                report_token = report.get('token')
+                if (report_token and report_token.startswith('REP-') and 
+                    report.get('title') == report_data['title']):
+                    self.log_result("Diagnosis Report API - POST create", True)
+                else:
+                    self.log_result("Diagnosis Report API - POST create", False, "Report not created correctly")
+            else:
+                self.log_result("Diagnosis Report API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Diagnosis Report API - POST create", False, str(e))
+
+        # Test 2: GET /api/reports/public/{token} (retrieve report)
+        if report_token:
+            try:
+                response = self.session.get(f"{API_URL}/reports/public/{report_token}")
+                if response.status_code == 200:
+                    public_report = response.json()
+                    if (public_report.get('token') == report_token and 
+                        public_report.get('title') == report_data['title']):
+                        self.log_result("Diagnosis Report API - GET public", True)
+                    else:
+                        self.log_result("Diagnosis Report API - GET public", False, "Report data mismatch")
+                else:
+                    self.log_result("Diagnosis Report API - GET public", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Diagnosis Report API - GET public", False, str(e))
+
+    def test_approval_request_api(self):
+        """Test Approval Request Public Flow"""
+        print("\n✅ Testing Approval Request API...")
+        
+        # Create a test vehicle first for the approval
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA_2)
+        if not vehicle:
+            self.log_result("Approval Request API - Setup", False, "Failed to create test vehicle")
+            return
+
+        # Test 1: POST /api/approvals (create approval request)
+        approval_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "title": "Repair Approval Request",
+            "amount": 500.0
+        }
+        approval_token = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/approvals", json=approval_data)
+            if response.status_code == 200:
+                approval = response.json()
+                approval_token = approval.get('token')
+                if (approval_token and approval_token.startswith('APR-') and 
+                    approval.get('amount') == approval_data['amount']):
+                    self.log_result("Approval Request API - POST create", True)
+                else:
+                    self.log_result("Approval Request API - POST create", False, "Approval not created correctly")
+            else:
+                self.log_result("Approval Request API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Approval Request API - POST create", False, str(e))
+
+        # Test 2: GET /api/approvals/public/{token} (get approval request)
+        if approval_token:
+            try:
+                response = self.session.get(f"{API_URL}/approvals/public/{approval_token}")
+                if response.status_code == 200:
+                    public_approval = response.json()
+                    if (public_approval.get('token') == approval_token and 
+                        public_approval.get('amount') == approval_data['amount']):
+                        self.log_result("Approval Request API - GET public", True)
+                    else:
+                        self.log_result("Approval Request API - GET public", False, "Approval data mismatch")
+                else:
+                    self.log_result("Approval Request API - GET public", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Approval Request API - GET public", False, str(e))
+
+        # Test 3: POST /api/approvals/public/{token}/respond (respond to approval)
+        if approval_token:
+            try:
+                response_data = {
+                    "status": "approved",
+                    "name": "Ahmed Al-Rashid",
+                    "notes": "Approved for repair"
+                }
+                response = self.session.post(f"{API_URL}/approvals/public/{approval_token}/respond", 
+                                           params=response_data)
+                if response.status_code == 200:
+                    updated_approval = response.json()
+                    if (updated_approval.get('status') == 'approved' and 
+                        updated_approval.get('responderName') == 'Ahmed Al-Rashid'):
+                        self.log_result("Approval Request API - POST respond", True)
+                    else:
+                        self.log_result("Approval Request API - POST respond", False, "Response not saved correctly")
+                else:
+                    self.log_result("Approval Request API - POST respond", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Approval Request API - POST respond", False, str(e))
+
+    def test_vehicle_tracking_api(self):
+        """Test Vehicle Tracking"""
+        print("\n🚗 Testing Vehicle Tracking API...")
+        
+        # Create a test vehicle with tracking link
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Vehicle Tracking API - Setup", False, "Failed to create test vehicle")
+            return
+
+        tracking_link = vehicle.get('trackingLink')
+        if not tracking_link:
+            self.log_result("Vehicle Tracking API - Setup", False, "No tracking link generated")
+            return
+
+        # Test: GET /api/vehicles/track/{trackingLink}
+        try:
+            response = self.session.get(f"{API_URL}/vehicles/track/{tracking_link}")
+            if response.status_code == 200:
+                tracked_vehicle = response.json()
+                if (tracked_vehicle.get('id') == vehicle['id'] and 
+                    tracked_vehicle.get('trackingLink') == tracking_link):
+                    self.log_result("Vehicle Tracking API - GET track", True)
+                else:
+                    self.log_result("Vehicle Tracking API - GET track", False, "Vehicle data mismatch")
+            else:
+                self.log_result("Vehicle Tracking API - GET track", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Vehicle Tracking API - GET track", False, str(e))
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")
@@ -442,11 +790,19 @@ class APITester:
             print("❌ API is not accessible. Stopping tests.")
             return
         
-        # Run all tests
+        # Run existing tests
         self.test_vehicle_list_api()
         self.test_customer_list_api()
         self.test_vehicle_delete_api()
         self.test_customer_delete_api()
+        
+        # Run new API tests
+        self.test_settings_api()
+        self.test_templates_crud_api()
+        self.test_services_crud_api()
+        self.test_diagnosis_report_api()
+        self.test_approval_request_api()
+        self.test_vehicle_tracking_api()
         
         # Cleanup
         self.cleanup()

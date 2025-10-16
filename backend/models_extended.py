@@ -298,8 +298,11 @@ class Account(BaseModel):
 
 class Budget(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    accountId: str
     period: str  # YYYY-MM
-    allocations: List[dict]  # [{accountCode, amount}]
+    allocations: List[dict] = []  # [{key, amount}] مثل income/expense أو تفصيل حسابات
+    incomeTarget: float = 0.0
+    expenseTarget: float = 0.0
     notes: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 

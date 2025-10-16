@@ -17,6 +17,20 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   const { toast } = useToast();
   const [newStatus, setNewStatus] = useState(vehicle?.status || 'diagnosis');
   const [loading, setLoading] = useState(false);
+  const [templatesCache, setTemplatesCache] = useState(null);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/templates`, { timeout: 8000 });
+        setTemplatesCache(res.data || []);
+      } catch (e) {
+        setTemplatesCache([]);
+      }
+    };
+    if (isOpen) fetchTemplates();
+  }, [isOpen]);
+
 
   const statusOptions = [
     { value: 'diagnosis', label: 'تشخيص', color: 'bg-yellow-500' },

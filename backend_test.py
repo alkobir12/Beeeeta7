@@ -1923,6 +1923,384 @@ class APITester:
         except Exception as e:
             self.log_result("D1) Approvals respond non-regression", False, str(e))
 
+    def test_diagnosis_cases_api(self):
+        """Test Diagnosis Cases API endpoints"""
+        print("\n🔍 Testing Diagnosis Cases API...")
+        
+        # Create test vehicle and customer first
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Diagnosis Cases API - Setup", False, "Failed to create test vehicle")
+            return
+        
+        # Test 1: POST /api/diagnosis-cases
+        diagnosis_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "title": "Engine Diagnosis",
+            "description": "Complete engine diagnostic check",
+            "findings": ["Oil leak detected", "Air filter needs replacement"],
+            "recommendations": ["Replace oil seals", "Change air filter"],
+            "media": [
+                {"url": "/uploads/engine1.jpg", "type": "image", "caption": "Engine oil leak"}
+            ],
+            "status": "open"
+        }
+        diagnosis_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/diagnosis-cases", json=diagnosis_data)
+            if response.status_code == 200:
+                diagnosis = response.json()
+                diagnosis_id = diagnosis.get('id')
+                if (diagnosis.get('vehicleId') == vehicle['id'] and 
+                    diagnosis.get('title') == diagnosis_data['title'] and
+                    len(diagnosis.get('findings', [])) == 2):
+                    self.log_result("Diagnosis Cases API - POST create", True)
+                else:
+                    self.log_result("Diagnosis Cases API - POST create", False, "Diagnosis data not saved correctly")
+            else:
+                self.log_result("Diagnosis Cases API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Diagnosis Cases API - POST create", False, str(e))
+        
+        # Test 2: GET /api/diagnosis-cases with vehicle_id filter
+        try:
+            response = self.session.get(f"{API_URL}/diagnosis-cases?vehicle_id={vehicle['id']}")
+            if response.status_code == 200:
+                cases = response.json()
+                if isinstance(cases, list) and len(cases) > 0:
+                    found_case = any(c.get('id') == diagnosis_id for c in cases)
+                    # Check no _id fields in response
+                    has_mongo_id = any('_id' in c for c in cases)
+                    if found_case and not has_mongo_id:
+                        self.log_result("Diagnosis Cases API - GET filter by vehicle_id", True)
+                    else:
+                        self.log_result("Diagnosis Cases API - GET filter by vehicle_id", False, 
+                                      f"Case not found or _id field present: found={found_case}, has_id={has_mongo_id}")
+                else:
+                    self.log_result("Diagnosis Cases API - GET filter by vehicle_id", False, "No cases returned")
+            else:
+                self.log_result("Diagnosis Cases API - GET filter by vehicle_id", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Diagnosis Cases API - GET filter by vehicle_id", False, str(e))
+        
+        return diagnosis_id
+
+    def test_pricing_quotes_api(self):
+        """Test Pricing Quotes API endpoints"""
+        print("\n💰 Testing Pricing Quotes API...")
+        
+        # Create test vehicle and diagnosis case first
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA_2)
+        if not vehicle:
+            self.log_result("Pricing Quotes API - Setup", False, "Failed to create test vehicle")
+            return
+        
+        diagnosis_id = self.test_diagnosis_cases_api()
+        
+        # Test 1: POST /api/quotes with items, discount, tax -> totals computed
+        quote_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "diagnosisCaseId": diagnosis_id,
+            "items": [
+                {"itemType": "service", "name": "Oil Change", "quantity": 1, "price": 150.0, "total": 150.0},
+                {"itemType": "part", "name": "Oil Filter", "quantity": 1, "price": 45.0, "total": 45.0}
+            ],
+            "discount": 20.0,
+            "tax": 29.25,  # 15% of (195-20)
+            "status": "draft"
+        }
+        quote_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/quotes", json=quote_data)
+            if response.status_code == 200:
+                quote = response.json()
+                quote_id = quote.get('id')
+                # Verify totals computation: subtotal = 150 + 45 = 195, total = 195 - 20 + 29.25 = 204.25
+                expected_subtotal = 195.0
+                expected_total = 204.25
+                if (abs(quote.get('subtotal', 0) - expected_subtotal) < 0.01 and
+                    abs(quote.get('total', 0) - expected_total) < 0.01 and
+                    quote.get('diagnosisCaseId') == diagnosis_id):
+                    self.log_result("Pricing Quotes API - POST create with totals", True)
+                else:
+                    self.log_result("Pricing Quotes API - POST create with totals", False, 
+                                  f"Totals mismatch: subtotal={quote.get('subtotal')} (expected {expected_subtotal}), "
+                                  f"total={quote.get('total')} (expected {expected_total})")
+            else:
+                self.log_result("Pricing Quotes API - POST create with totals", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Pricing Quotes API - POST create with totals", False, str(e))
+        
+        # Test 2: Verify dependency creation in /api/dependencies
+        if quote_id and diagnosis_id:
+            try:
+                response = self.session.get(f"{API_URL}/dependencies?doc_type=quote&doc_id={quote_id}")
+                if response.status_code == 200:
+                    deps = response.json()
+                    found_dep = any(d.get('fromDoc', {}).get('docId') == diagnosis_id and 
+                                  d.get('toDoc', {}).get('docId') == quote_id for d in deps)
+                    if found_dep:
+                        self.log_result("Pricing Quotes API - Dependency creation", True)
+                    else:
+                        self.log_result("Pricing Quotes API - Dependency creation", False, "Dependency not created")
+                else:
+                    self.log_result("Pricing Quotes API - Dependency creation", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Pricing Quotes API - Dependency creation", False, str(e))
+        
+        # Test 3: GET /api/quotes with customer_id and status filters
+        try:
+            response = self.session.get(f"{API_URL}/quotes?customer_id={vehicle['customerId']}&status=draft")
+            if response.status_code == 200:
+                quotes = response.json()
+                if isinstance(quotes, list):
+                    found_quote = any(q.get('id') == quote_id for q in quotes)
+                    # Check no _id fields and proper date serialization
+                    has_mongo_id = any('_id' in q for q in quotes)
+                    has_dates = all('createdAt' in q for q in quotes if q)
+                    if found_quote and not has_mongo_id and has_dates:
+                        self.log_result("Pricing Quotes API - GET filter by customer_id & status", True)
+                    else:
+                        self.log_result("Pricing Quotes API - GET filter by customer_id & status", False, 
+                                      f"Issues: found={found_quote}, has_id={has_mongo_id}, has_dates={has_dates}")
+                else:
+                    self.log_result("Pricing Quotes API - GET filter by customer_id & status", False, "Response not a list")
+            else:
+                self.log_result("Pricing Quotes API - GET filter by customer_id & status", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Pricing Quotes API - GET filter by customer_id & status", False, str(e))
+        
+        return quote_id
+
+    def test_sales_orders_api(self):
+        """Test Sales Orders API endpoints"""
+        print("\n📋 Testing Sales Orders API...")
+        
+        # Create test vehicle and quote first
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Sales Orders API - Setup", False, "Failed to create test vehicle")
+            return
+        
+        quote_id = self.test_pricing_quotes_api()
+        
+        # Test 1: POST /api/sales referencing quoteId -> creates derived_from dependency
+        sales_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "quoteId": quote_id,
+            "items": [
+                {"itemType": "service", "name": "Oil Change", "quantity": 1, "price": 150.0, "total": 150.0}
+            ],
+            "tax": 22.5,
+            "status": "confirmed",
+            "notes": "Customer approved quote"
+        }
+        sales_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/sales", json=sales_data)
+            if response.status_code == 200:
+                sales = response.json()
+                sales_id = sales.get('id')
+                # Verify totals: subtotal = 150, total = 150 + 22.5 = 172.5
+                expected_total = 172.5
+                if (sales.get('quoteId') == quote_id and
+                    abs(sales.get('total', 0) - expected_total) < 0.01 and
+                    sales.get('status') == 'confirmed'):
+                    self.log_result("Sales Orders API - POST create from quote", True)
+                else:
+                    self.log_result("Sales Orders API - POST create from quote", False, 
+                                  f"Data mismatch: total={sales.get('total')} (expected {expected_total})")
+            else:
+                self.log_result("Sales Orders API - POST create from quote", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Sales Orders API - POST create from quote", False, str(e))
+        
+        # Test 2: Verify derived_from dependency creation
+        if sales_id and quote_id:
+            try:
+                response = self.session.get(f"{API_URL}/dependencies?doc_type=sales_order&doc_id={sales_id}")
+                if response.status_code == 200:
+                    deps = response.json()
+                    found_dep = any(d.get('fromDoc', {}).get('docId') == quote_id and 
+                                  d.get('toDoc', {}).get('docId') == sales_id and
+                                  d.get('relation') == 'derived_from' for d in deps)
+                    if found_dep:
+                        self.log_result("Sales Orders API - Derived_from dependency", True)
+                    else:
+                        self.log_result("Sales Orders API - Derived_from dependency", False, "Dependency not created correctly")
+                else:
+                    self.log_result("Sales Orders API - Derived_from dependency", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Sales Orders API - Derived_from dependency", False, str(e))
+        
+        # Test 3: GET /api/sales filters by vehicle_id
+        try:
+            response = self.session.get(f"{API_URL}/sales?vehicle_id={vehicle['id']}")
+            if response.status_code == 200:
+                sales_orders = response.json()
+                if isinstance(sales_orders, list):
+                    found_order = any(s.get('id') == sales_id for s in sales_orders)
+                    # Check no _id fields and proper date serialization
+                    has_mongo_id = any('_id' in s for s in sales_orders)
+                    if found_order and not has_mongo_id:
+                        self.log_result("Sales Orders API - GET filter by vehicle_id", True)
+                    else:
+                        self.log_result("Sales Orders API - GET filter by vehicle_id", False, 
+                                      f"Issues: found={found_order}, has_id={has_mongo_id}")
+                else:
+                    self.log_result("Sales Orders API - GET filter by vehicle_id", False, "Response not a list")
+            else:
+                self.log_result("Sales Orders API - GET filter by vehicle_id", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Sales Orders API - GET filter by vehicle_id", False, str(e))
+
+    def test_vendor_bills_api(self):
+        """Test Vendor Bills API endpoints"""
+        print("\n🧾 Testing Vendor Bills API...")
+        
+        # Create a test supplier first (using existing customer creation as supplier)
+        supplier_data = {
+            "name": "Auto Parts Supplier LLC",
+            "phone": "+966512345678",
+            "email": "supplier@autoparts.com"
+        }
+        supplier_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/customers", json=supplier_data)
+            if response.status_code == 200:
+                supplier = response.json()
+                supplier_id = supplier.get('id')
+                self.log_result("Vendor Bills API - Create supplier", True)
+            else:
+                self.log_result("Vendor Bills API - Create supplier", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Vendor Bills API - Create supplier", False, str(e))
+            return
+        
+        # Test 1: POST /api/vendor-bills with supplierId and items
+        bill_data = {
+            "supplierId": supplier_id,
+            "items": [
+                {"itemType": "part", "name": "Brake Pads", "quantity": 4, "price": 75.0, "total": 300.0},
+                {"itemType": "part", "name": "Oil Filter", "quantity": 10, "price": 25.0, "total": 250.0}
+            ],
+            "tax": 82.5,  # 15% of 550
+            "currency": "SAR",
+            "status": "pending",
+            "reference": "BILL-001"
+        }
+        bill_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/vendor-bills", json=bill_data)
+            if response.status_code == 200:
+                bill = response.json()
+                bill_id = bill.get('id')
+                # Verify totals: subtotal = 300 + 250 = 550, total = 550 + 82.5 = 632.5
+                expected_subtotal = 550.0
+                expected_total = 632.5
+                if (bill.get('supplierId') == supplier_id and
+                    abs(bill.get('subtotal', 0) - expected_subtotal) < 0.01 and
+                    abs(bill.get('total', 0) - expected_total) < 0.01 and
+                    bill.get('reference') == 'BILL-001'):
+                    self.log_result("Vendor Bills API - POST create", True)
+                else:
+                    self.log_result("Vendor Bills API - POST create", False, 
+                                  f"Data mismatch: subtotal={bill.get('subtotal')} (expected {expected_subtotal}), "
+                                  f"total={bill.get('total')} (expected {expected_total})")
+            else:
+                self.log_result("Vendor Bills API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Vendor Bills API - POST create", False, str(e))
+        
+        # Test 2: GET /api/vendor-bills filters by supplier_id
+        try:
+            response = self.session.get(f"{API_URL}/vendor-bills?supplier_id={supplier_id}")
+            if response.status_code == 200:
+                bills = response.json()
+                if isinstance(bills, list):
+                    found_bill = any(b.get('id') == bill_id for b in bills)
+                    # Check no _id fields and proper date serialization
+                    has_mongo_id = any('_id' in b for b in bills)
+                    if found_bill and not has_mongo_id:
+                        self.log_result("Vendor Bills API - GET filter by supplier_id", True)
+                    else:
+                        self.log_result("Vendor Bills API - GET filter by supplier_id", False, 
+                                      f"Issues: found={found_bill}, has_id={has_mongo_id}")
+                else:
+                    self.log_result("Vendor Bills API - GET filter by supplier_id", False, "Response not a list")
+            else:
+                self.log_result("Vendor Bills API - GET filter by supplier_id", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Vendor Bills API - GET filter by supplier_id", False, str(e))
+
+    def test_activities_api(self):
+        """Test Activities API for document activity logging"""
+        print("\n📝 Testing Activities API...")
+        
+        # Create a quote to generate activity logs
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Activities API - Setup", False, "Failed to create test vehicle")
+            return
+        
+        quote_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "items": [
+                {"itemType": "service", "name": "Brake Service", "quantity": 1, "price": 200.0, "total": 200.0}
+            ],
+            "discount": 0.0,
+            "tax": 30.0,
+            "status": "draft"
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/quotes", json=quote_data)
+            if response.status_code == 200:
+                quote = response.json()
+                quote_id = quote.get('id')
+                self.log_result("Activities API - Create quote for logging", True)
+            else:
+                self.log_result("Activities API - Create quote for logging", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Activities API - Create quote for logging", False, str(e))
+            return
+        
+        # Test: GET /api/activities?doc_type=quote returns log entries
+        try:
+            response = self.session.get(f"{API_URL}/activities?doc_type=quote")
+            if response.status_code == 200:
+                activities = response.json()
+                if isinstance(activities, list) and len(activities) > 0:
+                    # Look for the created activity
+                    found_activity = any(a.get('docId') == quote_id and 
+                                       a.get('docType') == 'quote' and
+                                       a.get('action') == 'created' for a in activities)
+                    # Check no _id fields and proper date serialization
+                    has_mongo_id = any('_id' in a for a in activities)
+                    has_dates = all('date' in a for a in activities if a)
+                    if found_activity and not has_mongo_id and has_dates:
+                        self.log_result("Activities API - GET doc_type=quote returns logs", True)
+                    else:
+                        self.log_result("Activities API - GET doc_type=quote returns logs", False, 
+                                      f"Issues: found={found_activity}, has_id={has_mongo_id}, has_dates={has_dates}")
+                else:
+                    self.log_result("Activities API - GET doc_type=quote returns logs", False, "No activities returned")
+            else:
+                self.log_result("Activities API - GET doc_type=quote returns logs", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Activities API - GET doc_type=quote returns logs", False, str(e))
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

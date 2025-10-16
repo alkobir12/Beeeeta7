@@ -110,13 +110,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const { data: templates } = await axios.get(`${API_URL}/templates`);
       const inv = (templates || []).find(t => (t.type === 'invoice'));
       const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
-      const win = window.open('', '_blank', 'noopener,noreferrer');
-      if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => { try { win.print(); } catch(_) {} }, 400);
+      openPrintWindow(html);
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل تجهيز الفاتورة', variant: 'destructive' });
     } finally {

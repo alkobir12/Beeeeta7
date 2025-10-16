@@ -42,7 +42,7 @@ async def update_business_account(acc_id: str, payload: dict):
     doc = await db.business_accounts.find_one({"id": acc_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Account not found")
-    return doc
+    return BusinessAccount(**doc)
 
 # ============ Operations (Purchase/Sale) ============
 @router.post("/operations", response_model=Operation)

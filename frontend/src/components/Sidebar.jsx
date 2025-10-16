@@ -18,6 +18,19 @@ import {
 } from 'lucide-react';
 
 import axios from 'axios';
+  const [menuConfig, setMenuConfig] = React.useState(null);
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/settings`);
+        setMenuConfig(data?.menuConfig || null);
+      } catch (_) {
+        setMenuConfig(null);
+      }
+    };
+    load();
+  }, []);
+
 const API_URL = import.meta.env.REACT_APP_BACKEND_URL + '/api';
 
 const Sidebar = ({ isOpen, onClose }) => {

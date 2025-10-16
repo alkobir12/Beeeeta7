@@ -89,6 +89,49 @@ const Sidebar = ({ isOpen, onClose }) => {
                 variant="outline"
                 size="sm"
                 className="mt-3 w-full justify-center"
+          {/* Dynamic Menu based on settings */}
+          {menuConfig?.items ? (
+            <nav className="space-y-2">
+              {menuConfig.items.map((item) => {
+                if (item.group && item.children?.length) {
+                  const isActive = location.pathname.startsWith(item.path);
+                  return (
+                    <div key={item.path}>
+                      <Button
+                        variant={isActive ? 'default' : 'ghost'}
+                        className={`w-full justify-start gap-3 py-6 text-base ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                        onClick={() => handleNavigate(item.path)}
+                      >
+                        <Package size={20} />
+                        {item.label}
+                      </Button>
+                      <div className="mr-6 mt-1 space-y-1">
+                        {item.children.map((ch) => (
+                          <Button key={ch.path} variant={location.pathname===ch.path?'default':'ghost'} className={`w-full justify-start ${location.pathname===ch.path?'bg-blue-600 text-white':'text-slate-700 hover:bg-slate-100'}`} onClick={() => handleNavigate(ch.path)}>
+                            {ch.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (item.enabled === false) return null;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActive ? 'default' : 'ghost'}
+                    className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                    onClick={() => handleNavigate(item.path)}
+                  >
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </nav>
+          ) : (
+            <nav className="space-y-2">
+
                 onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}
               >
                 المدير (CEO)

@@ -892,7 +892,9 @@ async def seed_print_templates():
     existing_types = set([t.get('type') for t in templates])
     to_seed = [
         ("invoice", "فاتورة"),
+        ("sales_invoice", "فاتورة مبيعات"),
         ("diagnosis", "تقرير تشخيص"),
+        ("vehicle_estimate", "تقدير مركبة"),
         ("quote", "عرض سعر"),
         ("purchase_order", "أمر شراء"),
         ("vendor_bill", "فاتورة مورد"),

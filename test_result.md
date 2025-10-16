@@ -471,7 +471,7 @@ frontend:
 
   - task: "Vehicle Quick Actions Modal"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/components/VehicleQuickActions.jsx"
     stuck_count: 1
     priority: "high"
@@ -480,6 +480,9 @@ frontend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL ISSUE: VehicleQuickActions modal not opening. Vehicles are displayed on dashboard but action buttons (more-vertical icons) are not accessible or not triggering modal. Modal component exists with correct buttons (طلب اعتماد، صياغة وطباعة تقرير التشخيص، طباعة الفاتورة) but cannot be accessed. Approval page displays error messages correctly for invalid tokens."
+        - working: "NA"
+          agent: "main"
+          comment: "Updated approval creation to include expiresAt and show expiry toast. No UI change to modal trigger. Needs retest along with public link flow."
 
 metadata:
   created_by: "main_agent"

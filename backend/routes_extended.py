@@ -518,4 +518,9 @@ async def respond_public_approval(token: str, status: str, name: Optional[str] =
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Approval not found")
     updated = await db.approval_requests.find_one({"token": token})
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in updated:
+        del updated['_id']
+    if 'respondedAt' in updated and hasattr(updated['respondedAt'], 'isoformat'):
+        updated['respondedAt'] = updated['respondedAt'].isoformat()
     return updated

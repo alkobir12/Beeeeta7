@@ -582,6 +582,31 @@ async def get_settings():
         })
         await db.settings.insert_one(defaults)
         return defaults
+    # Ensure menuConfig backfill if missing
+    if 'menuConfig' not in s:
+        default_menu = {
+            "inventoryGrouped": True,
+            "items": [
+                {"path": "/", "label": "لوحة التحكم", "enabled": True},
+                {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
+                {"path": "/analytics", "label": "التحليلات", "enabled": True},
+                {"path": "/customers", "label": "العملاء", "enabled": True},
+                {"path": "/technicians", "label": "الفنيين", "enabled": True},
+                {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
+                {"path": "/profile", "label": "ملف الورشة", "enabled": True},
+                {"path": "/business-accounts", "label": "الفروع", "enabled": True},
+                {"group": True, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
+                    {"path": "/suppliers", "label": "الموردين", "enabled": True},
+                    {"path": "/operations", "label": "عمليات شراء/بيع", "enabled": True},
+                    {"path": "/services", "label": "الخدمات", "enabled": True}
+                ]}
+            ]
+        }
+        s['menuConfig'] = default_menu
+        try:
+            await db.settings.update_one({"id": "app_settings"}, {"$set": {"menuConfig": default_menu}})
+        except Exception:
+            pass
     # Remove MongoDB _id field and convert datetime objects
     if '_id' in s:
         del s['_id']

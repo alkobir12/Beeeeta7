@@ -127,19 +127,6 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-        '{{DIAGNOSIS_DATE}}': new Date().toLocaleDateString('ar-SA'),
-        '{{TECHNICIAN_NAME}}': vehicle?.technicianName || ''
-      };
-      Object.keys(replacements).forEach(k => {
-        output = output.split(k).join(replacements[k]);
-      });
-      output = output.replace('{{TOTAL}}', invoiceLike?.total?.toFixed?.(2) || '0.00');
-      return output;
-    } catch (e) {
-      return html;
-    }
-  };
-
   const openPrintWindow = (rawHtml) => {
     const win = window.open('about:blank', '_blank', 'noopener');
     if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');

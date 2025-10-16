@@ -477,10 +477,13 @@ async def create_vendor_bill(payload: dict = Body(...)):
 @router.get("/vendor-bills")
 async def list_vendor_bills(supplier_id: Optional[str] = None, status: Optional[str] = None):
     q = {}
-    if supplier_id: q['supplierId'] = supplier_id
-    if status: q['status'] = status
+    if supplier_id:
+        q['supplierId'] = supplier_id
+    if status:
+        q['status'] = status
     rows = await db.vendor_bills.find(q).sort("date", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 @router.post("/dependencies", response_model=DocumentDependency)

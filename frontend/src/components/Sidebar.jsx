@@ -147,21 +147,16 @@ const Sidebar = ({ isOpen, onClose }) => {
             </Button>
           </div>
 
-          {/* Menu Items */}
+          {/* Menu Items (fallback) */}
           <nav className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
               return (
                 <Button
                   key={item.path}
                   variant={isActive ? 'default' : 'ghost'}
-                  className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' 
-                      : 'hover:bg-slate-100 text-slate-700'
-                  }`}
+                  className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
                   onClick={() => handleNavigate(item.path)}
                 >
                   <Icon size={20} />
@@ -170,6 +165,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               );
             })}
           </nav>
+          )}
 
           {/* Quick Action */}
           <div className="mt-8">

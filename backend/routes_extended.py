@@ -538,6 +538,156 @@ async def get_settings():
             "workshopAddress": "",
             "workshopCity": "",
             "taxNumber": "",
+
+# ============ Seeding: Clone-like data (no UI) ============
+from datetime import timedelta
+from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+@router.post("/seed/clone-basics")
+async def seed_clone_basics():
+    """Create baseline data: accounts (Main, Family, Personal), budgets, and sample transactions/vehicles/settings.
+    No UI changes. Idempotent (safe to call multiple times)."""
+    # Accounts
+    async def upsert_account(name, code):
+        acc = await db.business_accounts.find_one({"code": code})
+        if not acc:
+            from models_extended import BusinessAccount
+            acc_obj = BusinessAccount(name=name, code=code)
+            await db.business_accounts.insert_one(acc_obj.dict())
+            return acc_obj.dict()
+        acc.pop('_id', None)
+        return acc
+
+    main_acc = await upsert_account("Main Workshop", "MAIN")
+    family_acc = await upsert_account("Family", "FAMILY")
+    personal_acc = await upsert_account("Personal", "PERSONAL")
+
+    # Settings
+    settings = await db.settings.find_one({"id": "app_settings"})
+    if not settings:
+        from models_extended import AppSettings
+        await db.settings.insert_one(AppSettings().dict())
+
+    # Budgets for current month
+    from datetime import datetime
+    now = datetime.utcnow()
+    period = now.strftime("%Y-%m")
+
+    async def ensure_budget(account, income_target, expense_target):
+        b = await db.budgets.find_one({"accountId": account['id'], "period": period})
+        if not b:
+            from models_extended import Budget
+            b_obj = Budget(accountId=account['id'], period=period, incomeTarget=income_target, expenseTarget=expense_target)
+            await db.budgets.insert_one(b_obj.dict())
+            return b_obj.dict()
+        b.pop('_id', None)
+        return b
+
+    main_budget = await ensure_budget(main_acc, 50000, 30000)
+    family_budget = await ensure_budget(family_acc, 0, 6000)
+    personal_budget = await ensure_budget(personal_acc, 0, 3000)
+
+    # Seed transactions per account (last 30 days)
+    async def add_tx(account, t_type, category, amount, desc):
+        await db.transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "type": t_type,
+            "category": category,
+            "amount": float(amount),
+            "description": desc,
+            "paymentMethod": "cash",
+            "reference": None,
+            "date": datetime.utcnow() - timedelta(days=7),
+            "accountId": account['id']
+        })
+
+    # Workshop sample
+    await add_tx(main_acc, 'income', 'service', 18000, 'Service invoices')
+    await add_tx(main_acc, 'expense', 'parts', 4500, 'Parts purchase')
+    await add_tx(main_acc, 'expense', 'utilities', 1200, 'Electricity bill')
+
+    # Family categories
+    await add_tx(family_acc, 'expense', 'groceries', 1800, 'مواد غذائية')
+    await add_tx(family_acc, 'expense', 'purchases', 900, 'مشتريات عامة')
+    await add_tx(family_acc, 'expense', 'electricity', 400, 'فاتورة كهرباء')
+
+    # Personal categories
+    await add_tx(personal_acc, 'expense', 'groceries', 350, 'مواد غذائية فردية')
+    await add_tx(personal_acc, 'expense', 'subscriptions', 80, 'اشتراك شهري')
+    await add_tx(personal_acc, 'expense', 'transport', 250, 'مواصلات')
+
+    # Sample vehicles for completeness (no UI)
+    from models import Vehicle
+    v_exists = await db.vehicles.count_documents({})
+    if v_exists == 0:
+        v1 = Vehicle(
+            plateNumber="ABC-1111", brand="Toyota", model="Camry", year=2019, color="White",
+            customerName="عميل 1", customerPhone="0551111111", services=["فحص", "زيت"],
+            customerId=str(uuid.uuid4()), trackingLink=f"TRK-{str(uuid.uuid4())[:8].upper()}"
+        )
+        await db.vehicles.insert_one(v1.dict())
+
+    return {
+        "accounts": [main_acc, family_acc, personal_acc],
+        "budgets": [main_budget, family_budget, personal_budget],
+        "status": "ok"
+    }
+
+# ============ CEO Multi-Account AI Analysis ============
+@router.post("/ceo/ai-analysis-multi")
+async def ceo_ai_analysis_multi(payload: dict = Body(...)):
+    """Analyze multiple accounts simultaneously and return comparative insights.
+    payload: { account_ids: [..], question?: str }
+    """
+    account_ids = payload.get('account_ids') or []
+    question = payload.get('question') or "حلل أداء هذه الحسابات خلال الشهر الماضي وقدم توصيات"
+    if not account_ids:
+        raise HTTPException(status_code=400, detail="account_ids required")
+
+    from datetime import datetime, timedelta
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=30)
+
+    results = []
+    combined = {"income": 0.0, "expenses": 0.0, "profit": 0.0}
+
+    for acc_id in account_ids:
+        tx = await db.transactions.find({
+            "accountId": acc_id,
+            "date": {"$gte": start_date, "$lte": end_date}
+        }).to_list(10000)
+        income = sum(t.get('amount',0) for t in tx if t.get('type') == 'income')
+        expenses = sum(t.get('amount',0) for t in tx if t.get('type') == 'expense')
+        profit = income - expenses
+        acc = await db.business_accounts.find_one({"id": acc_id})
+        name = acc.get('name') if acc else acc_id
+        res = {
+            "accountId": acc_id,
+            "name": name,
+            "income": income,
+            "expenses": expenses,
+            "profit": profit,
+            "profitMargin": (profit/income*100) if income>0 else 0
+        }
+        results.append(res)
+        combined["income"] += income
+        combined["expenses"] += expenses
+    combined["profit"] = combined["income"] - combined["expenses"]
+
+    # Optional AI summary if key available
+    ai_summary = None
+    try:
+      llm_key = os.getenv('EMERGENT_LLM_KEY')
+      if llm_key:
+        chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message="محلل مالي يقارن عدة حسابات في ورشة وأسرة وفرد.").with_model("anthropic", "claude-3-7-sonnet-20250219")
+        context = "\n".join([f"- {r['name']}: إيرادات {r['income']:.0f}، مصروفات {r['expenses']:.0f}، ربح {r['profit']:.0f}" for r in results])
+        prompt = f"قارن بين الحسابات التالية وأعطِ توصيات مختصرة:\n{context}\n\nالسؤال: {question}"
+        ai_summary = await chat.send_message(UserMessage(text=prompt))
+    except Exception as _:
+      ai_summary = None
+
+    return {"accounts": results, "combined": combined, "ai": ai_summary}
+
             "logoUrl": "",
             "defaultTemplate": "invoice",
             "printHeaderFooter": True,

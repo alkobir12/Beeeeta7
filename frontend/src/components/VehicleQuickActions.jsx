@@ -127,13 +127,33 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
 
   const handlePrintInvoice = async () => {
+    let win;
     try {
       setLoading(true);
+      // Open first to avoid blockers
+      win = window.open('about:blank', '_blank', 'noopener');
+      if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
+      win.document.open();
+      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تجهيز الفاتورة</title><style>body{font-family:Tahoma,Arial;padding:20px} .muted{color:#666}</style></head><body><h3>جاري تجهيز الفاتورة...</h3><p class="muted">يرجى الانتظار</p></body></html>`);
+      win.document.close();
+
       const { data: templates } = await axios.get(`${API_URL}/templates`);
       const inv = (templates || []).find(t => (t.type === 'invoice'));
       const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
-      openPrintWindow(html);
+      const hasHtmlTag = /<html[\s\S]*>/i.test(html || '');
+      const content = hasHtmlTag ? html : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>فاتورة</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial;padding:8mm}</style></head><body>${html || ''}<script>window.onload=function(){try{window.focus();window.print();}catch(e){}};<\/script></body></html>`;
+      win.document.open();
+      win.document.write(content);
+      win.document.close();
+      setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 600);
     } catch (e) {
+      if (win) {
+        try {
+          win.document.open();
+          win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>خطأ</title></head><body><h3>تعذر تجهيز الفاتورة</h3><p>${e?.message || ''}</p></body></html>`);
+          win.document.close();
+        } catch(_){}
+      }
       toast({ title: 'خطأ', description: 'فشل تجهيز الفاتورة', variant: 'destructive' });
     } finally {
       setLoading(false);

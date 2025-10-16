@@ -428,6 +428,21 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ PASSED: POST /api/admin/create-indexes endpoint working correctly. Successfully created all required production database indexes: approval_requests.token (unique), approval_requests.vehicleId, transactions.date, transactions.accountId, vehicles.customerId, quotes.customerId, sales_orders.customerId, vendor_bills.supplierId, document_dependencies.fromDoc.docId, document_dependencies.toDoc.docId. Database is production-ready with proper indexing for performance optimization."
+        - working: true
+          agent: "testing"
+          comment: "✅ PRODUCTION ACTIVATION RETEST PASSED: POST /api/admin/create-indexes endpoint confirmed working correctly. Returns {status: 'ok'} as expected. Database indexes creation successful for production deployment."
+
+  - task: "Seed Print Templates for Production"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PRODUCTION ACTIVATION TEST PASSED: POST /api/seed/print-templates endpoint working correctly. Successfully seeds default templates (invoice, sales_invoice, diagnosis, vehicle_estimate, quote, purchase_order, vendor_bill, receipt). Returns JSON {added: [...]} with template types added or empty added array if templates already exist. Idempotent operation safe for production deployment."
 
 frontend:
   - task: "Dashboard with API Integration"

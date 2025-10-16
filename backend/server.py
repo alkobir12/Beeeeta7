@@ -178,11 +178,48 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     
+    prev_status = vehicle.get("status")
     update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
     
     if update_dict:
         await db.vehicles.update_one({"id": vehicle_id}, {"$set": update_dict})
         vehicle = await db.vehicles.find_one({"id": vehicle_id})
+    
+    # Auto-manage approval links based on status transitions
+    try:
+        new_status = vehicle.get("status")
+        # On move to quotation: ensure there is an active pending approval (create if none active)
+        if new_status == "quotation" and prev_status != "quotation":
+            active = await db.approval_requests.find_one({
+                "vehicleId": vehicle_id,
+                "status": "pending",
+                "revoked": {"$ne": True},
+                "expiresAt": {"$gt": datetime.utcnow()}
+            })
+            if not active:
+                token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+                await db.approval_requests.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "vehicleId": vehicle_id,
+                    "customerId": vehicle.get("customerId"),
+                    "title": "طلب اعتماد",
+                    "amount": 0.0,
+                    "status": "pending",
+                    "token": token,
+                    "createdAt": datetime.utcnow(),
+                    "expiresAt": datetime.utcnow() + timedelta(days=7),
+                    "revoked": False
+                })
+        # On approved/ready/delivered: revoke all active pending approvals
+        if new_status in ("approved", "ready", "delivered") and prev_status != new_status:
+            await db.approval_requests.update_many({
+                "vehicleId": vehicle_id,
+                "status": "pending",
+                "revoked": {"$ne": True},
+                "expiresAt": {"$gt": datetime.utcnow()}
+            }, {"$set": {"revoked": True}})
+    except Exception as _:
+        logger.warning("Auto-manage approval links on status change failed, continuing")
     
     return Vehicle(**vehicle)
 

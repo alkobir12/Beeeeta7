@@ -21,6 +21,7 @@ class OTPRequest(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     phone: str
     code: str
+    token: str = Field(default_factory=lambda: str(uuid.uuid4()))
     purpose: str = "login"  # login, register
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     expiresAt: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(minutes=5))

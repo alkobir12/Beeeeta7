@@ -26,7 +26,7 @@ import CustomerReceipts from "./pages/CustomerReceipts";
 import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
-import { ThemeProvider } from './components/ui/theme-provider';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (

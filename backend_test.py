@@ -2740,6 +2740,286 @@ class APITester:
         
         return self.test_results['failed'] == 0
 
+    def test_end_to_end_operational_flow(self):
+        """Execute end-to-end operational flow as requested in review"""
+        print("\n🔄 Testing End-to-End Operational Flow...")
+        
+        # Step 1: Create Customer
+        customer_data = {
+            "name": "عميل تجريبي",
+            "phone": "0550000000", 
+            "email": "test@example.com"
+        }
+        customer_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/customers", json=customer_data)
+            if response.status_code == 200:
+                customer = response.json()
+                customer_id = customer.get('id')
+                self.log_result("E2E Flow - Step 1: Create Customer", True)
+            else:
+                self.log_result("E2E Flow - Step 1: Create Customer", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 1: Create Customer", False, str(e))
+            return
+
+        if not customer_id:
+            return
+
+        # Step 2: Create Vehicle
+        vehicle_data = {
+            "plateNumber": "ABC-2025",
+            "brand": "Toyota",
+            "model": "Corolla", 
+            "year": 2021,
+            "color": "White",
+            "customerId": customer_id,
+            "customerName": "عميل تجريبي",
+            "customerPhone": "0550000000",
+            "services": ["فحص شامل", "زيت"]
+        }
+        vehicle_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/vehicles", json=vehicle_data)
+            if response.status_code == 200:
+                vehicle = response.json()
+                vehicle_id = vehicle.get('id')
+                self.log_result("E2E Flow - Step 2: Create Vehicle (expect auto-approval)", True)
+            else:
+                self.log_result("E2E Flow - Step 2: Create Vehicle", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 2: Create Vehicle", False, str(e))
+            return
+
+        if not vehicle_id:
+            return
+
+        # Step 3: Verify Approvals
+        try:
+            response = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+            if response.status_code == 200:
+                approvals = response.json()
+                if isinstance(approvals, list) and len(approvals) > 0:
+                    approval = approvals[0]
+                    if (approval.get('status') == 'pending' and 
+                        not approval.get('revoked') and
+                        approval.get('token')):
+                        self.log_result("E2E Flow - Step 3: Verify Approvals", True)
+                        approval_token = approval.get('token')
+                    else:
+                        self.log_result("E2E Flow - Step 3: Verify Approvals", False, "No pending non-revoked approval with token")
+                        return
+                else:
+                    self.log_result("E2E Flow - Step 3: Verify Approvals", False, "No approvals found")
+                    return
+            else:
+                self.log_result("E2E Flow - Step 3: Verify Approvals", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 3: Verify Approvals", False, str(e))
+            return
+
+        # Step 4: Create DiagnosisCase
+        diagnosis_data = {
+            "vehicleId": vehicle_id,
+            "customerId": customer_id,
+            "title": "تشخيص شامل",
+            "findings": ["تسريب زيت"],
+            "recommendations": ["تغيير جوان"]
+        }
+        diagnosis_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/diagnosis-cases", json=diagnosis_data)
+            if response.status_code == 200:
+                diagnosis = response.json()
+                diagnosis_id = diagnosis.get('id')
+                self.log_result("E2E Flow - Step 4: Create DiagnosisCase", True)
+            else:
+                self.log_result("E2E Flow - Step 4: Create DiagnosisCase", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 4: Create DiagnosisCase", False, str(e))
+            return
+
+        if not diagnosis_id:
+            return
+
+        # Step 5: Create Quote from Diagnosis
+        quote_data = {
+            "vehicleId": vehicle_id,
+            "customerId": customer_id,
+            "diagnosisCaseId": diagnosis_id,
+            "items": [{
+                "itemType": "service",
+                "name": "تغيير زيت",
+                "quantity": 1,
+                "price": 120,
+                "total": 120
+            }],
+            "discount": 0,
+            "tax": 0
+        }
+        quote_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/quotes", json=quote_data)
+            if response.status_code == 200:
+                quote = response.json()
+                quote_id = quote.get('id')
+                # Verify totals computed
+                if quote.get('subtotal') == 120 and quote.get('total') == 120:
+                    self.log_result("E2E Flow - Step 5: Create Quote from Diagnosis", True)
+                else:
+                    self.log_result("E2E Flow - Step 5: Create Quote from Diagnosis", False, "Totals not computed correctly")
+                    return
+            else:
+                self.log_result("E2E Flow - Step 5: Create Quote from Diagnosis", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 5: Create Quote from Diagnosis", False, str(e))
+            return
+
+        if not quote_id:
+            return
+
+        # Step 6: Create SalesOrder from Quote
+        sales_data = {
+            "vehicleId": vehicle_id,
+            "customerId": customer_id,
+            "quoteId": quote_id,
+            "items": [{
+                "itemType": "service",
+                "name": "تغيير زيت",
+                "quantity": 1,
+                "price": 120,
+                "total": 120
+            }],
+            "tax": 0
+        }
+        sales_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/sales", json=sales_data)
+            if response.status_code == 200:
+                sales = response.json()
+                sales_id = sales.get('id')
+                self.log_result("E2E Flow - Step 6: Create SalesOrder from Quote", True)
+            else:
+                self.log_result("E2E Flow - Step 6: Create SalesOrder from Quote", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("E2E Flow - Step 6: Create SalesOrder from Quote", False, str(e))
+            return
+
+        # Step 7: Resolve Print Template
+        template_data = {
+            "service_category": "فحص شامل",
+            "service_name": "كشف مركبة"
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/print/resolve-template", json=template_data)
+            if response.status_code == 200:
+                template_result = response.json()
+                if (template_result.get('type') == 'vehicle_estimate' and 
+                    'template' in template_result):
+                    self.log_result("E2E Flow - Step 7: Resolve Print Template", True)
+                else:
+                    self.log_result("E2E Flow - Step 7: Resolve Print Template", False, "Template type or content not correct")
+            else:
+                self.log_result("E2E Flow - Step 7: Resolve Print Template", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("E2E Flow - Step 7: Resolve Print Template", False, str(e))
+
+        # Step 8: Create PurchaseOrder and VendorBill
+        purchase_data = {
+            "supplierId": "SUP-TEST",
+            "items": [{
+                "name": "فلتر زيت",
+                "itemType": "part",
+                "quantity": 1,
+                "price": 50,
+                "total": 50
+            }],
+            "orderTotal": 50
+        }
+        purchase_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/purchase-orders", json=purchase_data)
+            if response.status_code == 200:
+                purchase = response.json()
+                purchase_id = purchase.get('id')
+                self.log_result("E2E Flow - Step 8a: Create PurchaseOrder", True)
+            else:
+                self.log_result("E2E Flow - Step 8a: Create PurchaseOrder", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("E2E Flow - Step 8a: Create PurchaseOrder", False, str(e))
+
+        # Create VendorBill linking to PurchaseOrder
+        if purchase_id:
+            vendor_bill_data = {
+                "supplierId": "SUP-TEST",
+                "purchaseOrderId": purchase_id,
+                "items": [{
+                    "name": "فلتر زيت",
+                    "itemType": "part", 
+                    "quantity": 1,
+                    "price": 50,
+                    "total": 50
+                }],
+                "subtotal": 50,
+                "tax": 0,
+                "total": 50
+            }
+            
+            try:
+                response = self.session.post(f"{API_URL}/vendor-bills", json=vendor_bill_data)
+                if response.status_code == 200:
+                    vendor_bill = response.json()
+                    self.log_result("E2E Flow - Step 8b: Create VendorBill", True)
+                else:
+                    self.log_result("E2E Flow - Step 8b: Create VendorBill", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("E2E Flow - Step 8b: Create VendorBill", False, str(e))
+
+        # Step 9: List Activities/Dependencies
+        if quote_id:
+            try:
+                # Check activities
+                response = self.session.get(f"{API_URL}/activities?doc_type=quote&doc_id={quote_id}")
+                if response.status_code == 200:
+                    activities = response.json()
+                    if isinstance(activities, list) and len(activities) > 0:
+                        self.log_result("E2E Flow - Step 9a: List Activities", True)
+                    else:
+                        self.log_result("E2E Flow - Step 9a: List Activities", False, "No activities found")
+                else:
+                    self.log_result("E2E Flow - Step 9a: List Activities", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("E2E Flow - Step 9a: List Activities", False, str(e))
+
+            try:
+                # Check dependencies
+                response = self.session.get(f"{API_URL}/dependencies?doc_type=quote&doc_id={quote_id}")
+                if response.status_code == 200:
+                    dependencies = response.json()
+                    if isinstance(dependencies, list):
+                        self.log_result("E2E Flow - Step 9b: List Dependencies", True)
+                    else:
+                        self.log_result("E2E Flow - Step 9b: List Dependencies", False, "Dependencies not returned as list")
+                else:
+                    self.log_result("E2E Flow - Step 9b: List Dependencies", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("E2E Flow - Step 9b: List Dependencies", False, str(e))
+
+        print("✅ End-to-End Operational Flow Testing Complete")
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

@@ -15,6 +15,8 @@ from models_extended import (
 # Router
 import os
 
+from fastapi import UploadFile, File
+
 router = APIRouter(prefix="/api")
 
 # Database will be injected from server.py

@@ -16,15 +16,23 @@ class AppointmentBase(BaseModel):
 class AppointmentCreate(AppointmentBase):
     pass
 
-class Appointment(AppointmentBase):
+class Appointment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customerId: str
+    customerName: str
+    customerPhone: str
+    vehiclePlateNumber: str
+    appointmentDate: datetime
+    serviceType: str
+    notes: Optional[str] = None
     status: str = "pending"  # pending, confirmed, completed, cancelled
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     reminderSent: bool = False
     
     class Config:
         json_encoders = {
-            datetime: lambda v: v.isoformat()
+            datetime: lambda v: v.isoformat(),
+            date: lambda v: v.isoformat()
         }
 
 # ============ Employee Models (إدارة الموظفين) ============
@@ -272,8 +280,13 @@ class ApprovalRequest(BaseModel):
     title: str
     amount: float
     status: str = "pending"  # pending, approved, rejected
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    respondedAt: Optional[datetime] = None
+    responderName: Optional[str] = None
+    notes: Optional[str] = None
 
-# AppSettings class removed
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 class Account(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -290,6 +303,9 @@ class Budget(BaseModel):
     notes: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 class AppSettings(BaseModel):
     id: str = "app_settings"
     currency: str = "SAR"
@@ -299,6 +315,44 @@ class AppSettings(BaseModel):
     numberingFormat: str = "{prefix}-{year}-{seq:04d}"
     nextSequence: int = 1
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+# ============ Business Accounts (فروع منفصلة) ============
+class BusinessAccount(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    code: str
+    currency: str = "SAR"
+    isActive: bool = True
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+# ============ Operations (Purchase / Sale) ============
+class OperationItem(BaseModel):
+    itemType: str  # part or service
+    itemId: Optional[str] = None
+    name: str
+    quantity: float
+    price: float
+    total: float
+
+class Operation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    accountId: str
+    type: str  # purchase or sale
+    partnerType: str  # supplier or customer
+    partnerName: Optional[str] = None
+    partnerId: Optional[str] = None
+    items: List[OperationItem]
+    subtotal: float
+    total: float
+    paymentMethod: str  # cash, card, credit
+    date: datetime = Field(default_factory=datetime.utcnow)
+    notes: Optional[str] = None
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

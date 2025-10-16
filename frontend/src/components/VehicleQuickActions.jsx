@@ -77,19 +77,25 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
+  const openPrintWindow = (rawHtml) => {
+    const win = window.open('about:blank', '_blank', 'noopener');
+    if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
+    const hasHtmlTag = /<html[\s\S]*>/i.test(rawHtml || '');
+    const content = hasHtmlTag ? rawHtml : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>طباعة</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial,sans-serif;color:#111;direction:rtl;padding:8mm;}h1,h2,h3{margin:0 0 8px;} .muted{color:#555;} .row{display:flex;gap:16px} .col{flex:1} hr{border:none;border-top:1px solid #ddd;margin:12px 0}</style></head><body>${rawHtml || ''}<script>window.onload=function(){try{window.focus();window.print();}catch(e){}};<\/script></body></html>`;
+    win.document.open();
+    win.document.write(content);
+    win.document.close();
+    // Fallback print after a short delay for Safari
+    setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 700);
+  };
+
   const handlePrintReport = async () => {
     try {
       setLoading(true);
       const { data: templates } = await axios.get(`${API_URL}/templates`);
       const diag = (templates || []).find(t => (t.type === 'diagnosis'));
       const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
-      const win = window.open('', '_blank', 'noopener,noreferrer');
-      if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => { try { win.print(); } catch(_) {} }, 400);
+      openPrintWindow(html);
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل تجهيز التقرير', variant: 'destructive' });
     } finally {

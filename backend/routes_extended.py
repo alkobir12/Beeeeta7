@@ -362,7 +362,13 @@ async def create_template(payload: dict):
     # Convert datetime objects for JSON serialization
     if 'updatedAt' in data and hasattr(data['updatedAt'], 'isoformat'):
         data['updatedAt'] = data['updatedAt'].isoformat()
-    await db.templates.insert_one(data)
+    
+    # Create a copy for database insertion (with original datetime)
+    db_data = tpl.dict()
+    db_data['content'] = db_data['html']
+    db_data['styles'] = payload.get('styles', '')
+    
+    await db.templates.insert_one(db_data)
     return data
 
 @router.put("/templates/{template_id}")

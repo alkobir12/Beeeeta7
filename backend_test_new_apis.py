@@ -149,9 +149,9 @@ class NewAPITester:
             "category": "Filters",
             "quantity": 10,
             "minQuantity": 5,
-            "unitPrice": 45.0,
-            "supplier": "Auto Parts Co",
-            "location": "Shelf A1"
+            "purchasePrice": 35.0,
+            "sellingPrice": 45.0,
+            "supplier": "Auto Parts Co"
         }
         part_id = None
         

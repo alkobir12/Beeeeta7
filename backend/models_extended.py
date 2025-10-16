@@ -325,4 +325,5 @@ class VendorBill(BaseModel):
     reference: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
 
+    class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

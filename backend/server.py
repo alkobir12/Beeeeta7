@@ -60,7 +60,13 @@ def generate_tracking_link():
     return f"TRK-{str(uuid.uuid4())[:8].upper()}"
 
 def generate_invoice_number():
-    return f"INV-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+    # Use settings prefix if available
+    try:
+        settings = db.settings.find_one({"id": "app_settings"})
+        prefix = settings.get("invoicePrefix", "INV") if settings else "INV"
+    except Exception:
+        prefix = "INV"
+    return f"{prefix}-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
 async def get_or_create_customer(name: str, phone: str, email: Optional[str] = None):
     customer = await db.customers.find_one({"phone": phone})
@@ -301,6 +307,27 @@ async def get_technician(tech_id: str):
 async def get_services():
     services = await db.services.find().to_list(1000)
     return [Service(**s) for s in services]
+
+@api_router.post("/services", response_model=Service)
+async def create_service(service: Service):
+    await db.services.insert_one(service.dict())
+    return service
+
+@api_router.put("/services/{service_id}", response_model=Service)
+async def update_service(service_id: str, payload: dict):
+    update = {k: v for k, v in payload.items() if v is not None}
+    await db.services.update_one({"id": service_id}, {"$set": update})
+    doc = await db.services.find_one({"id": service_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return Service(**doc)
+
+@api_router.delete("/services/{service_id}")
+async def delete_service(service_id: str):
+    res = await db.services.delete_one({"id": service_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {"message": "deleted"}
 
 # ============ Parts APIs ============
 @api_router.post("/parts", response_model=Part)

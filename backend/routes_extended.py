@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 from typing import List, Optional
+import uuid
 
 from models_extended import (
     Appointment, AppointmentCreate,
     Employee, EmployeeCreate, SalaryPayment, AdvancePayment,
     LoyaltyPoints, PointsTransaction, Coupon,
     MaintenanceReminder, Warranty, WarrantyClaim,
-    Supplier, PurchaseOrder, WorkshopProfile
+    Supplier, PurchaseOrder, WorkshopProfile,
+    TemplateDoc, DiagnosisReport, ApprovalRequest, AppSettings
 )
 
 # Router
@@ -326,3 +328,167 @@ async def update_workshop_profile(profile: WorkshopProfile):
         upsert=True
     )
     return profile
+
+# ============ Templates APIs ============
+@router.get("/templates")
+async def get_templates():
+    templates = await db.templates.find().to_list(1000)
+    # Return both html and content for frontend compatibility
+    for t in templates:
+        if 'html' in t and 'content' not in t:
+            t['content'] = t['html']
+    return templates
+
+@router.post("/templates")
+async def create_template(payload: dict):
+    # payload may contain name, type, content(html), styles, language
+    tpl = TemplateDoc(
+        name=payload.get('name', 'Template'),
+        type=payload.get('type', 'invoice'),
+        language=payload.get('language', 'ar'),
+        html=payload.get('content') or payload.get('html') or ''
+    )
+    data = tpl.dict()
+    # Keep original fields for compatibility
+    data['content'] = data['html']
+    data['styles'] = payload.get('styles', '')
+    await db.templates.insert_one(data)
+    return data
+
+@router.put("/templates/{template_id}")
+async def update_template(template_id: str, payload: dict):
+    update = {
+        "name": payload.get('name'),
+        "type": payload.get('type'),
+        "language": payload.get('language', 'ar'),
+        "html": payload.get('content') or payload.get('html')
+    }
+    # Clean None
+    update = {k: v for k, v in update.items() if v is not None}
+    if 'html' in update:
+        update['content'] = update['html']
+    if 'styles' in payload:
+        update['styles'] = payload['styles']
+    await db.templates.update_one({"id": template_id}, {"$set": update})
+    updated = await db.templates.find_one({"id": template_id})
+    if not updated:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return updated
+
+@router.delete("/templates/{template_id}")
+async def delete_template(template_id: str):
+    res = await db.templates.delete_one({"id": template_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"message": "deleted"}
+
+# ============ Settings APIs ============
+@router.get("/settings")
+async def get_settings():
+    s = await db.settings.find_one({"id": "app_settings"})
+    if not s:
+        # defaults aligned with user: SAR, no tax
+        defaults = AppSettings().dict()
+        # Also include UI expected fields with sane defaults
+        defaults.update({
+            "workshopName": "ورشتي",
+            "workshopPhone": "",
+            "workshopWhatsapp": "",
+            "workshopEmail": "",
+            "workshopAddress": "",
+            "workshopCity": "",
+            "taxNumber": "",
+            "logoUrl": "",
+            "defaultTemplate": "invoice",
+            "printHeaderFooter": True,
+            "printLogo": True,
+            "printWatermark": False,
+            "paperSize": "A4",
+            "printOrientation": "portrait",
+            "smsEnabled": False,
+            "whatsappEnabled": True,
+            "emailEnabled": False,
+            "notifyOnNewVehicle": True,
+            "notifyOnStatusChange": True,
+            "notifyOnPayment": True,
+            "language": "ar",
+            "dateFormat": "DD/MM/YYYY",
+            "timeFormat": "12",
+            "timezone": "Asia/Riyadh",
+            "requireLogin": False,
+            "sessionTimeout": 60,
+            "backupEnabled": True,
+            "backupFrequency": "daily"
+        })
+        await db.settings.insert_one(defaults)
+        return defaults
+    return s
+
+@router.post("/settings")
+async def save_settings(payload: dict):
+    payload['updatedAt'] = datetime.utcnow()
+    payload['id'] = 'app_settings'
+    await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
+    return payload
+
+# ============ Diagnosis Reports & Approvals ============
+@router.post("/reports/diagnosis")
+async def create_diagnosis_report(payload: dict):
+    # payload: vehicleId, customerId, title, summary, items[{name, qty, price, total}], subtotal, total
+    token = f"REP-{str(uuid.uuid4())[:8].upper()}"
+    report = DiagnosisReport(
+        token=token,
+        vehicleId=payload.get('vehicleId'),
+        customerId=payload.get('customerId'),
+        title=payload.get('title', 'تقرير تشخيص'),
+        summary=payload.get('summary', ''),
+        items=payload.get('items', []),
+        subtotal=payload.get('subtotal', 0.0),
+        total=payload.get('total', 0.0)
+    )
+    await db.diagnosis_reports.insert_one(report.dict())
+    return report.dict()
+
+@router.get("/reports/public/{token}")
+async def get_public_report(token: str):
+    rep = await db.diagnosis_reports.find_one({"token": token})
+    if not rep:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return rep
+
+@router.post("/approvals")
+async def create_approval_request(payload: dict):
+    # payload: vehicleId, customerId, title, amount
+    token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+    req = ApprovalRequest(
+        token=token,
+        vehicleId=payload.get('vehicleId'),
+        customerId=payload.get('customerId'),
+        title=payload.get('title', 'طلب اعتماد'),
+        amount=float(payload.get('amount', 0))
+    )
+    await db.approval_requests.insert_one(req.dict())
+    return req.dict()
+
+@router.get("/approvals/public/{token}")
+async def get_public_approval(token: str):
+    req = await db.approval_requests.find_one({"token": token})
+    if not req:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    return req
+
+@router.post("/approvals/public/{token}/respond")
+async def respond_public_approval(token: str, status: str, name: Optional[str] = None, notes: Optional[str] = None):
+    if status not in ("approved", "rejected"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    update = {
+        "status": status,
+        "respondedAt": datetime.utcnow(),
+        "responderName": name,
+        "notes": notes
+    }
+    res = await db.approval_requests.update_one({"token": token}, {"$set": update})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    updated = await db.approval_requests.find_one({"token": token})
+    return updated

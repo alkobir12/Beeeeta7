@@ -1440,7 +1440,7 @@ if __name__ == "__main__":
     results = tester.run_all_tests()
     
     # Exit with error code if tests failed
-    if results['failed'] > 0:
+    if results and results['failed'] > 0:
         sys.exit(1)
     else:
         print("\n🎉 All tests passed!")

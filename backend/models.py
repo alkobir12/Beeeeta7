@@ -162,6 +162,7 @@ class TransactionBase(BaseModel):
     description: str
     paymentMethod: Optional[str] = None
     reference: Optional[str] = None  # رقم الفاتورة أو المرجع
+    accountId: Optional[str] = None  # للربط بالفروع
 
 class TransactionCreate(TransactionBase):
     pass

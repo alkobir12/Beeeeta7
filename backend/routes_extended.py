@@ -1105,6 +1105,43 @@ async def import_services_csv(file: UploadFile = File(...)):
     return {"added": added}
 
 
+# ============ Template Auto-Selection ============
+@router.post("/print/resolve-template")
+async def resolve_template(payload: dict = Body(...)):
+    """Resolve template type based on given service context with optional override.
+    payload: { service_category?: str, service_name?: str, override_type?: str }
+    returns: { type, template }
+    """
+    override = payload.get('override_type')
+    if override:
+        tpl = await db.templates.find_one({"type": override, "isActive": True})
+        if not tpl:
+            raise HTTPException(status_code=404, detail="Template override not found")
+        tpl.pop('_id', None)
+        return {"type": override, "template": tpl}
+
+    cat = (payload.get('service_category') or '').lower()
+    name = (payload.get('service_name') or '').lower()
+
+    # Rule-based selection
+    t_type = 'invoice'
+    if any(k in cat for k in ['فحص', 'كشف', 'inspection', 'diagnosis']) or any(k in name for k in ['فحص', 'كشف', 'inspection', 'diagnosis']):
+        t_type = 'vehicle_estimate'
+    elif any(k in cat for k in ['تسعير', 'quote', 'pricing']) or 'quote' in name:
+        t_type = 'quote'
+    elif any(k in cat for k in ['تنفيذ', 'service', 'repair']) or any(k in name for k in ['تنفيذ', 'service', 'repair']):
+        t_type = 'sales_invoice'
+
+    tpl = await db.templates.find_one({"type": t_type, "isActive": True})
+    if not tpl:
+        # fallback to generic invoice
+        tpl = await db.templates.find_one({"type": "invoice"})
+        if not tpl:
+            raise HTTPException(status_code=404, detail="No template found")
+    tpl.pop('_id', None)
+    return {"type": t_type, "template": tpl}
+
+
 # ============ Import Skeletons (JSON rows, no UI) ============
 @router.post("/import/services")
 async def import_services(payload: dict = Body(...)):

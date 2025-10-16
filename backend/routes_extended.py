@@ -442,8 +442,9 @@ async def get_public_report(token: str):
 
 @router.post("/approvals")
 async def create_approval_request(payload: dict):
-    # payload: vehicleId, customerId, title, amount
+    # payload: vehicleId, customerId, title, amount, expiresInDays(optional)
     token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+    expires_in = int(payload.get('expiresInDays', 7))
     req = ApprovalRequest(
         token=token,
         vehicleId=payload.get('vehicleId'),
@@ -451,8 +452,14 @@ async def create_approval_request(payload: dict):
         title=payload.get('title', 'طلب اعتماد'),
         amount=float(payload.get('amount', 0))
     )
+    # Override default expiry if provided
+    req.expiresAt = datetime.utcnow() + timedelta(days=expires_in)
     await db.approval_requests.insert_one(req.dict())
-    return req.dict()
+    out = req.dict()
+    out.pop('_id', None)
+    if 'expiresAt' in out and hasattr(out['expiresAt'], 'isoformat'):
+        out['expiresAt'] = out['expiresAt'].isoformat()
+    return out
 
 @router.get("/approvals/public/{token}")
 async def get_public_approval(token: str):

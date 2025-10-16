@@ -2685,13 +2685,13 @@ class APITester:
 if __name__ == "__main__":
     tester = APITester()
     
-    # Run the specific health check tests as requested
-    success = tester.run_health_check_tests()
+    # Run the specific production activation tests as requested
+    success = tester.run_production_activation_tests()
     
     # Exit with appropriate code
     if success:
-        print("\n🎉 All health check tests passed!")
+        print("\n🎉 All production activation tests passed!")
         sys.exit(0)
     else:
-        print("\n❌ Some health check tests failed!")
+        print("\n❌ Some production activation tests failed!")
         sys.exit(1)

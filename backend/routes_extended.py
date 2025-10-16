@@ -718,44 +718,6 @@ async def ceo_ai_analysis_multi(payload: dict = Body(...)):
 
     return {"accounts": results, "combined": combined, "ai": ai_summary}
 
-            "logoUrl": "",
-            "defaultTemplate": "invoice",
-            "printHeaderFooter": True,
-            "printLogo": True,
-            "printWatermark": False,
-            "paperSize": "A4",
-            "printOrientation": "portrait",
-            "smsEnabled": False,
-            "whatsappEnabled": True,
-            "emailEnabled": False,
-            "notifyOnNewVehicle": True,
-            "notifyOnStatusChange": True,
-            "notifyOnPayment": True,
-            "language": "ar",
-            "dateFormat": "DD/MM/YYYY",
-            "timeFormat": "12",
-            "timezone": "Asia/Riyadh",
-            "requireLogin": False,
-            "sessionTimeout": 60,
-            "backupEnabled": True,
-            "backupFrequency": "daily"
-        })
-        await db.settings.insert_one(defaults)
-        return defaults
-    # Remove MongoDB _id field and convert datetime objects
-    if '_id' in s:
-        del s['_id']
-    if 'updatedAt' in s and hasattr(s['updatedAt'], 'isoformat'):
-        s['updatedAt'] = s['updatedAt'].isoformat()
-    return s
-
-@router.post("/settings")
-async def save_settings(payload: dict):
-    payload['updatedAt'] = datetime.utcnow()
-    payload['id'] = 'app_settings'
-    await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
-    return payload
-
 # ============ Diagnosis Reports & Approvals ============
 @router.post("/reports/diagnosis")
 async def create_diagnosis_report(payload: dict):

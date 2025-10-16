@@ -484,6 +484,9 @@ frontend:
           agent: "testing"
           comment: "❌ CRITICAL ISSUE: VehicleQuickActions modal not opening. Vehicles are displayed on dashboard but action buttons (more-vertical icons) are not accessible or not triggering modal. Modal component exists with correct buttons (طلب اعتماد، صياغة وطباعة تقرير التشخيص، طباعة الفاتورة) but cannot be accessed. Approval page displays error messages correctly for invalid tokens."
         - working: "NA"
+    - agent: "main"
+      message: "Auto-create approval link on vehicle creation; auto-generate if entering quotation; auto-revoke on approved/ready/delivered. Proceeding to backend health check."
+
           agent: "main"
           comment: "Updated approval creation to include expiresAt and show expiry toast. No UI change to modal trigger. Needs retest along with public link flow."
 

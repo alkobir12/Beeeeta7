@@ -33,6 +33,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
     { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
     { path: '/profile', label: 'ملف الورشة', icon: Building2 },
+    { path: '/business-accounts', label: 'الفروع', icon: Building2 },
+    { path: '/operations', label: 'عمليات شراء/بيع', icon: Package },
+    { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText },
   ];
 
   const handleNavigate = (path) => {

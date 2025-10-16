@@ -475,13 +475,24 @@ async def get_public_approval(token: str):
     return req
 
 @router.post("/approvals/public/{token}/respond")
-async def respond_public_approval(token: str, status: str, name: Optional[str] = None, notes: Optional[str] = None):
-    if status not in ("approved", "rejected"):
+async def respond_public_approval(token: str, status: str, name: Optional[str] = None, phone: Optional[str] = None, notes: Optional[str] = None):
+    valid_status = ("approved", "rejected", "deferred", "requote")
+    if status not in valid_status:
         raise HTTPException(status_code=400, detail="Invalid status")
+    # Validate link is active
+    req = await db.approval_requests.find_one({"token": token})
+    if not req:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    now = datetime.utcnow()
+    if req.get('revoked'):
+        raise HTTPException(status_code=410, detail="Link revoked")
+    if req.get('expiresAt') and req['expiresAt'] < now:
+        raise HTTPException(status_code=410, detail="Link expired")
     update = {
         "status": status,
-        "respondedAt": datetime.utcnow(),
+        "respondedAt": now,
         "responderName": name,
+        "responderPhone": phone,
         "notes": notes
     }
     res = await db.approval_requests.update_one({"token": token}, {"$set": update})
@@ -493,4 +504,6 @@ async def respond_public_approval(token: str, status: str, name: Optional[str] =
         del updated['_id']
     if 'respondedAt' in updated and hasattr(updated['respondedAt'], 'isoformat'):
         updated['respondedAt'] = updated['respondedAt'].isoformat()
+    if 'expiresAt' in updated and hasattr(updated['expiresAt'], 'isoformat'):
+        updated['expiresAt'] = updated['expiresAt'].isoformat()
     return updated

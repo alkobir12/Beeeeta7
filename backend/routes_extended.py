@@ -359,6 +359,9 @@ async def create_template(payload: dict):
     # Keep original fields for compatibility
     data['content'] = data['html']
     data['styles'] = payload.get('styles', '')
+    # Convert datetime objects for JSON serialization
+    if 'updatedAt' in data and hasattr(data['updatedAt'], 'isoformat'):
+        data['updatedAt'] = data['updatedAt'].isoformat()
     await db.templates.insert_one(data)
     return data
 

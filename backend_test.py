@@ -2612,11 +2612,14 @@ class APITester:
 
 if __name__ == "__main__":
     tester = APITester()
-    results = tester.run_all_tests()
     
-    # Exit with error code if tests failed
-    if results and results['failed'] > 0:
-        sys.exit(1)
-    else:
-        print("\n🎉 All tests passed!")
+    # Run the specific health check tests as requested
+    success = tester.run_health_check_tests()
+    
+    # Exit with appropriate code
+    if success:
+        print("\n🎉 All health check tests passed!")
         sys.exit(0)
+    else:
+        print("\n❌ Some health check tests failed!")
+        sys.exit(1)

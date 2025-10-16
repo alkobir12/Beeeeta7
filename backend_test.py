@@ -1632,6 +1632,7 @@ class APITester:
         self.test_services_crud_api()
         self.test_diagnosis_report_api()
         self.test_approval_request_api()
+        self.test_approvals_lifecycle_comprehensive()  # New comprehensive test
         self.test_vehicle_tracking_api()
         
         # Run NEW Business Accounts and Operations tests

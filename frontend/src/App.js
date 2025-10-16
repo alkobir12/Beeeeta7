@@ -66,5 +66,4 @@ function App() {
   );
 }
 
-import { ThemeProvider } from './contexts/ThemeContext';
 export default App;

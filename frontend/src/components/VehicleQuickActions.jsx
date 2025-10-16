@@ -162,29 +162,20 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
 
   const handlePrintInvoice = async () => {
-    let win;
     try {
       setLoading(true);
-      // Open first to avoid blockers
-      win = window.open('about:blank', '_blank', 'noopener');
-      if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
-      win.document.open();
-      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تجهيز الفاتورة</title><style>body{font-family:Tahoma,Arial;padding:20px} .muted{color:#666}</style></head><body><h3>جاري تجهيز الفاتورة...</h3><p class="muted">يرجى الانتظار</p></body></html>`);
-      win.document.close();
-
+      console.log('Starting invoice print flow...');
+      
       const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const inv = (templates || []).find(t => (t.type === 'invoice'));
       const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
-      try { printViaIframe(html, 'فاتورة'); } catch(_) {}
-      try { if (win && !win.closed) win.close(); } catch(_) {}
+      
+      console.log('Calling printViaIframe with invoice content...');
+      printViaIframe(html, 'فاتورة');
+      
+      toast({ title: 'تم الطباعة', description: 'تم إرسال الفاتورة للطباعة' });
     } catch (e) {
-      if (win) {
-        try {
-          win.document.open();
-          win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>خطأ</title></head><body><h3>تعذر تجهيز الفاتورة</h3><p>${e?.message || ''}</p></body></html>`);
-          win.document.close();
-        } catch(_){}
-      }
+      console.error('Print invoice error:', e);
       toast({ title: 'خطأ', description: 'فشل تجهيز الفاتورة', variant: 'destructive' });
     } finally {
       setLoading(false);

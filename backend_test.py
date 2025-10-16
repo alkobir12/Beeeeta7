@@ -2548,6 +2548,78 @@ class APITester:
         
         return self.test_results['failed'] == 0
 
+    def test_production_activation_endpoints(self):
+        """Test the two specific production activation endpoints"""
+        print("\n🚀 Testing Production Activation Endpoints...")
+        
+        # Test 1: POST /api/seed/print-templates
+        try:
+            response = self.session.post(f"{API_URL}/seed/print-templates")
+            if response.status_code == 200:
+                result = response.json()
+                if 'added' in result and isinstance(result['added'], list):
+                    # Check if it returns expected template types or empty if already exists
+                    expected_types = ['invoice', 'sales_invoice', 'diagnosis', 'vehicle_estimate', 'quote', 'purchase_order', 'vendor_bill', 'receipt']
+                    added_types = result['added']
+                    
+                    # Either adds new templates or returns empty list if already exists
+                    if len(added_types) == 0:
+                        self.log_result("Production Activation - Seed Print Templates", True, "Templates already exist (empty added list)")
+                    elif all(t in expected_types for t in added_types):
+                        self.log_result("Production Activation - Seed Print Templates", True, f"Added {len(added_types)} templates: {added_types}")
+                    else:
+                        self.log_result("Production Activation - Seed Print Templates", False, f"Unexpected template types added: {added_types}")
+                else:
+                    self.log_result("Production Activation - Seed Print Templates", False, "Response missing 'added' field or not a list")
+            else:
+                self.log_result("Production Activation - Seed Print Templates", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Production Activation - Seed Print Templates", False, str(e))
+
+        # Test 2: POST /api/admin/create-indexes
+        try:
+            response = self.session.post(f"{API_URL}/admin/create-indexes")
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('status') == 'ok':
+                    self.log_result("Production Activation - Create Database Indexes", True)
+                else:
+                    self.log_result("Production Activation - Create Database Indexes", False, f"Unexpected response: {result}")
+            else:
+                self.log_result("Production Activation - Create Database Indexes", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Production Activation - Create Database Indexes", False, str(e))
+
+    def run_production_activation_tests(self):
+        """Run only the production activation tests as requested"""
+        print("🚀 Starting Production Activation Tests...")
+        print("=" * 50)
+        
+        # Check API health first
+        if not self.test_api_health():
+            print("❌ API is not accessible, stopping tests")
+            return False
+        
+        # Run only the production activation tests
+        self.test_production_activation_endpoints()
+        
+        # Print summary
+        print("\n" + "=" * 50)
+        print("🏁 Production Activation Test Summary")
+        print("=" * 50)
+        print(f"✅ Passed: {self.test_results['passed']}")
+        print(f"❌ Failed: {self.test_results['failed']}")
+        
+        if self.test_results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.test_results['errors']:
+                print(f"  • {error}")
+        
+        success_rate = (self.test_results['passed'] / (self.test_results['passed'] + self.test_results['failed'])) * 100 if (self.test_results['passed'] + self.test_results['failed']) > 0 else 0
+        print(f"\n📊 Success Rate: {success_rate:.1f}%")
+        
+        return self.test_results['failed'] == 0
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

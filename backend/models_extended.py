@@ -213,6 +213,69 @@ class WorkshopProfile(BaseModel):
     id: str = "workshop_profile"  # Single document
     name: str
     nameEnglish: Optional[str] = None
+
+# ============ Templates & Reports & Approvals & Finance =========
+class TemplateDoc(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    type: str  # diagnosis, quotation, service_invoice
+    language: str = "ar"  # ar, en, ar_en
+    name: str
+    html: str
+    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+class DiagnosisReport(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    token: str  # public token to view
+    vehicleId: str
+    customerId: str
+    title: str
+    summary: str
+    items: List[dict] = []  # [{name, qty, price, total}]
+    subtotal: float
+    total: float
+    status: str = "draft"  # draft, sent, approved, rejected
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+class ApprovalRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    token: str
+    vehicleId: str
+    customerId: str
+    title: str
+    amount: float
+    status: str = "pending"  # pending, approved, rejected
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    respondedAt: Optional[datetime] = None
+    responderName: Optional[str] = None
+    notes: Optional[str] = None
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+class Account(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    name: str
+    type: str  # asset, liability, equity, income, expense
+    openingBalance: float = 0
+    isActive: bool = True
+
+class Budget(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    period: str  # YYYY-MM
+    allocations: List[dict]  # [{accountCode, amount}]
+    notes: Optional[str] = None
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
     logo: Optional[str] = None
     phone: str
     whatsapp: str

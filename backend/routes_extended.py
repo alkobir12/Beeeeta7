@@ -614,6 +614,36 @@ async def get_settings():
         s['updatedAt'] = s['updatedAt'].isoformat()
     return s
 
+@router.post("/settings")
+async def update_settings(payload: dict):
+    """Update application settings"""
+    try:
+        # Get existing settings or create defaults
+        existing = await db.settings.find_one({"id": "app_settings"})
+        if not existing:
+            from models_extended import AppSettings
+            existing = AppSettings().dict()
+            await db.settings.insert_one(existing)
+        
+        # Update with new values
+        update_data = {k: v for k, v in payload.items() if v is not None}
+        update_data["updatedAt"] = datetime.utcnow()
+        
+        await db.settings.update_one(
+            {"id": "app_settings"}, 
+            {"$set": update_data}
+        )
+        
+        # Return updated settings
+        updated = await db.settings.find_one({"id": "app_settings"})
+        if '_id' in updated:
+            del updated['_id']
+        if 'updatedAt' in updated and hasattr(updated['updatedAt'], 'isoformat'):
+            updated['updatedAt'] = updated['updatedAt'].isoformat()
+        return updated
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============ Seeding: Clone-like data (no UI) ============
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 

@@ -129,9 +129,12 @@ class DiagnosisReport(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     vehicleId: str
     customerId: str
-    diagnosis: str
-    treatment: Optional[str] = None
     token: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: Optional[str] = "تقرير تشخيص"
+    summary: Optional[str] = ""
+    items: Optional[List[dict]] = []
+    subtotal: Optional[float] = 0.0
+    total: Optional[float] = 0.0
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
 # Approval Request Model

@@ -206,11 +206,11 @@ backend:
 
   - task: "Approvals & Reports API"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
@@ -218,6 +218,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ PASSED: Approvals & Reports API working correctly. POST /api/reports/diagnosis creates reports with tokens, GET /api/reports/public/{token} retrieves reports successfully. POST /api/approvals creates approval requests with tokens, GET /api/approvals/public/{token} returns requests, POST /api/approvals/public/{token}/respond with status=approved persists changes. Fixed ObjectId serialization issues during testing."
+        - working: "NA"
+          agent: "main"
+          comment: "HARDENED: Added 7-day expiry, revocation flag, extended statuses (approved/rejected/deferred/requote), responder phone, admin list + revoke endpoint, and expiry checks on public endpoints. Frontend ApprovalPublic updated to 4 decision options and phone field. Request Approval now shows expiry info. Needs retesting."
 
   - task: "Vehicle Tracking API"
     implemented: true

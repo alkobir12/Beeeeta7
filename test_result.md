@@ -520,8 +520,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "CRITICAL: VehicleQuickActions modal completely inaccessible - buttons visually present but not functionally responsive"
-    - "Print flows testing blocked by modal access failure"
+    - "VehicleQuickActions print flows: API calls not being made despite popup windows opening"
+    - "Templates API integration issue in print functions"
   stuck_tasks:
     - "Vehicle Quick Actions Modal"
   test_all: false

@@ -17,6 +17,9 @@ import {
   FileText
 } from 'lucide-react';
 
+import axios from 'axios';
+const API_URL = import.meta.env.REACT_APP_BACKEND_URL + '/api';
+
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();

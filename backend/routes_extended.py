@@ -1198,6 +1198,84 @@ async def create_indexes():
         await db.approval_requests.create_index("token", unique=True)
         await db.approval_requests.create_index("vehicleId")
         await db.transactions.create_index([("date", 1)])
+
+# ============ Auth via WhatsApp-like OTP (link delivery) ============
+@router.post('/auth/request-otp')
+async def request_otp(payload: dict = Body(...)):
+    phone = (payload.get('phone') or '').strip()
+    if not phone:
+        raise HTTPException(status_code=400, detail='phone required')
+    import random
+    code = f"{random.randint(100000, 999999)}"
+    from models_extended import OTPRequest
+    otp = OTPRequest(phone=phone, code=code)
+    await db.otp_requests.insert_one(otp.dict())
+    # Build link similar to public tracking/approval links
+    link = f"/login?token={otp.token}"
+    # In production, send via WhatsApp deeplink manually as you did for approvals
+    # Return both for now (you can copy/share link to user)
+    return {"sent": True, "phone": phone, "code": code, "link": link, "token": otp.token, "expiresAt": otp.expiresAt.isoformat()}
+
+@router.post('/auth/verify-otp')
+async def verify_otp(payload: dict = Body(...)):
+    phone = (payload.get('phone') or '').strip()
+    code = (payload.get('code') or '').strip()
+    token = payload.get('token')
+    now = datetime.utcnow()
+    q = {"phone": phone, "consumed": False, "expiresAt": {"$gt": now}}
+    if token:
+        q["token"] = token
+    otp = await db.otp_requests.find_one(q, sort=[("createdAt", -1)])
+    if not otp:
+        raise HTTPException(status_code=400, detail='OTP not found or expired')
+    if otp.get('attempts', 0) >= 5:
+        raise HTTPException(status_code=429, detail='Too many attempts')
+    if otp.get('code') != code:
+        await db.otp_requests.update_one({"id": otp['id']}, {"$inc": {"attempts": 1}})
+        raise HTTPException(status_code=400, detail='Invalid code')
+    # Mark consumed
+    await db.otp_requests.update_one({"id": otp['id']}, {"$set": {"consumed": True}})
+    # Upsert user
+    from models_extended import UserAccount
+    user = await db.users.find_one({"phone": phone})
+    if not user:
+        user_obj = UserAccount(phone=phone, role=payload.get('role', 'user'))
+        await db.users.insert_one(user_obj.dict())
+        user = user_obj.dict()
+    user.pop('_id', None)
+    return {"ok": True, "user": user, "session": {"token": str(uuid.uuid4()), "createdAt": datetime.utcnow().isoformat()}}
+
+# ============ Users CRUD ============
+@router.get('/users')
+async def list_users():
+    rows = await db.users.find({}).sort('createdAt', -1).to_list(1000)
+    for r in rows:
+        r.pop('_id', None)
+    return rows
+
+@router.post('/users')
+async def create_user(payload: dict = Body(...)):
+    from models_extended import UserAccount
+    u = UserAccount(**payload)
+    await db.users.insert_one(u.dict())
+    return u.dict()
+
+@router.put('/users/{user_id}')
+async def update_user(user_id: str, payload: dict = Body(...)):
+    await db.users.update_one({"id": user_id}, {"$set": payload})
+    doc = await db.users.find_one({"id": user_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail='User not found')
+    doc.pop('_id', None)
+    return doc
+
+@router.delete('/users/{user_id}')
+async def delete_user(user_id: str):
+    res = await db.users.delete_one({"id": user_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail='User not found')
+    return {"deleted": True}
+
         await db.transactions.create_index([("accountId", 1)])
         await db.vehicles.create_index("customerId")
         await db.quotes.create_index("customerId")

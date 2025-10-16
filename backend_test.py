@@ -1616,7 +1616,10 @@ class APITester:
             print("❌ API is not accessible. Stopping tests.")
             return
         
-        # Run NEW REQUESTED TESTS FIRST
+        # Run AUTO-APPROVAL WORKFLOW TESTS FIRST (as requested in review)
+        self.test_auto_approval_workflow()
+        
+        # Run NEW REQUESTED TESTS
         self.test_budget_report_api()
         self.test_customer_receipts_api()
         

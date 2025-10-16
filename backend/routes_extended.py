@@ -471,6 +471,11 @@ async def get_public_report(token: str):
     rep = await db.diagnosis_reports.find_one({"token": token})
     if not rep:
         raise HTTPException(status_code=404, detail="Report not found")
+    # Remove MongoDB _id field and convert datetime
+    if '_id' in rep:
+        del rep['_id']
+    if 'createdAt' in rep and hasattr(rep['createdAt'], 'isoformat'):
+        rep['createdAt'] = rep['createdAt'].isoformat()
     return rep
 
 @router.post("/approvals")

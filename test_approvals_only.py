@@ -285,14 +285,26 @@ class ApprovalsOnlyTester:
                     # Check that all approvals have the correct vehicle_id
                     all_correct_vehicle = all(a.get('vehicleId') == vehicle_id for a in approvals_list)
                     # Check ISO format dates and no _id field
-                    has_iso_dates = all('respondedAt' not in a or isinstance(a.get('respondedAt'), str) for a in approvals_list)
+                    has_iso_dates = all('respondedAt' not in a or a.get('respondedAt') is None or isinstance(a.get('respondedAt'), str) for a in approvals_list)
                     has_iso_expires = all('expiresAt' not in a or isinstance(a.get('expiresAt'), str) for a in approvals_list)
+                    has_iso_created = all('createdAt' not in a or isinstance(a.get('createdAt'), str) for a in approvals_list)
                     no_id_fields = all('_id' not in a for a in approvals_list)
                     
-                    if all_correct_vehicle and has_iso_dates and has_iso_expires and no_id_fields:
+                    if all_correct_vehicle and has_iso_dates and has_iso_expires and has_iso_created and no_id_fields:
                         self.log_result("Approvals Lifecycle - List by vehicle_id with ISO dates", True)
                     else:
-                        self.log_result("Approvals Lifecycle - List by vehicle_id with ISO dates", False, f"Filter or serialization issues. Sample: {approvals_list[0] if approvals_list else 'None'}")
+                        issues = []
+                        if not all_correct_vehicle:
+                            issues.append("vehicle_id filter failed")
+                        if not has_iso_dates:
+                            issues.append("respondedAt not ISO string")
+                        if not has_iso_expires:
+                            issues.append("expiresAt not ISO string")
+                        if not has_iso_created:
+                            issues.append("createdAt not ISO string")
+                        if not no_id_fields:
+                            issues.append("_id field present")
+                        self.log_result("Approvals Lifecycle - List by vehicle_id with ISO dates", False, f"Issues: {', '.join(issues)}")
                 else:
                     self.log_result("Approvals Lifecycle - List by vehicle_id with ISO dates", False, "No approvals returned")
             else:

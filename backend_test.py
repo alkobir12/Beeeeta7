@@ -1606,6 +1606,323 @@ class APITester:
         except Exception as e:
             self.log_result("Approvals Lifecycle - List by vehicle_id with ISO dates", False, str(e))
 
+    def test_auto_approval_workflow(self):
+        """Test the complete auto-approval workflow as requested in review"""
+        print("\n🔄 Testing Auto-Approval Workflow...")
+        
+        # A) Vehicle creation auto-approval
+        print("\n--- A) Vehicle Creation Auto-Approval ---")
+        self.test_vehicle_creation_auto_approval()
+        
+        # B) Transition to quotation auto-create-if-missing
+        print("\n--- B) Quotation Status Auto-Create-If-Missing ---")
+        self.test_quotation_auto_create_approval()
+        
+        # C) Auto-revoke on approved/ready/delivered
+        print("\n--- C) Auto-Revoke on Final Statuses ---")
+        self.test_auto_revoke_on_final_status()
+        
+        # D) Non-regression for approvals respond API
+        print("\n--- D) Approvals Respond API Non-Regression ---")
+        self.test_approvals_respond_non_regression()
+
+    def test_vehicle_creation_auto_approval(self):
+        """A) Test vehicle creation auto-approval workflow"""
+        # 1) POST /api/vehicles with minimal valid data
+        vehicle_data = {
+            "plateNumber": f"AUTO-{str(uuid.uuid4())[:4]}",
+            "brand": "Toyota",
+            "model": "Camry",
+            "year": 2022,
+            "color": "Silver",
+            "customerName": "Omar Al-Fahad",
+            "customerPhone": "+966551234567",
+            "customerEmail": "omar.fahad@email.com",
+            "services": ["Engine Check"]
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/vehicles", json=vehicle_data)
+            if response.status_code == 200:
+                vehicle = response.json()
+                vehicle_id = vehicle['id']
+                self.created_vehicles.append(vehicle_id)
+                
+                # Expect vehicle created and approval_requests contains a pending not-revoked record
+                # with expiresAt ~7 days and token starts with APR-
+                approval_response = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                if approval_response.status_code == 200:
+                    approvals = approval_response.json()
+                    pending_approvals = [a for a in approvals if a.get('status') == 'pending' and not a.get('revoked')]
+                    
+                    if len(pending_approvals) > 0:
+                        approval = pending_approvals[0]
+                        token = approval.get('token', '')
+                        expires_at = approval.get('expiresAt')
+                        
+                        # Check token format and expiry
+                        if (token.startswith('APR-') and expires_at):
+                            # Parse expiry date and check it's ~7 days from now
+                            try:
+                                from datetime import datetime
+                                expires_dt = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+                                now = datetime.utcnow()
+                                days_diff = (expires_dt - now).days
+                                
+                                if 6 <= days_diff <= 8:  # Allow some tolerance
+                                    self.log_result("A1) Vehicle creation auto-approval", True)
+                                    
+                                    # 2) GET /api/approvals?vehicle_id=<id> -> contains at least one pending record
+                                    if len(pending_approvals) >= 1:
+                                        self.log_result("A2) Approval list contains pending record", True)
+                                        
+                                        # 3) GET /api/approvals/public/{token} -> 200 OK
+                                        public_response = self.session.get(f"{API_URL}/approvals/public/{token}")
+                                        if public_response.status_code == 200:
+                                            self.log_result("A3) Public approval access", True)
+                                            return vehicle_id, token  # Return for further tests
+                                        else:
+                                            self.log_result("A3) Public approval access", False, f"Status: {public_response.status_code}")
+                                    else:
+                                        self.log_result("A2) Approval list contains pending record", False, "No pending approvals found")
+                                else:
+                                    self.log_result("A1) Vehicle creation auto-approval", False, f"Expiry not ~7 days: {days_diff} days")
+                            except Exception as e:
+                                self.log_result("A1) Vehicle creation auto-approval", False, f"Date parsing error: {e}")
+                        else:
+                            self.log_result("A1) Vehicle creation auto-approval", False, f"Invalid token format or missing expiry: {token}")
+                    else:
+                        self.log_result("A1) Vehicle creation auto-approval", False, "No pending non-revoked approval found")
+                else:
+                    self.log_result("A1) Vehicle creation auto-approval", False, f"Approval list status: {approval_response.status_code}")
+            else:
+                self.log_result("A1) Vehicle creation auto-approval", False, f"Vehicle creation status: {response.status_code}")
+        except Exception as e:
+            self.log_result("A1) Vehicle creation auto-approval", False, str(e))
+        
+        return None, None
+
+    def test_quotation_auto_create_approval(self):
+        """B) Test transition to quotation auto-create-if-missing"""
+        # 1) Create a new vehicle
+        vehicle_data = {
+            "plateNumber": f"QUOT-{str(uuid.uuid4())[:4]}",
+            "brand": "Honda",
+            "model": "Civic", 
+            "year": 2021,
+            "color": "Blue",
+            "customerName": "Sara Al-Zahra",
+            "customerPhone": "+966557654321",
+            "customerEmail": "sara.zahra@email.com",
+            "services": ["Brake Check"]
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/vehicles", json=vehicle_data)
+            if response.status_code == 200:
+                vehicle = response.json()
+                vehicle_id = vehicle['id']
+                self.created_vehicles.append(vehicle_id)
+                
+                # 2) DELETE any existing approvals for that vehicle (simulate missing pending)
+                approval_response = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                if approval_response.status_code == 200:
+                    approvals = approval_response.json()
+                    for approval in approvals:
+                        approval_id = approval.get('id')
+                        if approval_id:
+                            # Revoke existing approvals to simulate missing pending
+                            self.session.put(f"{API_URL}/approvals/{approval_id}/revoke")
+                
+                # 3) PUT /api/vehicles/{id} with {status:"quotation"} -> expect new pending approval created
+                update_data = {"status": "quotation"}
+                update_response = self.session.put(f"{API_URL}/vehicles/{vehicle_id}", json=update_data)
+                
+                if update_response.status_code == 200:
+                    # 4) Verify via GET /api/approvals?vehicle_id=... and public GET
+                    approval_response2 = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                    if approval_response2.status_code == 200:
+                        approvals2 = approval_response2.json()
+                        active_approvals = [a for a in approvals2 if a.get('status') == 'pending' and not a.get('revoked')]
+                        
+                        if len(active_approvals) > 0:
+                            self.log_result("B1) Quotation status auto-creates approval", True)
+                            
+                            # Test public access to new approval
+                            new_token = active_approvals[0].get('token')
+                            if new_token:
+                                public_response = self.session.get(f"{API_URL}/approvals/public/{new_token}")
+                                if public_response.status_code == 200:
+                                    self.log_result("B2) New approval public access", True)
+                                    return vehicle_id, new_token
+                                else:
+                                    self.log_result("B2) New approval public access", False, f"Status: {public_response.status_code}")
+                        else:
+                            self.log_result("B1) Quotation status auto-creates approval", False, "No active approval found after quotation status")
+                    else:
+                        self.log_result("B1) Quotation status auto-creates approval", False, f"Approval list status: {approval_response2.status_code}")
+                else:
+                    self.log_result("B1) Quotation status auto-creates approval", False, f"Vehicle update status: {update_response.status_code}")
+            else:
+                self.log_result("B1) Quotation status auto-creates approval", False, f"Vehicle creation status: {response.status_code}")
+        except Exception as e:
+            self.log_result("B1) Quotation status auto-creates approval", False, str(e))
+        
+        return None, None
+
+    def test_auto_revoke_on_final_status(self):
+        """C) Test auto-revoke on approved/ready/delivered"""
+        # 1) Ensure vehicle has a pending approval
+        vehicle_data = {
+            "plateNumber": f"REVK-{str(uuid.uuid4())[:4]}",
+            "brand": "Nissan",
+            "model": "Altima",
+            "year": 2020,
+            "color": "Red",
+            "customerName": "Khalid Al-Mansouri",
+            "customerPhone": "+966559876543",
+            "customerEmail": "khalid.mansouri@email.com",
+            "services": ["Oil Change"]
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/vehicles", json=vehicle_data)
+            if response.status_code == 200:
+                vehicle = response.json()
+                vehicle_id = vehicle['id']
+                self.created_vehicles.append(vehicle_id)
+                
+                # Verify pending approval exists
+                approval_response = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                if approval_response.status_code == 200:
+                    approvals = approval_response.json()
+                    pending_approvals = [a for a in approvals if a.get('status') == 'pending' and not a.get('revoked')]
+                    
+                    if len(pending_approvals) > 0:
+                        token = pending_approvals[0].get('token')
+                        
+                        # 2) PUT /api/vehicles/{id} status="approved" -> then GET approvals list -> pending approvals have revoked=true
+                        for final_status in ["approved", "ready", "delivered"]:
+                            update_data = {"status": final_status}
+                            update_response = self.session.put(f"{API_URL}/vehicles/{vehicle_id}", json=update_data)
+                            
+                            if update_response.status_code == 200:
+                                # Check if pending approvals are revoked
+                                approval_response2 = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                                if approval_response2.status_code == 200:
+                                    approvals2 = approval_response2.json()
+                                    revoked_count = sum(1 for a in approvals2 if a.get('revoked') == True)
+                                    
+                                    if revoked_count > 0:
+                                        self.log_result(f"C1) Auto-revoke on {final_status} status", True)
+                                        
+                                        # 3) GET /api/approvals/public/{token} should return 410
+                                        if token:
+                                            public_response = self.session.get(f"{API_URL}/approvals/public/{token}")
+                                            if public_response.status_code == 410:
+                                                self.log_result(f"C2) Public access returns 410 after {final_status}", True)
+                                            else:
+                                                self.log_result(f"C2) Public access returns 410 after {final_status}", False, f"Status: {public_response.status_code}")
+                                    else:
+                                        self.log_result(f"C1) Auto-revoke on {final_status} status", False, "No approvals were revoked")
+                                else:
+                                    self.log_result(f"C1) Auto-revoke on {final_status} status", False, f"Approval list status: {approval_response2.status_code}")
+                            else:
+                                self.log_result(f"C1) Auto-revoke on {final_status} status", False, f"Vehicle update status: {update_response.status_code}")
+                            
+                            # Only test one status to avoid conflicts
+                            break
+                    else:
+                        self.log_result("C1) Auto-revoke setup", False, "No pending approval found for revoke test")
+                else:
+                    self.log_result("C1) Auto-revoke setup", False, f"Approval list status: {approval_response.status_code}")
+            else:
+                self.log_result("C1) Auto-revoke setup", False, f"Vehicle creation status: {response.status_code}")
+        except Exception as e:
+            self.log_result("C1) Auto-revoke on final status", False, str(e))
+
+    def test_approvals_respond_non_regression(self):
+        """D) Test non-regression for approvals respond API with extended statuses and phone/name"""
+        # Create a vehicle with approval
+        vehicle_data = {
+            "plateNumber": f"RESP-{str(uuid.uuid4())[:4]}",
+            "brand": "BMW",
+            "model": "X5",
+            "year": 2023,
+            "color": "Black",
+            "customerName": "Fatima Al-Rashid",
+            "customerPhone": "+966552468135",
+            "customerEmail": "fatima.rashid@email.com",
+            "services": ["Full Service"]
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/vehicles", json=vehicle_data)
+            if response.status_code == 200:
+                vehicle = response.json()
+                vehicle_id = vehicle['id']
+                self.created_vehicles.append(vehicle_id)
+                
+                # Get the auto-created approval
+                approval_response = self.session.get(f"{API_URL}/approvals?vehicle_id={vehicle_id}")
+                if approval_response.status_code == 200:
+                    approvals = approval_response.json()
+                    pending_approvals = [a for a in approvals if a.get('status') == 'pending' and not a.get('revoked')]
+                    
+                    if len(pending_approvals) > 0:
+                        token = pending_approvals[0].get('token')
+                        
+                        # Test extended statuses and phone/name parameters
+                        test_cases = [
+                            {"status": "approved", "name": "Fatima Al-Rashid", "phone": "+966552468135", "notes": "Approved for repair"},
+                            {"status": "deferred", "name": "Ahmad Al-Rashid", "phone": "+966551234567", "notes": "Need more time to decide"},
+                            {"status": "requote", "name": "Fatima Al-Rashid", "phone": "+966552468135", "notes": "Please provide new quote"},
+                            {"status": "rejected", "name": "Fatima Al-Rashid", "phone": "+966552468135", "notes": "Too expensive"}
+                        ]
+                        
+                        for i, test_case in enumerate(test_cases):
+                            # Create a new approval for each test (except first)
+                            if i > 0:
+                                approval_data = {
+                                    "vehicleId": vehicle_id,
+                                    "customerId": vehicle.get('customerId'),
+                                    "title": f"Test Approval {i+1}",
+                                    "amount": 500.0 + (i * 100)
+                                }
+                                create_response = self.session.post(f"{API_URL}/approvals", json=approval_data)
+                                if create_response.status_code == 200:
+                                    new_approval = create_response.json()
+                                    token = new_approval.get('token')
+                                else:
+                                    self.log_result(f"D{i+1}) Create test approval", False, f"Status: {create_response.status_code}")
+                                    continue
+                            
+                            # Test respond with extended status and parameters
+                            respond_response = self.session.post(
+                                f"{API_URL}/approvals/public/{token}/respond",
+                                params=test_case
+                            )
+                            
+                            if respond_response.status_code == 200:
+                                response_data = respond_response.json()
+                                if (response_data.get('status') == test_case['status'] and
+                                    response_data.get('responderName') == test_case['name'] and
+                                    response_data.get('responderPhone') == test_case['phone'] and
+                                    response_data.get('notes') == test_case['notes']):
+                                    self.log_result(f"D{i+1}) Respond with {test_case['status']} status", True)
+                                else:
+                                    self.log_result(f"D{i+1}) Respond with {test_case['status']} status", False, "Response data mismatch")
+                            else:
+                                self.log_result(f"D{i+1}) Respond with {test_case['status']} status", False, f"Status: {respond_response.status_code}")
+                    else:
+                        self.log_result("D1) Approvals respond setup", False, "No pending approval found")
+                else:
+                    self.log_result("D1) Approvals respond setup", False, f"Approval list status: {approval_response.status_code}")
+            else:
+                self.log_result("D1) Approvals respond setup", False, f"Vehicle creation status: {response.status_code}")
+        except Exception as e:
+            self.log_result("D1) Approvals respond non-regression", False, str(e))
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

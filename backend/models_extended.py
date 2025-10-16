@@ -250,6 +250,20 @@ class ApprovalRequest(BaseModel):
     title: str
     amount: float
     status: str = "pending"  # pending, approved, rejected
+
+class AppSettings(BaseModel):
+    id: str = "app_settings"
+    currency: str = "SAR"
+    taxEnabled: bool = False
+    defaultLanguages: List[str] = ["ar", "en"]
+    invoicePrefix: str = "WKS"
+    numberingFormat: str = "{prefix}-{year}-{seq:04d}"
+    nextSequence: int = 1
+    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     respondedAt: Optional[datetime] = None
     responderName: Optional[str] = None

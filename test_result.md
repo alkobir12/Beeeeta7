@@ -267,6 +267,30 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Services count verification successful. GET /api/services returns 211 services (>150 required). Seed script executed successfully to populate comprehensive service catalog with Arabic service names across multiple categories (محرك، كهرباء، فرامل، تعليق، صيانة)."
 
+  - task: "Budget Report API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Budget Report API working correctly. Successfully creates business accounts, transactions with accountId, and budgets. GET /api/budgets/{id}/report returns accurate incomeActual (2300.0), expenseActual (800.0), profitActual (1500.0) and percentages (76.7% income, 80.0% expense). HTML format (format=html) returns proper HTML string with Arabic content. Fixed Transaction model to support accountId field during testing."
+
+  - task: "Customer Receipts API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Customer Receipts API working correctly. POST /api/customer-receipts creates receipts with customerId and optional accountId. GET /api/customer-receipts filters correctly by customer_id and account_id parameters. Automatically creates income transaction with category=customer_receipt and proper accountId linking. All CRUD operations and filtering functionality verified."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

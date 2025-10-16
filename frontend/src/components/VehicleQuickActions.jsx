@@ -140,31 +140,20 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const handlePrintReport = async () => {
-    let win;
     try {
       setLoading(true);
-      // Open window immediately to avoid popup blockers
-      win = window.open('about:blank', '_blank', 'noopener');
-      if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
-      // Show loading placeholder
-      win.document.open();
-      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تجهيز التقرير</title><style>body{font-family:Tahoma,Arial;padding:20px} .muted{color:#666}</style></head><body><h3>جاري تجهيز تقرير التشخيص...</h3><p class="muted">يرجى الانتظار</p></body></html>`);
-      win.document.close();
-
+      console.log('Starting diagnosis report print flow...');
+      
       const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const diag = (templates || []).find(t => (t.type === 'diagnosis'));
       const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
-      // Fallback to iframe printing to avoid popup lifecycle issues
-      try { printViaIframe(html, 'تقرير تشخيص'); } catch(_) {}
-      try { if (win && !win.closed) win.close(); } catch(_) {}
+      
+      console.log('Calling printViaIframe with diagnosis content...');
+      printViaIframe(html, 'تقرير تشخيص');
+      
+      toast({ title: 'تم الطباعة', description: 'تم إرسال التقرير للطباعة' });
     } catch (e) {
-      if (win) {
-        try {
-          win.document.open();
-          win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>خطأ</title></head><body><h3>تعذر تجهيز التقرير</h3><p>${e?.message || ''}</p></body></html>`);
-          win.document.close();
-        } catch(_){}
-      }
+      console.error('Print report error:', e);
       toast({ title: 'خطأ', description: 'فشل تجهيز التقرير', variant: 'destructive' });
     } finally {
       setLoading(false);

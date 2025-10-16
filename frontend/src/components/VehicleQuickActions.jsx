@@ -78,6 +78,42 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         '{{VEHICLE_PLATE}}': vehicle?.plateNumber || '',
         '{{VEHICLE_MODEL}}': `${vehicle?.brand || ''} ${vehicle?.model || ''}`,
         '{{VEHICLE_YEAR}}': vehicle?.year?.toString() || '',
+  const printViaIframe = (rawHtml, title = 'طباعة') => {
+    try {
+      const hasHtmlTag = /<html[\s\S]*>/i.test(rawHtml || '');
+      const content = hasHtmlTag ? rawHtml : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"/><title>${title}</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial;color:#111;direction:rtl;padding:8mm;}h1,h2{margin:0 0 8px}</style></head><body>${rawHtml || ''}</body></html>`;
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+      const ifrw = iframe.contentWindow || iframe;
+      iframe.onload = () => {
+        try {
+          ifrw.focus();
+          ifrw.print();
+        } catch (_) {}
+        setTimeout(() => { try { document.body.removeChild(iframe); } catch(_){} }, 500);
+      };
+      // Prefer srcdoc where supported
+      try {
+        iframe.srcdoc = content;
+      } catch (_) {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(content);
+        doc.close();
+      }
+    } catch (e) {
+      console.error('printViaIframe error', e);
+      throw e;
+    }
+  };
+
         '{{DIAGNOSIS_DATE}}': new Date().toLocaleDateString('ar-SA'),
         '{{TECHNICIAN_NAME}}': vehicle?.technicianName || ''
       };

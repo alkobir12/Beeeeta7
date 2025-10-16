@@ -982,18 +982,6 @@ async def create_indexes():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        title=payload.get('title', 'طلب اعتماد'),
-        amount=float(payload.get('amount', 0))
-    )
-    # Override default expiry if provided
-    req.expiresAt = datetime.utcnow() + timedelta(days=expires_in)
-    await db.approval_requests.insert_one(req.dict())
-    out = req.dict()
-    out.pop('_id', None)
-    if 'expiresAt' in out and hasattr(out['expiresAt'], 'isoformat'):
-        out['expiresAt'] = out['expiresAt'].isoformat()
-    return out
-
 @router.get("/approvals/public/{token}")
 async def get_public_approval(token: str):
     req = await db.approval_requests.find_one({"token": token})

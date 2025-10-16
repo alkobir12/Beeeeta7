@@ -3030,7 +3030,10 @@ class APITester:
             print("❌ API is not accessible. Stopping tests.")
             return
         
-        # Run AUTO-APPROVAL WORKFLOW TESTS FIRST (as requested in review)
+        # Run END-TO-END OPERATIONAL FLOW TEST FIRST (as requested in review)
+        self.test_end_to_end_operational_flow()
+        
+        # Run AUTO-APPROVAL WORKFLOW TESTS
         self.test_auto_approval_workflow()
         
         # Run NEW REQUESTED TESTS

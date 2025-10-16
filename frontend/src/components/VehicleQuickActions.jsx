@@ -157,10 +157,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
       const hasHtmlTag = /<html[\s\S]*>/i.test(html || '');
       const content = hasHtmlTag ? html : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>فاتورة</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial;padding:8mm}</style></head><body>${html || ''}<script>window.onload=function(){try{window.focus();window.print();}catch(e){}};<\/script></body></html>`;
-      win.document.open();
-      win.document.write(content);
-      win.document.close();
-      setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 600);
+      const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      try { win.location.href = url; } catch(_) {}
+      setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 800);
     } catch (e) {
       if (win) {
         try {

@@ -108,12 +108,33 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-  const handleRequestApproval = () => {
-    toast({
-      title: "تم الإرسال",
-      description: "تم إرسال طلب الاعتماد للعميل"
-    });
-    setNewStatus('quotation');
+  const handleRequestApproval = async () => {
+    try {
+      const title = window.prompt('عنوان طلب التعميد', 'طلب اعتماد الإصلاح');
+      if (title === null) return;
+      const amountStr = window.prompt('المبلغ المتوقع (ريال)', '0');
+      if (amountStr === null) return;
+      const amount = parseFloat(amountStr || '0');
+      setLoading(true);
+      const payload = {
+        vehicleId: vehicle?.id,
+        customerId: vehicle?.customerId,
+        title,
+        amount
+      };
+      const { data } = await axios.post(`${API_URL}/approvals`, payload);
+      toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
+      const approvalLink = `${window.location.origin}/approval/${data.token}`;
+      const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink}`;
+      const msg = `السلام عليكم ${vehicle?.customerName}\nرابط تتبع مركبتك: ${trackingLink}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
+      const phone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
+      if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      setNewStatus('quotation');
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'تعذر إرسال طلب الاعتماد', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async () => {

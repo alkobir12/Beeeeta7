@@ -231,6 +231,42 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Vehicle Tracking API working correctly. GET /api/vehicles/track/{trackingLink} returns vehicle data successfully using the tracking link generated during vehicle creation."
 
+  - task: "Business Accounts API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Business Accounts CRUD API working correctly. POST /api/biz-accounts creates accounts with name/code/currency fields, GET /api/biz-accounts lists all active accounts, PUT /api/biz-accounts/{id} updates account name successfully. Fixed ObjectId serialization issue in PUT endpoint during testing."
+
+  - task: "Operations API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Operations API working correctly. POST /api/operations creates purchase operations that increase part quantities (tested: 10→15 after +5 purchase), POST /api/operations creates sale operations that decrease part quantities (tested: 15→12 after -3 sale), GET /api/operations filters correctly by accountId and type parameters. Inventory management working as expected."
+
+  - task: "Services Count Verification"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_database.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Services count verification successful. GET /api/services returns 211 services (>150 required). Seed script executed successfully to populate comprehensive service catalog with Arabic service names across multiple categories (محرك، كهرباء، فرامل، تعليق، صيانة)."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

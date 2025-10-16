@@ -512,10 +512,13 @@ async def list_dependencies(doc_type: Optional[str] = None, doc_id: Optional[str
 @router.get("/activities")
 async def list_activities(doc_type: Optional[str] = None, doc_id: Optional[str] = None):
     q = {}
-    if doc_type: q['docType'] = doc_type
-    if doc_id: q['docId'] = doc_id
+    if doc_type:
+        q['docType'] = doc_type
+    if doc_id:
+        q['docId'] = doc_id
     rows = await db.document_activities.find(q).sort("date", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 

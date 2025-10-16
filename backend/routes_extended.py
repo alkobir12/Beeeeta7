@@ -19,6 +19,51 @@ router = APIRouter(prefix="/api")
 # Database will be injected from server.py
 db = None
 
+# ============ Customer Receipts (توريد العملاء) ============
+from models_extended import CustomerReceipt
+
+@router.post("/customer-receipts", response_model=CustomerReceipt)
+async def create_customer_receipt(payload: dict):
+    try:
+        receipt = CustomerReceipt(
+            customerId=payload['customerId'],
+            accountId=payload.get('accountId'),
+            amount=float(payload['amount']),
+            paymentMethod=payload.get('paymentMethod', 'cash'),
+            reference=payload.get('reference'),
+            notes=payload.get('notes')
+        )
+        await db.customer_receipts.insert_one(receipt.dict())
+        # Post as income transaction tagged optional accountId
+        await db.transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "type": "income",
+            "category": "customer_receipt",
+            "amount": receipt.amount,
+            "description": f"Customer receipt {receipt.id}",
+            "paymentMethod": receipt.paymentMethod,
+            "reference": receipt.reference,
+            "date": receipt.date,
+            "accountId": receipt.accountId
+        })
+        return receipt
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/customer-receipts")
+async def list_customer_receipts(customer_id: Optional[str] = None, account_id: Optional[str] = None):
+    query = {}
+    if customer_id:
+        query['customerId'] = customer_id
+    if account_id:
+        query['accountId'] = account_id
+    rows = await db.customer_receipts.find(query).sort("date", -1).to_list(1000)
+    # Normalize
+    for r in rows:
+        r.pop('_id', None)
+    return rows
+
+
 # ============ Budgets (ميزانيات متعددة لكل فرع) ============
 @router.post("/budgets", response_model=Budget)
 async def create_budget(payload: dict):

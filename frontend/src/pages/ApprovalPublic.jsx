@@ -13,6 +13,7 @@ const ApprovalPublic = () => {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
+  const [phone, setPhone] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 

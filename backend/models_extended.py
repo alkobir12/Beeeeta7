@@ -303,26 +303,3 @@ class Budget(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
-
-    logo: Optional[str] = None
-    phone: str
-    whatsapp: str
-    email: Optional[str] = None
-    address: str
-    city: str
-    postalCode: Optional[str] = None
-    taxNumber: Optional[str] = None
-    commercialRegister: Optional[str] = None
-    bankAccount: Optional[str] = None
-    iban: Optional[str] = None
-    workingHours: Optional[str] = None
-    services: List[str] = []
-    socialMedia: Optional[dict] = None  # {facebook, twitter, instagram}
-    invoiceFooter: Optional[str] = None
-    termsAndConditions: Optional[str] = None
-    updatedAt: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }

@@ -953,24 +953,6 @@ async def resolve_template(payload: dict = Body(...)):
     tpl.pop('_id', None)
     return {"type": t_type, "template": tpl}
 
-        ("receipt", "سند قبض")
-    ]
-    added = []
-    for t_type, t_name in to_seed:
-        if t_type not in existing_types:
-            html = f"<!DOCTYPE html><html dir='rtl'><head><meta charset='UTF-8'><title>{t_name}</title></head><body><h2 style='text-align:center'>{t_name}</h2><p>{{{{WORKSHOP_NAME}}}}</p><hr/></body></html>"
-            doc = {
-                "id": str(uuid.uuid4()),
-                "name": t_name,
-                "type": t_type,
-                "language": "ar",
-                "html": html,
-                "content": html,
-                "isActive": True
-            }
-            await db.templates.insert_one(doc)
-            added.append(t_type)
-    return {"added": added}
 
 # ============ Import Skeletons (JSON rows, no UI) ============
 @router.post("/import/services")

@@ -161,51 +161,75 @@ backend:
 
   - task: "Templates API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added /api/templates CRUD endpoints with TemplateDoc model. Frontend Templates page integrated."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Templates CRUD API working correctly. POST creates templates with name/type/content fields, GET lists templates with content/html present, PUT updates name/type/content successfully, DELETE removes templates. Fixed ObjectId serialization issues during testing."
 
   - task: "Settings API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added /api/settings GET/POST with defaults (SAR, no tax). Used by Settings page."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Settings API working correctly. GET returns settings with currency and taxEnabled fields, POST persists payload successfully, GET returns updated values. Fixed ObjectId serialization issues during testing."
 
   - task: "Services CRUD API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added POST/PUT/DELETE for /api/services for ServicesManagement page."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Services CRUD API working correctly. POST creates services with name/category/price/duration fields, PUT updates service price successfully, DELETE removes services and returns proper message."
 
   - task: "Approvals & Reports API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added /api/approvals (public token + respond) and /api/reports/diagnosis with public retrieval. Used for request approval and diagnosis report."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Approvals & Reports API working correctly. POST /api/reports/diagnosis creates reports with tokens, GET /api/reports/public/{token} retrieves reports successfully. POST /api/approvals creates approval requests with tokens, GET /api/approvals/public/{token} returns requests, POST /api/approvals/public/{token}/respond with status=approved persists changes. Fixed ObjectId serialization issues during testing."
+
+  - task: "Vehicle Tracking API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Vehicle Tracking API working correctly. GET /api/vehicles/track/{trackingLink} returns vehicle data successfully using the tracking link generated during vehicle creation."
 
 frontend:
   - task: "Dashboard with API Integration"

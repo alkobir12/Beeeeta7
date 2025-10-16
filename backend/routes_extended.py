@@ -1002,6 +1002,7 @@ async def import_customers_csv(file: UploadFile = File(...)):
         header = [h.strip().lower() for h in lines[0].split(',')]
         idx = {k: i for i, k in enumerate(header)}
         created = 0
+        from models import Customer
         for line in lines[1:]:
             cols = [c.strip() for c in line.split(',')]
             try:
@@ -1009,7 +1010,6 @@ async def import_customers_csv(file: UploadFile = File(...)):
                 phone = cols[idx.get('phone', 1)] if idx.get('phone', None) is not None else ''
                 email = cols[idx.get('email', 2)] if idx.get('email', None) is not None else None
                 address = cols[idx.get('address', 3)] if idx.get('address', None) is not None else None
-                from models import Customer
                 c = Customer(name=name, phone=phone, email=email, address=address)
                 await db.customers.insert_one(c.dict())
                 created += 1
@@ -1055,6 +1055,7 @@ async def import_customers_csv(file: UploadFile = File(...)):
         header = [h.strip().lower() for h in lines[0].split(',')]
         idx = {k: i for i, k in enumerate(header)}
         created = 0
+        from models import Customer
         for line in lines[1:]:
             cols = [c.strip() for c in line.split(',')]
             try:
@@ -1062,7 +1063,6 @@ async def import_customers_csv(file: UploadFile = File(...)):
                 phone = cols[idx.get('phone', 1)] if idx.get('phone', None) is not None else ''
                 email = cols[idx.get('email', 2)] if idx.get('email', None) is not None else None
                 address = cols[idx.get('address', 3)] if idx.get('address', None) is not None else None
-                from models import Customer
                 c = Customer(name=name, phone=phone, email=email, address=address)
                 await db.customers.insert_one(c.dict())
                 created += 1

@@ -504,16 +504,7 @@ frontend:
         - working: "NA"
           agent: "main"
           comment: "Fixed blank print issue by injecting full HTML doc with A4 styles when template lacks <html>, using about:blank + onload + Safari fallback. Requesting UI retest for 'صياغة وطباعة تقرير التشخيص' و'طباعة الفاتورة'."
-    - agent: "main"
-      message: "Auto-create approval link on vehicle creation; auto-generate if entering quotation; auto-revoke on approved/ready/delivered. Proceeding to backend health check."
-
-          agent: "main"
-          comment: "Updated approval creation to include expiresAt and show expiry toast. No UI change to modal trigger. Needs retest along with public link flow."
-
-    - agent: "main"
-      message: "Phase 1 start: Hardened approval public links with 7-day expiry, revoke endpoint, added statuses (deferred/requote), responder phone, and frontend ApprovalPublic updated with four decision buttons and phone field. Request Approval shows expiry info. Requesting backend retest for approvals lifecycle."
-    - agent: "testing"
-      message: "✅ APPROVALS LIFECYCLE TESTING COMPLETE: Comprehensive testing of hardened approvals system completed successfully with 100% pass rate (11/11 tests). All requested flows verified: (1) Create approval with 7-day expiry and ISO format, (2) Public fetch before respond, (3) Public respond with extended statuses (approved/deferred/requote/rejected) including name/phone/notes, (4) Idempotency handling, (5) Revocation flow with 410 responses, (6) Expiry check with expiresInDays=0, (7) Listing with vehicle_id filter and proper serialization. Fixed critical issue: incomplete respond_public_approval function was missing implementation after validation. Also fixed DiagnosisReport model validation error. All serialization, 404/410 behaviors, and API endpoints working correctly as specified."
+ 
 
 metadata:
   created_by: "main_agent"

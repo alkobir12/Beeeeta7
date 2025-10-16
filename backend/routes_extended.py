@@ -505,7 +505,8 @@ async def list_dependencies(doc_type: Optional[str] = None, doc_id: Optional[str
             {"toDoc.docType": doc_type, "toDoc.docId": doc_id}
         ]}
     rows = await db.document_dependencies.find(q).sort("createdAt", -1).to_list(1000)
-    for r in rows: r.pop('_id', None)
+    for r in rows:
+        r.pop('_id', None)
     return rows
 
 @router.get("/activities")

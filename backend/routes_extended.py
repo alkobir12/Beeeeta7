@@ -520,32 +520,3 @@ async def list_approvals(vehicle_id: Optional[str] = None, customer_id: Optional
         if 'expiresAt' in r and hasattr(r['expiresAt'], 'isoformat'):
             r['expiresAt'] = r['expiresAt'].isoformat()
     return rows
-
-    # Validate link is active
-    req = await db.approval_requests.find_one({"token": token})
-    if not req:
-        raise HTTPException(status_code=404, detail="Approval not found")
-    now = datetime.utcnow()
-    if req.get('revoked'):
-        raise HTTPException(status_code=410, detail="Link revoked")
-    if req.get('expiresAt') and req['expiresAt'] < now:
-        raise HTTPException(status_code=410, detail="Link expired")
-    update = {
-        "status": status,
-        "respondedAt": now,
-        "responderName": name,
-        "responderPhone": phone,
-        "notes": notes
-    }
-    res = await db.approval_requests.update_one({"token": token}, {"$set": update})
-    if res.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Approval not found")
-    updated = await db.approval_requests.find_one({"token": token})
-    # Remove MongoDB _id field and convert datetime
-    if '_id' in updated:
-        del updated['_id']
-    if 'respondedAt' in updated and hasattr(updated['respondedAt'], 'isoformat'):
-        updated['respondedAt'] = updated['respondedAt'].isoformat()
-    if 'expiresAt' in updated and hasattr(updated['expiresAt'], 'isoformat'):
-        updated['expiresAt'] = updated['expiresAt'].isoformat()
-    return updated

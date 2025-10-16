@@ -3088,13 +3088,13 @@ class APITester:
 if __name__ == "__main__":
     tester = APITester()
     
-    # Run the specific production activation tests as requested
-    success = tester.run_production_activation_tests()
+    # Run the full test suite including end-to-end operational flow
+    success = tester.run_all_tests()
     
     # Exit with appropriate code
     if success:
-        print("\n🎉 All production activation tests passed!")
+        print("\n🎉 All tests passed!")
         sys.exit(0)
     else:
-        print("\n❌ Some production activation tests failed!")
+        print("\n❌ Some tests failed!")
         sys.exit(1)

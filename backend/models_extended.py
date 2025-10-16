@@ -221,4 +221,107 @@ class CustomerReceipt(BaseModel):
     date: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
+
+# ======== Document Linking & Activity =========
+class DocumentRef(BaseModel):
+    docType: str  # e.g., diagnosis_case, quote, sales_order, purchase_order, vendor_bill, invoice
+    docId: str
+
+class DocumentDependency(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    fromDoc: DocumentRef
+    toDoc: DocumentRef
+    relation: str  # derived_from, references, fulfills
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+
+class DocumentActivity(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    docType: str
+    docId: str
+    action: str  # created, updated, status_changed, approved, rejected, emailed, printed
+    meta: Optional[dict] = None
+    date: datetime = Field(default_factory=datetime.utcnow)
+
+# ======== Diagnosis Case =========
+class DiagnosisMedia(BaseModel):
+    url: str
+    type: str = "image"  # image, video
+    caption: Optional[str] = None
+
+class DiagnosisCase(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    vehicleId: str
+    customerId: str
+    title: str = "ملف تشخيص"
+    description: Optional[str] = None
+    findings: List[str] = []
+    recommendations: List[str] = []
+    media: List[DiagnosisMedia] = []
+    status: str = "open"  # open, closed
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+# ======== Pricing Quote =========
+class QuoteItem(BaseModel):
+    itemType: str = "service"  # service, part
+    itemId: Optional[str] = None
+    name: str
+    quantity: float = 1
+    price: float
+    total: float
+
+class PricingQuote(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    vehicleId: str
+    customerId: str
+    diagnosisCaseId: Optional[str] = None
+    items: List[QuoteItem] = []
+    subtotal: float = 0.0
+    discount: float = 0.0
+    tax: float = 0.0
+    total: float = 0.0
+    currency: str = "SAR"
+    status: str = "draft"  # draft, sent, approved, rejected, revised
+    validityDate: Optional[datetime] = None
+    reference: Optional[str] = None
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+# ======== Sales Order =========
+class SalesOrder(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    vehicleId: Optional[str] = None
+    customerId: Optional[str] = None
+    quoteId: Optional[str] = None
+    items: List[QuoteItem] = []
+    subtotal: float = 0.0
+    tax: float = 0.0
+    total: float = 0.0
+    status: str = "draft"  # draft, confirmed, invoiced, cancelled
+    date: datetime = Field(default_factory=datetime.utcnow)
+    notes: Optional[str] = None
+
+# ======== Vendor Bill (Accounts Payable) =========
+class BillItem(BaseModel):
+    itemType: str = "part"  # part, service, expense
+    itemId: Optional[str] = None
+    name: str
+    quantity: float = 1
+    price: float
+    total: float
+
+class VendorBill(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    supplierId: str
+    purchaseOrderId: Optional[str] = None
+    items: List[BillItem] = []
+    subtotal: float = 0.0
+    tax: float = 0.0
+    total: float = 0.0
+    currency: str = "SAR"
+    dueDate: Optional[datetime] = None
+    status: str = "draft"  # draft, posted, paid, cancelled
+    reference: Optional[str] = None
+    date: datetime = Field(default_factory=datetime.utcnow)
+
         json_encoders = {datetime: lambda v: v.isoformat()}

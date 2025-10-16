@@ -225,7 +225,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               variant="outline"
               className="w-full justify-start hover:bg-green-50"
             >
-              <CheckCircle size={18} className="ml-2" />
+              <BadgeCheck size={18} className="ml-2" />
               طلب اعتماد من العميل
             </Button>
 
@@ -236,7 +236,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               className="w-full justify-start hover:bg-blue-50"
             >
               <FileText size={18} className="ml-2" />
-              طباعة تقرير الحالة
+              صياغة وطباعة تقرير التشخيص
             </Button>
 
             <Button

@@ -402,8 +402,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Budget Report API - COMPLETED"
-    - "Customer Receipts API - COMPLETED"
+    - "Frontend: CEO page budgets UI (add/list), account selection and AI analysis filtered by branch"
+    - "Frontend: CustomerReceipts page (create receipt, filter by customer/account)"
+    - "Frontend: ServicesManagement CRUD (create/delete)"
+    - "Frontend: VehicleQuickActions (open modal, request approval, print diagnosis/invoice with templates)"
+    - "Frontend: Operations (create purchase/sale with manual service item)"
+    - "Frontend: Dashboard cards clickability and navigation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

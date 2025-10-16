@@ -114,6 +114,27 @@ async def create_vehicle(vehicle_data: VehicleCreate):
             }
         )
         
+        
+        # Auto-create approval link for this vehicle (7-day expiry)
+        try:
+            token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+            await db.approval_requests.insert_one({
+                "id": str(uuid.uuid4()),
+                "vehicleId": vehicle.id,
+                "customerId": customer_id,
+                "title": "طلب اعتماد",
+                "amount": 0.0,
+                "status": "pending",
+                "token": token,
+                "createdAt": datetime.utcnow(),
+                "expiresAt": datetime.utcnow() + timedelta(days=7),
+                "revoked": False
+            })
+        except Exception as _:
+            # Do not block vehicle creation if approval auto-create fails
+            logger.warning("Auto-create approval link failed, continuing vehicle creation")
+        
+
         return vehicle
     except Exception as e:
         logger.error(f"Error creating vehicle: {e}")

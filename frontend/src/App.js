@@ -20,6 +20,8 @@ import ServicesManagement from "./pages/ServicesManagement";
 import Templates from "./pages/Templates";
 import Settings from "./pages/Settings";
 import AIHelper from "./components/AIHelper";
+import CEO from "./pages/CEO";
+import Payroll from "./pages/Payroll";
 
 function App() {
   return (
@@ -43,6 +45,8 @@ function App() {
             <Route path="/templates" element={<Templates />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<WorkshopProfile />} />
+            <Route path="/ceo" element={<CEO />} />
+            <Route path="/payroll" element={<Payroll />} />
           </Routes>
           <AIHelper />
         </BrowserRouter>

@@ -2301,6 +2301,253 @@ class APITester:
         except Exception as e:
             self.log_result("Activities API - GET doc_type=quote returns logs", False, str(e))
 
+    def test_seed_clone_basics_api(self):
+        """Test POST /api/seed/clone-basics endpoint"""
+        print("\n🌱 Testing Seed Clone Basics API...")
+        
+        # Test: POST /api/seed/clone-basics
+        try:
+            response = self.session.post(f"{API_URL}/seed/clone-basics")
+            if response.status_code == 200:
+                result = response.json()
+                accounts = result.get('accounts', [])
+                budgets = result.get('budgets', [])
+                status = result.get('status')
+                
+                # Verify we get 3 accounts (Main, Family, Personal)
+                if (len(accounts) == 3 and 
+                    len(budgets) == 3 and 
+                    status == 'ok'):
+                    # Check account names
+                    account_names = [acc.get('name') for acc in accounts]
+                    expected_names = ['Main Workshop', 'Family', 'Personal']
+                    if all(name in account_names for name in expected_names):
+                        self.log_result("Seed Clone Basics API - POST create", True)
+                        return accounts  # Return for use in other tests
+                    else:
+                        self.log_result("Seed Clone Basics API - POST create", False, f"Expected account names {expected_names}, got {account_names}")
+                else:
+                    self.log_result("Seed Clone Basics API - POST create", False, f"Expected 3 accounts, 3 budgets, status=ok. Got {len(accounts)} accounts, {len(budgets)} budgets, status={status}")
+            else:
+                self.log_result("Seed Clone Basics API - POST create", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Seed Clone Basics API - POST create", False, str(e))
+        
+        return None
+
+    def test_biz_accounts_api(self):
+        """Test GET /api/biz-accounts endpoint"""
+        print("\n🏢 Testing Business Accounts List API...")
+        
+        # Test: GET /api/biz-accounts (should list three accounts: Main, Family, Personal)
+        try:
+            response = self.session.get(f"{API_URL}/biz-accounts")
+            if response.status_code == 200:
+                accounts = response.json()
+                if isinstance(accounts, list) and len(accounts) >= 3:
+                    # Check for expected account names
+                    account_names = [acc.get('name') for acc in accounts]
+                    expected_names = ['Main Workshop', 'Family', 'Personal']
+                    found_names = [name for name in expected_names if name in account_names]
+                    
+                    if len(found_names) == 3:
+                        self.log_result("Business Accounts List API - GET three accounts", True)
+                        return accounts
+                    else:
+                        self.log_result("Business Accounts List API - GET three accounts", False, f"Expected {expected_names}, found {found_names}")
+                else:
+                    self.log_result("Business Accounts List API - GET three accounts", False, f"Expected list with >=3 accounts, got {len(accounts) if isinstance(accounts, list) else 'not a list'}")
+            else:
+                self.log_result("Business Accounts List API - GET three accounts", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Business Accounts List API - GET three accounts", False, str(e))
+        
+        return None
+
+    def test_budgets_api_with_account(self, account_id):
+        """Test GET /api/budgets?account_id=<family_id> endpoint"""
+        print(f"\n📊 Testing Budgets API with account_id={account_id}...")
+        
+        # Test: GET /api/budgets?account_id=<account_id>
+        try:
+            response = self.session.get(f"{API_URL}/budgets?account_id={account_id}")
+            if response.status_code == 200:
+                budgets = response.json()
+                if isinstance(budgets, list) and len(budgets) > 0:
+                    # Check if budget is for current month
+                    from datetime import datetime
+                    current_month = datetime.now().strftime('%Y-%m')
+                    found_current_month = any(b.get('period') == current_month for b in budgets)
+                    
+                    if found_current_month:
+                        self.log_result("Budgets API - GET with account_id filter", True)
+                        return budgets[0]  # Return first budget for further testing
+                    else:
+                        self.log_result("Budgets API - GET with account_id filter", False, f"No budget found for current month {current_month}")
+                else:
+                    self.log_result("Budgets API - GET with account_id filter", False, f"Expected list with >0 budgets, got {len(budgets) if isinstance(budgets, list) else 'not a list'}")
+            else:
+                self.log_result("Budgets API - GET with account_id filter", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Budgets API - GET with account_id filter", False, str(e))
+        
+        return None
+
+    def test_ceo_ai_analysis_multi_api(self, account_ids):
+        """Test POST /api/ceo/ai-analysis-multi with three account IDs"""
+        print(f"\n🤖 Testing CEO AI Analysis Multi API with {len(account_ids)} accounts...")
+        
+        # Test: POST /api/ceo/ai-analysis-multi
+        payload = {
+            "account_ids": account_ids,
+            "question": "حلل أداء هذه الحسابات وقدم توصيات"
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/ceo/ai-analysis-multi", json=payload)
+            if response.status_code == 200:
+                result = response.json()
+                accounts = result.get('accounts', [])
+                combined = result.get('combined', {})
+                ai_summary = result.get('ai')
+                
+                # Verify response structure
+                if (len(accounts) == len(account_ids) and 
+                    'income' in combined and 
+                    'expenses' in combined and 
+                    'profit' in combined):
+                    
+                    # Check that each account has required metrics
+                    all_accounts_valid = all(
+                        'accountId' in acc and 
+                        'name' in acc and 
+                        'income' in acc and 
+                        'expenses' in acc and 
+                        'profit' in acc
+                        for acc in accounts
+                    )
+                    
+                    if all_accounts_valid:
+                        # AI field may be null if no key available
+                        ai_status = "available" if ai_summary else "null (no API key)"
+                        self.log_result("CEO AI Analysis Multi API - POST analysis", True, f"AI field: {ai_status}")
+                        return result
+                    else:
+                        self.log_result("CEO AI Analysis Multi API - POST analysis", False, "Account metrics incomplete")
+                else:
+                    self.log_result("CEO AI Analysis Multi API - POST analysis", False, f"Expected {len(account_ids)} accounts and combined totals, got {len(accounts)} accounts")
+            else:
+                self.log_result("CEO AI Analysis Multi API - POST analysis", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("CEO AI Analysis Multi API - POST analysis", False, str(e))
+        
+        return None
+
+    def test_json_serialization(self, data, test_name):
+        """Helper to verify proper JSON serialization (no _id leaks, proper date format)"""
+        try:
+            # Check for _id fields (should not be present)
+            json_str = json.dumps(data)
+            if '_id' in json_str:
+                self.log_result(f"{test_name} - JSON serialization", False, "Found _id field in response")
+                return False
+            
+            # Check for proper date serialization (ISO format)
+            if 'createdAt' in json_str or 'updatedAt' in json_str or 'expiresAt' in json_str:
+                # Dates should be in ISO format, not MongoDB ObjectId format
+                import re
+                # Look for ISO date pattern
+                iso_pattern = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
+                if re.search(iso_pattern, json_str):
+                    self.log_result(f"{test_name} - JSON serialization", True)
+                    return True
+                else:
+                    self.log_result(f"{test_name} - JSON serialization", False, "Dates not in ISO format")
+                    return False
+            else:
+                # No dates to check, just verify no _id
+                self.log_result(f"{test_name} - JSON serialization", True)
+                return True
+                
+        except Exception as e:
+            self.log_result(f"{test_name} - JSON serialization", False, str(e))
+            return False
+
+    def run_health_check_tests(self):
+        """Run the specific health check tests requested"""
+        print("🚀 Starting Backend Health Check Tests...")
+        print("=" * 60)
+        
+        # Basic health check first
+        if not self.test_api_health():
+            print("❌ API is not accessible, stopping tests")
+            return False
+        
+        # 1) POST /api/seed/clone-basics
+        print("\n1️⃣ Testing seed/clone-basics endpoint...")
+        accounts = self.test_seed_clone_basics_api()
+        
+        # 2) GET /api/biz-accounts
+        print("\n2️⃣ Testing biz-accounts endpoint...")
+        biz_accounts = self.test_biz_accounts_api()
+        
+        # Use accounts from seed or biz-accounts call
+        if not accounts and biz_accounts:
+            accounts = biz_accounts
+        
+        if not accounts or len(accounts) < 3:
+            print("❌ Could not get required accounts for further testing")
+            return False
+        
+        # Find Family account for budget test
+        family_account = None
+        for acc in accounts:
+            if acc.get('name') == 'Family':
+                family_account = acc
+                break
+        
+        if not family_account:
+            print("❌ Could not find Family account for budget testing")
+            return False
+        
+        # 3) GET /api/budgets?account_id=<family_id>
+        print(f"\n3️⃣ Testing budgets endpoint with Family account ID...")
+        budget = self.test_budgets_api_with_account(family_account['id'])
+        
+        # 4) POST /api/ceo/ai-analysis-multi with three IDs
+        print(f"\n4️⃣ Testing CEO AI analysis multi endpoint...")
+        account_ids = [acc['id'] for acc in accounts[:3]]  # Take first 3 accounts
+        analysis_result = self.test_ceo_ai_analysis_multi_api(account_ids)
+        
+        # Test JSON serialization for all responses
+        if accounts:
+            self.test_json_serialization(accounts, "Accounts Response")
+        if budget:
+            self.test_json_serialization(budget, "Budget Response")
+        if analysis_result:
+            self.test_json_serialization(analysis_result, "AI Analysis Response")
+        
+        # Cleanup
+        self.cleanup()
+        
+        # Print summary
+        print("\n" + "=" * 60)
+        print("📊 HEALTH CHECK SUMMARY")
+        print("=" * 60)
+        print(f"✅ Passed: {self.test_results['passed']}")
+        print(f"❌ Failed: {self.test_results['failed']}")
+        
+        if self.test_results['passed'] + self.test_results['failed'] > 0:
+            success_rate = (self.test_results['passed'] / (self.test_results['passed'] + self.test_results['failed']) * 100)
+            print(f"📈 Success Rate: {success_rate:.1f}%")
+        
+        if self.test_results['errors']:
+            print("\n🔍 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"  • {error}")
+        
+        return self.test_results['failed'] == 0
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

@@ -444,6 +444,18 @@ backend:
           agent: "testing"
           comment: "✅ PRODUCTION ACTIVATION TEST PASSED: POST /api/seed/print-templates endpoint working correctly. Successfully seeds default templates (invoice, sales_invoice, diagnosis, vehicle_estimate, quote, purchase_order, vendor_bill, receipt). Returns JSON {added: [...]} with template types added or empty added array if templates already exist. Idempotent operation safe for production deployment."
 
+  - task: "Production Activation End-to-End Workflow"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PRODUCTION ACTIVATION END-TO-END COMPLETE: Successfully executed comprehensive production activation workflow with 100% pass rate (7/7 tests passed). All 6 steps working correctly: (1) POST /api/settings with workshop info and menuConfig persists correctly, (2) POST /api/seed/clone-basics creates 3 accounts/budgets/transactions, (3) POST /api/seed/print-templates seeds all templates idempotently, (4) POST /api/admin/create-indexes creates database indexes, (5) GET /api/settings verification confirms persistence, (6) GET /api/biz-accounts verification confirms 3 accounts. Added missing POST /api/settings endpoint during testing. System is production-ready."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

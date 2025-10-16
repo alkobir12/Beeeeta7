@@ -378,9 +378,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Settings page navigation and functionality verification"
-    - "WhatsApp share integration in VehicleQuickActions"
-    - "New vehicle creation and tracking link generation"
+    - "Business Accounts (separate branches) APIs and UI"
+    - "Operations (Purchase/Sale) APIs and inventory tie-in"
+    - "Services list >150 and manual service pricing in NewVehicle"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

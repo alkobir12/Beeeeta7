@@ -78,6 +78,19 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         '{{VEHICLE_PLATE}}': vehicle?.plateNumber || '',
         '{{VEHICLE_MODEL}}': `${vehicle?.brand || ''} ${vehicle?.model || ''}`,
         '{{VEHICLE_YEAR}}': vehicle?.year?.toString() || '',
+        '{{DIAGNOSIS_DATE}}': new Date().toLocaleDateString('ar-SA'),
+        '{{TECHNICIAN_NAME}}': vehicle?.technicianName || ''
+      };
+      Object.keys(replacements).forEach(k => {
+        output = output.split(k).join(replacements[k]);
+      });
+      output = output.replace('{{TOTAL}}', invoiceLike?.total?.toFixed?.(2) || '0.00');
+      return output;
+    } catch (e) {
+      return html;
+    }
+  };
+
   const printViaIframe = (rawHtml, title = 'طباعة') => {
     try {
       const hasHtmlTag = /<html[\s\S]*>/i.test(rawHtml || '');

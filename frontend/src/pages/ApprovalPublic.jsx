@@ -65,12 +65,15 @@ const ApprovalPublic = () => {
 
             <div className="grid grid-cols-1 gap-3">
               <Input placeholder="اسمك" value={name} onChange={e => setName(e.target.value)} />
+              <Input placeholder="الجوال" value={phone} onChange={e => setPhone(e.target.value)} />
               <Input placeholder="ملاحظات (اختياري)" value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <Button disabled={sending || data.status !== 'pending'} onClick={() => respond('approved')} className="bg-green-600 hover:bg-green-700">موافقة</Button>
               <Button disabled={sending || data.status !== 'pending'} variant="destructive" onClick={() => respond('rejected')}>رفض</Button>
+              <Button disabled={sending || data.status !== 'pending'} variant="outline" onClick={() => respond('deferred')}>تأجيل</Button>
+              <Button disabled={sending || data.status !== 'pending'} variant="outline" onClick={() => respond('requote')}>تسعير أخرى</Button>
             </div>
 
             <div className="text-sm text-slate-500">الحالة الحالية: {data.status === 'pending' ? 'بانتظار الرد' : data.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}</div>

@@ -284,6 +284,22 @@ const NewVehicle = () => {
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
+              {/* Manual service add */}
+              <div className="mt-4 p-4 border rounded-lg">
+                <div className="font-semibold mb-2">إضافة خدمة يدوية</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Input placeholder="اسم الخدمة" onBlur={(e)=>{
+                    const name = e.target.value?.trim();
+                    if(!name) return;
+                    setFormData(prev => ({...prev, services: [...prev.services, name]}));
+                    e.target.value='';
+                  }} />
+                  <Input placeholder="السعر (اختياري)" type="number" onBlur={(e)=>{ e.target.value=''; }} />
+                  <Button type="button" variant="outline" onClick={()=>{}} className="justify-center">إضافة</Button>
+                </div>
+                <div className="text-xs text-slate-500 mt-2">يمكنك كتابة اسم الخدمة وسيتم إضافتها مباشرة إلى القائمة المحددة.</div>
+              </div>
+
                 </Select>
               </div>
               

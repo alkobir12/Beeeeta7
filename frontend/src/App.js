@@ -33,7 +33,6 @@ function App() {
     <ThemeProvider>
       <div className="App">
         <BrowserRouter>
-import CustomerReceipts from "./pages/CustomerReceipts";
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/new-vehicle" element={<NewVehicle />} />
@@ -57,13 +56,13 @@ import CustomerReceipts from "./pages/CustomerReceipts";
             <Route path="/payroll" element={<Payroll />} />
             <Route path="/business-accounts" element={<BusinessAccounts />} />
             <Route path="/operations" element={<Operations />} />
+            <Route path="/customer-receipts" element={<CustomerReceipts />} />
           </Routes>
           <AIHelper />
         </BrowserRouter>
         <Toaster />
       </div>
     </ThemeProvider>
-            <Route path="/customer-receipts" element={<CustomerReceipts />} />
   );
 }
 

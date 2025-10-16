@@ -758,6 +758,18 @@ async def create_approval_request(payload: dict):
         token=token,
         vehicleId=payload.get('vehicleId'),
         customerId=payload.get('customerId'),
+        title=payload.get('title', 'طلب اعتماد'),
+        amount=float(payload.get('amount', 0))
+    )
+    # Override default expiry if provided
+    req.expiresAt = datetime.utcnow() + timedelta(days=expires_in)
+    await db.approval_requests.insert_one(req.dict())
+    out = req.dict()
+    out.pop('_id', None)
+    if 'expiresAt' in out and hasattr(out['expiresAt'], 'isoformat'):
+        out['expiresAt'] = out['expiresAt'].isoformat()
+    return out
+
 
 # ============ Purchase Orders CRUD ============
 @router.post("/purchase-orders")

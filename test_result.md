@@ -342,9 +342,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Settings API & Page integration"
-    - "Templates CRUD & Printing correctness"
-    - "Vehicle Quick Actions: approval + diagnosis report + WhatsApp share + tracking"
+    - "Settings page navigation and functionality verification"
+    - "WhatsApp share integration in VehicleQuickActions"
+    - "New vehicle creation and tracking link generation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

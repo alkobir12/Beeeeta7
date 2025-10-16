@@ -133,6 +133,8 @@ class InvoiceBase(BaseModel):
     type: str  # "diagnosis" (تشخيص), "quotation" (تسعيرة), "service" (فاتورة خدمة)
     items: List[InvoiceItem]
     subtotal: float
+    tax: float = 0.0  # Default 0% VAT per current settings
+
     tax: float = 0.15  # 15% ضريبة
     total: float
     paymentMethod: str  # "cash" (كاش) or "card" (شبكة)

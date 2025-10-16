@@ -489,7 +489,7 @@ frontend:
 
   - task: "Vehicle Quick Actions Modal"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/components/VehicleQuickActions.jsx"
     stuck_count: 2
     priority: "high"
@@ -510,6 +510,9 @@ frontend:
         - working: true
           agent: "testing"
           comment: "✅ MAJOR PROGRESS: VehicleQuickActions modal is now accessible! Modal opens correctly with title 'إدارة المركبة' and displays all required buttons. However, print flows have partial functionality: (1) Popup windows open successfully with popup workaround implementation, (2) Button click handlers are working (window.open calls detected), (3) ❌ ISSUE: Templates API calls are not being made - no network requests to /api/templates detected despite templates being available on backend, (4) Popup content remains blank (39 chars: <html><head></head><body></body></html>). Root cause: JavaScript execution stops after window.open, preventing axios calls to fetch templates. Print functionality is 50% working - popup mechanism works but content loading fails due to missing API integration."
+        - working: false
+          agent: "testing"
+          comment: "❌ PRINT FLOWS CRITICAL ISSUE IDENTIFIED: Comprehensive testing reveals VehicleQuickActions modal is accessible and templates are being cached correctly (2 API calls to /api/templates on modal open). However, print flows fail completely: (1) ✅ Modal opens with correct title 'إدارة المركبة', (2) ✅ Print buttons ('صياغة وطباعة تقرير التشخيص' and 'طباعة الفاتورة') are clickable, (3) ✅ Templates cached successfully from backend (6 templates available including diagnosis template), (4) ✅ window.open() calls are made correctly, (5) ❌ CRITICAL: Popup windows open but immediately close or get blocked - popup count remains 0 despite window.open calls, (6) ❌ Popup content remains static blank HTML (<html><head></head><body></body></html>) and never gets updated with template content. Root cause: Browser popup handling issue - popups are opened but not persisting long enough for document.write operations. This prevents template content from being displayed in print windows."
  
 
 metadata:

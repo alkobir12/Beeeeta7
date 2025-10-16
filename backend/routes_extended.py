@@ -13,6 +13,8 @@ from models_extended import (
 )
 
 # Router
+import os
+
 router = APIRouter(prefix="/api")
 
 # Database will be injected from server.py

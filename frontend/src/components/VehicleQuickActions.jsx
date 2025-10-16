@@ -9,6 +9,10 @@ import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+// Fallback minimal templates if backend has none
+const defaultInvoiceTemplate = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة</title></head><body><h2 style="text-align:center">فاتورة</h2><p>العميل: {{CUSTOMER_NAME}}</p><p>المركبة: {{VEHICLE_PLATE}} - {{VEHICLE_MODEL}}</p><hr/><p>المجموع: {{TOTAL}} ر.س</p></body></html>`;
+const defaultDiagnosisTemplate = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير تشخيص</title></head><body><h2 style="text-align:center">تقرير تشخيص</h2><p>العميل: {{CUSTOMER_NAME}}</p><p>المركبة: {{VEHICLE_PLATE}} - {{VEHICLE_MODEL}}</p><p>التاريخ: {{DIAGNOSIS_DATE}}</p><hr/></body></html>`;
+
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {
   const { toast } = useToast();
   const [newStatus, setNewStatus] = useState(vehicle?.status || 'diagnosis');

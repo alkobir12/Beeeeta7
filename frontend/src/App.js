@@ -32,6 +32,7 @@ function App() {
     <ThemeProvider>
       <div className="App">
         <BrowserRouter>
+import CustomerReceipts from "./pages/CustomerReceipts";
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/new-vehicle" element={<NewVehicle />} />

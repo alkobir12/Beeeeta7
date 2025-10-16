@@ -183,6 +183,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         <div className="space-y-6 py-4">
           {/* Vehicle Info */}
           <div className="bg-slate-50 p-4 rounded-lg">
+// Fallback minimal templates if backend has none
+const defaultInvoiceTemplate = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة</title></head><body><h2 style="text-align:center">فاتورة</h2><p>العميل: {{CUSTOMER_NAME}}</p><p>المركبة: {{VEHICLE_PLATE}} - {{VEHICLE_MODEL}}</p><hr/><p>المجموع: {{TOTAL}} ر.س</p></body></html>`;
+const defaultDiagnosisTemplate = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير تشخيص</title></head><body><h2 style="text-align:center">تقرير تشخيص</h2><p>العميل: {{CUSTOMER_NAME}}</p><p>المركبة: {{VEHICLE_PLATE}} - {{VEHICLE_MODEL}}</p><p>التاريخ: {{DIAGNOSIS_DATE}}</p><hr/></body></html>`;
+
             <h3 className="font-bold text-lg text-slate-800 mb-2">{vehicle.plateNumber}</h3>
             <p className="text-slate-600 text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
             <p className="text-slate-600 text-sm">{vehicle.customerName}</p>

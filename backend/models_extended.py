@@ -286,14 +286,6 @@ class AppSettings(BaseModel):
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
-    respondedAt: Optional[datetime] = None
-    responderName: Optional[str] = None
-    notes: Optional[str] = None
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
 class Account(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     code: str

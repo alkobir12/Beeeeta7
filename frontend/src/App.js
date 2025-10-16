@@ -24,6 +24,8 @@ import CEO from "./pages/CEO";
 import Payroll from "./pages/Payroll";
 import BusinessAccounts from "./pages/BusinessAccounts";
 import Operations from "./pages/Operations";
+import ApprovalPublic from "./pages/ApprovalPublic";
+import ReportPublic from "./pages/ReportPublic";
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
             <Route path="/new-vehicle" element={<NewVehicle />} />
             <Route path="/vehicle/:id" element={<VehicleDetails />} />
             <Route path="/track/:trackingId" element={<CustomerTracking />} />
+            <Route path="/approval/:token" element={<ApprovalPublic />} />
+            <Route path="/report/:token" element={<ReportPublic />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/customers/:id" element={<CustomerDetails />} />
             <Route path="/technicians" element={<Technicians />} />

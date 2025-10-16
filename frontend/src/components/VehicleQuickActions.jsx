@@ -149,6 +149,11 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
           <DialogTitle className="flex items-center justify-between">
             <span>إدارة المركبة</span>
             <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-50">
+              <BadgeCheck size={18} className="ml-2" />
+              طلب اعتماد من العميل
+            </Button>
+
               <X size={20} />
             </Button>
           </DialogTitle>

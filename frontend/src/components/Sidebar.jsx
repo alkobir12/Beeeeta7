@@ -66,6 +66,14 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <h2 className="text-2xl font-bold text-slate-800">ورشتي</h2>
               <p className="text-sm text-slate-500">نظام الإدارة</p>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full justify-center"
+                onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}
+              >
+                المدير (CEO)
+              </Button>
             </div>
             <Button 
               variant="ghost" 

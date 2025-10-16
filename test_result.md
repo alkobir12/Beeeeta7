@@ -484,6 +484,9 @@ frontend:
           agent: "main"
           comment: "Updated approval creation to include expiresAt and show expiry toast. No UI change to modal trigger. Needs retest along with public link flow."
 
+    - agent: "main"
+      message: "Phase 1 start: Hardened approval public links with 7-day expiry, revoke endpoint, added statuses (deferred/requote), responder phone, and frontend ApprovalPublic updated with four decision buttons and phone field. Request Approval shows expiry info. Requesting backend retest for approvals lifecycle."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"

@@ -175,7 +175,8 @@ class SpecificTester:
             return False
         
         html_content = response.text
-        if (html_content.startswith('<!DOCTYPE html') and 
+        # The HTML might be returned as a JSON string, so check both formats
+        if (('<!DOCTYPE html' in html_content) and 
             'تقرير الميزانية' in html_content and
             'الإيرادات الفعلية' in html_content and
             'المصروفات الفعلية' in html_content):

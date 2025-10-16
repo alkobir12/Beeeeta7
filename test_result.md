@@ -159,6 +159,54 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Customer list API working correctly. Successfully fetches all customers and supports search by name. Minor: Phone search with + symbol has regex issues but core functionality works. Search by phone number without + symbol works fine."
 
+  - task: "Templates API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added /api/templates CRUD endpoints with TemplateDoc model. Frontend Templates page integrated."
+
+  - task: "Settings API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added /api/settings GET/POST with defaults (SAR, no tax). Used by Settings page."
+
+  - task: "Services CRUD API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added POST/PUT/DELETE for /api/services for ServicesManagement page."
+
+  - task: "Approvals & Reports API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added /api/approvals (public token + respond) and /api/reports/diagnosis with public retrieval. Used for request approval and diagnosis report."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

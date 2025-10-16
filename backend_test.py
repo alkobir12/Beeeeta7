@@ -1066,6 +1066,324 @@ class APITester:
         except Exception as e:
             print(f"❌ Error running seed script: {e}")
 
+    def test_budget_report_api(self):
+        """Test Budget Report API with business account, transactions, and budget creation"""
+        print("\n📊 Testing Budget Report API...")
+        
+        # Step 1: Create a business account
+        account_data = {
+            "name": "Test Budget Branch",
+            "code": "TBB001",
+            "currency": "SAR",
+            "isActive": True
+        }
+        account_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/biz-accounts", json=account_data)
+            if response.status_code == 200:
+                account = response.json()
+                account_id = account.get('id')
+                self.log_result("Budget Report API - Create business account", True)
+            else:
+                self.log_result("Budget Report API - Create business account", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Budget Report API - Create business account", False, str(e))
+            return
+
+        if not account_id:
+            return
+
+        # Step 2: Create transactions for that account (income and expense)
+        current_month = datetime.now().strftime('%Y-%m')
+        
+        # Create income transactions
+        income_transactions = [
+            {
+                "type": "income",
+                "category": "service",
+                "amount": 1500.0,
+                "description": "Service income for budget test",
+                "paymentMethod": "cash",
+                "reference": "INC001",
+                "accountId": account_id
+            },
+            {
+                "type": "income", 
+                "category": "parts",
+                "amount": 800.0,
+                "description": "Parts sales for budget test",
+                "paymentMethod": "card",
+                "reference": "INC002",
+                "accountId": account_id
+            }
+        ]
+        
+        # Create expense transactions
+        expense_transactions = [
+            {
+                "type": "expense",
+                "category": "supplies",
+                "amount": 500.0,
+                "description": "Office supplies for budget test",
+                "paymentMethod": "cash",
+                "reference": "EXP001",
+                "accountId": account_id
+            },
+            {
+                "type": "expense",
+                "category": "utilities",
+                "amount": 300.0,
+                "description": "Utilities for budget test",
+                "paymentMethod": "bank",
+                "reference": "EXP002",
+                "accountId": account_id
+            }
+        ]
+        
+        # Post income transactions
+        for tx in income_transactions:
+            try:
+                response = self.session.post(f"{API_URL}/transactions", json=tx)
+                if response.status_code != 200:
+                    self.log_result("Budget Report API - Create income transactions", False, f"Status: {response.status_code}")
+                    return
+            except Exception as e:
+                self.log_result("Budget Report API - Create income transactions", False, str(e))
+                return
+        
+        # Post expense transactions
+        for tx in expense_transactions:
+            try:
+                response = self.session.post(f"{API_URL}/transactions", json=tx)
+                if response.status_code != 200:
+                    self.log_result("Budget Report API - Create expense transactions", False, f"Status: {response.status_code}")
+                    return
+            except Exception as e:
+                self.log_result("Budget Report API - Create expense transactions", False, str(e))
+                return
+        
+        self.log_result("Budget Report API - Create transactions", True)
+
+        # Step 3: Create a budget for current month
+        budget_data = {
+            "accountId": account_id,
+            "period": current_month,
+            "incomeTarget": 3000.0,
+            "expenseTarget": 1000.0,
+            "notes": "Test budget for API testing"
+        }
+        budget_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/budgets", json=budget_data)
+            if response.status_code == 200:
+                budget = response.json()
+                budget_id = budget.get('id')
+                self.log_result("Budget Report API - Create budget", True)
+            else:
+                self.log_result("Budget Report API - Create budget", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Budget Report API - Create budget", False, str(e))
+            return
+
+        if not budget_id:
+            return
+
+        # Step 4: GET /api/budgets/{id}/report and verify incomeActual/expenseActual/profitActual and percentages
+        try:
+            response = self.session.get(f"{API_URL}/budgets/{budget_id}/report")
+            if response.status_code == 200:
+                report = response.json()
+                summary = report.get('summary', {})
+                
+                # Verify expected values
+                expected_income = 2300.0  # 1500 + 800
+                expected_expense = 800.0  # 500 + 300
+                expected_profit = expected_income - expected_expense  # 1500
+                
+                income_actual = summary.get('incomeActual', 0)
+                expense_actual = summary.get('expenseActual', 0)
+                profit_actual = summary.get('profitActual', 0)
+                income_pct = summary.get('incomeAchievedPct')
+                expense_pct = summary.get('expenseAchievedPct')
+                
+                if (abs(income_actual - expected_income) < 0.01 and 
+                    abs(expense_actual - expected_expense) < 0.01 and
+                    abs(profit_actual - expected_profit) < 0.01 and
+                    income_pct is not None and expense_pct is not None):
+                    self.log_result("Budget Report API - GET report JSON", True)
+                else:
+                    self.log_result("Budget Report API - GET report JSON", False, 
+                                  f"Values mismatch - Income: {income_actual} (expected {expected_income}), "
+                                  f"Expense: {expense_actual} (expected {expected_expense}), "
+                                  f"Profit: {profit_actual} (expected {expected_profit})")
+            else:
+                self.log_result("Budget Report API - GET report JSON", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Budget Report API - GET report JSON", False, str(e))
+
+        # Step 5: Request format=html and verify returns HTML string
+        try:
+            response = self.session.get(f"{API_URL}/budgets/{budget_id}/report?format=html")
+            if response.status_code == 200:
+                html_content = response.text
+                if (html_content.startswith('<!DOCTYPE html') and 
+                    'تقرير الميزانية' in html_content and
+                    'الإيرادات الفعلية' in html_content and
+                    'المصروفات الفعلية' in html_content):
+                    self.log_result("Budget Report API - GET report HTML", True)
+                else:
+                    self.log_result("Budget Report API - GET report HTML", False, "HTML format not correct")
+            else:
+                self.log_result("Budget Report API - GET report HTML", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Budget Report API - GET report HTML", False, str(e))
+
+    def test_customer_receipts_api(self):
+        """Test Customer Receipts API with customer creation and transaction verification"""
+        print("\n🧾 Testing Customer Receipts API...")
+        
+        # Step 1: Create a customer
+        customer_data = {
+            "name": "Khalid Al-Mansouri",
+            "phone": "+966509876543",
+            "email": "khalid.mansouri@email.com"
+        }
+        customer_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/customers", json=customer_data)
+            if response.status_code == 200:
+                customer = response.json()
+                customer_id = customer.get('id')
+                self.log_result("Customer Receipts API - Create customer", True)
+            else:
+                self.log_result("Customer Receipts API - Create customer", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Customer Receipts API - Create customer", False, str(e))
+            return
+
+        if not customer_id:
+            return
+
+        # Create a business account for optional accountId testing
+        account_data = {
+            "name": "Receipt Test Branch",
+            "code": "RTB001", 
+            "currency": "SAR",
+            "isActive": True
+        }
+        account_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/biz-accounts", json=account_data)
+            if response.status_code == 200:
+                account = response.json()
+                account_id = account.get('id')
+        except Exception:
+            pass  # Optional account creation
+
+        # Step 2: POST /api/customer-receipts with customerId and optional accountId
+        receipt_data = {
+            "customerId": customer_id,
+            "accountId": account_id,  # Optional
+            "amount": 750.0,
+            "paymentMethod": "cash",
+            "reference": "REC001",
+            "notes": "Test customer receipt"
+        }
+        receipt_id = None
+        
+        try:
+            response = self.session.post(f"{API_URL}/customer-receipts", json=receipt_data)
+            if response.status_code == 200:
+                receipt = response.json()
+                receipt_id = receipt.get('id')
+                if (receipt.get('customerId') == customer_id and 
+                    receipt.get('amount') == 750.0 and
+                    receipt.get('accountId') == account_id):
+                    self.log_result("Customer Receipts API - POST create", True)
+                else:
+                    self.log_result("Customer Receipts API - POST create", False, "Receipt data not saved correctly")
+            else:
+                self.log_result("Customer Receipts API - POST create", False, f"Status: {response.status_code}")
+                return
+        except Exception as e:
+            self.log_result("Customer Receipts API - POST create", False, str(e))
+            return
+
+        # Step 3: GET /api/customer-receipts filtered by customer_id
+        try:
+            response = self.session.get(f"{API_URL}/customer-receipts?customer_id={customer_id}")
+            if response.status_code == 200:
+                receipts = response.json()
+                if isinstance(receipts, list) and len(receipts) > 0:
+                    found_receipt = any(r.get('id') == receipt_id for r in receipts)
+                    if found_receipt:
+                        self.log_result("Customer Receipts API - GET filter by customer_id", True)
+                    else:
+                        self.log_result("Customer Receipts API - GET filter by customer_id", False, "Receipt not found in customer filter")
+                else:
+                    self.log_result("Customer Receipts API - GET filter by customer_id", False, "No receipts returned")
+            else:
+                self.log_result("Customer Receipts API - GET filter by customer_id", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Customer Receipts API - GET filter by customer_id", False, str(e))
+
+        # Step 4: GET /api/customer-receipts filtered by account_id (if account was created)
+        if account_id:
+            try:
+                response = self.session.get(f"{API_URL}/customer-receipts?account_id={account_id}")
+                if response.status_code == 200:
+                    receipts = response.json()
+                    if isinstance(receipts, list) and len(receipts) > 0:
+                        found_receipt = any(r.get('id') == receipt_id for r in receipts)
+                        if found_receipt:
+                            self.log_result("Customer Receipts API - GET filter by account_id", True)
+                        else:
+                            self.log_result("Customer Receipts API - GET filter by account_id", False, "Receipt not found in account filter")
+                    else:
+                        self.log_result("Customer Receipts API - GET filter by account_id", False, "No receipts returned for account filter")
+                else:
+                    self.log_result("Customer Receipts API - GET filter by account_id", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_result("Customer Receipts API - GET filter by account_id", False, str(e))
+
+        # Step 5: Verify a transaction with category=customer_receipt was created
+        try:
+            response = self.session.get(f"{API_URL}/transactions")
+            if response.status_code == 200:
+                tx_data = response.json()
+                transactions = tx_data.get('transactions', []) if isinstance(tx_data, dict) else tx_data
+                
+                # Find transaction with category=customer_receipt and matching amount
+                customer_receipt_tx = None
+                for tx in transactions:
+                    if (tx.get('category') == 'customer_receipt' and 
+                        abs(tx.get('amount', 0) - 750.0) < 0.01 and
+                        tx.get('type') == 'income'):
+                        customer_receipt_tx = tx
+                        break
+                
+                if customer_receipt_tx:
+                    # Verify it has the correct accountId if provided
+                    if account_id and customer_receipt_tx.get('accountId') == account_id:
+                        self.log_result("Customer Receipts API - Verify transaction created", True)
+                    elif not account_id:
+                        self.log_result("Customer Receipts API - Verify transaction created", True)
+                    else:
+                        self.log_result("Customer Receipts API - Verify transaction created", False, "Transaction accountId mismatch")
+                else:
+                    self.log_result("Customer Receipts API - Verify transaction created", False, "No customer_receipt transaction found")
+            else:
+                self.log_result("Customer Receipts API - Verify transaction created", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Customer Receipts API - Verify transaction created", False, str(e))
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")
@@ -1075,6 +1393,10 @@ class APITester:
         if not self.test_api_health():
             print("❌ API is not accessible. Stopping tests.")
             return
+        
+        # Run NEW REQUESTED TESTS FIRST
+        self.test_budget_report_api()
+        self.test_customer_receipts_api()
         
         # Run existing tests
         self.test_vehicle_list_api()

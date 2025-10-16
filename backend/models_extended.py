@@ -290,5 +290,19 @@ class Budget(BaseModel):
     notes: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
+class AppSettings(BaseModel):
+    id: str = "app_settings"
+    currency: str = "SAR"
+    taxEnabled: bool = False
+    defaultLanguages: List[str] = ["ar", "en"]
+    invoicePrefix: str = "WKS"
+    numberingFormat: str = "{prefix}-{year}-{seq:04d}"
+    nextSequence: int = 1
+    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

@@ -514,6 +514,28 @@ const Settings = () => {
                       rows={3}
                       value={settings.whatsappTrackingTemplate || ''}
                       onChange={(e) => setSettings({...settings, whatsappTrackingTemplate: e.target.value})}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="font-bold text-lg text-slate-800">قوالب رسائل الخدمات</h3>
+                  <div>
+                    <Label>قالب رسالة التشخيص</Label>
+                    <Textarea
+                      rows={3}
+                      value={settings.whatsappDiagnosisTemplate || ''}
+                      onChange={(e) => setSettings({...settings, whatsappDiagnosisTemplate: e.target.value})}
+                      placeholder={"تم إنشاء تقرير التشخيص لمركبتك.\n{{LINK}}"}
+                    />
+                  </div>
+                  <div>
+                    <Label>قالب رسالة طلب الاعتماد</Label>
+                    <Textarea
+                      rows={3}
+                      value={settings.whatsappApprovalTemplate || ''}
+                      onChange={(e) => setSettings({...settings, whatsappApprovalTemplate: e.target.value})}
+                      placeholder={"يرجى مراجعة طلب الاعتماد واتخاذ القرار:\n{{LINK}}"}
+                    />
+                  </div>
+                </div>
+
                       placeholder={"متابعة مركبتك من هنا:\n{{LINK}}"}
                     />
                   </div>

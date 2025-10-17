@@ -448,6 +448,7 @@ const Settings = () => {
                       <select className="w-full border rounded p-2" value={settings.language || 'ar'} onChange={(e)=> setSettings({...settings, language: e.target.value})}>
                         <option value="ar">العربية</option>
                         <option value="en">English</option>
+                        <option value="hi">हिन्दी</option>
                       </select>
                     </div>
                     <div>

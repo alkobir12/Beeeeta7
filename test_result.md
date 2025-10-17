@@ -549,6 +549,18 @@ backend:
           agent: "testing"
           comment: "✅ AI ENHANCED ROUTES SMOKE TESTS COMPLETE: Successfully tested all 5 requested AI endpoints with 100% pass rate (6/6 tests passed). (1) ✅ POST /api/ai/enhanced-chat with Arabic message 'كيف أشخص صوت طقطقة في المحرك؟', provider='openai', model='gpt-5' returns 200 with response and session_id fields as expected. (2) ✅ POST /api/ai/enhanced-chat with Arabic message 'أعطني خطوات فحص مكيف' using default provider returns 200 with proper response structure. (3) ✅ POST /api/ai/kb/import/json with 2 Arabic automotive solution items returns created=2 as expected. (4) ✅ GET /api/ai/search-solutions?query=طقطقة returns count>=0 with proper results structure. (5) ✅ POST /api/ai/kb/docs with Arabic content then GET /api/ai/kb/search-docs?query=مكيف returns results>=1 confirming document storage and search functionality. Fixed ObjectId serialization issue in ai_knowledge_base.py during testing. EMERGENT_LLM_KEY is properly configured and all AI chat endpoints working correctly. All AI routes ready for production use."
 
+  - task: "Toyota PDF Knowledge Base Ingestion"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_ai_enhanced.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ TOYOTA PDF KB INGESTION COMPLETE: Successfully ingested two Toyota PDFs into AI Knowledge Base with 100% pass rate (6/6 tests passed). (1) ✅ POST /api/ai/kb/docs with DENSO CRS Service Manual - TOYOTA HILUX/INNOVA 1KD/2KD (2004) ingested successfully with rich content, tags, and source URL. (2) ✅ POST /api/ai/kb/docs with DENSO CRS Operation - TOYOTA LAND CRUISER 200 Series 1VD-FTV (2007) ingested successfully with comprehensive technical details. (3) ✅ GET /api/ai/kb/search-docs?query=SCV returns 2 results as expected - both documents contain SCV valve information. (4) ✅ GET /api/ai/kb/search-docs?query=1KD returns 1 result - HILUX/INNOVA manual found correctly. (5) ✅ GET /api/ai/kb/search-docs?query=1VD-FTV returns 1 result - LAND CRUISER manual found correctly. (6) ✅ POST /api/ai/enhanced-chat with Arabic message 'اشرح وظيفة صمام SCV ودوره في ضغط السكة' and vehicle_info 'تويوتا 1KD' returns detailed Arabic response about SCV valve function. All KB document ingestion, search functionality, and RAG-enhanced chat working perfectly. Knowledge base successfully populated with Toyota technical manuals and searchable via multiple queries."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

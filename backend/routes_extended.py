@@ -1065,7 +1065,10 @@ async def resolve_template(payload: dict = Body(...)):
     if override:
         tpl = await db.templates.find_one({"type": override, "isActive": True})
         if not tpl:
-            raise HTTPException(status_code=404, detail="Template override not found")
+            # allow non-active fallback
+            tpl = await db.templates.find_one({"type": override})
+            if not tpl:
+                raise HTTPException(status_code=404, detail="Template override not found")
         tpl.pop('_id', None)
         return {"type": override, "template": tpl}
 
@@ -1089,6 +1092,71 @@ async def resolve_template(payload: dict = Body(...)):
             raise HTTPException(status_code=404, detail="No template found")
     tpl.pop('_id', None)
     return {"type": t_type, "template": tpl}
+
+# ============ Template Render (merge data into template) ============
+@router.post("/print/render")
+async def render_template(payload: dict = Body(...)):
+    """Render a template by type with provided data.
+    payload: { override_type?: str, service_category?: str, service_name?: str, data: {..} }
+    returns: { html }
+    """
+    try:
+        # Resolve template
+        res = await resolve_template(payload)
+        tpl = res["template"]
+        html = tpl.get("content") or tpl.get("html") or ""
+        data = payload.get("data") or {}
+        # Basic placeholder fill
+        def get_val(key, default=""):
+            v = data.get(key)
+            if v is None:
+                return default
+            return v
+        replacements = {
+            "{{WORKSHOP_NAME}}": get_val("WORKSHOP_NAME","ورشتي"),
+            "{{WORKSHOP_ADDRESS}}": get_val("WORKSHOP_ADDRESS",""),
+            "{{WORKSHOP_PHONE}}": get_val("WORKSHOP_PHONE",""),
+            "{{TAX_NUMBER}}": get_val("TAX_NUMBER",""),
+            "{{INVOICE_NUMBER}}": get_val("INVOICE_NUMBER",""),
+            "{{INVOICE_DATE}}": get_val("INVOICE_DATE", datetime.utcnow().date().isoformat()),
+            "{{CUSTOMER_NAME}}": get_val("CUSTOMER_NAME",""),
+            "{{CUSTOMER_PHONE}}": get_val("CUSTOMER_PHONE",""),
+            "{{CUSTOMER_EMAIL}}": get_val("CUSTOMER_EMAIL",""),
+            "{{VEHICLE_PLATE}}": get_val("VEHICLE_PLATE",""),
+            "{{VEHICLE_MODEL}}": get_val("VEHICLE_MODEL",""),
+            "{{VEHICLE_YEAR}}": get_val("VEHICLE_YEAR",""),
+            "{{VEHICLE_COLOR}}": get_val("VEHICLE_COLOR",""),
+            "{{VEHICLE_VIN}}": get_val("VEHICLE_VIN",""),
+            "{{FILE_NUMBER}}": get_val("FILE_NUMBER",""),
+            "{{SUBTOTAL}}": f"{float(get_val('SUBTOTAL',0)):.2f}",
+            "{{DISCOUNT}}": f"{float(get_val('DISCOUNT',0)):.2f}",
+            "{{TAX}}": f"{float(get_val('TAX',0)):.2f}",
+            "{{TOTAL}}": f"{float(get_val('TOTAL',0)):.2f}",
+            "{{DIAGNOSIS_DATE}}": get_val("DIAGNOSIS_DATE", datetime.utcnow().date().isoformat()),
+            "{{TECHNICIAN_NAME}}": get_val("TECHNICIAN_NAME",""),
+        }
+        for k, v in replacements.items():
+            html = html.replace(k, str(v))
+        # Items handling
+        items = data.get("items") or []
+        if "{{ITEMS}}" in html:
+            rows = []
+            for it in items:
+                name = str(it.get('name',''))
+                qty = float(it.get('qty', it.get('quantity',1) or 1))
+                price = float(it.get('price',0))
+                total = float(it.get('total', qty*price))
+                rows.append(f"<tr><td>{name}</td><td>{qty:.2f}</td><td>{price:.2f}</td><td>{total:.2f}</td></tr>")
+            table_html = "".join(rows) or "<tr><td colspan='4'>لا توجد بنود</td></tr>"
+            html = html.replace("{{ITEMS}}", table_html)
+        # Ensure printable wrapper
+        if "<html" not in html.lower():
+            html = f"<!DOCTYPE html><html dir='rtl'><head><meta charset='UTF-8'><title>طباعة</title><style>@page{{size:A4;margin:12mm}} body{{font-family:Tahoma,Arial;direction:rtl;color:#111;padding:8mm}} table{{width:100%;border-collapse:collapse}} td,th{{border:1px solid #ddd;padding:6px;text-align:right}}</style></head><body>{html}</body></html>"
+        return {"html": html}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============ Import Skeletons (JSON rows, no UI) ============

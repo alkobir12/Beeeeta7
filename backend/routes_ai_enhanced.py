@@ -189,7 +189,8 @@ async def ai_diagnostics_compare(payload: CompareRequest):
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             # Fallback: diff only
-            a = payload.vehicle_a.dict(); b = payload.vehicle_b.dict()
+            a = payload.vehicle_a.dict()
+            b = payload.vehicle_b.dict()
             diffs = {k: {"a": a.get(k), "b": b.get(k)} for k in set(a)|set(b) if a.get(k) != b.get(k)}
             rep = {"summary": "تقرير بدائي بلا نموذج ذكاء (مطلوب EMERGENT_LLM_KEY)", "diffs": diffs}
             await db.ai_vehicle_cases.insert_one({

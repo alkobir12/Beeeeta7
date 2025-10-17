@@ -28,15 +28,65 @@ import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
 import CustomerTracking from "./pages/CustomerTracking";
 import Knowledge from "./pages/Knowledge";
+import Login from "./pages/Login";
+import Users from "./pages/Users";
 import { ThemeProvider } from './contexts/ThemeContext';
+
+const Protected = ({ children }) => {
+  const session = (() => { try { return JSON.parse(localStorage.getItem('session')||'null'); } catch(e){ return null; } })();
+  if (!session) {
+    window.location.href = '/login';
+    return null;
+  }
+  return children;
+};
 
 function App() {
   return (
-    <div className="App">
-      <h1>نظام إدارة الورش</h1>
-      <p>تطبيق إدارة الورش يعمل بنجاح</p>
-      <button>اختبار الزر</button>
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/approval/:token" element={<ApprovalPublic />} />
+            <Route path="/report/:token" element={<ReportPublic />} />
+            <Route path="/track/:trackingId" element={<CustomerTracking />} />
+
+            <Route path="*" element={
+              <Protected>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/new-vehicle" element={<NewVehicle />} />
+                    <Route path="/vehicle/:id" element={<VehicleDetails />} />
+                    <Route path="/customer/:id" element={<CustomerDetails />} />
+                    <Route path="/technicians" element={<Technicians />} />
+                    <Route path="/suppliers" element={<Suppliers />} />
+                    <Route path="/parts" element={<PartsInventory />} />
+                    <Route path="/services" element={<ServicesManagement />} />
+                    <Route path="/templates" element={<Templates />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/ai-assistant" element={<AIAssistant />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/profile" element={<WorkshopProfile />} />
+                    <Route path="/archive" element={<VehicleArchive />} />
+                    <Route path="/ceo" element={<CEO />} />
+                    <Route path="/payroll" element={<Payroll />} />
+                    <Route path="/business-accounts" element={<BusinessAccounts />} />
+                    <Route path="/operations" element={<Operations />} />
+                    <Route path="/customer-receipts" element={<CustomerReceipts />} />
+                    <Route path="/knowledge" element={<Knowledge />} />
+                    <Route path="/import" element={<ImportPage />} />
+                    <Route path="/users" element={<Users />} />
+                  </Routes>
+                </Layout>
+              </Protected>
+            } />
+          </Routes>
+        </Router>
+      </div>
+    </ThemeProvider>
   );
 }
 

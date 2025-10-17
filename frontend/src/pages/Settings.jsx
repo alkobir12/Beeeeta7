@@ -163,6 +163,7 @@ const Settings = () => {
   const tabs = [
     { id: 'workshop', label: 'معلومات الورشة', icon: Building2 },
     { id: 'printing', label: 'الطباعة والنماذج', icon: FileText },
+    { id: 'navigation', label: 'القائمة والتنقل', icon: SettingsIcon },
     { id: 'notifications', label: 'الإشعارات', icon: Bell },
     { id: 'system', label: 'النظام', icon: Globe },
     { id: 'security', label: 'الأمان', icon: Shield },

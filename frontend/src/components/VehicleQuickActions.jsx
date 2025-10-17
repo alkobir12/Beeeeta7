@@ -83,25 +83,71 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
+  const fetchLatestDocData = async (type) => {
+    try {
+      if (!vehicle?.id) return null;
+      if (type === 'invoice') {
+        const res = await axios.get(`${API_URL}/invoices`, { params: { vehicle_id: vehicle.id } });
+        const inv = (res.data || [])[0];
+        if (inv) {
+          const items = (inv.items||[]).map(it => ({ name: it.name, qty: it.quantity, price: it.price, total: it.total }));
+          return { items, SUBTOTAL: inv.subtotal||0, TAX: inv.tax||0, TOTAL: inv.total||0, PAYMENT_METHOD: inv.paymentMethod, INVOICE_NO: inv.invoiceNumber };
+        }
+      } else if (type === 'quote') {
+        try {
+          const res = await axios.get(`${API_URL}/quotes`, { params: { vehicle_id: vehicle.id } });
+          const q = (res.data || [])[0];
+          if (q) {
+            const items = (q.items||[]).map(it => ({ name: it.name, qty: it.quantity, price: it.price, total: (it.quantity*it.price) }));
+            return { items, SUBTOTAL: q.subtotal||0, DISCOUNT: q.discount||0, TAX: q.tax||0, TOTAL: q.total||0 };
+          }
+        } catch(_){ /* ignore if endpoint missing */ }
+      } else if (type === 'receipt') {
+        try {
+          const res = await axios.get(`${API_URL}/customer-receipts`, { params: { customer_id: vehicle.customerId } });
+          const r = (res.data || [])[0];
+          if (r) {
+            return { TOTAL: r.amount||0, RECEIPT_DATE: r.date?.slice(0,10), CUSTOMER_NAME: vehicle.customerName };
+          }
+        } catch(_){ /* ignore */ }
+      } else if (type === 'diagnosis') {
+        try {
+          const res = await axios.get(`${API_URL}/diagnosis-cases`, { params: { vehicle_id: vehicle.id } });
+          const d = (res.data || [])[0];
+          if (d) {
+            const items = (d.items||[]).map(it => ({ name: it.name || it.title || 'بند', qty: it.quantity||1, price: it.price||0, total: (it.quantity||1)*(it.price||0) }));
+            return { items, DIAGNOSIS_DATE: new Date(d.createdAt).toISOString().slice(0,10) };
+          }
+        } catch(_){ /* ignore */ }
+      }
+    } catch(_){ return null; }
+    return null;
+  };
+
   const handlePrint = async (type) => {
     try {
       setLoading(true);
       let title = 'معاينة الطباعة';
       let html = '';
+
+      // Prefer real documents linked to the vehicle; fallback to vehicle data if not found
+      const docData = await fetchLatestDocData(type);
+
       if (type === 'invoice') {
         title = 'فاتورة';
-        html = await renderDoc('invoice', { items: vehicle?.items||[], TOTAL: 0 });
+        const fallbackItems = (vehicle?.items||[]).map(it => ({ name: it.name, qty: it.qty||1, price: it.price||0, total: it.total||0 }));
+        html = await renderDoc('invoice', docData || { items: fallbackItems, TOTAL: 0 });
       } else if (type === 'diagnosis') {
         title = 'تقرير تشخيص';
         const items = (vehicle?.services||[]).map(n => ({ name: n, qty: 1, price: 0, total: 0 }));
-        html = await renderDoc('diagnosis', { items, DIAGNOSIS_DATE: new Date().toISOString().slice(0,10) });
+        html = await renderDoc('diagnosis', docData || { items, DIAGNOSIS_DATE: new Date().toISOString().slice(0,10) });
       } else if (type === 'quote') {
         title = 'عرض سعر';
         const items = (vehicle?.services||[]).map(n => ({ name: n, qty: 1, price: 0, total: 0 }));
-        html = await renderDoc('quote', { items });
+        html = await renderDoc('quote', docData || { items });
       } else if (type === 'receipt') {
         title = 'سند قبض';
-        html = await renderDoc('receipt', { TOTAL: 0 });
+        html = await renderDoc('receipt', docData || { TOTAL: 0 });
       }
       if (!html) throw new Error('no html');
       openPreview(title, html);

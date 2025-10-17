@@ -204,16 +204,25 @@ class HealthCheckTester:
             
             self.log_result("Media Upload - Init", True)
             
-            # Step 2: Upload one chunk
+            # Step 2: Upload one chunk - Use multipart form data correctly
             import io
             fake_video_data = b"fake video content for testing" * 32  # Make it 1024 bytes
             
-            files = {'chunk': ('chunk.bin', io.BytesIO(fake_video_data), 'application/octet-stream')}
-            data = {'uploadId': upload_id, 'index': 0}
+            # Create multipart form data with all fields as form data
+            files = {
+                'chunk': ('chunk.bin', io.BytesIO(fake_video_data), 'application/octet-stream')
+            }
+            data = {
+                'uploadId': upload_id,
+                'index': '0'  # Send as string in form data
+            }
             
-            chunk_response = self.session.post(f"{API_URL}/media/upload/chunk", files=files, data=data)
+            # Remove JSON header for multipart request
+            headers = {'Accept': 'application/json'}
+            chunk_response = requests.post(f"{API_URL}/media/upload/chunk", files=files, data=data, headers=headers)
+            
             if chunk_response.status_code != 200:
-                self.log_result("Media Upload - Chunk", False, f"Status: {chunk_response.status_code}")
+                self.log_result("Media Upload - Chunk", False, f"Status: {chunk_response.status_code}, Response: {chunk_response.text}")
                 return
             
             chunk_result = chunk_response.json()

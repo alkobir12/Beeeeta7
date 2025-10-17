@@ -601,6 +601,7 @@ async def get_settings():
                 {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
                 {"path": "/analytics", "label": "التحليلات", "enabled": True},
                 {"path": "/customers", "label": "العملاء", "enabled": True},
+                {"path": "/customer-receipts", "label": "توريد العملاء", "enabled": True},
                 {"path": "/technicians", "label": "الفنيين", "enabled": True},
                 {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
                 {"path": "/profile", "label": "ملف الورشة", "enabled": True},

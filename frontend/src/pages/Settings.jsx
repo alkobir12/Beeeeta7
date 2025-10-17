@@ -428,6 +428,57 @@ const Settings = () => {
                       checked={!!settings.menuConfig?.simple}
                       onCheckedChange={(checked) => setSettings({
                         ...settings,
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-l from-slate-50">
+                  <CardTitle>الإعدادات الشاملة</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>الثيم</Label>
+                      <select className="w-full border rounded p-2" value={settings.themeName || 'light'} onChange={(e)=> setSettings({...settings, themeName: e.target.value})}>
+                        <option value="light">فاتح</option>
+                        <option value="dark">داكن</option>
+                        <option value="blue">أزرق</option>
+                        <option value="green">أخضر</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>اللغة</Label>
+                      <select className="w-full border rounded p-2" value={settings.language || 'ar'} onChange={(e)=> setSettings({...settings, language: e.target.value})}>
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>نمط التخطيط</Label>
+                      <select className="w-full border rounded p-2" value={settings.layoutMode || 'comfortable'} onChange={(e)=> setSettings({...settings, layoutMode: e.target.value})}>
+                        <option value="compact">مضغوط</option>
+                        <option value="comfortable">مريح</option>
+                        <option value="spacious">واسع</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button onClick={async ()=>{
+                      try{
+                        const res = await fetch(`${API_URL}/settings`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(settings)});
+                        if(!res.ok) throw new Error('failed');
+                        toast({ title:'تم الحفظ', description:'تم تحديث الإعدادات' });
+                      }catch(e){ toast({ title:'خطأ', description:'تعذر حفظ الإعدادات', variant:'destructive' }); }
+                    }} className="bg-blue-600 hover:bg-blue-700">حفظ الإعدادات</Button>
+                    <Button variant="outline" onClick={()=>{
+                      setSettings({...settings, themeName:'light', language:'ar', layoutMode:'comfortable'});
+                    }}>إعادة تعيين</Button>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Label className="mb-2 block">نماذج الفواتير والتقارير</Label>
+                    <Button onClick={()=> navigate('/templates')} className="bg-purple-600 hover:bg-purple-700">فتح إدارة النماذج</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
                         menuConfig: { ...(settings.menuConfig||{}), simple: checked }
                       })}
                     />

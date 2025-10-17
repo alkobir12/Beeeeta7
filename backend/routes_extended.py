@@ -1191,6 +1191,16 @@ async def create_indexes():
         await db.approval_requests.create_index("token", unique=True)
         await db.approval_requests.create_index("vehicleId")
         await db.transactions.create_index([("date", 1)])
+        await db.transactions.create_index([("accountId", 1)])
+        await db.vehicles.create_index("customerId")
+        await db.quotes.create_index("customerId")
+        await db.sales_orders.create_index("customerId")
+        await db.vendor_bills.create_index("supplierId")
+        await db.document_dependencies.create_index([("fromDoc.docId", 1)])
+        await db.document_dependencies.create_index([("toDoc.docId", 1)])
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============ Auth via WhatsApp-like OTP (link delivery) ============
 @router.post('/auth/request-otp')

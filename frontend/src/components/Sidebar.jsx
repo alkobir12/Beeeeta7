@@ -160,11 +160,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <Button
                     key={item.path}
                     variant={isActive ? 'default' : 'ghost'}
-                    className={`w-full justify-start gap-3 py-4 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                    className={`w-full justify-start gap-3 py-2 text-sm transition-all duration-200 ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-slate-100 text-slate-700'}`}
                     onClick={() => handleNavigate(item.path)}
                     title={item.label}
                   >
-                    <Icon size={20} />
+                    <Icon size={18} />
                     {item.label}
                   </Button>
                 );

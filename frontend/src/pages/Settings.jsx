@@ -408,6 +408,41 @@ const Settings = () => {
 
               <Card className="shadow-lg">
                 <CardHeader className="bg-gradient-to-l from-blue-50">
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-l from-slate-50">
+                  <CardTitle>إعدادات القائمة والتنقل</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base">قائمة موحّدة مبسّطة</Label>
+                      <p className="text-sm text-slate-500">دمج جميع العناصر في قائمة واحدة بدون مجموعات</p>
+                    </div>
+                    <Switch
+                      checked={!!settings.menuConfig?.simple}
+                      onCheckedChange={(checked) => setSettings({
+                        ...settings,
+                        menuConfig: { ...(settings.menuConfig||{}), simple: checked }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base">إظهار صفحة الاستيراد في القائمة</Label>
+                      <p className="text-sm text-slate-500">عرض رابط الاستيراد ضمن القائمة الجانبية</p>
+                    </div>
+                    <Switch
+                      checked={!!settings.menuConfig?.showImport}
+                      onCheckedChange={(checked) => setSettings({
+                        ...settings,
+                        menuConfig: { ...(settings.menuConfig||{}), showImport: checked }
+                      })}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
                   <CardTitle>إدارة النماذج</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">

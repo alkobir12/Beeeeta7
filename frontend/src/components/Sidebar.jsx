@@ -109,7 +109,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Dynamic Menu based on settings */}
           {menuConfig?.items ? (
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               {menuConfig.items.map((item) => {
                 if (item.group && item.children?.length) {
                   const isActive = location.pathname.startsWith(item.path);

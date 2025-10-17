@@ -49,8 +49,8 @@ async def analytics_cards():
             cust_new = await db.customers.count_documents({"createdAt": {"$gte": since_month}})
         except Exception:
             cust_new = 0
-        cust_has_phone = await db.customers.count_documents({"phone": {"$ne": None, "$ne": ""}})
-        cust_has_email = await db.customers.count_documents({"email": {"$ne": None, "$ne": ""}})
+        cust_has_phone = await db.customers.count_documents({"phone": {"$nin": [None, ""]}})
+        cust_has_email = await db.customers.count_documents({"email": {"$nin": [None, ""]}})
 
         return {
             "customers": {"total": customers_count, "newThisMonth": cust_new, "withPhone": cust_has_phone, "withEmail": cust_has_email},

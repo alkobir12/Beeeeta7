@@ -3,7 +3,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Car, Search, Calendar, User, Phone, FileText, Eye, Trash2, Filter, MoreVertical } from 'lucide-react';
+import { Car, Search, Calendar, User, Phone, FileText, Eye, Trash2, Filter, MoreVertical, Wrench } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';

@@ -32,41 +32,11 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
-    <ThemeProvider>
-      <div className="App">
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/customers" element={<Customers />} />
-              <Route path="/new-vehicle" element={<NewVehicle />} />
-              <Route path="/vehicle/:id" element={<VehicleDetails />} />
-              <Route path="/customer/:id" element={<CustomerDetails />} />
-              <Route path="/technicians" element={<Technicians />} />
-              <Route path="/suppliers" element={<Suppliers />} />
-              <Route path="/parts" element={<PartsInventory />} />
-              <Route path="/services" element={<ServicesManagement />} />
-              <Route path="/templates" element={<Templates />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/ai-assistant" element={<AIAssistant />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/profile" element={<WorkshopProfile />} />
-              <Route path="/archive" element={<VehicleArchive />} />
-              <Route path="/ceo" element={<CEO />} />
-              <Route path="/payroll" element={<Payroll />} />
-              <Route path="/business-accounts" element={<BusinessAccounts />} />
-              <Route path="/operations" element={<Operations />} />
-              <Route path="/customer-receipts" element={<CustomerReceipts />} />
-              <Route path="/approval/:token" element={<ApprovalPublic />} />
-              <Route path="/report/:token" element={<ReportPublic />} />
-              <Route path="/track/:trackingId" element={<CustomerTracking />} />
-              <Route path="/knowledge" element={<Knowledge />} />
-              <Route path="/import" element={<ImportPage />} />
-            </Routes>
-          </Layout>
-        </Router>
-      </div>
-    </ThemeProvider>
+    <div className="App">
+      <h1>نظام إدارة الورش</h1>
+      <p>تطبيق إدارة الورش يعمل بنجاح</p>
+      <button>اختبار الزر</button>
+    </div>
   );
 }
 

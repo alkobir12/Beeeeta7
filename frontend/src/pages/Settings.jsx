@@ -476,6 +476,12 @@ const Settings = () => {
                       }catch(e){ toast({ title:'خطأ', description:'تعذر حفظ الإعدادات', variant:'destructive' }); }
                     }} className="bg-blue-600 hover:bg-blue-700">حفظ الإعدادات</Button>
                     <Button variant="outline" onClick={()=>{
+                      setSettings({...settings, themeName:'light'});
+                    }}>إعادة تعيين</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="shadow-lg">
                 <CardHeader className="bg-gradient-to-l from-slate-50">
                   <CardTitle>إعدادات الطباعة</CardTitle>

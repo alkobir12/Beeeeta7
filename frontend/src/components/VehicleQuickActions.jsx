@@ -150,9 +150,24 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   const handlePrintInvoice = async () => {
     try {
       setLoading(true);
-      const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
-      const inv = (templates || []).find(t => (t.type === 'invoice'));
-      const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
+      // Resolve and render via backend to ensure correct template binding
+      const data = {
+        override_type: 'invoice',
+        data: {
+          WORKSHOP_NAME: 'ورشتي',
+          CUSTOMER_NAME: vehicle?.customerName,
+          CUSTOMER_PHONE: vehicle?.customerPhone,
+          VEHICLE_PLATE: vehicle?.plateNumber,
+          VEHICLE_MODEL: `${vehicle?.brand||''} ${vehicle?.model||''}`,
+          VEHICLE_YEAR: vehicle?.year,
+          FILE_NUMBER: vehicle?.file_number,
+          VEHICLE_VIN: vehicle?.vin,
+          ITEMS: (vehicle?.items||[]),
+          SUBTOTAL: 0, DISCOUNT: 0, TAX: 0, TOTAL: 0
+        }
+      };
+      const res = await axios.post(`${API_URL}/print/render`, data);
+      const html = res.data?.html || defaultInvoiceTemplate;
       printViaIframe(html, 'فاتورة');
       toast({ title: 'تم الطباعة', description: 'تم إرسال الفاتورة للطباعة' });
     } catch (e) {

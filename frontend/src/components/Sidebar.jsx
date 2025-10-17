@@ -51,7 +51,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/profile', label: 'ملف الورشة', icon: Building2 },
     { path: '/business-accounts', label: 'الفروع', icon: Building2 },
     { path: '/operations', label: 'عمليات شراء/بيع', icon: Package },
-    { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText }
+    { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText },
+    { path: '/import', label: 'الاستيراد', icon: FileText }
   ];
 
   const handleNavigate = (path) => {

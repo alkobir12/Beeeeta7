@@ -41,6 +41,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     { value: 'delivered', label: 'تم التسليم', color: 'bg-gray-500' }
   ];
 
+  useEffect(() => {
+    setNewStatus(vehicle?.status || 'diagnosis');
+  }, [vehicle]);
+
   const handleStatusUpdate = async () => {
     try {
       setLoading(true);
@@ -127,30 +131,13 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-  const openPrintWindow = (rawHtml) => {
-    const win = window.open('about:blank', '_blank', 'noopener');
-    if (!win) throw new Error('حظر المنبثقات: الرجاء السماح بالنوافذ المنبثقة للطباعة');
-    const hasHtmlTag = /<html[\s\S]*>/i.test(rawHtml || '');
-    const content = hasHtmlTag ? rawHtml : `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>طباعة</title><style>@page{size:A4;margin:12mm;}body{font-family:Tahoma,Arial,sans-serif;color:#111;direction:rtl;padding:8mm;}h1,h2,h3{margin:0 0 8px;} .muted{color:#555;} .row{display:flex;gap:16px} .col{flex:1} hr{border:none;border-top:1px solid #ddd;margin:12px 0}</style></head><body>${rawHtml || ''}<script>window.onload=function(){try{window.focus();window.print();}catch(e){}};<\/script></body></html>`;
-    win.document.open();
-    win.document.write(content);
-    win.document.close();
-    // Fallback print after a short delay for Safari
-    setTimeout(() => { try { win.focus(); win.print(); } catch(_) {} }, 700);
-  };
-
   const handlePrintReport = async () => {
     try {
       setLoading(true);
-      console.log('Starting diagnosis report print flow...');
-      
       const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const diag = (templates || []).find(t => (t.type === 'diagnosis'));
       const html = fillTemplate(diag?.content || diag?.html || defaultDiagnosisTemplate, {});
-      
-      console.log('Calling printViaIframe with diagnosis content...');
       printViaIframe(html, 'تقرير تشخيص');
-      
       toast({ title: 'تم الطباعة', description: 'تم إرسال التقرير للطباعة' });
     } catch (e) {
       console.error('Print report error:', e);
@@ -160,19 +147,13 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-
   const handlePrintInvoice = async () => {
     try {
       setLoading(true);
-      console.log('Starting invoice print flow...');
-      
       const templates = Array.isArray(templatesCache) ? templatesCache : (await axios.get(`${API_URL}/templates`)).data;
       const inv = (templates || []).find(t => (t.type === 'invoice'));
       const html = fillTemplate(inv?.content || inv?.html || defaultInvoiceTemplate, { total: 0 });
-      
-      console.log('Calling printViaIframe with invoice content...');
       printViaIframe(html, 'فاتورة');
-      
       toast({ title: 'تم الطباعة', description: 'تم إرسال الفاتورة للطباعة' });
     } catch (e) {
       console.error('Print invoice error:', e);
@@ -202,12 +183,17 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       if (data.expiresAt) {
         toast({ title: 'صلاحية الرابط', description: `ينتهي خلال 7 أيام (${new Date(data.expiresAt).toLocaleString('ar-SA')})` });
       }
-      const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink}`;
-      const msg = `السلام عليكم ${vehicle?.customerName}\nرابط تتبع مركبتك: ${trackingLink}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
       const phone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
       if (phone) {
-        const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-        if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
+        try {
+          const prep = await axios.post(`${API_URL}/notifications/prepare`, { type: 'approval', phone, link: approvalLink });
+          const wa = window.open(prep.data.whatsappDeeplink, '_blank', 'noopener,noreferrer');
+          if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
+        } catch (_e) {
+          const msg = `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
+          const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+          if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
+        }
       }
       setNewStatus('quotation');
     } catch (e) {
@@ -221,7 +207,6 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     if (!window.confirm(`هل أنت متأكد من حذف المركبة ${vehicle?.plateNumber}؟`)) {
       return;
     }
-    
     try {
       setLoading(true);
       await onDelete();

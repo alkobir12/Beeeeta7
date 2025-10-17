@@ -574,7 +574,7 @@ async def get_settings():
                     {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
                     {"path": "/profile", "label": "ملف الورشة", "enabled": True},
                     {"path": "/business-accounts", "label": "الفروع", "enabled": True},
-                    {"group": true, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
+                    {"group": True, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
                         {"path": "/suppliers", "label": "الموردين", "enabled": True},
                         {"path": "/operations", "label": "عمليات شراء/بيع", "enabled": True},
                         {"path": "/services", "label": "الخدمات", "enabled": True}

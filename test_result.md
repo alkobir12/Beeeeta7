@@ -690,6 +690,8 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+    - agent: "main"
+      message: "Updated frontend: added /track/:trackingId route, rebuilt CustomerTracking to use real /api/vehicles/track/{id} data and show full vehicle details. Sidebar now includes Import link. VehicleQuickActions now uses /api/notifications/prepare to build WhatsApp deeplink and generates /approval/{token} link. Requesting focused frontend tests for these flows."
 
 agent_communication:
     - agent: "main"

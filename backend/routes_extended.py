@@ -185,6 +185,12 @@ async def analytics_services():
             cats[r.get('category') or 'other'] = cats.get(r.get('category') or 'other', 0) + 1
             total_price += float(r.get('price') or 0)
 # ------------------ AUTH (OTP) ------------------
+        avg_price = (total_price / total) if total > 0 else 0
+        return {"total": total, "categories": cats, "avgPrice": avg_price}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post('/auth/request-otp')
 async def request_otp(payload: Dict[str, Any]):
     try:

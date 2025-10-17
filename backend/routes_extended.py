@@ -273,9 +273,9 @@ DEFAULT_TEMPLATES: Dict[str, str] = {
 
 async def _ensure_templates():
     try:
-        count = await db.templates.count_documents({})
+        await db.templates.count_documents({})
     except Exception:
-        count = 0
+        pass
     added = []
     for t, html in DEFAULT_TEMPLATES.items():
         existing = await db.templates.find_one({'type': t, 'isActive': True})

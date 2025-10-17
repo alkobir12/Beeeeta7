@@ -41,8 +41,8 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
     vehicle_info: Optional[str] = None
-    provider: Optional[str] = None  # 'openai' | 'anthropic'
-    model: Optional[str] = None     # e.g. 'gpt-5' | 'claude-3-7-sonnet-20250219'
+    provider: Optional[str] = None
+    model: Optional[str] = None
 
 
 @router.post("/ai/enhanced-chat")
@@ -125,6 +125,117 @@ async def enhanced_ai_chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# -------------------- Diagram Reading Assistant --------------------
+class DiagramQARequest(BaseModel):
+    diagram_text: Optional[str] = None
+    question: Optional[str] = None
+    vehicle_info: Optional[str] = None
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+
+@router.post("/ai/electrical/diagram-qa")
+async def electrical_diagram_qa(req: DiagramQARequest):
+    """Assistant to help read wiring diagrams and propose solutions."""
+    try:
+        # collect context from electrical KB and docs with diagram keywords
+        terms = [t for t in ["مخطط", "schematic", "wiring", "DIN", "JIS", "connector", "pinout", "ground", "GND", "E", "IG", "B+", "ACC", "CAN", "LIN"]]
+        q_or = [{"title": {"$regex": t, "$options": "i"}} for t in terms] + [{"content_excerpt": {"$regex": t, "$options": "i"}} for t in terms]
+        ekb = await db.ai_kb_electrical.find({"$or": q_or}).sort("created_at", -1).limit(3).to_list(length=3)
+        for e in ekb:
+            e.pop('_id', None)
+        d_or = [{"title": {"$regex": t, "$options": "i"}} for t in terms] + [{"content": {"$regex": t, "$options": "i"}} for t in terms]
+        docs = await db.ai_kb_docs.find({"$or": d_or}).sort("created_at", -1).limit(3).to_list(length=3)
+        for d in docs:
+            d.pop('_id', None)
+        ctx = []
+        if ekb:
+            ctx.append("\n\n=== مرجع كهربائي منظم ===\n" + "\n".join([str(e.get('structured'))[:600] for e in ekb]))
+        if docs:
+            ctx.append("\n\n=== مقتطف وثائق ===\n" + "\n".join([(d.get('title') or d.get('file_name') or 'وثيقة') + "\n" + (d.get('content') or '')[:500] for d in docs]))
+        system = f"""أنت خبير قراءة مخططات كهرباء سيارات.
+اهدافك:
+- شرح رموز المخططات (أسلاك، ألوان، فيوزات، ريلايات، موصلات، أطراف)
+- تحديد اتجاه سريان التيار والمسار من المصدر إلى الحمل والأرضي
+- تحديد نقاط القياس بالمِلتميتر والاسكانر
+- اقتراح الحلول بناءً على القراءة
+
+مراجع مختصرة:
+{''.join(ctx)}
+
+صيغة الإجابة:
+1) فهم المخطط (الرموز/الألوان/الاتجاه)
+2) تتبع المسار (B+ → فيوز → ريلاي → الموصل → الحمل → الأرضي)
+3) نقاط اختبار رئيسية وقيم متوقعة
+4) أعطال محتملة وحلول
+5) تحذيرات سلامة
+"""
+        user = (req.question or "") + ("\n\n" + (req.diagram_text or ""))
+        llm_key = os.getenv('EMERGENT_LLM_KEY')
+        if not llm_key:
+            # fallback textual guide
+            guide = """دليل مبسط لقراءة المخطط:
+- حدد مصدر التغذية: B+ أو IG أو ACC
+- تتبع الفيوز ثم الريلاي ثم سلك الخرج إلى الحمل ثم الأرضي E
+- اقرأ ألوان الأسلاك (مثال تويوتا: B=أسود أرضي، R=أحمر بطارية، G=أخضر، Y=أصفر، W=أبيض)
+- افحص الفولت قبل وبعد الفيوز والريلاي، وافحص الاستمرارية للأرضي
+- نقاط قياس: طرف الإدخال/الإخراج في الريلاي، طرف الحمل، نقطة الأرضي
+- في غياب مفتاح الذكاء، اتبع الجدول المرجعي للمخططات DIN/JIS
+"""
+            return {"response": guide, "sources": [d.get('title') for d in docs][:3]}
+        provider = (req.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
+        model = req.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system).with_model(provider, model)
+        resp = await chat.send_message(UserMessage(text=user))
+        return {"response": resp, "sources": [d.get('title') or d.get('file_name') for d in docs][:3]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ai/kb/electrical/seed-diagram-guide")
+async def seed_diagram_guide():
+    """Seed a tutorial doc for reading automotive wiring diagrams."""
+    try:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "title": "دليل قراءة مخططات كهرباء السيارات",
+            "tags": ["electrical","diagram","schematic","tutorial"],
+            "content_excerpt": "خطوات قراءة المخطط: تحديد المصدر B+/IG/ACC، تتبع الفيوز والريلاي، ألوان الأسلاك، أطراف الموصلات، اتجاه السريان، نقاط القياس.",
+            "structured": {
+                "symbols": {
+                    "battery": "B+",
+                    "ignition": "IG",
+                    "accessory": "ACC",
+                    "ground": "E/GND",
+                    "fuse": "F",
+                    "relay": "RL",
+                    "connector": "C/IG/K/EM/ECU pins",
+                    "junction": "J/SPLICE",
+                    "sensor": "SNS/V",
+                    "actuator": "M/COIL"
+                },
+                "wire_colors_toyota": {"B":"أسود (أرضي)","W":"أبيض","R":"أحمر","G":"أخضر","Y":"أصفر","L":"أزرق","Br":"بني","P":"وردي"},
+                "pinout_reading": ["اقرأ اسم الموصل (مثال C25)","تعرّف على رقم الطرف (مثال 3)","طول السلك ولونه","الوجهة التالية"],
+                "flow": "B+ → FUSE → RELAY → CONNECTOR → LOAD → GROUND",
+                "test_points": ["قبل/بعد الفيوز","مدخل/مخرج الريلاي","طرف الحمل","نقطة الأرضي"],
+                "expected_values": ["12V عند B+","0V قبل الريلاي إذا غير مُفعّل","12V بعد الريلاي عند التفعيل","0Ω تقريبًا بين الأرضي ونقطة E"],
+                "safety": ["افصل البطارية","استخدم ملتيميتر مع نطاق مناسب","تجنّب القِصر"],
+                "procedure": [
+                    "حدد مصدر التغذية المناسب للدائرة",
+                    "اتبع المخطط من المصدر إلى الحمل مع تدوين الرموز",
+                    "حدّد نقاط القياس وقارن بالقيم",
+                    "عزل العطل: تغذية/تأريض/توصيل/مكوّن",
+                    "أكّد الإصلاح بإعادة القياس"
+                ]
+            },
+            "created_at": datetime.utcnow()
+        }
+        await db.ai_kb_electrical.insert_one(doc)
+        return {"ok": True, "id": doc["id"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # -------------------- Diagnostics Compare & Fleet --------------------
 class VehicleSnapshot(BaseModel):
     vin: Optional[str] = None
@@ -188,7 +299,6 @@ async def ai_diagnostics_compare(payload: CompareRequest):
         model = payload.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
-            # Fallback: diff only
             a = payload.vehicle_a.dict()
             b = payload.vehicle_b.dict()
             diffs = {k: {"a": a.get(k), "b": b.get(k)} for k in set(a)|set(b) if a.get(k) != b.get(k)}
@@ -351,15 +461,14 @@ async def media_list(limit: int = 50):
 # -------------------- Electrical Knowledge Extraction & QA --------------------
 class ElectricalIngestRequest(BaseModel):
     title: Optional[str] = None
-    content: Optional[str] = None  # raw text (from pdf/video transcript)
-    docId: Optional[str] = None    # if provided, load from ai_kb_docs
+    content: Optional[str] = None
+    docId: Optional[str] = None
     tags: Optional[List[str]] = None
 
 
 @router.post("/ai/kb/electrical/ingest")
 async def electrical_ingest(req: ElectricalIngestRequest):
     try:
-        # load content
         text = req.content
         if not text and req.docId:
             doc = await db.ai_kb_docs.find_one({"id": req.docId})
@@ -368,7 +477,6 @@ async def electrical_ingest(req: ElectricalIngestRequest):
             text = doc.get('content')
         if not text:
             raise HTTPException(status_code=400, detail="content or docId required")
-        # Try structured extraction via LLM
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         structured = None
         if llm_key:
@@ -382,7 +490,6 @@ async def electrical_ingest(req: ElectricalIngestRequest):
             except Exception:
                 structured = None
         if not structured:
-            # fallback keywords
             structured = {
                 "components": {"fuses": [], "relays": [], "sensors": [], "connectors": [], "grounds": []},
                 "wires": [], "pinouts": [], "expected_values": [], "test_steps": ["فحص فولت/أوم حسب المخطط"], "safety_notes": ["افصل البطارية قبل العمل"]
@@ -425,7 +532,6 @@ class ElectricalQARequest(BaseModel):
 @router.post("/ai/electrical/qa")
 async def electrical_qa(request: ElectricalQARequest):
     try:
-        # Gather context from electrical KB
         q = {"$or": [
             {"title": {"$regex": request.message, "$options": "i"}},
             {"content_excerpt": {"$regex": request.message, "$options": "i"}},

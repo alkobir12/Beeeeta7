@@ -86,7 +86,7 @@ const AIHelper = () => {
               </div>
               <div>
                 <CardTitle className="text-base">المساعد الفني الذكي</CardTitle>
-                <p className="text-xs text-purple-100">Claude AI - متصل</p>
+                <p className="text-xs text-purple-100">Claude/ChatGPT - متصل</p>
               </div>
             </div>
             <div className="flex gap-2">

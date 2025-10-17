@@ -597,6 +597,18 @@ backend:
           agent: "testing"
           comment: "✅ BACKEND HEALTH CHECKS SEQUENCE COMPLETE: Successfully executed all 7 requested health checks with 100% pass rate (11/11 tests passed). (1) ✅ POST /api/ai/kb/electrical/seed-diagram-guide returns ok:true - electrical diagram guide seeded successfully. (2) ✅ POST /api/seed/print-templates adds missing templates - idempotent operation working correctly. (3) ✅ POST /api/print/resolve-template with override_type:'invoice' returns 200 with template object. (4) ✅ POST /api/print/render with Arabic data (CUSTOMER_NAME:'اختبار', TOTAL:123.45, ITEMS) returns HTML containing both 'اختبار' and '123.45' as expected. (5) ✅ POST /api/notifications/prepare with type:'approval', phone:'+966501234567', link:'https://example.com' returns whatsappDeeplink with correct phone normalization (966501234567) and URL-encoded message containing the provided link. (6) ✅ Media upload roundtrip (init→chunk→complete) working correctly - returns ok:true, audio extraction may be null which is acceptable. (7) ✅ Electrical KB ingest and search working, enhanced-chat handles LLM key gracefully (200 OK with configured key). Fixed invoice template to include proper placeholders during testing. All backend health check endpoints are production-ready and functioning correctly."
 
+  - task: "Restored Endpoints Verification"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ RESTORED ENDPOINTS RETEST COMPLETE: All 6 requested restored backend endpoints tested successfully with 100% pass rate (6/6 tests passed). (1) ✅ GET /api/diagnosis-cases returns 200 with array of 11 items, (2) ✅ GET /api/customer-receipts returns 200 with array of 7 items, (3) ✅ GET /api/quotes returns 200 with array of 9 items, (4) ✅ POST /api/seed/print-templates returns 200 with {added: []} (idempotent - templates already exist), (5) ✅ POST /api/print/resolve-template with {override_type:'invoice'} returns 200 with template object, (6) ✅ POST /api/print/render with Arabic data {CUSTOMER_NAME:'اختبار', ITEMS_ROWS array} returns 200 with HTML content (510 chars). All restored endpoints are functioning correctly and ready for frontend integration."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

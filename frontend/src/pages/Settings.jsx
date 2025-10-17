@@ -427,6 +427,14 @@ const Settings = () => {
               <CardContent className="p-6 space-y-6">
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg text-slate-800">قنوات الإشعارات</h3>
+                  <div>
+                    <Label>مفتاح الدولة لواتساب</Label>
+                    <Input
+                      value={settings.whatsappCountryCode || '966'}
+                      onChange={(e) => setSettings({...settings, whatsappCountryCode: e.target.value})}
+                      placeholder="966"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-base">إشعارات SMS</Label>

@@ -460,55 +460,6 @@ const Settings = () => {
             </div>
           )}
 
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-base">قائمة موحّدة مبسّطة</Label>
-                      <p className="text-sm text-slate-500">دمج جميع العناصر في قائمة واحدة بدون مجموعات</p>
-                    </div>
-                    <Switch
-                      checked={!!settings.menuConfig?.simple}
-                      onCheckedChange={(checked) => setSettings({
-                        ...settings,
-                        menuConfig: { ...(settings.menuConfig||{}), simple: checked }
-                      })}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-base">إظهار صفحة الاستيراد في القائمة</Label>
-                      <p className="text-sm text-slate-500">عرض رابط الاستيراد ضمن القائمة الجانبية</p>
-                    </div>
-                    <Switch
-                      checked={!!settings.menuConfig?.showImport}
-                      onCheckedChange={(checked) => setSettings({
-                        ...settings,
-                        menuConfig: { ...(settings.menuConfig||{}), showImport: checked }
-                      })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-l from-slate-50">
-                  <CardTitle>إدارة النماذج</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <p className="text-slate-600 mb-4">يمكنك إنشاء وتعديل نماذج الطباعة من صفحة النماذج</p>
-                  <Button
-                    onClick={() => navigate('/templates')}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <FileText size={18} className="ml-2" />
-                    إدارة النماذج
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {/* Notification Settings */}
           {activeTab === 'notifications' && (
             <Card className="shadow-lg">

@@ -269,6 +269,28 @@ const VehicleArchive = () => {
                 </div>
 
                 {/* Date From */}
+                <Button
+                  variant={statusFilter === 'awaiting_parts' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('awaiting_parts')}
+                  size="sm"
+                >
+                  تنتظر قطع ({vehicles.filter(v => (v.status === 'repair') && (!v.parts || v.parts.length === 0)).length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'awaiting_quote_approval' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('awaiting_quote_approval')}
+                  size="sm"
+                >
+                  تسعير/اعتماد ({vehicles.filter(v => v.status === 'quotation').length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'abandoned' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('abandoned')}
+                  size="sm"
+                >
+                  متروكة ({vehicles.filter(v => { try { const d=new Date(v.entryDate); return ((Date.now()-d.getTime())/(1000*60*60*24))>=30 && v.status!=='delivered'; } catch(_) { return false; } }).length})
+                </Button>
+
                 <div>
                   <Input
                     type="date"

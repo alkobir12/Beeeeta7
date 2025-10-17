@@ -107,6 +107,10 @@ class AIKnowledgeBase:
             ("created_at", -1)
         ]).limit(limit).to_list(length=limit)
         
+        # Remove ObjectId fields for JSON serialization
+        for result in results:
+            result.pop("_id", None)
+        
         return results
     
     async def mark_solution_used(self, solution_id: str, was_successful: bool = True):

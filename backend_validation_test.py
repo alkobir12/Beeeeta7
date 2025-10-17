@@ -362,18 +362,14 @@ print("=" * 80)
 print("\n📝 Creating test vehicle for print flow validation...")
 vehicle_data = {
     "plateNumber": f"TEST-{datetime.now().strftime('%H%M%S')}",
-    "make": "تويوتا",
+    "brand": "تويوتا",
     "model": "كامري",
     "year": 2020,
     "color": "أبيض",
     "customerName": "عميل اختبار",
     "customerPhone": "+966501234567",
     "customerEmail": "test@example.com",
-    "status": "diagnosis",
-    "services": [
-        {"name": "تغيير زيت", "price": 150.0},
-        {"name": "فحص شامل", "price": 200.0}
-    ]
+    "services": ["تغيير زيت", "فحص شامل"]
 }
 
 success, vehicle_response = test_endpoint(

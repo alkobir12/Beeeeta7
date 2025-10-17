@@ -106,7 +106,7 @@ const Dashboard = () => {
     })() : (filterStatus === 'awaiting_parts') ? ((vehicle.status === 'repair') && (!vehicle.parts || vehicle.parts.length === 0)) : (filterStatus === 'awaiting_quote_approval') ? (vehicle.status === 'quotation') : true;
     const matchesSearch = vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          vehicle.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || vehicle.status === filterStatus;
+    const matchesFilter = filterStatus === 'all' || vehicle.status === filterStatus || matchesCustom;
     return matchesSearch && matchesFilter;
   });
 

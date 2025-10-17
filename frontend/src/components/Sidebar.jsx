@@ -182,17 +182,28 @@ const Sidebar = ({ isOpen, onClose }) => {
             </nav>
           )}
 
-          {/* Quick Action */}
+          {/* Settings Shortcut */}
           <div className="mt-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 p-4">
-              <p className="text-sm text-blue-800 mb-3 font-medium">إضافة سريعة</p>
-              <Button
-                onClick={() => handleNavigate('/new-vehicle')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-              >
-                <Car className="ml-2" size={18} />
-                مركبة جديدة
-              </Button>
+            <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 p-4">
+              <p className="text-sm text-slate-800 mb-3 font-medium">اختصارات</p>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleNavigate('/settings')}
+                  variant="outline"
+                  className="w-full justify-start"
+                  title="إعدادات النظام والقوائم"
+                >
+                  <Cog className="ml-2" size={18} />
+                  الإعدادات والقوائم
+                </Button>
+                <Button
+                  onClick={() => handleNavigate('/new-vehicle')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+                >
+                  <Car className="ml-2" size={18} />
+                  مركبة جديدة
+                </Button>
+              </div>
             </Card>
           </div>
         </div>

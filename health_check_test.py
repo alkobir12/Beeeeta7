@@ -162,10 +162,18 @@ class HealthCheckTester:
                 if 'whatsappDeeplink' in result and result['whatsappDeeplink'].startswith('https://wa.me/'):
                     # Check if phone normalization is working correctly
                     deeplink = result['whatsappDeeplink']
-                    if '966501234567' in deeplink and 'https://example.com' in deeplink:
-                        self.log_result("Notifications Prepare", True)
+                    # Decode URL to check actual content
+                    import urllib.parse
+                    if 'text=' in deeplink:
+                        text_param = deeplink.split('text=')[1]
+                        decoded_text = urllib.parse.unquote(text_param)
+                        
+                        if '966501234567' in deeplink and 'https://example.com' in decoded_text:
+                            self.log_result("Notifications Prepare", True)
+                        else:
+                            self.log_result("Notifications Prepare", False, f"WhatsApp deeplink missing expected content. Phone in URL: {'966501234567' in deeplink}, Link in message: {'https://example.com' in decoded_text}")
                     else:
-                        self.log_result("Notifications Prepare", False, f"WhatsApp deeplink missing expected content: {deeplink}")
+                        self.log_result("Notifications Prepare", False, f"WhatsApp deeplink missing text parameter: {deeplink}")
                 else:
                     self.log_result("Notifications Prepare", False, f"Missing or invalid whatsappDeeplink: {result}")
             else:

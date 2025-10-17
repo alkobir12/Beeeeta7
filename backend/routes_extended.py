@@ -1045,59 +1045,6 @@ async def import_services_csv(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# ============ Import via CSV (Customers & Services) ============
-@router.post("/import/customers/csv")
-async def import_customers_csv(file: UploadFile = File(...)):
-    try:
-        content = (await file.read()).decode('utf-8', errors='ignore')
-        lines = [l for l in content.splitlines() if l.strip()]
-        # Expect header: name,phone,email,address
-        header = [h.strip().lower() for h in lines[0].split(',')]
-        idx = {k: i for i, k in enumerate(header)}
-        created = 0
-        from models import Customer
-        for line in lines[1:]:
-            cols = [c.strip() for c in line.split(',')]
-            try:
-                name = cols[idx.get('name', 0)]
-                phone = cols[idx.get('phone', 1)] if idx.get('phone', None) is not None else ''
-                email = cols[idx.get('email', 2)] if idx.get('email', None) is not None else None
-                address = cols[idx.get('address', 3)] if idx.get('address', None) is not None else None
-                c = Customer(name=name, phone=phone, email=email, address=address)
-                await db.customers.insert_one(c.dict())
-                created += 1
-            except Exception:
-                continue
-        return {"created": created}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/import/services/csv")
-async def import_services_csv(file: UploadFile = File(...)):
-    try:
-        content = (await file.read()).decode('utf-8', errors='ignore')
-        lines = [l for l in content.splitlines() if l.strip()]
-        # Expect header: name,category,price,duration
-        header = [h.strip().lower() for h in lines[0].split(',')]
-        idx = {k: i for i, k in enumerate(header)}
-        created = 0
-        from models import Service
-        for line in lines[1:]:
-            cols = [c.strip() for c in line.split(',')]
-            try:
-                name = cols[idx.get('name', 0)]
-                category = cols[idx.get('category', 1)] if idx.get('category', None) is not None else 'عام'
-                price = float(cols[idx.get('price', 2)]) if idx.get('price', None) is not None and cols[idx.get('price', 2)] else 0.0
-                duration = int(cols[idx.get('duration', 3)]) if idx.get('duration', None) is not None and cols[idx.get('duration', 3)] else 30
-                s = Service(name=name, category=category, price=price, duration=duration)
-                await db.services.insert_one(s.dict())
-                created += 1
-            except Exception:
-                continue
-        return {"created": created}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 # ============ Template Auto-Selection ============
 @router.post("/print/resolve-template")
 async def resolve_template(payload: dict = Body(...)):

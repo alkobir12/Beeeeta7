@@ -362,10 +362,6 @@ async def delete_template(template_id: str):
 
 # ============ New Business Documents CRUD ============
 from fastapi import Body
-from models_extended import (
-    DiagnosisCase, PricingQuote, SalesOrder, VendorBill,
-    DocumentDependency, DocumentRef, DocumentActivity, QuoteItem, BillItem
-)
 
 @router.post("/diagnosis-cases", response_model=DiagnosisCase)
 async def create_diagnosis_case(payload: dict = Body(...)):
@@ -1086,7 +1082,6 @@ async def resolve_template(payload: dict = Body(...)):
 @router.post("/import/services")
 async def import_services(payload: dict = Body(...)):
     rows = payload.get('rows', [])
-    from models import Service
     created = 0
     for r in rows:
         try:
@@ -1100,7 +1095,6 @@ async def import_services(payload: dict = Body(...)):
 @router.post("/import/customers")
 async def import_customers(payload: dict = Body(...)):
     rows = payload.get('rows', [])
-    from models import Customer
     created = 0
     for r in rows:
         try:
@@ -1157,7 +1151,6 @@ async def request_otp(payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail='phone required')
     import random
     code = f"{random.randint(100000, 999999)}"
-    from models_extended import OTPRequest
     otp = OTPRequest(phone=phone, code=code)
     await db.otp_requests.insert_one(otp.dict())
     # Build link similar to public tracking/approval links
@@ -1186,7 +1179,6 @@ async def verify_otp(payload: dict = Body(...)):
     # Mark consumed
     await db.otp_requests.update_one({"id": otp['id']}, {"$set": {"consumed": True}})
     # Upsert user
-    from models_extended import UserAccount
     user = await db.users.find_one({"phone": phone})
     if not user:
         user_obj = UserAccount(phone=phone, role=payload.get('role', 'user'))
@@ -1205,7 +1197,6 @@ async def list_users():
 
 @router.post('/users')
 async def create_user(payload: dict = Body(...)):
-    from models_extended import UserAccount
     u = UserAccount(**payload)
     await db.users.insert_one(u.dict())
     return u.dict()

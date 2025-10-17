@@ -25,6 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuConfig, setMenuConfig] = useState(null);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   useEffect(() => {
     const load = async () => {

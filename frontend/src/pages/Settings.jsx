@@ -491,6 +491,8 @@ const Settings = () => {
                 </CardContent>
               </Card>
 
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-l from-slate-50">
                   <CardTitle>إدارة النماذج</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">

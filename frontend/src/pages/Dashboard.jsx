@@ -101,6 +101,9 @@ const Dashboard = () => {
   };
 
   const filteredVehicles = vehicles.filter(vehicle => {
+  const matchesCustom = (filterStatus === 'abandoned') ? (() => {
+      try { const d = new Date(vehicle.entryDate); const days = (Date.now() - d.getTime())/(1000*60*60*24); return days >= 30 && vehicle.status !== 'delivered'; } catch(_) { return false; }
+    })() : (filterStatus === 'awaiting_parts') ? ((vehicle.status === 'repair') && (!vehicle.parts || vehicle.parts.length === 0)) : (filterStatus === 'awaiting_quote_approval') ? (vehicle.status === 'quotation') : true;
     const matchesSearch = vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          vehicle.customerName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === 'all' || vehicle.status === filterStatus;

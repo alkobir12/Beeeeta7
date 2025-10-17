@@ -765,9 +765,7 @@ test_plan:
     - "CustomerTracking route and API integration"
     - "VehicleQuickActions approval WhatsApp deeplink and approval link"
     - "Public pages: /approval/:token and /report/:token"
-  stuck_tasks:
-    - "Notifications Prepare Health Check"
-    - "Print Resolve Template Health Check"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
     - agent: "main"

@@ -521,7 +521,7 @@ backend:
 
   - task: "Print Resolve Template Health Check"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 1
     priority: "high"
@@ -530,6 +530,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ ISSUE: /api/print/resolve-template returns 404 for override_type=invoice. Endpoint exists in routes_extended.py code but not accessible via API. Routing or registration issue needs investigation."
+        - working: true
+          agent: "testing"
+          comment: "✅ FIXED: POST /api/print/resolve-template with {override_type:'invoice'} now returns 200 with template. Issue was missing active invoice template - created active invoice template and endpoint now works correctly. Returns proper JSON structure with type='invoice' and template object containing content."
 
 frontend:
   - task: "Dashboard with API Integration"

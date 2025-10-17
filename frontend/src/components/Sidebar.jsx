@@ -15,30 +15,13 @@ import {
   Truck,
   Archive,
   FileText,
-  Settings as Cog
+  Settings as Cog,
+  BookOpen
 } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = (import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL) + '/api';
 
-const Sidebar = ({ isOpen, onClose }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [menuConfig, setMenuConfig] = useState(null);
-  const [collapsedGroups, setCollapsedGroups] = useState({});
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/settings`);
-        setMenuConfig(data?.menuConfig || null);
-      } catch (_) {
-        setMenuConfig(null);
-      }
-    };
-    load();
-  }, []);
-// Map known paths to icons for custom items
 const PATH_ICONS = {
   '/': LayoutDashboard,
   '/customers': Users,
@@ -55,17 +38,43 @@ const PATH_ICONS = {
   '/business-accounts': Building2,
   '/profile': Building2,
   '/import': FileText,
-  '/settings': Cog
+  '/settings': Cog,
+  '/knowledge': BookOpen
 };
 
-  // Single consolidated menu (flat but supports grouping toggle)
+const Sidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuConfig, setMenuConfig] = useState(null);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/settings`);
+        // Ensure knowledge appears in menu
+        let mc = data?.menuConfig || null;
+        if (mc) {
+          const hasKnowledge = (mc.items||[]).some(it => it.path === '/knowledge');
+          if (!hasKnowledge) {
+            mc = { ...mc, items: [{ path:'/', label:'لوحة التحكم', enabled:true }, ...(mc.items||[]), { path:'/knowledge', label:'إدارة المعرفة', enabled:true }] };
+          }
+        }
+        setMenuConfig(mc || null);
+      } catch (_) {
+        setMenuConfig(null);
+      }
+    };
+    load();
+  }, []);
+
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
     { path: '/customers', label: 'العملاء', icon: Users },
+    { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText },
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
     { path: '/services', label: 'الخدمات', icon: Wrench },
     { path: '/operations', label: 'عمليات شراء/بيع', icon: Package },
-    { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText },
     { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
     { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
     { path: '/suppliers', label: 'الموردين', icon: Truck },
@@ -74,6 +83,7 @@ const PATH_ICONS = {
     { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
     { path: '/business-accounts', label: 'الفروع', icon: Building2 },
     { path: '/profile', label: 'ملف الورشة', icon: Building2 },
+    { path: '/knowledge', label: 'إدارة المعرفة', icon: BookOpen },
     { path: '/import', label: 'الاستيراد', icon: FileText }
   ];
 
@@ -84,52 +94,26 @@ const PATH_ICONS = {
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />
       )}
 
-      {/* Sidebar */}
-      <div
-        className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${
+      <div className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        } w-64 lg:w-72`}
-        dir="rtl"
-      >
+        } w-64 lg:w-72`} dir="rtl">
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div
-              className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => handleNavigate('/profile')}
-            >
+            <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/profile')}>
               <h2 className="text-2xl font-bold text-slate-800">ورشتي</h2>
               <p className="text-sm text-slate-500">نظام الإدارة</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 w-full justify-center"
-                onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}
-              >
+              <Button variant="outline" size="sm" className="mt-3 w-full justify-center" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>
                 المدير (CEO)
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="lg:hidden"
-            >
-              <X size={20} />
-            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>
           </div>
 
-          {/* Dynamic Menu based on settings or consolidated flat menu */}
           {menuConfig?.simple ? (
-            // Consolidated flat menu mode (uses configured items if present)
             <nav className="space-y-1">
               {(menuConfig?.items?.length ? menuConfig.items : menuItems)
                 .filter(it => it.enabled !== false)
@@ -189,6 +173,7 @@ const PATH_ICONS = {
                   );
                 }
                 if (item.enabled === false) return null;
+                const Icon = PATH_ICONS[item.path] || FileText;
                 const isActive = location.pathname === item.path;
                 return (
                   <Button
@@ -198,24 +183,19 @@ const PATH_ICONS = {
                     onClick={() => handleNavigate(item.path)}
                     title={item.label}
                   >
+                    <Icon size={20} />
                     {item.label}
                   </Button>
                 );
               })}
             </nav>
           ) : (
-            // Fallback static menu
             <nav className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 return (
-                  <Button
-                    key={item.path}
-                    variant={isActive ? 'default' : 'ghost'}
-                    className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
-                    onClick={() => handleNavigate(item.path)}
-                  >
+                  <Button key={item.path} variant={isActive ? 'default' : 'ghost'} className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`} onClick={() => handleNavigate(item.path)}>
                     <Icon size={20} />
                     {item.label}
                   </Button>
@@ -224,26 +204,17 @@ const PATH_ICONS = {
             </nav>
           )}
 
-          {/* Settings Shortcut */}
           <div className="mt-8">
             <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 p-4">
               <p className="text-sm text-slate-800 mb-3 font-medium">اختصارات</p>
               <div className="space-y-2">
-                <Button
-                  onClick={() => handleNavigate('/settings')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  title="إعدادات النظام والقوائم"
-                >
+                <Button onClick={() => handleNavigate('/settings')} variant="outline" className="w-full justify-start" title="إعدادات النظام والقوائم">
                   <Cog className="ml-2" size={18} />
                   الإعدادات والقوائم
                 </Button>
-                <Button
-                  onClick={() => handleNavigate('/new-vehicle')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                >
-                  <Car className="ml-2" size={18} />
-                  مركبة جديدة
+                <Button onClick={() => handleNavigate('/knowledge')} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                  <BookOpen className="ml-2" size={18} />
+                  إدارة المعرفة
                 </Button>
               </div>
             </Card>

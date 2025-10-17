@@ -27,6 +27,7 @@ import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
 import CustomerTracking from "./pages/CustomerTracking";
+import Knowledge from "./pages/Knowledge";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
               <Route path="/approval/:token" element={<ApprovalPublic />} />
               <Route path="/report/:token" element={<ReportPublic />} />
               <Route path="/track/:trackingId" element={<CustomerTracking />} />
+              <Route path="/knowledge" element={<Knowledge />} />
               <Route path="/import" element={<ImportPage />} />
             </Routes>
           </Layout>

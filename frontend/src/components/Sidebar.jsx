@@ -129,23 +129,25 @@ const PATH_ICONS = {
 
           {/* Dynamic Menu based on settings or consolidated flat menu */}
           {menuConfig?.simple ? (
-            // Consolidated flat menu mode
+            // Consolidated flat menu mode (uses configured items if present)
             <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Button
-                    key={item.path}
-                    variant={isActive ? 'default' : 'ghost'}
-                    className={`w-full justify-start gap-3 py-4 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
-                    onClick={() => handleNavigate(item.path)}
-                    title={item.label}
-                  >
-                    <Icon size={20} />
-                    {item.label}
-                  </Button>
-                );
+              {(menuConfig?.items?.length ? menuConfig.items : menuItems)
+                .filter(it => it.enabled !== false)
+                .map((item) => {
+                  const Icon = PATH_ICONS[item.path] || FileText;
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Button
+                      key={item.path}
+                      variant={isActive ? 'default' : 'ghost'}
+                      className={`w-full justify-start gap-3 py-4 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                      onClick={() => handleNavigate(item.path)}
+                      title={item.label}
+                    >
+                      <Icon size={20} />
+                      {item.label}
+                    </Button>
+                  );
               })}
             </nav>
           ) : menuConfig?.items ? (

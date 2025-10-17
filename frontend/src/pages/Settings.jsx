@@ -428,6 +428,13 @@ const Settings = () => {
                       checked={!!settings.menuConfig?.simple}
                       onCheckedChange={(checked) => setSettings({
                         ...settings,
+                        menuConfig: { ...(settings.menuConfig||{}), simple: checked }
+                      })}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="shadow-lg">
                 <CardHeader className="bg-gradient-to-l from-slate-50">
                   <CardTitle>الإعدادات الشاملة</CardTitle>

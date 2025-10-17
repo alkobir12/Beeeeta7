@@ -1250,7 +1250,17 @@ async def prepare_notification(payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail='type, phone, link required')
     s = await db.settings.find_one({"id": "app_settings"}) or {}
     cc = (s.get('whatsappCountryCode') or '966').strip()
-    dest = phone if phone.startswith(cc) else f"{cc}{phone}"
+    # Normalize phone to digits only for wa.me
+    raw = ''.join([c for c in phone if c.isdigit() or c == '+'])
+    digits = ''.join([c for c in raw if c.isdigit()])
+    if digits.startswith('00'):
+        digits = digits[2:]
+    if digits.startswith(cc):
+        dest = digits
+    else:
+        # strip leading zeros
+        digits_no_zero = digits.lstrip('0')
+        dest = digits_no_zero if digits_no_zero.startswith(cc) else f"{cc}{digits_no_zero}"
     # Select template
     if ntype == 'diagnosis':
         tmpl = s.get('whatsappDiagnosisTemplate') or "تم إنشاء تقرير التشخيص لمركبتك.\n{{LINK}}"

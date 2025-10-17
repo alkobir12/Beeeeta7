@@ -1160,9 +1160,15 @@ async def request_otp(payload: dict = Body(...)):
     await db.otp_requests.insert_one(otp.dict())
     # Build link similar to public tracking/approval links
     link = f"/login?token={otp.token}"
-    # In production, send via WhatsApp deeplink manually as you did for approvals
-    # Return both for now (you can copy/share link to user)
-    return {"sent": True, "phone": phone, "code": code, "link": link, "token": otp.token, "expiresAt": otp.expiresAt.isoformat()}
+    # Build WhatsApp deeplink from settings template
+    s = await db.settings.find_one({"id": "app_settings"}) or {}
+    tmpl = (s.get('whatsappOtpTemplate') or "رمز الدخول: {{CODE}}\\nلتأكيد الدخول اضغط الرابط:\\n{{LINK}}").replace("{{CODE}}", code).replace("{{LINK}}", link)
+    # Normalize phone with country code
+    cc = (s.get('whatsappCountryCode') or '966').strip()
+    dest = phone if phone.startswith(cc) else f"{cc}{phone}"
+    from urllib.parse import quote
+    wa = f"https://wa.me/{dest}?text={quote(tmpl)}"
+    return {"sent": True, "phone": phone, "code": code, "link": link, "token": otp.token, "expiresAt": otp.expiresAt.isoformat(), "whatsappDeeplink": wa}
 
 @router.post('/auth/verify-otp')
 async def verify_otp(payload: dict = Body(...)):

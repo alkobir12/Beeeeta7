@@ -113,28 +113,36 @@ const Sidebar = ({ isOpen, onClose }) => {
               {menuConfig.items.map((item) => {
                 if (item.group && item.children?.length) {
                   const isActive = location.pathname.startsWith(item.path);
+                  const collapsed = collapsedGroups[item.path];
                   return (
                     <div key={item.path}>
                       <Button
                         variant={isActive ? 'default' : 'ghost'}
-                        className={`w-full justify-start gap-3 py-6 text-base ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
-                        onClick={() => handleNavigate(item.path)}
+                        className={`w-full justify-between gap-3 py-4 text-base ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                        onClick={() => setCollapsedGroups(prev => ({...prev, [item.path]: !prev[item.path]}))}
+                        title={item.label}
                       >
-                        <Package size={20} />
-                        {item.label}
+                        <div className="flex items-center gap-3">
+                          <Package size={20} />
+                          {item.label}
+                        </div>
+                        <span className="text-xs opacity-80">{collapsed ? '▼' : '▲'}</span>
                       </Button>
-                      <div className="mr-6 mt-1 space-y-1">
-                        {item.children.map((ch) => (
-                          <Button
-                            key={ch.path}
-                            variant={location.pathname === ch.path ? 'default' : 'ghost'}
-                            className={`w-full justify-start ${location.pathname === ch.path ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-                            onClick={() => handleNavigate(ch.path)}
-                          >
-                            {ch.label}
-                          </Button>
-                        ))}
-                      </div>
+                      {!collapsed && (
+                        <div className="mr-4 mt-1 space-y-1">
+                          {item.children.map((ch) => (
+                            <Button
+                              key={ch.path}
+                              variant={location.pathname === ch.path ? 'default' : 'ghost'}
+                              className={`w-full justify-start ${location.pathname === ch.path ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+                              onClick={() => handleNavigate(ch.path)}
+                              title={ch.label}
+                            >
+                              {ch.label}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -144,8 +152,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <Button
                     key={item.path}
                     variant={isActive ? 'default' : 'ghost'}
-                    className={`w-full justify-start gap-3 py-6 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
+                    className={`w-full justify-start gap-3 py-4 text-base transition-all duration-200 ${isActive ? 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-700'}`}
                     onClick={() => handleNavigate(item.path)}
+                    title={item.label}
                   >
                     {item.label}
                   </Button>

@@ -3,14 +3,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 import uuid
 
-from models_extended import (
-    Employee, EmployeeCreate, SalaryPayment, AdvancePayment,
-    LoyaltyPoints, PointsTransaction, Coupon,
-    MaintenanceReminder, Warranty, WarrantyClaim,
-    Supplier, PurchaseOrder, WorkshopProfile,
-    TemplateDoc, DiagnosisReport, ApprovalRequest, AppSettings,
-    Account, Budget, BusinessAccount, Operation, OperationItem, CustomerReceipt
-)
+from models_extended import UserAccount, OTPRequest
+from models import Customer, Service
 
 # Router
 import os

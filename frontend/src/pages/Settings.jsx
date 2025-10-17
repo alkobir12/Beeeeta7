@@ -496,6 +496,29 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={settings.notifyOnPayment}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="font-bold text-lg text-slate-800">قوالب رسائل واتساب</h3>
+                  <div>
+                    <Label>قالب رسالة OTP</Label>
+                    <Textarea
+                      rows={4}
+                      value={settings.whatsappOtpTemplate || ''}
+                      onChange={(e) => setSettings({...settings, whatsappOtpTemplate: e.target.value})}
+                      placeholder={"رمز الدخول: {{CODE}}\nلتأكيد الدخول اضغط الرابط:\n{{LINK}}"}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">استخدم {{CODE}} لكود OTP و {{LINK}} للرابط.</p>
+                  </div>
+                  <div>
+                    <Label>قالب رسالة التتبع</Label>
+                    <Textarea
+                      rows={3}
+                      value={settings.whatsappTrackingTemplate || ''}
+                      onChange={(e) => setSettings({...settings, whatsappTrackingTemplate: e.target.value})}
+                      placeholder={"متابعة مركبتك من هنا:\n{{LINK}}"}
+                    />
+                  </div>
+                </div>
+
                       onCheckedChange={(checked) => setSettings({...settings, notifyOnPayment: checked})}
                     />
                   </div>

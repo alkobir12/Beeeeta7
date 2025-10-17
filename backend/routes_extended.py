@@ -3,7 +3,13 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 import uuid
 
-from models_extended import UserAccount, OTPRequest
+from models_extended import (
+    UserAccount, OTPRequest, BusinessAccount, Budget, Operation, OperationItem, 
+    CustomerReceipt, WorkshopProfile, TemplateDoc, DiagnosisReport, 
+    ApprovalRequest, AppSettings, DocumentRef, DocumentDependency, 
+    DocumentActivity, QuoteItem, BillItem, DiagnosisCase, PricingQuote, 
+    SalesOrder, VendorBill, PurchaseOrder
+)
 from models import Customer, Service
 
 # Router

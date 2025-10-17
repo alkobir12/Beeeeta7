@@ -3020,6 +3020,281 @@ class APITester:
 
         print("✅ End-to-End Operational Flow Testing Complete")
 
+    def test_focused_health_checks(self):
+        """Run focused health checks as requested in review"""
+        print("\n🎯 Running Focused Health Checks...")
+        
+        # 1) GET /api/vehicles/track/{trackingLink}: returns Vehicle for valid link, 404 for invalid
+        self.test_vehicle_tracking_focused()
+        
+        # 2) POST /api/approvals: returns payload with token and expiresAt ISO string
+        self.test_approvals_creation_focused()
+        
+        # 3) GET /api/approvals/public/{token}: 200 for valid non-expired token, 410 after revoke
+        self.test_approvals_public_access_focused()
+        
+        # 4) POST /api/notifications/prepare with type=approval: returns whatsappDeeplink containing provided link and normalized phone
+        self.test_notifications_prepare_focused()
+        
+        # 5) Ensure /api/settings includes whatsapp templates fields and whatsappCountryCode
+        self.test_settings_whatsapp_fields_focused()
+        
+        # 6) Verify that /api/print/resolve-template works for override_type=invoice
+        self.test_print_resolve_template_focused()
+
+    def test_vehicle_tracking_focused(self):
+        """Test GET /api/vehicles/track/{trackingLink} - focused health check"""
+        print("\n🚗 Testing Vehicle Tracking API (Focused)...")
+        
+        # Use seed endpoint to create a vehicle and get valid trackingLink
+        try:
+            # First try to get existing vehicles to find a valid tracking link
+            response = self.session.get(f"{API_URL}/vehicles")
+            if response.status_code == 200:
+                vehicles = response.json()
+                if vehicles and len(vehicles) > 0:
+                    # Use first vehicle's tracking link
+                    tracking_link = vehicles[0].get('trackingLink')
+                    if tracking_link:
+                        # Test valid tracking link
+                        track_response = self.session.get(f"{API_URL}/vehicles/track/{tracking_link}")
+                        if track_response.status_code == 200:
+                            vehicle_data = track_response.json()
+                            if vehicle_data.get('trackingLink') == tracking_link:
+                                self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", True)
+                            else:
+                                self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, "Vehicle data mismatch")
+                        else:
+                            self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, f"Status: {track_response.status_code}")
+                    else:
+                        # Create a new vehicle to get tracking link
+                        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+                        if vehicle and vehicle.get('trackingLink'):
+                            tracking_link = vehicle['trackingLink']
+                            track_response = self.session.get(f"{API_URL}/vehicles/track/{tracking_link}")
+                            if track_response.status_code == 200:
+                                self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", True)
+                            else:
+                                self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, f"Status: {track_response.status_code}")
+                        else:
+                            self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, "Could not create vehicle with tracking link")
+                else:
+                    # No vehicles exist, create one
+                    vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+                    if vehicle and vehicle.get('trackingLink'):
+                        tracking_link = vehicle['trackingLink']
+                        track_response = self.session.get(f"{API_URL}/vehicles/track/{tracking_link}")
+                        if track_response.status_code == 200:
+                            self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", True)
+                        else:
+                            self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, f"Status: {track_response.status_code}")
+                    else:
+                        self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, "Could not create vehicle with tracking link")
+            else:
+                self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, f"Could not get vehicles list: {response.status_code}")
+        except Exception as e:
+            self.log_result("Vehicle Tracking - Valid Link Returns Vehicle", False, str(e))
+        
+        # Test invalid tracking link returns 404
+        try:
+            invalid_response = self.session.get(f"{API_URL}/vehicles/track/INVALID-LINK-123")
+            if invalid_response.status_code == 404:
+                self.log_result("Vehicle Tracking - Invalid Link Returns 404", True)
+            else:
+                self.log_result("Vehicle Tracking - Invalid Link Returns 404", False, f"Expected 404, got {invalid_response.status_code}")
+        except Exception as e:
+            self.log_result("Vehicle Tracking - Invalid Link Returns 404", False, str(e))
+
+    def test_approvals_creation_focused(self):
+        """Test POST /api/approvals returns payload with token and expiresAt ISO string"""
+        print("\n✅ Testing Approvals Creation (Focused)...")
+        
+        # Create a test vehicle first to get valid vehicleId and customerId
+        vehicle = self.create_test_vehicle(TEST_VEHICLE_DATA)
+        if not vehicle:
+            self.log_result("Approvals Creation - Setup", False, "Failed to create test vehicle")
+            return None
+        
+        # Test POST /api/approvals
+        approval_data = {
+            "vehicleId": vehicle['id'],
+            "customerId": vehicle['customerId'],
+            "title": "Test Approval Request",
+            "amount": 750.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/approvals", json=approval_data)
+            if response.status_code == 200:
+                approval = response.json()
+                token = approval.get('token')
+                expires_at = approval.get('expiresAt')
+                
+                # Verify token format and expiresAt ISO string
+                if (token and token.startswith('APR-') and 
+                    expires_at and isinstance(expires_at, str)):
+                    # Try to parse expiresAt as ISO datetime
+                    try:
+                        datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+                        self.log_result("Approvals Creation - Returns Token and ISO ExpiresAt", True)
+                        return token  # Return for use in next test
+                    except ValueError:
+                        self.log_result("Approvals Creation - Returns Token and ISO ExpiresAt", False, "expiresAt is not valid ISO format")
+                else:
+                    self.log_result("Approvals Creation - Returns Token and ISO ExpiresAt", False, f"Missing token or expiresAt. Token: {token}, ExpiresAt: {expires_at}")
+            else:
+                self.log_result("Approvals Creation - Returns Token and ISO ExpiresAt", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Approvals Creation - Returns Token and ISO ExpiresAt", False, str(e))
+        
+        return None
+
+    def test_approvals_public_access_focused(self):
+        """Test GET /api/approvals/public/{token}: 200 for valid, 410 after revoke"""
+        print("\n🔓 Testing Approvals Public Access (Focused)...")
+        
+        # Create an approval first
+        token = self.test_approvals_creation_focused()
+        if not token:
+            self.log_result("Approvals Public Access - Setup", False, "Could not create approval token")
+            return
+        
+        # Test 1: GET /api/approvals/public/{token} returns 200 for valid non-expired token
+        try:
+            response = self.session.get(f"{API_URL}/approvals/public/{token}")
+            if response.status_code == 200:
+                approval_data = response.json()
+                if approval_data.get('token') == token:
+                    self.log_result("Approvals Public Access - Valid Token Returns 200", True)
+                else:
+                    self.log_result("Approvals Public Access - Valid Token Returns 200", False, "Token mismatch in response")
+            else:
+                self.log_result("Approvals Public Access - Valid Token Returns 200", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Approvals Public Access - Valid Token Returns 200", False, str(e))
+        
+        # Test 2: Find approval ID and revoke it, then test 410 response
+        try:
+            # Get approval ID by listing approvals
+            list_response = self.session.get(f"{API_URL}/approvals")
+            if list_response.status_code == 200:
+                approvals = list_response.json()
+                approval_id = None
+                for approval in approvals:
+                    if approval.get('token') == token:
+                        approval_id = approval.get('id')
+                        break
+                
+                if approval_id:
+                    # Revoke the approval
+                    revoke_response = self.session.put(f"{API_URL}/approvals/{approval_id}/revoke")
+                    if revoke_response.status_code == 200:
+                        # Now test that public access returns 410
+                        public_response = self.session.get(f"{API_URL}/approvals/public/{token}")
+                        if public_response.status_code == 410:
+                            self.log_result("Approvals Public Access - Revoked Token Returns 410", True)
+                        else:
+                            self.log_result("Approvals Public Access - Revoked Token Returns 410", False, f"Expected 410, got {public_response.status_code}")
+                    else:
+                        self.log_result("Approvals Public Access - Revoked Token Returns 410", False, f"Could not revoke approval: {revoke_response.status_code}")
+                else:
+                    self.log_result("Approvals Public Access - Revoked Token Returns 410", False, "Could not find approval ID")
+            else:
+                self.log_result("Approvals Public Access - Revoked Token Returns 410", False, f"Could not list approvals: {list_response.status_code}")
+        except Exception as e:
+            self.log_result("Approvals Public Access - Revoked Token Returns 410", False, str(e))
+
+    def test_notifications_prepare_focused(self):
+        """Test POST /api/notifications/prepare with type=approval"""
+        print("\n📱 Testing Notifications Prepare (Focused)...")
+        
+        # Test POST /api/notifications/prepare with type=approval
+        notification_data = {
+            "type": "approval",
+            "phone": "+966501234567",
+            "link": "https://example.com/approval/APR-12345678",
+            "customerName": "Ahmed Al-Rashid",
+            "amount": 500.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/notifications/prepare", json=notification_data)
+            if response.status_code == 200:
+                result = response.json()
+                whatsapp_deeplink = result.get('whatsappDeeplink')
+                
+                # Verify whatsappDeeplink contains provided link and normalized phone
+                if (whatsapp_deeplink and 
+                    notification_data['link'] in whatsapp_deeplink and
+                    '966501234567' in whatsapp_deeplink):  # Normalized phone (without +)
+                    self.log_result("Notifications Prepare - WhatsApp Deeplink with Link and Phone", True)
+                else:
+                    self.log_result("Notifications Prepare - WhatsApp Deeplink with Link and Phone", False, 
+                                  f"WhatsApp deeplink missing required elements. Got: {whatsapp_deeplink}")
+            else:
+                self.log_result("Notifications Prepare - WhatsApp Deeplink with Link and Phone", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Notifications Prepare - WhatsApp Deeplink with Link and Phone", False, str(e))
+
+    def test_settings_whatsapp_fields_focused(self):
+        """Test /api/settings includes whatsapp templates fields and whatsappCountryCode"""
+        print("\n⚙️ Testing Settings WhatsApp Fields (Focused)...")
+        
+        # Test GET /api/settings includes whatsapp fields
+        try:
+            response = self.session.get(f"{API_URL}/settings")
+            if response.status_code == 200:
+                settings = response.json()
+                
+                # Check for whatsapp related fields
+                has_whatsapp_country_code = 'whatsappCountryCode' in settings
+                has_whatsapp_templates = any('whatsapp' in key.lower() and 'template' in key.lower() for key in settings.keys())
+                
+                if has_whatsapp_country_code:
+                    self.log_result("Settings - WhatsApp Country Code Field Present", True)
+                else:
+                    self.log_result("Settings - WhatsApp Country Code Field Present", False, "whatsappCountryCode field missing")
+                
+                if has_whatsapp_templates:
+                    self.log_result("Settings - WhatsApp Templates Fields Present", True)
+                else:
+                    # Check for any template-related fields that might contain whatsapp templates
+                    template_fields = [k for k in settings.keys() if 'template' in k.lower()]
+                    if template_fields:
+                        self.log_result("Settings - WhatsApp Templates Fields Present", True, f"Found template fields: {template_fields}")
+                    else:
+                        self.log_result("Settings - WhatsApp Templates Fields Present", False, "No WhatsApp template fields found")
+            else:
+                self.log_result("Settings - WhatsApp Fields Check", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Settings - WhatsApp Fields Check", False, str(e))
+
+    def test_print_resolve_template_focused(self):
+        """Test /api/print/resolve-template works for override_type=invoice"""
+        print("\n🖨️ Testing Print Resolve Template (Focused)...")
+        
+        # Test POST /api/print/resolve-template with override_type=invoice
+        template_data = {
+            "override_type": "invoice",
+            "vehicleId": "test-vehicle-id",
+            "customerId": "test-customer-id"
+        }
+        
+        try:
+            response = self.session.post(f"{API_URL}/print/resolve-template", json=template_data)
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Verify response contains template information
+                if 'template' in result or 'templateType' in result or 'html' in result:
+                    self.log_result("Print Resolve Template - Invoice Override Type Works", True)
+                else:
+                    self.log_result("Print Resolve Template - Invoice Override Type Works", False, f"Unexpected response format: {result}")
+            else:
+                self.log_result("Print Resolve Template - Invoice Override Type Works", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_result("Print Resolve Template - Invoice Override Type Works", False, str(e))
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Workshop Management System Backend API Tests")

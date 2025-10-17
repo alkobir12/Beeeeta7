@@ -842,6 +842,9 @@ test_plan:
   test_priority: "high_first"
     - agent: "main"
     - agent: "main"
+      message: "Backend step: Restored minimal endpoints required by the frontend printing and analytics flows: GET /api/diagnosis-cases, GET /api/customer-receipts, GET /api/quotes (read-only), POST /api/seed/print-templates, POST /api/print/resolve-template, POST /api/print/render. Adjusted customer phone/email count queries and added default HTML templates. Ready for backend retest."
+
+    - agent: "main"
       message: "Frontend step 1 complete: Added extended vehicle banners (abandoned, awaiting parts, awaiting quote/approval) to Dashboard and VehicleArchive with filters. Updated VehicleQuickActions printing to fetch latest linked documents (invoice, diagnosis case, quote, receipt) before rendering, falling back only if none found. Prepared placeholders for credit (آجل) analytics. Ready to run frontend automation tests for these flows."
 
       message: "Updated frontend: added /track/:trackingId route, rebuilt CustomerTracking to use real /api/vehicles/track/{id} data and show full vehicle details. Sidebar now includes Import link. VehicleQuickActions now uses /api/notifications/prepare to build WhatsApp deeplink and generates /approval/{token} link. Requesting focused frontend tests for these flows."

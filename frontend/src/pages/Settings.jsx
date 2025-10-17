@@ -408,12 +408,6 @@ const Settings = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-l from-blue-50">
-              <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-l from-slate-50">
-                  <CardTitle>إعدادات القائمة والتنقل</CardTitle>
-                </CardHeader>
             </div>
           )}
 

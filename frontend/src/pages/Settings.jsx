@@ -63,6 +63,15 @@ const Settings = () => {
     timeFormat: '12',
     timezone: 'Asia/Riyadh',
     
+    // Navigation/Menu Settings
+    menuConfig: {
+      simple: true,
+      inventoryGrouped: true,
+      consolidateServices: true,
+      showImport: true,
+      items: []
+    },
+
     // Security Settings
     requireLogin: false,
     sessionTimeout: 60,

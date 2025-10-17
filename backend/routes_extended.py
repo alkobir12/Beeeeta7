@@ -573,17 +573,27 @@ async def get_settings():
                     {"path": "/customers", "label": "العملاء", "enabled": True},
                     {"path": "/customer-receipts", "label": "توريد العملاء", "enabled": True},
                     {"path": "/technicians", "label": "الفنيين", "enabled": True},
+                    {"group": True, "path": "/customers", "label": "العملاء", "enabled": True, "children": [
+                        {"path": "/customers", "label": "قائمة العملاء", "enabled": True},
+                        {"path": "/customer-receipts", "label": "توريد/استيراد العملاء", "enabled": True}
+                    ]},
                     {"group": True, "path": "/parts", "label": "المخزون", "enabled": True, "children": [
                         {"path": "/suppliers", "label": "الموردين", "enabled": True},
-                        {"path": "/operations", "label": "المبيعات / المشتريات", "enabled": True}
+                        {"path": "/operations", "label": "المبيعات / المشتريات", "enabled": True},
+                        {"path": "/import", "label": "توريد/استيراد قطع الغيار", "enabled": True}
                     ]},
-                    {"path": "/services", "label": "الخدمات", "enabled": True},
+                    {"group": True, "path": "/services", "label": "الخدمات", "enabled": True, "children": [
+                        {"path": "/services", "label": "قائمة الخدمات", "enabled": True},
+                        {"path": "/import", "label": "توريد/استيراد الخدمات", "enabled": True}
+                    ]},
                     {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
                     {"path": "/ai-assistant", "label": "المساعد الذكي", "enabled": True},
                     {"path": "/knowledge", "label": "إدارة المعرفة", "enabled": True},
-                    {"path": "/templates", "label": "النماذج", "enabled": True},
-                    {"path": "/settings", "label": "الإعدادات", "enabled": True},
-                    {"path": "/import", "label": "الاستيراد", "enabled": True},
+                    {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [
+                        {"path": "/settings", "label": "الإعدادات العامة", "enabled": True},
+                        {"path": "/templates", "label": "نماذج الفواتير/التقارير", "enabled": True}
+                    ]},
+                    {"path": "/import", "label": "الاستيراد (عام)", "enabled": True},
                     {"path": "/profile", "label": "ملف الورشة", "enabled": True},
                     {"path": "/business-accounts", "label": "الفروع", "enabled": True}
                 ]

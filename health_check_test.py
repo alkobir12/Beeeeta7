@@ -129,10 +129,16 @@ class HealthCheckTester:
                 result = response.json()
                 if 'html' in result:
                     html_content = result['html']
-                    if 'اختبار' in html_content and '123.45' in html_content:
+                    # Check for the Arabic customer name and total amount
+                    contains_customer = 'اختبار' in html_content
+                    contains_total = '123.45' in html_content
+                    
+                    if contains_customer and contains_total:
                         self.log_result("Print Render", True)
                     else:
-                        self.log_result("Print Render", False, f"HTML missing required content. Contains 'اختبار': {'اختبار' in html_content}, Contains '123.45': {'123.45' in html_content}")
+                        # More detailed debugging
+                        print(f"HTML content preview: {html_content[:500]}")
+                        self.log_result("Print Render", False, f"HTML missing required content. Contains 'اختبار': {contains_customer}, Contains '123.45': {contains_total}")
                 else:
                     self.log_result("Print Render", False, f"Missing html field: {result}")
             else:

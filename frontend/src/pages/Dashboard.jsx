@@ -219,6 +219,49 @@ const Dashboard = () => {
                   <p className="text-orange-700 text-sm font-medium mb-1">قيد العمل</p>
                   <p className="text-3xl font-bold text-orange-900">{stats.inProgress}</p>
                 </div>
+        {/* Finance banners including payment method credit */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-none shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-700 text-sm font-medium mb-1">عدد فواتير الآجل (آخر 30 يوم)</p>
+                  <p className="text-3xl font-bold text-emerald-900">—</p>
+                </div>
+                <div className="bg-emerald-600 p-3 rounded-full">
+                  <CheckCircle className="text-white" size={24} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-none shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-700 text-sm font-medium mb-1">عدد عمليات الشراء/البيع</p>
+                  <p className="text-3xl font-bold text-slate-900">{technicians.length /* placeholder replace later */}</p>
+                </div>
+                <div className="bg-slate-600 p-3 rounded-full">
+                  <Wrench className="text-white" size={24} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-none shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-700 text-sm font-medium mb-1">قيمة المخزون التقديرية</p>
+                  <p className="text-3xl font-bold text-indigo-900">—</p>
+                </div>
+                <div className="bg-indigo-600 p-3 rounded-full">
+                  <Car className="text-white" size={24} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
                 <div className="bg-orange-600 p-3 rounded-full">
                   <Wrench className="text-white" size={24} />
                 </div>

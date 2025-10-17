@@ -188,6 +188,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ PASSED: Settings API working correctly. GET returns settings with currency and taxEnabled fields, POST persists payload successfully, GET returns updated values. Fixed ObjectId serialization issues during testing."
+        - working: true
+          agent: "testing"
+          comment: "✅ MENU SETTINGS PERSISTENCE VERIFIED: Comprehensive testing of menu settings persistence completed successfully (5/5 tests passed). (1) GET /api/settings captures current menuConfig with 9 items, (2) POST /api/settings with modified menuConfig (simple=true, 2 custom items: Dashboard and Customers) returns 200 and updates structure correctly, (3) GET /api/settings again confirms values persisted correctly with simple=True, items count=2, proper labels and paths. Other settings fields remained unchanged as required. Menu configuration persistence working perfectly as specified in review request."
 
   - task: "Services CRUD API"
     implemented: true

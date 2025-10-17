@@ -1,106 +1,102 @@
 <analysis>
-The AI engineer's trajectory describes the incremental development of a Workshop Management System. Initially, the focus was on establishing core CRUD operations, integrating AI features, and setting up the basic UI structure, including a floating AI helper and navigation. The work then expanded significantly based on user feedback, addressing functional gaps like delete operations, real API data integration across multiple pages (Dashboard, Customers, VehicleDetails, Technicians), and enhancing navigation.
+The AI engineer's work trajectory outlines a comprehensive development process for a Workshop Management System. Starting from an MVP, the engineer incrementally added critical functionalities based on user feedback. Key phases included establishing core CRUD operations, integrating AI features, and setting up the initial UI. The work then progressed to addressing functional gaps like delete operations, real API data integration across various pages (Dashboard, Customers, Technicians), and enhancing navigation.
 
-Subsequent interactions involved complex feature additions: implementing a comprehensive Settings page, Services Management, and Templates with full backend CRUD. A major focus was the CEO dashboard for multi-account management and financial analysis, alongside a Payroll module. The engineer also addressed critical user experience issues such as reliable quick actions for vehicles (approvals, reports, invoices), robust printing functionality with A4 templates, and enhanced vehicle tracking with multimedia support. Database seeding was expanded, and new backend APIs for business accounts, operations (purchase/sale), budgets, and customer receipts were developed. The latest phase involves a two-stage plan focusing on critical fixes for approval links, printing, tracking, UI re-organization, and template creation, followed by advanced features like AI-driven Excel/CSV imports and a template store. Throughout, the AI engineer consistently provided updates, confirmed plans, and conducted backend and frontend testing.
+Significant feature additions involved implementing a robust Settings page, Services Management, and Templates with full backend CRUD. A major focus was the CEO dashboard for multi-account management and financial analysis, coupled with a Payroll module. The engineer also tackled crucial UX issues such as reliable quick actions for vehicles, robust printing with A4 templates, and enhanced vehicle tracking with multimedia. Database seeding was expanded, and new backend APIs for business accounts, operations, budgets, and customer receipts were developed. More recently, the engineer worked on implementing WhatsApp OTP login, customizable message templates, and preparing for iOS app generation. The process involved continuous backend and frontend fixes, testing, and confirmation with the user.
 </analysis>
 
 <product_requirements>
-The user requires a comprehensive **Workshop Management System** to digitalize auto repair. Core features include:
-- **Vehicle Management**: Intake, details, status updates, tracking links (WhatsApp shareable), archive, quick actions (edit, delete, print, status, approval requests, diagnosis reports). Multimedia (images/videos) on tracking page.
-- **Customer Relationship Management**: Customer database, visit history, loyalty cards, analytics, customer receipts (with Excel/AI import).
-- **Service & Inventory Management**: Unlimited services (>150), manual pricing, parts inventory. Inventory section renamed to Services consolidating suppliers, sales/operations, and service list.
-- **Financials & Accounting**: Multi-account/branch management, budget creation/tracking per branch, financial analysis banners, purchase/sale operations (linked to inventory), salary lists for workers, payments (cash, network, credit, no tax, SAR currency).
-- **AI Integration**: Claude AI assistant (CEO bot), AI Helper for problem-solving and text generation, AI for Excel data analysis.
-- **Reporting & Printing**: Multiple invoice types (quotation, diagnosis, service), A4 print templates (invoice, diagnosis, service, purchase order, receipt), print/export functionality (PDF), template store.
-- **User Experience**: Responsive design, multi-language support (Arabic/English), clickable banners, consolidated navigation, general settings.
-- **Scalability**: Database indexing and pagination for large lists.
+The user requires a comprehensive Workshop Management System to digitalize auto repair operations. The system's core functionalities encompass:
+-   **Vehicle Lifecycle Management**: Intake, detailed vehicle data including VIN/file number, status updates, archive, and quick actions (edit, delete, print, status change, approval requests, diagnosis reports). Includes customer approval pages and public tracking links (WhatsApp shareable) with multimedia support.
+-   **Customer & Financial Management**: Full customer database, visit history, loyalty, receipts (with future AI/Excel import), multi-account/branch management, budget creation/tracking, financial analysis banners, purchase/sale operations (linked to inventory), worker salary lists, and diverse payment methods.
+-   **Service & Inventory**: Management of unlimited services, manual pricing, parts inventory. The Inventory section was to be renamed Services consolidating suppliers, sales/operations, and service list.
+-   **AI Integration**: Features a floating AI Helper for problem-solving/text generation, a CEO bot for multi-account financial analysis, and future AI-driven Excel/CSV data analysis.
+-   **Reporting & Printing**: A4 printable templates for various documents (invoice, diagnosis, quote, purchase order, vendor bill, receipt), print/export functionality, and a future template store.
+-   **User Experience & Scalability**: Responsive design, multi-language support (Arabic/English), dynamic navigation controllable from settings, and database indexing/pagination for performance.
+-   **User Authentication & Authorization**: WhatsApp OTP login, user management with roles and customizable permissions, and customizable message templates for WhatsApp notifications.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack Architecture**: React.js (Frontend), FastAPI (Backend), MongoDB (Database).
-- **State Management**: React Context, Shadcn UI.
-- **API Integration**: Axios, Pydantic models.
-- **AI Integration**: Claude AI (Emergent Integrations), RAG.
-- **Internationalization**: i18next.
-- **Deployment**: Kubernetes, Supervisor,  for variables.
-- **Data Handling**: UUIDs for IDs, ISO strings for datetime.
+-   **Full-stack Architecture**: React.js (Frontend), FastAPI (Backend), MongoDB (Database).
+-   **State Management**: React Context, Shadcn UI.
+-   **API Integration**: Axios, Pydantic models.
+-   **AI Integration**: Claude AI (Emergent Integrations), RAG.
+-   **Internationalization**: i18next.
+-   **Deployment**: Kubernetes, Supervisor,  for variables.
+-   **Data Handling**: UUIDs for IDs, ISO strings for datetime, CSV imports.
+-   **Mobile App Development**: Capacitor (planned for IPA generation).
 </key_technical_concepts>
 
 <code_architecture>
 
-- ****: Main FastAPI application.
-    - Added DELETE endpoints for vehicles/customers. Included . Updated to handle  for AI analysis and transactions. Activated workshop profile routes.
-- ****: Pydantic models.
-    - Added  to  model. Potentially added new transaction/operation models.
-- ****: Extended Pydantic models.
-    - Added models for ,  (purchase/sale), , , and . Fixed  redefinition errors and ensured  serialization.
-- ****: API endpoints.
-    - Added basic  APIs. Added , ,  for  model. Added CRUD for , , , , , .
-- ****: New API endpoints for AI Helper.
-- ****: Manages AI knowledge base.
-- ****: Populates database.
-    - Updated to seed >150 (currently 211) services. Fixed f-string formatting.
-- ****: Main React router.
-    - Added routes for , , , , , , , , , , , .
-- ****: Navigation menu.
-    - Added links to , , , , , , , , , . Logo navigates to .
-- ****: Floating AI assistant. Updated to use enhanced AI endpoints.
-- ****: Reusable modal for quick actions.
-    - Implemented edit, delete, print, status update. Enhanced for 'Request Approval', 'Diagnosis Report', 'Invoice Print' with public links and WhatsApp sharing. Fixed print/approval issues and popup blockers.
-- ****: Main dashboard.
-    - Rewritten to use real API data. Added delete for vehicles, integrated . Made stats cards clickable with filtering.
-- ****: Customer management.
-    - Rewritten for real API data. Added add/edit/delete.
-- ****: Add new vehicle.
-    - Updated for API submission, VIN/File Number. Integrated service selection with search, categories, and manual service input.
-- ****: Vehicle details.
-    - Updated to use API data.
-- ****: Technicians list. Updated to use real API data.
-- ****: Page for managing suppliers.
-- ****: Page for viewing historical records, includes .
-- ****: New page for managing workshop services. Full CRUD with API integration.
-- ****: New page for managing print templates. Ready for API connection.
-- ****: General settings page. Ready for API connection.
-- ****: AI assistant page.
-- ****: Analytics page.
-- ****: Workshop profile page.
-- ****: NEW page.
-    - Implemented for multi-branch/account management, financial analysis (income/expenses/profit), budget creation, and AI analysis filtered by branch.
-- ****: NEW page.
-    - Set up for worker salary lists.
-- ****: NEW page.
-    - For managing separate business accounts/branches. UI loads.
-- ****: NEW page.
-    - For purchase/sale operations. UI loads.
-- ****: NEW page.
-    - For recording customer receipts. Fully functional.
-- ****: NEW public page for customer approval/rejection.
-- ****: NEW public page for viewing diagnosis reports.
-- ****: Centralized API service.
-    - Added , , , , AI-enhanced endpoints, and new APIs for , , , , , .
+-   ****: Main FastAPI application.
+    -   Handles API routing, includes  and . Updated to process  for AI analysis and transactions, and manage workshop profile routes.
+-   ****: Contains core Pydantic models.
+    -   Includes  in  model. Base models for core entities.
+-   ****: Extends Pydantic models.
+    -   **Added**: , , , , , , , , , , , , , , ,  (extended with  and WhatsApp templates).
+    -   Fixed  redefinition errors and ensured  serialization.
+-   ****: API endpoints.
+    -   **Added**: CRUD for , , , , , , , .
+    -   **New**: APIs for , , ,  (CRUD), , , .
+    -   **New**:  for seeding test data,  for seeding default print templates,  for database indexing.
+    -   **New**:  for dynamic print template selection,  for preparing WhatsApp messages.
+    -   **New**: , , and user management APIs (planned).
+    -   **New**: ,  for CSV imports.
+    -   **Modified**: Approval request handling, added auto-creation/revocation based on vehicle status.
+    -   Fixed indentation and syntax errors multiple times.
+-   ****: New API endpoints for AI Helper.
+    -   **New**:  for multi-account AI analysis.
+-   ****: Populates database.
+    -   Updated to seed >150 services. Extended with logic for accounts, budgets, and transactions for cloning.
+-   ****: Main React router.
+    -   **Added**: Routes for all new pages (, , , , , , , , , , , , ). Planned routes for  and .
+    -   Fixed  import to .
+-   ****: Navigation menu.
+    -   **Updated**: Dynamically loads menu configuration from  () to allow custom grouping (e.g., Inventory containing Suppliers, Sales/Operations, Services).
+    -   Fixed JSX syntax errors.
+-   ****: Reusable modal for quick actions.
+    -   **Enhanced**: Edit, delete, print, status update, 'Request Approval', 'Diagnosis Report', 'Invoice Print' with public links and WhatsApp sharing.
+    -   **Fixed**: Printing issues by using  instead of popups, pre-fetching templates, and content wrapping.
+-   ****: Main dashboard.
+    -   Rewritten to use real API data. Integrated .
+-   ****: General settings page.
+    -   **Enhanced**: Added new tabs/sections for Notifications to manage WhatsApp Country Code and customizable templates (OTP, Tracking, Diagnosis, Approval).
+    -   Fixed JSX syntax errors during template addition.
+-   ****: Multi-account/branch management and financial analysis.
+    -   Implemented to display financial metrics, budget creation, and AI analysis filtered by branch.
+-   ****: For recording customer receipts. Fully functional.
+-   ****: **NEW page.**
+    -   Added for CSV imports of Customers () and Services (). Shows required headers and import status.
+-   ****: Centralized API service.
+    -   **Added**: , , , , AI-enhanced endpoints, and new APIs for , , , , , , , , , , , , , , , and import functionalities.
+-   ****: Provides theme context.
+    -   Ensured proper export of .
 </code_architecture>
 
 <pending_tasks>
-- **Phase 1 (Critical Fixes & UX)**:
-    - Improve reliability of customer approval links and create a Links Manager for all public links.
-    - Design and implement A4 printable templates for various reports/invoices.
-    - Enhance vehicle tracking page to show status steps and attached media (images/videos) responsively.
-    - Reorganize main navigation: rename Inventory to Services and nest Suppliers, Sales/Operations, and Service List under it.
-    - Create a dedicated UI for designing new print templates with A4 preview and dynamic placeholders.
-    - Expand and categorize mechanics services list.
-- **Phase 2 (Smart Import & Template Store)**:
-    - Implement AI-assisted Excel/CSV import for customer receipts.
-    - Create a Templates Store with suggested templates for different specializations.
-    - Improve scalability with database indexing and pagination for large data lists.
-    - Enhance the AI Helper for in-page problem-solving and text suggestions.
+-   **Frontend Implementation**:
+    -   Build  page for WhatsApp OTP authentication.
+    -   Build  page for user listing, creation, and permission management.
+    -   Add  link to the sidebar navigation (if desired by the user).
+-   **Backend Enhancements**:
+    -   Further support for Excel (xlsx) file imports.
+    -   Implement duplicate checking for CSV imports (e.g., preventing customer creation with the same phone number).
+-   **Mobile App Generation**:
+    -   Generate iOS IPA file using Capacitor, requiring Apple Developer Team ID, Bundle ID, and distribution choice.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer had completed a comprehensive set of tasks, including full CRUD for ,  (purchase/sale with inventory linkage),  (with per-branch analysis in the CEO page), , and . The  were significantly improved to handle approval requests, diagnosis reports, and invoice printing with public links and proper popup management. The  page was enhanced to manage multiple accounts/branches, allow budget creation and display financial metrics with comparisons. The  and  pages were made fully functional. A health check for deployment was performed and passed.
+Immediately before this summary request, the AI engineer was addressing the user's request to انشائه في صيغة ipa (create it in IPA format). The AI engineer provided a detailed plan to convert the existing React frontend into an iOS application using Capacitor. This plan outlined the necessary steps for code preparation (adding Capacitor, configuring , building React, adding iOS platform, opening in Xcode), and Xcode specific configurations (signing, capabilities, archiving for distribution). It also noted the requirements for Apple Developer credentials (Team ID, Bundle ID) and distribution preference (TestFlight or Ad Hoc).
 
-The user then provided a detailed, multifaceted set of new requirements covering further improvements to approval links, printing, tracking, UI re-organization, template creation, expanded services, AI-driven Excel imports, a template store, database scalability, and AI Helper enhancements. The AI engineer formulated a two-phase plan for these requests. The very last action taken was confirming this two-phase plan with the user, indicating the start of Phase 1: Critical Fixes and User Experience Improvements.
+Prior to this, the engineer had completed:
+-   Implementing WhatsApp OTP authentication backend APIs (, ) and planned frontend pages (, ).
+-   Adding customizable WhatsApp message templates (OTP, tracking, diagnosis, approval) to the backend settings and the  frontend page.
+-   Fixing frontend compilation issues related to  and  JSX syntax, and   import, which had prevented the preview from loading.
+-   Adding a simple  page to the frontend with routes for CSV imports of customers and services (, ).
+-   Ensuring the dynamic sidebar from settings and dynamic print template selection were functional.
+-   Confirming all backend APIs for business documents (DiagnosisCase, PricingQuote, SalesOrder, VendorBill, PurchaseOrder, DocumentDependency, DocumentActivity) were implemented and tested.
 </current_work>
 
 <optional_next_step>
-Start implementing Phase 1 of the agreed plan: improving the reliability of customer approval links.
+Call Deployer Agent and Run Health Check to Check for Readiness for Deployment.
 </optional_next_step>

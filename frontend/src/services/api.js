@@ -6,7 +6,21 @@ const vehicleAPI = {
   async track(trackingId) {
     return axios.get(`${API_BASE}/vehicles/track/${trackingId}`);
   },
-  // ... other vehicle APIs
+  async getAll() {
+    return axios.get(`${API_BASE}/vehicles`);
+  },
+  async getById(id) {
+    return axios.get(`${API_BASE}/vehicles/${id}`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/vehicles`, data);
+  },
+  async update(id, data) {
+    return axios.put(`${API_BASE}/vehicles/${id}`, data);
+  },
+  async delete(id) {
+    return axios.delete(`${API_BASE}/vehicles/${id}`);
+  }
 };
 
 const aiAPI = {

@@ -72,8 +72,15 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         DIAGNOSIS_DATE: extraData.DIAGNOSIS_DATE
       }
     };
-    const res = await axios.post(`${API_URL}/print/render`, payload);
-    return res.data?.html || '';
+    try {
+      const res = await axios.post(`${API_URL}/print/render`, payload);
+      return res.data?.html || '';
+    } catch (err) {
+      // Attempt to seed templates then retry once
+      try { await axios.post(`${API_URL}/seed/print-templates`); } catch(_){}
+      const res2 = await axios.post(`${API_URL}/print/render`, payload);
+      return res2.data?.html || '';
+    }
   };
 
   const handlePrint = async (type) => {

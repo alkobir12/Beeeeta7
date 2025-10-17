@@ -1098,13 +1098,6 @@ async def import_services_csv(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-                "isActive": True
-            }
-            await db.templates.insert_one(doc)
-            added.append(t_type)
-    return {"added": added}
-
-
 # ============ Template Auto-Selection ============
 @router.post("/print/resolve-template")
 async def resolve_template(payload: dict = Body(...)):

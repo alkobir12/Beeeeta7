@@ -48,11 +48,96 @@ const notificationAPI = {
   async prepare(payload){ return axios.post(`${API_BASE}/notifications/prepare`, payload); }
 };
 
-const statsAPI = {};
+const customerAPI = {
+  async getAll() {
+    return axios.get(`${API_BASE}/customers`);
+  },
+  async getById(id) {
+    return axios.get(`${API_BASE}/customers/${id}`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/customers`, data);
+  },
+  async update(id, data) {
+    return axios.put(`${API_BASE}/customers/${id}`, data);
+  },
+  async delete(id) {
+    return axios.delete(`${API_BASE}/customers/${id}`);
+  }
+};
 
-export { vehicleAPI };
+const technicianAPI = {
+  async getAll() {
+    return axios.get(`${API_BASE}/technicians`);
+  },
+  async getById(id) {
+    return axios.get(`${API_BASE}/technicians/${id}`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/technicians`, data);
+  },
+  async update(id, data) {
+    return axios.put(`${API_BASE}/technicians/${id}`, data);
+  }
+};
+
+const serviceAPI = {
+  async getAll() {
+    return axios.get(`${API_BASE}/services`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/services`, data);
+  },
+  async update(id, data) {
+    return axios.put(`${API_BASE}/services/${id}`, data);
+  },
+  async delete(id) {
+    return axios.delete(`${API_BASE}/services/${id}`);
+  }
+};
+
+const partAPI = {
+  async getAll() {
+    return axios.get(`${API_BASE}/parts`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/parts`, data);
+  },
+  async update(id, data) {
+    return axios.put(`${API_BASE}/parts/${id}`, data);
+  }
+};
+
+const transactionAPI = {
+  async getAll() {
+    return axios.get(`${API_BASE}/transactions`);
+  },
+  async create(data) {
+    return axios.post(`${API_BASE}/transactions`, data);
+  }
+};
+
+const fileAPI = {
+  async upload(formData) {
+    return axios.post(`${API_BASE}/files/upload`, formData);
+  }
+};
+
+const statsAPI = {
+  async getStats() {
+    return axios.get(`${API_BASE}/stats`);
+  }
+};
+
+export { vehicleAPI, customerAPI, technicianAPI, serviceAPI, partAPI, transactionAPI, fileAPI, aiAPI, mediaAPI, notificationAPI, statsAPI };
 export default {
   vehicle: vehicleAPI,
+  customer: customerAPI,
+  technician: technicianAPI,
+  service: serviceAPI,
+  part: partAPI,
+  transaction: transactionAPI,
+  file: fileAPI,
   ai: aiAPI,
   media: mediaAPI,
   notification: notificationAPI,

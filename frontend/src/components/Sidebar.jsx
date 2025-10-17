@@ -76,7 +76,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div
         className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        } w-64`}
+        } w-64 lg:w-72`}
         dir="rtl"
       >
         <div className="p-6">

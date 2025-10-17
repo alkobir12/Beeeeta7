@@ -39,21 +39,22 @@ const Sidebar = ({ isOpen, onClose }) => {
     load();
   }, []);
 
+  // Single consolidated menu (flat but supports grouping toggle)
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
-    { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
-    { path: '/services', label: 'الخدمات', icon: Wrench },
-    { path: '/templates', label: 'النماذج', icon: FileText },
-    { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
-    { path: '/parts', label: 'المخزون', icon: Package },
-    { path: '/suppliers', label: 'الموردين', icon: Truck },
     { path: '/customers', label: 'العملاء', icon: Users },
     { path: '/technicians', label: 'الفنيين', icon: Wrench },
-    { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
-    { path: '/profile', label: 'ملف الورشة', icon: Building2 },
-    { path: '/business-accounts', label: 'الفروع', icon: Building2 },
+    { path: '/services', label: 'الخدمات', icon: Wrench },
     { path: '/operations', label: 'عمليات شراء/بيع', icon: Package },
     { path: '/customer-receipts', label: 'توريد العملاء', icon: FileText },
+    { path: '/analytics', label: 'التحليلات', icon: BarChart3 },
+    { path: '/archive', label: 'أرشيف المركبات', icon: Archive },
+    { path: '/suppliers', label: 'الموردين', icon: Truck },
+    { path: '/parts', label: 'المخزون', icon: Package },
+    { path: '/templates', label: 'النماذج', icon: FileText },
+    { path: '/ai-assistant', label: 'المساعد الذكي', icon: Brain },
+    { path: '/business-accounts', label: 'الفروع', icon: Building2 },
+    { path: '/profile', label: 'ملف الورشة', icon: Building2 },
     { path: '/import', label: 'الاستيراد', icon: FileText }
   ];
 

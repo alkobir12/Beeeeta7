@@ -245,11 +245,6 @@ async def verify_otp(payload: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        avg_price = (total_price / total) if total > 0 else 0
-        return {"total": total, "categories": cats, "avgPrice": avg_price}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get('/analytics/suppliers')
 async def analytics_suppliers():
     try:

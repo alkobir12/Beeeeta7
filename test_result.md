@@ -706,6 +706,8 @@ frontend:
     file: "/app/frontend/src/components/Sidebar.jsx"
     stuck_count: 0
     priority: "medium"
+    - agent: "main"
+      message: "Preparing to run automated frontend tests: verify unified sidebar (includes إدارة المعرفة, توريد العملاء); navigate to /knowledge and test Docs add/search, Electrical ingest/search/QA (expect fallback message if no LLM key); test Media upload with a small file (single chunk) and confirm listing; open Customer Receipts page. Print preview tested indirectly via presence of preview dialog after invoking print actions if the UI exposes it; otherwise, backend print rendering already validated in backend health checks."
     needs_retesting: false
     status_history:
         - working: "NA"

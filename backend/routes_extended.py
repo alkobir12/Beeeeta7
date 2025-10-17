@@ -564,6 +564,8 @@ async def get_settings():
                 "items": [
                     {"path": "/", "label": "لوحة التحكم", "enabled": True},
                     {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
+                    {"path": "/import", "label": "الاستيراد", "enabled": True},
+
                     {"path": "/analytics", "label": "التحليلات", "enabled": True},
                     {"path": "/customers", "label": "العملاء", "enabled": True},
                     {"path": "/technicians", "label": "الفنيين", "enabled": True},

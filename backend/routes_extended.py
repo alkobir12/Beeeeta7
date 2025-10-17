@@ -554,6 +554,8 @@ async def get_settings():
             "whatsappCountryCode": "966",
             "whatsappOtpTemplate": "رمز الدخول: {{CODE}}\nلتأكيد الدخول اضغط الرابط:\n{{LINK}}",
             "whatsappTrackingTemplate": "متابعة مركبتك من هنا:\n{{LINK}}",
+            "whatsappDiagnosisTemplate": "تم إنشاء تقرير التشخيص لمركبتك. الاطلاع من هنا:\n{{LINK}}",
+            "whatsappApprovalTemplate": "يرجى مراجعة طلب الاعتماد واتخاذ القرار:\n{{LINK}}",
             "language": "ar",
             "dateFormat": "DD/MM/YYYY",
             "timeFormat": "12",

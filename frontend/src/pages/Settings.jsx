@@ -468,6 +468,54 @@ const Settings = () => {
                       }catch(e){ toast({ title:'خطأ', description:'تعذر حفظ الإعدادات', variant:'destructive' }); }
                     }} className="bg-blue-600 hover:bg-blue-700">حفظ الإعدادات</Button>
                     <Button variant="outline" onClick={()=>{
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-l from-slate-50">
+                  <CardTitle>إعدادات الطباعة</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>حجم الورق</Label>
+                      <select className="w-full border rounded p-2" value={settings.paperSize || 'A4'} onChange={(e)=> setSettings({...settings, paperSize:e.target.value})}>
+                        <option value="A4">A4</option>
+                        <option value="Letter">Letter</option>
+                        <option value="A5">A5</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>الاتجاه</Label>
+                      <select className="w-full border rounded p-2" value={settings.printOrientation || 'portrait'} onChange={(e)=> setSettings({...settings, printOrientation:e.target.value})}>
+                        <option value="portrait">طولي</option>
+                        <option value="landscape">عرضي</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>العناصر الثابتة</Label>
+                      <div className="flex items-center gap-3 mt-2">
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={!!settings.printHeaderFooter} onChange={(e)=> setSettings({...settings, printHeaderFooter:e.target.checked})} /> رأس/تذييل</label>
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={!!settings.printLogo} onChange={(e)=> setSettings({...settings, printLogo:e.target.checked})} /> شعار</label>
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={!!settings.printWatermark} onChange={(e)=> setSettings({...settings, printWatermark:e.target.checked})} /> علامة مائية</label>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-l from-slate-50">
+                  <CardTitle>متجر الثيمات</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-3">
+                  <p className="text-slate-600">اختر ثيم جاهز أو قم بتنزيل ثيمات جديدة لاحقاً (تطبيق لاحق)</p>
+                  <div className="flex gap-3">
+                    <Button onClick={()=> setSettings({...settings, themeName:'light'})}>فاتح</Button>
+                    <Button onClick={()=> setSettings({...settings, themeName:'dark'})} variant="outline">داكن</Button>
+                    <Button onClick={()=> setSettings({...settings, themeName:'blue'})} variant="outline">أزرق</Button>
+                    <Button onClick={()=> setSettings({...settings, themeName:'green'})} variant="outline">أخضر</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
                       setSettings({...settings, themeName:'light', language:'ar', layoutMode:'comfortable'});
                     }}>إعادة تعيين</Button>
                   </div>

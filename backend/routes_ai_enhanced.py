@@ -421,7 +421,7 @@ class ElectricalQARequest(BaseModel):
     model: Optional[str] = None
 
 
-@router.post("/api/ai/electrical/qa".replace("/api", ""))
+@router.post("/ai/electrical/qa")
 async def electrical_qa(request: ElectricalQARequest):
     try:
         # Gather context from electrical KB

@@ -714,6 +714,8 @@ frontend:
     needs_retesting: false
     status_history:
         - working: "NA"
+    - agent: "main"
+      message: "Run comprehensive backend tests for new features (imports CSV/XLSX mode skip/update, print render, OTP auth, users CRUD, knowledge docs/electrical, media upload, AI compare) followed by UI automation (sidebar groups, settings language/print/theme, import tabs, users page, knowledge UI). Accept LLM-dependent endpoints to 500 gracefully if key missing."
           agent: "main"
     - agent: "main"
       message: "Plan to run backend health checks: seed diagram guide; ensure /api/seed/print-templates ok; test /api/print/resolve-template and /api/print/render for invoice, diagnosis, receipt; approvals prepare and public links; media upload init/chunk/complete; knowledge ingestion/search. Then run frontend automated tests for navigation, knowledge UI flows, and presence of print preview actions. User approved 'start everything'."

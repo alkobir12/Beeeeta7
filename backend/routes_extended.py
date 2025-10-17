@@ -135,7 +135,8 @@ async def analytics_suppliers():
             s.pop('_id', None)
         # Vendor bills aggregation
         bills = await db.vendor_bills.find({}).to_list(length=100000)
-        for b in bills: b.pop('_id', None)
+        for b in bills:
+            b.pop('_id', None)
         per_supplier: Dict[str, Dict[str, Any]] = {}
         for s in sups:
             per_supplier[s['id']] = {"name": s.get('name'), "paid": 0.0, "unpaid": 0.0, "count": 0}

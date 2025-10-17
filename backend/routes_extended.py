@@ -997,7 +997,7 @@ async def seed_print_templates():
 async def import_customers_csv(file: UploadFile = File(...)):
     try:
         content = (await file.read()).decode('utf-8', errors='ignore')
-        lines = [l for l in content.splitlines() if l.strip()]
+        lines = [line for line in content.splitlines() if line.strip()]
         # Expect header: name,phone,email,address
         header = [h.strip().lower() for h in lines[0].split(',')]
         idx = {k: i for i, k in enumerate(header)}
@@ -1023,7 +1023,7 @@ async def import_customers_csv(file: UploadFile = File(...)):
 async def import_services_csv(file: UploadFile = File(...)):
     try:
         content = (await file.read()).decode('utf-8', errors='ignore')
-        lines = [l for l in content.splitlines() if l.strip()]
+        lines = [line for line in content.splitlines() if line.strip()]
         # Expect header: name,category,price,duration
         header = [h.strip().lower() for h in lines[0].split(',')]
         idx = {k: i for i, k in enumerate(header)}

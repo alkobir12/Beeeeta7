@@ -100,6 +100,7 @@ const VehicleArchive = () => {
     
     // Status filter
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
+    const matchesCustom = (statusFilter === 'abandoned') ? (() => { try { const d = new Date(vehicle.entryDate); const days = (Date.now()-d.getTime())/(1000*60*60*24); return days>=30 && vehicle.status !== 'delivered'; } catch(_) { return false; } })() : (statusFilter === 'awaiting_parts') ? ((vehicle.status === 'repair') && (!vehicle.parts || vehicle.parts.length === 0)) : (statusFilter === 'awaiting_quote_approval') ? (vehicle.status === 'quotation') : true;
     
     // Date filter
     let matchesDate = true;

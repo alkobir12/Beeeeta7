@@ -15,7 +15,7 @@ from models import Customer, Service
 # Router
 import os
 
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, Body
 
 router = APIRouter(prefix="/api")
 
@@ -361,8 +361,6 @@ async def delete_template(template_id: str):
     return {"message": "deleted"}
 
 # ============ New Business Documents CRUD ============
-from fastapi import Body
-
 @router.post("/diagnosis-cases", response_model=DiagnosisCase)
 async def create_diagnosis_case(payload: dict = Body(...)):
     case = DiagnosisCase(**payload)
@@ -566,6 +564,9 @@ async def get_settings():
             "backupFrequency": "daily",
             "menuConfig": {
                 "inventoryGrouped": True,
+                "simple": True,
+                "consolidateServices": True,
+                "showImport": True,
                 "items": [
                     {"path": "/", "label": "لوحة التحكم", "enabled": True},
                     {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
@@ -591,6 +592,9 @@ async def get_settings():
     if 'menuConfig' not in s:
         default_menu = {
             "inventoryGrouped": True,
+            "simple": True,
+            "consolidateServices": True,
+            "showImport": True,
             "items": [
                 {"path": "/", "label": "لوحة التحكم", "enabled": True},
                 {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
@@ -1164,7 +1168,7 @@ async def request_otp(payload: dict = Body(...)):
     link = f"/login?token={otp.token}"
     # Build WhatsApp deeplink from settings template
     s = await db.settings.find_one({"id": "app_settings"}) or {}
-    tmpl = (s.get('whatsappOtpTemplate') or "رمز الدخول: {{CODE}}\\nلتأكيد الدخول اضغط الرابط:\\n{{LINK}}").replace("{{CODE}}", code).replace("{{LINK}}", link)
+    tmpl = (s.get('whatsappOtpTemplate') or "رمز الدخول: {{CODE}}\nلتأكيد الدخول اضغط الرابط:\n{{LINK}}").replace("{{CODE}}", code).replace("{{LINK}}", link)
     # Normalize phone with country code
     cc = (s.get('whatsappCountryCode') or '966').strip()
     # Normalize phone to digits only for wa.me

@@ -561,6 +561,30 @@ backend:
           agent: "testing"
           comment: "✅ TOYOTA PDF KB INGESTION COMPLETE: Successfully ingested two Toyota PDFs into AI Knowledge Base with 100% pass rate (6/6 tests passed). (1) ✅ POST /api/ai/kb/docs with DENSO CRS Service Manual - TOYOTA HILUX/INNOVA 1KD/2KD (2004) ingested successfully with rich content, tags, and source URL. (2) ✅ POST /api/ai/kb/docs with DENSO CRS Operation - TOYOTA LAND CRUISER 200 Series 1VD-FTV (2007) ingested successfully with comprehensive technical details. (3) ✅ GET /api/ai/kb/search-docs?query=SCV returns 2 results as expected - both documents contain SCV valve information. (4) ✅ GET /api/ai/kb/search-docs?query=1KD returns 1 result - HILUX/INNOVA manual found correctly. (5) ✅ GET /api/ai/kb/search-docs?query=1VD-FTV returns 1 result - LAND CRUISER manual found correctly. (6) ✅ POST /api/ai/enhanced-chat with Arabic message 'اشرح وظيفة صمام SCV ودوره في ضغط السكة' and vehicle_info 'تويوتا 1KD' returns detailed Arabic response about SCV valve function. All KB document ingestion, search functionality, and RAG-enhanced chat working perfectly. Knowledge base successfully populated with Toyota technical manuals and searchable via multiple queries."
 
+  - task: "Electrical Knowledge Base Ingestion"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_ai_enhanced.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ ELECTRICAL KB INGESTION COMPLETE: Successfully tested electrical knowledge base ingestion and search functionality with 100% pass rate (3/3 tests passed). (1) ✅ POST /api/ai/kb/electrical/ingest with title 'أساسيات الكهرباء', content (first 6000 chars of electrical basics text), and tags ['electrical','basic'] returns ok:true and generates structured electrical knowledge with components (fuses, relays, grounds), expected values (12.6V battery, 13.8-14.4V alternator), test steps, and safety notes. (2) ✅ GET /api/ai/kb/electrical/search?query=أساسيات returns count>=1 with proper search results containing the ingested electrical basics content. (3) ✅ GET /api/settings confirms menuConfig.items contains /customer-receipts path with Arabic label 'توريد العملاء'. All electrical KB endpoints working correctly for automotive electrical knowledge management and retrieval."
+
+  - task: "Settings MenuConfig Customer Receipts Verification"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ SETTINGS MENUCONFIG VERIFICATION COMPLETE: Successfully verified that GET /api/settings returns menuConfig with proper structure including Customer Receipts menu item. MenuConfig contains 10 menu items including the required /customer-receipts path with Arabic label 'توريد العملاء' and enabled:true status. Settings endpoint properly maintains the full default menu structure as specified in routes_extended.py with all required navigation items for the workshop management system."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

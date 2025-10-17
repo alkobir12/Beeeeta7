@@ -14,7 +14,8 @@ import {
   Building2,
   Truck,
   Archive,
-  FileText
+  FileText,
+  Settings as Cog
 } from 'lucide-react';
 import axios from 'axios';
 

@@ -157,6 +157,10 @@ class AIKnowledgeBase:
             "vehicle_info": {"$regex": vehicle_info, "$options": "i"}
         }).sort("effectiveness_rating", -1).limit(10).to_list(length=10)
         
+        # Remove ObjectId fields for JSON serialization
+        for result in results:
+            result.pop("_id", None)
+        
         return results
     
     def _extract_keywords(self, text: str) -> List[str]:

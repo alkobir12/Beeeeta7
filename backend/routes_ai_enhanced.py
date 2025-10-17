@@ -7,6 +7,9 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 import uuid
 import os
+import shutil
+import asyncio
+import subprocess
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from ai_knowledge_base import AIKnowledgeBase, INITIAL_KNOWLEDGE
@@ -16,6 +19,16 @@ router = APIRouter(prefix="/api")
 
 db = None
 knowledge_base = None
+
+BASE_UPLOAD_DIR = "/app/uploads"
+TMP_DIR = os.path.join(BASE_UPLOAD_DIR, "tmp")
+VIDEO_DIR = os.path.join(BASE_UPLOAD_DIR, "videos")
+AUDIO_DIR = os.path.join(BASE_UPLOAD_DIR, "audio")
+for d in (BASE_UPLOAD_DIR, TMP_DIR, VIDEO_DIR, AUDIO_DIR):
+    try:
+        os.makedirs(d, exist_ok=True)
+    except Exception:
+        pass
 
 
 def set_db(database):
@@ -48,13 +61,12 @@ class NewSolution(BaseModel):
 
 
 class VehicleSnapshot(BaseModel):
-    # Minimal schema for diagnostics; all fields optional and free-form friendly
     vin: Optional[str] = None
     plate: Optional[str] = None
     brand: Optional[str] = None
     model: Optional[str] = None
     year: Optional[int] = None
-    engine_code: Optional[str] = None  # e.g., 1KD-FTV, 2KD-FTV, 1VD-FTV
+    engine_code: Optional[str] = None
     mileage_km: Optional[float] = None
     dtc_codes: Optional[List[str]] = None
     symptoms: Optional[str] = None
@@ -72,7 +84,7 @@ class VehicleSnapshot(BaseModel):
 class CompareRequest(BaseModel):
     vehicle_a: VehicleSnapshot
     vehicle_b: VehicleSnapshot
-    baseline_hint: Optional[str] = None  # e.g., "1KD-FTV", "1VD-FTV"
+    baseline_hint: Optional[str] = None
     session_id: Optional[str] = None
     provider: Optional[str] = None
     model: Optional[str] = None
@@ -82,15 +94,11 @@ class CompareRequest(BaseModel):
 async def enhanced_ai_chat(request: ChatRequest):
     try:
         session_id = request.session_id or str(uuid.uuid4())
-
-        # Step 1: Search knowledge base (structured)
         relevant_solutions = await knowledge_base.search_solutions(
             query=request.message,
             vehicle_info=request.vehicle_info,
             limit=5
         )
-
-        # Step 2: Search KB docs (unstructured)
         doc_hits = []
         try:
             q = {
@@ -104,15 +112,12 @@ async def enhanced_ai_chat(request: ChatRequest):
                 d.pop("_id", None)
         except Exception:
             doc_hits = []
-
-        # Step 3: Build context
         kb_parts = []
         if relevant_solutions:
             sctx = "\n\n=== حلول من قاعدة المعرفة (من قضايا حقيقية) ===\n"
             for i, s in enumerate(relevant_solutions[:3], 1):
-                sctx += f"\n{i}. [نوع المشكلة] {s.get('problem_type','-')} | [مركبة] {s.get('vehicle_info','-')}\n"
-                sctx += f"الوصف: {s.get('problem_description','-')}\n"
-                sctx += f"الحل: {s.get('solution','-')}\n"
+                sctx += f"\n{i}. [نوع] {s.get('problem_type','-')} | [مركبة] {s.get('vehicle_info','-')}\n"
+                sctx += f"الوصف: {s.get('problem_description','-')}\nالحل: {s.get('solution','-')}\n"
             kb_parts.append(sctx)
         if doc_hits:
             dctx = "\n\n=== مقتطفات من وثائق فنية / مراجع ===\n"
@@ -122,32 +127,22 @@ async def enhanced_ai_chat(request: ChatRequest):
                 dctx += f"\n- {title}:\n{snippet}\n"
             kb_parts.append(dctx)
         kb_context = "".join(kb_parts)
-
         system_prompt = f"""أنت مساعد ذكي متخصص في صيانة وإصلاح السيارات.
-
-مهامك:
-1) مساعدة الفنيين في التشخيص 
-2) تقديم حلول دقيقة وفعّالة
-3) إعطاء تعليمات فحص خطوة بخطوة
-
-إن وُجدت معلومات مرجعية مفيدة أدناه فاعتمد عليها: {kb_context}
+اعتمد على المراجع إن وُجدت:
+{kb_context}
 
 متطلبات الإجابة:
 - بالعربية الواضحة
-- خطوات مرقمة
-- نبّه لسلامة العمل عند الحاجة
+- خطوات مرقمة عند الحاجة
+- السلامة أولاً
 """
-
         provider = (request.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
         model = request.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY missing")
-
         chat = LlmChat(api_key=llm_key, session_id=session_id, system_message=system_prompt).with_model(provider, model)
-        user_message = UserMessage(text=request.message)
-        response = await chat.send_message(user_message)
-
+        response = await chat.send_message(UserMessage(text=request.message))
         await db.ai_conversations.insert_one({
             "id": str(uuid.uuid4()),
             "session_id": session_id,
@@ -160,7 +155,6 @@ async def enhanced_ai_chat(request: ChatRequest):
             "kb_doc_hits": len(doc_hits or []),
             "timestamp": datetime.utcnow()
         })
-
         return {
             "response": response,
             "session_id": session_id,
@@ -170,7 +164,6 @@ async def enhanced_ai_chat(request: ChatRequest):
             "relevant_solutions": len(relevant_solutions or []),
             "relevant_docs": len(doc_hits or [])
         }
-
     except HTTPException:
         raise
     except Exception as e:
@@ -179,10 +172,8 @@ async def enhanced_ai_chat(request: ChatRequest):
 
 @router.post("/ai/diagnostics/compare")
 async def ai_diagnostics_compare(payload: CompareRequest):
-    """Compare two vehicle snapshots and produce an expert report using KB context."""
     try:
         session_id = payload.session_id or str(uuid.uuid4())
-        # Gather doc context based on baseline hint or engine codes
         hint = payload.baseline_hint or payload.vehicle_a.engine_code or payload.vehicle_b.engine_code or ""
         doc_query_terms = [t for t in [hint, payload.vehicle_a.engine_code, payload.vehicle_b.engine_code, "SCV", "Rail", "Injector", "DTC"] if t]
         doc_hits: List[Dict[str, Any]] = []
@@ -191,8 +182,6 @@ async def ai_diagnostics_compare(payload: CompareRequest):
             doc_hits = await db.ai_kb_docs.find(q).limit(5).to_list(length=5)
             for d in doc_hits:
                 d.pop('_id', None)
-
-        # Build comparison prompt
         def to_lines(v: VehicleSnapshot) -> str:
             data = v.dict()
             lines = []
@@ -200,32 +189,19 @@ async def ai_diagnostics_compare(payload: CompareRequest):
                 if val is not None:
                     lines.append(f"- {k}: {val}")
             return "\n".join(lines)
-
         ctx_docs = "\n\n".join([f"[مرجع] {d.get('title') or d.get('file_name')}:\n{(d.get('content') or '')[:500]}" for d in (doc_hits or [])])
-
         system_prompt = f"""أنت خبير ديزل وأنظمة DENSO CRS.
-قارن بين مركبتين وحدد ما إذا كانت القيم ضمن الحدود الطبيعية أم لا بناءً على خبرتك والمراجع المقتطفة أدناه.
-أذكر: الملخص، القيم الحرجة، احتمال السبب، خطوات فحص، وتوصيات.
+قارن بين مركبتين وحدد الطبيعي/غير الطبيعي بناءً على المراجع المختصرة أدناه.
+اكتب: ملخص، مقارنة نصية، القيم الحرجة، الأسباب المحتملة، خطوات فحص، توصيات، مخاطر السلامة.
 
-مراجع تقنية مختصرة:
+مراجع مختصرة:
 {ctx_docs}
-
-صيغة الإخراج:
-- الملخص العام
-- جدول مقارنة (نصي) لأهم المؤشرات
-- القيم خارج النطاق المحتمل + سبب مرجح
-- خطوات فحص مقترحة (مرقمة)
-- قطع/تنظيف/برمجة مقترحة
-- مخاطر السلامة إن وجدت
 """
-        user_prompt = f"""المركبة أ:\n{to_lines(payload.vehicle_a)}\n\nالمركبة ب:\n{to_lines(payload.vehicle_b)}\n\nالمطلوب: تقرير مقارنة عربي احترافي مع حكم (طبيعي/غير طبيعي) لكل مؤشر، وتوصيات عملية.
-إن وُجدت أكواد أعطال فقم بربطها بالأسباب المحتملة من مراجع DENSO."""
-
+        user_prompt = f"""المركبة أ:\n{to_lines(payload.vehicle_a)}\n\nالمركبة ب:\n{to_lines(payload.vehicle_b)}\n\nالمطلوب: تقرير مقارنة عربي احترافي مع حكم (طبيعي/غير طبيعي) لكل مؤشر، وتوصيات عملية."""
         provider = (payload.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
         model = payload.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
-            # Fallback heuristic (no LLM) — simple diff
             def heuristic_report() -> Dict[str, Any]:
                 diffs = {}
                 a = payload.vehicle_a.dict()
@@ -235,12 +211,11 @@ async def ai_diagnostics_compare(payload: CompareRequest):
                     if a.get(k) != b.get(k):
                         diffs[k] = {"a": a.get(k), "b": b.get(k)}
                 return {
-                    "summary": "وضع تقرير بدائي بدون نموذج ذكاء بسبب غياب مفتاح LLM.",
+                    "summary": "تقرير بدائي بلا نموذج ذكاء (مطلوب EMERGENT_LLM_KEY)",
                     "diffs": diffs,
-                    "recommendations": ["يرجى تفعيل EMERGENT_LLM_KEY للحصول على تحليل خبير"],
+                    "recommendations": ["فعّل مفتاح LLM لتحليل خبير"],
                 }
             rep = heuristic_report()
-            # Persist case
             await db.ai_vehicle_cases.insert_one({
                 "id": str(uuid.uuid4()),
                 "session_id": session_id,
@@ -252,10 +227,8 @@ async def ai_diagnostics_compare(payload: CompareRequest):
                 "timestamp": datetime.utcnow()
             })
             return rep
-
         chat = LlmChat(api_key=llm_key, session_id=session_id, system_message=system_prompt).with_model(provider, model)
         response = await chat.send_message(UserMessage(text=user_prompt))
-
         report = {
             "report": response,
             "session_id": session_id,
@@ -279,8 +252,7 @@ async def ai_diagnostics_compare(payload: CompareRequest):
 
 
 @router.post("/ai/diagnostics/analyze-fleet")
-async def ai_analyze_fleet(payload: dict = Body(default={})):  # accepts {account_id?}
-    """Analyze all vehicles and produce AI insights for CEO/Analytics."""
+async def ai_analyze_fleet(payload: dict = Body(default={})):
     try:
         account_id = payload.get('account_id')
         q: Dict[str, Any] = {}
@@ -289,8 +261,6 @@ async def ai_analyze_fleet(payload: dict = Body(default={})):  # accepts {accoun
         vehicles = await db.vehicles.find(q).to_list(length=5000)
         for v in vehicles:
             v.pop('_id', None)
-
-        # Basic KPIs via Mongo-only data
         total = len(vehicles)
         by_status = {}
         brands = {}
@@ -299,18 +269,14 @@ async def ai_analyze_fleet(payload: dict = Body(default={})):  # accepts {accoun
             by_status[s] = by_status.get(s, 0) + 1
             b = (v.get('brand') or 'Unknown')
             brands[b] = brands.get(b, 0) + 1
-
         kpi = {
             "totalVehicles": total,
             "byStatus": by_status,
             "topBrands": sorted(brands.items(), key=lambda x: x[1], reverse=True)[:10]
         }
-
-        # Compose AI summary
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             return {"kpi": kpi, "ai": None, "note": "LLM key missing; returned KPIs only"}
-
         provider = (os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
         model = ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
         system_prompt = "محلل عمليات للورشة يقدّم مؤشرات وتنبيهات ذكية حول حالة المركبات وتدفق العمل."
@@ -318,12 +284,135 @@ async def ai_analyze_fleet(payload: dict = Body(default={})):  # accepts {accoun
         ask = "حلّل المؤشرات وقدّم 3 تنبيهات مبكرة، و3 توصيات قابلة للتنفيذ لتحسين سرعة الإنجاز ومعدّل الاعتماد."
         chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system_prompt).with_model(provider, model)
         ai_resp = await chat.send_message(UserMessage(text=context + "\n\n" + ask))
-
         return {"kpi": kpi, "ai": ai_resp}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# -------------------- Media Upload (Video) with 1GB support via chunks --------------------
+class InitUploadRequest(BaseModel):
+    filename: str
+    size: int
+    mimeType: Optional[str] = None
+
+
+@router.post("/media/upload/init")
+async def media_upload_init(req: InitUploadRequest):
+    try:
+        if req.size > 1024 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Max 1GB allowed")
+        upload_id = str(uuid.uuid4())
+        tmp_prefix = os.path.join(TMP_DIR, upload_id)
+        os.makedirs(TMP_DIR, exist_ok=True)
+        meta = {
+            "id": upload_id,
+            "filename": req.filename,
+            "size": req.size,
+            "mimeType": req.mimeType,
+            "createdAt": datetime.utcnow()
+        }
+        await db.ai_media_uploads.insert_one(meta)
+        return {"uploadId": upload_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/media/upload/chunk")
+async def media_upload_chunk(uploadId: str = Body(...), index: int = Body(...), chunk: UploadFile = File(...)):
+    try:
+        if not uploadId:
+            raise HTTPException(status_code=400, detail="uploadId required")
+        chunk_path = os.path.join(TMP_DIR, f"{uploadId}_{index:06d}.part")
+        with open(chunk_path, "wb") as f:
+            f.write(await chunk.read())
+        return {"ok": True, "index": index}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class CompleteUploadRequest(BaseModel):
+    uploadId: str
+    totalChunks: int
+
+
+@router.post("/media/upload/complete")
+async def media_upload_complete(req: CompleteUploadRequest):
+    try:
+        meta = await db.ai_media_uploads.find_one({"id": req.uploadId})
+        if not meta:
+            raise HTTPException(status_code=404, detail="upload not found")
+        # Merge chunks
+        safe_name = meta['filename'].replace('/', '_')
+        final_name = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
+        final_path = os.path.join(VIDEO_DIR, final_name)
+        with open(final_path, "wb") as out:
+            for i in range(req.totalChunks):
+                part_path = os.path.join(TMP_DIR, f"{req.uploadId}_{i:06d}.part")
+                if not os.path.exists(part_path):
+                    raise HTTPException(status_code=400, detail=f"missing chunk {i}")
+                with open(part_path, "rb") as p:
+                    shutil.copyfileobj(p, out)
+        # Cleanup chunks
+        for i in range(req.totalChunks):
+            try:
+                os.remove(os.path.join(TMP_DIR, f"{req.uploadId}_{i:06d}.part"))
+            except Exception:
+                pass
+        # Extract audio via ffmpeg if available
+        audio_path = None
+        try:
+            if shutil.which('ffmpeg'):
+                audio_name = os.path.splitext(final_name)[0] + ".mp3"
+                audio_path = os.path.join(AUDIO_DIR, audio_name)
+                cmd = [
+                    'ffmpeg', '-y', '-i', final_path,
+                    '-vn', '-acodec', 'libmp3lame', '-q:a', '2', audio_path
+                ]
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            audio_path = None
+        # Save media record
+        rec = {
+            "id": str(uuid.uuid4()),
+            "uploadId": req.uploadId,
+            "videoPath": final_path,
+            "audioPath": audio_path,
+            "filename": meta['filename'],
+            "size": meta['size'],
+            "createdAt": datetime.utcnow()
+        }
+        await db.ai_media.insert_one(rec)
+        # Index as KB doc (unstructured) placeholder
+        kb_doc = {
+            "id": str(uuid.uuid4()),
+            "source_type": "video",
+            "title": f"فيديو تقني: {meta['filename']}",
+            "content": f"تمت إضافة فيديو للتوثيق الفني. المسار: {final_path}. الصوت: {audio_path or 'قيد المعالجة/غير متوفر' }.",
+            "tags": ["video","repair","inspection"],
+            "url": None,
+            "file_name": meta['filename'],
+            "created_at": datetime.utcnow()
+        }
+        await db.ai_kb_docs.insert_one(kb_doc)
+        return {"ok": True, "video": final_path, "audio": audio_path}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/media/list")
+async def media_list(limit: int = 50):
+    try:
+        rows = await db.ai_media.find({}).sort("createdAt", -1).limit(limit).to_list(length=limit)
+        for r in rows:
+            r.pop('_id', None)
+        return {"items": rows, "count": len(rows)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------- KB routes (existing) --------------------
 @router.post("/ai/add-solution")
 async def add_solution_to_knowledge_base(solution: NewSolution):
     try:

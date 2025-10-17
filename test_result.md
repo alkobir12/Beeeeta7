@@ -852,9 +852,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "CustomerTracking route and API integration"
-    - "VehicleQuickActions approval WhatsApp deeplink and approval link"
-    - "Public pages: /approval/:token and /report/:token"
+    - "Verify restored backend endpoints (diagnosis-cases, customer-receipts, quotes, print/resolve-template, print/render)"
+    - "Validate sidebar menuConfig persistence and loading"
+    - "Test print preview functionality with actual linked documents"
+    - "Verify new analytics banners data endpoints"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

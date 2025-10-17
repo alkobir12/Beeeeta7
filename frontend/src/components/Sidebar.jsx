@@ -117,6 +117,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {menuConfig?.items ? (
             <nav className="space-y-1">
               {menuConfig.items.map((item) => {
+                // Inventory group collapsed/expandable
                 if (item.group && item.children?.length) {
                   const isActive = location.pathname.startsWith(item.path);
                   const collapsed = collapsedGroups[item.path];

@@ -569,7 +569,7 @@ async def submit_solution_feedback(feedback: dict = Body(...)):
         )
         return {"success": True, "message": "شكراً لتقييمك"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/ai/common-problems")
@@ -578,7 +578,7 @@ async def get_common_problems(limit: int = 10):
         problems = await knowledge_base.get_common_problems(limit=limit)
         return {"problems": problems, "count": len(problems)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/ai/vehicle-issues/{vehicle_info}")
@@ -587,7 +587,7 @@ async def get_vehicle_specific_issues(vehicle_info: str):
         issues = await knowledge_base.get_vehicle_specific_issues(vehicle_info)
         return {"vehicle": vehicle_info, "common_issues": issues, "count": len(issues)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/ai/initialize-knowledge-base")
@@ -599,4 +599,4 @@ async def initialize_knowledge_base():
             count += 1
         return {"success": True, "message": f"تم تهيئة قاعدة المعرفة بـ {count} حل مسبق", "count": count}
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))

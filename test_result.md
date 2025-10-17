@@ -494,7 +494,7 @@ backend:
 
   - task: "Notifications Prepare Health Check"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 1
     priority: "high"
@@ -503,6 +503,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ ISSUE: POST /api/notifications/prepare with type=approval has phone normalization bug. Creates +966966... instead of 966... when phone already has +966 prefix. WhatsApp deeplink contains provided link but phone normalization needs fixing."
+        - working: true
+          agent: "testing"
+          comment: "✅ FIXED: POST /api/notifications/prepare with type=approval, phone '+966501234567' and link 'https://example.com/a' now returns whatsappDeeplink with phone 966501234567 (no duplicate country code). Phone normalization issue has been resolved. Link is correctly included in message text."
 
   - task: "Settings WhatsApp Fields Health Check"
     implemented: true

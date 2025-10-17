@@ -139,6 +139,53 @@ const VehicleArchive = () => {
             <p className="text-slate-600">سجل كامل لجميع المركبات والصيانات السابقة</p>
           </div>
 
+          {/* Extended Banners */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-rose-50 to-rose-100 border-none shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-rose-700 text-sm font-medium mb-1">مركبات متروكة</p>
+                    <p className="text-3xl font-bold text-rose-900">{vehicles.filter(v => {
+                      try { const d = new Date(v.entryDate); const days = (Date.now() - d.getTime())/(1000*60*60*24); return days >= 30 && v.status !== 'delivered'; } catch(_) { return false; }
+                    }).length}</p>
+                  </div>
+                  <div className="bg-rose-600 p-3 rounded-full">
+                    <Car className="text-white" size={24} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-none shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-amber-700 text-sm font-medium mb-1">تنتظر قطع</p>
+                    <p className="text-3xl font-bold text-amber-900">{vehicles.filter(v => (v.status === 'repair') && (!v.parts || v.parts.length === 0)).length}</p>
+                  </div>
+                  <div className="bg-amber-600 p-3 rounded-full">
+                    <Wrench className="text-white" size={24} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-none shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-cyan-700 text-sm font-medium mb-1">تنتظر تسعير/اعتماد</p>
+                    <p className="text-3xl font-bold text-cyan-900">{vehicles.filter(v => v.status === 'quotation').length}</p>
+                  </div>
+                  <div className="bg-cyan-600 p-3 rounded-full">
+                    <FileText className="text-white" size={24} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">

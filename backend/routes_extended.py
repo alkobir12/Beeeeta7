@@ -101,8 +101,8 @@ async def analytics_parts():
 async def analytics_customers():
     try:
         total = await db.customers.count_documents({})
-        with_phone = await db.customers.count_documents({"phone": {"$ne": None, "$ne": ""}})
-        with_email = await db.customers.count_documents({"email": {"$ne": None, "$ne": ""}})
+        with_phone = await db.customers.count_documents({"phone": {"$nin": [None, ""]}})
+        with_email = await db.customers.count_documents({"email": {"$nin": [None, ""]}})
         since = datetime.utcnow() - timedelta(days=30)
         receipts = await db.customer_receipts.find({"date": {"$gte": since}}).to_list(length=100000)
         total_receipts = sum(r.get('amount', 0) for r in receipts)

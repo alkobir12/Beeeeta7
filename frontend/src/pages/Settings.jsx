@@ -425,6 +425,7 @@ const Settings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
+                {/* Channels */}
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg text-slate-800">قنوات الإشعارات</h3>
                   <div>
@@ -467,6 +468,7 @@ const Settings = () => {
                   </div>
                 </div>
 
+                {/* Notification Types */}
                 <div className="space-y-4 border-t pt-6">
                   <h3 className="font-bold text-lg text-slate-800">أنواع الإشعارات</h3>
                   <div className="flex items-center justify-between">
@@ -496,6 +498,12 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={settings.notifyOnPayment}
+                      onCheckedChange={(checked) => setSettings({...settings, notifyOnPayment: checked})}
+                    />
+                  </div>
+                </div>
+
+                {/* WhatsApp Templates */}
                 <div className="space-y-4 border-t pt-6">
                   <h3 className="font-bold text-lg text-slate-800">قوالب رسائل واتساب</h3>
                   <div>
@@ -514,6 +522,12 @@ const Settings = () => {
                       rows={3}
                       value={settings.whatsappTrackingTemplate || ''}
                       onChange={(e) => setSettings({...settings, whatsappTrackingTemplate: e.target.value})}
+                      placeholder={"متابعة مركبتك من هنا:\n{{LINK}}"}
+                    />
+                  </div>
+                </div>
+
+                {/* Service Templates */}
                 <div className="space-y-4 border-t pt-6">
                   <h3 className="font-bold text-lg text-slate-800">قوالب رسائل الخدمات</h3>
                   <div>
@@ -536,15 +550,6 @@ const Settings = () => {
                   </div>
                 </div>
 
-                      placeholder={"متابعة مركبتك من هنا:\n{{LINK}}"}
-                    />
-                  </div>
-                </div>
-
-                      onCheckedChange={(checked) => setSettings({...settings, notifyOnPayment: checked})}
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
           )}

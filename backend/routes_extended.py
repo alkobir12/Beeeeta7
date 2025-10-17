@@ -1279,17 +1279,6 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=404, detail='User not found')
     return {"deleted": True}
 
-        await db.transactions.create_index([("accountId", 1)])
-        await db.vehicles.create_index("customerId")
-        await db.quotes.create_index("customerId")
-        await db.sales_orders.create_index("customerId")
-        await db.vendor_bills.create_index("supplierId")
-        await db.document_dependencies.create_index([("fromDoc.docId", 1)])
-        await db.document_dependencies.create_index([("toDoc.docId", 1)])
-        return {"status": "ok"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/approvals/public/{token}")
 async def get_public_approval(token: str):
     req = await db.approval_requests.find_one({"token": token})

@@ -49,7 +49,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     VEHICLE_PLATE: vehicle?.plateNumber,
     VEHICLE_MODEL: `${vehicle?.brand||''} ${vehicle?.model||''}`,
     VEHICLE_YEAR: vehicle?.year,
-    FILE_NUMBER: vehicle?.file_number,
+    FILE_NUMBER: vehicle?.fileNumber,
     VEHICLE_VIN: vehicle?.vin,
   });
 

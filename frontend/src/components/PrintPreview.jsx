@@ -38,6 +38,21 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
     } catch (e) {}
   };
 
+  const handleOpenFullPage = () => {
+    try {
+      const blob = new Blob([html || ''], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!w) {
+        alert('يبدو أن المتصفح منع فتح نافذة جديدة. الرجاء السماح بالنوافذ المنبثقة مؤقتًا.');
+      }
+      // Note: do not revoke immediately to keep page alive; browser revokes when tab closes
+      // We can cleanup on unload of current page if needed
+    } catch (e) {
+      alert('تعذر فتح الصفحة الكاملة');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[900px]" dir="rtl">
@@ -45,9 +60,10 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3">
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end flex-wrap">
             <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">طباعة</Button>
             <Button variant="outline" onClick={handleDownload}>تحميل HTML</Button>
+            <Button variant="outline" onClick={handleOpenFullPage}>فتح صفحة كاملة</Button>
           </div>
           <div className="border rounded h-[70vh] overflow-hidden">
             <iframe ref={iframeRef} title="preview" style={{ width: '100%', height: '100%', border: '0' }} />

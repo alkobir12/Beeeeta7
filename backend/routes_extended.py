@@ -1167,7 +1167,17 @@ async def request_otp(payload: dict = Body(...)):
     tmpl = (s.get('whatsappOtpTemplate') or "رمز الدخول: {{CODE}}\\nلتأكيد الدخول اضغط الرابط:\\n{{LINK}}").replace("{{CODE}}", code).replace("{{LINK}}", link)
     # Normalize phone with country code
     cc = (s.get('whatsappCountryCode') or '966').strip()
-    dest = phone if phone.startswith(cc) else f"{cc}{phone}"
+    # Normalize phone to digits only for wa.me
+    raw = ''.join([c for c in phone if c.isdigit() or c == '+'])
+    digits = ''.join([c for c in raw if c.isdigit()])
+    if digits.startswith('00'):
+        digits = digits[2:]
+    if digits.startswith(cc):
+        dest = digits
+    else:
+        # strip leading zeros
+        digits_no_zero = digits.lstrip('0')
+        dest = digits_no_zero if digits_no_zero.startswith(cc) else f"{cc}{digits_no_zero}"
     from urllib.parse import quote
     wa = f"https://wa.me/{dest}?text={quote(tmpl)}"
     return {"sent": True, "phone": phone, "code": code, "link": link, "token": otp.token, "expiresAt": otp.expiresAt.isoformat(), "whatsappDeeplink": wa}

@@ -20,6 +20,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import MenuEditor from '../components/MenuEditor';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;

@@ -1,82 +1,78 @@
 <analysis>
-The AI engineer's trajectory shows an iterative and responsive development process, initially focusing on an MVP for a Workshop Management System. The work progressed from core CRUD operations and UI setup to advanced features like AI integration, dynamic reporting, robust printing, and user management. Persistent user feedback, particularly regarding sidebar navigation, printing functionality, and import capabilities, led to multiple refinements. A significant recent addition involved integrating advanced AI capabilities for vehicle diagnostics, electrical knowledge, video processing, and a comprehensive knowledge management system. The engineer consistently addressed issues, refactored UI elements, and expanded backend APIs, demonstrating adaptability to evolving requirements. The current focus is on enhancing UI configurability, detailed analytics, and streamlined import/export processes.
+The AI engineer has focused on expanding a Workshop Management System MVP. Initially, the work involved establishing core CRUD operations and UI components. Subsequent iterations added advanced features: AI integration for diagnostics and knowledge management, dynamic reporting, robust printing, and user/menu management. Key challenges included refining sidebar navigation, fixing printing functionalities, and enhancing import capabilities based on continuous user feedback. The engineer consistently adapted to evolving requirements, introducing new UI components (, ) and backend routes. Recently, the emphasis shifted to UI configurability (editable sidebar), detailed analytics, streamlining import/export, and addressing specific user issues regarding print previews and custom domain binding. Backend stability, especially for print-related endpoints, was a recurring theme, requiring multiple fixes and verifications. The current state involves validating recent frontend and backend improvements through automated tests, specifically focusing on login and print functionalities.
 </analysis>
 
 <product_requirements>
 The user requires a comprehensive Workshop Management System to digitalize auto repair operations. Key functionalities include:
-*   **Vehicle Lifecycle Management**: Intake, detailed vehicle data (VIN/file number), status updates, archive, quick actions (edit, delete, print, status change, approval requests, diagnosis reports), customer approval pages, public tracking links (WhatsApp shareable) with multimedia support.
-*   **Customer & Financial Management**: Full customer database, visit history, loyalty, receipts, multi-account/branch management, budget creation/tracking, financial analysis banners, purchase/sale operations, worker salary lists, diverse payment methods, and import/export for customers.
-*   **Service & Inventory**: Management of services, manual pricing, parts inventory. Renamed to Inventory to include suppliers, sales/operations. Now also includes import/export for services and parts.
-*   **AI Integration**: Floating AI Helper, CEO bot for multi-account financial analysis. Enhanced with ChatGPT/Claude, RAG search, knowledge base for technical docs (PDFs, text), electrical knowledge ingestion, electrical Q&A, diagram reading assistance, two-vehicle comparison, fleet analysis, and video processing (upload, audio extraction).
-*   **Reporting & Printing**: A4 printable templates for documents (invoice, diagnosis, quote, purchase order, vendor bill, receipt), print/export functionality. Now includes a complete printing system with backend rendering, print preview, default templates, and customizable content linking.
-*   **User Experience & Scalability**: Responsive design, multi-language support (Arabic/English/Hindi), dynamic navigation controllable from settings, database indexing/pagination. Now includes a highly customizable, draggable, and smoothly animated sidebar menu.
-*   **User Authentication & Authorization**: WhatsApp OTP login, user management with roles and customizable permissions, customizable message templates for WhatsApp notifications.
+*   **Vehicle Lifecycle Management**: Intake, detailed vehicle data, status updates, archive, quick actions (edit, delete, print, status change, approval requests, diagnosis reports), customer approval pages, public tracking links. New requirements include banners for abandoned, awaiting parts, and awaiting quote/approval vehicles. Printing must link to actual documents, not generic templates.
+*   **Customer & Financial Management**: Full customer database, visit history, receipts, multi-account/branch management, budget creation/tracking, financial analysis, purchase/sale operations, worker salary lists, diverse payment methods, and import/export. New additions: credit/آجل payment method, comprehensive financial system with detailed budgets and expense categories (electricity, water, food, fuel), separated accounts.
+*   **Service & Inventory**: Management of services, pricing, parts inventory, suppliers. Includes import/export for customers, services, and parts. Operations, Parts Inventory, and Sales/Purchases are to be grouped under Inventory.
+*   **AI Integration**: Floating AI Helper, CEO bot for multi-account financial analysis, ChatGPT/Claude integration, RAG search, knowledge base for technical docs, electrical knowledge, diagram reading, vehicle comparison, fleet analysis, and video processing.
+*   **Reporting & Printing**: A4 printable templates for various documents, print/export functionality, backend rendering, print preview. Printing must dynamically use linked documents.
+*   **User Experience & Scalability**: Responsive design, multi-language (Arabic/English/Hindi), dynamic and editable navigation (drag-and-drop), database indexing/pagination.
+*   **User Authentication & Authorization**: WhatsApp OTP login, user management with roles/permissions, customizable WhatsApp message templates.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Architecture**: React.js, FastAPI, MongoDB.
 -   **State Management**: React Context, Shadcn UI.
 -   **API Integration**: Axios, Pydantic models.
--   **AI Integration**: Claude AI, ChatGPT (via Emergent LLM Key), RAG, ffmpeg (audio extraction).
+-   **AI Integration**: Claude AI, ChatGPT, RAG, ffmpeg.
 -   **Internationalization**: i18next.
 -   **Deployment**: Kubernetes, Supervisor,  for variables.
--   **Data Handling**: UUIDs, ISO datetime, CSV/XLSX imports, chunked video uploads.
--   **Mobile App Development**: Capacitor (planned for iOS IPA).
 </key_technical_concepts>
 
 <code_architecture>
 
--   ****: Main FastAPI application. Integrates API routes and handles core server setup.
--   ****: Extends core Pydantic models for various new entities like , , , , , , , , , , , , , , , and  (now including  and WhatsApp templates). Ensures  serialization.
--   ****: Central for API endpoints. Significant additions include: CRUD operations for , , , , , , , ; new APIs for various documents; , , ; dynamic print template resolution (, ); WhatsApp notification preparation (); OTP authentication (, ); user management; CSV/XLSX imports for customers, services, and parts (). Updated for sidebar .
--   ****: Manages AI-related APIs. Includes . **Major additions**: ChatGPT/Claude integration for ; knowledge base management (, , , ); electrical knowledge ingestion (), search (), Q&A (), and diagram Q&A (); vehicle comparison (); fleet analysis (); and media upload (chunked , , ) with audio extraction.
--   ****: Defines the structure and interaction with the AI knowledge base, including structured and unstructured data, and electrical-specific knowledge.
--   ****: Main React router. Updated to include routes for almost all new pages like , , , , , , , , , , , , , , and .
--   ****: Navigation menu. Dynamically loads  from , supports customizable grouping (now flattened by default with fold/unfold), quick actions. **Currently being updated for drag-and-drop editing.**
--   ****: Modal for quick vehicle actions. Enhanced with edit, delete, print, status updates, approval requests, diagnosis/invoice printing. **Recently updated to use  for print previews and fixed  usage.**
--   ****: General settings. Expanded with tabs for Notifications (WhatsApp templates), Menu and Navigation (sidebar editor), General Settings (language, theme, style, print settings, theme store).
--   ****: **New page.** Initially for CSV import of customers/services. **Significantly enhanced with tabs for Customers, Services, Parts, supporting both CSV and XLSX, and options for handling duplicate entries (skip/update).**
--   ****: Centralized API service. All new backend endpoints for various entities, AI, media, print, and authentication have been integrated here.
--   ****: **NEW component.** An interactive UI to edit, reorder, enable/disable, and delete sidebar menu items, saving configurations to the backend.
--   ****: **NEW component.** Displays a document's HTML content in a modal for user review before printing or downloading, used across various document types.
--   ****: **NEW page.** Implements WhatsApp OTP authentication flow, integrating with backend  and  APIs.
--   ****: **NEW page.** Provides an interface for managing users (listing, adding, editing, deleting) with roles.
--   ****: **NEW page.** A comprehensive interface for AI knowledge management, featuring tabs for general documents, electrical knowledge, video/audio uploads (with progress bar), and bulk import.
+-   ****: Main FastAPI application entry point.
+-   ****: Defines Pydantic models for various entities including  (now with  and WhatsApp templates).
+-   ****: Contains numerous API endpoints for CRUD, document generation, print, user management, and imports. Recently edited multiple times to fix syntax and undefined variable errors related to new features, and to ensure print/data flows work correctly. Also updated to include  endpoints for .
+-   ****: Manages AI-related APIs, including knowledge base and vehicle diagnostics.
+-   ****: Main React router, includes routes for most pages.
+-   ****: Navigation menu. Dynamically loads  from . Currently being updated for drag-and-drop editing and menu re-structuring.
+-   ****: Modal for quick vehicle actions. Recently updated to use  and fetch actual linked documents for printing instead of static templates.
+-   ****: General settings page, expanded with Menu and Navigation for sidebar editing.
+-   ****: New page for CSV/XLSX imports of customers, services, parts.
+-   ****: Centralized API service for all frontend-backend communication.
+-   ****: NEW component for interactive sidebar menu editing.
+-   ****: NEW component to display document HTML content in a modal for review before printing. Recently edited to ensure printing uses backend rendering in an iframe and provides a Open Full Page option via Blob URL.
+-   ****: NEW page for WhatsApp OTP authentication.
+-   ****: NEW page for user management.
+-   ****: NEW comprehensive interface for AI knowledge management.
+-   ** / **: Updated to include new analytics banners and filters (abandoned, awaiting parts, awaiting quote/approval vehicles).
+-   ****: Updated to include credit/آجل payment method.
 </code_architecture>
 
 <pending_tasks>
 -   **Frontend Implementation**:
-    -   Integrate Supply/Import links directly into the Customers, Services, and PartsInventory pages.
-    -   Implement the ability to edit analytics banners.
-    -   Complete the Batch 2 plan: smooth movement of the sidebar list.
+    -   Integrate Supply/Import links into Customers, Services, and PartsInventory pages.
+    -   Implement ability to edit analytics banners (colors/icons/data source).
+    -   Complete Batch 2 for smooth movement of sidebar items (drag-and-drop).
+    -   Add analytics credit/آجل cards to Dashboard.
+    -   Add Payroll list page analytics summary and year filter options.
+    -   Ensure عمليات الشراء/البيع (Sales/Purchases) is visually raised in the sidebar.
 -   **Backend Enhancements**:
     -   Further support for advanced permissions matrix for user roles.
+    -   Implement detailed financial fields (Debtor, Creditor, Due) for Supplier form.
 -   **AI Integration**:
-    -   Implement full Speech-to-Text (STT) for video transcription (requires external provider key).
-    -   Add support for YouTube links (extracting titles, descriptions) in the knowledge management page.
--   **UI/UX Enhancements**:
-    -   Refine i18next implementation for seamless live language switching.
-    -   Implement default financial fields for the Supplier form.
-    -   Implement customizable colors/icons for analytics banners.
+    -   Implement full Speech-to-Text (STT) for video transcription.
+    -   Add support for YouTube links in knowledge management.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was working on a comprehensive set of improvements based on the user's detailed feedback, which included multiple reiterations of previously discussed issues. The work is structured into two batches:
+Immediately before this summary, the AI engineer was actively implementing and fixing issues related to a comprehensive set of improvements. The primary focus was on resolving critical print preview issues, configuring sidebar navigation, and introducing new analytics.
 
-**Batch 1 (Currently in progress)**:
-1.  **Live Editable Sidebar**: Implementing a drag-and-drop feature for sidebar menu items, allowing users to reorder them directly from the UI. This involves updating  and potentially  to reflect changes in  with smooth animations.
-2.  **Sidebar Re-structuring**: Finalizing the grouping of menu items, specifically:
-    *   Suppliers, Parts Inventory, and Sales/Purchases are to be nested under a primary Inventory group.
-    *   Customer List and Customer Import/Supply will be grouped under Customers.
-    *   Service List and Service Import/Supply will be grouped under Services.
-3.  **Advanced Analytics Banners**: Increasing the number and detail of analytical banners on relevant pages (e.g., Sales, Suppliers, Parts Inventory) to provide more comprehensive insights, with a design consistent with the Dashboard. These banners should also be editable.
-4.  **Template Seeding and Linking**: Ensuring that default print templates are automatically seeded (if missing or on first print failure) and that each service or operation is explicitly linked to its specific template for direct, ready-to-print output.
-5.  **Enhanced Supplier Form**: Expanding the Add/Edit Supplier form to include detailed financial fields such as 'Debtor', 'Creditor', and 'Due'.
+Specifically, the engineer:
+1.  **Fixed Print Preview Functionality**: Addressed user complaints about errors and incorrect links during print previews. The  component was modified to render HTML content within an  using backend rendering via . A فتح صفحة كاملة (Open Full Page) button was added, which creates a local Blob URL to display content in a new tab, bypassing popup blockers and incorrect link issues.  was updated to prioritize fetching actual linked documents (invoice, diagnosis, quote, receipt) for printing, falling back to a safe preview only if no linked documents exist, directly addressing the user's لا يربط بالنموذج request.
+2.  **Restored Backend Print/Data Endpoints**: Several critical backend endpoints (e.g., , , , , , ) which were previously returning 404 errors, were restored and verified as working through deep backend tests.
+3.  **Sidebar Configuration**: Implemented  endpoints ( and ) to manage  for dynamic sidebar loading. A default menu configuration was established, including logical grouping (Inventory, Customers, Services, Settings) and reordering (Operations, Payroll, CEO, Knowledge, Customer Receipts).
+4.  **New Analytics Banners**: Implemented three new analytics banners and associated filters on the Dashboard and Vehicle Archive pages: Abandoned vehicles, Awaiting parts, and Awaiting quote/approval.
+5.  **Credit/آجل Payment Method**: Added the credit/آجل payment method option to the Operations page UI and prepared a placeholder for finance cards on the Dashboard for future analytics integration.
+6.  **Backend Stability**: Conducted multiple iterations of fixing syntax errors and undefined variable issues within  to ensure all new and modified backend logic is stable.
 
-The engineer has already worked on seeding default print templates and has configured the import endpoints and UI structure. The current task is to implement the live editing and re-ordering functionality of the sidebar, along with the detailed analytics banners and the enhanced supplier form, as per the user's latest confirmation.
+The engineer is currently at the stage of preparing to run comprehensive automated frontend UI tests to validate all these recent changes, particularly focusing on the login flow, the new banners, the print preview functionality, and the dynamically loaded sidebar. The user also raised a request to link a custom domain (), which the AI engineer explained how to do via the Emergent platform without code changes.
 </current_work>
 
 <optional_next_step>
-Continue implementing Batch 1 of the plan: the live editable sidebar with drag-and-drop, advanced analytics banners, and the expanded supplier form.
+The AI engineer will run automated frontend UI tests after implementing the OTP login flow to verify new banners, print flows, and basic navigation.
 </optional_next_step>
-

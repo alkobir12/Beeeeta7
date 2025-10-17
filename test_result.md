@@ -537,6 +537,18 @@ backend:
           agent: "testing"
           comment: "✅ FIXED: POST /api/print/resolve-template with {override_type:'invoice'} now returns 200 with template. Issue was missing active invoice template - created active invoice template and endpoint now works correctly. Returns proper JSON structure with type='invoice' and template object containing content."
 
+  - task: "AI Enhanced Routes Smoke Tests"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_ai_enhanced.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ AI ENHANCED ROUTES SMOKE TESTS COMPLETE: Successfully tested all 5 requested AI endpoints with 100% pass rate (6/6 tests passed). (1) ✅ POST /api/ai/enhanced-chat with Arabic message 'كيف أشخص صوت طقطقة في المحرك؟', provider='openai', model='gpt-5' returns 200 with response and session_id fields as expected. (2) ✅ POST /api/ai/enhanced-chat with Arabic message 'أعطني خطوات فحص مكيف' using default provider returns 200 with proper response structure. (3) ✅ POST /api/ai/kb/import/json with 2 Arabic automotive solution items returns created=2 as expected. (4) ✅ GET /api/ai/search-solutions?query=طقطقة returns count>=0 with proper results structure. (5) ✅ POST /api/ai/kb/docs with Arabic content then GET /api/ai/kb/search-docs?query=مكيف returns results>=1 confirming document storage and search functionality. Fixed ObjectId serialization issue in ai_knowledge_base.py during testing. EMERGENT_LLM_KEY is properly configured and all AI chat endpoints working correctly. All AI routes ready for production use."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

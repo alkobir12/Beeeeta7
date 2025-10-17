@@ -698,6 +698,8 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
+    - agent: "main"
+      message: "Plan to run backend health checks: seed diagram guide; ensure /api/seed/print-templates ok; test /api/print/resolve-template and /api/print/render for invoice, diagnosis, receipt; approvals prepare and public links; media upload init/chunk/complete; knowledge ingestion/search. Then run frontend automated tests for navigation, knowledge UI flows, and presence of print preview actions. User approved 'start everything'."
           comment: "Added Workshop Profile link to sidebar. Made logo/header clickable linking to workshop profile page."
         - working: true
           agent: "testing"

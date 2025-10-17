@@ -1224,6 +1224,35 @@ async def update_user(user_id: str, payload: dict = Body(...)):
     return doc
 
 @router.delete('/users/{user_id}')
+
+# ============ Prepare WhatsApp Notification ============
+@router.post('/notifications/prepare')
+async def prepare_notification(payload: dict = Body(...)):
+    """
+    Prepare WhatsApp message and deeplink for a given type.
+    payload: { type: 'diagnosis'|'approval'|'tracking', phone, link, code? }
+    """
+    ntype = payload.get('type')
+    phone = (payload.get('phone') or '').strip()
+    link = payload.get('link') or ''
+    code = payload.get('code') or ''
+    if not ntype or not phone or not link:
+        raise HTTPException(status_code=400, detail='type, phone, link required')
+    s = await db.settings.find_one({"id": "app_settings"}) or {}
+    cc = (s.get('whatsappCountryCode') or '966').strip()
+    dest = phone if phone.startswith(cc) else f"{cc}{phone}"
+    # Select template
+    if ntype == 'diagnosis':
+        tmpl = s.get('whatsappDiagnosisTemplate') or "تم إنشاء تقرير التشخيص لمركبتك.\n{{LINK}}"
+    elif ntype == 'approval':
+        tmpl = s.get('whatsappApprovalTemplate') or "يرجى مراجعة طلب الاعتماد واتخاذ القرار:\n{{LINK}}"
+    else:
+        tmpl = s.get('whatsappTrackingTemplate') or "متابعة مركبتك من هنا:\n{{LINK}}"
+    text = tmpl.replace('{{LINK}}', link).replace('{{CODE}}', code)
+    from urllib.parse import quote
+    wa = f"https://wa.me/{dest}?text={quote(text)}"
+    return {"text": text, "whatsappDeeplink": wa}
+
 async def delete_user(user_id: str):
     res = await db.users.delete_one({"id": user_id})
     if res.deleted_count == 0:

@@ -16,6 +16,68 @@ def set_db(database):
     global db
     db = database
 
+# ------------------ SETTINGS (App + MenuConfig) ------------------
+@router.get('/settings')
+async def get_settings():
+    try:
+        doc = await db.settings.find_one({"id": "app_settings"})
+        if not doc:
+            # Defaults with menuConfig
+            default = {
+                "id": "app_settings",
+                "currency": "SAR",
+                "taxRate": 0.0,
+                "language": "ar",
+                "timezone": "Asia/Riyadh",
+                "invoicePrefix": "INV",
+                "menuConfig": {
+                    "simple": False,
+                    "items": [
+                        {"path": "/", "label": "الرئيسية", "enabled": True},
+                        {"path": "/operations", "label": "عمليات الشراء/البيع", "enabled": True},
+                        {"group": True, "path": "/inventory", "label": "المخزون", "enabled": True, "children": [
+                            {"path": "/parts", "label": "قطع الغيار", "enabled": True},
+                            {"path": "/suppliers", "label": "الموردين", "enabled": True},
+                        ]},
+                        {"group": True, "path": "/customers-group", "label": "العملاء", "enabled": True, "children": [
+                            {"path": "/customers", "label": "قائمة العملاء", "enabled": True},
+                            {"path": "/customer-receipts", "label": "توريد العملاء", "enabled": True}
+                        ]},
+                        {"group": True, "path": "/services-group", "label": "الخدمات", "enabled": True, "children": [
+                            {"path": "/services", "label": "قائمة الخدمات", "enabled": True},
+                            {"path": "/import", "label": "استيراد/توريد", "enabled": True}
+                        ]},
+                        {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
+                        {"path": "/ceo", "label": "المدير التنفيذي", "enabled": True},
+                        {"path": "/payroll", "label": "الرواتب", "enabled": True},
+                        {"path": "/knowledge", "label": "إدارة المعرفة", "enabled": True},
+                        {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [
+                            {"path": "/settings", "label": "الإعدادات العامة", "enabled": True},
+                            {"path": "/templates", "label": "نماذج الفواتير/التقارير", "enabled": True},
+                            {"path": "/users", "label": "المستخدمون", "enabled": True}
+                        ]}
+                    ]
+                }
+            }
+            await db.settings.insert_one(default)
+            doc = default
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/settings')
+async def save_settings(payload: Dict[str, Any]):
+    try:
+        payload = {**payload, "id": "app_settings", "updatedAt": datetime.utcnow()}
+        await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
+        saved = await db.settings.find_one({"id": "app_settings"})
+        if saved:
+            saved.pop('_id', None)
+        return saved
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ------------------ ANALYTICS CARDS (GLOBAL) ------------------
 @router.get('/analytics/cards')
 async def analytics_cards():

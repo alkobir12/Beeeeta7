@@ -456,6 +456,78 @@ backend:
           agent: "testing"
           comment: "✅ PRODUCTION ACTIVATION END-TO-END COMPLETE: Successfully executed comprehensive production activation workflow with 100% pass rate (7/7 tests passed). All 6 steps working correctly: (1) POST /api/settings with workshop info and menuConfig persists correctly, (2) POST /api/seed/clone-basics creates 3 accounts/budgets/transactions, (3) POST /api/seed/print-templates seeds all templates idempotently, (4) POST /api/admin/create-indexes creates database indexes, (5) GET /api/settings verification confirms persistence, (6) GET /api/biz-accounts verification confirms 3 accounts. Added missing POST /api/settings endpoint during testing. System is production-ready."
 
+  - task: "Vehicle Tracking Health Check"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: GET /api/vehicles/track/{trackingLink} working correctly. Returns Vehicle data for valid tracking links and 404 for invalid links as specified in review request."
+
+  - task: "Approvals Creation Health Check"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: POST /api/approvals working correctly. Returns payload with token (APR- prefix) and expiresAt ISO string as specified in review request."
+
+  - task: "Approvals Public Access Health Check"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: GET /api/approvals/public/{token} working correctly. Returns 200 for valid non-expired tokens and 410 after revoke as specified in review request."
+
+  - task: "Notifications Prepare Health Check"
+    implemented: true
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ ISSUE: POST /api/notifications/prepare with type=approval has phone normalization bug. Creates +966966... instead of 966... when phone already has +966 prefix. WhatsApp deeplink contains provided link but phone normalization needs fixing."
+
+  - task: "Settings WhatsApp Fields Health Check"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: /api/settings includes whatsapp templates fields and whatsappCountryCode in defaults as specified in review request."
+
+  - task: "Print Resolve Template Health Check"
+    implemented: true
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ ISSUE: /api/print/resolve-template returns 404 for override_type=invoice. Endpoint exists in routes_extended.py code but not accessible via API. Routing or registration issue needs investigation."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

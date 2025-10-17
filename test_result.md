@@ -684,8 +684,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Production activation end-to-end workflow completed successfully"
-    - "All backend production activation steps tested and working"
+    - "CustomerTracking route and API integration"
+    - "VehicleQuickActions approval WhatsApp deeplink and approval link"
+    - "Public pages: /approval/:token and /report/:token"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

@@ -38,6 +38,25 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
     load();
   }, []);
+// Map known paths to icons for custom items
+const PATH_ICONS = {
+  '/': LayoutDashboard,
+  '/customers': Users,
+  '/technicians': Wrench,
+  '/services': Wrench,
+  '/operations': Package,
+  '/customer-receipts': FileText,
+  '/analytics': BarChart3,
+  '/archive': Archive,
+  '/suppliers': Truck,
+  '/parts': Package,
+  '/templates': FileText,
+  '/ai-assistant': Brain,
+  '/business-accounts': Building2,
+  '/profile': Building2,
+  '/import': FileText,
+  '/settings': Cog
+};
 
   // Single consolidated menu (flat but supports grouping toggle)
   const menuItems = [

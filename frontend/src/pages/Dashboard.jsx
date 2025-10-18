@@ -97,7 +97,17 @@ const Dashboard = () => {
     totalVehicles: vehicles.length,
     inProgress: vehicles.filter(v => v.status !== 'ready').length,
     ready: vehicles.filter(v => v.status === 'ready').length,
-    technicians: technicians.length
+    technicians: technicians.length,
+    // New analytics
+    abandoned: vehicles.filter(v => {
+      if (!v.updatedAt) return false;
+      const daysSinceUpdate = (Date.now() - new Date(v.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceUpdate > 7 && !['delivered', 'ready'].includes(v.status);
+    }).length,
+    awaitingParts: vehicles.filter(v => v.status === 'awaiting_parts' || (v.notes && v.notes.includes('انتظار قطع'))).length,
+    awaitingApproval: vehicles.filter(v => v.status === 'quotation' || v.status === 'awaiting_approval' || (v.notes && v.notes.includes('انتظار اعتماد'))).length,
+    creditPayments: vehicles.filter(v => v.paymentMethod === 'credit' || v.paymentMethod === 'آجل').length
+  };
   };
 
   const filteredVehicles = vehicles.filter(vehicle => {

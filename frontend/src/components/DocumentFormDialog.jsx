@@ -184,17 +184,39 @@ const DocumentFormDialog = ({
     try {
       setLoading(true);
       
+      // First resolve the template
+      let templateHtml = '';
+      if (selectedTemplate) {
+        try {
+          const templateRes = await axios.post(`${API_URL}/print/resolve-template`, {
+            override_type: documentType,
+            template_id: selectedTemplate
+          });
+          templateHtml = templateRes.data?.template?.html || '';
+        } catch (e) {
+          console.warn('Template resolution failed, using default');
+        }
+      }
+      
       const renderData = {
         override_type: documentType,
+        template_id: selectedTemplate,
         data: {
           WORKSHOP_NAME: 'ورشتي',
+          WORKSHOP_ADDRESS: 'العنوان الرئيسي',
+          WORKSHOP_PHONE: '0553280100',
+          WORKSHOP_CITY: 'القصيم',
+          TAX_NUMBER: '1131051365',
           CUSTOMER_NAME: vehicle?.customerName,
           CUSTOMER_PHONE: vehicle?.customerPhone,
+          CUSTOMER_BALANCE: '0.00',
           VEHICLE_PLATE: vehicle?.plateNumber,
           VEHICLE_MODEL: `${vehicle?.brand || ''} ${vehicle?.model || ''}`,
           VEHICLE_YEAR: vehicle?.year,
           DOCUMENT_TITLE: formData.title,
           DOCUMENT_NOTES: formData.notes,
+          FOOTER_NOTES: formData.notes,
+          INVOICE_NO: `INV-${Date.now().toString().slice(-6)}`,
           items: formData.items,
           SUBTOTAL: formData.subtotal,
           DISCOUNT: formData.discount,

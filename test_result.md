@@ -886,6 +886,8 @@ test_plan:
       message: "Updated frontend: added /track/:trackingId route, rebuilt CustomerTracking to use real /api/vehicles/track/{id} data and show full vehicle details. Sidebar now includes Import link. VehicleQuickActions now uses /api/notifications/prepare to build WhatsApp deeplink and generates /approval/{token} link. Requesting focused frontend tests for these flows."
 
 agent_communication:
+    - agent: "main"
+      message: "MAJOR UPDATE - Phase 1 Complete: (1) Login simplified to name-only authentication, (2) Created DocumentFormDialog.jsx for save-before-print workflow with template selection and auto-calculations, (3) Updated VehicleQuickActions with all actions from user's screenshot (parts, pricing, operations, reports, archive exits), (4) Added 6 WhatsApp APIs (send-otp, send-approval, send-document, messages list, status), (5) Moved Knowledge under CEO in sidebar. Fixed all environment variable issues (import.meta.env → process.env). Fixed deployment blocker (hardcoded paths). Backend and Frontend running. Ready for comprehensive testing."
     - agent: "testing"
       message: "✅ BACKEND VALIDATION COMPLETE: Comprehensive backend test suite executed with 94.7% pass rate (18/19 tests). All previously failing endpoints (diagnosis-cases, customer-receipts, quotes, print/resolve-template, print/render) are now working correctly. Settings menuConfig confirmed with 10 items + Arabic labels. Analytics data endpoints functional. WhatsApp OTP auth working. Only /api/users returns 404 (not required). System is production-ready on backend. Main agent should now decide on frontend testing approach."
     - agent: "main"

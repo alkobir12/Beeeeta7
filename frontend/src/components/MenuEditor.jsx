@@ -39,7 +39,72 @@ const defaultItems = [
   { path: '/import', label: 'الاستيراد', enabled: true },
 ];
 
+// Sortable Item Component
+function SortableItem({ item, idx, updateField, toggleEnabled, removeItem }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `item-${idx}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="grid grid-cols-12 items-center gap-3 p-3 border rounded-md bg-white"
+    >
+      {/* Drag Handle */}
+      <div className="col-span-1 flex justify-center cursor-move" {...attributes} {...listeners}>
+        <GripVertical size={20} className="text-slate-400" />
+      </div>
+      
+      {/* Label Input */}
+      <div className="col-span-4">
+        <Label className="text-xs">الاسم الظاهر</Label>
+        <Input value={item.label} onChange={(e) => updateField(idx, 'label', e.target.value)} />
+      </div>
+      
+      {/* Path Input */}
+      <div className="col-span-4">
+        <Label className="text-xs">المسار</Label>
+        <Input value={item.path} onChange={(e) => updateField(idx, 'path', e.target.value)} />
+      </div>
+      
+      {/* Enable Switch */}
+      <div className="col-span-1 text-center">
+        <Label className="text-xs">تفعيل</Label>
+        <div className="flex justify-center mt-1">
+          <Switch checked={item.enabled !== false} onCheckedChange={() => toggleEnabled(idx)} />
+        </div>
+      </div>
+      
+      {/* Delete Button */}
+      <div className="col-span-2 flex justify-end">
+        <Button variant="destructive" size="sm" onClick={() => removeItem(idx)} title="حذف">
+          <Trash2 size={16} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function MenuEditor({ settings, setSettings }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const items = useMemo(() => {
     return Array.isArray(settings?.menuConfig?.items) && settings.menuConfig.items.length
       ? settings.menuConfig.items
@@ -61,20 +126,6 @@ export default function MenuEditor({ settings, setSettings }) {
     updateItems(next);
   };
 
-  const moveUp = (idx) => {
-    if (idx === 0) return;
-    const next = [...items];
-    [next[idx-1], next[idx]] = [next[idx], next[idx-1]];
-    updateItems(next);
-  };
-
-  const moveDown = (idx) => {
-    if (idx === items.length - 1) return;
-    const next = [...items];
-    [next[idx+1], next[idx]] = [next[idx], next[idx+1]];
-    updateItems(next);
-  };
-
   const removeItem = (idx) => {
     const next = items.filter((_, i) => i !== idx);
     updateItems(next);
@@ -90,40 +141,59 @@ export default function MenuEditor({ settings, setSettings }) {
     updateItems(next);
   };
 
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const oldIndex = parseInt(active.id.split('-')[1]);
+      const newIndex = parseInt(over.id.split('-')[1]);
+      const next = arrayMove(items, oldIndex, newIndex);
+      updateItems(next);
+    }
+  };
+
   return (
     <div className="space-y-4" dir="rtl">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <p className="text-sm text-blue-800">
+          💡 <strong>نصيحة:</strong> اسحب العنصر من الأيقونة ⋮⋮ لإعادة ترتيب القائمة
+        </p>
+      </div>
+      
       <div className="flex justify-end">
         <Button onClick={addItem} className="bg-blue-600 hover:bg-blue-700">
           <Plus size={18} className="ml-2" />
           إضافة عنصر
         </Button>
       </div>
-      <div className="space-y-3">
-        {items.map((item, idx) => (
-          <div key={idx} className="grid grid-cols-12 items-center gap-3 p-3 border rounded-md">
-            <div className="col-span-4">
-              <Label>الاسم الظاهر</Label>
-              <Input value={item.label} onChange={(e) => updateField(idx, 'label', e.target.value)} />
-            </div>
-            <div className="col-span-5">
-              <Label>المسار</Label>
-              <Input value={item.path} onChange={(e) => updateField(idx, 'path', e.target.value)} />
-            </div>
-            <div className="col-span-1 text-center">
-              <Label>تفعيل</Label>
-              <div className="flex justify-center">
-                <Switch checked={item.enabled !== false} onCheckedChange={() => toggleEnabled(idx)} />
-              </div>
-            </div>
-            <div className="col-span-2 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => moveUp(idx)} title="للأعلى"><ArrowUp size={18} /></Button>
-              <Button variant="outline" onClick={() => moveDown(idx)} title="للأسفل"><ArrowDown size={18} /></Button>
-              <Button variant="destructive" onClick={() => removeItem(idx)} title="حذف"><Trash2 size={18} /></Button>
-            </div>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={items.map((_, idx) => `item-${idx}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-3">
+            {items.map((item, idx) => (
+              <SortableItem
+                key={`item-${idx}`}
+                item={item}
+                idx={idx}
+                updateField={updateField}
+                toggleEnabled={toggleEnabled}
+                removeItem={removeItem}
+              />
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="text-sm text-slate-500">تلميح: بعد الحفظ، ستطبّق القائمة الجديدة فورًا على الواجهة.</p>
+        </SortableContext>
+      </DndContext>
+
+      <p className="text-sm text-slate-500 mt-4">
+        تلميح: بعد الحفظ، ستطبّق القائمة الجديدة فورًا على الواجهة.
+      </p>
     </div>
   );
 }

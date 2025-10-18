@@ -456,6 +456,47 @@ async def seed_print_templates():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/print/resolve-template')
+
+
+@router.post('/seed/add-mechanic-template')
+async def add_mechanic_invoice_template():
+    """Add professional mechanic invoice template from image"""
+    try:
+        from pathlib import Path
+        template_path = Path(__file__).parent / "invoice_template_mechanic.html"
+        
+        if template_path.exists():
+            with open(template_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Check if already exists
+            existing = await db.templates.find_one({
+                'name': 'فاتورة الميكانيكا الاحترافية',
+                'type': 'invoice'
+            })
+            
+            if not existing:
+                doc = TemplateDoc(
+                    name='فاتورة الميكانيكا الاحترافية',
+                    type='invoice',
+                    language='ar',
+                    html=html_content,
+                    isActive=True
+                )
+                await db.templates.insert_one(doc.dict())
+                return {'status': 'ok', 'message': 'Template added successfully'}
+            else:
+                # Update existing
+                await db.templates.update_one(
+                    {'id': existing['id']},
+                    {'$set': {'html': html_content, 'updatedAt': datetime.utcnow()}}
+                )
+                return {'status': 'ok', 'message': 'Template updated successfully'}
+        else:
+            raise HTTPException(status_code=404, detail='Template file not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 async def resolve_template(payload: Dict[str, Any] = Body(...)):
     try:
         override_type = (payload or {}).get('override_type') or (payload or {}).get('type')

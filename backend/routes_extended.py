@@ -188,6 +188,8 @@ async def analytics_services():
             total_price += float(r.get('price') or 0)
         avg_price = (total_price / total) if total > 0 else 0
         return {"total": total, "categories": cats, "avgPrice": avg_price}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ------------------ BUSINESS ACCOUNTS ------------------

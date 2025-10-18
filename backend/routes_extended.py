@@ -652,7 +652,10 @@ async def prepare_notification(payload: Dict[str, Any]):
         else:
             message = f"رسالة من الورشة:\n{link}"
         
-        whatsapp_deeplink = f"https://wa.me/{norm}?text={message.replace(' ', '%20').replace('\n', '%0A')}"
+        # Encode message for URL
+        import urllib.parse
+        encoded_message = urllib.parse.quote(message)
+        whatsapp_deeplink = f"https://wa.me/{norm}?text={encoded_message}"
         
         return {
             'whatsappDeeplink': whatsapp_deeplink,

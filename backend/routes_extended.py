@@ -48,9 +48,11 @@ async def get_settings():
                             {"path": "/import", "label": "استيراد/توريد", "enabled": True}
                         ]},
                         {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
-                        {"path": "/ceo", "label": "المدير التنفيذي", "enabled": True},
+                        {"group": True, "path": "/ceo-group", "label": "المدير التنفيذي", "enabled": True, "children": [
+                            {"path": "/ceo", "label": "لوحة المدير", "enabled": True},
+                            {"path": "/knowledge", "label": "إدارة المعرفة AI", "enabled": True}
+                        ]},
                         {"path": "/payroll", "label": "الرواتب", "enabled": True},
-                        {"path": "/knowledge", "label": "إدارة المعرفة", "enabled": True},
                         {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [
                             {"path": "/settings", "label": "الإعدادات العامة", "enabled": True},
                             {"path": "/templates", "label": "نماذج الفواتير/التقارير", "enabled": True},

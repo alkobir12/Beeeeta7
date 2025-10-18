@@ -13,11 +13,15 @@ const CustomerReceipts = () => {
   const [customers, setCustomers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [form, setForm] = useState({ customerId: '', accountId: '', amount: 0, paymentMethod: 'cash', notes: '' });
-  const [filters, setFilters] = useState({ customerId: '', accountId: '' });
+  const [filters, setFilters] = useState({ customerId: 'all', accountId: 'all' });
 
   const load = async () => {
+    const params = {};
+    if (filters.customerId && filters.customerId !== 'all') params.customer_id = filters.customerId;
+    if (filters.accountId && filters.accountId !== 'all') params.account_id = filters.accountId;
+    
     const [receiptsRes, customersRes, accountsRes] = await Promise.all([
-      axios.get(`${API_URL}/customer-receipts`, { params: filters }),
+      axios.get(`${API_URL}/customer-receipts`, { params }),
       axios.get(`${API_URL}/customers`),
       axios.get(`${API_URL}/biz-accounts`)
     ]);

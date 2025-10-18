@@ -196,7 +196,21 @@ async def request_otp(payload: Dict[str, Any]):
         phone = (payload or {}).get('phone') or ''
         if not phone:
             raise HTTPException(status_code=422, detail='phone required')
+        
+        # Normalize phone number - ensure it starts with country code
         norm = ''.join([c for c in phone if c.isdigit()])
+        
+        # Add Saudi country code if missing
+        if norm.startswith('05') or norm.startswith('5'):
+            # Remove leading 0 and add 966
+            if norm.startswith('0'):
+                norm = '966' + norm[1:]
+            else:
+                norm = '966' + norm
+        elif not norm.startswith('966'):
+            # If doesn't start with 966 and not 05x, add it anyway
+            norm = '966' + norm
+        
         code = '123456'
         token = str(uuid.uuid4())
         doc = {
@@ -211,8 +225,13 @@ async def request_otp(payload: Dict[str, Any]):
             'consumed': False
         }
         await db.otp_requests.insert_one(doc)
+        
+        # Build WhatsApp message with proper encoding
         whatsapp_text = f"رمز التحقق للدخول: {code}"
-        deeplink = f"https://wa.me/{norm}?text={whatsapp_text}"
+        import urllib.parse
+        encoded_text = urllib.parse.quote(whatsapp_text)
+        deeplink = f"https://wa.me/{norm}?text={encoded_text}"
+        
         return { 'token': token, 'whatsappDeeplink': deeplink }
     except HTTPException:
         raise

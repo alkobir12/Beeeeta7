@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { CheckCircle, FileText, Printer, Trash2, X, Share2, BadgeCheck } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
-import PrintPreview from './PrintPreview';
+import DocumentFormDialog from './DocumentFormDialog';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 

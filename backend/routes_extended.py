@@ -633,10 +633,21 @@ def _render_items_rows(items: List[Dict[str, Any]]):
 async def print_render(payload: Dict[str, Any] = Body(...)):
     try:
         override_type = payload.get('override_type') or payload.get('type') or 'invoice'
+        template_id = payload.get('template_id')
         data = payload.get('data') or {}
-        await _ensure_templates()
-        tpl = await db.templates.find_one({'type': override_type, 'isActive': True})
-        html = (tpl.get('html') if tpl else DEFAULT_TEMPLATES.get(override_type)) or '<html><body>{{CONTENT}}</body></html>'
+        
+        # Get template - prioritize template_id if provided
+        html = None
+        if template_id:
+            tpl = await db.templates.find_one({'id': template_id})
+            if tpl:
+                html = tpl.get('html')
+        
+        # Fallback to type-based lookup
+        if not html:
+            await _ensure_templates()
+            tpl = await db.templates.find_one({'type': override_type, 'isActive': True})
+            html = (tpl.get('html') if tpl else DEFAULT_TEMPLATES.get(override_type)) or '<html><body>{{CONTENT}}</body></html>'
 
         # Prepare items
         items = data.get('items') or []

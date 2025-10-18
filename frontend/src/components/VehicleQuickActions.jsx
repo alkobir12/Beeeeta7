@@ -43,118 +43,14 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     } finally { setLoading(false); }
   };
 
-  const buildBaseData = () => ({
-    WORKSHOP_NAME: 'ورشتي',
-    CUSTOMER_NAME: vehicle?.customerName,
-    CUSTOMER_PHONE: vehicle?.customerPhone,
-    VEHICLE_PLATE: vehicle?.plateNumber,
-    VEHICLE_MODEL: `${vehicle?.brand||''} ${vehicle?.model||''}`,
-    VEHICLE_YEAR: vehicle?.year,
-    FILE_NUMBER: vehicle?.fileNumber,
-    VEHICLE_VIN: vehicle?.vin,
-  });
-
-  const openPreview = (title, html) => {
-    setPreviewTitle(title);
-    setPreviewHtml(html);
-    setPreviewOpen(true);
+  const openDocumentDialog = (docType) => {
+    setCurrentDocType(docType);
+    setDocumentDialogOpen(true);
   };
 
-  const renderDoc = async (override_type, extraData={}) => {
-    const payload = {
-      override_type,
-      data: {
-        ...buildBaseData(),
-        items: extraData.items || [],
-        SUBTOTAL: extraData.SUBTOTAL || 0,
-        DISCOUNT: extraData.DISCOUNT || 0,
-        TAX: extraData.TAX || 0,
-        TOTAL: extraData.TOTAL || 0,
-        DIAGNOSIS_DATE: extraData.DIAGNOSIS_DATE
-      }
-    };
-    try {
-      const res = await axios.post(`${API_URL}/print/render`, payload);
-      return res.data?.html || '';
-    } catch (err) {
-      // Attempt to seed templates then retry once
-      try { await axios.post(`${API_URL}/seed/print-templates`); } catch(_){}
-      const res2 = await axios.post(`${API_URL}/print/render`, payload);
-      return res2.data?.html || '';
-    }
-  };
-
-  const fetchLatestDocData = async (type) => {
-    try {
-      if (!vehicle?.id) return null;
-      if (type === 'invoice') {
-        const res = await axios.get(`${API_URL}/invoices`, { params: { vehicle_id: vehicle.id } });
-        const inv = (res.data || [])[0];
-        if (inv) {
-          const items = (inv.items||[]).map(it => ({ name: it.name, qty: it.quantity, price: it.price, total: it.total }));
-          return { items, SUBTOTAL: inv.subtotal||0, TAX: inv.tax||0, TOTAL: inv.total||0, PAYMENT_METHOD: inv.paymentMethod, INVOICE_NO: inv.invoiceNumber };
-        }
-      } else if (type === 'quote') {
-        try {
-          const res = await axios.get(`${API_URL}/quotes`, { params: { vehicle_id: vehicle.id } });
-          const q = (res.data || [])[0];
-          if (q) {
-            const items = (q.items||[]).map(it => ({ name: it.name, qty: it.quantity, price: it.price, total: (it.quantity*it.price) }));
-            return { items, SUBTOTAL: q.subtotal||0, DISCOUNT: q.discount||0, TAX: q.tax||0, TOTAL: q.total||0 };
-          }
-        } catch(_){ /* ignore if endpoint missing */ }
-      } else if (type === 'receipt') {
-        try {
-          const res = await axios.get(`${API_URL}/customer-receipts`, { params: { customer_id: vehicle.customerId } });
-          const r = (res.data || [])[0];
-          if (r) {
-            return { TOTAL: r.amount||0, RECEIPT_DATE: r.date?.slice(0,10), CUSTOMER_NAME: vehicle.customerName };
-          }
-        } catch(_){ /* ignore */ }
-      } else if (type === 'diagnosis') {
-        try {
-          const res = await axios.get(`${API_URL}/diagnosis-cases`, { params: { vehicle_id: vehicle.id } });
-          const d = (res.data || [])[0];
-          if (d) {
-            const items = (d.items||[]).map(it => ({ name: it.name || it.title || 'بند', qty: it.quantity||1, price: it.price||0, total: (it.quantity||1)*(it.price||0) }));
-            return { items, DIAGNOSIS_DATE: new Date(d.createdAt).toISOString().slice(0,10) };
-          }
-        } catch(_){ /* ignore */ }
-      }
-    } catch(_){ return null; }
-    return null;
-  };
-
-  const handlePrint = async (type) => {
-    try {
-      setLoading(true);
-      let title = 'معاينة الطباعة';
-      let html = '';
-
-      // Prefer real documents linked to the vehicle; fallback to vehicle data if not found
-      const docData = await fetchLatestDocData(type);
-
-      if (type === 'invoice') {
-        title = 'فاتورة';
-        const fallbackItems = (vehicle?.items||[]).map(it => ({ name: it.name, qty: it.qty||1, price: it.price||0, total: it.total||0 }));
-        html = await renderDoc('invoice', docData || { items: fallbackItems, TOTAL: 0 });
-      } else if (type === 'diagnosis') {
-        title = 'تقرير تشخيص';
-        const items = (vehicle?.services||[]).map(n => ({ name: n, qty: 1, price: 0, total: 0 }));
-        html = await renderDoc('diagnosis', docData || { items, DIAGNOSIS_DATE: new Date().toISOString().slice(0,10) });
-      } else if (type === 'quote') {
-        title = 'عرض سعر';
-        const items = (vehicle?.services||[]).map(n => ({ name: n, qty: 1, price: 0, total: 0 }));
-        html = await renderDoc('quote', docData || { items });
-      } else if (type === 'receipt') {
-        title = 'سند قبض';
-        html = await renderDoc('receipt', docData || { TOTAL: 0 });
-      }
-      if (!html) throw new Error('no html');
-      openPreview(title, html);
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'فشل تجهيز المستند للطباعة', variant: 'destructive' });
-    } finally { setLoading(false); }
+  const handleDocumentSaved = (savedDoc) => {
+    toast({ title: 'تم الحفظ', description: 'تم حفظ وطباعة المستند بنجاح' });
+    setDocumentDialogOpen(false);
   };
 
   const handleRequestApproval = async () => {

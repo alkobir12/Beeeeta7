@@ -13,6 +13,7 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api'
 
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [newStatus, setNewStatus] = useState(vehicle?.status || 'diagnosis');
   const [loading, setLoading] = useState(false);
   

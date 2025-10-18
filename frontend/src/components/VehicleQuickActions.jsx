@@ -217,7 +217,13 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         </DialogContent>
       </Dialog>
 
-      <PrintPreview open={previewOpen} onClose={() => setPreviewOpen(false)} title={previewTitle} html={previewHtml} />
+      <DocumentFormDialog
+        isOpen={documentDialogOpen}
+        onClose={() => setDocumentDialogOpen(false)}
+        documentType={currentDocType}
+        vehicle={vehicle}
+        onSaved={handleDocumentSaved}
+      />
     </>
   );
 };

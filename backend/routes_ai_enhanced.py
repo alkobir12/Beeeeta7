@@ -383,8 +383,8 @@ async def media_upload_chunk(uploadId: str = Body(...), index: int = Body(...), 
     try:
         if not uploadId:
             raise HTTPException(status_code=400, detail="uploadId required")
-        os.makedirs(TMP_DIR, exist_ok=True)
-        chunk_path = os.path.join(TMP_DIR, f"{uploadId}_{index:06d}.part")
+        TMP_DIR.mkdir(parents=True, exist_ok=True)
+        chunk_path = TMP_DIR / f"{uploadId}_{index:06d}.part"
         with open(chunk_path, "wb") as f:
             f.write(await chunk.read())
         return {"ok": True, "index": index}
@@ -404,21 +404,22 @@ async def media_upload_complete(req: CompleteUploadRequest):
         if not meta:
             raise HTTPException(status_code=404, detail="upload not found")
         safe_name = meta['filename'].replace('/', '_')
-        os.makedirs(VIDEO_DIR, exist_ok=True)
-        os.makedirs(AUDIO_DIR, exist_ok=True)
+        VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+        AUDIO_DIR.mkdir(parents=True, exist_ok=True)
         final_name = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
-        final_path = os.path.join(VIDEO_DIR, final_name)
+        final_path = VIDEO_DIR / final_name
         with open(final_path, "wb") as out:
             for i in range(req.totalChunks):
-                part_path = os.path.join(TMP_DIR, f"{req.uploadId}_{i:06d}.part")
-                if not os.path.exists(part_path):
+                part_path = TMP_DIR / f"{req.uploadId}_{i:06d}.part"
+                if not part_path.exists():
                     raise HTTPException(status_code=400, detail=f"missing chunk {i}")
                 with open(part_path, "rb") as p:
                     shutil.copyfileobj(p, out)
         # cleanup
         for i in range(req.totalChunks):
             try:
-                os.remove(os.path.join(TMP_DIR, f"{req.uploadId}_{i:06d}.part"))
+                part_path = TMP_DIR / f"{req.uploadId}_{i:06d}.part"
+                part_path.unlink(missing_ok=True)
             except Exception:
                 pass
         # extract audio if ffmpeg available
@@ -426,13 +427,13 @@ async def media_upload_complete(req: CompleteUploadRequest):
         try:
             if shutil.which('ffmpeg'):
                 audio_name = os.path.splitext(final_name)[0] + ".mp3"
-                audio_path = os.path.join(AUDIO_DIR, audio_name)
-                cmd = ['ffmpeg', '-y', '-i', final_path, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', audio_path]
+                audio_path = AUDIO_DIR / audio_name
+                cmd = ['ffmpeg', '-y', '-i', str(final_path), '-vn', '-acodec', 'libmp3lame', '-q:a', '2', str(audio_path)]
                 subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except Exception:
             audio_path = None
         rec = {
-            "id": str(uuid.uuid4()), "uploadId": req.uploadId, "videoPath": final_path, "audioPath": audio_path,
+            "id": str(uuid.uuid4()), "uploadId": req.uploadId, "videoPath": str(final_path), "audioPath": str(audio_path) if audio_path else None,
             "filename": meta['filename'], "size": meta['size'], "createdAt": datetime.utcnow()
         }
         await db.ai_media.insert_one(rec)

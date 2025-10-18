@@ -211,7 +211,10 @@ async def request_otp(payload: Dict[str, Any]):
             # If doesn't start with 966 and not 05x, add it anyway
             norm = '966' + norm
         
-        code = '123456'
+        # Generate random 6-digit OTP code
+        import random
+        code = str(random.randint(100000, 999999))
+        
         token = str(uuid.uuid4())
         doc = {
             'id': str(uuid.uuid4()),

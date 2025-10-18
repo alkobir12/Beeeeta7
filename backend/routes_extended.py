@@ -656,6 +656,170 @@ async def prepare_notification(payload: Dict[str, Any]):
         norm = ''.join([c for c in phone if c.isdigit()])
         # If starts with +966, already has country code
         if phone.startswith('+966'):
+
+
+# ------------------ WHATSAPP MESSAGING APIs ------------------
+whatsapp_service = None
+
+def init_whatsapp_service(database):
+    """Initialize WhatsApp service with database"""
+    global whatsapp_service
+    from whatsapp_service import WhatsAppService
+    whatsapp_service = WhatsAppService(database)
+    return whatsapp_service
+
+@router.post('/whatsapp/send-otp')
+async def send_otp_whatsapp(payload: Dict[str, Any]):
+    """Send OTP via WhatsApp"""
+    try:
+        phone = payload.get('phone')
+        code = payload.get('code')
+        
+        if not phone or not code:
+            raise HTTPException(status_code=422, detail='phone and code required')
+        
+        if not whatsapp_service:
+            raise HTTPException(status_code=500, detail='WhatsApp service not initialized')
+        
+        result = await whatsapp_service.send_otp(phone, code)
+        
+        if not result['success']:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Failed to send'))
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/whatsapp/send-approval')
+async def send_approval_whatsapp(payload: Dict[str, Any]):
+    """Send approval request via WhatsApp"""
+    try:
+        phone = payload.get('phone')
+        customer_name = payload.get('customerName', 'العميل')
+        title = payload.get('title', 'طلب اعتماد')
+        amount = float(payload.get('amount', 0))
+        approval_link = payload.get('approvalLink')
+        
+        if not phone or not approval_link:
+            raise HTTPException(status_code=422, detail='phone and approvalLink required')
+        
+        if not whatsapp_service:
+            raise HTTPException(status_code=500, detail='WhatsApp service not initialized')
+        
+        result = await whatsapp_service.send_approval_request(
+            phone=phone,
+            customer_name=customer_name,
+            title=title,
+            amount=amount,
+            approval_link=approval_link
+        )
+        
+        if not result['success']:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Failed to send'))
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/whatsapp/send-document')
+async def send_document_whatsapp(payload: Dict[str, Any]):
+    """Send document (invoice, diagnosis, quote, receipt) via WhatsApp"""
+    try:
+        phone = payload.get('phone')
+        customer_name = payload.get('customerName', 'العميل')
+        document_type = payload.get('documentType', 'invoice')
+        vehicle_plate = payload.get('vehiclePlate', '')
+        tracking_link = payload.get('trackingLink')
+        
+        if not phone or not tracking_link:
+            raise HTTPException(status_code=422, detail='phone and trackingLink required')
+        
+        if not whatsapp_service:
+            raise HTTPException(status_code=500, detail='WhatsApp service not initialized')
+        
+        result = await whatsapp_service.send_document(
+            phone=phone,
+            customer_name=customer_name,
+            document_type=document_type,
+            vehicle_plate=vehicle_plate,
+            tracking_link=tracking_link
+        )
+        
+        if not result['success']:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Failed to send'))
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/whatsapp/messages')
+async def get_whatsapp_messages(
+    phone: Optional[str] = None,
+    message_type: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 50
+):
+    """Get list of sent WhatsApp messages"""
+    try:
+        if not whatsapp_service:
+            raise HTTPException(status_code=500, detail='WhatsApp service not initialized')
+        
+        messages = await whatsapp_service.get_messages(
+            phone=phone,
+            message_type=message_type,
+            status=status,
+            limit=limit
+        )
+        
+        return {'messages': messages, 'count': len(messages)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/whatsapp/messages/{message_id}')
+async def get_whatsapp_message_status(message_id: str):
+    """Get status of specific WhatsApp message"""
+    try:
+        if not whatsapp_service:
+            raise HTTPException(status_code=500, detail='WhatsApp service not initialized')
+        
+        message = await whatsapp_service.get_message_status(message_id)
+        
+        if not message:
+            raise HTTPException(status_code=404, detail='Message not found')
+        
+        return message
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/whatsapp/status')
+async def get_whatsapp_service_status():
+    """Get WhatsApp service configuration status"""
+    try:
+        if not whatsapp_service:
+            return {
+                'initialized': False,
+                'twilio_enabled': False,
+                'delivery_method': 'none'
+            }
+        
+        return {
+            'initialized': True,
+            'twilio_enabled': whatsapp_service.twilio_enabled,
+            'delivery_method': 'twilio' if whatsapp_service.twilio_enabled else 'deeplink'
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
             norm = norm  # already correct
         elif norm.startswith('966'):
             pass  # already correct

@@ -168,22 +168,73 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const { data } = await axios.post(`${API_URL}/approvals`, payload);
       toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
       const approvalLink = `${window.location.origin}/approval/${data.token}`;
-      const phone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
-      if (phone) {
-        try {
-          const prep = await axios.post(`${API_URL}/notifications/prepare`, { type: 'approval', phone, link: approvalLink });
-          const wa = window.open(prep.data.whatsappDeeplink, '_blank', 'noopener,noreferrer');
-          if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
-        } catch (_e) {
-          const msg = `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${approvalLink}\nالمبلغ المتوقع: ${amount} ر.س`;
-          const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-          if (!wa) toast({ title: 'تنبيه', description: 'يبدو أن المتصفح منع فتح واتساب، الرجاء السماح بالنوافذ المنبثقة', variant: 'destructive' });
-        }
-      }
+      
+      // Send to WhatsApp
+      await sendToWhatsApp(
+        'approval',
+        approvalLink,
+        `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${title}\nالمبلغ المتوقع: ${amount} ر.س\nللاعتماد: ${approvalLink}`
+      );
+      
       setNewStatus('quotation');
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر إرسال طلب الاعتماد', variant: 'destructive' });
     } finally { setLoading(false); }
+  };
+
+  const sendToWhatsApp = async (type, link, customMessage) => {
+    const phone = (vehicle?.customerPhone || '').replace(/[^0-9+]/g, '');
+    if (!phone) {
+      toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
+      return;
+    }
+    
+    try {
+      const prep = await axios.post(`${API_URL}/notifications/prepare`, { type, phone, link });
+      setTimeout(() => {
+        const wa = window.open(prep.data.whatsappDeeplink, '_blank', 'noopener,noreferrer');
+        if (!wa) {
+          toast({ 
+            title: 'افتح الواتساب يدوياً', 
+            description: 'المتصفح منع النافذة المنبثقة. انسخ الرابط وأرسله للعميل.',
+            variant: 'destructive' 
+          });
+        }
+      }, 300);
+    } catch (_e) {
+      // Fallback to direct WhatsApp link
+      const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
+      setTimeout(() => {
+        const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+        if (!wa) {
+          toast({ 
+            title: 'افتح الواتساب يدوياً', 
+            description: 'المتصفح منع النافذة المنبثقة',
+            variant: 'destructive' 
+          });
+        }
+      }, 300);
+    }
+  };
+
+  const handlePrintAndSend = async (type) => {
+    await handlePrint(type);
+    
+    // Generate link for sharing
+    const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink || vehicle?.id}`;
+    let message = `السلام عليكم ${vehicle?.customerName}\n`;
+    
+    if (type === 'diagnosis') {
+      message += `تقرير التشخيص للمركبة ${vehicle?.plateNumber}\nللاطلاع: ${trackingLink}`;
+    } else if (type === 'invoice') {
+      message += `فاتورة المركبة ${vehicle?.plateNumber}\nللاطلاع: ${trackingLink}`;
+    } else if (type === 'quote') {
+      message += `عرض السعر للمركبة ${vehicle?.plateNumber}\nللاطلاع: ${trackingLink}`;
+    } else if (type === 'receipt') {
+      message += `سند القبض\nللاطلاع: ${trackingLink}`;
+    }
+    
+    await sendToWhatsApp(type, trackingLink, message);
   };
 
   const handleDelete = async () => {

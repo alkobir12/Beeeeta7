@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة - ورشة الميكانيكا</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+            text-align: right;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .invoice-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+        }
+        
+        /* Header */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #17a2b8;
+            margin-bottom: 25px;
+        }
+        
+        .company-info h1 {
+            font-size: 22px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .company-info h2 {
+            font-size: 16px;
+            color: #555;
+            font-weight: normal;
+        }
+        
+        .invoice-meta {
+            text-align: left;
+        }
+        
+        .invoice-meta p {
+            margin: 3px 0;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .logo {
+            text-align: center;
+        }
+        
+        .logo .brand {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            letter-spacing: 1px;
+        }
+        
+        .logo .subtitle {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+        
+        /* Customer & Date Section */
+        .customer-date {
+            display: flex;
+            justify-content: flex-end;
+            gap: 40px;
+            margin-bottom: 25px;
+        }
+        
+        .info-field {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        
+        .info-field label {
+            font-weight: bold;
+            color: #34495e;
+            font-size: 14px;
+        }
+        
+        .info-field span {
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            padding: 2px 10px;
+            min-width: 150px;
+            display: inline-block;
+        }
+        
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        
+        .items-table thead {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+        }
+        
+        .items-table th {
+            padding: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #138496;
+        }
+        
+        .items-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            font-size: 13px;
+        }
+        
+        .items-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .items-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        /* Discounts & Balance Section */
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section-field {
+            flex: 1;
+        }
+        
+        .section-field label {
+            display: block;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .section-field .content-box {
+            border: 1px solid #ddd;
+            padding: 12px;
+            background: #f8f9fa;
+            min-height: 60px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        /* Footer */
+        .invoice-footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .footer-notes {
+            flex: 1;
+        }
+        
+        .footer-notes label {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .footer-notes .notes-content {
+            color: #666;
+            font-size: 12px;
+            font-style: italic;
+        }
+        
+        .contact-info {
+            text-align: left;
+            color: #555;
+            font-size: 13px;
+        }
+        
+        .contact-info p {
+            margin: 4px 0;
+        }
+        
+        .contact-info strong {
+            color: #2c3e50;
+        }
+        
+        .stamp-area {
+            text-align: center;
+            border: 1px dashed #ccc;
+            padding: 15px;
+            min-width: 100px;
+            color: #aaa;
+            font-size: 11px;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            .invoice-container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <h1>{{WORKSHOP_NAME}}</h1>
+                <h2>لميكانيكا السيارات</h2>
+            </div>
+            <div class="invoice-meta">
+                <p><strong>{{WORKSHOP_ADDRESS}}</strong></p>
+                <p><strong>رقم الفاتورة:</strong> {{INVOICE_NO}}</p>
+            </div>
+            <div class="logo">
+                <div class="brand">MECHANIC</div>
+                <div class="subtitle">AUTO REPAIR</div>
+            </div>
+        </div>
+        
+        <!-- Customer & Date -->
+        <div class="customer-date">
+            <div class="info-field">
+                <label>العميل:</label>
+                <span>{{CUSTOMER_NAME}}</span>
+            </div>
+            <div class="info-field">
+                <label>التاريخ:</label>
+                <span>{{DATE}}</span>
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>المادة</th>
+                    <th>الكمية</th>
+                    <th>الوحدة</th>
+                    <th>الإفرادي</th>
+                    <th>الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ITEMS_ROWS}}
+            </tbody>
+        </table>
+        
+        <!-- Discounts & Balance -->
+        <div class="bottom-section">
+            <div class="section-field">
+                <label>الخصومات:</label>
+                <div class="content-box">{{DISCOUNT}} ر.س</div>
+            </div>
+            <div class="section-field">
+                <label>رصيد العميل بعد الفاتورة:</label>
+                <div class="content-box">{{CUSTOMER_BALANCE}} ر.س</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <div class="footer-notes">
+                <label>نص الحاشية:</label>
+                <div class="notes-content">{{FOOTER_NOTES}}</div>
+            </div>
+            <div class="stamp-area">
+                [ختم الورشة]
+            </div>
+            <div class="contact-info">
+                <p><strong>رقم التواصل:</strong> {{WORKSHOP_PHONE}}</p>
+                <p><strong>عنوان الشركة:</strong> {{WORKSHOP_CITY}}</p>
+                <p><strong>سجل رقم:</strong> {{TAX_NUMBER}}</p>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

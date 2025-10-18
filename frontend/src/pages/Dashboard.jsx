@@ -108,7 +108,6 @@ const Dashboard = () => {
     awaitingApproval: vehicles.filter(v => v.status === 'quotation' || v.status === 'awaiting_approval' || (v.notes && v.notes.includes('انتظار اعتماد'))).length,
     creditPayments: vehicles.filter(v => v.paymentMethod === 'credit' || v.paymentMethod === 'آجل').length
   };
-  };
 
   const filteredVehicles = vehicles.filter(vehicle => {
   const matchesCustom = (filterStatus === 'abandoned') ? (() => {

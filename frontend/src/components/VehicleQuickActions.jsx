@@ -14,9 +14,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   const { toast } = useToast();
   const [newStatus, setNewStatus] = useState(vehicle?.status || 'diagnosis');
   const [loading, setLoading] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewTitle, setPreviewTitle] = useState('معاينة الطباعة');
-  const [previewHtml, setPreviewHtml] = useState('');
+  
+  // Document form dialogs
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [currentDocType, setCurrentDocType] = useState('');
 
   useEffect(() => {
     setNewStatus(vehicle?.status || 'diagnosis');

@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
 
-const API_URL = (((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_BACKEND_URL) ? import.meta.env.REACT_APP_BACKEND_URL : (process.env.REACT_APP_BACKEND_URL || '')) + '/api').replace('//api','/api');
+const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Login = () => {
   const navigate = useNavigate();

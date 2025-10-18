@@ -229,13 +229,33 @@ async def request_otp(payload: Dict[str, Any]):
         }
         await db.otp_requests.insert_one(doc)
         
-        # Build WhatsApp message with proper encoding
+        # Send via WhatsApp service if available
+        whatsapp_result = None
+        if whatsapp_service:
+            try:
+                whatsapp_result = await whatsapp_service.send_otp(norm, code)
+            except Exception as e:
+                print(f"WhatsApp send error: {e}")
+        
+        # Always return deeplink as fallback
         whatsapp_text = f"رمز التحقق للدخول: {code}"
         import urllib.parse
         encoded_text = urllib.parse.quote(whatsapp_text)
         deeplink = f"https://wa.me/{norm}?text={encoded_text}"
         
-        return { 'token': token, 'whatsappDeeplink': deeplink }
+        response = { 
+            'token': token, 
+            'whatsappDeeplink': deeplink
+        }
+        
+        # Add WhatsApp send status if available
+        if whatsapp_result:
+            response['whatsappSent'] = whatsapp_result.get('success', False)
+            response['deliveryMethod'] = whatsapp_result.get('delivery_method', 'deeplink')
+            if whatsapp_result.get('message_id'):
+                response['messageId'] = whatsapp_result['message_id']
+        
+        return response
     except HTTPException:
         raise
     except Exception as e:

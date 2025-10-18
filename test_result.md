@@ -868,12 +868,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Verify restored backend endpoints (diagnosis-cases, customer-receipts, quotes, print/resolve-template, print/render)"
-    - "Validate sidebar menuConfig persistence and loading"
-    - "Test print preview functionality with actual linked documents"
-    - "Verify new analytics banners data endpoints"
+    - "Updated Login - Name-based authentication without OTP"
+    - "DocumentFormDialog - Save and print documents with template selection"
+    - "VehicleQuickActions - Updated with all actions from image (parts, pricing, operations, reports, archive)"
+    - "WhatsApp APIs - send-otp, send-approval, send-document"
+    - "Sidebar menu - Knowledge moved under CEO group"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
     - agent: "main"
     - agent: "main"

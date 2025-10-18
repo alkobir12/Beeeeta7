@@ -530,6 +530,37 @@ async def seed_print_templates():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/print/resolve-template')
+async def resolve_print_template(payload: Dict[str, Any]):
+    try:
+        override_type = payload.get('override_type')
+        template_id = payload.get('template_id')
+        
+        # If template_id provided, use it
+        if template_id:
+            template = await db.templates.find_one({'id': template_id})
+            if template:
+                template.pop('_id', None)
+                return {'type': override_type, 'template': template}
+        
+        # Otherwise find by type
+        if override_type:
+            template = await db.templates.find_one({'type': override_type, 'isActive': True})
+            if template:
+                template.pop('_id', None)
+                return {'type': override_type, 'template': template}
+        
+        # Fallback to defaults
+        await _ensure_templates()
+        template = await db.templates.find_one({'type': override_type, 'isActive': True})
+        if template:
+            template.pop('_id', None)
+            return {'type': override_type, 'template': template}
+        
+        raise HTTPException(status_code=404, detail='No template found')
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post('/seed/add-mechanic-template')

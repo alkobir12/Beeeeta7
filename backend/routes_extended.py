@@ -869,35 +869,5 @@ async def get_whatsapp_service_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-            norm = norm  # already correct
-        elif norm.startswith('966'):
-            pass  # already correct
-        elif norm.startswith('05') or norm.startswith('5'):
-            # Add Saudi country code
-            if norm.startswith('0'):
-                norm = '966' + norm[1:]
-            else:
-                norm = '966' + norm
-        
-        # Build message based on type
-        if notif_type == 'approval':
-            message = f"السلام عليكم،\nلديك طلب اعتماد جديد:\n{link}"
-        elif notif_type == 'tracking':
-            message = f"السلام عليكم،\nلتتبع حالة مركبتك:\n{link}"
-        else:
-            message = f"رسالة من الورشة:\n{link}"
-        
-        # Encode message for URL
-        import urllib.parse
-        encoded_message = urllib.parse.quote(message)
-        whatsapp_deeplink = f"https://wa.me/{norm}?text={encoded_message}"
-        
-        return {
-            'whatsappDeeplink': whatsapp_deeplink,
-            'normalizedPhone': norm,
-            'message': message
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 

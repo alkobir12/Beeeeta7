@@ -10,7 +10,7 @@ import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = (import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL) + '/api';
+const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Settings = () => {
   const { toast } = useToast();

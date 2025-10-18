@@ -9,6 +9,7 @@ import uuid
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from ai_knowledge_base import AIKnowledgeBase, INITIAL_KNOWLEDGE
@@ -19,13 +20,15 @@ router = APIRouter(prefix="/api")
 db = None
 knowledge_base = None
 
-BASE_UPLOAD_DIR = "/app/uploads"
-TMP_DIR = os.path.join(BASE_UPLOAD_DIR, "tmp")
-VIDEO_DIR = os.path.join(BASE_UPLOAD_DIR, "videos")
-AUDIO_DIR = os.path.join(BASE_UPLOAD_DIR, "audio")
+# Use relative path from current file location (deployment-safe)
+ROOT_DIR = Path(__file__).parent
+BASE_UPLOAD_DIR = ROOT_DIR / "uploads"
+TMP_DIR = BASE_UPLOAD_DIR / "tmp"
+VIDEO_DIR = BASE_UPLOAD_DIR / "videos"
+AUDIO_DIR = BASE_UPLOAD_DIR / "audio"
 for d in (BASE_UPLOAD_DIR, TMP_DIR, VIDEO_DIR, AUDIO_DIR):
     try:
-        os.makedirs(d, exist_ok=True)
+        d.mkdir(parents=True, exist_ok=True)
     except Exception:
         pass
 

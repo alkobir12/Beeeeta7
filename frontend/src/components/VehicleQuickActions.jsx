@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
-import { CheckCircle, FileText, Printer, Trash2, X, Share2, BadgeCheck } from 'lucide-react';
+import { CheckCircle, FileText, Printer, Trash2, X, Share2, BadgeCheck, Package, Wrench } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DocumentFormDialog from './DocumentFormDialog';
 

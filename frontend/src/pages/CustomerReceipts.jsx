@@ -82,14 +82,14 @@ const CustomerReceipts = () => {
                 <Select value={filters.customerId} onValueChange={v => setFilters({ ...filters, customerId: v })}>
                   <SelectTrigger><SelectValue placeholder="فلترة بالعميل" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">الكل</SelectItem>
+                    <SelectItem value="all">الكل</SelectItem>
                     {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.accountId} onValueChange={v => setFilters({ ...filters, accountId: v })}>
                   <SelectTrigger><SelectValue placeholder="فلترة بالفرع" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">الكل</SelectItem>
+                    <SelectItem value="all">الكل</SelectItem>
                     {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                   </SelectContent>
                 </Select>

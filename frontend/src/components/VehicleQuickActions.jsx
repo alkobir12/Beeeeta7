@@ -8,7 +8,7 @@ import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import PrintPreview from './PrintPreview';
 
-const API_URL = (((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_BACKEND_URL) ? import.meta.env.REACT_APP_BACKEND_URL : (process.env.REACT_APP_BACKEND_URL || '')) + '/api').replace('//api','/api');
+const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {
   const { toast } = useToast();

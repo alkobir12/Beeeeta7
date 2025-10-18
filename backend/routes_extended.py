@@ -188,6 +188,78 @@ async def analytics_services():
             total_price += float(r.get('price') or 0)
         avg_price = (total_price / total) if total > 0 else 0
         return {"total": total, "categories": cats, "avgPrice": avg_price}
+
+
+# ------------------ BUSINESS ACCOUNTS ------------------
+@router.get('/biz-accounts')
+async def get_business_accounts():
+    """Get all business accounts"""
+    try:
+        accounts = await db.business_accounts.find({'isActive': True}).to_list(length=1000)
+        for a in accounts:
+            a.pop('_id', None)
+            if a.get('createdAt'):
+                a['createdAt'] = a['createdAt'].isoformat()
+            if a.get('updatedAt'):
+                a['updatedAt'] = a['updatedAt'].isoformat()
+        return accounts
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/biz-accounts')
+async def create_business_account(payload: Dict[str, Any]):
+    """Create new business account"""
+    try:
+        from models_extended import BusinessAccount
+        account = BusinessAccount(
+            name=payload.get('name', ''),
+            code=payload.get('code', ''),
+            description=payload.get('description'),
+            isActive=True
+        )
+        doc = account.dict()
+        await db.business_accounts.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/biz-accounts/{account_id}')
+async def update_business_account(account_id: str, payload: Dict[str, Any]):
+    """Update business account"""
+    try:
+        update_data = {}
+        if 'name' in payload:
+            update_data['name'] = payload['name']
+        if 'code' in payload:
+            update_data['code'] = payload['code']
+        if 'description' in payload:
+            update_data['description'] = payload['description']
+        if 'isActive' in payload:
+            update_data['isActive'] = payload['isActive']
+        
+        update_data['updatedAt'] = datetime.utcnow()
+        
+        result = await db.business_accounts.update_one(
+            {'id': account_id},
+            {'$set': update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail='Account not found')
+        
+        updated = await db.business_accounts.find_one({'id': account_id})
+        updated.pop('_id', None)
+        if updated.get('createdAt'):
+            updated['createdAt'] = updated['createdAt'].isoformat()
+        if updated.get('updatedAt'):
+            updated['updatedAt'] = updated['updatedAt'].isoformat()
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -389,12 +389,39 @@ const Dashboard = () => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex gap-2 flex-wrap">
-                    {vehicle.services && vehicle.services.map((service, idx) => (
-                      <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        {service}
-                      </Badge>
-                    ))}
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-2 flex-wrap flex-1">
+                      {vehicle.services && vehicle.services.map((service, idx) => (
+                        <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {service}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/vehicle-details/${vehicle.id}`);
+                        }}
+                        className="hover:bg-blue-50"
+                      >
+                        تعديل
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedVehicle(vehicle);
+                          setShowQuickActions(true);
+                        }}
+                        className="hover:bg-green-50"
+                      >
+                        تشخيص
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

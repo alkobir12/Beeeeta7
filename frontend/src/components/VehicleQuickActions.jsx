@@ -189,26 +189,53 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
             <div className="space-y-2">
               <Label className="text-base font-semibold">إجراءات سريعة</Label>
 
+              {/* Approval Request */}
               <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-50">
                 <BadgeCheck size={18} className="ml-2" />طلب اعتماد من العميل
               </Button>
 
+              {/* Document Creation */}
               <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-50">
-                <FileText size={18} className="ml-2" />إنشاء تقرير التشخيص
+                <FileText size={18} className="ml-2" />تقرير الإصلاح
               </Button>
 
               <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-amber-50">
-                <FileText size={18} className="ml-2" />إنشاء عرض السعر
+                <FileText size={18} className="ml-2" />تسعير القطع
               </Button>
 
               <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-purple-50">
-                <Printer size={18} className="ml-2" />إنشاء الفاتورة
+                <Printer size={18} className="ml-2" />طباعة كرت استلام (فاتورة)
               </Button>
 
               <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-emerald-50">
-                <FileText size={18} className="ml-2" />إنشاء سند قبض
+                <FileText size={18} className="ml-2" />سند قبض
               </Button>
 
+              {/* Operations */}
+              <Button onClick={() => navigate(`/vehicle-details/${vehicle.id}`)} disabled={loading} variant="outline" className="w-full justify-start hover:bg-slate-50">
+                <FileText size={18} className="ml-2" />التفاصيل
+              </Button>
+
+              {/* Parts Management */}
+              <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-50">
+                <Package size={18} className="ml-2" />قطع الغيار
+              </Button>
+
+              {/* Operations/Services */}
+              <Button onClick={() => navigate('/operations')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-orange-50">
+                <Wrench size={18} className="ml-2" />إدخال العمليات
+              </Button>
+
+              {/* Archive Actions */}
+              <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-50">
+                <CheckCircle size={18} className="ml-2" />خروج من الأرشيف (تسليم)
+              </Button>
+
+              <Button onClick={() => handleStatusUpdate('cancelled')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-gray-50">
+                <X size={18} className="ml-2" />خروج بدون إصلاح
+              </Button>
+
+              {/* Delete */}
               <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full justify-start hover:bg-red-600">
                 <Trash2 size={18} className="ml-2" />حذف المركبة
               </Button>

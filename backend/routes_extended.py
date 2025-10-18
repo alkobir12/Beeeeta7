@@ -538,7 +538,7 @@ async def get_templates():
         templates = await db.templates.find({}).to_list(length=1000)
         for t in templates:
             t.pop('_id', None)
-            if t.get('updatedAt'):
+            if t.get('updatedAt') and hasattr(t['updatedAt'], 'isoformat'):
                 t['updatedAt'] = t['updatedAt'].isoformat()
         return templates
     except Exception as e:

@@ -612,6 +612,43 @@ backend:
           agent: "testing"
           comment: "✅ RESTORED ENDPOINTS RETEST COMPLETE: All 6 requested restored backend endpoints tested successfully with 100% pass rate (6/6 tests passed). (1) ✅ GET /api/diagnosis-cases returns 200 with array of 11 items, (2) ✅ GET /api/customer-receipts returns 200 with array of 7 items, (3) ✅ GET /api/quotes returns 200 with array of 9 items, (4) ✅ POST /api/seed/print-templates returns 200 with {added: []} (idempotent - templates already exist), (5) ✅ POST /api/print/resolve-template with {override_type:'invoice'} returns 200 with template object, (6) ✅ POST /api/print/render with Arabic data {CUSTOMER_NAME:'اختبار', ITEMS_ROWS array} returns 200 with HTML content (510 chars). All restored endpoints are functioning correctly and ready for frontend integration."
         - working: true
+
+  - task: "WhatsApp APIs Comprehensive Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py, /app/backend/whatsapp_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ WHATSAPP APIs COMPLETE (100% pass - 4/4 tests): (1) GET /api/whatsapp/status returns initialized=true, delivery_method=deeplink. (2) POST /api/whatsapp/send-document successfully sends with phone normalization (0501234567→966501234567), Arabic content in deeplink. (3) GET /api/whatsapp/messages retrieves 4+ messages from database. (4) POST /api/whatsapp/send-approval sends approval with proper Arabic encoding. All WhatsApp messaging APIs operational."
+
+  - task: "Approvals System Full Validation"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ APPROVALS SYSTEM COMPLETE (100% pass - 4/4 tests): (1) POST /api/approvals creates approval with APR- token and 7-day expiry. (2) GET /api/approvals returns 142 approvals with no _id fields. (3) GET /api/approvals/public/{token} public access working. (4) POST /api/notifications/prepare phone normalization correct (966501234567, no duplicates). All approval endpoints operational."
+
+  - task: "Settings MenuConfig CEO Group Verification"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ SETTINGS MENUCONFIG VERIFIED (100% pass - 1/1 test): GET /api/settings returns menuConfig with CEO group containing Knowledge child item. Structure: {group:true, path:'/ceo-group', label:'المدير التنفيذي', children:[{path:'/ceo'}, {path:'/knowledge'}]}. Menu reorganization successful."
+
           agent: "testing"
           comment: "✅ COMPREHENSIVE BACKEND VALIDATION COMPLETE (94.7% pass rate - 18/19 tests): All critical endpoints verified working. (1) diagnosis-cases, customer-receipts, quotes all return proper data, (2) Print flow validated with Arabic content preservation (اختبار, 123.45 in HTML), (3) Settings menuConfig with 10 items including Arabic labels confirmed, (4) Analytics endpoints working (14 vehicles total), (5) WhatsApp OTP auth flow functional. Only /api/users returns 404 (not required). System production-ready."
 

@@ -23,7 +23,7 @@ from models import (
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 # Import extended routes
-from routes_extended import router as extended_router, set_db as set_db_extended
+from routes_extended import router as extended_router, set_db as set_db_extended, init_whatsapp_service
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 ROOT_DIR = Path(__file__).parent
@@ -37,6 +37,13 @@ db = client[os.environ.get('DB_NAME', 'workshop_db')]
 # Set database for extended and advanced routes
 set_db_extended(db)
 set_db_advanced(db)
+
+# Initialize WhatsApp service
+try:
+    whatsapp_svc = init_whatsapp_service(db)
+    print(f"✅ WhatsApp Service initialized - Mode: {'Twilio' if whatsapp_svc.twilio_enabled else 'Deeplink'}")
+except Exception as e:
+    print(f"⚠️  WhatsApp Service initialization warning: {e}")
 
 # Create upload directory
 UPLOAD_DIR = ROOT_DIR / "uploads"

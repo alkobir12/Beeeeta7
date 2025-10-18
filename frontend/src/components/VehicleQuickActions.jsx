@@ -193,41 +193,21 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                 <BadgeCheck size={18} className="ml-2" />طلب اعتماد من العميل
               </Button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => handlePrint('diagnosis')} disabled={loading} variant="outline" className="justify-start hover:bg-blue-50">
-                  <FileText size={18} className="ml-2" />طباعة تقرير التشخيص
-                </Button>
-                <Button onClick={() => handlePrintAndSend('diagnosis')} disabled={loading} variant="outline" className="justify-start hover:bg-green-50">
-                  <Share2 size={18} className="ml-2" />إرسال للواتساب
-                </Button>
-              </div>
+              <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-50">
+                <FileText size={18} className="ml-2" />إنشاء تقرير التشخيص
+              </Button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => handlePrint('quote')} disabled={loading} variant="outline" className="justify-start hover:bg-amber-50">
-                  <FileText size={18} className="ml-2" />طباعة عرض السعر
-                </Button>
-                <Button onClick={() => handlePrintAndSend('quote')} disabled={loading} variant="outline" className="justify-start hover:bg-green-50">
-                  <Share2 size={18} className="ml-2" />إرسال للواتساب
-                </Button>
-              </div>
+              <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-amber-50">
+                <FileText size={18} className="ml-2" />إنشاء عرض السعر
+              </Button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => handlePrint('invoice')} disabled={loading} variant="outline" className="justify-start hover:bg-purple-50">
-                  <Printer size={18} className="ml-2" />طباعة الفاتورة
-                </Button>
-                <Button onClick={() => handlePrintAndSend('invoice')} disabled={loading} variant="outline" className="justify-start hover:bg-green-50">
-                  <Share2 size={18} className="ml-2" />إرسال للواتساب
-                </Button>
-              </div>
+              <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-purple-50">
+                <Printer size={18} className="ml-2" />إنشاء الفاتورة
+              </Button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => handlePrint('receipt')} disabled={loading} variant="outline" className="justify-start hover:bg-emerald-50">
-                  <FileText size={18} className="ml-2" />طباعة سند قبض
-                </Button>
-                <Button onClick={() => handlePrintAndSend('receipt')} disabled={loading} variant="outline" className="justify-start hover:bg-green-50">
-                  <Share2 size={18} className="ml-2" />إرسال للواتساب
-                </Button>
-              </div>
+              <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-emerald-50">
+                <FileText size={18} className="ml-2" />إنشاء سند قبض
+              </Button>
 
               <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full justify-start hover:bg-red-600">
                 <Trash2 size={18} className="ml-2" />حذف المركبة

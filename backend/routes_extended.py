@@ -490,3 +490,176 @@ async def _upsert_customer_row(name, phone, email=None, address=None, mode: str 
     return created, updated, skipped
 
 # ... (rest of existing import endpoints remain unchanged) ...
+
+# ------------------ APPROVALS (Customer Approval Requests) ------------------
+@router.post('/approvals')
+async def create_approval(payload: Dict[str, Any]):
+    """Create customer approval request with token"""
+    try:
+        from models_extended import ApprovalRequest
+        vehicle_id = payload.get('vehicleId')
+        customer_id = payload.get('customerId')
+        title = payload.get('title', 'طلب اعتماد')
+        amount = float(payload.get('amount', 0))
+        
+        token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+        expires_at = datetime.utcnow() + timedelta(days=7)
+        
+        approval = ApprovalRequest(
+            token=token,
+            vehicleId=vehicle_id,
+            customerId=customer_id,
+            title=title,
+            amount=amount,
+            status='pending',
+            expiresAt=expires_at
+        )
+        doc = approval.dict()
+        await db.approval_requests.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/approvals')
+async def list_approvals(vehicle_id: Optional[str] = None):
+    """List approval requests, optionally filtered by vehicle_id"""
+    try:
+        query = {}
+        if vehicle_id:
+            query['vehicleId'] = vehicle_id
+        docs = await db.approval_requests.find(query).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            if d.get('createdAt'):
+                d['createdAt'] = d['createdAt'].isoformat()
+            if d.get('expiresAt'):
+                d['expiresAt'] = d['expiresAt'].isoformat()
+            if d.get('respondedAt'):
+                d['respondedAt'] = d['respondedAt'].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/approvals/public/{token}')
+async def get_public_approval(token: str):
+    """Get approval request by token for public view"""
+    try:
+        doc = await db.approval_requests.find_one({'token': token})
+        if not doc:
+            raise HTTPException(status_code=404, detail='رابط غير صحيح')
+        if doc.get('revoked'):
+            raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+        if doc.get('expiresAt') and doc['expiresAt'] < datetime.utcnow():
+            raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+        doc.pop('_id', None)
+        if doc.get('createdAt'):
+            doc['createdAt'] = doc['createdAt'].isoformat()
+        if doc.get('expiresAt'):
+            doc['expiresAt'] = doc['expiresAt'].isoformat()
+        if doc.get('respondedAt'):
+            doc['respondedAt'] = doc['respondedAt'].isoformat()
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/approvals/public/{token}/respond')
+async def respond_to_approval(token: str, payload: Dict[str, Any]):
+    """Customer responds to approval request"""
+    try:
+        status = payload.get('status', 'approved')  # approved, rejected, deferred, requote
+        name = payload.get('name', '')
+        phone = payload.get('phone', '')
+        notes = payload.get('notes', '')
+        
+        doc = await db.approval_requests.find_one({'token': token})
+        if not doc:
+            raise HTTPException(status_code=404, detail='رابط غير صحيح')
+        if doc.get('revoked'):
+            raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+        if doc.get('expiresAt') and doc['expiresAt'] < datetime.utcnow():
+            raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+        
+        update = {
+            'status': status,
+            'respondedAt': datetime.utcnow(),
+            'responderName': name,
+            'responderPhone': phone,
+            'notes': notes
+        }
+        await db.approval_requests.update_one({'token': token}, {'$set': update})
+        
+        updated_doc = await db.approval_requests.find_one({'token': token})
+        updated_doc.pop('_id', None)
+        if updated_doc.get('createdAt'):
+            updated_doc['createdAt'] = updated_doc['createdAt'].isoformat()
+        if updated_doc.get('expiresAt'):
+            updated_doc['expiresAt'] = updated_doc['expiresAt'].isoformat()
+        if updated_doc.get('respondedAt'):
+            updated_doc['respondedAt'] = updated_doc['respondedAt'].isoformat()
+        return updated_doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/approvals/{approval_id}/revoke')
+async def revoke_approval(approval_id: str):
+    """Revoke an approval request"""
+    try:
+        result = await db.approval_requests.update_one(
+            {'id': approval_id},
+            {'$set': {'revoked': True}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail='not found')
+        return {'status': 'ok', 'revoked': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ------------------ NOTIFICATIONS (WhatsApp Helpers) ------------------
+@router.post('/notifications/prepare')
+async def prepare_notification(payload: Dict[str, Any]):
+    """Prepare WhatsApp notification with phone normalization"""
+    try:
+        notif_type = payload.get('type', 'generic')
+        phone = payload.get('phone', '')
+        link = payload.get('link', '')
+        
+        # Normalize phone: remove all non-digits, then ensure it starts with country code
+        norm = ''.join([c for c in phone if c.isdigit()])
+        # If starts with +966, already has country code
+        if phone.startswith('+966'):
+            norm = norm  # already correct
+        elif norm.startswith('966'):
+            pass  # already correct
+        elif norm.startswith('05') or norm.startswith('5'):
+            # Add Saudi country code
+            if norm.startswith('0'):
+                norm = '966' + norm[1:]
+            else:
+                norm = '966' + norm
+        
+        # Build message based on type
+        if notif_type == 'approval':
+            message = f"السلام عليكم،\nلديك طلب اعتماد جديد:\n{link}"
+        elif notif_type == 'tracking':
+            message = f"السلام عليكم،\nلتتبع حالة مركبتك:\n{link}"
+        else:
+            message = f"رسالة من الورشة:\n{link}"
+        
+        whatsapp_deeplink = f"https://wa.me/{norm}?text={message.replace(' ', '%20').replace('\n', '%0A')}"
+        
+        return {
+            'whatsappDeeplink': whatsapp_deeplink,
+            'normalizedPhone': norm,
+            'message': message
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+

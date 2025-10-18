@@ -3,7 +3,23 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const defaultItems = [
   { path: '/', label: 'لوحة التحكم', enabled: true },

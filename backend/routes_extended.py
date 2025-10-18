@@ -529,6 +529,87 @@ async def seed_print_templates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ------------------ TEMPLATES CRUD ------------------
+@router.get('/templates')
+async def get_templates():
+    """Get all templates"""
+    try:
+        templates = await db.templates.find({}).to_list(length=1000)
+        for t in templates:
+            t.pop('_id', None)
+            if t.get('updatedAt'):
+                t['updatedAt'] = t['updatedAt'].isoformat()
+        return templates
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/templates')
+async def create_template(payload: Dict[str, Any]):
+    """Create new template"""
+    try:
+        doc = TemplateDoc(
+            name=payload.get('name', 'نموذج جديد'),
+            type=payload.get('type', 'invoice'),
+            language=payload.get('language', 'ar'),
+            html=payload.get('html', ''),
+            isActive=payload.get('isActive', True)
+        )
+        await db.templates.insert_one(doc.dict())
+        doc_dict = doc.dict()
+        doc_dict.pop('_id', None) if '_id' in doc_dict else None
+        return doc_dict
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/templates/{template_id}')
+async def update_template(template_id: str, payload: Dict[str, Any]):
+    """Update template"""
+    try:
+        update_data = {}
+        if 'name' in payload:
+            update_data['name'] = payload['name']
+        if 'html' in payload:
+            update_data['html'] = payload['html']
+        if 'type' in payload:
+            update_data['type'] = payload['type']
+        if 'isActive' in payload:
+            update_data['isActive'] = payload['isActive']
+        
+        update_data['updatedAt'] = datetime.utcnow()
+        
+        result = await db.templates.update_one(
+            {'id': template_id},
+            {'$set': update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail='Template not found')
+        
+        updated = await db.templates.find_one({'id': template_id})
+        updated.pop('_id', None)
+        if updated.get('updatedAt'):
+            updated['updatedAt'] = updated['updatedAt'].isoformat()
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete('/templates/{template_id}')
+async def delete_template(template_id: str):
+    """Delete template"""
+    try:
+        result = await db.templates.delete_one({'id': template_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail='Template not found')
+        return {'status': 'ok', 'deleted': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post('/print/resolve-template')
 async def resolve_print_template(payload: Dict[str, Any]):
     try:

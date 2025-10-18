@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = (((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_BACKEND_URL) ? import.meta.env.REACT_APP_BACKEND_URL : (process.env.REACT_APP_BACKEND_URL || '')) + '/api').replace('//api','/api');
+const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const PATH_ICONS = {
   '/': LayoutDashboard,

@@ -194,6 +194,30 @@ const Customers = () => {
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
                   />
                 </div>
+                
+                {/* معلومات المركبة */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-semibold mb-3 text-slate-700">معلومات المركبة (اختياري)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input
+                      placeholder="نوع المركبة (مثل: Toyota Camry)"
+                      value={formData.vehicleBrand}
+                      onChange={(e) => setFormData({...formData, vehicleBrand: e.target.value})}
+                    />
+                    <Input
+                      placeholder="رقم اللوحة"
+                      value={formData.vehiclePlate}
+                      onChange={(e) => setFormData({...formData, vehiclePlate: e.target.value})}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="الكيلومتر"
+                      value={formData.vehicleKm || ''}
+                      onChange={(e) => setFormData({...formData, vehicleKm: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
+                </div>
+                
                 <div className="flex gap-2">
                   <Button type="submit" className="bg-green-600 hover:bg-green-700">
                     {editingCustomer ? 'تحديث' : 'حفظ'}
@@ -204,7 +228,7 @@ const Customers = () => {
                     onClick={() => {
                       setShowAddForm(false);
                       setEditingCustomer(null);
-                      setFormData({ name: '', phone: '', email: '', address: '' });
+                      setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
                     }}
                   >
                     إلغاء

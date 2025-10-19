@@ -368,16 +368,22 @@ const KnowledgeAdvanced = () => {
             <TabsContent value="compare-files">
               <Card>
                 <CardHeader>
-                  <CardTitle>مقارنة بين ملفين</CardTitle>
+                  <CardTitle>مقارنة بين ملفين (جميع الصيغ)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800">
+                      📌 الصيغ المدعومة: PDF, Word, Excel, PowerPoint, Video (MP4, MOV, AVI), Images
+                    </p>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border-2 border-dashed rounded-lg p-6 text-center">
                       <FileText className="mx-auto text-blue-500 mb-3" size={32} />
                       <p className="text-sm text-slate-600 mb-3">الملف الأول</p>
                       <input
                         type="file"
-                        accept=".pdf,.mp4"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.mp4,.mov,.avi,.jpg,.jpeg,.png"
                         onChange={e => setFile1(e.target.files[0])}
                         className="hidden"
                         id="file1"
@@ -387,7 +393,7 @@ const KnowledgeAdvanced = () => {
                         variant="outline"
                         onClick={() => document.getElementById('file1').click()}
                       >
-                        {file1 ? file1.name : 'اختر ملف'}
+                        {file1 ? `✓ ${file1.name}` : 'اختر ملف'}
                       </Button>
                     </div>
 
@@ -396,7 +402,7 @@ const KnowledgeAdvanced = () => {
                       <p className="text-sm text-slate-600 mb-3">الملف الثاني</p>
                       <input
                         type="file"
-                        accept=".pdf,.mp4"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.mp4,.mov,.avi,.jpg,.jpeg,.png"
                         onChange={e => setFile2(e.target.files[0])}
                         className="hidden"
                         id="file2"
@@ -406,7 +412,7 @@ const KnowledgeAdvanced = () => {
                         variant="outline"
                         onClick={() => document.getElementById('file2').click()}
                       >
-                        {file2 ? file2.name : 'اختر ملف'}
+                        {file2 ? `✓ ${file2.name}` : 'اختر ملف'}
                       </Button>
                     </div>
                   </div>

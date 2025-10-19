@@ -87,8 +87,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {isOpen && (<div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />)}
 
-      <div className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72`} dir="rtl">
-        <div className="p-6">
+      <div className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72 overflow-y-auto`} dir="rtl">
+        <div className="p-6 pb-24">
           <div className="flex items-center justify-between mb-8">
             <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
               <h2 className="text-2xl font-bold text-slate-800">ورشتي</h2>

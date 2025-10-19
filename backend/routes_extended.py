@@ -338,6 +338,85 @@ async def create_operation(payload: Dict[str, Any]):
                         {'$inc': {'quantity': -int(it.quantity)}}
                     )
         
+
+
+# ------------------ IMPORT CUSTOMERS ------------------
+@router.post('/import/customers')
+async def import_customers(file: UploadFile = File(...), mode: str = 'skip'):
+    """Import customers from Excel/CSV file"""
+    try:
+        import pandas as pd
+        from io import BytesIO
+        
+        # Read file
+        contents = await file.read()
+        
+        # Determine file type and read
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(BytesIO(contents))
+        else:
+            df = pd.read_excel(BytesIO(contents))
+        
+        # Expected columns: name, phone, email (optional), address (optional), vehicleBrand (optional), vehiclePlate (optional), vehicleKm (optional)
+        created = updated = skipped = 0
+        
+        for _, row in df.iterrows():
+            try:
+                name = str(row.get('name', row.get('الاسم', ''))).strip()
+                phone = str(row.get('phone', row.get('الجوال', row.get('رقم الجوال', '')))).strip()
+                
+                if not name or not phone:
+                    skipped += 1
+                    continue
+                
+                # Check if customer exists
+                existing = await db.customers.find_one({'phone': phone})
+                
+                customer_data = {
+                    'name': name,
+                    'phone': phone,
+                    'email': str(row.get('email', row.get('البريد', ''))) if pd.notna(row.get('email', row.get('البريد'))) else None,
+                    'address': str(row.get('address', row.get('العنوان', ''))) if pd.notna(row.get('address', row.get('العنوان'))) else None,
+                    'vehicleBrand': str(row.get('vehicleBrand', row.get('نوع المركبة', ''))) if pd.notna(row.get('vehicleBrand', row.get('نوع المركبة'))) else None,
+                    'vehiclePlate': str(row.get('vehiclePlate', row.get('رقم اللوحة', ''))) if pd.notna(row.get('vehiclePlate', row.get('رقم اللوحة'))) else None,
+                    'vehicleKm': int(row.get('vehicleKm', row.get('الكيلومتر', 0))) if pd.notna(row.get('vehicleKm', row.get('الكيلومتر'))) else 0
+                }
+                
+                if existing:
+                    if mode == 'update':
+                        await db.customers.update_one(
+                            {'id': existing['id']},
+                            {'$set': customer_data}
+                        )
+                        updated += 1
+                    else:
+                        skipped += 1
+                else:
+                    from models import Customer
+                    customer = Customer(
+                        **customer_data,
+                        vehicles=[],
+                        totalVisits=0,
+                        createdAt=datetime.utcnow()
+                    )
+                    await db.customers.insert_one(customer.dict())
+                    created += 1
+                    
+            except Exception as e:
+                print(f"Error processing row: {e}")
+                skipped += 1
+                continue
+        
+        return {
+            'status': 'ok',
+            'created': created,
+            'updated': updated,
+            'skipped': skipped,
+            'total': len(df)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         doc.pop('_id', None)
         if doc.get('date'):
             doc['date'] = doc['date'].isoformat()

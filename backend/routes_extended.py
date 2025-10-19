@@ -338,6 +338,12 @@ async def create_operation(payload: Dict[str, Any]):
                         {'$inc': {'quantity': -int(it.quantity)}}
                     )
         
+        doc.pop('_id', None)
+        if doc.get('date'):
+            doc['date'] = doc['date'].isoformat()
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ------------------ IMPORT CUSTOMERS ------------------

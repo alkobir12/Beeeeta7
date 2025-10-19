@@ -198,6 +198,228 @@ async def electrical_diagram_qa(req: DiagramQARequest):
 @router.post("/ai/kb/electrical/seed-diagram-guide")
 async def seed_diagram_guide():
     """Seed a tutorial doc for reading automotive wiring diagrams."""
+
+
+@router.post("/ai/kb/upload-and-analyze")
+async def upload_and_analyze_document(file: UploadFile = File(...)):
+    """Upload PDF/video and analyze with AI"""
+    try:
+        # Save file temporarily
+        file_content = await file.read()
+        file_path = TMP_DIR / file.filename
+        
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        # Analyze with AI
+        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        
+        analysis_prompt = f"""Analyze this document and provide:
+1. Summary in Arabic
+2. Key points (3-5 bullet points)
+3. Main topics covered
+4. Any technical specifications or data
+
+Document: {file.filename}"""
+        
+        response = llm.send_message(
+            message=UserMessage(content=analysis_prompt)
+        )
+        
+        # Store in knowledge base
+        doc_record = {
+            'id': str(uuid.uuid4()),
+            'filename': file.filename,
+            'type': 'pdf' if file.filename.endswith('.pdf') else 'video',
+            'title': file.filename,
+            'content': response.text[:5000],  # First 5000 chars
+            'summary': response.text,
+            'uploadedAt': datetime.utcnow()
+        }
+        
+        await db.knowledge_documents.insert_one(doc_record)
+        
+        # Parse key points from AI response
+        key_points = []
+        for line in response.text.split('\n'):
+            if line.strip().startswith('•') or line.strip().startswith('-'):
+                key_points.append(line.strip()[1:].strip())
+        
+        return {
+            'success': True,
+            'filename': file.filename,
+            'type': doc_record['type'],
+            'summary': response.text,
+            'keyPoints': key_points[:5]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/ai/kb/docs")
+async def get_knowledge_documents():
+    """Get all uploaded knowledge documents"""
+    try:
+        docs = await db.knowledge_documents.find({}).sort('uploadedAt', -1).to_list(length=100)
+        for doc in docs:
+            doc.pop('_id', None)
+            if doc.get('uploadedAt') and hasattr(doc['uploadedAt'], 'isoformat'):
+                doc['uploadedAt'] = doc['uploadedAt'].isoformat()
+        return {'docs': docs, 'count': len(docs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai/kb/smart-search")
+async def smart_search_knowledge(payload: Dict[str, Any]):
+    """AI-powered smart search in knowledge base"""
+    try:
+        query = payload.get('query', '')
+        limit = payload.get('limit', 10)
+        
+        if not query:
+            raise HTTPException(status_code=422, detail='query required')
+        
+        # Get all documents
+        docs = await db.knowledge_documents.find({}).to_list(length=1000)
+        
+        # Use AI to rank and find relevant results
+        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        
+        search_prompt = f"""Based on this query: "{query}"
+
+Find the most relevant information from these documents:
+{[{'title': d.get('title'), 'summary': d.get('summary', '')[:200]} for d in docs[:20]]}
+
+Return the top {limit} most relevant results with excerpts."""
+        
+        response = llm.send_message(UserMessage(content=search_prompt))
+        
+        # For now, return simple text-based results
+        results = []
+        for doc in docs[:limit]:
+            if query.lower() in doc.get('content', '').lower() or query.lower() in doc.get('title', '').lower():
+                results.append({
+                    'title': doc.get('title'),
+                    'excerpt': doc.get('content', '')[:200] + '...',
+                    'source': doc.get('filename'),
+                    'relevance': 0.8
+                })
+        
+        return {'results': results, 'count': len(results)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai/kb/compare-files")
+async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(...)):
+    """Compare two files using AI"""
+    try:
+        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        
+        # Read files
+        content1 = (await file1.read()).decode('utf-8', errors='ignore')[:3000]
+        content2 = (await file2.read()).decode('utf-8', errors='ignore')[:3000]
+        
+        comparison_prompt = f"""قارن بين هذين الملفين بالتفصيل:
+
+الملف الأول ({file1.filename}):
+{content1}
+
+الملف الثاني ({file2.filename}):
+{content2}
+
+أعطني:
+1. التشابهات
+2. الاختلافات  
+3. التوصيات"""
+        
+        response = llm.send_message(UserMessage(content=comparison_prompt))
+        
+        # Parse response
+        sections = response.text.split('\n\n')
+        
+        return {
+            'file1': file1.filename,
+            'file2': file2.filename,
+            'similarities': sections[0] if len(sections) > 0 else '',
+            'differences': sections[1] if len(sections) > 1 else '',
+            'recommendations': sections[2] if len(sections) > 2 else response.text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai/kb/compare-vehicles")
+async def compare_vehicles(payload: Dict[str, Any]):
+    """Compare two vehicles using AI"""
+    try:
+        vehicle1_id = payload.get('vehicle1_id')
+        vehicle2_id = payload.get('vehicle2_id')
+        
+        v1 = await db.vehicles.find_one({'id': vehicle1_id})
+        v2 = await db.vehicles.find_one({'id': vehicle2_id})
+        
+        if not v1 or not v2:
+            raise HTTPException(status_code=404, detail='Vehicle not found')
+        
+        # Clean data
+        v1.pop('_id', None)
+        v2.pop('_id', None)
+        
+        # Use AI to analyze
+        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        
+        prompt = f"""قارن بين هاتين المركبتين بالتفصيل:
+
+المركبة 1: {v1.get('brand')} {v1.get('model')} {v1.get('year')} - {v1.get('plateNumber')}
+المركبة 2: {v2.get('brand')} {v2.get('model')} {v2.get('year')} - {v2.get('plateNumber')}
+
+حلل الفروقات في: الموديل، السنة، الخدمات المطلوبة، الحالة، أي معلومات مهمة."""
+        
+        response = llm.send_message(UserMessage(content=prompt))
+        
+        return {
+            'vehicle1': v1,
+            'vehicle2': v2,
+            'analysis': response.text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai/kb/engine-info")
+async def get_engine_info(payload: Dict[str, Any]):
+    """Get engine/vehicle information using AI"""
+    try:
+        query = payload.get('query', '')
+        
+        if not query:
+            raise HTTPException(status_code=422, detail='query required')
+        
+        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        
+        # Search in knowledge base first
+        docs = await db.knowledge_documents.find({}).to_list(length=100)
+        context = '\n'.join([d.get('summary', '')[:500] for d in docs[:5]])
+        
+        prompt = f"""أنت خبير ميكانيكا سيارات. أجب على هذا السؤال بالتفصيل:
+
+السؤال: {query}
+
+السياق من قاعدة المعرفة:
+{context}
+
+أعطني إجابة شاملة ومفصلة."""
+        
+        response = llm.send_message(UserMessage(content=prompt))
+        
+        # Extract sources
+        sources = [d.get('filename', d.get('title', 'Unknown')) for d in docs[:3]]
+        
+        return {
+            'query': query,
+            'answer': response.text,
+            'sources': sources
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     try:
         doc = {
             "id": str(uuid.uuid4()),

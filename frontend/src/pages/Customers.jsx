@@ -123,6 +123,45 @@ const Customers = () => {
     }
   };
 
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mode', 'update'); // skip or update duplicates
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/import/customers`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "نجح الاستيراد",
+          description: `تم إضافة ${result.created || 0} عميل، تحديث ${result.updated || 0} عميل، تخطي ${result.skipped || 0} عميل`
+        });
+        fetchCustomers();
+      } else {
+        throw new Error(result.detail || 'فشل الاستيراد');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في استيراد الملف",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
+
   const filteredCustomers = customers;
 
   if (loading) {

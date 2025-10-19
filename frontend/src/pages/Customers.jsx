@@ -21,7 +21,10 @@ const Customers = () => {
     name: '',
     phone: '',
     email: '',
-    address: ''
+    address: '',
+    vehicleBrand: '',
+    vehiclePlate: '',
+    vehicleKm: 0
   });
 
   useEffect(() => {

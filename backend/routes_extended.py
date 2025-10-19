@@ -262,6 +262,90 @@ async def update_business_account(account_id: str, payload: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ------------------ OPERATIONS (Purchase/Sale) ------------------
+@router.get('/operations')
+async def get_operations(account_id: Optional[str] = None, type: Optional[str] = None):
+    """Get all operations with optional filters"""
+    try:
+        query = {}
+        if account_id:
+            query['accountId'] = account_id
+        if type:
+            query['type'] = type
+        
+        operations = await db.operations.find(query).sort('date', -1).to_list(length=1000)
+        for op in operations:
+            op.pop('_id', None)
+            if op.get('date') and hasattr(op['date'], 'isoformat'):
+                op['date'] = op['date'].isoformat()
+        return operations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/operations')
+async def create_operation(payload: Dict[str, Any]):
+    """Create new purchase/sale operation"""
+    try:
+        from models_extended import Operation, OperationItem
+        
+        # Parse items
+        items_data = payload.get('items', [])
+        items = []
+        for it in items_data:
+            items.append(OperationItem(
+                itemId=it.get('itemId'),
+                itemType=it.get('itemType', 'part'),
+                name=it.get('name', ''),
+                quantity=float(it.get('quantity', 1)),
+                price=float(it.get('price', 0))
+            ))
+        
+        # Calculate totals
+        subtotal = sum(it.quantity * it.price for it in items)
+        
+        operation = Operation(
+            accountId=payload.get('accountId', ''),
+            type=payload.get('type', 'purchase'),
+            partnerType=payload.get('partnerType', 'supplier'),
+            partnerName=payload.get('partnerName'),
+            partnerId=payload.get('partnerId'),
+            items=items,
+            subtotal=subtotal,
+            total=subtotal,
+            paymentMethod=payload.get('paymentMethod', 'cash'),
+            notes=payload.get('notes')
+        )
+        
+        doc = operation.dict()
+        await db.operations.insert_one(doc)
+        
+        # Update parts inventory if applicable
+        if operation.type == 'purchase':
+            # Increase quantity for purchase
+            for it in items:
+                if it.itemType == 'part' and it.itemId:
+                    await db.parts.update_one(
+                        {'id': it.itemId},
+                        {'$inc': {'quantity': int(it.quantity)}}
+                    )
+        elif operation.type == 'sale':
+            # Decrease quantity for sale
+            for it in items:
+                if it.itemType == 'part' and it.itemId:
+                    await db.parts.update_one(
+                        {'id': it.itemId},
+                        {'$inc': {'quantity': -int(it.quantity)}}
+                    )
+        
+        doc.pop('_id', None)
+        if doc.get('date'):
+            doc['date'] = doc['date'].isoformat()
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

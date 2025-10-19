@@ -57,7 +57,7 @@ const Customers = () => {
         description: "تم إضافة العميل بنجاح"
       });
       setShowAddForm(false);
-      setFormData({ name: '', phone: '', email: '', address: '' });
+      setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
       fetchCustomers();
     } catch (error) {
       console.error('Error adding customer:', error);

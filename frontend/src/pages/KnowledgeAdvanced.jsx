@@ -241,15 +241,22 @@ const KnowledgeAdvanced = () => {
             <TabsContent value="upload">
               <Card>
                 <CardHeader>
-                  <CardTitle>رفع ملفات PDF أو فيديو للتحليل</CardTitle>
+                  <CardTitle>رفع وتحليل ملفات (جميع الصيغ)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-green-800">
+                      ✅ الصيغ المدعومة: PDF, Word, Excel, PowerPoint, Video (MP4/MOV/AVI), Images (JPG/PNG)
+                    </p>
+                  </div>
+                  
                   <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
                     <Upload className="mx-auto text-slate-400 mb-4" size={48} />
-                    <p className="text-slate-600 mb-4">اسحب ملف PDF أو فيديو هنا أو اضغط للاختيار</p>
+                    <p className="text-slate-600 mb-4">اسحب ملف هنا أو اضغط للاختيار</p>
+                    <p className="text-xs text-slate-500 mb-4">الحد الأقصى: 100 MB لكل ملف</p>
                     <input
                       type="file"
-                      accept=".pdf,.mp4,.mov,.avi"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.mp4,.mov,.avi,.jpg,.jpeg,.png"
                       onChange={handleFileUpload}
                       className="hidden"
                       id="file-upload"

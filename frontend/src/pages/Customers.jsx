@@ -78,7 +78,7 @@ const Customers = () => {
         description: "تم تحديث العميل بنجاح"
       });
       setEditingCustomer(null);
-      setFormData({ name: '', phone: '', email: '', address: '' });
+      setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
       fetchCustomers();
     } catch (error) {
       console.error('Error updating customer:', error);

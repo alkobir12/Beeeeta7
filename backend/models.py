@@ -53,6 +53,10 @@ class CustomerBase(BaseModel):
     name: str
     phone: str
     email: Optional[str] = None
+    address: Optional[str] = None
+    vehicleBrand: Optional[str] = None  # نوع المركبة
+    vehiclePlate: Optional[str] = None  # رقم اللوحة
+    vehicleKm: Optional[int] = None  # الكيلومتر
 
 class Customer(CustomerBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

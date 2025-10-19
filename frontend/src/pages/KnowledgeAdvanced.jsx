@@ -461,12 +461,12 @@ const KnowledgeAdvanced = () => {
             <TabsContent value="compare-vehicles">
               <Card>
                 <CardHeader>
-                  <CardTitle>مقارنة بين مركبتين</CardTitle>
+                  <CardTitle>مقارنة بين مركبتين أو ملفاتهما</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">المركبة الأولى</label>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium">المركبة الأولى</label>
                       <Select value={vehicle1} onValueChange={setVehicle1}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر مركبة" />
@@ -479,10 +479,21 @@ const KnowledgeAdvanced = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      <div className="border-2 border-dashed rounded-lg p-4">
+                        <p className="text-xs text-slate-600 mb-2">أو ارفع ملف/فيديو للمقارنة</p>
+                        <input
+                          type="file"
+                          accept=".pdf,.mp4,.mov,.avi,.doc,.docx"
+                          onChange={e => setFile1(e.target.files[0])}
+                          className="text-sm"
+                        />
+                        {file1 && <p className="text-xs text-green-600 mt-1">✓ {file1.name}</p>}
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">المركبة الثانية</label>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium">المركبة الثانية</label>
                       <Select value={vehicle2} onValueChange={setVehicle2}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر مركبة" />
@@ -495,16 +506,27 @@ const KnowledgeAdvanced = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      <div className="border-2 border-dashed rounded-lg p-4">
+                        <p className="text-xs text-slate-600 mb-2">أو ارفع ملف/فيديو للمقارنة</p>
+                        <input
+                          type="file"
+                          accept=".pdf,.mp4,.mov,.avi,.doc,.docx"
+                          onChange={e => setFile2(e.target.files[0])}
+                          className="text-sm"
+                        />
+                        {file2 && <p className="text-xs text-green-600 mt-1">✓ {file2.name}</p>}
+                      </div>
                     </div>
                   </div>
 
                   <Button
                     onClick={handleCompareVehicles}
-                    disabled={loading || !vehicle1 || !vehicle2}
+                    disabled={loading || (!vehicle1 && !file1) || (!vehicle2 && !file2)}
                     className="w-full bg-indigo-600 hover:bg-indigo-700"
                   >
                     {loading ? <Loader2 className="ml-2 animate-spin" size={18} /> : <GitCompare className="ml-2" size={18} />}
-                    قارن بين المركبتين
+                    قارن
                   </Button>
 
                   {vehicleComparison && (

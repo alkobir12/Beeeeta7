@@ -23,7 +23,7 @@ const Layout = ({ children }) => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="lg:mr-64">
+      <div className="lg:mr-64 pb-16">
         {children}
       </div>
     </div>

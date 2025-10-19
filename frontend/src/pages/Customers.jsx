@@ -148,17 +148,34 @@ const Customers = () => {
             <h1 className="text-4xl font-bold text-slate-800 mb-2">قائمة العملاء</h1>
             <p className="text-slate-600">إدارة بيانات العملاء</p>
           </div>
-          <Button
-            onClick={() => {
-              setShowAddForm(true);
-              setEditingCustomer(null);
-              setFormData({ name: '', phone: '', email: '', address: '' });
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus size={20} className="ml-2" />
-            إضافة عميل
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => document.getElementById('import-customers-file').click()}
+              variant="outline"
+              className="bg-green-50 hover:bg-green-100"
+            >
+              <Plus size={20} className="ml-2" />
+              استيراد من Excel
+            </Button>
+            <input
+              id="import-customers-file"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button
+              onClick={() => {
+                setShowAddForm(true);
+                setEditingCustomer(null);
+                setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus size={20} className="ml-2" />
+              إضافة عميل
+            </Button>
+          </div>
         </div>
 
         {/* Add/Edit Form */}

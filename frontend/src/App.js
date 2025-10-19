@@ -28,6 +28,7 @@ import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
 import CustomerTracking from "./pages/CustomerTracking";
 import Knowledge from "./pages/Knowledge";
+import KnowledgeAdvanced from "./pages/KnowledgeAdvanced";
 import Login from "./pages/Login";
 import Users from "./pages/Users";
 import { ThemeProvider } from './contexts/ThemeContext';

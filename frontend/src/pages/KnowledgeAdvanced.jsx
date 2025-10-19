@@ -166,10 +166,11 @@ const KnowledgeAdvanced = () => {
   };
 
   const handleCompareVehicles = async () => {
-    if (!vehicle1 || !vehicle2) {
+    // Can compare: vehicle vs vehicle, vehicle vs file, or file vs file
+    if ((!vehicle1 && !file1) || (!vehicle2 && !file2)) {
       toast({
         title: "تنبيه",
-        description: "اختر مركبتين للمقارنة",
+        description: "اختر مركبتين أو ملفين للمقارنة",
         variant: "destructive"
       });
       return;
@@ -177,20 +178,45 @@ const KnowledgeAdvanced = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/ai/kb/compare-vehicles`, {
-        vehicle1_id: vehicle1,
-        vehicle2_id: vehicle2
-      });
+      
+      // If both are files, use file comparison
+      if (file1 && file2) {
+        const formData = new FormData();
+        formData.append('file1', file1);
+        formData.append('file2', file2);
 
-      setVehicleComparison(response.data);
+        const response = await axios.post(`${API_URL}/ai/kb/compare-files`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        setVehicleComparison({
+          type: 'files',
+          ...response.data
+        });
+      } 
+      // If vehicle vs file or both vehicles
+      else {
+        const formData = new FormData();
+        if (file1) formData.append('file1', file1);
+        if (file2) formData.append('file2', file2);
+        formData.append('vehicle1_id', vehicle1);
+        formData.append('vehicle2_id', vehicle2);
+
+        const response = await axios.post(`${API_URL}/ai/kb/compare-vehicles-advanced`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        setVehicleComparison(response.data);
+      }
+
       toast({
         title: "اكتملت المقارنة",
-        description: "تم تحليل الفروقات بين المركبتين"
+        description: "تم تحليل الفروقات بنجاح"
       });
     } catch (error) {
       toast({
         title: "خطأ",
-        description: "فشل في مقارنة المركبات",
+        description: "فشل في المقارنة",
         variant: "destructive"
       });
     } finally {

@@ -345,6 +345,97 @@ async def update_budget(budget_id: str, payload: Dict[str, Any]):
         res = await db.budgets.update_one({'id': budget_id}, {'$set': update})
         if res.matched_count == 0:
             raise HTTPException(status_code=404, detail='Budget not found')
+@router.get('/operations/{op_id}')
+async def get_operation(op_id: str):
+    try:
+        op = await db.operations.find_one({'id': op_id})
+        if not op:
+            raise HTTPException(status_code=404, detail='Operation not found')
+        op.pop('_id', None)
+        if op.get('date') and hasattr(op['date'], 'isoformat'):
+            op['date'] = op['date'].isoformat()
+        return op
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put('/operations/{op_id}')
+async def update_operation(op_id: str, payload: Dict[str, Any]):
+    """Update simple fields of an operation (partnerName, paymentMethod, notes)."""
+    try:
+        allowed = {k: v for k, v in payload.items() if k in ['partnerName', 'paymentMethod', 'notes']}
+        if not allowed:
+            return {'status': 'noop'}
+        res = await db.operations.update_one({'id': op_id}, {'$set': allowed})
+        if res.matched_count == 0:
+            raise HTTPException(status_code=404, detail='Operation not found')
+        op = await db.operations.find_one({'id': op_id})
+        op.pop('_id', None)
+        if op.get('date') and hasattr(op['date'], 'isoformat'):
+            op['date'] = op['date'].isoformat()
+        return op
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ------------------ IMPORT PARTS ------------------
+@router.post('/import/parts')
+async def import_parts(file: UploadFile = File(...), mode: str = 'skip'):
+    """Import parts from Excel/CSV. Supports Arabic headers."""
+    try:
+        import pandas as pd
+        from io import BytesIO
+        contents = await file.read()
+        if file.filename.lower().endswith('.csv'):
+            df = pd.read_csv(BytesIO(contents))
+        else:
+            df = pd.read_excel(BytesIO(contents))
+        created = updated = skipped = 0
+        for _, row in df.iterrows():
+            try:
+                part_number = str(row.get('partNumber', row.get('رقم القطعة', row.get('PartNumber', '')))).strip()
+                name = str(row.get('name', row.get('الاسم', row.get('اسم القطعة', '')))).strip()
+                if not part_number or not name:
+                    skipped += 1
+                    continue
+                category = (row.get('category', row.get('التصنيف', 'عام')))
+                purchase_price = float(row.get('purchasePrice', row.get('سعر الشراء', row.get('cost', 0)) or 0))
+                selling_price = float(row.get('sellingPrice', row.get('سعر البيع', row.get('price', 0)) or 0))
+                quantity = int(row.get('quantity', row.get('الكمية', 0) or 0))
+                min_qty = int(row.get('minQuantity', row.get('الحد الأدنى', 5) or 5))
+                supplier = row.get('supplier', row.get('المورد')) if pd.notna(row.get('supplier', row.get('المورد', None))) else None
+                existing = await db.parts.find_one({'partNumber': part_number})
+                part_payload = {
+                    'partNumber': part_number,
+                    'name': name,
+                    'category': str(category),
+                    'purchasePrice': purchase_price,
+                    'sellingPrice': selling_price,
+                    'quantity': quantity,
+                    'minQuantity': min_qty,
+                    'supplier': supplier
+                }
+                if existing:
+                    if mode == 'update':
+                        await db.parts.update_one({'id': existing['id']}, {'$set': part_payload})
+                        updated += 1
+                    else:
+                        skipped += 1
+                else:
+                    from models import Part
+                    p = Part(**part_payload)
+                    await db.parts.insert_one(p.dict())
+                    created += 1
+            except Exception:
+                skipped += 1
+                continue
+        return {'status': 'ok', 'created': created, 'updated': updated, 'skipped': skipped, 'total': len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         row = await db.budgets.find_one({'id': budget_id})
         row.pop('_id', None)
         return row

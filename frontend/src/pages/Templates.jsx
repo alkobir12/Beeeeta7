@@ -92,9 +92,11 @@ const Templates = () => {
     <thead>
       <tr>
         <th>الخدمة/القطعة</th>
+        <th>الصنف</th>
+        <th>الوحدة</th>
         <th>الكمية</th>
         <th>السعر</th>
-        <th>المجموع</th>
+        <th>الإجمالي</th>
       </tr>
     </thead>
     <tbody>
@@ -303,9 +305,11 @@ const Templates = () => {
     <thead>
       <tr>
         <th style="width: 50%">البند</th>
+        <th>الصنف</th>
+        <th>الوحدة</th>
         <th>الكمية</th>
         <th>السعر</th>
-        <th>المجموع</th>
+        <th>الإجمالي</th>
       </tr>
     </thead>
     <tbody>

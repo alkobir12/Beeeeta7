@@ -1471,17 +1471,6 @@ async def chart_account_ai(node_id: str, question: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        encoded_message = urllib.parse.quote(message)
-        whatsapp_deeplink = f"https://wa.me/{norm}?text={encoded_message}"
-        
-        return {
-            'whatsappDeeplink': whatsapp_deeplink,
-            'normalizedPhone': norm,
-            'message': message
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 # ------------------ WHATSAPP MESSAGING APIs ------------------
 whatsapp_service = None
 

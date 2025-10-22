@@ -733,6 +733,12 @@ const Templates = () => {
                       <Edit size={16} className="ml-1" />
                       تعديل
                     </Button>
+                    <Button size="sm" variant="outline" onClick={()=>makeDefault(template.id)}>
+                      اجعله افتراضياً
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={()=>applyToAll(template.id)}>
+                      تطبيق على كل الأنواع
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"

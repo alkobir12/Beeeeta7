@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BASE_URL = "https://auto-fix-pro.preview.emergentagent.com/api"
+BASE_URL = "https://workshop-manager-21.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

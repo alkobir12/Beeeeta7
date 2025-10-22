@@ -118,6 +118,30 @@ const Operations = () => {
 
           <Card>
             <CardHeader>
+            <CardContent className="p-6 space-y-3">
+              {ops.map(op => (
+                <div key={op.id} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
+                  <div>
+                    <div className="font-bold">{op.type === 'purchase' ? 'شراء' : 'بيع'} • {op.partnerName}</div>
+                    <div className="text-sm text-slate-500">{new Date(op.date).toLocaleString('ar-SA')} — بنود: {op.items?.length || 0}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-bold text-blue-700">{Number(op.total).toFixed(2)} ر.س</div>
+                    <Button size="sm" variant="outline" onClick={async ()=>{
+                      const res = await axios.get(`${API_URL}/operations/${op.id}`);
+                      const o = res.data;
+                      alert(`تفاصيل العملية:\nالنوع: ${o.type}\nالشريك: ${o.partnerName || '-'}\nالإجمالي: ${o.total}`);
+                    }}>فتح</Button>
+                    <Button size="sm" variant="ghost" onClick={async ()=>{
+                      const name = prompt('تعديل اسم الشريك', op.partnerName || '');
+                      if (name === null) return;
+                      await axios.put(`${API_URL}/operations/${op.id}`, { partnerName: name });
+                      await load();
+                    }}>تعديل</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
               <CardTitle>آخر العمليات</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-3">

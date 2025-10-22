@@ -1022,7 +1022,7 @@ async def seed_mechanic_apply_all():
         for t in types:
             existing = await db.templates.find_one({'type': t, 'isActive': True})
             if existing:
-                await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html_content, 'updatedAt': datetime.utcnow()}})
+                await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html_content, 'isActive': True, 'updatedAt': datetime.utcnow(), 'name': 'قالب الميكانيكا الافتراضي'}})
                 active_id = existing['id']
             else:
                 doc = TemplateDoc(name='قالب الميكانيكا الافتراضي', type=t, language='ar', html=html_content, isActive=True)

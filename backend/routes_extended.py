@@ -1278,6 +1278,192 @@ async def prepare_notification(payload: Dict[str, Any]):
         
         # Encode message for URL
         import urllib.parse
+
+# ------------------ CEO: Chart of Accounts ------------------
+
+DEFAULT_ACCOUNTS = [
+    {"name": "الإيرادات", "code": "revenue", "type": "group", "children": [
+        {"name": "الخدمات", "code": "service_revenue", "type": "revenue"},
+        {"name": "بيع قطع الغيار", "code": "parts_sale", "type": "revenue"}
+    ]},
+    {"name": "المصروفات", "code": "expenses", "type": "group", "children": [
+        {"name": "مشتريات قطع الغيار", "code": "parts_purchase", "type": "expense"},
+        {"name": "مصروفات تشغيلية", "code": "operational", "type": "group", "children": [
+            {"name": "رواتب", "code": "salaries", "type": "expense"},
+            {"name": "إيجار", "code": "rent", "type": "expense"},
+            {"name": "كهرباء/ماء", "code": "utilities", "type": "expense"},
+            {"name": "وقود", "code": "fuel", "type": "expense"},
+            {"name": "أدوات", "code": "tools", "type": "expense"},
+            {"name": "متفرقات", "code": "misc", "type": "expense"}
+        ]}
+    ]}
+]
+
+async def _seed_accounts_for_branch(branch_id: str):
+    # Check if already seeded
+    existing = await db.chart_accounts.find_one({"branchId": branch_id})
+    if existing:
+        return 0
+    created = 0
+    async def insert_node(node, parent_id=None, path=None):
+        nonlocal created
+        import uuid
+        nid = str(uuid.uuid4())
+        doc = {
+            "id": nid,
+            "name": node["name"],
+            "code": node.get("code"),
+            "type": node.get("type", "group"),
+            "parentId": parent_id,
+            "branchId": branch_id,
+            "path": (path or []) + [nid],
+            "createdAt": datetime.utcnow()
+        }
+        await db.chart_accounts.insert_one(doc)
+        created += 1
+        for ch in node.get("children", []) or []:
+            await insert_node(ch, nid, doc["path"])
+    for root in DEFAULT_ACCOUNTS:
+        await insert_node(root)
+    return created
+
+@router.post('/ceo/seed-accounts')
+async def seed_chart_accounts(account_id: Optional[str] = None):
+    try:
+        created = 0
+        if account_id:
+            created += await _seed_accounts_for_branch(account_id)
+        else:
+            accounts = await db.business_accounts.find({"isActive": True}).to_list(length=1000)
+            for a in accounts:
+                created += await _seed_accounts_for_branch(a['id'])
+        return {"status": "ok", "created": created}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/ceo/accounts')
+async def list_chart_accounts(branch: Optional[str] = None):
+    try:
+        q = {"branchId": branch} if branch else {}
+        rows = await db.chart_accounts.find(q).to_list(length=5000)
+        for r in rows:
+            r.pop('_id', None)
+        return {"items": rows, "count": len(rows)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _map_tx_to_code(tx: Dict[str, Any]) -> Optional[str]:
+    cat = (tx.get('category') or '').lower()
+    typ = (tx.get('type') or '').lower()
+    if typ == 'income':
+        if cat in ('service','services','service_income'):
+            return 'service_revenue'
+        if cat in ('parts_sale','sale','sales','parts'):
+            return 'parts_sale'
+    if typ == 'expense':
+        if cat in ('parts_purchase','purchase','parts'):
+            return 'parts_purchase'
+        if cat in ('salaries','salary','payroll'):
+            return 'salaries'
+        if cat in ('rent',):
+            return 'rent'
+        if cat in ('utilities','electricity','water'):
+            return 'utilities'
+        if cat in ('fuel','gas'):
+            return 'fuel'
+        if cat in ('tools','equipment'):
+            return 'tools'
+        if cat in ('misc','other'):
+            return 'misc'
+    return None
+
+@router.get('/ceo/accounts/{node_id}/summary')
+async def chart_account_summary(node_id: str, branch: Optional[str] = None, period: Optional[str] = None):
+    try:
+        node = await db.chart_accounts.find_one({'id': node_id})
+        if not node:
+            raise HTTPException(status_code=404, detail='account node not found')
+        # Collect codes under this node
+        descendants = await db.chart_accounts.find({'branchId': node['branchId']}).to_list(length=5000)
+        for d in descendants:
+            d.pop('_id', None)
+        allowed_codes = set()
+        def collect(nid):
+            for d in descendants:
+                if d['id'] == nid:
+                    if d.get('code'):
+                        allowed_codes.add(d['code'])
+                    # children
+                    for c in descendants:
+                        if c.get('parentId') == nid:
+                            collect(c['id'])
+        collect(node_id)
+        # Query transactions
+        tq: Dict[str, Any] = {}
+        if branch:
+            tq['accountId'] = branch
+        else:
+            tq['accountId'] = node['branchId']
+        if period:
+            # period format YYYY-MM
+            start = datetime.fromisoformat(period + '-01')
+            from datetime import timedelta
+            next_month = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+            tq['date'] = {"$gte": start, "$lt": next_month}
+        txs = await db.transactions.find(tq).to_list(length=50000)
+        total_income = total_expense = 0.0
+        by_code = {}
+        for t in txs:
+            code = _map_tx_to_code(t)
+            if code and code in allowed_codes:
+                amt = float(t.get('amount') or 0)
+                if (t.get('type') or '').lower() == 'income':
+                    total_income += amt
+                else:
+                    total_expense += amt
+                by_code[code] = by_code.get(code, 0.0) + amt
+        return {
+            'node': {k:v for k,v in node.items() if k != '_id'},
+            'period': period,
+            'income': total_income,
+            'expense': total_expense,
+            'net': total_income - total_expense,
+            'byCode': by_code
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/ceo/accounts/{node_id}/ai-analysis')
+async def chart_account_ai(node_id: str, question: Optional[str] = None):
+    try:
+        node = await db.chart_accounts.find_one({'id': node_id})
+        if not node:
+            raise HTTPException(status_code=404, detail='account node not found')
+        # Build summary context quickly
+        summary = await chart_account_summary(node_id)
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import os, uuid
+        llm_key = os.getenv('EMERGENT_LLM_KEY')
+        provider = (os.getenv('DEFAULT_AI_PROVIDER') or 'anthropic').lower()
+        model = 'gpt-5' if provider == 'openai' else 'claude-3-7-sonnet-20250219'
+        sysmsg = f"""
+أنت محلل مالي للورش.
+العقد: {node.get('name')} ({node.get('code')})
+الملخص: الدخل {summary['income']:.2f}، المصروف {summary['expense']:.2f}، صافي {summary['net']:.2f}
+حسب الرموز: {summary['byCode']}
+قدم توصيات مختصرة قابلة للتنفيذ.
+"""
+        chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=sysmsg).with_model(provider, model)
+        resp = await chat.send_message(UserMessage(text=question or 'حلّل هذا الحساب وقدّم توصيات.'))
+        return {'analysis': resp, 'summary': summary}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         encoded_message = urllib.parse.quote(message)
         whatsapp_deeplink = f"https://wa.me/{norm}?text={encoded_message}"
         

@@ -954,24 +954,8 @@ async def make_default_template(template_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-# [trimmed accidental leftover]
 # CLEAN START
-# (removed stray block)
-# cleanup stray lines begin
 
-
-        update_data['updatedAt'] = datetime.utcnow()
-        
-        result = await db.templates.update_one(
-            {'id': template_id},
-            {'$set': update_data}
-        )
-        
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail='Template not found')
-# cleanup stray lines end
-
-        
         updated = await db.templates.find_one({'id': template_id})
         updated.pop('_id', None)
         if updated.get('updatedAt'):

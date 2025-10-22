@@ -1451,7 +1451,8 @@ async def chart_account_ai(node_id: str, question: Optional[str] = None):
         # Build summary context quickly
         summary = await chart_account_summary(node_id)
         from emergentintegrations.llm.chat import LlmChat, UserMessage
-        import os, uuid
+        import os
+        import uuid
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         provider = (os.getenv('DEFAULT_AI_PROVIDER') or 'anthropic').lower()
         model = 'gpt-5' if provider == 'openai' else 'claude-3-7-sonnet-20250219'

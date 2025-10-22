@@ -93,7 +93,14 @@ class MechanicTemplateAPITester:
                 for template in templates:
                     template_type = template.get('type')
                     if template_type in required_types:
-                        found_types[template_type] = template
+                        # For invoice type, only consider active templates
+                        if template_type == 'invoice':
+                            if template.get('isActive', False):
+                                found_types[template_type] = template
+                        else:
+                            # For other types, find active templates or use the first one
+                            if template.get('isActive', False) or template_type not in found_types:
+                                found_types[template_type] = template
                 
                 # Verify all 4 types are present
                 missing_types = [t for t in required_types if t not in found_types]

@@ -262,6 +262,98 @@ async def update_business_account(account_id: str, payload: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ------------------ BUDGETS ------------------
+@router.get('/budgets')
+async def list_budgets(account_id: Optional[str] = None, period: Optional[str] = None):
+    """List budgets. Optionally filter by account_id and/or period (YYYY-MM)."""
+    try:
+        q: Dict[str, Any] = {}
+        if account_id:
+            q['accountId'] = account_id
+        if period:
+            q['period'] = period
+        rows = await db.budgets.find(q).sort('createdAt', -1).to_list(length=1000)
+        for r in rows:
+            r.pop('_id', None)
+        # Enrich with actuals if possible
+        for r in rows:
+            per = r.get('period')
+            acc = r.get('accountId')
+            try:
+                if per:
+                    start = datetime.fromisoformat(per + '-01')
+                    # naive monthly end: add 32 days then set day=1 and minus 1 second
+                    from datetime import timedelta
+                    next_month = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+                    end = next_month
+                    tq: Dict[str, Any] = {"date": {"$gte": start, "$lt": end}}
+                    if acc:
+                        tq['accountId'] = acc
+                    tx = await db.transactions.find(tq).to_list(length=10000)
+                    income = sum(float(t.get('amount', 0)) for t in tx if t.get('type') == 'income')
+                    expense = sum(float(t.get('amount', 0)) for t in tx if t.get('type') == 'expense')
+                    r['actualIncome'] = income
+                    r['actualExpenses'] = expense
+            except Exception:
+                pass
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post('/budgets')
+async def create_budget(payload: Dict[str, Any]):
+    """Create a budget for a branch (account)."""
+    try:
+        account_id = payload.get('accountId')
+        period = payload.get('period')  # YYYY-MM
+        if not account_id or not period:
+            raise HTTPException(status_code=422, detail='accountId and period required')
+        # prevent duplicates
+        existing = await db.budgets.find_one({'accountId': account_id, 'period': period})
+        if existing:
+            existing.pop('_id', None)
+            return existing
+        from models_extended import Budget
+        b = Budget(
+            accountId=account_id,
+            period=period,
+            allocations=payload.get('allocations', []),
+            incomeTarget=float(payload.get('incomeTarget', 0) or 0),
+            expenseTarget=float(payload.get('expenseTarget', 0) or 0),
+            notes=payload.get('notes')
+        )
+        await db.budgets.insert_one(b.dict())
+        doc = b.dict()
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put('/budgets/{budget_id}')
+async def update_budget(budget_id: str, payload: Dict[str, Any]):
+    try:
+        update = {}
+        for k in ['allocations', 'incomeTarget', 'expenseTarget', 'notes', 'period']:
+            if k in payload:
+                update[k] = payload[k]
+        if not update:
+            return {'status': 'noop'}
+        res = await db.budgets.update_one({'id': budget_id}, {'$set': update})
+        if res.matched_count == 0:
+            raise HTTPException(status_code=404, detail='Budget not found')
+        row = await db.budgets.find_one({'id': budget_id})
+        row.pop('_id', None)
+        return row
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # ------------------ OPERATIONS (Purchase/Sale) ------------------
 @router.get('/operations')

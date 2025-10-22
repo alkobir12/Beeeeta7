@@ -345,6 +345,15 @@ async def update_budget(budget_id: str, payload: Dict[str, Any]):
         res = await db.budgets.update_one({'id': budget_id}, {'$set': update})
         if res.matched_count == 0:
             raise HTTPException(status_code=404, detail='Budget not found')
+        row = await db.budgets.find_one({'id': budget_id})
+        row.pop('_id', None)
+        return row
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get('/operations/{op_id}')
 async def get_operation(op_id: str):
     try:

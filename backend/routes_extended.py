@@ -445,14 +445,6 @@ async def import_parts(file: UploadFile = File(...), mode: str = 'skip'):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        row = await db.budgets.find_one({'id': budget_id})
-        row.pop('_id', None)
-        return row
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 
 # ------------------ OPERATIONS (Purchase/Sale) ------------------

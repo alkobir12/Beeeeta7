@@ -237,9 +237,9 @@ const Templates = () => {
       `,
       styles: ''
     },
-    quotation: {
+    quote: {
       name: 'عرض سعر',
-      type: 'quotation',
+      type: 'quote',
       content: `
 <!DOCTYPE html>
 <html dir="rtl">

@@ -113,7 +113,7 @@ const DocumentFormDialog = ({
 
   const recalculateTotals = (items = formData.items) => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-    const discount = parseFloat(formData.discount)) || 0;
+    const discount = parseFloat(formData.discount) || 0;
     const taxRate = 0.15; // 15% VAT
     const afterDiscount = subtotal - discount;
     const tax = afterDiscount * taxRate;

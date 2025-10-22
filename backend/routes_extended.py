@@ -972,6 +972,13 @@ async def delete_template(template_id: str):
     try:
         result = await db.templates.delete_one({'id': template_id})
         if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail='Template not found')
+        return {'status': 'ok', 'deleted': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/templates/{template_id}/apply-to-all')
 async def apply_template_to_all_types(template_id: str, types: Optional[List[str]] = Body(default=None)):
     """Copy template HTML to multiple types (invoice/diagnosis/quote) and set as active default for each."""

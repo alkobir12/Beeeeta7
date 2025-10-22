@@ -967,6 +967,8 @@ async def make_default_template(template_id: str):
         
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail='Template not found')
+# cleanup stray lines end
+
         
         updated = await db.templates.find_one({'id': template_id})
         updated.pop('_id', None)

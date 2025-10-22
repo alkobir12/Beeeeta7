@@ -984,7 +984,6 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
     """Copy template HTML to multiple types (invoice/diagnosis/quote) and set as active default for each."""
     try:
         tpl = await db.templates.find_one({'id': template_id})
-@router.post('/templates/seed-mechanic-apply-all')
         if not tpl:
             raise HTTPException(status_code=404, detail='Template not found')
         html = tpl.get('html') or tpl.get('content') or ''

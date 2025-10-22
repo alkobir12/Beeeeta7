@@ -955,6 +955,8 @@ async def make_default_template(template_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 # [trimmed accidental leftover]
+# cleanup stray lines begin
+
 
         update_data['updatedAt'] = datetime.utcnow()
         

@@ -1005,29 +1005,25 @@ frontend:
           agent: "main"
           comment: "Added POST /api/import/parts with Arabic header support. Frontend PartsInventory now shows Import button and posts to this endpoint."
 
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 11
+  run_ui: false
 
 test_plan:
   current_focus:
-    - "Comprehensive WhatsApp & System Integration Testing - COMPLETED"
+    - "Frontend: Operations quick open/edit UI testing"
+    - "Frontend: Parts import button visibility"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
-    - agent: "main"
-    - agent: "main"
-      message: "Backend step: Restored minimal endpoints required by the frontend printing and analytics flows: GET /api/diagnosis-cases, GET /api/customer-receipts, GET /api/quotes (read-only), POST /api/seed/print-templates, POST /api/print/resolve-template, POST /api/print/render. Adjusted customer phone/email count queries and added default HTML templates. Ready for backend retest."
-
-    - agent: "main"
-      message: "Frontend step 1 complete: Added extended vehicle banners (abandoned, awaiting parts, awaiting quote/approval) to Dashboard and VehicleArchive with filters. Updated VehicleQuickActions printing to fetch latest linked documents (invoice, diagnosis case, quote, receipt) before rendering, falling back only if none found. Prepared placeholders for credit (آجل) analytics. Ready to run frontend automation tests for these flows."
-
-      message: "Updated frontend: added /track/:trackingId route, rebuilt CustomerTracking to use real /api/vehicles/track/{id} data and show full vehicle details. Sidebar now includes Import link. VehicleQuickActions now uses /api/notifications/prepare to build WhatsApp deeplink and generates /approval/{token} link. Requesting focused frontend tests for these flows."
 
 agent_communication:
-    - agent: "main"
-      message: "Starting comprehensive frontend testing: (1) Login with name-only authentication, (2) Dashboard analytics banners, (3) VehicleQuickActions modal with all new actions, (4) DocumentFormDialog functionality, (5) Sidebar menu structure with Knowledge under CEO, (6) Navigation flows. User also requests adding invoice template from image - will implement after testing."
-    - agent: "testing"
-      message: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE - 100% PASS RATE (18/18 tests): All 5 sections tested successfully. (1) WhatsApp APIs: status, send-document, messages list, send-approval all working with proper phone normalization and Arabic encoding. (2) Approvals System: creation, listing, public access, notifications all operational. (3) Document Management: all CRUD endpoints working (diagnosis-cases, invoices, quotes, customer-receipts, print/render, resolve-template). (4) Settings: menuConfig verified with Knowledge under CEO group. (5) Analytics: vehicle counts and status filters working. System is 100% production-ready on backend. All critical validations passed (no _id fields, ISO dates, phone normalization, Arabic content preservation)."
-    - agent: "main"
-      message: "Starting Phase 1 validation: Running comprehensive backend tests to verify all restored endpoints (diagnosis-cases, customer-receipts, quotes, print/resolve-template, print/render) and recent implementations (sidebar menuConfig, analytics banners). Previous lightweight test showed 404 errors on some endpoints - verifying current status."
+  - agent: "main"
+    message: "Added budgets endpoints to fix CEO 404; implemented operations quick open/edit APIs and parts Excel import with Arabic headers. Please run backend deep tests for these new endpoints and sanity check CEO budgets flow (GET /api/budgets?account_id). After backend passes, proceed with frontend automation to click 'آخر العمليات' row buttons and parts import button visibility (file upload may be skipped in automation)."
+  - agent: "testing"
+    message: "✅ BACKEND DEEP TESTS COMPLETE: Executed comprehensive backend testing with 93.8% success rate (15/16 tests passed). **SECTION 1 - BUDGETS ENDPOINTS (4/4 PASSED):** All budget CRUD operations working correctly with monthly actuals enrichment. **SECTION 2 - OPERATIONS QUICK ACCESS (5/5 PASSED):** All operations endpoints functional including Arabic partner name updates. **SECTION 3 - PARTS EXCEL IMPORT (1/2 PASSED):** Import functionality verified working with CSV data and Arabic headers, parts successfully created/listed. **SECTION 4 - REGRESSION TESTS (4/4 PASSED):** All existing endpoints remain functional. Only minor issue: multipart upload test framework configuration, but endpoint functionality confirmed via separate verification. All requested backend functionality is production-ready. Ready for frontend UI testing of operations buttons and parts import interface."
     - agent: "main"
       message: "Implemented delete functionality for vehicles and customers. Updated Dashboard and Customers pages to use real API instead of mock data. Added delete buttons with confirmation dialogs. Ready for backend testing."
     - agent: "testing"

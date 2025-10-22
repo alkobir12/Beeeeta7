@@ -374,6 +374,24 @@ const PartsInventory = () => {
                 >
                   <AlertTriangle className="ml-2" size={18} />
                   قطع قليلة المخزون
+                <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" id="parts-import" className="hidden" onChange={async (e)=>{
+                  const f = e.target.files?.[0];
+                  if(!f) return;
+                  const fd = new FormData();
+                  fd.append('file', f);
+                  try{
+                    await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/import/parts`, { method:'POST', body: fd });
+                    toast({ title: 'تم الاستيراد', description: 'تم استيراد قائمة القطع من الملف' });
+                    await loadParts();
+                  }catch(err){
+                    toast({ title: 'فشل الاستيراد', description: 'تأكد من الأعمدة: partNumber, name, category, purchasePrice, sellingPrice, quantity, minQuantity, supplier (أو عناوين عربية مكافئة)', variant: 'destructive' });
+                  }
+                }} />
+                <label htmlFor="parts-import">
+                  <Button variant="outline" asChild>
+                    <span><Upload className="ml-2" size={18}/>استيراد قطع (Excel)</span>
+                  </Button>
+                </label>
                 </Button>
               </div>
             </CardContent>

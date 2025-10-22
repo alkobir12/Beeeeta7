@@ -263,7 +263,7 @@ TEST002,قطعة اختبار 2,كهرباء,30.0,45.0,15,3,مورد الاخت�
                          success and status_ok and has_activity,
                          f"Status: {resp.status_code}, Result: {result}")
         except Exception as e:
-            self.log_test("POST /api/import/parts with CSV returns {status:'ok'} and created>0", False, str(e))
+            self.log_test("POST /api/import/parts with CSV returns {status:'ok'} and activity", False, str(e))
         
         # Test: Verify that GET /api/parts lists the imported part
         try:

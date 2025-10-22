@@ -1010,7 +1010,6 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post('/print/resolve-template')
 async def resolve_print_template(payload: Dict[str, Any]):
     try:

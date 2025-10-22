@@ -972,6 +972,30 @@ async def delete_template(template_id: str):
     try:
         result = await db.templates.delete_one({'id': template_id})
         if result.deleted_count == 0:
+@router.post('/templates/{template_id}/apply-to-all')
+async def apply_template_to_all_types(template_id: str, types: Optional[List[str]] = Body(default=None)):
+    """Copy template HTML to multiple types (invoice/diagnosis/quote) and set as active default for each."""
+    try:
+        tpl = await db.templates.find_one({'id': template_id})
+        if not tpl:
+            raise HTTPException(status_code=404, detail='Template not found')
+        html = tpl.get('html') or tpl.get('content') or ''
+        target_types = types or ['invoice', 'diagnosis', 'quote']
+        for t in target_types:
+            existing = await db.templates.find_one({'type': t})
+            if existing:
+                await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html, 'isActive': True, 'updatedAt': datetime.utcnow(), 'name': tpl.get('name', 'نموذج')}})
+            else:
+                doc = TemplateDoc(name=tpl.get('name', 'نموذج'), type=t, language=tpl.get('language', 'ar'), html=html, isActive=True)
+                await db.templates.insert_one(doc.dict())
+            # Deactivate all other templates of same type
+            await db.templates.update_many({'type': t, 'id': {'$ne': (existing['id'] if existing else None)}}, {'$set': {'isActive': False}})
+        return {'status': 'ok', 'applied_types': target_types}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
             raise HTTPException(status_code=404, detail='Template not found')
         return {'status': 'ok', 'deleted': True}
     except HTTPException:

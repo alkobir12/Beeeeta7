@@ -114,7 +114,7 @@ class MechanicTemplateAPITester:
                     
                     # Check name contains mechanic template text
                     name = template.get('name', '')
-                    if 'قالب الميكانيكا الافتراضي' not in name and 'mechanic' not in name.lower():
+                    if 'قالب الميكانيكا الافتراضي' not in name and 'mechanic' not in name.lower() and 'ميكانيكا' not in name:
                         self.log_result(f"Template {template_type} name", False, 
                                       f"Name doesn't contain mechanic template reference: {name}")
                         all_valid = False

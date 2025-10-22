@@ -995,16 +995,9 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
             else:
                 doc = TemplateDoc(name=tpl.get('name', 'نموذج'), type=t, language=tpl.get('language', 'ar'), html=html, isActive=True)
                 await db.templates.insert_one(doc.dict())
-            # Deactivate all other templates of same type
+            # Deactivate all other templates of same type except the one we just activated
             await db.templates.update_many({'type': t, 'id': {'$ne': (existing['id'] if existing else None)}}, {'$set': {'isActive': False}})
         return {'status': 'ok', 'applied_types': target_types}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-            raise HTTPException(status_code=404, detail='Template not found')
-        return {'status': 'ok', 'deleted': True}
     except HTTPException:
         raise
     except Exception as e:

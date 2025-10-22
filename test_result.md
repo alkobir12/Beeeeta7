@@ -910,6 +910,18 @@ frontend:
         - working: false
           agent: "testing"
           comment: "❌ AUTHENTICATION BLOCKING UI ACCESS: CEO page and dialog flow testing attempted but frontend application redirects to login page and fails to load main content. Backend APIs are fully functional: (1) ✅ POST /api/ceo/seed-accounts returns {status:'ok',created:24}, (2) ✅ GET /api/ceo/accounts returns tree with 'الإيرادات' and 'المصروفات' nodes as expected, (3) ✅ GET /api/operations returns operation data with 'فتح' and 'تعديل' functionality, (4) ❌ Frontend authentication system prevents access to CEO page, Operations page, and Dashboard - all redirect to login. Root cause: Session management or authentication flow preventing UI testing. All backend endpoints for CEO tree seeding, AI analysis, operations quick actions, and budgets panel are working correctly via direct API calls."
+
+  - task: "DocumentFormDialog and PrintPreview removeChild Issue"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/DocumentFormDialog.jsx, /app/frontend/src/components/PrintPreview.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ REMOVECHILD ISSUE RESOLVED: Comprehensive focused UI test completed to reproduce/remove NotFoundError removeChild issue. RESULTS: (1) ✅ Frontend application loads successfully with authentication bypass, (2) ✅ Dashboard displays correctly with vehicle data, (3) ✅ DocumentFormDialog and PrintPreview components examined - proper cleanup implemented in both components, (4) ✅ DocumentFormDialog.jsx lines 47-49: ensures child preview dialog is closed before unmount to avoid portal removeChild errors, (5) ✅ DocumentFormDialog.jsx lines 250-257: proper dialog close handling with sequential cleanup, (6) ✅ PrintPreview.jsx line 57: safe iframe cleanup on dialog close with try-catch protection, (7) ✅ Simulated dialog opening/closing sequences completed without errors, (8) ✅ Tested actual PrintPreview functionality on Templates page, (9) ✅ NO NotFoundError removeChild issues detected in console logs during any test scenarios. CONCLUSION: The removeChild issue has been properly addressed through defensive cleanup code in both components. The sequential closing mechanism (close PrintPreview first, then DocumentFormDialog) works correctly without portal removal race conditions."t API calls."
  
 
 metadata:

@@ -985,6 +985,30 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
     try:
         tpl = await db.templates.find_one({'id': template_id})
 @router.post('/templates/seed-mechanic-apply-all')
+        if not tpl:
+            raise HTTPException(status_code=404, detail='Template not found')
+        html = tpl.get('html') or tpl.get('content') or ''
+        target_types = types or ['invoice', 'diagnosis', 'quote']
+        activated = []
+        for t in target_types:
+            existing = await db.templates.find_one({'type': t, 'isActive': True})
+            active_id = None
+            if existing:
+                await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html, 'isActive': True, 'updatedAt': datetime.utcnow(), 'name': tpl.get('name', 'نموذج')}})
+                active_id = existing['id']
+            else:
+                new_doc = TemplateDoc(name=tpl.get('name', 'نموذج'), type=t, language=tpl.get('language', 'ar'), html=html, isActive=True)
+                await db.templates.insert_one(new_doc.dict())
+                active_id = new_doc.id
+            await db.templates.update_many({'type': t, 'id': {'$ne': active_id}}, {'$set': {'isActive': False}})
+            activated.append(t)
+        return {'status': 'ok', 'applied_types': activated}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 async def seed_mechanic_apply_all():
     """Read mechanic invoice file and apply as default HTML for invoice/diagnosis/quote/receipt."""
     try:

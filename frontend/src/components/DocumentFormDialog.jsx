@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Plus, Trash2, Save, Printer } from 'lucide-react';
+import { Plus, Trash2, Save, Printer, X, Download } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
-import PrintPreview from './PrintPreview';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
@@ -35,28 +34,43 @@ const DocumentFormDialog = ({
     total: 0
   });
   
-  // Preview
+  // Inline preview (avoid nested Dialog portals)
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       loadTemplates();
       initializeForm();
     } else {
-      // ensure child preview dialog is closed before unmount to avoid portal removeChild errors
+      // ensure child preview is closed to avoid portal removeChild errors
       if (previewOpen) setPreviewOpen(false);
     }
   }, [isOpen, documentType]);
 
+  useEffect(() => {
+    // write to iframe when previewOpen and html available
+    if (previewOpen && iframeRef.current && previewHtml) {
+      try {
+        const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+        doc.open();
+        doc.write(previewHtml);
+        doc.close();
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [previewOpen, previewHtml]);
+
   const loadTemplates = async () => {
     try {
       const res = await axios.get(`${API_URL}/templates`);
-      const filtered = res.data.filter(t => t.type === documentType || t.type === 'generic');
+      const filtered = res.data.filter(t => t.type === documentType || t.type === 'generic' || t.isActive);
       setTemplates(filtered);
-      if (filtered.length > 0) {
-        setSelectedTemplate(filtered[0].id);
-      }
+      const active = filtered.find(t => t.isActive && (t.type === documentType));
+      if (active) setSelectedTemplate(active.id);
+      else if (filtered.length > 0) setSelectedTemplate(filtered[0].id);
     } catch (e) {
       console.error('Failed to load templates:', e);
     }
@@ -100,7 +114,6 @@ const DocumentFormDialog = ({
     const newItems = [...formData.items];
     newItems[index][field] = value;
     
-    // Recalculate item total
     if (field === 'quantity' || field === 'price') {
       const qty = parseFloat(newItems[index].quantity) || 0;
       const price = parseFloat(newItems[index].price) || 0;
@@ -114,7 +127,7 @@ const DocumentFormDialog = ({
   const recalculateTotals = (items = formData.items) => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
     const discount = parseFloat(formData.discount) || 0;
-    const taxRate = 0.15; // 15% VAT
+    const taxRate = 0.15;
     const afterDiscount = subtotal - discount;
     const tax = afterDiscount * taxRate;
     const total = afterDiscount + tax;
@@ -132,7 +145,6 @@ const DocumentFormDialog = ({
       toast({ title: 'خطأ', description: 'العنوان مطلوب', variant: 'destructive' });
       return;
     }
-
     if (formData.items.length === 0) {
       toast({ title: 'خطأ', description: 'أضف بند واحد على الأقل', variant: 'destructive' });
       return;
@@ -155,26 +167,15 @@ const DocumentFormDialog = ({
       };
 
       let endpoint = '';
-      if (documentType === 'diagnosis') {
-        endpoint = '/diagnosis-cases';
-      } else if (documentType === 'invoice') {
-        endpoint = '/invoices';
-      } else if (documentType === 'quote') {
-        endpoint = '/quotes';
-      } else if (documentType === 'receipt') {
-        endpoint = '/customer-receipts';
-        payload.amount = parseFloat(formData.total);
-      }
+      if (documentType === 'diagnosis') endpoint = '/diagnosis-cases';
+      else if (documentType === 'invoice') endpoint = '/invoices';
+      else if (documentType === 'quote') endpoint = '/quotes';
+      else if (documentType === 'receipt') { endpoint = '/customer-receipts'; payload.amount = parseFloat(formData.total); }
 
       const res = await axios.post(`${API_URL}${endpoint}`, payload);
-      
       toast({ title: 'تم الحفظ', description: 'تم حفظ المستند بنجاح' });
-      
       if (onSaved) onSaved(res.data);
-      
-      // Show preview
-      await handlePreview(res.data.id);
-      
+      await handlePreview();
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل في حفظ المستند', variant: 'destructive' });
       console.error(e);
@@ -183,22 +184,14 @@ const DocumentFormDialog = ({
     }
   };
 
-  const handlePreview = async (documentId = null) => {
+  const handlePreview = async () => {
     try {
       setLoading(true);
-      
-      // First resolve the template
       if (selectedTemplate) {
         try {
-          await axios.post(`${API_URL}/print/resolve-template`, {
-            override_type: documentType,
-            template_id: selectedTemplate
-          });
-        } catch (e) {
-          console.warn('Template resolution failed, using default');
-        }
+          await axios.post(`${API_URL}/print/resolve-template`, { override_type: documentType, template_id: selectedTemplate });
+        } catch (e) { /* ignore */ }
       }
-      
       const renderData = {
         override_type: documentType,
         template_id: selectedTemplate,
@@ -226,12 +219,9 @@ const DocumentFormDialog = ({
           DATE: new Date().toLocaleDateString('ar-SA')
         }
       };
-
       const res = await axios.post(`${API_URL}/print/render`, renderData);
-      setPreviewHtml(res.data.html);
-      // Open preview; ensure not closing parent simultaneously
+      setPreviewHtml(res.data.html || res.data?.html || res.data);
       setPreviewOpen(true);
-      
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل في إنشاء المعاينة', variant: 'destructive' });
       console.error(e);
@@ -249,11 +239,21 @@ const DocumentFormDialog = ({
 
   const handleDialogOpenChange = (v) => {
     if (!v) {
-      // Close child preview first to prevent portal removal race
       if (previewOpen) setPreviewOpen(false);
-      // Defer parent close to next tick
       setTimeout(() => onClose?.(false), 0);
     }
+  };
+
+  const downloadHtml = () => {
+    try {
+      const blob = new Blob([previewHtml || ''], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docTitles[documentType] || 'document'}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {}
   };
 
   return (
@@ -266,6 +266,26 @@ const DocumentFormDialog = ({
             </DialogTitle>
           </DialogHeader>
 
+          {/* Inline Preview Overlay */}
+          {previewOpen && (
+            <div className="fixed inset-0 bg-black/20 z-[60] flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-xl w-[900px] max-w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="p-3 flex items-center justify-between border-b">
+                  <div className="font-bold">معاينة — {docTitles[documentType]}</div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={downloadHtml}><Download size={16} className="ml-1"/>تحميل HTML</Button>
+                    <Button size="sm" onClick={()=>{ try{ const w = iframeRef.current?.contentWindow; w?.focus(); w?.print(); } catch(e){} }}>طباعة</Button>
+                    <Button size="sm" variant="destructive" onClick={()=> setPreviewOpen(false)}><X size={16} className="ml-1"/>إغلاق</Button>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <iframe ref={iframeRef} title="doc-preview" style={{width:'100%',height:'100%',border:0}} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Form */}
           <div className="space-y-6 py-4">
             {/* Vehicle Info */}
             <div className="bg-slate-50 p-4 rounded-lg">
@@ -423,13 +443,6 @@ const DocumentFormDialog = ({
           </div>
         </DialogContent>
       </Dialog>
-
-      <PrintPreview 
-        open={previewOpen} 
-        onClose={() => setPreviewOpen(false)} 
-        title={docTitles[documentType]}
-        html={previewHtml} 
-      />
     </>
   );
 };

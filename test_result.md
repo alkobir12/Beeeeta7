@@ -921,6 +921,32 @@ metadata:
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
+
+frontend:
+  - task: "Operations quick open/edit UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added Open and Edit buttons per row in 'آخر العمليات' with API integration to new endpoints."
+
+  - task: "Parts import button"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/PartsInventory.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added Excel import input and button that posts file to /api/import/parts, handles toasts and reloads list."
+
     needs_retesting: true
     status_history:
         - working: false

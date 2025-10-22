@@ -919,6 +919,20 @@ async def update_template(template_id: str, payload: Dict[str, Any]):
             update_data['isActive'] = payload['isActive']
         
 
+        update_data['updatedAt'] = datetime.utcnow()
+        result = await db.templates.update_one({'id': template_id}, {'$set': update_data})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail='Template not found')
+        updated = await db.templates.find_one({'id': template_id})
+        updated.pop('_id', None)
+        if updated.get('updatedAt') and hasattr(updated['updatedAt'], 'isoformat'):
+            updated['updatedAt'] = updated['updatedAt'].isoformat()
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/templates/{template_id}/make-default')
 async def make_default_template(template_id: str):
     """Set a template as default (isActive=True) and deactivate other templates of the same type."""

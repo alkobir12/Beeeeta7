@@ -915,6 +915,46 @@ metadata:
   test_sequence: 9
   run_ui: false
 
+  - task: "Budgets API (list/create/update)"
+    implemented: true
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported 404 on loadBudgets in CEO."
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented GET /api/budgets, POST /api/budgets, PUT /api/budgets/{id} with monthly actuals enrichment. Needs backend test."
+
+  - task: "Operations quick open/edit endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added GET /api/operations/{id} and PUT /api/operations/{id} (partnerName/paymentMethod/notes). Frontend wired quick Open/Edit in Operations page."
+
+  - task: "Parts Excel import"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added POST /api/import/parts with Arabic header support. Frontend PartsInventory now shows Import button and posts to this endpoint."
+
+
 test_plan:
   current_focus:
     - "Comprehensive WhatsApp & System Integration Testing - COMPLETED"

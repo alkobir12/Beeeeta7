@@ -1278,6 +1278,12 @@ async def prepare_notification(payload: Dict[str, Any]):
         
         # Encode message for URL
         import urllib.parse
+        encoded_message = urllib.parse.quote(message)
+        whatsapp_deeplink = f"https://wa.me/{norm}?text={encoded_message}"
+        return {"whatsappDeeplink": whatsapp_deeplink, "normalizedPhone": norm, "message": message}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ------------------ CEO: Chart of Accounts ------------------
 

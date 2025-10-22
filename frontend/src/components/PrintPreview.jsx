@@ -9,6 +9,7 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
     if (open && iframeRef.current && html) {
       try {
         const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+        // Reset iframe safely before writing
         doc.open();
         doc.write(html);
         doc.close();
@@ -20,9 +21,9 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
 
   const handlePrint = () => {
     try {
-      const win = iframeRef.current.contentWindow;
-      win.focus();
-      win.print();
+      const win = iframeRef.current?.contentWindow;
+      win?.focus();
+      win?.print();
     } catch (e) {}
   };
 
@@ -46,15 +47,14 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
       if (!w) {
         alert('يبدو أن المتصفح منع فتح نافذة جديدة. الرجاء السماح بالنوافذ المنبثقة مؤقتًا.');
       }
-      // Note: do not revoke immediately to keep page alive; browser revokes when tab closes
-      // We can cleanup on unload of current page if needed
+      // Do not revoke immediately; let browser handle on tab close
     } catch (e) {
       alert('تعذر فتح الصفحة الكاملة');
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(v)=>{ if(!v) onClose?.(); }}>
       <DialogContent className="max-w-[900px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

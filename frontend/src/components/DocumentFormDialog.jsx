@@ -43,6 +43,9 @@ const DocumentFormDialog = ({
     if (isOpen) {
       loadTemplates();
       initializeForm();
+    } else {
+      // ensure child preview dialog is closed before unmount to avoid portal removeChild errors
+      if (previewOpen) setPreviewOpen(false);
     }
   }, [isOpen, documentType]);
 
@@ -110,7 +113,7 @@ const DocumentFormDialog = ({
 
   const recalculateTotals = (items = formData.items) => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-    const discount = parseFloat(formData.discount) || 0;
+    const discount = parseFloat(formData.discount)) || 0;
     const taxRate = 0.15; // 15% VAT
     const afterDiscount = subtotal - discount;
     const tax = afterDiscount * taxRate;
@@ -185,14 +188,12 @@ const DocumentFormDialog = ({
       setLoading(true);
       
       // First resolve the template
-      let templateHtml = '';
       if (selectedTemplate) {
         try {
-          const templateRes = await axios.post(`${API_URL}/print/resolve-template`, {
+          await axios.post(`${API_URL}/print/resolve-template`, {
             override_type: documentType,
             template_id: selectedTemplate
           });
-          templateHtml = templateRes.data?.template?.html || '';
         } catch (e) {
           console.warn('Template resolution failed, using default');
         }
@@ -228,6 +229,7 @@ const DocumentFormDialog = ({
 
       const res = await axios.post(`${API_URL}/print/render`, renderData);
       setPreviewHtml(res.data.html);
+      // Open preview; ensure not closing parent simultaneously
       setPreviewOpen(true);
       
     } catch (e) {
@@ -245,9 +247,18 @@ const DocumentFormDialog = ({
     receipt: 'سند القبض'
   };
 
+  const handleDialogOpenChange = (v) => {
+    if (!v) {
+      // Close child preview first to prevent portal removal race
+      if (previewOpen) setPreviewOpen(false);
+      // Defer parent close to next tick
+      setTimeout(() => onClose?.(false), 0);
+    }
+  };
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-2xl">

@@ -387,7 +387,7 @@ const Templates = () => {
       setTemplates([
         { id: '1', ...defaultTemplates.invoice },
         { id: '2', ...defaultTemplates.diagnosis },
-        { id: '3', ...defaultTemplates.quotation }
+        { id: '3', ...defaultTemplates.quote }
       ]);
     } finally {
       setLoading(false);

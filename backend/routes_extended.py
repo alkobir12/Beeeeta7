@@ -1131,11 +1131,14 @@ async def resolve_template(payload: Dict[str, Any] = Body(...)):
 def _render_items_rows(items: List[Dict[str, Any]]):
     rows = []
     for it in (items or []):
+        # Support new fields: category, unit
         name = it.get('name', '')
+        category = it.get('category', '')
+        unit = it.get('unit', '')
         qty = it.get('qty') or it.get('quantity') or 1
         price = it.get('price') or 0
         total = it.get('total') or (qty * price)
-        rows.append(f"<tr><td>{name}</td><td>{qty}</td><td>{price}</td><td>{total}</td></tr>")
+        rows.append(f"<tr><td>{name}</td><td>{category}</td><td>{unit}</td><td>{qty}</td><td>{price}</td><td>{total}</td></tr>")
     return "".join(rows)
 
 @router.post('/print/render')

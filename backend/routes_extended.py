@@ -1008,6 +1008,7 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post('/templates/seed-mechanic-apply-all')
 async def seed_mechanic_apply_all():
     """Read mechanic invoice file and apply as default HTML for invoice/diagnosis/quote/receipt."""
     try:

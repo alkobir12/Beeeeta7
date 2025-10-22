@@ -989,14 +989,17 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
         html = tpl.get('html') or tpl.get('content') or ''
         target_types = types or ['invoice', 'diagnosis', 'quote']
         for t in target_types:
-            existing = await db.templates.find_one({'type': t})
+            existing = await db.templates.find_one({'type': t, 'isActive': True})
+            activated_id = None
             if existing:
                 await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html, 'isActive': True, 'updatedAt': datetime.utcnow(), 'name': tpl.get('name', 'نموذج')}})
+                activated_id = existing['id']
             else:
-                doc = TemplateDoc(name=tpl.get('name', 'نموذج'), type=t, language=tpl.get('language', 'ar'), html=html, isActive=True)
-                await db.templates.insert_one(doc.dict())
+                new_doc = TemplateDoc(name=tpl.get('name', 'نموذج'), type=t, language=tpl.get('language', 'ar'), html=html, isActive=True)
+                await db.templates.insert_one(new_doc.dict())
+                activated_id = new_doc.id
             # Deactivate all other templates of same type except the one we just activated
-            await db.templates.update_many({'type': t, 'id': {'$ne': (existing['id'] if existing else None)}}, {'$set': {'isActive': False}})
+            await db.templates.update_many({'type': t, 'id': {'$ne': activated_id}}, {'$set': {'isActive': False}})
         return {'status': 'ok', 'applied_types': target_types}
     except HTTPException:
         raise

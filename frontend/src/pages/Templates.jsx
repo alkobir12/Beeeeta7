@@ -388,6 +388,29 @@ const Templates = () => {
     } finally {
       setLoading(false);
     }
+
+  const makeDefault = async (templateId) => {
+    try {
+      await axios.post(`${API_URL}/templates/${templateId}/make-default`);
+      toast({ title: 'تم التفعيل', description: 'تم جعل هذا النموذج افتراضياً لنوعه' });
+      fetchTemplates();
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'خطأ', description: 'تعذر جعل النموذج افتراضياً', variant: 'destructive' });
+    }
+  };
+
+  const applyToAll = async (templateId) => {
+    try {
+      await axios.post(`${API_URL}/templates/${templateId}/apply-to-all`);
+      toast({ title: 'تم التطبيق', description: 'تم تطبيق هذا النموذج على جميع الأنواع' });
+      fetchTemplates();
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'خطأ', description: 'تعذر تطبيق النموذج على جميع الأنواع', variant: 'destructive' });
+    }
+  };
+
   };
 
   const handleSave = async (e) => {

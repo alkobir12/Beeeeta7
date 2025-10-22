@@ -515,17 +515,6 @@ async def import_customers(file: UploadFile = File(...), mode: str = 'skip'):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        doc.pop('_id', None)
-        if doc.get('date'):
-            doc['date'] = doc['date'].isoformat()
-        return doc
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 # ------------------ AUTH (OTP) ------------------
 @router.post('/auth/request-otp')
 async def request_otp(payload: Dict[str, Any]):

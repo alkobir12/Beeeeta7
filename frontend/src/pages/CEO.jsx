@@ -5,10 +5,43 @@ import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { BarChart3, Sparkles, Plus, Target } from 'lucide-react';
+import { BarChart3, Sparkles, Plus, Target, TreePine, Layers } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const Tree = ({ items, onSelect, selectedId }) => {
+  const byParent = (parentId) => items.filter(i => (i.parentId || null) === (parentId || null));
+  const Node = ({ node }) => {
+    const children = byParent(node.id);
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="ml-3">
+        <div
+          className={`flex items-center gap-2 p-1 rounded cursor-pointer ${selectedId===node.id?'bg-blue-50':'hover:bg-slate-50'}`}
+          onClick={() => onSelect(node)}
+        >
+          {children.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={(e)=>{e.stopPropagation(); setOpen(!open);}}>
+              {open ? '−' : '+'}
+            </Button>
+          )}
+          <span className="text-sm font-medium">{node.name}</span>
+          {node.type !== 'group' && (
+            <Badge variant="outline" className="text-[10px]">{node.type}</Badge>
+          )}
+        </div>
+        {open && children.length > 0 && (
+          <div className="border-r pr-2 ml-4">
+            {children.map(ch => <Node key={ch.id} node={ch} />)}
+          </div>
+        )}
+      </div>
+    );
+  };
+  const roots = byParent(null);
+  return <div>{roots.map(r => <Node key={r.id} node={r} />)}</div>;
+};
 
 const CEO = () => {
   const [loading, setLoading] = useState(false);
@@ -20,6 +53,14 @@ const CEO = () => {
 
   const [budgets, setBudgets] = useState([]);
   const [budgetForm, setBudgetForm] = useState({ period: new Date().toISOString().slice(0,7), incomeTarget: 0, expenseTarget: 0, notes: '' });
+
+  // Chart of Accounts state
+  const [acctTree, setAcctTree] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [nodeSummary, setNodeSummary] = useState(null);
+  const [period, setPeriod] = useState(new Date().toISOString().slice(0,7));
+  const [aiNodeAnswer, setAiNodeAnswer] = useState('');
+  const [seeding, setSeeding] = useState(false);
 
   const loadAccounts = async () => {
     const res = await axios.get(`${API_URL}/biz-accounts`);
@@ -33,8 +74,21 @@ const CEO = () => {
     setBudgets(res.data || []);
   };
 
+  const loadChart = async (accId) => {
+    if (!accId) { setAcctTree([]); return; }
+    const res = await axios.get(`${API_URL}/ceo/accounts`, { params: { branch: accId } });
+    setAcctTree(res.data?.items || []);
+  };
+
+  const loadNodeSummary = async (node) => {
+    if (!node) return;
+    const res = await axios.get(`${API_URL}/ceo/accounts/${node.id}/summary`, { params: { branch: selectedAcc, period } });
+    setNodeSummary(res.data);
+  };
+
   useEffect(() => { loadAccounts(); }, []);
-  useEffect(() => { loadBudgets(selectedAcc); }, [selectedAcc]);
+  useEffect(() => { loadBudgets(selectedAcc); loadChart(selectedAcc); setSelectedNode(null); setNodeSummary(null); }, [selectedAcc]);
+  useEffect(() => { if (selectedNode) loadNodeSummary(selectedNode); }, [period]);
 
   const addAccount = async (e) => {
     e.preventDefault();
@@ -67,6 +121,22 @@ const CEO = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const seedAccounts = async () => {
+    if (!selectedAcc) return;
+    try {
+      setSeeding(true);
+      await axios.post(`${API_URL}/ceo/seed-accounts`, null, { params: { account_id: selectedAcc } });
+      await loadChart(selectedAcc);
+    } finally { setSeeding(false); }
+  };
+
+  const analyzeNode = async () => {
+    if (!selectedNode) return;
+    setAiNodeAnswer('');
+    const res = await axios.post(`${API_URL}/ceo/accounts/${selectedNode.id}/ai-analysis`, { question: 'حلّل هذا الحساب وقدّم توصيات مختصرة قابلة للتنفيذ' });
+    setAiNodeAnswer(res.data?.analysis || '');
   };
 
   const activeBudget = budgets.find(b => b.period === (new Date().toISOString().slice(0,7))) || null;
@@ -147,6 +217,61 @@ const CEO = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Chart of Accounts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-l from-emerald-50">
+                <CardTitle className="flex items-center gap-2"><TreePine size={18}/> شجرة الحسابات</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Button onClick={seedAccounts} disabled={!selectedAcc || seeding} className="bg-emerald-600 hover:bg-emerald-700">{seeding? 'جاري التهيئة...' : 'تهيئة الشجرة للفرع'}</Button>
+                  <div className="flex items-center gap-2">
+                    <Layers size={16} className="text-slate-500" />
+                    <span className="text-slate-500 text-sm">{acctTree.length} حساب</span>
+                  </div>
+                </div>
+                {acctTree.length === 0 ? (
+                  <div className="text-slate-500 text-sm">لم يتم تهيئة الشجرة بعد لهذا الفرع</div>
+                ) : (
+                  <Tree items={acctTree} onSelect={(n)=>{ setSelectedNode(n); setAiNodeAnswer(''); loadNodeSummary(n); }} selectedId={selectedNode?.id} />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-l from-slate-50">
+                <CardTitle>ملخص الحساب</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Input type="month" value={period} onChange={e=>setPeriod(e.target.value)} className="w-44" />
+                  <Button onClick={analyzeNode} disabled={!selectedNode} className="bg-purple-600 hover:bg-purple-700"><Sparkles size={16} className="ml-2"/>تحليل AI</Button>
+                </div>
+                {selectedNode ? (
+                  <div className="space-y-2">
+                    <div className="text-lg font-bold">{selectedNode.name}</div>
+                    {nodeSummary ? (
+                      <div className="space-y-1 text-sm">
+                        <div>الإيرادات: <span className="font-bold text-green-700">{Number(nodeSummary.income).toFixed(2)} ر.س</span></div>
+                        <div>المصروفات: <span className="font-bold text-red-700">{Number(nodeSummary.expense).toFixed(2)} ر.س</span></div>
+                        <div>الصافي: <span className="font-bold text-blue-700">{Number(nodeSummary.net).toFixed(2)} ر.س</span></div>
+                      </div>
+                    ) : (
+                      <div className="text-slate-500 text-sm">اختر حسابًا لعرض ملخصه</div>
+                    )}
+                
+                    {aiNodeAnswer && (
+                      <div className="mt-4 p-3 border rounded bg-purple-50 text-slate-800 whitespace-pre-wrap">{aiNodeAnswer}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-sm">اختر حسابًا من الشجرة</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Metrics & AI */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

@@ -939,6 +939,26 @@ frontend:
     implemented: true
     working: "NA"
     file: "/app/frontend/src/pages/PartsInventory.jsx"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 10
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Backend: Budgets endpoints (list/create/update)"
+    - "Backend: Import parts endpoint"
+    - "Backend: Operations GET/PUT endpoints"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Added budgets endpoints to fix CEO 404; implemented operations quick open/edit APIs and parts Excel import with Arabic headers. Please run backend deep tests for these new endpoints and sanity check CEO budgets flow (GET /api/budgets?account_id). After backend passes, proceed with frontend automation to click 'آخر العمليات' row buttons and parts import button visibility (file upload may be skipped in automation)."
+
     stuck_count: 0
     priority: "high"
     needs_retesting: true

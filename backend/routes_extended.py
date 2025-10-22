@@ -1164,7 +1164,10 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         # Prepare items
         items = data.get('items') or []
         rows_html = _render_items_rows(items)
+        # Replace multiple placeholders that templates may use
         html = html.replace('{{ITEMS_ROWS}}', rows_html)
+        html = html.replace('{{ITEMS_LIST}}', rows_html)
+        html = html.replace('{{QUOTE_ITEMS}}', rows_html)
 
         # Replace simple placeholders
         for k, v in data.items():

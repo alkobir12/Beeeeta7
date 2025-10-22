@@ -984,6 +984,36 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
     """Copy template HTML to multiple types (invoice/diagnosis/quote) and set as active default for each."""
     try:
         tpl = await db.templates.find_one({'id': template_id})
+@router.post('/templates/seed-mechanic-apply-all')
+async def seed_mechanic_apply_all():
+    """Read mechanic invoice file and apply as default HTML for invoice/diagnosis/quote/receipt."""
+    try:
+        from pathlib import Path
+        template_path = Path(__file__).parent / 'invoice_template_mechanic.html'
+        if not template_path.exists():
+            raise HTTPException(status_code=404, detail='Mechanic template file not found')
+        html_content = template_path.read_text(encoding='utf-8')
+        types = ['invoice', 'diagnosis', 'quote', 'receipt']
+        applied = []
+        for t in types:
+            existing = await db.templates.find_one({'type': t, 'isActive': True})
+            if existing:
+                await db.templates.update_one({'id': existing['id']}, {'$set': {'html': html_content, 'updatedAt': datetime.utcnow()}})
+                active_id = existing['id']
+            else:
+                doc = TemplateDoc(name='قالب الميكانيكا الافتراضي', type=t, language='ar', html=html_content, isActive=True)
+                await db.templates.insert_one(doc.dict())
+                active_id = doc.id
+            await db.templates.update_many({'type': t, 'id': {'$ne': active_id}}, {'$set': {'isActive': False}})
+            applied.append(t)
+        # Mark settings flag so we don't reapply automatically later
+        await db.settings.update_one({'id': 'app_settings'}, {'$set': {'id': 'app_settings', 'mechanicTemplateApplied': True, 'updatedAt': datetime.utcnow()}}, upsert=True)
+        return {'status': 'ok', 'applied_types': applied}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         if not tpl:
             raise HTTPException(status_code=404, detail='Template not found')
         html = tpl.get('html') or tpl.get('content') or ''

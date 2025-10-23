@@ -415,7 +415,6 @@ const Templates = () => {
     }
   };
 
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();

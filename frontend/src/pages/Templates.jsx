@@ -393,6 +393,7 @@ const Templates = () => {
       setLoading(false);
     }
 
+  // Set default template for its type
   const makeDefault = async (templateId) => {
     try {
       await axios.post(`${API_URL}/templates/${templateId}/make-default`);

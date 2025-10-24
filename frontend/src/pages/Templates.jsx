@@ -259,7 +259,7 @@ const Templates = () => {
                   <div>
                     <Label>محتوى النموذج (HTML) *</Label>
                     <Textarea value={formData.content} onChange={(e)=>setFormData({...formData, content: e.target.value})} rows={15} className="font-mono text-sm" required />
-                    <p className="text-xs text-slate-500 mt-2">المتغيرات المتاحة: {{"{{WORKSHOP_NAME}}"}}, {{"{{CUSTOMER_NAME}}"}}, {{"{{VEHICLE_PLATE}}"}} ...</p>
+                    <p className="text-xs text-slate-500 mt-2">المتغيرات المتاحة: {'{{WORKSHOP_NAME}}'}, {'{{CUSTOMER_NAME}}'}, {'{{VEHICLE_PLATE}}'} ...</p>
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" className="bg-green-600 hover:bg-green-700">{editingTemplate ? 'تحديث' : 'حفظ'}</Button>

@@ -1167,6 +1167,23 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         
         # Get template - prioritize template_id if provided
 
+        # Prepare items
+        items = data.get('items') or []
+        rows_html = _render_items_rows(items)
+        html = html.replace('{{ITEMS_ROWS}}', rows_html).replace('{{ITEMS_LIST}}', rows_html).replace('{{QUOTE_ITEMS}}', rows_html)
+
+        # Replace simple placeholders
+        for k, v in data.items():
+            try:
+                html = html.replace('{{'+str(k)+'}}', str(v))
+            except Exception:
+                pass
+        return {'html': html}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ------------------ WORKSHOP PROFILE ------------------
 @router.get('/profile')
 async def get_profile():

@@ -392,6 +392,8 @@ const Templates = () => {
     } finally {
       setLoading(false);
     }
+  };
+
 
   // Set default template for its type
   const makeDefault = async (templateId) => {

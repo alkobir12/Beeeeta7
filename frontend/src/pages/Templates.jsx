@@ -230,7 +230,7 @@ const Templates = () => {
                 </Button>
                 <input id="import-template" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
-              <Button onClick={()=>{ setShowEditor(true); setEditingTemplate(null); setFormData({ name: '', type: 'invoice', content: '', styles: '' }); }} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={async ()=>{ try{ const res = await axios.get(`${API_URL}/templates/mechanic-default`, { params: { t: 'invoice' } }); const html = res.data?.html || ''; setShowEditor(true); setEditingTemplate(null); setFormData({ name: 'نموذج جديد (ميكانيكا)', type: 'invoice', content: html, styles: '' }); } catch(e){ setShowEditor(true); setEditingTemplate(null); setFormData({ name: '', type: 'invoice', content: defaultTemplates.invoice.content, styles: '' }); } }} className="bg-blue-600 hover:bg-blue-700">
                 <Plus size={20} className="ml-2" />نموذج جديد
               </Button>
             </div>

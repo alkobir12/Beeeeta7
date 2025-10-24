@@ -1166,6 +1166,147 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         data = payload.get('data') or {}
         
         # Get template - prioritize template_id if provided
+
+# ------------------ WORKSHOP PROFILE ------------------
+@router.get('/profile')
+async def get_profile():
+    try:
+        doc = await db.settings.find_one({'id': 'workshop_profile'})
+        if not doc:
+            return {
+                'name': '', 'nameEnglish': '', 'logo': '', 'phone': '', 'whatsapp': '', 'email': '',
+                'address': '', 'city': '', 'postalCode': '', 'taxNumber': '', 'commercialRegister': '',
+                'bankAccount': '', 'iban': '', 'workingHours': '', 'invoiceFooter': '', 'termsAndConditions': ''
+            }
+        doc.pop('_id', None)
+        return doc.get('data') if 'data' in doc else doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/profile')
+async def update_profile(payload: Dict[str, Any]):
+    try:
+        await db.settings.update_one(
+            {'id': 'workshop_profile'},
+            {'$set': {'id': 'workshop_profile', 'data': payload, 'updatedAt': datetime.utcnow()}},
+            upsert=True
+        )
+        return {'status': 'ok'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ------------------ SERVICES ------------------
+@router.get('/services')
+async def list_services():
+    try:
+        rows = await db.services.find({}).sort('createdAt', -1).to_list(length=1000)
+        for r in rows:
+            r.pop('_id', None)
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/services')
+async def create_service(payload: Dict[str, Any]):
+    try:
+        import uuid
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': payload.get('name', '').strip(),
+            'category': payload.get('category', '').strip(),
+            'price': float(payload.get('price') or 0),
+            'duration': int(payload.get('duration') or 0),
+            'createdAt': datetime.utcnow()
+        }
+        if not doc['name']:
+            raise HTTPException(status_code=422, detail='name required')
+        await db.services.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete('/services/{sid}')
+async def delete_service(sid: str):
+    try:
+        res = await db.services.delete_one({'id': sid})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail='Service not found')
+        return {'status': 'ok'}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ------------------ PARTS (minimal) ------------------
+@router.get('/parts')
+async def list_parts():
+    try:
+        rows = await db.parts.find({}).sort('createdAt', -1).to_list(length=5000)
+        for r in rows:
+            r.pop('_id', None)
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ------------------ OPERATIONS list/create ------------------
+@router.get('/operations')
+async def list_operations():
+    try:
+        rows = await db.operations.find({}).sort('date', -1).to_list(length=1000)
+        for r in rows:
+            r.pop('_id', None)
+            if r.get('date') and hasattr(r['date'], 'isoformat'):
+                r['date'] = r['date'].isoformat()
+            # compute total if missing
+            if 'total' not in r:
+                r['total'] = sum(float(i.get('total') or (float(i.get('price') or 0) * float(i.get('quantity') or i.get('qty') or 1))) for i in (r.get('items') or []))
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/operations')
+async def create_operation(payload: Dict[str, Any]):
+    try:
+        import uuid
+        items = payload.get('items') or []
+        # Normalize items and preserve service rows
+        norm_items = []
+        for it in items:
+            name = (it.get('name') or '').strip()
+            qty = float(it.get('quantity') or it.get('qty') or 1)
+            price = float(it.get('price') or 0)
+            total = float(it.get('total') or (qty * price))
+            norm_items.append({
+                'itemType': it.get('itemType') or ('service' if not it.get('itemId') else 'part'),
+                'itemId': it.get('itemId') or None,
+                'name': name,
+                'quantity': qty,
+                'price': price,
+                'total': total
+            })
+        total = sum(i['total'] for i in norm_items)
+        doc = {
+            'id': str(uuid.uuid4()),
+            'accountId': payload.get('accountId'),
+            'type': payload.get('type', 'purchase'),
+            'partnerType': payload.get('partnerType'),
+            'partnerName': payload.get('partnerName'),
+            'items': norm_items,
+            'paymentMethod': payload.get('paymentMethod', 'cash'),
+            'notes': payload.get('notes', ''),
+            'total': total,
+            'date': datetime.utcnow()
+        }
+        await db.operations.insert_one(doc)
+        doc.pop('_id', None)
+        doc['date'] = doc['date'].isoformat()
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         html = None
         if template_id:
             tpl = await db.templates.find_one({'id': template_id})

@@ -966,6 +966,23 @@ async def make_default_template(template_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get('/templates/mechanic-default')
+async def get_mechanic_default_template(t: Optional[str] = None):
+    """Return mechanic default HTML to help users start a new template quickly.
+    Query param t can be: invoice, diagnosis, quote, receipt (optional)"""
+    try:
+        from pathlib import Path
+        p = Path(__file__).parent / 'invoice_template_mechanic.html'
+        if not p.exists():
+            raise HTTPException(status_code=404, detail='invoice_template_mechanic.html not found')
+        html = p.read_text(encoding='utf-8')
+        return {'type': (t or 'invoice'), 'html': html}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.delete('/templates/{template_id}')
 async def delete_template(template_id: str):
     """Delete template"""

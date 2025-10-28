@@ -44,9 +44,17 @@ const KnowledgeAdvanced = () => {
   const [engineInfo, setEngineInfo] = useState(null);
 
   useEffect(() => {
-    loadVehicles();
-    loadDocuments();
+    // Load data only when needed, not on page load
+    // Vehicles will be loaded when vehicle comparison tab is opened
+    // Documents list will be loaded when needed
   }, []);
+
+  useEffect(() => {
+    // Load vehicles only when vehicle comparison tab is active
+    if (activeTab === 'compare-vehicles') {
+      loadVehicles();
+    }
+  }, [activeTab]);
 
   const loadVehicles = async () => {
     try {

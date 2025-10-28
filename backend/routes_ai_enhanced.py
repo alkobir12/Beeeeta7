@@ -212,7 +212,11 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
             f.write(file_content)
         
         # Analyze with AI
-        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are an AI document analyzer assistant for automotive workshop management."
+        )
         
         analysis_prompt = f"""Analyze this document and provide:
 1. Summary in Arabic

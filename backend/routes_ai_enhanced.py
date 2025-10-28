@@ -346,7 +346,8 @@ async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(
         response = await llm.send_message(UserMessage(text=comparison_prompt))
         
         # Parse response
-        sections = response.text.split('\n\n')
+        response_text = response if isinstance(response, str) else response.text
+        sections = response_text.split('\n\n')
         
         return {
             'file1': file1.filename,

@@ -382,7 +382,8 @@ async def compare_vehicles(payload: Dict[str, Any]):
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are a vehicle comparison assistant for automotive workshop management. Compare vehicles and provide detailed analysis in Arabic."
+            system_message="You are a vehicle comparison assistant for automotive workshop management. Compare vehicles and provide detailed analysis in Arabic.",
+            model="claude-3-7-sonnet-20250219"
         )
         
         prompt = f"""قارن بين هاتين المركبتين بالتفصيل:

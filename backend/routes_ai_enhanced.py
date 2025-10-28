@@ -408,7 +408,11 @@ async def get_engine_info(payload: Dict[str, Any]):
         if not query:
             raise HTTPException(status_code=422, detail='query required')
         
-        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are an expert automotive mechanic assistant. Provide detailed technical information about engines and vehicles in Arabic."
+        )
         
         # Search in knowledge base first
         docs = await db.knowledge_documents.find({}).to_list(length=100)

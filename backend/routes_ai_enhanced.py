@@ -320,7 +320,11 @@ Return the top {limit} most relevant results with excerpts."""
 async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(...)):
     """Compare two files using AI"""
     try:
-        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are a file comparison assistant for automotive workshop management. Compare documents and provide detailed analysis in Arabic."
+        )
         
         # Read files
         content1 = (await file1.read()).decode('utf-8', errors='ignore')[:3000]

@@ -8,7 +8,7 @@ import requests
 import json
 from datetime import datetime
 
-BASE_URL = "https://workshop-manager-21.preview.emergentagent.com/api"
+BASE_URL = "https://carmech-hub.preview.emergentagent.com/api"
 
 test_results = {
     "passed": [],

@@ -434,7 +434,7 @@ async def get_engine_info(payload: Dict[str, Any]):
         
         return {
             'query': query,
-            'answer': response.text,
+            'answer': response if isinstance(response, str) else response.text,
             'sources': sources
         }
     except Exception as e:

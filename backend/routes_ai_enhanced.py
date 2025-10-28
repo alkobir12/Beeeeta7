@@ -299,7 +299,7 @@ Find the most relevant information from these documents:
 
 Return the top {limit} most relevant results with excerpts."""
         
-        response = llm.send_message(UserMessage(text=search_prompt))
+        response = await llm.send_message(UserMessage(text=search_prompt))
         
         # For now, return simple text-based results
         results = []

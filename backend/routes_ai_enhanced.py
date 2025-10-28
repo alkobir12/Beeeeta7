@@ -411,9 +411,8 @@ async def get_engine_info(payload: Dict[str, Any]):
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an expert automotive mechanic assistant. Provide detailed technical information about engines and vehicles in Arabic.",
-            model="claude-3-7-sonnet-20250219"
-        )
+            system_message="You are an expert automotive mechanic assistant. Provide detailed technical information about engines and vehicles in Arabic."
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
         # Search in knowledge base first
         docs = await db.knowledge_documents.find({}).to_list(length=100)

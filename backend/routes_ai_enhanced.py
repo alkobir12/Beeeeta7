@@ -389,7 +389,7 @@ async def compare_vehicles(payload: Dict[str, Any]):
 
 حلل الفروقات في: الموديل، السنة، الخدمات المطلوبة، الحالة، أي معلومات مهمة."""
         
-        response = llm.send_message(UserMessage(content=prompt))
+        response = llm.send_message(UserMessage(text=prompt))
         
         return {
             'vehicle1': v1,
@@ -427,7 +427,7 @@ async def get_engine_info(payload: Dict[str, Any]):
 
 أعطني إجابة شاملة ومفصلة."""
         
-        response = llm.send_message(UserMessage(content=prompt))
+        response = llm.send_message(UserMessage(text=prompt))
         
         # Extract sources
         sources = [d.get('filename', d.get('title', 'Unknown')) for d in docs[:3]]

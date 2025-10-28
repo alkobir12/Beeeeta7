@@ -376,7 +376,11 @@ async def compare_vehicles(payload: Dict[str, Any]):
         v2.pop('_id', None)
         
         # Use AI to analyze
-        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are a vehicle comparison assistant for automotive workshop management. Compare vehicles and provide detailed analysis in Arabic."
+        )
         
         prompt = f"""قارن بين هاتين المركبتين بالتفصيل:
 

@@ -42,7 +42,25 @@ const WorkshopProfile = () => {
   const loadProfile = async () => {
     try {
       const response = await axios.get(`${API}/profile`);
-      setProfile(response.data);
+      // Ensure all fields have values (prevent undefined)
+      setProfile({
+        name: response.data.name || '',
+        nameEnglish: response.data.nameEnglish || '',
+        logo: response.data.logo || '',
+        phone: response.data.phone || '',
+        whatsapp: response.data.whatsapp || '',
+        email: response.data.email || '',
+        address: response.data.address || '',
+        city: response.data.city || '',
+        postalCode: response.data.postalCode || '',
+        taxNumber: response.data.taxNumber || '',
+        commercialRegister: response.data.commercialRegister || '',
+        bankAccount: response.data.bankAccount || '',
+        iban: response.data.iban || '',
+        workingHours: response.data.workingHours || '',
+        invoiceFooter: response.data.invoiceFooter || '',
+        termsAndConditions: response.data.termsAndConditions || ''
+      });
     } catch (error) {
       console.error('Error loading profile:', error);
     }

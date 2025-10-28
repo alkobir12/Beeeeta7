@@ -323,9 +323,8 @@ async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are a file comparison assistant for automotive workshop management. Compare documents and provide detailed analysis in Arabic.",
-            model="claude-3-7-sonnet-20250219"
-        )
+            system_message="You are a file comparison assistant for automotive workshop management. Compare documents and provide detailed analysis in Arabic."
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
         # Read files
         content1 = (await file1.read()).decode('utf-8', errors='ignore')[:3000]

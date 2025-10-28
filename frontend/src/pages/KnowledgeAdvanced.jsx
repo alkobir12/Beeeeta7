@@ -66,6 +66,9 @@ const KnowledgeAdvanced = () => {
   };
 
   const loadDocuments = async () => {
+    // Only load if not already loaded
+    if (uploadedFiles.length > 0) return;
+    
     try {
       const res = await axios.get(`${API_URL}/ai/kb/docs`);
       setUploadedFiles(res.data?.docs || []);

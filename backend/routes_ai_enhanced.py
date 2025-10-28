@@ -394,7 +394,7 @@ async def compare_vehicles(payload: Dict[str, Any]):
         return {
             'vehicle1': v1,
             'vehicle2': v2,
-            'analysis': response.text
+            'analysis': response if isinstance(response, str) else response.text
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

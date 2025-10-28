@@ -236,8 +236,8 @@ Document: {file.filename}"""
             'filename': file.filename,
             'type': 'pdf' if file.filename.endswith('.pdf') else 'video',
             'title': file.filename,
-            'content': response.text[:5000],  # First 5000 chars
-            'summary': response.text,
+            'content': (response if isinstance(response, str) else response.text)[:5000],  # First 5000 chars
+            'summary': response if isinstance(response, str) else response.text,
             'uploadedAt': datetime.utcnow()
         }
         

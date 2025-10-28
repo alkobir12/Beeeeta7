@@ -286,7 +286,11 @@ async def smart_search_knowledge(payload: Dict[str, Any]):
         docs = await db.knowledge_documents.find({}).to_list(length=1000)
         
         # Use AI to rank and find relevant results
-        llm = LlmChat(api_key=os.getenv('EMERGENT_LLM_KEY'))
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are a knowledge base search assistant for automotive workshop management. Help find and rank relevant documents based on user queries."
+        )
         
         search_prompt = f"""Based on this query: "{query}"
 

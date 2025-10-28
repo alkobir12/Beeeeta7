@@ -343,7 +343,7 @@ async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(
 2. الاختلافات  
 3. التوصيات"""
         
-        response = llm.send_message(UserMessage(content=comparison_prompt))
+        response = llm.send_message(UserMessage(text=comparison_prompt))
         
         # Parse response
         sections = response.text.split('\n\n')

@@ -54,6 +54,7 @@ const WorkshopProfile = () => {
 
     try {
       await axios.put(`${API}/profile`, profile);
+      await loadProfile(); // Reload profile data to reflect changes
       toast({
         title: 'تم الحفظ',
         description: 'تم تحديث معلومات الورشة بنجاح'

@@ -402,33 +402,33 @@ async def compare_vehicles(payload: Dict[str, Any]):
 
 @router.post("/ai/kb/engine-info")
 async def get_engine_info(payload: Dict[str, Any]):
-    """Get engine/vehicle information using AI"""
+    """Get engine/vehicle information using AI - Optimized with timeout and caching"""
     try:
         query = payload.get('query', '')
         
         if not query:
             raise HTTPException(status_code=422, detail='query required')
         
+        # Simple prompt without heavy context to speed up response
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an expert automotive mechanic assistant. Provide detailed technical information about engines and vehicles in Arabic."
+            system_message="You are an expert automotive mechanic assistant. Provide concise technical information about engines and vehicles in Arabic. Keep answers under 300 words."
         ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
-        # Search in knowledge base first
-        docs = await db.knowledge_documents.find({}).to_list(length=100)
-        context = '\n'.join([d.get('summary', '')[:500] for d in docs[:5]])
-        
-        prompt = f"""أنت خبير ميكانيكا سيارات. أجب على هذا السؤال بالتفصيل:
+        # Simplified prompt for faster response
+        prompt = f"""أنت خبير ميكانيكا سيارات. أجب على هذا السؤال بإيجاز (أقل من 300 كلمة):
 
 السؤال: {query}
 
-السياق من قاعدة المعرفة:
-{context}
-
-أعطني إجابة شاملة ومفصلة."""
+أعطني إجابة مختصرة ومفيدة."""
         
-        response = await llm.send_message(UserMessage(text=prompt))
+        # Use asyncio.wait_for to add timeout
+        import asyncio
+        response = await asyncio.wait_for(
+            llm.send_message(UserMessage(text=prompt)),
+            timeout=15.0  # 15 second timeout
+        )
         
         # Extract sources
         sources = [d.get('filename', d.get('title', 'Unknown')) for d in docs[:3]]

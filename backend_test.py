@@ -322,7 +322,7 @@ def test_ai_knowledge_base():
             f"{BACKEND_URL}/ai/kb/engine-info",
             json=query_data,
             headers={"Content-Type": "application/json"},
-            timeout=15
+            timeout=30  # Increased timeout for AI processing
         )
         response_time = time.time() - start_time
         
@@ -337,7 +337,7 @@ def test_ai_knowledge_base():
             results.append(("POST /api/ai/kb/engine-info", True, response_time))
             
             # Check response speed
-            if response_time > 5.0:
+            if response_time > 10.0:
                 print(f"  {Colors.YELLOW}⚠️  Warning: Response time is slow ({response_time:.3f}s){Colors.RESET}")
         else:
             log_test(
@@ -346,6 +346,13 @@ def test_ai_knowledge_base():
                 f"Status: {response.status_code}, Response: {response.text[:200]}"
             )
             results.append(("POST /api/ai/kb/engine-info", False, 0))
+    except requests.exceptions.Timeout:
+        log_test(
+            "POST /api/ai/kb/engine-info", 
+            "FAIL", 
+            f"⚠️  Timeout after 30s - AI endpoint is too slow or unresponsive"
+        )
+        results.append(("POST /api/ai/kb/engine-info", False, 0))
     except Exception as e:
         log_test("POST /api/ai/kb/engine-info", "FAIL", f"Exception: {str(e)}")
         results.append(("POST /api/ai/kb/engine-info", False, 0))

@@ -36,6 +36,8 @@ const NewVehicle = () => {
   
   const [serviceSearch, setServiceSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [manualServiceName, setManualServiceName] = useState('');
+  const [manualServicePrice, setManualServicePrice] = useState('');
 
   useEffect(() => {
     fetchData();

@@ -343,12 +343,8 @@ const NewVehicle = () => {
                 </div>
               </div>
               
-              <div>
-                  اكتب اسم الخدمة واضغط "إضافة" لإضافتها للقائمة المحددة
-                </div>
-              </div>
-
-                </Select>
+              {/* Services List Section */}
+              <div>                </Select>
               </div>
               
               {/* Services Grid */}

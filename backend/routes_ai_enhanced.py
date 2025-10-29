@@ -282,37 +282,38 @@ async def smart_search_knowledge(payload: Dict[str, Any]):
         if not query:
             raise HTTPException(status_code=422, detail='query required')
         
-        # Get all documents
-        docs = await db.knowledge_documents.find({}).to_list(length=1000)
+        # Simple text-based search first (fast, no AI needed for basic search)
+        docs = await db.knowledge_documents.find({}).to_list(length=100)  # Limit to 100 for speed
         
-        # Use AI to rank and find relevant results
-        llm = LlmChat(
-            api_key=os.getenv('EMERGENT_LLM_KEY'),
-            session_id=str(uuid.uuid4()),
-            system_message="You are a knowledge base search assistant for automotive workshop management. Help find and rank relevant documents based on user queries."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
-        
-        search_prompt = f"""Based on this query: "{query}"
-
-Find the most relevant information from these documents:
-{[{'title': d.get('title'), 'summary': d.get('summary', '')[:200]} for d in docs[:20]]}
-
-Return the top {limit} most relevant results with excerpts."""
-        
-        response = await llm.send_message(UserMessage(text=search_prompt))
-        
-        # For now, return simple text-based results
+        # Fast text matching
         results = []
-        for doc in docs[:limit]:
-            if query.lower() in doc.get('content', '').lower() or query.lower() in doc.get('title', '').lower():
+        query_lower = query.lower()
+        
+        for doc in docs:
+            title = doc.get('title', '').lower()
+            content = doc.get('content', '').lower()
+            summary = doc.get('summary', '').lower()
+            
+            # Calculate simple relevance score
+            relevance = 0
+            if query_lower in title:
+                relevance += 0.5
+            if query_lower in content:
+                relevance += 0.3
+            if query_lower in summary:
+                relevance += 0.2
+            
+            if relevance > 0:
                 results.append({
                     'title': doc.get('title'),
-                    'excerpt': doc.get('content', '')[:200] + '...',
-                    'source': doc.get('filename'),
-                    'relevance': 0.8
+                    'excerpt': doc.get('summary', doc.get('content', ''))[:300] + '...',
+                    'source': doc.get('filename', 'Unknown'),
+                    'relevance': relevance
                 })
         
-        return {'results': results, 'count': len(results)}
+        # Sort by relevance and return top results
+        results.sort(key=lambda x: x['relevance'], reverse=True)
+        return {'results': results[:limit], 'count': len(results[:limit])}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

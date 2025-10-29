@@ -287,19 +287,57 @@ const NewVehicle = () => {
                     ))}
                   </SelectContent>
               {/* Manual service add */}
-              <div className="mt-4 p-4 border rounded-lg">
+              <div className="mt-4 p-4 border rounded-lg bg-blue-50">
                 <div className="font-semibold mb-2">إضافة خدمة يدوية</div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input placeholder="اسم الخدمة" onBlur={(e)=>{
-                    const name = e.target.value?.trim();
-                    if(!name) return;
-                    setFormData(prev => ({...prev, services: [...prev.services, name]}));
-                    e.target.value='';
-                  }} />
-                  <Input placeholder="السعر (اختياري)" type="number" onBlur={(e)=>{ e.target.value=''; }} />
-                  <Button type="button" variant="outline" onClick={()=>{}} className="justify-center">إضافة</Button>
+                  <Input 
+                    placeholder="اسم الخدمة" 
+                    value={manualServiceName}
+                    onChange={(e) => setManualServiceName(e.target.value)}
+                  />
+                  <Input 
+                    placeholder="السعر (اختياري)" 
+                    type="number" 
+                    value={manualServicePrice}
+                    onChange={(e) => setManualServicePrice(e.target.value)}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      const name = manualServiceName?.trim();
+                      if (!name) {
+                        toast({
+                          title: "تنبيه",
+                          description: "الرجاء إدخال اسم الخدمة",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      
+                      // Add service to selected services
+                      setFormData(prev => ({
+                        ...prev, 
+                        services: [...prev.services, name]
+                      }));
+                      
+                      // Clear inputs
+                      setManualServiceName('');
+                      setManualServicePrice('');
+                      
+                      toast({
+                        title: "تم الإضافة",
+                        description: `تمت إضافة: ${name}`
+                      });
+                    }} 
+                    className="justify-center"
+                  >
+                    إضافة
+                  </Button>
                 </div>
-                <div className="text-xs text-slate-500 mt-2">يمكنك كتابة اسم الخدمة وسيتم إضافتها مباشرة إلى القائمة المحددة.</div>
+                <div className="text-xs text-slate-600 mt-2">
+                  اكتب اسم الخدمة واضغط "إضافة" لإضافتها للقائمة المحددة
+                </div>
               </div>
 
                 </Select>

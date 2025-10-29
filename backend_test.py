@@ -165,6 +165,18 @@ def test_vehicle_management():
     
     # Test 2.1: POST /api/vehicles - Create new vehicle with complete data
     try:
+        # First, get some service IDs from the database
+        services_response = requests.get(f"{BACKEND_URL}/services", timeout=10)
+        service_ids = []
+        if services_response.status_code == 200:
+            services = services_response.json()
+            # Get at least 2 service IDs
+            service_ids = [s.get("id") for s in services[:2] if s.get("id")]
+        
+        # If no services found, use empty list (still valid)
+        if not service_ids:
+            service_ids = []
+        
         vehicle_data = {
             "customerName": "أحمد محمد الراشد",
             "customerPhone": "+966555123456",
@@ -176,22 +188,7 @@ def test_vehicle_management():
             "color": "أبيض",
             "mileage": 45000,
             "status": "diagnosis",
-            "services": [
-                {
-                    "id": "service-1",
-                    "name": "تغيير زيت المحرك",
-                    "category": "صيانة دورية",
-                    "price": 150.0,
-                    "duration": 30
-                },
-                {
-                    "id": "service-2",
-                    "name": "فحص الفرامل",
-                    "category": "فحص",
-                    "price": 100.0,
-                    "duration": 20
-                }
-            ],
+            "services": service_ids,  # List of service IDs
             "notes": "العميل يشتكي من صوت غريب في المحرك"
         }
         

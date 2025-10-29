@@ -430,14 +430,13 @@ async def get_engine_info(payload: Dict[str, Any]):
             timeout=15.0  # 15 second timeout
         )
         
-        # Extract sources
-        sources = [d.get('filename', d.get('title', 'Unknown')) for d in docs[:3]]
-        
         return {
             'query': query,
             'answer': response if isinstance(response, str) else response.text,
-            'sources': sources
+            'sources': []
         }
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail='AI response timeout - please try a simpler query')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -286,6 +286,9 @@ const NewVehicle = () => {
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
+                </Select>
+              </div>
+              
               {/* Manual service add */}
               <div className="mt-4 p-4 border rounded-lg bg-blue-50">
                 <div className="font-semibold mb-2">إضافة خدمة يدوية</div>
@@ -336,6 +339,11 @@ const NewVehicle = () => {
                   </Button>
                 </div>
                 <div className="text-xs text-slate-600 mt-2">
+                  اكتب اسم الخدمة واضغط "إضافة" لإضافتها للقائمة المحددة
+                </div>
+              </div>
+              
+              <div>
                   اكتب اسم الخدمة واضغط "إضافة" لإضافتها للقائمة المحددة
                 </div>
               </div>

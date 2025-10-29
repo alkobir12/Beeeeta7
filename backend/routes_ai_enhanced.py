@@ -9,6 +9,7 @@ import uuid
 import os
 import shutil
 import subprocess
+import asyncio
 from pathlib import Path
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage

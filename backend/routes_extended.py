@@ -558,7 +558,7 @@ async def get_operations_analytics(account_id: Optional[str] = None):
             if isinstance(d, str):
                 try:
                     return datetime.fromisoformat(d.replace('Z', '+00:00'))
-                except:
+                except Exception:
                     return None
             return d
         

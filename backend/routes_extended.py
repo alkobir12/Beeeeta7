@@ -622,37 +622,59 @@ async def get_operations_analytics(account_id: Optional[str] = None):
                 if not acc_id:
                     continue
                     
-                acc_sales = [op for op in all_sales if op.get('accountId') == acc_id]
+                # Filter operations for this account
+                acc_ops = [op for op in all_operations if op.get('accountId') == acc_id]
                 
-                acc_today = 0
-                acc_week = 0
-                acc_month = 0
+                acc_today_sales = 0
+                acc_week_sales = 0
+                acc_month_sales = 0
+                acc_today_expenses = 0
+                acc_week_expenses = 0
+                acc_month_expenses = 0
                 acc_today_count = 0
                 acc_week_count = 0
                 acc_month_count = 0
                 
-                for op in acc_sales:
+                for op in acc_ops:
                     op_date = parse_date(op)
                     if not op_date:
                         continue
                     total = float(op.get('total', 0))
+                    op_type = op.get('type')
                     
                     if op_date >= today:
-                        acc_today += total
+                        if op_type == 'sale':
+                            acc_today_sales += total
+                        elif op_type == 'purchase':
+                            acc_today_expenses += total
                         acc_today_count += 1
+                        
                     if op_date >= week_ago:
-                        acc_week += total
+                        if op_type == 'sale':
+                            acc_week_sales += total
+                        elif op_type == 'purchase':
+                            acc_week_expenses += total
                         acc_week_count += 1
+                        
                     if op_date >= month_start:
-                        acc_month += total
+                        if op_type == 'sale':
+                            acc_month_sales += total
+                        elif op_type == 'purchase':
+                            acc_month_expenses += total
                         acc_month_count += 1
                 
                 accounts_summary.append({
                     'id': acc_id,
                     'name': acc.get('name', 'Unknown'),
-                    'todaySales': acc_today,
-                    'weekSales': acc_week,
-                    'monthSales': acc_month,
+                    'todaySales': acc_today_sales,
+                    'weekSales': acc_week_sales,
+                    'monthSales': acc_month_sales,
+                    'todayExpenses': acc_today_expenses,
+                    'weekExpenses': acc_week_expenses,
+                    'monthExpenses': acc_month_expenses,
+                    'todayProfit': acc_today_sales - acc_today_expenses,
+                    'weekProfit': acc_week_sales - acc_week_expenses,
+                    'monthProfit': acc_month_sales - acc_month_expenses,
                     'todayCount': acc_today_count,
                     'weekCount': acc_week_count,
                     'monthCount': acc_month_count

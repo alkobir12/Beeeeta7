@@ -217,29 +217,64 @@ const Operations = () => {
           {/* Accounts Summary Cards */}
           {analytics && analytics.accountsSummary && analytics.accountsSummary.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-slate-800 mb-4">تحليلات الفروع</h2>
+              <h2 className="text-xl font-bold text-slate-800 mb-4">📊 تحليلات الفروع التفصيلية</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {analytics.accountsSummary.map(acc => (
                   <Card key={acc.id} className="border-2 hover:shadow-lg transition-shadow">
-                    <CardHeader className="bg-gradient-to-l from-slate-50 pb-3">
-                      <CardTitle className="text-lg">{acc.name}</CardTitle>
+                    <CardHeader className="bg-gradient-to-l from-blue-50 to-white pb-3">
+                      <CardTitle className="text-lg flex items-center justify-between">
+                        <span>{acc.name}</span>
+                        <span className={`text-sm px-2 py-1 rounded ${acc.monthProfit >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {acc.monthProfit >= 0 ? '↗' : '↘'} {acc.monthProfit.toFixed(0)}
+                        </span>
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">اليوم:</span>
-                          <span className="font-bold text-green-700">{acc.todaySales.toFixed(2)} ر.س</span>
+                      <div className="space-y-3">
+                        {/* Today */}
+                        <div className="p-2 bg-green-50 rounded">
+                          <div className="text-xs text-slate-600 mb-1">اليوم:</div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">مبيعات: {acc.todaySales.toFixed(2)}</span>
+                            <span className="text-sm text-red-700">مصروفات: {acc.todayExpenses.toFixed(2)}</span>
+                          </div>
+                          <div className="text-center mt-1">
+                            <span className={`font-bold text-sm ${acc.todayProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              ربح: {acc.todayProfit.toFixed(2)} ر.س
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">الأسبوع:</span>
-                          <span className="font-bold text-blue-700">{acc.weekSales.toFixed(2)} ر.س</span>
+
+                        {/* Week */}
+                        <div className="p-2 bg-blue-50 rounded">
+                          <div className="text-xs text-slate-600 mb-1">الأسبوع:</div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">مبيعات: {acc.weekSales.toFixed(2)}</span>
+                            <span className="text-sm text-red-700">مصروفات: {acc.weekExpenses.toFixed(2)}</span>
+                          </div>
+                          <div className="text-center mt-1">
+                            <span className={`font-bold text-sm ${acc.weekProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              ربح: {acc.weekProfit.toFixed(2)} ر.س
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">الشهر:</span>
-                          <span className="font-bold text-purple-700">{acc.monthSales.toFixed(2)} ر.س</span>
+
+                        {/* Month */}
+                        <div className="p-2 bg-purple-50 rounded">
+                          <div className="text-xs text-slate-600 mb-1">الشهر:</div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">مبيعات: {acc.monthSales.toFixed(2)}</span>
+                            <span className="text-sm text-red-700">مصروفات: {acc.monthExpenses.toFixed(2)}</span>
+                          </div>
+                          <div className="text-center mt-1">
+                            <span className={`font-bold text-sm ${acc.monthProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              ربح: {acc.monthProfit.toFixed(2)} ر.س
+                            </span>
+                          </div>
                         </div>
+
                         <div className="pt-2 border-t mt-2">
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 text-center">
                             {acc.monthCount} عملية هذا الشهر
                           </p>
                         </div>

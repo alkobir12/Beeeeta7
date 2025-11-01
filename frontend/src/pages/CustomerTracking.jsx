@@ -257,6 +257,12 @@ const CustomerTracking = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* AI Chatbot for customer support */}
+      <CustomerChatbot 
+        vehicleId={vehicle?.id} 
+        vehicleInfo={`${vehicle?.brand} ${vehicle?.model} ${vehicle?.year} - ${vehicle?.plateNumber}`}
+      />
     </div>
   );
 };

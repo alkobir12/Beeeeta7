@@ -12,18 +12,21 @@ const Operations = () => {
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
   const [ops, setOps] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [form, setForm] = useState({ accountId: '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '' });
   const [item, setItem] = useState({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
 
   const load = async () => {
-    const [accRes, partsRes, opsRes] = await Promise.all([
+    const [accRes, partsRes, opsRes, analyticsRes] = await Promise.all([
       axios.get(`${API_URL}/biz-accounts`),
       axios.get(`${API_URL}/parts`),
-      axios.get(`${API_URL}/operations`)
+      axios.get(`${API_URL}/operations`),
+      axios.get(`${API_URL}/operations/analytics/summary`)
     ]);
     setAccounts(accRes.data || []);
     setParts(partsRes.data || []);
     setOps(opsRes.data || []);
+    setAnalytics(analyticsRes.data || null);
   };
 
   useEffect(() => { load(); }, []);

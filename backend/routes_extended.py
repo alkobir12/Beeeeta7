@@ -589,45 +589,53 @@ async def get_operations_analytics(account_id: Optional[str] = None):
         
         # Get all accounts summary
         accounts_summary = []
-        all_accounts = await db.biz_accounts.find({}).to_list(length=100)
         
-        for acc in all_accounts:
-            acc_id = acc.get('id')
-            acc_sales = [op for op in all_sales if op.get('accountId') == acc_id]
+        try:
+            all_accounts_list = await db.biz_accounts.find({}).to_list(length=100)
             
-            acc_today = 0
-            acc_week = 0
-            acc_month = 0
-            acc_today_count = 0
-            acc_week_count = 0
-            acc_month_count = 0
-            
-            for op in acc_sales:
-                op_date = parse_date(op)
-                if not op_date:
+            for acc in all_accounts_list:
+                acc_id = acc.get('id')
+                if not acc_id:
                     continue
-                total = float(op.get('total', 0))
+                    
+                acc_sales = [op for op in all_sales if op.get('accountId') == acc_id]
                 
-                if op_date >= today:
-                    acc_today += total
-                    acc_today_count += 1
-                if op_date >= week_ago:
-                    acc_week += total
-                    acc_week_count += 1
-                if op_date >= month_start:
-                    acc_month += total
-                    acc_month_count += 1
-            
-            accounts_summary.append({
-                'id': acc_id,
-                'name': acc.get('name'),
-                'todaySales': acc_today,
-                'weekSales': acc_week,
-                'monthSales': acc_month,
-                'todayCount': acc_today_count,
-                'weekCount': acc_week_count,
-                'monthCount': acc_month_count
-            })
+                acc_today = 0
+                acc_week = 0
+                acc_month = 0
+                acc_today_count = 0
+                acc_week_count = 0
+                acc_month_count = 0
+                
+                for op in acc_sales:
+                    op_date = parse_date(op)
+                    if not op_date:
+                        continue
+                    total = float(op.get('total', 0))
+                    
+                    if op_date >= today:
+                        acc_today += total
+                        acc_today_count += 1
+                    if op_date >= week_ago:
+                        acc_week += total
+                        acc_week_count += 1
+                    if op_date >= month_start:
+                        acc_month += total
+                        acc_month_count += 1
+                
+                accounts_summary.append({
+                    'id': acc_id,
+                    'name': acc.get('name', 'Unknown'),
+                    'todaySales': acc_today,
+                    'weekSales': acc_week,
+                    'monthSales': acc_month,
+                    'todayCount': acc_today_count,
+                    'weekCount': acc_week_count,
+                    'monthCount': acc_month_count
+                })
+        except Exception as e:
+            # If accounts summary fails, continue with main analytics
+            pass
         
         return {
             'today': {'total': today_sales, 'count': today_count},

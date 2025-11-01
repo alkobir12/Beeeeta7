@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Car, CheckCircle, Calendar, Wrench, Phone, Mail, Hash } from 'lucide-react';
 import { vehicleAPI } from '../services/api';
+import CustomerChatbot from '../components/CustomerChatbot';
 
 const getStatusLabel = (key) => {
   const map = {

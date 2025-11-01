@@ -64,8 +64,14 @@ const Settings = () => {
       
       toast({ 
         title: 'تم الحفظ', 
-        description: 'تم حفظ الإعدادات بنجاح' 
+        description: 'تم حفظ الإعدادات بنجاح. سيتم إعادة تحميل الصفحة...' 
       });
+      
+      // Reload page after 1 second to apply language/theme changes
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
       console.error('Save error:', error);
       toast({ 
@@ -73,7 +79,6 @@ const Settings = () => {
         description: 'فشل في حفظ الإعدادات', 
         variant: 'destructive' 
       });
-    } finally {
       setLoading(false);
     }
   };

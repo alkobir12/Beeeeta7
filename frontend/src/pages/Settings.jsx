@@ -35,6 +35,13 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       const response = await axios.get(`${API_URL}/settings`);
+      
+      // Get language from settings or localStorage
+      const savedLanguage = response.data.language || localStorage.getItem('language') || 'ar';
+      
+      // Sync language to localStorage for i18n
+      localStorage.setItem('language', savedLanguage);
+      
       // Ensure all fields have default values to prevent undefined
       setSettings({
         workshopName: response.data.workshopName || 'ورشتي',
@@ -44,7 +51,7 @@ const Settings = () => {
         currency: response.data.currency || 'SAR',
         taxEnabled: response.data.taxEnabled || false,
         taxRate: response.data.taxRate || 15,
-        language: response.data.language || 'ar',
+        language: savedLanguage,
         themeName: response.data.themeName || 'light'
       });
     } catch (error) {

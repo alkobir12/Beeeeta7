@@ -347,24 +347,51 @@ const NewVehicle = () => {
               {/* Services List Section */}
               
               {/* Services Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-                {filteredServices.map(service => (
-                  <div key={service.id} className="flex items-center space-x-2 space-x-reverse p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-200">
-                    <Checkbox
-                      id={`service-${service.id}`}
-                      checked={formData.services.includes(service.name)}
-                      onCheckedChange={() => handleServiceToggle(service.name)}
-                    />
-                    <label
-                      htmlFor={`service-${service.id}`}
-                      className="flex-1 cursor-pointer"
-                    >
-                      <div className="font-semibold text-slate-800 text-sm">{service.name}</div>
-                      <div className="text-xs text-slate-500">{service.category}</div>
-                      <div className="text-xs text-green-600 font-bold">{service.price} ر.س</div>
-                    </label>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {filteredServices.map(service => {
+                  const isSelected = formData.services.includes(service.name);
+                  const customPrice = formData.servicePrices[service.name] ?? 0;
+                  
+                  return (
+                    <div key={service.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-200">
+                      <Checkbox
+                        id={`service-${service.id}`}
+                        checked={isSelected}
+                        onCheckedChange={() => handleServiceToggle(service.name)}
+                      />
+                      <label
+                        htmlFor={`service-${service.id}`}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <div className="font-semibold text-slate-800 text-sm">{service.name}</div>
+                        <div className="text-xs text-slate-500">{service.category}</div>
+                      </label>
+                      
+                      {/* Editable price field */}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={customPrice}
+                          onChange={(e) => {
+                            const newPrice = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              servicePrices: {
+                                ...prev.servicePrices,
+                                [service.name]: newPrice
+                              }
+                            }));
+                          }}
+                          placeholder="0"
+                          className="w-24 text-center"
+                          min="0"
+                          step="0.01"
+                        />
+                        <span className="text-xs text-slate-600">ر.س</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               
               {filteredServices.length === 0 && (

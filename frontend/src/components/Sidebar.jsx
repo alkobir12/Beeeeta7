@@ -96,7 +96,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-6 pb-24">
           <div className="flex items-center justify-between mb-8">
             <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
-              <h2 className="text-2xl font-bold text-slate-800">ورشتي</h2>
+              <h2 className="text-2xl font-bold text-slate-800">{workshopName}</h2>
               <p className="text-sm text-slate-500">نظام الإدارة</p>
               <Button variant="outline" size="sm" className="mt-3 w-full justify-center" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
             </div>

@@ -542,13 +542,12 @@ async def get_operations_analytics(account_id: Optional[str] = None):
         week_ago = today - timedelta(days=7)
         month_start = today.replace(day=1)
         
-        # Query for sales only
-        base_query = {'type': 'sale'}
+        # Get all operations (sales and purchases)
+        query_filter = {}
         if account_id:
-            base_query['accountId'] = account_id
+            query_filter['accountId'] = account_id
         
-        # Get all sales
-        all_sales = await db.operations.find(base_query).to_list(length=10000)
+        all_operations = await db.operations.find(query_filter).to_list(length=10000)
         
         # Helper function to parse date
         def parse_date(op):
@@ -562,30 +561,55 @@ async def get_operations_analytics(account_id: Optional[str] = None):
                     return None
             return d
         
-        # Calculate analytics
+        # Calculate sales analytics
         today_sales = 0
         week_sales = 0
         month_sales = 0
-        today_count = 0
-        week_count = 0
-        month_count = 0
+        today_sales_count = 0
+        week_sales_count = 0
+        month_sales_count = 0
         
-        for op in all_sales:
+        # Calculate expenses (purchases) analytics
+        today_expenses = 0
+        week_expenses = 0
+        month_expenses = 0
+        today_expenses_count = 0
+        week_expenses_count = 0
+        month_expenses_count = 0
+        
+        for op in all_operations:
             op_date = parse_date(op)
             if not op_date:
                 continue
             
             total = float(op.get('total', 0))
+            op_type = op.get('type')
             
-            if op_date >= today:
-                today_sales += total
-                today_count += 1
-            if op_date >= week_ago:
-                week_sales += total
-                week_count += 1
-            if op_date >= month_start:
-                month_sales += total
-                month_count += 1
+            if op_type == 'sale':
+                if op_date >= today:
+                    today_sales += total
+                    today_sales_count += 1
+                if op_date >= week_ago:
+                    week_sales += total
+                    week_sales_count += 1
+                if op_date >= month_start:
+                    month_sales += total
+                    month_sales_count += 1
+            elif op_type == 'purchase':
+                if op_date >= today:
+                    today_expenses += total
+                    today_expenses_count += 1
+                if op_date >= week_ago:
+                    week_expenses += total
+                    week_expenses_count += 1
+                if op_date >= month_start:
+                    month_expenses += total
+                    month_expenses_count += 1
+        
+        # Calculate profit
+        today_profit = today_sales - today_expenses
+        week_profit = week_sales - week_expenses
+        month_profit = month_sales - month_expenses
         
         # Get all accounts summary
         accounts_summary = []

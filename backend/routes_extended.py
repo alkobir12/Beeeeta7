@@ -594,9 +594,29 @@ async def get_operations_analytics(account_id: Optional[str] = None):
         for acc in all_accounts:
             acc_id = acc.get('id')
             acc_sales = [op for op in all_sales if op.get('accountId') == acc_id]
-            acc_today = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= today)
-            acc_week = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= week_ago)
-            acc_month = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= month_start)
+            
+            acc_today = 0
+            acc_week = 0
+            acc_month = 0
+            acc_today_count = 0
+            acc_week_count = 0
+            acc_month_count = 0
+            
+            for op in acc_sales:
+                op_date = parse_date(op)
+                if not op_date:
+                    continue
+                total = float(op.get('total', 0))
+                
+                if op_date >= today:
+                    acc_today += total
+                    acc_today_count += 1
+                if op_date >= week_ago:
+                    acc_week += total
+                    acc_week_count += 1
+                if op_date >= month_start:
+                    acc_month += total
+                    acc_month_count += 1
             
             accounts_summary.append({
                 'id': acc_id,
@@ -604,9 +624,9 @@ async def get_operations_analytics(account_id: Optional[str] = None):
                 'todaySales': acc_today,
                 'weekSales': acc_week,
                 'monthSales': acc_month,
-                'todayCount': len([op for op in acc_sales if op.get('date') and op['date'] >= today]),
-                'weekCount': len([op for op in acc_sales if op.get('date') and op['date'] >= week_ago]),
-                'monthCount': len([op for op in acc_sales if op.get('date') and op['date'] >= month_start])
+                'todayCount': acc_today_count,
+                'weekCount': acc_week_count,
+                'monthCount': acc_month_count
             })
         
         return {

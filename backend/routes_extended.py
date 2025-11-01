@@ -686,9 +686,27 @@ async def get_operations_analytics(account_id: Optional[str] = None):
             traceback.print_exc()
         
         return {
-            'today': {'total': today_sales, 'count': today_count},
-            'week': {'total': week_sales, 'count': week_count},
-            'month': {'total': month_sales, 'count': month_count},
+            'today': {
+                'sales': today_sales, 
+                'expenses': today_expenses,
+                'profit': today_profit,
+                'salesCount': today_sales_count,
+                'expensesCount': today_expenses_count
+            },
+            'week': {
+                'sales': week_sales,
+                'expenses': week_expenses,
+                'profit': week_profit,
+                'salesCount': week_sales_count,
+                'expensesCount': week_expenses_count
+            },
+            'month': {
+                'sales': month_sales,
+                'expenses': month_expenses,
+                'profit': month_profit,
+                'salesCount': month_sales_count,
+                'expensesCount': month_expenses_count
+            },
             'accountsSummary': accounts_summary
         }
     except Exception as e:

@@ -35,7 +35,18 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       const response = await axios.get(`${API_URL}/settings`);
-      setSettings({ ...settings, ...response.data });
+      // Ensure all fields have default values to prevent undefined
+      setSettings({
+        workshopName: response.data.workshopName || 'ورشتي',
+        workshopPhone: response.data.workshopPhone || '',
+        workshopEmail: response.data.workshopEmail || '',
+        workshopAddress: response.data.workshopAddress || '',
+        currency: response.data.currency || 'SAR',
+        taxEnabled: response.data.taxEnabled || false,
+        taxRate: response.data.taxRate || 15,
+        language: response.data.language || 'ar',
+        themeName: response.data.themeName || 'light'
+      });
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {

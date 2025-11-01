@@ -195,6 +195,8 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     # Auto-manage approval links based on status transitions
     try:
         new_status = vehicle.get("status")
+        customer_phone = vehicle.get("customerPhone", "")
+        
         # On move to quotation: ensure there is an active pending approval (create if none active)
         if new_status == "quotation" and prev_status != "quotation":
             active = await db.approval_requests.find_one({
@@ -205,28 +207,65 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
             })
             if not active:
                 token = f"APR-{str(uuid.uuid4())[:8].upper()}"
-                await db.approval_requests.insert_one({
+                approval_doc = {
                     "id": str(uuid.uuid4()),
                     "vehicleId": vehicle_id,
                     "customerId": vehicle.get("customerId"),
-                    "title": "طلب اعتماد",
+                    "title": "طلب اعتماد - " + vehicle.get("plateNumber", ""),
                     "amount": 0.0,
                     "status": "pending",
                     "token": token,
                     "createdAt": datetime.utcnow(),
                     "expiresAt": datetime.utcnow() + timedelta(days=7),
                     "revoked": False
-                })
-        # On approved/ready/delivered: revoke all active pending approvals
-        if new_status in ("approved", "ready", "delivered") and prev_status != new_status:
+                }
+                await db.approval_requests.insert_one(approval_doc)
+                
+                # Auto-send approval notification via WhatsApp
+                if customer_phone:
+                    try:
+                        from routes_extended import router as ext_router
+                        approval_link = f"https://carmech-hub.preview.emergentagent.com/approval/{token}"
+                        # Prepare notification
+                        notif_response = await db.whatsapp_messages.insert_one({
+                            "id": str(uuid.uuid4()),
+                            "phone": customer_phone,
+                            "message": f"🔔 طلب اعتماد جديد\n\nمركبتك: {vehicle.get('plateNumber')}\nالحالة: تسعير\n\nللاعتماد: {approval_link}\n\nصالح لمدة 7 أيام",
+                            "type": "approval",
+                            "status": "sent",
+                            "sentAt": datetime.utcnow()
+                        })
+                        logger.info(f"✅ Auto-sent approval to {customer_phone}")
+                    except Exception as e:
+                        logger.warning(f"Failed to auto-send approval: {e}")
+                        
+        # On ready/delivered: send notification to customer
+        if new_status in ("ready", "delivered") and prev_status != new_status:
+            # Revoke pending approvals
             await db.approval_requests.update_many({
                 "vehicleId": vehicle_id,
                 "status": "pending",
                 "revoked": {"$ne": True},
                 "expiresAt": {"$gt": datetime.utcnow()}
             }, {"$set": {"revoked": True}})
-    except Exception as _:
-        logger.warning("Auto-manage approval links on status change failed, continuing")
+            
+            # Send ready/delivered notification
+            if customer_phone and new_status == "ready":
+                try:
+                    await db.whatsapp_messages.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "phone": customer_phone,
+                        "message": f"✅ مركبتك جاهزة!\n\nرقم اللوحة: {vehicle.get('plateNumber')}\n{vehicle.get('brand')} {vehicle.get('model')}\n\nيمكنك استلامها في أي وقت خلال أوقات العمل.",
+                        "type": "notification",
+                        "status": "sent",
+                        "sentAt": datetime.utcnow()
+                    })
+                    logger.info(f"✅ Auto-sent ready notification to {customer_phone}")
+                except Exception as e:
+                    logger.warning(f"Failed to send ready notification: {e}")
+                    
+    except Exception as e:
+        logger.warning(f"Auto-manage approval links on status change failed: {e}")
     
     return Vehicle(**vehicle)
 

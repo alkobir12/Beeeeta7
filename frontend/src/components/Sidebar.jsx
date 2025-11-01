@@ -48,11 +48,16 @@ const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [menuConfig, setMenuConfig] = useState(null);
   const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [workshopName, setWorkshopName] = useState('ورشتي');
 
   useEffect(() => {
     const load = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/settings`);
+        
+        // Load workshop name
+        setWorkshopName(data?.workshopName || 'ورشتي');
+        
         let mc = data?.menuConfig || null;
         if (mc) {
           // Ensure Settings group contains Users and Templates

@@ -55,61 +55,163 @@ const Operations = () => {
 
           {/* Analytics Cards */}
           {analytics && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              {/* Today Sales */}
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-green-700 font-semibold">مبيعات اليوم</p>
-                      <p className="text-3xl font-bold text-green-800 mt-2">
-                        {analytics.today.total.toFixed(2)} ر.س
-                      </p>
-                      <p className="text-xs text-green-600 mt-1">
-                        {analytics.today.count} عملية
-                      </p>
+            <>
+              {/* Main Analytics - 6 Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* Today Sales */}
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-700 font-semibold">مبيعات اليوم</p>
+                        <p className="text-3xl font-bold text-green-800 mt-2">
+                          {analytics.today.sales.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">
+                          {analytics.today.salesCount} عملية بيع
+                        </p>
+                      </div>
+                      <div className="text-5xl">💰</div>
                     </div>
-                    <div className="text-5xl">💰</div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Week Sales */}
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-blue-700 font-semibold">مبيعات الأسبوع</p>
-                      <p className="text-3xl font-bold text-blue-800 mt-2">
-                        {analytics.week.total.toFixed(2)} ر.س
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {analytics.week.count} عملية
-                      </p>
+                {/* Week Sales */}
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-700 font-semibold">مبيعات الأسبوع</p>
+                        <p className="text-3xl font-bold text-blue-800 mt-2">
+                          {analytics.week.sales.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {analytics.week.salesCount} عملية بيع
+                        </p>
+                      </div>
+                      <div className="text-5xl">📊</div>
                     </div>
-                    <div className="text-5xl">📊</div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Month Sales */}
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-purple-700 font-semibold">مبيعات الشهر</p>
-                      <p className="text-3xl font-bold text-purple-800 mt-2">
-                        {analytics.month.total.toFixed(2)} ر.س
-                      </p>
-                      <p className="text-xs text-purple-600 mt-1">
-                        {analytics.month.count} عملية
-                      </p>
+                {/* Month Sales */}
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-700 font-semibold">مبيعات الشهر</p>
+                        <p className="text-3xl font-bold text-purple-800 mt-2">
+                          {analytics.month.sales.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-purple-600 mt-1">
+                          {analytics.month.salesCount} عملية بيع
+                        </p>
+                      </div>
+                      <div className="text-5xl">📈</div>
                     </div>
-                    <div className="text-5xl">📈</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+
+                {/* Today Expenses */}
+                <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-red-700 font-semibold">مصروفات اليوم</p>
+                        <p className="text-3xl font-bold text-red-800 mt-2">
+                          {analytics.today.expenses.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          {analytics.today.expensesCount} عملية شراء
+                        </p>
+                      </div>
+                      <div className="text-5xl">🛒</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Week Expenses */}
+                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-orange-700 font-semibold">مصروفات الأسبوع</p>
+                        <p className="text-3xl font-bold text-orange-800 mt-2">
+                          {analytics.week.expenses.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-orange-600 mt-1">
+                          {analytics.week.expensesCount} عملية شراء
+                        </p>
+                      </div>
+                      <div className="text-5xl">📦</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Month Expenses */}
+                <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-yellow-700 font-semibold">مصروفات الشهر</p>
+                        <p className="text-3xl font-bold text-yellow-800 mt-2">
+                          {analytics.month.expenses.toFixed(2)} ر.س
+                        </p>
+                        <p className="text-xs text-yellow-600 mt-1">
+                          {analytics.month.expensesCount} عملية شراء
+                        </p>
+                      </div>
+                      <div className="text-5xl">💳</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Profit Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className={`border-2 ${analytics.today.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold" style={{color: analytics.today.profit >= 0 ? '#047857' : '#be123c'}}>صافي ربح اليوم</p>
+                        <p className="text-3xl font-bold mt-2" style={{color: analytics.today.profit >= 0 ? '#065f46' : '#9f1239'}}>
+                          {analytics.today.profit.toFixed(2)} ر.س
+                        </p>
+                      </div>
+                      <div className="text-5xl">{analytics.today.profit >= 0 ? '✅' : '⚠️'}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={`border-2 ${analytics.week.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold" style={{color: analytics.week.profit >= 0 ? '#047857' : '#be123c'}}>صافي ربح الأسبوع</p>
+                        <p className="text-3xl font-bold mt-2" style={{color: analytics.week.profit >= 0 ? '#065f46' : '#9f1239'}}>
+                          {analytics.week.profit.toFixed(2)} ر.س
+                        </p>
+                      </div>
+                      <div className="text-5xl">{analytics.week.profit >= 0 ? '✅' : '⚠️'}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={`border-2 ${analytics.month.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold" style={{color: analytics.month.profit >= 0 ? '#047857' : '#be123c'}}>صافي ربح الشهر</p>
+                        <p className="text-3xl font-bold mt-2" style={{color: analytics.month.profit >= 0 ? '#065f46' : '#9f1239'}}>
+                          {analytics.month.profit.toFixed(2)} ر.س
+                        </p>
+                      </div>
+                      <div className="text-5xl">{analytics.month.profit >= 0 ? '✅' : '⚠️'}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
           )}
 
           {/* Accounts Summary Cards */}

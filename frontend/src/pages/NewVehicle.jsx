@@ -30,6 +30,7 @@ const NewVehicle = () => {
     customerPhone: '',
     customerEmail: '',
     services: [],
+    servicePrices: {}, // Store custom prices for each service
     technicianId: '',
     notes: ''
   });
@@ -37,7 +38,7 @@ const NewVehicle = () => {
   const [serviceSearch, setServiceSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [manualServiceName, setManualServiceName] = useState('');
-  const [manualServicePrice, setManualServicePrice] = useState('');
+  const [manualServicePrice, setManualServicePrice] = useState('0');
 
   useEffect(() => {
     fetchData();

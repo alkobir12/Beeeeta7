@@ -530,6 +530,67 @@ async def create_operation(payload: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ------------------ OPERATIONS ANALYTICS ------------------
+@router.get('/operations/analytics/summary')
+async def get_operations_analytics(account_id: Optional[str] = None):
+    """Get operations analytics: today, week, month sales"""
+    try:
+        from datetime import date, timedelta
+        
+        # Get today's date
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = today - timedelta(days=7)
+        month_start = today.replace(day=1)
+        
+        # Query for sales only
+        base_query = {'type': 'sale'}
+        if account_id:
+            base_query['accountId'] = account_id
+        
+        # Get all sales
+        all_sales = await db.operations.find(base_query).to_list(length=10000)
+        
+        # Calculate analytics
+        today_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= today)
+        week_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= week_ago)
+        month_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= month_start)
+        
+        today_count = len([op for op in all_sales if op.get('date') and op['date'] >= today])
+        week_count = len([op for op in all_sales if op.get('date') and op['date'] >= week_ago])
+        month_count = len([op for op in all_sales if op.get('date') and op['date'] >= month_start])
+        
+        # Get all accounts summary
+        accounts_summary = []
+        all_accounts = await db.biz_accounts.find({}).to_list(length=100)
+        
+        for acc in all_accounts:
+            acc_id = acc.get('id')
+            acc_sales = [op for op in all_sales if op.get('accountId') == acc_id]
+            acc_today = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= today)
+            acc_week = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= week_ago)
+            acc_month = sum(op.get('total', 0) for op in acc_sales if op.get('date') and op['date'] >= month_start)
+            
+            accounts_summary.append({
+                'id': acc_id,
+                'name': acc.get('name'),
+                'todaySales': acc_today,
+                'weekSales': acc_week,
+                'monthSales': acc_month,
+                'todayCount': len([op for op in acc_sales if op.get('date') and op['date'] >= today]),
+                'weekCount': len([op for op in acc_sales if op.get('date') and op['date'] >= week_ago]),
+                'monthCount': len([op for op in acc_sales if op.get('date') and op['date'] >= month_start])
+            })
+        
+        return {
+            'today': {'total': today_sales, 'count': today_count},
+            'week': {'total': week_sales, 'count': week_count},
+            'month': {'total': month_sales, 'count': month_count},
+            'accountsSummary': accounts_summary
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ------------------ IMPORT CUSTOMERS ------------------
 @router.post('/import/customers')
 async def import_customers(file: UploadFile = File(...), mode: str = 'skip'):

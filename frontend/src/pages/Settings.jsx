@@ -59,6 +59,9 @@ const Settings = () => {
       setLoading(true);
       await axios.post(`${API_URL}/settings`, settings);
       
+      // Save language to localStorage for i18n
+      localStorage.setItem('language', settings.language);
+      
       // Reload settings to confirm save
       await fetchSettings();
       

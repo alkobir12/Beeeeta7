@@ -50,8 +50,104 @@ const Operations = () => {
   return (
     <Layout>
       <div className="min-h-screen" dir="rtl">
-        <div className="container mx-auto p-6 max-w-5xl">
+        <div className="container mx-auto p-6 max-w-7xl">
           <h1 className="text-3xl font-bold text-slate-800 mb-6">عمليات الشراء/البيع</h1>
+
+          {/* Analytics Cards */}
+          {analytics && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Today Sales */}
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-700 font-semibold">مبيعات اليوم</p>
+                      <p className="text-3xl font-bold text-green-800 mt-2">
+                        {analytics.today.total.toFixed(2)} ر.س
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        {analytics.today.count} عملية
+                      </p>
+                    </div>
+                    <div className="text-5xl">💰</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Week Sales */}
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-700 font-semibold">مبيعات الأسبوع</p>
+                      <p className="text-3xl font-bold text-blue-800 mt-2">
+                        {analytics.week.total.toFixed(2)} ر.س
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {analytics.week.count} عملية
+                      </p>
+                    </div>
+                    <div className="text-5xl">📊</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Month Sales */}
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-700 font-semibold">مبيعات الشهر</p>
+                      <p className="text-3xl font-bold text-purple-800 mt-2">
+                        {analytics.month.total.toFixed(2)} ر.س
+                      </p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        {analytics.month.count} عملية
+                      </p>
+                    </div>
+                    <div className="text-5xl">📈</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Accounts Summary Cards */}
+          {analytics && analytics.accountsSummary && analytics.accountsSummary.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">تحليلات الفروع</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {analytics.accountsSummary.map(acc => (
+                  <Card key={acc.id} className="border-2 hover:shadow-lg transition-shadow">
+                    <CardHeader className="bg-gradient-to-l from-slate-50 pb-3">
+                      <CardTitle className="text-lg">{acc.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">اليوم:</span>
+                          <span className="font-bold text-green-700">{acc.todaySales.toFixed(2)} ر.س</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">الأسبوع:</span>
+                          <span className="font-bold text-blue-700">{acc.weekSales.toFixed(2)} ر.س</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">الشهر:</span>
+                          <span className="font-bold text-purple-700">{acc.monthSales.toFixed(2)} ر.س</span>
+                        </div>
+                        <div className="pt-2 border-t mt-2">
+                          <p className="text-xs text-slate-500">
+                            {acc.monthCount} عملية هذا الشهر
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Card className="mb-6">
             <CardHeader>

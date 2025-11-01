@@ -45,10 +45,25 @@ const Settings = () => {
 
   const saveSettings = async () => {
     try {
+      setLoading(true);
       await axios.post(`${API_URL}/settings`, settings);
-      toast({ title: 'تم الحفظ', description: 'تم حفظ الإعدادات بنجاح' });
+      
+      // Reload settings to confirm save
+      await fetchSettings();
+      
+      toast({ 
+        title: 'تم الحفظ', 
+        description: 'تم حفظ الإعدادات بنجاح' 
+      });
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل في حفظ الإعدادات', variant: 'destructive' });
+      console.error('Save error:', error);
+      toast({ 
+        title: 'خطأ', 
+        description: 'فشل في حفظ الإعدادات', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

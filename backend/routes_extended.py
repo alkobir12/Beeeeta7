@@ -633,9 +633,11 @@ async def get_operations_analytics(account_id: Optional[str] = None):
                     'weekCount': acc_week_count,
                     'monthCount': acc_month_count
                 })
-        except Exception as e:
+        except Exception as ex:
             # If accounts summary fails, continue with main analytics
-            pass
+            print(f"⚠️ Accounts summary error: {ex}")
+            import traceback
+            traceback.print_exc()
         
         return {
             'today': {'total': today_sales, 'count': today_count},

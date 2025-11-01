@@ -591,7 +591,7 @@ async def get_operations_analytics(account_id: Optional[str] = None):
         accounts_summary = []
         
         try:
-            all_accounts_list = await db.biz_accounts.find({}).to_list(length=100)
+            all_accounts_list = await db.business_accounts.find({'isActive': True}).to_list(length=100)
             
             for acc in all_accounts_list:
                 acc_id = acc.get('id')

@@ -550,14 +550,42 @@ async def get_operations_analytics(account_id: Optional[str] = None):
         # Get all sales
         all_sales = await db.operations.find(base_query).to_list(length=10000)
         
-        # Calculate analytics
-        today_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= today)
-        week_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= week_ago)
-        month_sales = sum(op.get('total', 0) for op in all_sales if op.get('date') and op['date'] >= month_start)
+        # Helper function to parse date
+        def parse_date(op):
+            d = op.get('date')
+            if not d:
+                return None
+            if isinstance(d, str):
+                try:
+                    return datetime.fromisoformat(d.replace('Z', '+00:00'))
+                except:
+                    return None
+            return d
         
-        today_count = len([op for op in all_sales if op.get('date') and op['date'] >= today])
-        week_count = len([op for op in all_sales if op.get('date') and op['date'] >= week_ago])
-        month_count = len([op for op in all_sales if op.get('date') and op['date'] >= month_start])
+        # Calculate analytics
+        today_sales = 0
+        week_sales = 0
+        month_sales = 0
+        today_count = 0
+        week_count = 0
+        month_count = 0
+        
+        for op in all_sales:
+            op_date = parse_date(op)
+            if not op_date:
+                continue
+            
+            total = float(op.get('total', 0))
+            
+            if op_date >= today:
+                today_sales += total
+                today_count += 1
+            if op_date >= week_ago:
+                week_sales += total
+                week_count += 1
+            if op_date >= month_start:
+                month_sales += total
+                month_count += 1
         
         # Get all accounts summary
         accounts_summary = []

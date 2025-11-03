@@ -331,6 +331,7 @@ const CEO = () => {
         </div>
       </div>
     </Layout>
+    </DialogPortalSafe>
   );
 };
 

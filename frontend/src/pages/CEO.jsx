@@ -143,11 +143,12 @@ const CEO = () => {
   const activeBudget = budgets.find(b => b.period === (new Date().toISOString().slice(0,7))) || null;
 
   return (
-    <Layout>
-      <div className="min-h-screen" dir="rtl">
-        <div className="container mx-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
+    <DialogPortalSafe>
+      <Layout>
+        <div className="min-h-screen" dir="rtl">
+          <div className="container mx-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
               <h1 className="text-4xl font-bold text-slate-800 mb-2">لوحة المدير التنفيذي</h1>
               <p className="text-slate-600">إدارة الفروع والميزانيات والتحليلات الذكية</p>
             </div>

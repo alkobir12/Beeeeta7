@@ -153,6 +153,50 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <Button onClick={() => handleNavigate('/knowledge')} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"><BookOpen className="ml-2" size={18} />إدارة المعرفة</Button>
               </div>
             </Card>
+            
+            {/* User Info & Logout */}
+            <Card className="mt-4 bg-gradient-to-br from-slate-50 to-slate-100">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                      {(() => {
+                        try {
+                          const session = JSON.parse(localStorage.getItem('session') || '{}');
+                          return session.name?.[0]?.toUpperCase() || 'م';
+                        } catch(e) {
+                          return 'م';
+                        }
+                      })()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800">
+                        {(() => {
+                          try {
+                            const session = JSON.parse(localStorage.getItem('session') || '{}');
+                            return session.name || 'مدير النظام';
+                          } catch(e) {
+                            return 'مدير النظام';
+                          }
+                        })()}
+                      </p>
+                      <p className="text-xs text-slate-500">مسجل دخول</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      localStorage.removeItem('session');
+                      window.location.href = '/login';
+                    }} 
+                    variant="destructive" 
+                    className="w-full justify-center"
+                    size="sm"
+                  >
+                    تسجيل خروج
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

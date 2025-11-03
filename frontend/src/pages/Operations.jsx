@@ -312,10 +312,36 @@ const Operations = () => {
                     <SelectContent>
                       <SelectItem value="cash">كاش</SelectItem>
                       <SelectItem value="card">شبكة</SelectItem>
+                      <SelectItem value="transfer">تحويل بنكي</SelectItem>
                       <SelectItem value="credit">آجل</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Receipt Upload for Bank Transfer */}
+                {form.paymentMethod === 'transfer' && (
+                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                    <Label className="text-sm font-semibold text-blue-800 mb-2 block">
+                      📎 إرفاق إيصال التحويل البنكي
+                    </Label>
+                    <Input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setForm({ ...form, receiptFile: file });
+                        }
+                      }}
+                      className="bg-white"
+                    />
+                    {form.receiptFile && (
+                      <p className="text-xs text-green-700 mt-2">
+                        ✅ تم اختيار: {form.receiptFile.name}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="p-4 border rounded-lg">
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-3">

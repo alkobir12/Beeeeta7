@@ -278,32 +278,49 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
         
         response = await llm.send_message(UserMessage(text=analysis_prompt))
         
-        # Store in knowledge base
+        # Extract keywords from response
+        response_text = response if isinstance(response, str) else response.text
+        
+        # Parse key points and keywords
+        key_points = []
+        keywords = []
+        for line in response_text.split('\n'):
+            if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
+                key_points.append(line.strip()[1:].strip())
+            # Extract keywords from specific sections
+            if 'كلمات مفتاحية' in line or 'Keywords' in line.lower():
+                words = line.split(':')[-1].strip()
+                keywords.extend([w.strip() for w in words.split(',') if w.strip()])
+        
+        # Store in knowledge base with enhanced metadata
         doc_record = {
             'id': str(uuid.uuid4()),
             'filename': file.filename,
-            'type': 'pdf' if file.filename.endswith('.pdf') else 'video',
+            'type': file_type,
             'title': file.filename,
-            'content': (response if isinstance(response, str) else response.text)[:5000],  # First 5000 chars
-            'summary': response if isinstance(response, str) else response.text,
-            'uploadedAt': datetime.utcnow()
+            'content': extracted_text,  # Full extracted text for search
+            'summary': response_text,  # AI analysis
+            'keyPoints': key_points[:10],
+            'keywords': keywords[:20] if keywords else [],
+            'category': 'automotive',
+            'subcategory': 'electrical' if 'كهرباء' in file.filename.lower() or 'electrical' in file.filename.lower() else 'general',
+            'language': 'ar',
+            'uploadedAt': datetime.utcnow(),
+            'lastAccessed': datetime.utcnow(),
+            'accessCount': 0
         }
         
         await db.knowledge_documents.insert_one(doc_record)
         
-        # Parse key points from AI response
-        response_text = response if isinstance(response, str) else response.text
-        key_points = []
-        for line in response_text.split('\n'):
-            if line.strip().startswith('•') or line.strip().startswith('-'):
-                key_points.append(line.strip()[1:].strip())
-        
         return {
             'success': True,
+            'id': doc_record['id'],
             'filename': file.filename,
-            'type': doc_record['type'],
+            'type': file_type,
             'summary': response_text,
-            'keyPoints': key_points[:5]
+            'keyPoints': key_points[:10],
+            'keywords': keywords[:10],
+            'extractedLength': len(extracted_text)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

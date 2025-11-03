@@ -78,7 +78,7 @@ function App() {
                     <Route path="/business-accounts" element={<BusinessAccounts />} />
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customer-receipts" element={<CustomerReceipts />} />
-                    <Route path="/knowledge" element={<KnowledgeAdvanced />} />
+                    <Route path="/knowledge" element={<KnowledgeBase />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/users" element={<Users />} />
                   </Routes>

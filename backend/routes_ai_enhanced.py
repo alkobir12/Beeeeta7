@@ -441,19 +441,56 @@ async def smart_search_knowledge(payload: Dict[str, Any]):
 
 @router.post("/ai/kb/compare-files")
 async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(...)):
-    """Compare two files using AI"""
+    """Compare two files using AI with proper extraction"""
     try:
+        # Helper function to extract text from different file types
+        async def extract_file_text(file: UploadFile):
+            content_bytes = await file.read()
+            temp_path = TMP_DIR / file.filename
+            
+            with open(temp_path, 'wb') as f:
+                f.write(content_bytes)
+            
+            text = ""
+            
+            if file.filename.lower().endswith('.pdf'):
+                try:
+                    from PyPDF2 import PdfReader
+                    reader = PdfReader(str(temp_path))
+                    for page in reader.pages[:5]:  # First 5 pages
+                        text += page.extract_text() + "\n"
+                except Exception as e:
+                    print(f"PDF extraction error: {e}")
+            
+            elif file.filename.lower().endswith(('.docx', '.doc')):
+                try:
+                    from docx import Document
+                    doc = Document(str(temp_path))
+                    for para in doc.paragraphs[:50]:  # First 50 paragraphs
+                        text += para.text + "\n"
+                except Exception as e:
+                    print(f"DOCX extraction error: {e}")
+            
+            else:
+                # Try as text
+                try:
+                    text = content_bytes.decode('utf-8', errors='ignore')
+                except:
+                    text = "[Unable to extract text]"
+            
+            return text[:10000]  # Limit to 10k chars
+        
+        # Extract text from both files
+        content1 = await extract_file_text(file1)
+        content2 = await extract_file_text(file2)
+        
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are a file comparison assistant for automotive workshop management. Compare documents and provide detailed analysis in Arabic."
+            system_message="You are an automotive technical document comparison expert. Provide detailed comparative analysis in Arabic."
         ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
-        # Read files
-        content1 = (await file1.read()).decode('utf-8', errors='ignore')[:3000]
-        content2 = (await file2.read()).decode('utf-8', errors='ignore')[:3000]
-        
-        comparison_prompt = f"""قارن بين هذين الملفين بالتفصيل:
+        comparison_prompt = f"""قارن بين هذين المستندين الفنيين بالتفصيل:
 
 الملف الأول ({file1.filename}):
 {content1}
@@ -461,23 +498,23 @@ async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(
 الملف الثاني ({file2.filename}):
 {content2}
 
-أعطني:
-1. التشابهات
-2. الاختلافات  
-3. التوصيات"""
+قدم تحليل شامل يتضمن:
+1. 📊 التشابهات: ما هي النقاط المشتركة؟
+2. 🔍 الاختلافات: ما الفروقات الرئيسية؟
+3. 💡 التوصيات: متى تستخدم كل منهما؟
+4. 🎯 الخلاصة: أيهما أفضل ولماذا؟"""
         
         response = await llm.send_message(UserMessage(text=comparison_prompt))
         
         # Parse response
         response_text = response if isinstance(response, str) else response.text
-        sections = response_text.split('\n\n')
         
         return {
             'file1': file1.filename,
             'file2': file2.filename,
-            'similarities': sections[0] if len(sections) > 0 else '',
-            'differences': sections[1] if len(sections) > 1 else '',
-            'recommendations': sections[2] if len(sections) > 2 else response.text
+            'comparison': response_text,
+            'extractedLength1': len(content1),
+            'extractedLength2': len(content2)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

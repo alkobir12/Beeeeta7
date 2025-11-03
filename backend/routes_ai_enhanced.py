@@ -436,33 +436,6 @@ async def smart_search_knowledge(payload: Dict[str, Any]):
             'totalMatches': len(results),
             'query': query
         }
-        query_lower = query.lower()
-        
-        for doc in docs:
-            title = doc.get('title', '').lower()
-            content = doc.get('content', '').lower()
-            summary = doc.get('summary', '').lower()
-            
-            # Calculate simple relevance score
-            relevance = 0
-            if query_lower in title:
-                relevance += 0.5
-            if query_lower in content:
-                relevance += 0.3
-            if query_lower in summary:
-                relevance += 0.2
-            
-            if relevance > 0:
-                results.append({
-                    'title': doc.get('title'),
-                    'excerpt': doc.get('summary', doc.get('content', ''))[:300] + '...',
-                    'source': doc.get('filename', 'Unknown'),
-                    'relevance': relevance
-                })
-        
-        # Sort by relevance and return top results
-        results.sort(key=lambda x: x['relevance'], reverse=True)
-        return {'results': results[:limit], 'count': len(results[:limit])}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

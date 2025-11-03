@@ -1,0 +1,226 @@
+/* GoDaddy-inspired Theme for Workshop Management System */
+
+:root {
+  /* GoDaddy Primary Colors */
+  --godaddy-green: #1bdbac;
+  --godaddy-green-dark: #00a87a;
+  --godaddy-green-light: #4de8c5;
+  
+  /* GoDaddy Neutrals */
+  --godaddy-black: #111827;
+  --godaddy-dark: #1f2937;
+  --godaddy-gray: #6b7280;
+  --godaddy-gray-light: #e5e7eb;
+  --godaddy-white: #ffffff;
+  
+  /* Accent Colors */
+  --godaddy-blue: #0073e6;
+  --godaddy-orange: #ff6a13;
+  --godaddy-red: #dc2626;
+}
+
+/* Global Styles */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #f9fafb;
+}
+
+/* Buttons - GoDaddy Style */
+.btn-godaddy-primary {
+  background: var(--godaddy-green) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(27, 219, 172, 0.3) !important;
+}
+
+.btn-godaddy-primary:hover {
+  background: var(--godaddy-green-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(27, 219, 172, 0.4) !important;
+}
+
+.btn-godaddy-secondary {
+  background: var(--godaddy-black) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-godaddy-secondary:hover {
+  background: var(--godaddy-dark) !important;
+}
+
+/* Cards - GoDaddy Style */
+.card-godaddy {
+  background: white;
+  border-radius: 12px !important;
+  border: 1px solid var(--godaddy-gray-light) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease;
+}
+
+.card-godaddy:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+/* Headers - GoDaddy Style */
+.header-godaddy {
+  background: white;
+  border-bottom: 1px solid var(--godaddy-gray-light);
+  padding: 20px 0;
+}
+
+.title-godaddy {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--godaddy-black);
+  letter-spacing: -0.02em;
+}
+
+/* Sidebar - GoDaddy Dark Style */
+.sidebar-godaddy {
+  background: var(--godaddy-black) !important;
+  color: white !important;
+}
+
+.sidebar-godaddy button {
+  color: #d1d5db !important;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-godaddy button:hover {
+  background: var(--godaddy-dark) !important;
+  color: white !important;
+}
+
+.sidebar-godaddy button.active {
+  background: var(--godaddy-green) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+/* Stats Cards - GoDaddy Style */
+.stat-card-godaddy {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--godaddy-gray-light);
+  transition: all 0.2s ease;
+}
+
+.stat-card-godaddy:hover {
+  border-color: var(--godaddy-green);
+  box-shadow: 0 10px 25px rgba(27, 219, 172, 0.15);
+}
+
+.stat-value-godaddy {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--godaddy-black);
+  line-height: 1;
+}
+
+.stat-label-godaddy {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--godaddy-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Inputs - GoDaddy Style */
+.input-godaddy {
+  border: 2px solid var(--godaddy-gray-light) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  font-size: 15px !important;
+  transition: all 0.2s ease !important;
+}
+
+.input-godaddy:focus {
+  border-color: var(--godaddy-green) !important;
+  box-shadow: 0 0 0 3px rgba(27, 219, 172, 0.1) !important;
+  outline: none !important;
+}
+
+/* Badges - GoDaddy Style */
+.badge-godaddy-success {
+  background: #ecfdf5 !important;
+  color: var(--godaddy-green-dark) !important;
+  border-radius: 6px !important;
+  padding: 4px 12px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.badge-godaddy-warning {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+  border-radius: 6px !important;
+  padding: 4px 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Tables - GoDaddy Style */
+.table-godaddy {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--godaddy-gray-light);
+}
+
+.table-godaddy thead {
+  background: var(--godaddy-black);
+  color: white;
+}
+
+.table-godaddy th {
+  padding: 16px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-godaddy td {
+  padding: 16px;
+  border-bottom: 1px solid var(--godaddy-gray-light);
+}
+
+.table-godaddy tr:hover {
+  background: #f9fafb;
+}
+
+/* Gradients - GoDaddy Style */
+.gradient-godaddy-primary {
+  background: linear-gradient(135deg, var(--godaddy-green) 0%, var(--godaddy-green-dark) 100%);
+}
+
+.gradient-godaddy-dark {
+  background: linear-gradient(135deg, var(--godaddy-black) 0%, var(--godaddy-dark) 100%);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out;
+}

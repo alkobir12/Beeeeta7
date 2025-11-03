@@ -138,7 +138,8 @@ const Customers = () => {
         body: formData
       });
 
-      const result = await response.json();
+      // Clone response before reading to avoid "body already used" error
+      const result = await response.clone().json();
       
       if (response.ok) {
         toast({
@@ -153,7 +154,7 @@ const Customers = () => {
       console.error('Import error:', error);
       toast({
         title: "خطأ",
-        description: "فشل في استيراد الملف",
+        description: error.message || "فشل في استيراد الملف",
         variant: "destructive"
       });
     } finally {

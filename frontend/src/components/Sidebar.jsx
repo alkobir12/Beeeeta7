@@ -49,8 +49,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [menuConfig, setMenuConfig] = useState(null);
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [workshopName, setWorkshopName] = useState('ورشتي');
+  const [userPermissions, setUserPermissions] = useState({});
+  const [userRole, setUserRole] = useState('admin');
 
   useEffect(() => {
+    // Load user permissions from session
+    try {
+      const session = JSON.parse(localStorage.getItem('session') || '{}');
+      setUserPermissions(session.permissions || {});
+      setUserRole(session.role || 'admin');
+    } catch (e) {
+      console.error('Error loading permissions:', e);
+    }
+    
     const load = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/settings`);

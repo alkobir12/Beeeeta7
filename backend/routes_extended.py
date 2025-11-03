@@ -522,6 +522,23 @@ async def create_operation(payload: Dict[str, Any]):
                         {'$inc': {'quantity': -int(it.quantity)}}
                     )
         
+        # Auto-create transaction in CEO tree
+        try:
+            transaction = {
+                'id': str(uuid.uuid4()),
+                'accountId': operation.accountId,
+                'type': 'income' if operation.type == 'sale' else 'expense',
+                'category': f"operation_{operation.type}",
+                'amount': subtotal,
+                'description': f"{operation.type} - {operation.partnerName or 'عملية'}",
+                'date': datetime.utcnow(),
+                'reference': operation.id,
+                'createdAt': datetime.utcnow()
+            }
+            await db.transactions.insert_one(transaction)
+        except Exception as e:
+            print(f"⚠️ Failed to create transaction: {e}")
+        
         doc.pop('_id', None)
         if doc.get('date'):
             doc['date'] = doc['date'].isoformat()

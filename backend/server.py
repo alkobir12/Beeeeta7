@@ -834,6 +834,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️  AI Enhanced router not loaded: {e}")
 
+# Import and include DTC router
+try:
+    from routes_dtc import router as dtc_router, set_db as set_dtc_db
+    set_dtc_db(db)
+    app.include_router(dtc_router)
+    logger.info("✅ DTC router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ DTC router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

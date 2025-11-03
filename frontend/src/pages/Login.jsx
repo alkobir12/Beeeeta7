@@ -21,27 +21,61 @@ const Login = () => {
     try {
       setLoading(true);
       
-      // Create simple session
-      const session = { 
-        id: Date.now().toString(), 
-        name: name.trim(),
-        role: 'admin',
-        loginTime: new Date().toISOString()
-      };
+      // Check if user exists by name
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const response = await fetch(`${API_URL}/users`);
+      const users = await response.json();
       
-      const user = { 
-        id: Date.now().toString(), 
-        name: name.trim(), 
-        role: 'admin' 
+      // Find user by name (case-insensitive)
+      const user = users.find(u => u.name.toLowerCase() === name.trim().toLowerCase());
+      
+      if (!user) {
+        toast({ 
+          title: 'مستخدم غير موجود', 
+          description: 'الاسم غير مسجل في النظام. تواصل مع المدير.',
+          variant: 'destructive' 
+        });
+        return;
+      }
+      
+      if (!user.isActive) {
+        toast({ 
+          title: 'حساب معطل', 
+          description: 'هذا الحساب معطل. تواصل مع المدير.',
+          variant: 'destructive' 
+        });
+        return;
+      }
+      
+      // Create session with user data and permissions
+      const session = { 
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || {},
+        loginTime: new Date().toISOString()
       };
       
       // Save session
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
       
-      toast({ title: 'تم الدخول', description: `مرحباً ${name.trim()}` });
+      // Update last login
+      await fetch(`${API_URL}/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lastLogin: new Date().toISOString() })
+      });
+      
+      toast({ 
+        title: 'مرحباً', 
+        description: `تم تسجيل دخول ${user.name} - ${user.role === 'admin' ? 'مدير النظام' : user.role === 'technician' ? 'فني' : user.role === 'manager' ? 'مدير' : 'موظف'}` 
+      });
       navigate('/');
     } catch (e) {
+      console.error('Login error:', e);
       toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول', variant: 'destructive' });
     } finally {
       setLoading(false);

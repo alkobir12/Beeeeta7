@@ -340,19 +340,102 @@ async def get_knowledge_documents():
 
 @router.post("/ai/kb/smart-search")
 async def smart_search_knowledge(payload: Dict[str, Any]):
-    """AI-powered smart search in knowledge base"""
+    """AI-powered comprehensive search in knowledge base"""
     try:
         query = payload.get('query', '')
         limit = payload.get('limit', 10)
+        search_mode = payload.get('mode', 'smart')  # smart, keyword, full
         
         if not query:
             raise HTTPException(status_code=422, detail='query required')
         
-        # Simple text-based search first (fast, no AI needed for basic search)
-        docs = await db.knowledge_documents.find({}).to_list(length=100)  # Limit to 100 for speed
+        # Get all documents
+        docs = await db.knowledge_documents.find({}).to_list(length=500)
         
-        # Fast text matching
+        # Enhanced text matching with scoring
         results = []
+        query_lower = query.lower()
+        query_words = query_lower.split()
+        
+        for doc in docs:
+            # Update access count
+            await db.knowledge_documents.update_one(
+                {'id': doc.get('id')},
+                {
+                    '$set': {'lastAccessed': datetime.utcnow()},
+                    '$inc': {'accessCount': 1}
+                }
+            )
+            
+            title = doc.get('title', '').lower()
+            content = doc.get('content', '').lower()
+            summary = doc.get('summary', '').lower()
+            keywords_list = [k.lower() for k in doc.get('keywords', [])]
+            
+            # Calculate comprehensive relevance score
+            score = 0
+            
+            # Exact match in title (highest priority)
+            if query_lower in title:
+                score += 50
+            
+            # Keyword match
+            for keyword in keywords_list:
+                if query_lower in keyword or keyword in query_lower:
+                    score += 30
+            
+            # Word matches in content
+            for word in query_words:
+                if len(word) < 2:
+                    continue
+                if word in title:
+                    score += 20
+                if word in content:
+                    score += 10
+                if word in summary:
+                    score += 15
+            
+            # Partial matches
+            if any(word in title for word in query_words):
+                score += 10
+            
+            if score > 0:
+                # Extract relevant excerpt
+                content_full = doc.get('content', '')
+                excerpt = ""
+                
+                # Find context around query
+                if query_lower in content.lower():
+                    idx = content.lower().find(query_lower)
+                    start = max(0, idx - 100)
+                    end = min(len(content_full), idx + 200)
+                    excerpt = "..." + content_full[start:end] + "..."
+                else:
+                    excerpt = doc.get('summary', '')[:300]
+                
+                results.append({
+                    'id': doc.get('id'),
+                    'title': doc.get('title'),
+                    'filename': doc.get('filename'),
+                    'type': doc.get('type'),
+                    'excerpt': excerpt,
+                    'summary': doc.get('summary', '')[:200],
+                    'keywords': doc.get('keywords', [])[:5],
+                    'relevance': score,
+                    'category': doc.get('category'),
+                    'subcategory': doc.get('subcategory'),
+                    'accessCount': doc.get('accessCount', 0)
+                })
+        
+        # Sort by relevance
+        results.sort(key=lambda x: x['relevance'], reverse=True)
+        
+        return {
+            'results': results[:limit],
+            'count': len(results[:limit]),
+            'totalMatches': len(results),
+            'query': query
+        }
         query_lower = query.lower()
         
         for doc in docs:

@@ -1409,6 +1409,27 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         data = payload.get('data') or {}
         
         # Get template - prioritize template_id if provided
+        html = None
+        if template_id:
+            tpl = await db.templates.find_one({'id': template_id})
+            if tpl:
+                html = tpl.get('html') or tpl.get('content')
+        
+        # If not found by ID, find by type
+        if not html:
+            tpl = await db.templates.find_one({'type': override_type, 'isActive': True})
+            if tpl:
+                html = tpl.get('html') or tpl.get('content')
+        
+        # Fallback to default
+        if not html:
+            await _ensure_templates()
+            tpl = await db.templates.find_one({'type': override_type, 'isActive': True})
+            if tpl:
+                html = tpl.get('html') or tpl.get('content')
+        
+        if not html:
+            raise HTTPException(status_code=404, detail='No template found')
 
         # Prepare items
         items = data.get('items') or []

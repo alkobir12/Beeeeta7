@@ -212,20 +212,37 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
         with open(file_path, 'wb') as f:
             f.write(file_content)
         
+        # Extract text from PDF if applicable
+        extracted_text = ""
+        if file.filename.lower().endswith('.pdf'):
+            try:
+                from PyPDF2 import PdfReader
+                reader = PdfReader(str(file_path))
+                # Extract first 10 pages
+                for page_num in range(min(10, len(reader.pages))):
+                    extracted_text += reader.pages[page_num].extract_text() + "\n"
+                extracted_text = extracted_text[:15000]  # Limit to 15k chars
+            except Exception as e:
+                print(f"⚠️ PDF extraction failed: {e}")
+                extracted_text = f"[ملف PDF: {file.filename}]"
+        
         # Analyze with AI
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an AI document analyzer assistant for automotive workshop management."
+            system_message="You are an AI document analyzer for automotive workshop. Analyze technical documents and electrical diagrams in Arabic."
         ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
-        analysis_prompt = f"""Analyze this document and provide:
-1. Summary in Arabic
-2. Key points (3-5 bullet points)
-3. Main topics covered
-4. Any technical specifications or data
+        analysis_prompt = f"""حلل هذا المستند وقدم:
+1. ملخص بالعربية
+2. النقاط الرئيسية (3-5 نقاط)
+3. المواضيع الرئيسية
+4. أي مواصفات أو بيانات تقنية
 
-Document: {file.filename}"""
+المستند: {file.filename}
+
+المحتوى:
+{extracted_text[:10000] if extracted_text else "لا يوجد نص مستخرج"}"""
         
         response = await llm.send_message(UserMessage(text=analysis_prompt))
         

@@ -212,37 +212,69 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
         with open(file_path, 'wb') as f:
             f.write(file_content)
         
-        # Extract text from PDF if applicable
+        # Extract text from document
         extracted_text = ""
+        file_type = "unknown"
+        
         if file.filename.lower().endswith('.pdf'):
+            file_type = "pdf"
             try:
                 from PyPDF2 import PdfReader
                 reader = PdfReader(str(file_path))
-                # Extract first 10 pages
-                for page_num in range(min(10, len(reader.pages))):
+                # Extract all pages
+                for page_num in range(len(reader.pages)):
                     extracted_text += reader.pages[page_num].extract_text() + "\n"
-                extracted_text = extracted_text[:15000]  # Limit to 15k chars
+                extracted_text = extracted_text[:30000]  # Limit to 30k chars for better context
             except Exception as e:
                 print(f"⚠️ PDF extraction failed: {e}")
                 extracted_text = f"[ملف PDF: {file.filename}]"
+        
+        elif file.filename.lower().endswith(('.docx', '.doc')):
+            file_type = "docx"
+            try:
+                from docx import Document
+                doc = Document(str(file_path))
+                # Extract all paragraphs
+                for para in doc.paragraphs:
+                    extracted_text += para.text + "\n"
+                # Extract tables
+                for table in doc.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            extracted_text += cell.text + " "
+                    extracted_text += "\n"
+                extracted_text = extracted_text[:30000]
+            except Exception as e:
+                print(f"⚠️ DOCX extraction failed: {e}")
+                extracted_text = f"[ملف DOCX: {file.filename}]"
+        
+        elif file.filename.lower().endswith(('.txt', '.md')):
+            file_type = "text"
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    extracted_text = f.read()[:30000]
+            except Exception as e:
+                print(f"⚠️ Text extraction failed: {e}")
         
         # Analyze with AI
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an AI document analyzer for automotive workshop. Analyze technical documents and electrical diagrams in Arabic."
+            system_message="You are an expert automotive technical knowledge analyzer. Extract key information, technical specs, troubleshooting steps, and educational content in Arabic."
         ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
-        analysis_prompt = f"""حلل هذا المستند وقدم:
-1. ملخص بالعربية
-2. النقاط الرئيسية (3-5 نقاط)
-3. المواضيع الرئيسية
-4. أي مواصفات أو بيانات تقنية
+        analysis_prompt = f"""حلل هذا المستند التقني بعمق وقدم:
+1. ملخص شامل بالعربية (200-300 كلمة)
+2. النقاط الرئيسية والمفاهيم (5-10 نقاط)
+3. المواصفات التقنية (إن وجدت)
+4. خطوات الفحص أو الإصلاح (إن وجدت)
+5. الكلمات المفتاحية للبحث
 
 المستند: {file.filename}
+النوع: {file_type}
 
-المحتوى:
-{extracted_text[:10000] if extracted_text else "لا يوجد نص مستخرج"}"""
+المحتوى الكامل:
+{extracted_text if extracted_text else "لا يوجد نص مستخرج"}"""
         
         response = await llm.send_message(UserMessage(text=analysis_prompt))
         

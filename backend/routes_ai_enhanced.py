@@ -243,8 +243,9 @@ Document: {file.filename}"""
         await db.knowledge_documents.insert_one(doc_record)
         
         # Parse key points from AI response
+        response_text = response if isinstance(response, str) else response.text
         key_points = []
-        for line in response.text.split('\n'):
+        for line in response_text.split('\n'):
             if line.strip().startswith('•') or line.strip().startswith('-'):
                 key_points.append(line.strip()[1:].strip())
         

@@ -530,6 +530,17 @@ async def create_operation(payload: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ------------------ DELETE ALL OPERATIONS ------------------
+@router.delete('/operations/clear-all')
+async def clear_all_operations():
+    """Delete all operations - use with caution"""
+    try:
+        result = await db.operations.delete_many({})
+        return {'status': 'ok', 'deleted': result.deleted_count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ------------------ OPERATIONS ANALYTICS ------------------
 @router.get('/operations/analytics/summary')
 async def get_operations_analytics(account_id: Optional[str] = None):

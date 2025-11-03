@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { BarChart3, Sparkles, Plus, Target, TreePine, Layers } from 'lucide-react';
+import DialogPortalSafe from '../components/DialogPortalSafe';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;

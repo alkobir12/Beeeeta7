@@ -20,9 +20,11 @@ const KnowledgeBase = () => {
   const [documents, setDocuments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [dtcCards, setDtcCards] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [showReader, setShowReader] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [searchMode, setSearchMode] = useState('smart'); // smart, dtc
 
   useEffect(() => {
     loadDocuments();

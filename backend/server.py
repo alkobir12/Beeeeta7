@@ -816,6 +816,15 @@ app.include_router(api_router)
 app.include_router(extended_router)  # Extended features
 app.include_router(advanced_router)  # Advanced features (Store, CEO, Support)
 
+# Import and include Users router
+try:
+    from routes_users import router as users_router, set_db as set_users_db
+    set_users_db(db)
+    app.include_router(users_router)
+    logger.info("✅ Users router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Users router not loaded: {e}")
+
 # Import and include AI Enhanced router
 try:
     from routes_ai_enhanced import router as ai_enhanced_router, set_db as set_ai_db

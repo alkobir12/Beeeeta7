@@ -239,7 +239,7 @@ const KnowledgeBase = () => {
                       </div>
 
                       {doc.summary && (
-                        <p className="text-sm text-godaddy-gray line-clamp-2 mb-3">
+                        <p className="text-sm text-godaddy-gray mb-3 overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>
                           {doc.summary.slice(0, 100)}...
                         </p>
                       )}

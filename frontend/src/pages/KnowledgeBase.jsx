@@ -174,7 +174,137 @@ const KnowledgeBase = () => {
                     </Button>
                   </div>
 
-                  {/* Search Results */}
+                  <div className="flex gap-3 mb-6">
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      placeholder="ابحث: كهرباء، محرك، P0087، فرامل، تويوتا..."
+                      className="input-godaddy flex-1 text-lg"
+                    />
+                    <Button
+                      onClick={handleSearch}
+                      disabled={loading}
+                      className="btn-godaddy-primary px-8"
+                    >
+                      {loading ? '⏳ جاري البحث...' : 'بحث'}
+                    </Button>
+                  </div>
+                  
+                  <div className="mb-4 text-sm text-godaddy-gray">
+                    💡 نصيحة: ابحث عن كود العطل (مثال: P0087) أو كلمة مفتاحية (كهرباء، محرك، SCV)
+                  </div>
+
+                  {/* DTC Cards Results */}
+                  {dtcCards.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <span className="text-2xl">🔧</span>
+                        <span className="font-semibold text-amber-900">
+                          وجدنا {dtcCards.length} بطاقة عطل
+                        </span>
+                      </div>
+
+                      {dtcCards.map((card, idx) => (
+                        <Card key={idx} className="border-2 border-amber-200 hover:border-godaddy-green hover:shadow-lg transition-all">
+                          <CardContent className="p-6">
+                            {/* DTC Header */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="px-4 py-2 bg-red-600 text-white font-mono font-bold text-lg rounded-lg">
+                                    {card.code}
+                                  </span>
+                                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm">
+                                    {card.vehicle}
+                                  </span>
+                                </div>
+                                <h3 className="font-bold text-xl text-godaddy-black mb-1">
+                                  {card.name}
+                                </h3>
+                                <p className="text-xs text-godaddy-gray">
+                                  📄 المصدر: {card.source}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Causes */}
+                            {card.causes && card.causes.length > 0 && (
+                              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                                  ⚠️ الأسباب المحتملة:
+                                </h4>
+                                <ul className="space-y-1">
+                                  {card.causes.map((cause, i) => (
+                                    <li key={i} className="text-sm text-red-800">
+                                      • {cause}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Fixes */}
+                            {card.fixes && card.fixes.length > 0 && (
+                              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                                  🔧 طرق الإصلاح:
+                                </h4>
+                                <ul className="space-y-1">
+                                  {card.fixes.map((fix, i) => (
+                                    <li key={i} className="text-sm text-green-800">
+                                      ✓ {fix}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Related Issues */}
+                            {card.related && card.related.length > 0 && (
+                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <h4 className="font-semibold text-blue-900 mb-2">
+                                  🔗 أكواد ذات صلة:
+                                </h4>
+                                <div className="flex gap-2 flex-wrap">
+                                  {card.related.map((code, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => {
+                                        setSearchQuery(code);
+                                        handleSearch();
+                                      }}
+                                      className="px-3 py-1 bg-blue-600 text-white rounded font-mono text-sm hover:bg-blue-700"
+                                    >
+                                      {code}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Read Full Document Button */}
+                            <div className="mt-4 pt-4 border-t">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const doc = documents.find(d => d.id === card.sourceId);
+                                  if (doc) openReader(doc);
+                                }}
+                                className="w-full"
+                              >
+                                <Eye size={16} className="ml-1" />
+                                اقرأ المستند الكامل
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Normal Search Results */}
                   {searchResults.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 text-sm text-godaddy-gray mb-4">

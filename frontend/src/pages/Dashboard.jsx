@@ -144,7 +144,7 @@ const Dashboard = () => {
           </div>
           <Button 
             onClick={() => navigate('/new-vehicle')}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            className="btn-godaddy-primary px-6 py-3 text-lg font-semibold"
           >
             <Plus className="ml-2" size={20} />
             استقبال مركبة جديدة

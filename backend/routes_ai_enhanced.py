@@ -253,7 +253,7 @@ Document: {file.filename}"""
             'success': True,
             'filename': file.filename,
             'type': doc_record['type'],
-            'summary': response.text,
+            'summary': response_text,
             'keyPoints': key_points[:5]
         }
     except Exception as e:

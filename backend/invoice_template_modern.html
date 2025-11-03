@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة</title>
+    <style>
+        @page { size: A4; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            color: #333;
+            line-height: 1.6;
+        }
+        .invoice-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            display: flex;
+        }
+        .sidebar {
+            width: 70mm;
+            background: #2d3748;
+            color: white;
+            padding: 30px 20px;
+        }
+        .sidebar .logo-section {
+            margin-bottom: 40px;
+        }
+        .sidebar h1 {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .sidebar .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        .sidebar .contact-item svg {
+            margin-left: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px 40px;
+            position: relative;
+        }
+        .header {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .header h2 {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .header .invoice-meta {
+            font-size: 13px;
+            color: #666;
+        }
+        .recipient-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .recipient-section h3 {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .recipient-section p {
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .items-table thead {
+            background: #2d3748;
+            color: white;
+        }
+        .items-table th {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .items-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        .items-table tbody tr:hover {
+            background: #f7fafc;
+        }
+        .summary {
+            margin-right: auto;
+            width: 250px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: #f7fafc;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .summary-row.total {
+            background: #2d3748;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .footer {
+            position: absolute;
+            bottom: 30px;
+            left: 40px;
+            right: 40px;
+            text-align: center;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .footer h4 {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .footer p {
+            font-size: 12px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-section">
+                <h1>{{WORKSHOP_NAME}}</h1>
+            </div>
+            
+            <div class="contact-item">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                </svg>
+                <span>{{WORKSHOP_PHONE}}</span>
+            </div>
+            
+            <div class="contact-item">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{WORKSHOP_ADDRESS}}</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h2>الفاتورة</h2>
+                <div class="invoice-meta">
+                    <div>رقم الفاتورة: #{{INVOICE_NUMBER}}</div>
+                    <div>التاريخ: {{DATE}}</div>
+                </div>
+            </div>
+
+            <!-- Recipient Info -->
+            <div class="recipient-section">
+                <h3>فاتورة إلي</h3>
+                <p><strong>الأسم:</strong> {{CUSTOMER_NAME}}</p>
+                <p><strong>العنوان:</strong> {{CUSTOMER_ADDRESS}}</p>
+                <p><strong>رقم الهاتف:</strong> {{CUSTOMER_PHONE}}</p>
+            </div>
+
+            <!-- Items Table -->
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>NO</th>
+                        <th>اسم الصنف</th>
+                        <th>سعر القطعة</th>
+                        <th>العدد</th>
+                        <th>المجموع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ITEMS_ROWS}}
+                </tbody>
+            </table>
+
+            <!-- Summary -->
+            <div class="summary">
+                <div class="summary-row">
+                    <span>قبل الضريبة</span>
+                    <span>{{SUBTOTAL}} ر.س</span>
+                </div>
+                <div class="summary-row">
+                    <span>الضريبة ({{TAX_RATE}}%)</span>
+                    <span>{{TAX_AMOUNT}} ر.س</span>
+                </div>
+                <div class="summary-row total">
+                    <span>الإجمالي</span>
+                    <span>{{TOTAL}} ر.س</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <h4>شكراً لثقتكم</h4>
+                <p>{{FOOTER_TEXT}}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

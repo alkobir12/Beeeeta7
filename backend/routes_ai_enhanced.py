@@ -227,9 +227,7 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
 
 Document: {file.filename}"""
         
-        response = await llm.send_message(
-            message=UserMessage(text=analysis_prompt)
-        )
+        response = await llm.send_message(UserMessage(text=analysis_prompt))
         
         # Store in knowledge base
         doc_record = {

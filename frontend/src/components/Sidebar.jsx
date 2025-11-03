@@ -168,15 +168,15 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {isOpen && (<div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />)}
 
-      <div className={`fixed right-0 top-0 h-full bg-white shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72 overflow-y-auto`} dir="rtl">
+      <div className={`sidebar-godaddy fixed right-0 top-0 h-full shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72 overflow-y-auto`} dir="rtl">
         <div className="p-6 pb-24">
           <div className="flex items-center justify-between mb-8">
             <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
-              <h2 className="text-2xl font-bold text-slate-800">{workshopName}</h2>
-              <p className="text-sm text-slate-500">نظام الإدارة</p>
+              <h2 className="text-2xl font-bold text-white">{workshopName}</h2>
+              <p className="text-sm text-gray-400">نظام الإدارة</p>
               {/* Only show CEO button if user has permission */}
               {(userRole === 'admin' || userPermissions.canAccessCEO) && (
-                <Button variant="outline" size="sm" className="mt-3 w-full justify-center" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
+                <Button variant="outline" size="sm" className="mt-3 w-full justify-center bg-transparent border-gray-600 text-white hover:bg-gray-800 hover:border-green-400" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
               )}
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>

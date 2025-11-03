@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-11-03T20:27:01.486238",
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "warned": 0
+  },
+  "tests": [
+    {
+      "test": "GET /api/ai/kb/docs",
+      "status": "PASS",
+      "details": "Found 9 documents, 5/5 have content, 5/5 have summaries",
+      "timestamp": "2025-11-03T20:26:26.599085",
+      "duration": "0.088s"
+    },
+    {
+      "test": "Smart Search - 'كهرباء'",
+      "status": "PASS",
+      "details": "Found 2 results, relevance scoring working, excerpts present, sorted correctly",
+      "timestamp": "2025-11-03T20:26:26.646165",
+      "duration": "0.046s"
+    },
+    {
+      "test": "Smart Search - 'محرك'",
+      "status": "PASS",
+      "details": "Found 3 results, relevance scoring working, excerpts present, sorted correctly",
+      "timestamp": "2025-11-03T20:26:26.691240",
+      "duration": "0.045s"
+    },
+    {
+      "test": "Smart Search - 'Toyota'",
+      "status": "PASS",
+      "details": "Found 1 results, relevance scoring working, excerpts present, sorted correctly",
+      "timestamp": "2025-11-03T20:26:26.739036",
+      "duration": "0.048s"
+    },
+    {
+      "test": "File Comparison",
+      "status": "PASS",
+      "details": "Files compared successfully. Extracted 205 and 201 chars. Analysis: 2202 chars with 4/4 sections.",
+      "timestamp": "2025-11-03T20:26:47.800151",
+      "duration": "21.060s"
+    },
+    {
+      "test": "Performance - Search Speed",
+      "status": "PASS",
+      "details": "Average search time: 0.056s (acceptable)",
+      "timestamp": "2025-11-03T20:26:47.968573",
+      "duration": "0.056s"
+    },
+    {
+      "test": "Performance - Upload & Analysis",
+      "status": "PASS",
+      "details": "Upload and analysis completed in 13.517s (acceptable)",
+      "timestamp": "2025-11-03T20:27:01.485277",
+      "duration": "13.517s"
+    }
+  ]
+}

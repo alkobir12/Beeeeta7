@@ -12,8 +12,27 @@ const Users = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', role: 'technician', active: true });
+  const [form, setForm] = useState({ 
+    name: '', 
+    phone: '', 
+    email: '',
+    role: 'employee', 
+    permissions: {
+      canViewDashboard: true,
+      canManageVehicles: true,
+      canManageCustomers: true,
+      canManageParts: false,
+      canManageServices: false,
+      canViewReports: true,
+      canManageFinance: false,
+      canManageUsers: false,
+      canAccessCEO: false,
+      canManageSettings: false
+    },
+    isActive: true 
+  });
   const [editingId, setEditingId] = useState(null);
+  const [showPermissions, setShowPermissions] = useState(false);
 
   const fetchUsers = async () => {
     try {

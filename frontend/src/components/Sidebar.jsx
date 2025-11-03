@@ -122,9 +122,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       '/services': 'canManageServices',
       '/technicians': 'canManageServices',
       '/ceo': 'canAccessCEO',
+      '/ceo-group': 'canAccessCEO',  // CEO group
       '/business-accounts': 'canAccessCEO',
       '/payroll': 'canManageFinance',
       '/settings': 'canManageSettings',
+      '/settings-group': 'canManageSettings',  // Settings group
       '/templates': 'canManageSettings',
       '/users': 'canManageUsers',
       '/knowledge': 'canViewDashboard' // Everyone can access knowledge

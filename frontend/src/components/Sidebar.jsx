@@ -177,9 +177,9 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>
           </div>
 
-          {menuConfig?.items ? (
+          {filteredMenu?.items ? (
             <nav className="space-y-1">
-              {menuConfig.items.map((item) => {
+              {filteredMenu.items.map((item) => {
                 if (item.group && item.children?.length) {
                   const isActive = location.pathname.startsWith(item.path);
                   const collapsed = collapsedGroups[item.path];

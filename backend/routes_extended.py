@@ -1236,6 +1236,38 @@ async def apply_template_to_all_types(template_id: str, types: Optional[List[str
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post('/templates/seed-modern-invoice')
+async def seed_modern_invoice():
+    """Add modern invoice template from uploaded design"""
+    try:
+        from pathlib import Path
+        template_path = Path(__file__).parent / 'invoice_template_modern.html'
+        if not template_path.exists():
+            raise HTTPException(status_code=404, detail='Modern template file not found')
+        
+        html_content = template_path.read_text(encoding='utf-8')
+        
+        # Create new template
+        template = TemplateDoc(
+            name='نموذج فاتورة حديث',
+            type='invoice',
+            language='ar',
+            html=html_content,
+            isActive=False  # Don't auto-activate
+        )
+        
+        await db.templates.insert_one(template.dict())
+        
+        return {
+            'status': 'ok',
+            'message': 'تم إضافة النموذج الحديث',
+            'templateId': template.id,
+            'name': template.name
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post('/templates/seed-mechanic-apply-all')
 async def seed_mechanic_apply_all():
     """Read mechanic invoice file and apply as default HTML for invoice/diagnosis/quote/receipt."""

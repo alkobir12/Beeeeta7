@@ -95,9 +95,72 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, []);
 
   const handleNavigate = (path) => {
+    // Check permissions before navigating
+    const canNavigate = checkPathPermission(path);
+    if (!canNavigate) {
+      return; // Silently block navigation
+    }
     navigate(path);
     if (onClose) onClose();
   };
+
+  const checkPathPermission = (path) => {
+    // Admin can access everything
+    if (userRole === 'admin') return true;
+    
+    // Map paths to permissions
+    const pathPermissions = {
+      '/': 'canViewDashboard',
+      '/customers': 'canManageCustomers',
+      '/customer-receipts': 'canManageCustomers',
+      '/new-vehicle': 'canManageVehicles',
+      '/vehicle': 'canManageVehicles',
+      '/archive': 'canManageVehicles',
+      '/parts': 'canManageParts',
+      '/suppliers': 'canManageParts',
+      '/operations': 'canManageFinance',
+      '/services': 'canManageServices',
+      '/technicians': 'canManageServices',
+      '/ceo': 'canAccessCEO',
+      '/business-accounts': 'canAccessCEO',
+      '/payroll': 'canManageFinance',
+      '/settings': 'canManageSettings',
+      '/templates': 'canManageSettings',
+      '/users': 'canManageUsers',
+      '/knowledge': 'canViewDashboard' // Everyone can access knowledge
+    };
+    
+    const requiredPermission = pathPermissions[path];
+    if (!requiredPermission) return true; // Unknown paths allowed
+    
+    return userPermissions[requiredPermission] === true;
+  };
+
+  const filterMenuByPermissions = (items) => {
+    if (userRole === 'admin') return items; // Admin sees everything
+    
+    return items.filter(item => {
+      if (!item.enabled) return false;
+      
+      if (item.group && item.children) {
+        const filteredChildren = item.children.filter(ch => checkPathPermission(ch.path));
+        if (filteredChildren.length === 0) return false;
+        item.children = filteredChildren;
+      } else {
+        if (!checkPathPermission(item.path)) return false;
+      }
+      
+      return true;
+    });
+  };
+
+  const filteredMenu = useMemo(() => {
+    if (!menuConfig?.items) return null;
+    return {
+      ...menuConfig,
+      items: filterMenuByPermissions([...menuConfig.items])
+    };
+  }, [menuConfig, userPermissions, userRole]);
 
   return (
     <>

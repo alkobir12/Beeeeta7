@@ -172,7 +172,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
               <h2 className="text-2xl font-bold text-slate-800">{workshopName}</h2>
               <p className="text-sm text-slate-500">نظام الإدارة</p>
-              <Button variant="outline" size="sm" className="mt-3 w-full justify-center" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
+              {/* Only show CEO button if user has permission */}
+              {(userRole === 'admin' || userPermissions.canAccessCEO) && (
+                <Button variant="outline" size="sm" className="mt-3 w-full justify-center" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
+              )}
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>
           </div>

@@ -47,16 +47,37 @@ const KnowledgeBase = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(`${API_URL}/ai/kb/smart-search`, {
-        query: searchQuery,
-        limit: 20
-      });
-      setSearchResults(res.data?.results || []);
-      toast({
-        title: '✅ اكتمل البحث',
-        description: `وجدنا ${res.data?.count || 0} نتيجة من ${res.data?.totalMatches || 0} مطابقة`
-      });
+      
+      // Check if searching for DTC code (P0xxx format)
+      const dtcPattern = /^[PCUB][0-9A-F]{4}$/i;
+      const isDTCSearch = dtcPattern.test(searchQuery.trim());
+      
+      if (isDTCSearch || searchMode === 'dtc') {
+        // Search for DTC cards
+        const res = await axios.post(`${API_URL}/ai/kb/extract-dtc-cards`, {
+          query: searchQuery.trim()
+        });
+        setDtcCards(res.data?.cards || []);
+        setSearchResults([]);
+        toast({
+          title: '🔧 وجدنا بطاقات أعطال',
+          description: `${res.data?.count || 0} بطاقة عطل`
+        });
+      } else {
+        // Normal smart search
+        const res = await axios.post(`${API_URL}/ai/kb/smart-search`, {
+          query: searchQuery,
+          limit: 20
+        });
+        setSearchResults(res.data?.results || []);
+        setDtcCards([]);
+        toast({
+          title: '✅ اكتمل البحث',
+          description: `وجدنا ${res.data?.count || 0} نتيجة من ${res.data?.totalMatches || 0} مطابقة`
+        });
+      }
     } catch (e) {
+      console.error('Search error:', e);
       toast({ title: 'خطأ في البحث', variant: 'destructive' });
     } finally {
       setLoading(false);

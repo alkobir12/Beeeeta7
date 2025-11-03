@@ -13,6 +13,14 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// GoDaddy Theme Colors
+  			'godaddy-green': '#1bdbac',
+  			'godaddy-green-dark': '#00a87a',
+  			'godaddy-green-light': '#4de8c5',
+  			'godaddy-black': '#111827',
+  			'godaddy-dark': '#1f2937',
+  			'godaddy-gray': '#6b7280',
+  			
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

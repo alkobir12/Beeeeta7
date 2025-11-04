@@ -136,7 +136,111 @@ async def get_dtc_references(code: str = None, vehicle: str = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/references/electrical")
+@router.get("/references/download-excel-program")
+async def download_excel_search_program():
+    """تحميل برنامج Excel للبحث في المراجع"""
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from fastapi.responses import StreamingResponse
+        import io
+        
+        wb = Workbook()
+        
+        # Sheet 1: البحث الذكي
+        ws_search = wb.active
+        ws_search.title = "البحث الذكي"
+        
+        # Instructions
+        ws_search['A1'] = "برنامج البحث في المراجع الفنية"
+        ws_search['A1'].font = Font(bold=True, size=16, color="FFFFFF")
+        ws_search['A1'].fill = PatternFill(start_color="1bdbac", end_color="1bdbac", fill_type="solid")
+        ws_search.merge_cells('A1:F1')
+        
+        ws_search['A3'] = "ابحث هنا:"
+        ws_search['B3'] = ""  # Search box
+        ws_search['B3'].fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+        
+        ws_search['A5'] = "التعليمات:"
+        ws_search['A6'] = "1. اكتب اسم المكون أو الكود في الخلية B3"
+        ws_search['A7'] = "2. انظر للنتائج في الأوراق الأخرى"
+        ws_search['A8'] = "3. استخدم Ctrl+F للبحث السريع"
+        
+        # Sheet 2: جميع أكواد DTC
+        ws_dtc = wb.create_sheet("أكواد الأعطال")
+        
+        # Get all DTC references
+        dtc_refs = await db.dtc_references.find({}).to_list(length=1000)
+        
+        headers = ["الكود", "الاسم", "السيارة", "الأسباب", "الحلول", "الصفحة", "أكواد مشابهة"]
+        ws_dtc.append(headers)
+        
+        for cell in ws_dtc[1]:
+            cell.fill = PatternFill(start_color="111827", end_color="111827", fill_type="solid")
+            cell.font = Font(bold=True, color="FFFFFF")
+        
+        for dtc in dtc_refs:
+            causes_text = '\n'.join(dtc.get('causes', [])) if isinstance(dtc.get('causes'), list) else dtc.get('causes', '')
+            fixes_text = '\n'.join(dtc.get('fixes', [])) if isinstance(dtc.get('fixes'), list) else dtc.get('fixes', '')
+            related_text = ', '.join(dtc.get('relatedCodes', [])) if isinstance(dtc.get('relatedCodes'), list) else ''
+            
+            ws_dtc.append([
+                dtc.get('code'),
+                dtc.get('nameAr'),
+                dtc.get('vehicle'),
+                causes_text,
+                fixes_text,
+                dtc.get('pageNumber'),
+                related_text
+            ])
+        
+        # Sheet 3: المكونات الكهربائية
+        ws_elec = wb.create_sheet("الجهد الكهربائي")
+        
+        elec_refs = await db.electrical_references.find({}).to_list(length=1000)
+        
+        headers_elec = ["المكون", "Component", "الجهد الطبيعي", "الأدنى", "الأعلى", "الوحدة", "طريقة القياس", "الحالة"]
+        ws_elec.append(headers_elec)
+        
+        for cell in ws_elec[1]:
+            cell.fill = PatternFill(start_color="1bdbac", end_color="1bdbac", fill_type="solid")
+            cell.font = Font(bold=True, color="FFFFFF")
+        
+        for elec in elec_refs:
+            ws_elec.append([
+                elec.get('componentAr'),
+                elec.get('componentEn'),
+                elec.get('voltageNormal'),
+                elec.get('voltageMin'),
+                elec.get('voltageMax'),
+                elec.get('unit'),
+                elec.get('measurementMethod'),
+                elec.get('notes')
+            ])
+        
+        # Adjust columns
+        for ws in [ws_dtc, ws_elec]:
+            for col in ws.columns:
+                max_length = 0
+                for cell in col:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 50)
+        
+        # Save to bytes
+        excel_bytes = io.BytesIO()
+        wb.save(excel_bytes)
+        excel_bytes.seek(0)
+        
+        return StreamingResponse(
+            excel_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=برنامج_البحث_الفني.xlsx"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 async def get_electrical_references(component: str = None):
     """الحصول على مراجع كهربائية"""
     try:

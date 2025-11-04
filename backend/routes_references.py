@@ -154,3 +154,83 @@ async def get_electrical_references(component: str = None):
         return {'references': refs, 'count': len(refs)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/references/electrical/smart-search")
+async def smart_search_electrical(payload: Dict[str, Any]):
+    """بحث ذكي عن الجهد الكهربائي - يفهم الأسئلة الطبيعية"""
+    try:
+        import os
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import uuid
+        
+        query = payload.get('query', '')
+        
+        if not query:
+            raise HTTPException(status_code=422, detail='query required')
+        
+        # Get all electrical components
+        all_components = await db.electrical_references.find({}).to_list(length=200)
+        
+        # Create simple component list for AI
+        components_list = []
+        for comp in all_components:
+            components_list.append({
+                'المكون': comp.get('componentAr'),
+                'Component': comp.get('componentEn'),
+                'الجهد_الطبيعي': comp.get('voltageNormal'),
+                'الأدنى': comp.get('voltageMin'),
+                'الأعلى': comp.get('voltageMax'),
+                'الوحدة': comp.get('unit'),
+                'القياس': comp.get('measurementMethod'),
+                'ملاحظات': comp.get('notes')
+            })
+        
+        # Use AI to understand the query and find the right component
+        llm = LlmChat(
+            api_key=os.getenv('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message="You are an automotive electrical diagnostic expert. Answer voltage/electrical questions in Arabic based on the reference data."
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        search_prompt = f"""السؤال: {query}
+
+المراجع الكهربائية المتوفرة:
+{components_list}
+
+أجب على السؤال بدقة بناءً على المراجع أعلاه. قدم:
+1. المكون المقصود
+2. الجهد الطبيعي بالتفصيل
+3. النطاق المقبول (الأدنى - الأعلى)
+4. طريقة القياس
+5. الملاحظات المهمة
+
+كن دقيقاً ومحدداً."""
+
+        response = await llm.send_message(UserMessage(text=search_prompt))
+        response_text = response if isinstance(response, str) else response.text
+        
+        # Also find matching components
+        matches = []
+        query_lower = query.lower()
+        keywords = ['هواء', 'maf', 'بطارية', 'battery', 'مولد', 'alternator', 'حساس', 'sensor']
+        
+        for comp in all_components:
+            comp_ar = comp.get('componentAr', '').lower()
+            comp_en = comp.get('componentEn', '').lower()
+            
+            if query_lower in comp_ar or query_lower in comp_en:
+                comp.pop('_id', None)
+                matches.append(comp)
+            elif any(kw in query_lower and kw in (comp_ar + ' ' + comp_en) for kw in keywords):
+                comp.pop('_id', None)
+                matches.append(comp)
+        
+        return {
+            'answer': response_text,
+            'matches': matches,
+            'count': len(matches),
+            'query': query
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

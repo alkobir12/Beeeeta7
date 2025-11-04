@@ -466,77 +466,137 @@ const KnowledgeBase = () => {
 
           {/* Document Reader Modal */}
           {showReader && selectedDoc && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowReader(false)}>
-              <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4" onClick={() => setShowReader(false)}>
+              <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
                 {/* Reader Header */}
-                <div className="bg-gradient-to-r from-godaddy-black to-godaddy-dark text-white p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <BookOpen size={28} />
+                <div className="bg-gradient-to-r from-godaddy-black to-godaddy-dark text-white p-6 flex items-center justify-between sticky top-0 z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-godaddy-green flex items-center justify-center">
+                      <BookOpen size={32} />
+                    </div>
                     <div>
-                      <h2 className="text-xl font-bold">{selectedDoc.filename}</h2>
-                      <p className="text-sm text-gray-300">
-                        {selectedDoc.type} • {new Date(selectedDoc.uploadedAt).toLocaleDateString('ar-SA')}
+                      <h2 className="text-2xl font-bold">{selectedDoc.filename}</h2>
+                      <p className="text-sm text-gray-300 flex items-center gap-3 mt-1">
+                        <span className="px-2 py-1 bg-white bg-opacity-20 rounded">{selectedDoc.type}</span>
+                        <span>•</span>
+                        <span>{new Date(selectedDoc.uploadedAt).toLocaleDateString('ar-SA')}</span>
+                        {selectedDoc.vehicle && (
+                          <>
+                            <span>•</span>
+                            <span>🚗 {selectedDoc.vehicle}</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" onClick={() => setShowReader(false)} className="text-white hover:bg-gray-700">
+                  <Button variant="ghost" onClick={() => setShowReader(false)} className="text-white hover:bg-gray-700 text-2xl px-4">
                     ✕
                   </Button>
                 </div>
 
-                {/* Reader Content */}
-                <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
-                  {/* Summary */}
-                  {selectedDoc.summary && (
-                    <Card className="mb-6 border-2 border-godaddy-green">
-                      <CardHeader className="bg-gradient-to-l from-green-50">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Zap className="text-godaddy-green" size={20} />
-                          الملخص الذكي
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-5">
-                        <p className="text-godaddy-black leading-relaxed whitespace-pre-wrap">
-                          {selectedDoc.summary}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
+                {/* Reader Content - Full Professional View */}
+                <div className="p-8 overflow-y-auto max-h-[calc(95vh-120px)] bg-gray-50">
+                  <div className="max-w-5xl mx-auto">
+                    
+                    {/* AI Summary Section */}
+                    {selectedDoc.summary && (
+                      <Card className="mb-6 border-2 border-godaddy-green shadow-lg">
+                        <CardHeader className="bg-gradient-to-l from-green-50 to-white">
+                          <CardTitle className="text-xl flex items-center gap-2">
+                            <Zap className="text-godaddy-green" size={24} />
+                            الملخص الذكي بالذكاء الاصطناعي
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 bg-white">
+                          <div className="prose prose-lg max-w-none text-godaddy-black leading-relaxed">
+                            <pre className="whitespace-pre-wrap font-sans text-base leading-loose">
+{selectedDoc.summary}
+                            </pre>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                  {/* Key Points */}
-                  {selectedDoc.keyPoints && selectedDoc.keyPoints.length > 0 && (
-                    <Card className="mb-6">
-                      <CardHeader>
-                        <CardTitle className="text-lg">📌 النقاط الرئيسية</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-5">
-                        <ul className="space-y-2">
-                          {selectedDoc.keyPoints.map((point, i) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <ChevronRight className="text-godaddy-green flex-shrink-0 mt-1" size={18} />
-                              <span className="text-godaddy-black">{point}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
+                    {/* Key Points */}
+                    {selectedDoc.keyPoints && selectedDoc.keyPoints.length > 0 && (
+                      <Card className="mb-6 shadow-lg">
+                        <CardHeader className="bg-gradient-to-l from-blue-50 to-white">
+                          <CardTitle className="text-xl">📌 النقاط الرئيسية والمفاهيم</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 bg-white">
+                          <div className="grid grid-cols-1 gap-3">
+                            {selectedDoc.keyPoints.map((point, i) => (
+                              <div key={i} className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-godaddy-green text-white flex items-center justify-center font-bold">
+                                  {i + 1}
+                                </span>
+                                <span className="text-godaddy-black text-base leading-relaxed">{point}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                  {/* Full Content */}
-                  {selectedDoc.content && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">📄 المحتوى الكامل</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-5">
-                        <div className="bg-gray-50 rounded-lg p-5 max-h-96 overflow-y-auto">
-                          <pre className="text-sm text-godaddy-black whitespace-pre-wrap font-sans leading-relaxed">
-                            {selectedDoc.content}
-                          </pre>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                    {/* Full Document Content - Professional Reading View */}
+                    {selectedDoc.content && (
+                      <Card className="mb-6 shadow-lg">
+                        <CardHeader className="bg-gradient-to-l from-amber-50 to-white">
+                          <CardTitle className="text-xl flex items-center gap-2">
+                            <FileText className="text-amber-600" size={24} />
+                            قراءة المستند الكامل - عرض احترافي
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 bg-white">
+                          {/* Professional Document View */}
+                          <div className="bg-white border-2 border-gray-200 rounded-xl p-10 shadow-inner" style={{
+                            fontFamily: "'Amiri', 'Traditional Arabic', 'Arial', sans-serif",
+                            fontSize: '16px',
+                            lineHeight: '2.2',
+                            color: '#1a202c'
+                          }}>
+                            <pre className="whitespace-pre-wrap" style={{
+                              fontFamily: 'inherit',
+                              fontSize: 'inherit',
+                              lineHeight: 'inherit',
+                              color: 'inherit',
+                              direction: 'rtl',
+                              textAlign: 'justify'
+                            }}>
+{selectedDoc.content}
+                            </pre>
+                          </div>
+                          
+                          {/* Document Stats */}
+                          <div className="mt-6 pt-6 border-t flex items-center justify-between text-sm text-gray-600">
+                            <span>📊 عدد الأحرف: {selectedDoc.content.length.toLocaleString('ar-SA')}</span>
+                            <span>📖 الصفحات المقدرة: ~{Math.ceil(selectedDoc.content.length / 2000)}</span>
+                            {selectedDoc.accessCount && (
+                              <span>👁️ عدد القراءات: {selectedDoc.accessCount}</span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Keywords & Classification */}
+                    {(selectedDoc.keywords && selectedDoc.keywords.length > 0) && (
+                      <Card className="shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="text-lg">🏷️ الكلمات المفتاحية والتصنيف</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          <div className="flex flex-wrap gap-2">
+                            {selectedDoc.keywords.map((kw, i) => (
+                              <span key={i} className="px-4 py-2 bg-godaddy-green text-white rounded-full font-semibold text-sm">
+                                #{kw}
+                              </span>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

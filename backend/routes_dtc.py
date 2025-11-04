@@ -166,7 +166,9 @@ def parse_ai_dtc_response(code: str, ai_text: str, info: dict) -> dict:
         'source': info['source'],
         'sourceId': info['sourceId'],
         'context': info['context'][:500],
-        'vehicle': info['vehicle']
+        'vehicle': info['vehicle'],
+        'repairManual': info['source'],  # Repair manual reference
+        'repairManualId': info['sourceId']
     }
 
 

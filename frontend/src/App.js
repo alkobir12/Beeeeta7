@@ -30,6 +30,7 @@ import CustomerTracking from "./pages/CustomerTracking";
 import Knowledge from "./pages/Knowledge";
 import KnowledgeAdvanced from "./pages/KnowledgeAdvanced";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import References from "./pages/References";
 import Login from "./pages/Login";
 import Users from "./pages/UsersManagement";
 import { ThemeProvider } from './contexts/ThemeContext';

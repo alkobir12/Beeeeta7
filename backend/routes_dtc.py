@@ -19,7 +19,7 @@ async def extract_dtc_cards(payload: Dict[str, Any]):
         from datetime import datetime
         
         query = payload.get('query', '')
-        use_web = payload.get('use_web', True)  # استخدام البحث في النت
+        # use_web = payload.get('use_web', True)  # Reserved for future web search integration
         
         # Get all documents
         docs = await db.knowledge_documents.find({}).to_list(length=500)

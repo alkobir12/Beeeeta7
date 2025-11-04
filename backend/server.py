@@ -852,6 +852,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ References router not loaded: {e}")
 
+# Import and include Vehicle Files router
+try:
+    from routes_vehicle_files import router as vf_router, set_db as set_vf_db
+    set_vf_db(db)
+    app.include_router(vf_router)
+    logger.info("✅ Vehicle Files router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Vehicle Files router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

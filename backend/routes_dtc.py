@@ -11,9 +11,15 @@ def set_db(database):
 
 @router.post("/ai/kb/extract-dtc-cards")
 async def extract_dtc_cards(payload: Dict[str, Any]):
-    """استخراج بطاقات الأعطال من المستندات"""
+    """استخراج بطاقات الأعطال الذكية بالذكاء الاصطناعي"""
     try:
+        import os
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import uuid
+        from datetime import datetime
+        
         query = payload.get('query', '')
+        use_web = payload.get('use_web', True)  # استخدام البحث في النت
         
         # Get all documents
         docs = await db.knowledge_documents.find({}).to_list(length=500)
@@ -23,9 +29,11 @@ async def extract_dtc_cards(payload: Dict[str, Any]):
         # DTC pattern (P0xxx, P1xxx, etc.)
         dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4}|C[0-9A-F]{4}|B[0-9A-F]{4})\b', re.IGNORECASE)
         
+        # Find all DTC codes in all documents
+        all_found_codes = {}
+        
         for doc in docs:
             content = doc.get('content', '')
-            summary = doc.get('summary', '')
             
             # Find all DTC codes
             found_codes = set(dtc_pattern.findall(content.upper()))
@@ -35,43 +43,131 @@ async def extract_dtc_cards(payload: Dict[str, Any]):
                 found_codes = {query.upper()}
             elif query:
                 # Search for query in content
-                if query.lower() not in content.lower() and query.lower() not in summary.lower():
+                if query.lower() not in content.lower():
                     continue
             
-            # Extract information for each DTC code
+            # Store codes with their context
             for code in found_codes:
-                # Find context around the code
-                code_index = content.upper().find(code)
-                if code_index == -1:
-                    continue
-                
-                # Extract surrounding text (500 chars before and after)
-                start = max(0, code_index - 500)
-                end = min(len(content), code_index + 1000)
-                context = content[start:end]
-                
-                # Try to extract structured info
-                card = {
-                    'code': code,
-                    'name': extract_fault_name(code, context),
-                    'causes': extract_causes(context),
-                    'fixes': extract_fixes(context),
-                    'related': extract_related_issues(context, code),
-                    'source': doc.get('filename'),
-                    'sourceId': doc.get('id'),
-                    'context': context[:500],
-                    'vehicle': extract_vehicle_info(doc.get('filename'))
-                }
-                
-                dtc_cards.append(card)
+                if code not in all_found_codes:
+                    code_index = content.upper().find(code)
+                    if code_index != -1:
+                        start = max(0, code_index - 1000)
+                        end = min(len(content), code_index + 2000)
+                        all_found_codes[code] = {
+                            'context': content[start:end],
+                            'source': doc.get('filename'),
+                            'sourceId': doc.get('id'),
+                            'vehicle': extract_vehicle_info(doc.get('filename'))
+                        }
+        
+        # Use AI to analyze each DTC code
+        llm_key = os.getenv('EMERGENT_LLM_KEY')
+        if llm_key and all_found_codes:
+            llm = LlmChat(
+                api_key=llm_key,
+                session_id=str(uuid.uuid4()),
+                system_message="You are an automotive DTC (Diagnostic Trouble Code) expert. Provide detailed, accurate information in Arabic."
+            ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+            
+            # Process each code
+            for code, info in list(all_found_codes.items())[:10]:  # Limit to 10 codes
+                try:
+                    analysis_prompt = f"""حلل كود العطل {code} بالتفصيل:
+
+السياق من المستند ({info['source']}):
+{info['context'][:1500]}
+
+قدم تحليل شامل بالعربية:
+1. اسم العطل بالعربية والإنجليزية
+2. الأسباب المحتملة (3-5 أسباب محددة)
+3. طرق الإصلاح (خطوات عملية محددة)
+4. ملاحظات مهمة
+
+كن دقيقاً ومحدداً بناءً على السياق المعطى."""
+
+                    response = await llm.send_message(UserMessage(text=analysis_prompt))
+                    response_text = response if isinstance(response, str) else response.text
+                    
+                    # Parse AI response
+                    card = parse_ai_dtc_response(code, response_text, info)
+                    dtc_cards.append(card)
+                    
+                except Exception as e:
+                    print(f"⚠️ AI analysis failed for {code}: {e}")
+                    # Fallback to basic extraction
+                    card = {
+                        'code': code,
+                        'name': extract_fault_name(code, info['context']),
+                        'causes': extract_causes(info['context']),
+                        'fixes': extract_fixes(info['context']),
+                        'related': extract_related_issues(info['context'], code),
+                        'source': info['source'],
+                        'sourceId': info['sourceId'],
+                        'context': info['context'][:500],
+                        'vehicle': info['vehicle']
+                    }
+                    dtc_cards.append(card)
         
         return {
-            'cards': dtc_cards[:20],  # Limit to 20 cards
+            'cards': dtc_cards[:20],
             'count': len(dtc_cards),
             'query': query
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def parse_ai_dtc_response(code: str, ai_text: str, info: dict) -> dict:
+    """تحليل استجابة AI واستخراج البطاقة"""
+    lines = ai_text.split('\n')
+    
+    name = ""
+    causes = []
+    fixes = []
+    notes = ""
+    
+    current_section = None
+    
+    for line in lines:
+        line_clean = line.strip()
+        
+        # Detect sections
+        if 'اسم العطل' in line or 'الاسم' in line or 'Name' in line.lower():
+            current_section = 'name'
+            # Try to extract name from same line
+            if ':' in line:
+                name = line.split(':', 1)[1].strip()
+        elif 'الأسباب' in line or 'Causes' in line.lower() or 'أسباب' in line:
+            current_section = 'causes'
+        elif 'الإصلاح' in line or 'Fix' in line.lower() or 'طرق' in line:
+            current_section = 'fixes'
+        elif 'ملاحظات' in line or 'Notes' in line.lower():
+            current_section = 'notes'
+        elif line_clean:
+            # Add content to current section
+            if current_section == 'name' and not name:
+                name = line_clean
+            elif current_section == 'causes' and (line_clean.startswith('-') or line_clean.startswith('•') or line_clean.startswith(('1', '2', '3', '4', '5'))):
+                causes.append(line_clean.lstrip('-•123456789. '))
+            elif current_section == 'fixes' and (line_clean.startswith('-') or line_clean.startswith('•') or line_clean.startswith(('1', '2', '3', '4', '5'))):
+                fixes.append(line_clean.lstrip('-•123456789. '))
+            elif current_section == 'notes':
+                notes += line_clean + " "
+    
+    related = extract_related_issues(info['context'], code)
+    
+    return {
+        'code': code,
+        'name': name or f"كود العطل {code}",
+        'causes': causes[:5] if causes else ["تحقق من المستند للتفاصيل"],
+        'fixes': fixes[:5] if fixes else ["راجع دليل الإصلاح"],
+        'related': related,
+        'notes': notes.strip()[:200],
+        'source': info['source'],
+        'sourceId': info['sourceId'],
+        'context': info['context'][:500],
+        'vehicle': info['vehicle']
+    }
 
 
 def extract_fault_name(code: str, context: str) -> str:

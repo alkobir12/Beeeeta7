@@ -157,12 +157,12 @@ const KnowledgeBase = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="flex gap-3 mb-6">
+                  <div className="flex gap-3 mb-4">
                     <Input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="ابحث عن: كهرباء، محرك، فرامل، تويوتا، 1KD..."
+                      placeholder="ابحث: كهرباء، P0087، محرك، SCV، فرامل..."
                       className="input-godaddy flex-1 text-lg"
                     />
                     <Button
@@ -173,8 +173,45 @@ const KnowledgeBase = () => {
                       {loading ? '⏳ جاري البحث...' : 'بحث'}
                     </Button>
                   </div>
+                  
+                  {/* Search Mode Selector */}
+                  <div className="flex gap-3 mb-6 p-3 bg-gray-100 rounded-lg">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="searchMode"
+                        value="smart"
+                        checked={searchMode === 'smart'}
+                        onChange={(e) => setSearchMode(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">🔍 بحث ذكي (كلمات)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="searchMode"
+                        value="dtc"
+                        checked={searchMode === 'dtc'}
+                        onChange={(e) => setSearchMode(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">🔧 بحث أكواد (P0087)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="searchMode"
+                        value="letter"
+                        checked={searchMode === 'letter'}
+                        onChange={(e) => setSearchMode(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">🔤 بحث بالحرف</span>
+                    </label>
+                  </div>
 
-                  <div className="flex gap-3 mb-6">
+                  <div className="mb-6">
                     <Input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}

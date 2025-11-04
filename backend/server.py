@@ -843,6 +843,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ DTC router not loaded: {e}")
 
+# Import and include References router
+try:
+    from routes_references import router as ref_router, set_db as set_ref_db
+    set_ref_db(db)
+    app.include_router(ref_router)
+    logger.info("✅ References router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ References router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

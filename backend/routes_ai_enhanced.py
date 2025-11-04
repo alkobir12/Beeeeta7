@@ -256,6 +256,21 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
             except Exception as e:
                 print(f"⚠️ Text extraction failed: {e}")
         
+        elif file.filename.lower().endswith(('.xlsx', '.xls')):
+            file_type = "excel"
+            try:
+                import pandas as pd
+                df = pd.read_excel(str(file_path), sheet_name=None)  # Read all sheets
+                
+                for sheet_name, sheet_df in df.items():
+                    extracted_text += f"\n=== Sheet: {sheet_name} ===\n"
+                    extracted_text += sheet_df.to_string() + "\n"
+                
+                extracted_text = extracted_text[:30000]
+            except Exception as e:
+                print(f"⚠️ Excel extraction failed: {e}")
+                extracted_text = f"[ملف Excel: {file.filename}]"
+        
         # Analyze with AI
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),

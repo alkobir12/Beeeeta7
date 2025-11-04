@@ -236,7 +236,7 @@ async def download_excel_search_program():
             excel_bytes,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
-                "Content-Disposition": f"attachment; filename=برنامج_البحث_الفني.xlsx"
+                "Content-Disposition": "attachment; filename=Technical_Search_Program.xlsx"
             }
         )
     except Exception as e:

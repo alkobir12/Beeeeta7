@@ -262,7 +262,7 @@ const KnowledgeBase = () => {
 
                             {/* Related Issues */}
                             {card.related && card.related.length > 0 && (
-                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                                 <h4 className="font-semibold text-blue-900 mb-2">
                                   🔗 أكواد ذات صلة:
                                 </h4>
@@ -283,8 +283,36 @@ const KnowledgeBase = () => {
                               </div>
                             )}
 
+                            {/* Repair Manual Reference */}
+                            <div className="p-4 bg-purple-50 border-2 border-purple-300 rounded-lg mb-4">
+                              <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                                📚 المرجع الفني (Repair Manual):
+                              </h4>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-purple-800 font-medium">
+                                    🚗 {card.vehicle}
+                                  </p>
+                                  <p className="text-xs text-purple-700 mt-1">
+                                    📄 {card.repairManual || card.source}
+                                  </p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                                  onClick={() => {
+                                    const doc = documents.find(d => d.id === (card.repairManualId || card.sourceId));
+                                    if (doc) openReader(doc);
+                                  }}
+                                >
+                                  <BookOpen size={16} className="ml-1" />
+                                  افتح المرجع
+                                </Button>
+                              </div>
+                            </div>
+
                             {/* Read Full Document Button */}
-                            <div className="mt-4 pt-4 border-t">
+                            <div className="pt-4 border-t">
                               <Button
                                 size="sm"
                                 variant="outline"

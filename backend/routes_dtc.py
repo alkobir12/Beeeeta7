@@ -221,7 +221,6 @@ def extract_fixes(context: str) -> List[str]:
 
 def extract_related_issues(context: str, code: str) -> List[str]:
     """استخراج مشاكل مشابهة"""
-    related = []
     dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4})\b', re.IGNORECASE)
     
     # Find other DTC codes in context

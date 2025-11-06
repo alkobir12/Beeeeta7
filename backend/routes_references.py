@@ -384,17 +384,16 @@ async def smart_search_electrical(payload: Dict[str, Any]):
         
         search_prompt = f"""السؤال: {query}
 
-المراجع الكهربائية المتوفرة:
-{components_list}
+المراجع الكهربائية:
+{components_list[:15]}
 
-أجب على السؤال بدقة بناءً على المراجع أعلاه. قدم:
-1. المكون المقصود
-2. الجهد الطبيعي بالتفصيل
-3. النطاق المقبول (الأدنى - الأعلى)
+أجب بإيجاز (أقل من 150 كلمة):
+1. المكون
+2. الجهد الطبيعي
+3. النطاق
 4. طريقة القياس
-5. الملاحظات المهمة
 
-كن دقيقاً ومحدداً."""
+كن مختصراً ودقيقاً."""
 
         response = await llm.send_message(UserMessage(text=search_prompt))
         response_text = response if isinstance(response, str) else response.text

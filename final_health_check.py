@@ -204,16 +204,18 @@ def test_knowledge(results: TestResults):
         
         if response.status_code == 200:
             data = response.json()
-            if isinstance(data, list):
+            # Handle both direct array and wrapped response
+            docs = data if isinstance(data, list) else data.get('docs', [])
+            if docs and isinstance(docs, list):
                 log_test("GET /api/ai/kb/docs", "PASS", 
-                        f"Retrieved {len(data)} knowledge documents", response_time)
+                        f"Retrieved {len(docs)} knowledge documents", response_time)
                 results.add_result("/api/ai/kb/docs", "GET", "PASS", 
-                                 f"{len(data)} documents", response_time)
+                                 f"{len(docs)} documents", response_time)
             else:
                 log_test("GET /api/ai/kb/docs", "FAIL", 
-                        f"Expected list, got {type(data)}", response_time)
+                        f"No documents found in response", response_time)
                 results.add_result("/api/ai/kb/docs", "GET", "FAIL", 
-                                 "Invalid response format", response_time)
+                                 "No documents found", response_time)
         else:
             log_test("GET /api/ai/kb/docs", "FAIL", 
                     f"Status: {response.status_code}", response_time)

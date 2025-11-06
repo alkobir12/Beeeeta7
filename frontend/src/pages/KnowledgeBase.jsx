@@ -132,7 +132,7 @@ const KnowledgeBase = () => {
           </div>
 
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
+            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-6">
               <TabsTrigger value="search">
                 <Search className="ml-2" size={18} />
                 البحث
@@ -140,6 +140,10 @@ const KnowledgeBase = () => {
               <TabsTrigger value="browse">
                 <BookOpen className="ml-2" size={18} />
                 تصفح
+              </TabsTrigger>
+              <TabsTrigger value="compare">
+                <GitCompare className="ml-2" size={18} />
+                مقارنة
               </TabsTrigger>
               <TabsTrigger value="upload">
                 <Upload className="ml-2" size={18} />

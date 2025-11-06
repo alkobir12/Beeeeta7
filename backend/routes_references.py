@@ -354,7 +354,7 @@ async def get_electrical_references(component: str = None):
 
 @router.post("/references/electrical/smart-search")
 async def smart_search_electrical(payload: Dict[str, Any]):
-    """بحث ذكي عن الجهد الكهربائي - يفهم الأسئلة الطبيعية"""
+    """بحث ذكي سريع عن الجهد الكهربائي"""
     try:
         import os
         from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -365,42 +365,79 @@ async def smart_search_electrical(payload: Dict[str, Any]):
         if not query:
             raise HTTPException(status_code=422, detail='query required')
         
-        # Get all electrical components
+        # Quick keyword matching first (no AI)
         all_components = await db.electrical_references.find({}).to_list(length=200)
         
-        # Create simple component list for AI
-        components_list = []
+        # Simple keyword detection
+        query_lower = query.lower()
+        keywords_map = {
+            'بطارية': 'بطارية',
+            'battery': 'بطارية',
+            'مولد': 'مولد',
+            'alternator': 'مولد',
+            'هواء': 'MAF',
+            'maf': 'MAF',
+            'كرنك': 'الكرنك',
+            'crank': 'الكرنك',
+            'أكسجين': 'الأكسجين',
+            'o2': 'الأكسجين',
+            'حرارة': 'الحرارة',
+            'temp': 'الحرارة'
+        }
+        
+        # Find matches quickly
+        matches = []
         for comp in all_components:
+            comp_ar = comp.get('componentAr', '').lower()
+            comp_en = comp.get('componentEn', '').lower()
+            
+            for keyword, target in keywords_map.items():
+                if keyword in query_lower and target.lower() in (comp_ar + ' ' + comp_en):
+                    comp.pop('_id', None)
+                    matches.append(comp)
+                    break
+        
+        # If direct match found, return fast answer without AI
+        if matches:
+            first_match = matches[0]
+            quick_answer = f"""## {first_match['componentAr']}
+
+**الجهد الطبيعي:** {first_match['voltageNormal']} {first_match['unit']}
+
+**النطاق المقبول:**
+- الأدنى: {first_match['voltageMin']} {first_match['unit']}
+- الأعلى: {first_match['voltageMax']} {first_match['unit']}
+
+**طريقة القياس:** {first_match['measurementMethod']}
+
+**الملاحظات:** {first_match['notes']}"""
+            
+            return {
+                'answer': quick_answer,
+                'matches': matches,
+                'count': len(matches),
+                'query': query,
+                'fast_match': True
+            }
+        
+        # If no direct match, use AI (slower but more flexible)
+        components_list = []
+        for comp in all_components[:10]:  # Only first 10 for speed
             components_list.append({
                 'المكون': comp.get('componentAr'),
-                'Component': comp.get('componentEn'),
-                'الجهد_الطبيعي': comp.get('voltageNormal'),
-                'الأدنى': comp.get('voltageMin'),
-                'الأعلى': comp.get('voltageMax'),
-                'الوحدة': comp.get('unit'),
-                'القياس': comp.get('measurementMethod'),
-                'ملاحظات': comp.get('notes')
+                'الجهد': comp.get('voltageNormal'),
+                'النطاق': f"{comp.get('voltageMin')}-{comp.get('voltageMax')} {comp.get('unit')}"
             })
         
-        # Use AI to understand the query and find the right component
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an automotive electrical diagnostic expert. Answer voltage/electrical questions in Arabic based on the reference data."
+            system_message="Answer voltage questions concisely in Arabic."
         ).with_model("anthropic", "claude-sonnet-4-20250514")
         
-        search_prompt = f"""السؤال: {query}
-
-المراجع الكهربائية:
-{components_list[:15]}
-
-أجب بإيجاز (أقل من 150 كلمة):
-1. المكون
-2. الجهد الطبيعي
-3. النطاق
-4. طريقة القياس
-
-كن مختصراً ودقيقاً."""
+        search_prompt = f"""سؤال: {query}
+مراجع: {components_list}
+أجب بإيجاز (50 كلمة): المكون، الجهد، النطاق، القياس."""
 
         response = await llm.send_message(UserMessage(text=search_prompt))
         response_text = response if isinstance(response, str) else response.text

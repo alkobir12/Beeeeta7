@@ -1431,6 +1431,29 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         
         if not html:
             raise HTTPException(status_code=404, detail='No template found')
+        
+        # Load workshop profile automatically
+        profile = await db.settings.find_one({'id': 'workshop_profile'})
+        profile_data = {}
+        if profile:
+            profile_data = profile.get('data', {})
+        
+        # Get settings for workshop info
+        settings = await db.settings.find_one({'id': 'app_settings'})
+        
+        # Auto-fill workshop data if not provided
+        if not data.get('WORKSHOP_NAME'):
+            data['WORKSHOP_NAME'] = profile_data.get('name') or settings.get('workshopName') or 'ورشتي'
+        if not data.get('WORKSHOP_PHONE'):
+            data['WORKSHOP_PHONE'] = profile_data.get('phone') or settings.get('workshopPhone') or ''
+        if not data.get('WORKSHOP_ADDRESS'):
+            data['WORKSHOP_ADDRESS'] = profile_data.get('address') or settings.get('workshopAddress') or ''
+        if not data.get('WORKSHOP_EMAIL'):
+            data['WORKSHOP_EMAIL'] = profile_data.get('email') or settings.get('workshopEmail') or ''
+        if not data.get('WORKSHOP_CR'):
+            data['WORKSHOP_CR'] = profile_data.get('commercialRegister') or ''
+        if not data.get('WORKSHOP_TAX'):
+            data['WORKSHOP_TAX'] = profile_data.get('taxNumber') or ''
 
         # Prepare items
         items = data.get('items') or []

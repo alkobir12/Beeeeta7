@@ -88,26 +88,26 @@ async def import_references_from_file(file: UploadFile = File(...)):
                 veh_count = 0
                 
                 for _, row in veh_df.iterrows():
-                veh_doc = {
-                    'id': str(uuid.uuid4()),
-                    'type': 'vehicle_spec',
-                    'vehicle': str(row.get('السيارة', '')),
-                    'engine': str(row.get('المحرك', '')),
-                    'year': str(row.get('السنة', '')),
-                    'displacement': str(row.get('السعة', '')),
-                    'power': str(row.get('القوة', '')),
-                    'torque': str(row.get('العزم', '')),
-                    'fuelSystem': str(row.get('نظام الوقود', '')),
-                    'ignitionSystem': str(row.get('نظام الإشعال', '')),
-                    'notes': str(row.get('الملاحظات', '')),
-                    'source': file.filename,
-                    'createdAt': datetime.utcnow()
-                }
+                    veh_doc = {
+                        'id': str(uuid.uuid4()),
+                        'type': 'vehicle_spec',
+                        'vehicle': str(row.get('السيارة', '')),
+                        'engine': str(row.get('المحرك', '')),
+                        'year': str(row.get('السنة', '')),
+                        'displacement': str(row.get('السعة', '')),
+                        'power': str(row.get('القوة', '')),
+                        'torque': str(row.get('العزم', '')),
+                        'fuelSystem': str(row.get('نظام الوقود', '')),
+                        'ignitionSystem': str(row.get('نظام الإشعال', '')),
+                        'notes': str(row.get('الملاحظات', '')),
+                        'source': file.filename,
+                        'createdAt': datetime.utcnow()
+                    }
+                    
+                    await db.vehicle_references.insert_one(veh_doc)
+                    veh_count += 1
                 
-                await db.vehicle_references.insert_one(veh_doc)
-                veh_count += 1
-            
-            imported_counts['vehicles'] = veh_count
+                imported_counts['vehicles'] = veh_count
         
         elif file.filename.lower().endswith('.pdf'):
             # Import from PDF - extract DTC codes automatically

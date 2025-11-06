@@ -26,10 +26,10 @@ async def import_references_from_file(file: UploadFile = File(...)):
             
             # Import DTC Codes
             if 'DTC Codes' in excel_data:
-            dtc_df = excel_data['DTC Codes']
-            dtc_count = 0
-            
-            for _, row in dtc_df.iterrows():
+                dtc_df = excel_data['DTC Codes']
+                dtc_count = 0
+                
+                for _, row in dtc_df.iterrows():
                 dtc_doc = {
                     'id': str(uuid.uuid4()),
                     'type': 'dtc',

@@ -1722,14 +1722,15 @@ async def get_public_approval(token: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/approvals/public/{token}/respond')
-async def respond_to_approval(token: str, payload: Dict[str, Any]):
-    """Customer responds to approval request"""
+async def respond_to_approval(
+    token: str, 
+    status: str = 'approved',
+    name: str = '',
+    phone: str = '',
+    notes: str = ''
+):
+    """Customer responds to approval request - supports query params or body"""
     try:
-        status = payload.get('status', 'approved')  # approved, rejected, deferred, requote
-        name = payload.get('name', '')
-        phone = payload.get('phone', '')
-        notes = payload.get('notes', '')
-        
         doc = await db.approval_requests.find_one({'token': token})
         if not doc:
             raise HTTPException(status_code=404, detail='رابط غير صحيح')

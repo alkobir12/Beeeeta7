@@ -58,36 +58,36 @@ async def import_references_from_file(file: UploadFile = File(...)):
             
             # Import Electrical Components
             if 'Electrical Components' in excel_data:
-            elec_df = excel_data['Electrical Components']
-            elec_count = 0
-            
-            for _, row in elec_df.iterrows():
-                elec_doc = {
-                    'id': str(uuid.uuid4()),
-                    'type': 'electrical',
-                    'componentAr': str(row.get('المكون', '')),
-                    'componentEn': str(row.get('Component', '')),
-                    'voltageNormal': float(row.get('الجهد الطبيعي', 0)),
-                    'voltageMin': float(row.get('الجهد الأدنى', 0)),
-                    'voltageMax': float(row.get('الجهد الأعلى', 0)),
-                    'unit': str(row.get('الوحدة', 'V')),
-                    'measurementMethod': str(row.get('طريقة القياس', '')),
-                    'notes': str(row.get('الملاحظات', '')),
-                    'source': file.filename,
-                    'createdAt': datetime.utcnow()
-                }
+                elec_df = excel_data['Electrical Components']
+                elec_count = 0
                 
-                await db.electrical_references.insert_one(elec_doc)
-                elec_count += 1
+                for _, row in elec_df.iterrows():
+                    elec_doc = {
+                        'id': str(uuid.uuid4()),
+                        'type': 'electrical',
+                        'componentAr': str(row.get('المكون', '')),
+                        'componentEn': str(row.get('Component', '')),
+                        'voltageNormal': float(row.get('الجهد الطبيعي', 0)),
+                        'voltageMin': float(row.get('الجهد الأدنى', 0)),
+                        'voltageMax': float(row.get('الجهد الأعلى', 0)),
+                        'unit': str(row.get('الوحدة', 'V')),
+                        'measurementMethod': str(row.get('طريقة القياس', '')),
+                        'notes': str(row.get('الملاحظات', '')),
+                        'source': file.filename,
+                        'createdAt': datetime.utcnow()
+                    }
+                    
+                    await db.electrical_references.insert_one(elec_doc)
+                    elec_count += 1
+                
+                imported_counts['electrical'] = elec_count
             
-            imported_counts['electrical'] = elec_count
-        
-        # Import Vehicle Specs
-        if 'Vehicle Specs' in excel_data:
-            veh_df = excel_data['Vehicle Specs']
-            veh_count = 0
-            
-            for _, row in veh_df.iterrows():
+            # Import Vehicle Specs
+            if 'Vehicle Specs' in excel_data:
+                veh_df = excel_data['Vehicle Specs']
+                veh_count = 0
+                
+                for _, row in veh_df.iterrows():
                 veh_doc = {
                     'id': str(uuid.uuid4()),
                     'type': 'vehicle_spec',

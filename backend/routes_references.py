@@ -241,6 +241,9 @@ async def download_excel_search_program():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/references/electrical")
 async def get_electrical_references(component: str = None):
     """الحصول على مراجع كهربائية"""
     try:

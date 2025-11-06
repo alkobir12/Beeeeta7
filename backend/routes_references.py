@@ -30,34 +30,34 @@ async def import_references_from_file(file: UploadFile = File(...)):
                 dtc_count = 0
                 
                 for _, row in dtc_df.iterrows():
-                dtc_doc = {
-                    'id': str(uuid.uuid4()),
-                    'type': 'dtc',
-                    'code': str(row.get('الكود', '')).strip().upper(),
-                    'nameAr': str(row.get('الاسم بالعربية', '')),
-                    'nameEn': str(row.get('الاسم English', '')),
-                    'vehicle': str(row.get('السيارة', '')),
-                    'causes': str(row.get('الأسباب', '')).split('\n') if pd.notna(row.get('الأسباب')) else [],
-                    'fixes': str(row.get('طرق الإصلاح', '')).split('\n') if pd.notna(row.get('طرق الإصلاح')) else [],
-                    'notes': str(row.get('الملاحظات', '')),
-                    'pageNumber': str(row.get('الصفحة', '')),
-                    'relatedCodes': str(row.get('أكواد مشابهة', '')).split(',') if pd.notna(row.get('أكواد مشابهة')) else [],
-                    'source': file.filename,
-                    'createdAt': datetime.utcnow()
-                }
+                    dtc_doc = {
+                        'id': str(uuid.uuid4()),
+                        'type': 'dtc',
+                        'code': str(row.get('الكود', '')).strip().upper(),
+                        'nameAr': str(row.get('الاسم بالعربية', '')),
+                        'nameEn': str(row.get('الاسم English', '')),
+                        'vehicle': str(row.get('السيارة', '')),
+                        'causes': str(row.get('الأسباب', '')).split('\n') if pd.notna(row.get('الأسباب')) else [],
+                        'fixes': str(row.get('طرق الإصلاح', '')).split('\n') if pd.notna(row.get('طرق الإصلاح')) else [],
+                        'notes': str(row.get('الملاحظات', '')),
+                        'pageNumber': str(row.get('الصفحة', '')),
+                        'relatedCodes': str(row.get('أكواد مشابهة', '')).split(',') if pd.notna(row.get('أكواد مشابهة')) else [],
+                        'source': file.filename,
+                        'createdAt': datetime.utcnow()
+                    }
+                    
+                    # Check if already exists
+                    existing = await db.dtc_references.find_one({'code': dtc_doc['code'], 'vehicle': dtc_doc['vehicle']})
+                    if existing:
+                        await db.dtc_references.update_one({'_id': existing['_id']}, {'$set': dtc_doc})
+                    else:
+                        await db.dtc_references.insert_one(dtc_doc)
+                    dtc_count += 1
                 
-                # Check if already exists
-                existing = await db.dtc_references.find_one({'code': dtc_doc['code'], 'vehicle': dtc_doc['vehicle']})
-                if existing:
-                    await db.dtc_references.update_one({'_id': existing['_id']}, {'$set': dtc_doc})
-                else:
-                    await db.dtc_references.insert_one(dtc_doc)
-                dtc_count += 1
+                imported_counts['dtc'] = dtc_count
             
-            imported_counts['dtc'] = dtc_count
-        
-        # Import Electrical Components
-        if 'Electrical Components' in excel_data:
+            # Import Electrical Components
+            if 'Electrical Components' in excel_data:
             elec_df = excel_data['Electrical Components']
             elec_count = 0
             

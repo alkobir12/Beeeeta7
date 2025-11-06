@@ -179,7 +179,7 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-amber-700 text-sm font-medium mb-1">تنتظر قطع</p>
+                  <p className="text-amber-700 text-sm font-medium mb-1">في انتظار قطع الغيار</p>
                   <p className="text-3xl font-bold text-amber-900">{vehicles.filter(v => (v.status === 'repair') && (!v.parts || v.parts.length === 0)).length}</p>
                 </div>
                 <div className="bg-amber-600 p-3 rounded-full">

@@ -873,6 +873,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Maintenance router not loaded: {e}")
 
+# Import and include Payroll router
+try:
+    from routes_payroll import router as payroll_router, set_db as set_payroll_db
+    set_payroll_db(db)
+    app.include_router(payroll_router)
+    logger.info("✅ Payroll router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Payroll router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

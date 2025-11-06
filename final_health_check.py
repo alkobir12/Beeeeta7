@@ -126,16 +126,18 @@ def test_references(results: TestResults):
         
         if response.status_code == 200:
             data = response.json()
-            if isinstance(data, list):
+            # Handle both direct array and wrapped response
+            refs = data if isinstance(data, list) else data.get('references', [])
+            if refs and isinstance(refs, list):
                 log_test("GET /api/references/electrical", "PASS", 
-                        f"Retrieved {len(data)} electrical references", response_time)
+                        f"Retrieved {len(refs)} electrical references", response_time)
                 results.add_result("/api/references/electrical", "GET", "PASS", 
-                                 f"{len(data)} references", response_time)
+                                 f"{len(refs)} references", response_time)
             else:
                 log_test("GET /api/references/electrical", "FAIL", 
-                        f"Expected list, got {type(data)}", response_time)
+                        f"No references found in response", response_time)
                 results.add_result("/api/references/electrical", "GET", "FAIL", 
-                                 "Invalid response format", response_time)
+                                 "No references found", response_time)
         else:
             log_test("GET /api/references/electrical", "FAIL", 
                     f"Status: {response.status_code}", response_time)

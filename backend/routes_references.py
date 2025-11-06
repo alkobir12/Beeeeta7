@@ -110,7 +110,7 @@ async def import_references_from_file(file: UploadFile = File(...)):
                 imported_counts['vehicles'] = veh_count
         
         elif file.filename.lower().endswith('.pdf'):
-            # Import from PDF - extract DTC codes automatically
+            # Import from PDF - extract DTC codes (optimized, first 30 pages only)
             from PyPDF2 import PdfReader
             import re
             from pathlib import Path
@@ -120,33 +120,40 @@ async def import_references_from_file(file: UploadFile = File(...)):
             with open(temp_path, 'wb') as f:
                 f.write(contents)
             
-            # Extract text
+            # Extract text - limit to first 30 pages for speed
             reader = PdfReader(str(temp_path))
             dtc_count = 0
+            max_pages = min(30, len(reader.pages))  # Only first 30 pages
             
-            for page_num, page in enumerate(reader.pages):
-                text = page.extract_text()
+            for page_num in range(max_pages):
+                text = reader.pages[page_num].extract_text()
                 
                 # Find DTC codes
                 dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4})\b', re.IGNORECASE)
                 codes = set(dtc_pattern.findall(text.upper()))
                 
-                for code in codes:
+                # Limit to 20 codes per file for speed
+                for code in list(codes)[:20]:
+                    # Check if already exists (skip duplicates)
+                    existing = await db.dtc_references.find_one({'code': code, 'source': file.filename})
+                    if existing:
+                        continue
+                    
                     # Extract context around code
                     code_idx = text.upper().find(code)
                     if code_idx == -1:
                         continue
                     
-                    start = max(0, code_idx - 200)
-                    end = min(len(text), code_idx + 500)
+                    start = max(0, code_idx - 150)
+                    end = min(len(text), code_idx + 300)
                     context = text[start:end]
                     
-                    # Try to extract name (next line after code)
+                    # Try to extract name (simplified)
                     lines = context.split('\n')
                     name = ""
                     for i, line in enumerate(lines):
                         if code in line.upper() and i + 1 < len(lines):
-                            name = lines[i + 1].strip()
+                            name = lines[i + 1].strip()[:100]
                             break
                     
                     dtc_doc = {

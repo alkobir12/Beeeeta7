@@ -21,6 +21,8 @@ const VehicleDetails = () => {
   const [status, setStatus] = useState('diagnosis');
   const [notes, setNotes] = useState('');
   const [assignedTech, setAssignedTech] = useState('');
+  const [vehicleFiles, setVehicleFiles] = useState([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     fetchData();

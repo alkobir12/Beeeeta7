@@ -109,6 +109,70 @@ async def import_references_from_file(file: UploadFile = File(...)):
             
             imported_counts['vehicles'] = veh_count
         
+        elif file.filename.lower().endswith('.pdf'):
+            # Import from PDF - extract DTC codes automatically
+            from PyPDF2 import PdfReader
+            import re
+            from pathlib import Path
+            
+            # Save temporarily
+            temp_path = Path('/tmp') / file.filename
+            with open(temp_path, 'wb') as f:
+                f.write(contents)
+            
+            # Extract text
+            reader = PdfReader(str(temp_path))
+            dtc_count = 0
+            
+            for page_num, page in enumerate(reader.pages):
+                text = page.extract_text()
+                
+                # Find DTC codes
+                dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4})\b', re.IGNORECASE)
+                codes = set(dtc_pattern.findall(text.upper()))
+                
+                for code in codes:
+                    # Extract context around code
+                    code_idx = text.upper().find(code)
+                    if code_idx == -1:
+                        continue
+                    
+                    start = max(0, code_idx - 200)
+                    end = min(len(text), code_idx + 500)
+                    context = text[start:end]
+                    
+                    # Try to extract name (next line after code)
+                    lines = context.split('\n')
+                    name = ""
+                    for i, line in enumerate(lines):
+                        if code in line.upper() and i + 1 < len(lines):
+                            name = lines[i + 1].strip()
+                            break
+                    
+                    dtc_doc = {
+                        'id': str(uuid.uuid4()),
+                        'type': 'dtc',
+                        'code': code,
+                        'nameAr': name[:100] if name else code,
+                        'nameEn': name[:100] if name else code,
+                        'vehicle': extract_vehicle_from_filename(file.filename),
+                        'causes': [],
+                        'fixes': [],
+                        'notes': context[:300],
+                        'pageNumber': str(page_num + 1),
+                        'relatedCodes': list(codes - {code})[:5],
+                        'source': file.filename,
+                        'createdAt': datetime.utcnow()
+                    }
+                    
+                    # Check if exists
+                    existing = await db.dtc_references.find_one({'code': code, 'source': file.filename})
+                    if not existing:
+                        await db.dtc_references.insert_one(dtc_doc)
+                        dtc_count += 1
+            
+            imported_counts['dtc_from_pdf'] = dtc_count
+        
         return {
             'status': 'ok',
             'message': 'تم استيراد المراجع بنجاح',
@@ -117,6 +181,22 @@ async def import_references_from_file(file: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def extract_vehicle_from_filename(filename: str) -> str:
+    """استخراج اسم السيارة من اسم الملف"""
+    filename_lower = filename.lower()
+    if 'land cruiser' in filename_lower or 'landcruiser' in filename_lower:
+        if '200' in filename:
+            return 'Toyota Land Cruiser 200'
+        return 'Toyota Land Cruiser'
+    elif 'hilux' in filename_lower:
+        if '1kd' in filename_lower or '2kd' in filename_lower:
+            return 'Toyota Hilux 1KD/2KD'
+        return 'Toyota Hilux'
+    elif 'innova' in filename_lower:
+        return 'Toyota Innova'
+    return 'عام'
 
 
 @router.get("/references/dtc")

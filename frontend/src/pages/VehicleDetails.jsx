@@ -351,6 +351,79 @@ const VehicleDetails = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Vehicle Files Section */}
+        <Card className="card-godaddy mt-6">
+          <CardHeader className="bg-gradient-to-l from-purple-50">
+            <CardTitle className="flex items-center gap-2">
+              <FileText size={20} />
+              ملفات وفيديوهات المركبة
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="mb-4">
+              <Label htmlFor="vehicle-file-upload" className="cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
+                  <Upload className="mx-auto text-godaddy-green mb-2" size={32} />
+                  <p className="font-semibold mb-1">رفع ملف تشخيص أو فيديو</p>
+                  <p className="text-sm text-gray-600">PDF, DOCX, Video, Images</p>
+                </div>
+              </Label>
+              <input
+                id="vehicle-file-upload"
+                type="file"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  
+                  try {
+                    setUploadingFile(true);
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('file_type', 'diagnostic');
+                    
+                    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                    await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=diagnostic`, {
+                      method: 'POST',
+                      body: formData
+                    });
+                    
+                    toast({ title: '✅ تم الرفع', description: file.name });
+                    fetchData();
+                  } catch (err) {
+                    toast({ title: 'خطأ', description: 'فشل رفع الملف', variant: 'destructive' });
+                  } finally {
+                    setUploadingFile(false);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </div>
+            
+            {vehicleFiles.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold mb-2">الملفات المرفوعة ({vehicleFiles.length})</h4>
+                {vehicleFiles.map((file, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="text-godaddy-green" size={20} />
+                      <div>
+                        <p className="font-medium text-sm">{file.filename}</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(file.uploadedAt).toLocaleDateString('ar-SA')}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                      {file.fileType}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
       </div>
     </Layout>

@@ -24,6 +24,7 @@ const VehicleDetails = () => {
   const [assignedTech, setAssignedTech] = useState('');
   const [vehicleFiles, setVehicleFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [statusImages, setStatusImages] = useState([]);
 
   useEffect(() => {
     fetchData();

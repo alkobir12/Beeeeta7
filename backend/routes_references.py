@@ -380,7 +380,7 @@ async def smart_search_electrical(payload: Dict[str, Any]):
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
             system_message="You are an automotive electrical diagnostic expert. Answer voltage/electrical questions in Arabic based on the reference data."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         search_prompt = f"""السؤال: {query}
 

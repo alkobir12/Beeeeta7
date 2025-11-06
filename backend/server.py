@@ -225,7 +225,10 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
                 if customer_phone:
                     try:
                         from routes_extended import router as ext_router
-                        approval_link = f"https://carmech-hub.preview.emergentagent.com/approval/{token}"
+                        # Get app URL from environment or use backend URL
+                        app_url = os.getenv('APP_URL') or os.getenv('REACT_APP_BACKEND_URL', 'https://carmech-hub.preview.emergentagent.com')
+                        app_url = app_url.replace('/api', '')  # Remove /api if present
+                        approval_link = f"{app_url}/approval/{token}"
                         # Prepare notification
                         notif_response = await db.whatsapp_messages.insert_one({
                             "id": str(uuid.uuid4()),

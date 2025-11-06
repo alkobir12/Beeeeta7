@@ -864,6 +864,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Vehicle Files router not loaded: {e}")
 
+# Import and include Maintenance router
+try:
+    from routes_maintenance import router as maint_router, set_db as set_maint_db
+    set_maint_db(db)
+    app.include_router(maint_router)
+    logger.info("✅ Maintenance router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Maintenance router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

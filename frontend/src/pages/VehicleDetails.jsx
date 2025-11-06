@@ -331,6 +331,36 @@ const VehicleDetails = () => {
                   placeholder="أضف ملاحظات حول حالة المركبة..."
                   className="min-h-32"
                 />
+                
+                {/* Upload Images for Status Update */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <Label htmlFor="status-images" className="cursor-pointer block text-center">
+                    <Upload className="mx-auto text-godaddy-green mb-2" size={32} />
+                    <p className="text-sm font-semibold">إرفاق صور للإصلاح (اختياري)</p>
+                    <p className="text-xs text-gray-600">صور قبل وبعد الإصلاح</p>
+                  </Label>
+                  <input
+                    id="status-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      setStatusImages(files);
+                      toast({
+                        title: '✅ تم اختيار الصور',
+                        description: `${files.length} صورة`
+                      });
+                    }}
+                  />
+                  {statusImages.length > 0 && (
+                    <div className="mt-2 text-sm text-green-700">
+                      ✓ {statusImages.length} صورة جاهزة للإرفاق
+                    </div>
+                  )}
+                </div>
+                
                 <Button 
                   onClick={handleNotify}
                   variant="outline"

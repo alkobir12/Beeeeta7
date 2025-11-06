@@ -31,12 +31,15 @@ const VehicleDetails = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [vehicleRes, techniciansRes] = await Promise.all([
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const [vehicleRes, techniciansRes, filesRes] = await Promise.all([
         vehicleAPI.getById(id),
-        technicianAPI.getAll()
+        technicianAPI.getAll(),
+        fetch(`${API_URL}/vehicles/${id}/files`).then(r => r.json()).catch(() => ({files: []}))
       ]);
       setVehicle(vehicleRes.data);
       setTechnicians(techniciansRes.data);
+      setVehicleFiles(filesRes.files || []);
       setStatus(vehicleRes.data.status || 'diagnosis');
       setNotes(vehicleRes.data.notes || '');
       setAssignedTech(vehicleRes.data.technicianId || '');

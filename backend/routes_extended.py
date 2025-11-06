@@ -50,7 +50,8 @@ async def get_settings():
                         {"path": "/archive", "label": "أرشيف المركبات", "enabled": True},
                         {"group": True, "path": "/ceo-group", "label": "المدير التنفيذي", "enabled": True, "children": [
                             {"path": "/ceo", "label": "لوحة المدير", "enabled": True},
-                            {"path": "/knowledge", "label": "إدارة المعرفة AI", "enabled": True}
+                            {"path": "/knowledge", "label": "إدارة المعرفة AI", "enabled": True},
+                            {"path": "/references", "label": "المراجع الفنية", "enabled": True}
                         ]},
                         {"path": "/payroll", "label": "الرواتب", "enabled": True},
                         {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [

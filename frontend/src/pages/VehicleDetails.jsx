@@ -59,15 +59,33 @@ const VehicleDetails = () => {
 
   const handleStatusUpdate = async () => {
     try {
+      // Upload images first if any
+      if (statusImages.length > 0) {
+        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+        for (const img of statusImages) {
+          const formData = new FormData();
+          formData.append('file', img);
+          formData.append('file_type', 'status_update');
+          
+          await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=status_update`, {
+            method: 'POST',
+            body: formData
+          });
+        }
+      }
+      
       await vehicleAPI.update(id, {
         status,
         notes,
         technicianId: assignedTech
       });
+      
       toast({
         title: 'تم التحديث',
-        description: 'تم تحديث حالة المركبة بنجاح. سيتم إرسال إشعار للعميل.',
+        description: `تم تحديث الحالة${statusImages.length > 0 ? ' وإرفاق ' + statusImages.length + ' صورة' : ''}. سيتم إرسال إشعار للعميل.`,
       });
+      
+      setStatusImages([]);
       fetchData();
     } catch (error) {
       console.error('Error updating vehicle:', error);

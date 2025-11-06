@@ -12,18 +12,20 @@ def set_db(database):
     global db
     db = database
 
-@router.post("/references/import-excel")
-async def import_references_excel(file: UploadFile = File(...)):
-    """استيراد مراجع من Excel"""
+@router.post("/references/import-file")
+async def import_references_from_file(file: UploadFile = File(...)):
+    """استيراد مراجع من PDF أو Excel"""
     try:
-        # Read Excel file
         contents = await file.read()
-        excel_data = pd.read_excel(BytesIO(contents), sheet_name=None)
-        
         imported_counts = {}
         
-        # Import DTC Codes
-        if 'DTC Codes' in excel_data:
+        # Determine file type
+        if file.filename.lower().endswith(('.xlsx', '.xls')):
+            # Import from Excel
+            excel_data = pd.read_excel(BytesIO(contents), sheet_name=None)
+            
+            # Import DTC Codes
+            if 'DTC Codes' in excel_data:
             dtc_df = excel_data['DTC Codes']
             dtc_count = 0
             

@@ -69,12 +69,21 @@ const Settings = () => {
       // Save language to localStorage for i18n
       localStorage.setItem('language', settings.language);
       
+      // Update i18n language immediately
+      if (window.i18n) {
+        window.i18n.changeLanguage(settings.language);
+      }
+      
+      // Update document direction
+      document.documentElement.dir = settings.language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = settings.language;
+      
       // Reload settings to confirm save
       await fetchSettings();
       
       toast({ 
-        title: 'تم الحفظ', 
-        description: 'تم حفظ الإعدادات بنجاح. سيتم إعادة تحميل الصفحة...' 
+        title: settings.language === 'ar' ? 'تم الحفظ' : 'Saved', 
+        description: settings.language === 'ar' ? 'تم حفظ الإعدادات بنجاح. سيتم إعادة تحميل الصفحة...' : 'Settings saved successfully. Page will reload...' 
       });
       
       // Reload page after 1 second to apply language/theme changes

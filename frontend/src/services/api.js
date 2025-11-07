@@ -29,6 +29,8 @@ const customerAPI = {
   create: (data) => axios.post(`${API_BASE}/customers`, data),
   update: (id, data) => axios.put(`${API_BASE}/customers/${id}`, data),
   delete: (id) => axios.delete(`${API_BASE}/customers/${id}`)
+  getApprovals: (id) => axios.get(`${API_BASE}/customers/${id}/approvals`),
+
 };
 
 const technicianAPI = {

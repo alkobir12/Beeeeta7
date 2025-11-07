@@ -1840,6 +1840,10 @@ async def list_customer_approvals(customer_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -156,7 +156,7 @@ async def chat_with_bot(bot_id: str, message: str, session_id: Optional[str] = N
             api_key=llm_key,
             session_id=session_id,
             system_message=bot_obj.systemPrompt
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         user_message = UserMessage(text=message)
         response = await chat.send_message(user_message)

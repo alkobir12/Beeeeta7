@@ -67,7 +67,7 @@ async def extract_dtc_cards(payload: Dict[str, Any]):
                 api_key=llm_key,
                 session_id=str(uuid.uuid4()),
                 system_message="You are an automotive DTC (Diagnostic Trouble Code) expert. Provide detailed, accurate information in Arabic."
-            ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+            ).with_model("anthropic", "claude-sonnet-4-20250514")
             
             # Process each code
             for code, info in list(all_found_codes.items())[:10]:  # Limit to 10 codes

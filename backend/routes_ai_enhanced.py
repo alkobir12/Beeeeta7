@@ -96,7 +96,7 @@ async def enhanced_ai_chat(request: ChatRequest):
 - السلامة أولاً
 """
         provider = (request.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-        model = request.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        model = request.model or ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY missing")
@@ -188,7 +188,7 @@ async def electrical_diagram_qa(req: DiagramQARequest):
 """
             return {"response": guide, "sources": [d.get('title') for d in docs][:3]}
         provider = (req.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-        model = req.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        model = req.model or ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system).with_model(provider, model)
         resp = await chat.send_message(UserMessage(text=user))
         return {"response": resp, "sources": [d.get('title') or d.get('file_name') for d in docs][:3]}
@@ -276,7 +276,7 @@ async def upload_and_analyze_document(file: UploadFile = File(...)):
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
             system_message="You are an expert automotive technical knowledge analyzer. Extract key information, technical specs, troubleshooting steps, and educational content in Arabic."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         analysis_prompt = f"""حلل هذا المستند التقني بعمق وقدم:
 1. ملخص شامل بالعربية (200-300 كلمة)
@@ -577,7 +577,7 @@ async def compare_vehicles(payload: Dict[str, Any]):
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
             system_message="You are a vehicle comparison assistant for automotive workshop management. Compare vehicles and provide detailed analysis in Arabic."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         prompt = f"""قارن بين هاتين المركبتين بالتفصيل:
 
@@ -610,7 +610,7 @@ async def get_engine_info(payload: Dict[str, Any]):
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
             system_message="You are an expert automotive mechanic assistant. Provide concise technical information about engines and vehicles in Arabic. Keep answers under 300 words."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         # Simplified prompt for faster response
         prompt = f"""أنت خبير ميكانيكا سيارات. أجب على هذا السؤال بإيجاز (أقل من 300 كلمة):
@@ -737,7 +737,7 @@ async def ai_diagnostics_compare(payload: CompareRequest):
 """
         user_prompt = f"""المركبة أ:\n{to_lines(payload.vehicle_a)}\n\nالمركبة ب:\n{to_lines(payload.vehicle_b)}\n\nالمطلوب: تقرير مقارنة عربي احترافي مع حكم (طبيعي/غير طبيعي) لكل مؤشر كهربائي وحقن، وتوصيات عملية."""
         provider = (payload.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-        model = payload.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        model = payload.model or ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             a = payload.vehicle_a.dict()
@@ -784,7 +784,7 @@ async def ai_analyze_fleet(payload: dict = Body(default={})):
         if not llm_key:
             return {"kpi": kpi, "ai": None, "note": "LLM key missing; returned KPIs only"}
         provider = (os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-        model = ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        model = ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         system_prompt = "محلل عمليات للورشة يقدّم مؤشرات وتنبيهات ذكية حول حالة المركبات وتدفق العمل."
         context = f"إجمالي المركبات: {total}\nحسب الحالة: {by_status}\nأكثر 10 علامات: {kpi['topBrands']}"
         ask = "حلّل المؤشرات وقدّم 3 تنبيهات مبكرة، و3 توصيات قابلة للتنفيذ."
@@ -923,7 +923,7 @@ async def electrical_ingest(req: ElectricalIngestRequest):
         structured = None
         if llm_key:
             provider = (os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-            model = ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+            model = ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
             system = "استخرج معرفة كهربائية منظمة من النص (أسماء الدوائر/الفيوزات/الريلايات/الأرضي/الحساسات/أرقام الأطراف/الجهود الطبيعية/خطوات الفحص) وأعد JSON."
             prompt = f"نص مرجعي:\n{text[:6000]}\n\nالمطلوب: JSON بالمفاتيح: components(fuses, relays, sensors, connectors, grounds), wires, pinouts, expected_values, test_steps(ar), safety_notes."
             chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system).with_model(provider, model)
@@ -988,7 +988,7 @@ async def electrical_qa(request: ElectricalQARequest):
 {ctx}
 """
         provider = (request.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
-        model = request.model or ("gpt-5" if provider == "openai" else "claude-3-7-sonnet-20250219")
+        model = request.model or ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         if not llm_key:
             raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY missing")

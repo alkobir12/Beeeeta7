@@ -604,7 +604,7 @@ async def chat_with_ai(chat_request: ChatRequest):
             api_key=llm_key,
             session_id=session_id,
             system_message=enhanced_prompt
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         # Send message
         user_message = UserMessage(text=chat_request.message)
@@ -733,7 +733,7 @@ async def ceo_ai_analysis(question: str, account_id: Optional[str] = None):
             api_key=llm_key,
             session_id=str(uuid.uuid4()),
             system_message="أنت مستشار أعمال وCEO مساعد متخصص في إدارة ورش السيارات. تحلل البيانات وتقدم توصيات استراتيجية."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         response = await chat.send_message(UserMessage(text=context))
         

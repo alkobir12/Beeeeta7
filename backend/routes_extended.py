@@ -2011,7 +2011,7 @@ async def chart_account_ai(node_id: str, question: Optional[str] = None):
         import uuid
         llm_key = os.getenv('EMERGENT_LLM_KEY')
         provider = (os.getenv('DEFAULT_AI_PROVIDER') or 'anthropic').lower()
-        model = 'gpt-5' if provider == 'openai' else 'claude-3-7-sonnet-20250219'
+        model = 'gpt-5' if provider == 'openai' else 'claude-sonnet-4-20250514'
         sysmsg = f"""
 أنت محلل مالي للورش.
 العقد: {node.get('name')} ({node.get('code')})

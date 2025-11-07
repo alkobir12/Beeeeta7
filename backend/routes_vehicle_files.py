@@ -110,7 +110,7 @@ async def compare_vehicle_diagnostics(payload: Dict[str, Any]):
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
             system_message="You are an automotive diagnostic comparison expert. Compare vehicles and their diagnostic data in Arabic."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         prompt = f"""قارن بين هاتين المركبتين بالتفصيل:
 

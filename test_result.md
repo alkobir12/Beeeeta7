@@ -1071,6 +1071,18 @@ frontend:
           agent: "main"
           comment: "Added POST /api/import/parts with Arabic header support. Frontend PartsInventory now shows Import button and posts to this endpoint."
 
+  - task: "Operations: CEO embedded section"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Embedded CEO section in Operations with KPIs, trends tab placeholder, and Ask CEO panel calling /api/ceo/ai-analysis-multi. Added filters for range/account."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"

@@ -54,6 +54,19 @@ const Operations = () => {
         <div className="container mx-auto p-6 max-w-7xl">
           <h1 className="text-3xl font-bold text-slate-800 mb-6">عمليات الشراء/البيع</h1>
 
+          {/* CEO Embedded Section */}
+          <Card className="mb-6 border-2">
+            <CardHeader>
+              <CardTitle>لوحة المدير التنفيذي (مضمنة داخل العمليات)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              {/* Filters */}
+              <CeoFilters accounts={accounts} onChange={()=>{}} />
+              <CeoSection accounts={accounts} ops={ops} />
+            </CardContent>
+          </Card>
+
+
           {/* Analytics Cards */}
           {analytics && (
             <>

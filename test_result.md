@@ -1073,15 +1073,18 @@ frontend:
 
   - task: "Operations: CEO embedded section"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/pages/Operations.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Embedded CEO section in Operations with KPIs, trends tab placeholder, and Ask CEO panel calling /api/ceo/ai-analysis-multi. Added filters for range/account."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL BACKEND ISSUE: Backend health check completed for Operations CEO embedded section. **BACKEND TEST RESULTS:** (1) ✅ GET /api/operations/analytics/summary - WORKING correctly, returns proper data structure with today/week/month analytics (sales, expenses, profit, counts). (2) ❌ POST /api/ceo/ai-analysis-multi - NOT FOUND (404), endpoint does not exist in backend code. Frontend Operations.jsx line 523 calls this endpoint but it's not implemented. This endpoint was previously marked as working in test_result.md line 424 but appears to have been removed or never properly implemented. **IMPACT:** The 'اسأل CEO' tab in the embedded CEO section will fail when user clicks 'تحليل ذكي' button. **REQUIRED ACTION:** Main agent must implement POST /api/ceo/ai-analysis-multi endpoint in backend to accept {accountIds: string[], question: string} and return {totals: object, ai: {answer: string}}. Frontend testing NOT performed as per testing agent scope (backend only)."
 
 metadata:
   created_by: "main_agent"

@@ -483,6 +483,85 @@ const KnowledgeBase = () => {
               </div>
             </TabsContent>
 
+            {/* Compare Tab */}
+            <TabsContent value="compare">
+              <Card className="card-godaddy">
+                <CardHeader className="bg-gradient-to-l from-purple-50">
+                  <CardTitle className="flex items-center gap-2">
+                    <GitCompare className="text-purple-600" />
+                    مقارنة المستندات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <Label className="mb-2 block font-semibold">الملف الأول</Label>
+                      <select 
+                        className="w-full border-2 rounded-lg p-3"
+                        onChange={(e) => setFile1(documents.find(d => d.id === e.target.value))}
+                      >
+                        <option value="">اختر مستند...</option>
+                        {documents.map(doc => (
+                          <option key={doc.id} value={doc.id}>{doc.filename}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="mb-2 block font-semibold">الملف الثاني</Label>
+                      <select 
+                        className="w-full border-2 rounded-lg p-3"
+                        onChange={(e) => setFile2(documents.find(d => d.id === e.target.value))}
+                      >
+                        <option value="">اختر مستند...</option>
+                        {documents.map(doc => (
+                          <option key={doc.id} value={doc.id}>{doc.filename}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    onClick={async () => {
+                      if (!file1 || !file2) {
+                        toast({ title: 'اختر ملفين', variant: 'destructive' });
+                        return;
+                      }
+                      
+                      try {
+                        setLoading(true);
+                        const res = await axios.post(`${API_URL}/ai/kb/compare-files`, {
+                          file1_id: file1.id,
+                          file2_id: file2.id
+                        });
+                        
+                        setComparisonResult(res.data);
+                        toast({ title: '✅ اكتملت المقارنة' });
+                      } catch (e) {
+                        toast({ title: 'خطأ في المقارنة', variant: 'destructive' });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={!file1 || !file2 || loading}
+                    className="btn-godaddy-primary w-full"
+                  >
+                    {loading ? 'جاري المقارنة...' : 'قارن الملفات'}
+                  </Button>
+                  
+                  {comparisonResult && (
+                    <Card className="mt-6 border-2 border-purple-300">
+                      <CardContent className="p-6">
+                        <h3 className="font-bold text-xl mb-4">نتيجة المقارنة</h3>
+                        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+{comparisonResult.comparison}
+                        </pre>
+                      </CardContent>
+                    </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {/* Upload Tab */}
             <TabsContent value="upload">
               <Card className="card-godaddy">

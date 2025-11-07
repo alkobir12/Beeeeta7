@@ -1073,9 +1073,9 @@ frontend:
 
   - task: "Operations: CEO embedded section"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/pages/Operations.jsx"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -1085,6 +1085,9 @@ frontend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL BACKEND ISSUE: Backend health check completed for Operations CEO embedded section. **BACKEND TEST RESULTS:** (1) ✅ GET /api/operations/analytics/summary - WORKING correctly, returns proper data structure with today/week/month analytics (sales, expenses, profit, counts). (2) ❌ POST /api/ceo/ai-analysis-multi - NOT FOUND (404), endpoint does not exist in backend code. Frontend Operations.jsx line 523 calls this endpoint but it's not implemented. This endpoint was previously marked as working in test_result.md line 424 but appears to have been removed or never properly implemented. **IMPACT:** The 'اسأل CEO' tab in the embedded CEO section will fail when user clicks 'تحليل ذكي' button. **REQUIRED ACTION:** Main agent must implement POST /api/ceo/ai-analysis-multi endpoint in backend to accept {accountIds: string[], question: string} and return {totals: object, ai: {answer: string}}. Frontend testing NOT performed as per testing agent scope (backend only)."
+        - working: true
+          agent: "testing"
+          comment: "✅ FOCUSED BACKEND HEALTH CHECK COMPLETE: Successfully tested both requested endpoints with 100% pass rate (3/3 tests passed). **TEST 1 - GET /api/operations/analytics/summary:** ✅ PASSED - Returns 200 OK with proper data structure including today/week/month analytics (sales, expenses, profit, counts) and accountsSummary array. Response includes all required fields and proper JSON serialization. **TEST 2 - POST /api/ceo/ai-analysis-multi:** ✅ PASSED - Endpoint now exists and working correctly in routes_extended.py (lines 745-846). Successfully tested with sample accountIds ['e28b9e20-c352-452c-a48f-7baee287da0f', '6115c89c-0d33-478e-9e68-552361cd3888'] and Arabic question 'ما هي أفضل الفروع أداءً من حيث الربحية؟'. Returns 200 OK with proper response structure: {accounts: [...], totals: {income, expenses, profit, profitMargin}, periodDays: 30, ai: {answer, model}}. AI field contains Arabic analysis from Claude Sonnet 4 model. Also tested with empty accountIds array (auto-pick active accounts) - works correctly. **BACKEND LOGS:** No Python errors detected. LLM integration working correctly with successful completion calls. All endpoints production-ready for Operations CEO embedded section."
 
 metadata:
   created_by: "main_agent"

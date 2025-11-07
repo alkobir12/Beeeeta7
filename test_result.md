@@ -1098,6 +1098,9 @@ test_plan:
     - "Frontend: Parts import button visibility"
   stuck_tasks: []
   test_all: false
+  - agent: "main"
+    message: "Implemented POST /api/ceo/ai-analysis-multi in routes_extended.py to unblock embedded CEO panel. Frontend Ask CEO tab calls this endpoint. Please rerun backend health check for it, then UI automation on /operations to verify tabs and button invoke the API."
+
   test_priority: "high_first"
 
   - task: "AI Knowledge Base Comprehensive Testing"

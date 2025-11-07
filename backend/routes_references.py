@@ -110,7 +110,7 @@ async def import_references_from_file(file: UploadFile = File(...)):
                 imported_counts['vehicles'] = veh_count
         
         elif file.filename.lower().endswith('.pdf'):
-            # Import from PDF - extract DTC codes (optimized, first 30 pages only)
+            # Import from PDF - fast batch processing
             from PyPDF2 import PdfReader
             import re
             from pathlib import Path
@@ -120,63 +120,66 @@ async def import_references_from_file(file: UploadFile = File(...)):
             with open(temp_path, 'wb') as f:
                 f.write(contents)
             
-            # Extract text - limit to first 30 pages for speed
+            # Extract text - limit to first 20 pages for speed
             reader = PdfReader(str(temp_path))
             dtc_count = 0
-            max_pages = min(30, len(reader.pages))  # Only first 30 pages
+            max_pages = min(20, len(reader.pages))
+            
+            # Batch collect all codes first
+            all_codes_with_context = {}
+            dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4}|C[0-9A-F]{4}|B[0-9A-F]{4})\b', re.IGNORECASE)
             
             for page_num in range(max_pages):
                 text = reader.pages[page_num].extract_text()
-                
-                # Find DTC codes
-                dtc_pattern = re.compile(r'\b(P[0-9A-F]{4}|U[0-9A-F]{4})\b', re.IGNORECASE)
                 codes = set(dtc_pattern.findall(text.upper()))
                 
-                # Limit to 20 codes per file for speed
-                for code in list(codes)[:20]:
-                    # Check if already exists (skip duplicates)
-                    existing = await db.dtc_references.find_one({'code': code, 'source': file.filename})
-                    if existing:
-                        continue
-                    
-                    # Extract context around code
-                    code_idx = text.upper().find(code)
-                    if code_idx == -1:
-                        continue
-                    
-                    start = max(0, code_idx - 150)
-                    end = min(len(text), code_idx + 300)
-                    context = text[start:end]
-                    
-                    # Try to extract name (simplified)
-                    lines = context.split('\n')
-                    name = ""
-                    for i, line in enumerate(lines):
-                        if code in line.upper() and i + 1 < len(lines):
-                            name = lines[i + 1].strip()[:100]
-                            break
-                    
-                    dtc_doc = {
-                        'id': str(uuid.uuid4()),
-                        'type': 'dtc',
-                        'code': code,
-                        'nameAr': name[:100] if name else code,
-                        'nameEn': name[:100] if name else code,
-                        'vehicle': extract_vehicle_from_filename(file.filename),
-                        'causes': [],
-                        'fixes': [],
-                        'notes': context[:300],
-                        'pageNumber': str(page_num + 1),
-                        'relatedCodes': list(codes - {code})[:5],
-                        'source': file.filename,
-                        'createdAt': datetime.utcnow()
-                    }
-                    
-                    # Check if exists
-                    existing = await db.dtc_references.find_one({'code': code, 'source': file.filename})
-                    if not existing:
-                        await db.dtc_references.insert_one(dtc_doc)
-                        dtc_count += 1
+                for code in codes:
+                    if code not in all_codes_with_context:
+                        code_idx = text.upper().find(code)
+                        if code_idx != -1:
+                            start = max(0, code_idx - 100)
+                            end = min(len(text), code_idx + 200)
+                            all_codes_with_context[code] = {
+                                'context': text[start:end],
+                                'page': page_num + 1
+                            }
+            
+            # Batch insert (faster)
+            batch_inserts = []
+            for code, info in list(all_codes_with_context.items())[:30]:  # Max 30 codes
+                # Check if exists
+                existing = await db.dtc_references.find_one({'code': code, 'source': file.filename})
+                if existing:
+                    continue
+                
+                # Extract name quickly
+                lines = info['context'].split('\n')
+                name = code
+                for i, line in enumerate(lines):
+                    if code in line.upper() and i + 1 < len(lines):
+                        name = lines[i + 1].strip()[:80]
+                        break
+                
+                batch_inserts.append({
+                    'id': str(uuid.uuid4()),
+                    'type': 'dtc',
+                    'code': code,
+                    'nameAr': name,
+                    'nameEn': name,
+                    'vehicle': extract_vehicle_from_filename(file.filename),
+                    'causes': [],
+                    'fixes': [],
+                    'notes': info['context'][:200],
+                    'pageNumber': str(info['page']),
+                    'relatedCodes': [],
+                    'source': file.filename,
+                    'createdAt': datetime.utcnow()
+                })
+            
+            # Batch insert for speed
+            if batch_inserts:
+                await db.dtc_references.insert_many(batch_inserts)
+                dtc_count = len(batch_inserts)
             
             imported_counts['dtc_from_pdf'] = dtc_count
         

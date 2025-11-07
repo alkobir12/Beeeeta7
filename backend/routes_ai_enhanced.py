@@ -546,8 +546,8 @@ async def compare_files(payload: Dict[str, Any] = Body(None), file1: UploadFile 
         response_text = response if isinstance(response, str) else response.text
         
         return {
-            'file1': file1.filename,
-            'file2': file2.filename,
+            'file1': filename1,
+            'file2': filename2,
             'comparison': response_text,
             'extractedLength1': len(content1),
             'extractedLength2': len(content2)

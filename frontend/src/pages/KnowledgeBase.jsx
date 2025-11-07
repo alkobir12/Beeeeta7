@@ -25,6 +25,9 @@ const KnowledgeBase = () => {
   const [showReader, setShowReader] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
   const [searchMode, setSearchMode] = useState('smart'); // smart, dtc
+  const [file1, setFile1] = useState(null);
+  const [file2, setFile2] = useState(null);
+  const [comparisonResult, setComparisonResult] = useState(null);
 
   useEffect(() => {
     loadDocuments();

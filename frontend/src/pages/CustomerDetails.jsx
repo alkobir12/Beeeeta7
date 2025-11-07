@@ -30,6 +30,14 @@ const CustomerDetails = () => {
       
       const historyRes = await customerAPI.getHistory(id);
       setHistory(historyRes.data);
+
+      // Load approvals for this customer
+      try {
+        const approvalsRes = await customerAPI.getApprovals(id);
+        setApprovals(approvalsRes.data || []);
+      } catch (e) {
+        setApprovals([]);
+      }
     } catch (error) {
       console.error('Error loading customer:', error);
     } finally {

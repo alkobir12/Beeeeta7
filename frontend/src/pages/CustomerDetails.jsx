@@ -156,6 +156,40 @@ const CustomerDetails = () => {
                     </p>
                     <p className="text-sm text-slate-600">إجمالي المدفوعات (ر.س)</p>
                   </div>
+
+          {/* Approvals List */}
+          <Card className="shadow-lg mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                قائمة الموافقات
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {approvals.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">لا توجد طلبات اعتماد</p>
+              ) : (
+                <div className="space-y-3">
+                  {approvals.map((appr) => (
+                    <div key={appr.id} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
+                      <div>
+                        <div className="font-bold">{appr.title || 'طلب اعتماد'} • {appr.amount?.toFixed ? appr.amount.toFixed(2) : appr.amount} ر.س</div>
+                        <div className="text-xs text-slate-500">
+                          {appr.status === 'approved' ? 'تمت الموافقة' : appr.status === 'rejected' ? 'مرفوض' : appr.status === 'deferred' ? 'مؤجل' : appr.status === 'requote' ? 'إعادة تسعير' : 'بانتظار الموافقة'}
+                          {appr.respondedAt && ` — ${new Date(appr.respondedAt).toLocaleString('ar-SA')}`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded ${appr.status==='approved'?'bg-green-100 text-green-700': appr.status==='rejected'?'bg-red-100 text-red-700': 'bg-yellow-100 text-yellow-700'}`}>
+                          {appr.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <p className="text-3xl font-bold text-purple-600">
                       {history.invoices?.length || 0}

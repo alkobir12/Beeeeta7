@@ -455,29 +455,48 @@ async def smart_search_knowledge(payload: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/ai/kb/compare-files")
-async def compare_files(file1: UploadFile = File(...), file2: UploadFile = File(...)):
-    """Compare two files using AI with proper extraction"""
+async def compare_files(payload: Dict[str, Any] = Body(None), file1: UploadFile = File(None), file2: UploadFile = File(None)):
+    """Compare two files using AI - supports file upload or document IDs"""
     try:
-        # Helper function to extract text from different file types
-        async def extract_file_text(file: UploadFile):
-            content_bytes = await file.read()
-            temp_path = TMP_DIR / file.filename
+        # Check if using document IDs
+        if payload and payload.get('file1_id') and payload.get('file2_id'):
+            # Compare by IDs
+            doc1 = await db.knowledge_documents.find_one({'id': payload['file1_id']})
+            doc2 = await db.knowledge_documents.find_one({'id': payload['file2_id']})
             
-            with open(temp_path, 'wb') as f:
-                f.write(content_bytes)
+            if not doc1 or not doc2:
+                raise HTTPException(status_code=404, detail='مستند غير موجود')
             
-            text = ""
+            content1 = doc1.get('content', '')[:5000]
+            content2 = doc2.get('content', '')[:5000]
+            filename1 = doc1.get('filename')
+            filename2 = doc2.get('filename')
             
-            if file.filename.lower().endswith('.pdf'):
-                try:
-                    from PyPDF2 import PdfReader
-                    reader = PdfReader(str(temp_path))
-                    for page in reader.pages[:5]:  # First 5 pages
-                        text += page.extract_text() + "\n"
-                except Exception as e:
-                    print(f"PDF extraction error: {e}")
+        else:
+            # Compare uploaded files
+            if not file1 or not file2:
+                raise HTTPException(status_code=422, detail='يجب رفع ملفين')
             
-            elif file.filename.lower().endswith(('.docx', '.doc')):
+            # Helper function to extract text from different file types
+            async def extract_file_text(file: UploadFile):
+                content_bytes = await file.read()
+                temp_path = TMP_DIR / file.filename
+                
+                with open(temp_path, 'wb') as f:
+                    f.write(content_bytes)
+                
+                text = ""
+                
+                if file.filename.lower().endswith('.pdf'):
+                    try:
+                        from PyPDF2 import PdfReader
+                        reader = PdfReader(str(temp_path))
+                        for page in reader.pages[:5]:  # First 5 pages
+                            text += page.extract_text() + "\n"
+                    except Exception as e:
+                        print(f"PDF extraction error: {e}")
+                
+                elif file.filename.lower().endswith(('.docx', '.doc')):
                 try:
                     from docx import Document
                     doc = Document(str(temp_path))

@@ -49,12 +49,7 @@ def test_approvals_flow():
             "model": "كامري",
             "year": 2022,
             "color": "أبيض",
-            "mileage": 45000,
-            "status": "diagnosis",
-            "services": [
-                {"name": "فحص شامل", "price": 200},
-                {"name": "تغيير زيت", "price": 150}
-            ],
+            "services": ["فحص شامل", "تغيير زيت"],
             "notes": "فحص دوري"
         }
         

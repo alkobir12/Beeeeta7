@@ -1822,6 +1822,24 @@ async def list_approvals(vehicle_id: Optional[str] = None):
             if d.get('respondedAt'):
                 d['respondedAt'] = d['respondedAt'].isoformat()
         return docs
+
+@router.get('/customers/{customer_id}/approvals')
+async def list_customer_approvals(customer_id: str):
+    """List approval requests for a given customer"""
+    try:
+        docs = await db.approval_requests.find({'customerId': customer_id}).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            if d.get('createdAt'):
+                d['createdAt'] = d['createdAt'].isoformat()
+            if d.get('expiresAt'):
+                d['expiresAt'] = d['expiresAt'].isoformat()
+            if d.get('respondedAt'):
+                d['respondedAt'] = d['respondedAt'].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

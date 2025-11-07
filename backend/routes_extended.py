@@ -1822,6 +1822,9 @@ async def list_approvals(vehicle_id: Optional[str] = None):
             if d.get('respondedAt'):
                 d['respondedAt'] = d['respondedAt'].isoformat()
         return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get('/customers/{customer_id}/approvals')
 async def list_customer_approvals(customer_id: str):

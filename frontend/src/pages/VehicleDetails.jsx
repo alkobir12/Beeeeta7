@@ -28,6 +28,24 @@ const VehicleDetails = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Poll approvals status for live update after customer responds
+    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+    const interval = setInterval(async () => {
+      try {
+        // If vehicle has approval(s), refresh vehicle data to reflect any derived changes
+        const res = await fetch(`${API_URL}/approvals?vehicle_id=${id}`);
+        if (res.ok) {
+          const list = await res.json();
+          // If any approval responded in the last 10s, refresh details
+          const recent = list.find(a => a.respondedAt && (Date.now() - new Date(a.respondedAt).getTime()) < 10000);
+          if (recent) {
+            fetchData();
+          }
+        }
+      } catch (e) {}
+    }, 5000);
+    return () => clearInterval(interval);
   }, [id]);
 
   const fetchData = async () => {

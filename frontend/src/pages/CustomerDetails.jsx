@@ -14,6 +14,8 @@ const CustomerDetails = () => {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [history, setHistory] = useState({ vehicles: [], invoices: [] });
+  const [approvals, setApprovals] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

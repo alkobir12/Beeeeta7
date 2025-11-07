@@ -497,39 +497,41 @@ async def compare_files(payload: Dict[str, Any] = Body(None), file1: UploadFile 
                         print(f"PDF extraction error: {e}")
                 
                 elif file.filename.lower().endswith(('.docx', '.doc')):
-                try:
-                    from docx import Document
-                    doc = Document(str(temp_path))
-                    for para in doc.paragraphs[:50]:  # First 50 paragraphs
-                        text += para.text + "\n"
-                except Exception as e:
-                    print(f"DOCX extraction error: {e}")
+                    try:
+                        from docx import Document
+                        doc = Document(str(temp_path))
+                        for para in doc.paragraphs[:50]:  # First 50 paragraphs
+                            text += para.text + "\n"
+                    except Exception as e:
+                        print(f"DOCX extraction error: {e}")
+                
+                else:
+                    # Try as text
+                    try:
+                        text = content_bytes.decode('utf-8', errors='ignore')
+                    except:
+                        text = "[Unable to extract text]"
+                
+                return text[:10000]  # Limit to 10k chars
             
-            else:
-                # Try as text
-                try:
-                    text = content_bytes.decode('utf-8', errors='ignore')
-                except:
-                    text = "[Unable to extract text]"
-            
-            return text[:10000]  # Limit to 10k chars
-        
-        # Extract text from both files
-        content1 = await extract_file_text(file1)
-        content2 = await extract_file_text(file2)
+            # Extract text from both files
+            content1 = await extract_file_text(file1)
+            content2 = await extract_file_text(file2)
+            filename1 = file1.filename
+            filename2 = file2.filename
         
         llm = LlmChat(
             api_key=os.getenv('EMERGENT_LLM_KEY'),
             session_id=str(uuid.uuid4()),
-            system_message="You are an automotive technical document comparison expert. Provide detailed comparative analysis in Arabic."
-        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+            system_message="You are an automotive technical document comparison expert. Provide concise comparative analysis in Arabic."
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
-        comparison_prompt = f"""قارن بين هذين المستندين الفنيين بالتفصيل:
+        comparison_prompt = f"""قارن بين هذين المستندين (مختصر):
 
-الملف الأول ({file1.filename}):
-{content1}
+الملف الأول ({filename1}):
+{content1[:3000]}
 
-الملف الثاني ({file2.filename}):
+الملف الثاني ({filename2}):
 {content2}
 
 قدم تحليل شامل يتضمن:

@@ -741,6 +741,111 @@ async def get_operations_analytics(account_id: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ------------------ CEO MULTI-ACCOUNT AI ANALYSIS ------------------
+@router.post('/ceo/ai-analysis-multi')
+async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
+    """Aggregate metrics across multiple business accounts and optionally return AI insights.
+    Expected payload: { accountIds: [str], question: str, days: int? }
+    Response: { accounts: [...], totals: {...}, ai: {answer, model}? }
+    """
+    try:
+        account_ids = (payload or {}).get('accountIds') or []
+        question = (payload or {}).get('question') or ''
+        days = int((payload or {}).get('days') or 30)
+
+        # Resolve accounts list
+        if not account_ids:
+            all_acc = await db.business_accounts.find({'isActive': True}).to_list(length=1000)
+            account_ids = [a.get('id') for a in all_acc if a.get('id')]
+        account_ids = [a for a in account_ids if a]
+        if not account_ids:
+            return {"accounts": [], "totals": {"income": 0.0, "expenses": 0.0, "profit": 0.0, "profitMargin": 0.0}, "ai": None}
+
+        # Date range
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=days)
+
+        # Fetch transactions in range for selected accounts
+        tx = await db.transactions.find({
+            'date': { '$gte': start_date, '$lte': end_date },
+            'accountId': { '$in': account_ids }
+        }).to_list(length=100000)
+
+        # Compute per-account metrics
+        per_account = []
+        # Load account names
+        acc_map = {}
+        try:
+            acc_docs = await db.business_accounts.find({'id': { '$in': account_ids }}).to_list(length=1000)
+            acc_map = {a.get('id'): a.get('name', 'Account') for a in acc_docs}
+        except Exception:
+            acc_map = {a: 'Account' for a in account_ids}
+
+        for acc_id in account_ids:
+            acc_tx = [t for t in tx if t.get('accountId') == acc_id]
+            income = sum(float(t.get('amount', 0)) for t in acc_tx if t.get('type') == 'income')
+            expenses = sum(float(t.get('amount', 0)) for t in acc_tx if t.get('type') == 'expense')
+            profit = income - expenses
+            profit_margin = (profit / income * 100.0) if income > 0 else 0.0
+            per_account.append({
+                'id': acc_id,
+                'name': acc_map.get(acc_id, 'Account'),
+                'income': income,
+                'expenses': expenses,
+                'profit': profit,
+                'profitMargin': profit_margin
+            })
+
+        totals_income = sum(a['income'] for a in per_account)
+        totals_expenses = sum(a['expenses'] for a in per_account)
+        totals_profit = totals_income - totals_expenses
+        totals = {
+            'income': totals_income,
+            'expenses': totals_expenses,
+            'profit': totals_profit,
+            'profitMargin': (totals_profit / totals_income * 100.0) if totals_income > 0 else 0.0
+        }
+
+        ai_result = None
+        # Try AI only if key available and question provided
+        if question:
+            try:
+                import os
+                from emergentintegrations.llm.chat import LlmChat, UserMessage
+                llm_key = os.getenv('EMERGENT_LLM_KEY')
+                if llm_key:
+                    system_msg = (
+                        "أنت مساعد المدير التنفيذي. حلّل بيانات الورشة عبر الفروع وقدّم قرارات عملية مختصرة بالعربية. "
+                        "ركّز على الربحية والسيولة وتحسين التسعير وتقليص المصروفات عند الحاجة."
+                    )
+                    # Build brief context
+                    context_lines = [
+                        f"فرع {a['name']}: إيرادات {a['income']:.0f}، مصروفات {a['expenses']:.0f}، ربح {a['profit']:.0f} (هامش {a['profitMargin']:.1f}%)"
+                        for a in per_account
+                    ]
+                    context = "\n".join(context_lines)
+                    user_text = f"السؤال: {question}\n\nالبيانات:\n{context}\n\nالرجاء إعطاء توصيات تنفيذية مختصرة (٥ نقاط كحد أقصى)."
+
+                    chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system_msg).with_model(
+                        'anthropic', 'claude-sonnet-4-20250514'
+                    )
+                    response_text = await chat.send_message(UserMessage(text=user_text))
+                    ai_result = { 'answer': response_text, 'model': 'anthropic/claude-sonnet-4-20250514' }
+            except Exception as e:
+                # Fail gracefully without blocking
+                print(f"AI analysis error: {e}")
+                ai_result = None
+
+        return {
+            'accounts': per_account,
+            'totals': totals,
+            'periodDays': days,
+            'ai': ai_result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # ------------------ IMPORT CUSTOMERS ------------------
 @router.post('/import/customers')

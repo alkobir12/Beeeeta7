@@ -422,6 +422,53 @@ const Operations = () => {
             </CardContent>
               <CardTitle>آخر العمليات</CardTitle>
             </CardHeader>
+
+// CEO Embedded Components
+const CeoSection = ({ accounts, ops }) => {
+  // Compute quick KPIs client-side as fallback
+  const [activeTab, setActiveTab] = useState('kpis');
+  const computeTotals = (ops, type) => ops.filter(o=>o.type===type).reduce((s,o)=>s+Number(o.total||0),0);
+  const totalSales = computeTotals(ops,'sale');
+  const totalExpenses = computeTotals(ops,'purchase');
+  const profit = totalSales - totalExpenses;
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="grid grid-cols-2 w-full">
+        <TabsTrigger value="kpis">المؤشرات</TabsTrigger>
+        <TabsTrigger value="trends">الترند</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="kpis">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="text-sm text-green-700">إجمالي المبيعات</div>
+              <div className="text-3xl font-bold text-green-800">{totalSales.toFixed(2)} ر.س</div>
+            </CardContent>
+          </Card>
+          <Card className="border-rose-200 bg-rose-50">
+            <CardContent className="p-4">
+              <div className="text-sm text-rose-700">إجمالي المصروفات</div>
+              <div className="text-3xl font-bold text-rose-800">{totalExpenses.toFixed(2)} ر.س</div>
+            </CardContent>
+          </Card>
+          <Card className={`border-2 ${profit>=0?'border-emerald-300 bg-emerald-50':'border-rose-300 bg-rose-50'}`}>
+            <CardContent className="p-4">
+              <div className="text-sm">صافي الربح</div>
+              <div className="text-3xl font-bold">{profit.toFixed(2)} ر.س</div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="trends">
+        <div className="text-sm text-slate-600">مخططات صغيرة (قريبًا) — سنعرض ترند أسبوعي/شهري للفروع.</div>
+      </TabsContent>
+    </Tabs>
+  );
+};
+
             <CardContent className="p-6 space-y-3">
               {ops.map(op => (
                 <div key={op.id} className="flex items-center justify-between p-3 rounded border">

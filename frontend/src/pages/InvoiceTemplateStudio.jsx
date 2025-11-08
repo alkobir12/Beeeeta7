@@ -37,6 +37,13 @@ const InvoiceTemplateStudio = () => {
       const prev = res.data.preview || [];
       setGrid(prev.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c))));
     }catch(e){ alert('فشل الاستيراد من الرابط'); }
+  const createBlank = async () => {
+    const res = await axios.post(`${API_URL}/invoice-templates/create-blank`, { name: 'قالب فارغ' });
+    await loadTemplates();
+    setSelected(res.data);
+    setGrid([Array(8).fill(''), Array(8).fill(''), Array(8).fill('')]);
+  };
+
   };
 
   const handleImport = async (e) => {

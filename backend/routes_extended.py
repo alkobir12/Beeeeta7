@@ -168,6 +168,12 @@ async def import_invoice_template(file: UploadFile = File(...)):
             s = content.decode('utf-8', errors='ignore')
             reader = csv.reader(io.StringIO(s))
             for i, row in enumerate(reader):
+                if i >= 30: break
+                preview.append(row[:20])
+                for cell in row:
+                    if isinstance(cell, str):
+                        fields += _extract_placeholders_from_text(cell)
+
 @router.post('/invoice-templates/create-blank')
 async def create_blank_template(payload: Dict[str, Any] = Body(...)):
     try:

@@ -60,6 +60,14 @@ async def get_settings():
                 }
             }
             await db.settings.insert_one(default)
+                },
+                "baseRepairTemplateActive": True,
+                "baseTemplates": {
+                    "repair": "invoice_template_repair_ar.html",
+                    "invoice": "invoice_template_repair_ar.html",
+                    "vehicle_status": "invoice_template_repair_ar.html"
+                }
+
             doc = default
         doc.pop('_id', None)
         return doc

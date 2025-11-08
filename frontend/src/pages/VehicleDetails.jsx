@@ -558,6 +558,53 @@ const VehicleDetails = () => {
                 <div className="text-sm text-slate-600">ملاحظات</div>
                 <div className="font-semibold whitespace-pre-wrap">{notes || '-'}</div>
               </div>
+
+        {/* إنشاء طلب اعتماد - نافذة */}
+        {showApprovalModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white w-full max-w-lg rounded-lg shadow-xl p-6" dir="rtl">
+              <h3 className="text-xl font-bold mb-4">إنشاء طلب اعتماد</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-slate-600">العنوان</label>
+                  <Input value={approvalForm.title} onChange={e=>setApprovalForm({...approvalForm, title: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-600">المبلغ</label>
+                  <Input type="number" value={approvalForm.amount} onChange={e=>setApprovalForm({...approvalForm, amount: e.target.value})} placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-600">ملاحظات (اختياري)</label>
+                  <Textarea value={approvalForm.notes} onChange={e=>setApprovalForm({...approvalForm, notes: e.target.value})} />
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <Button variant="ghost" onClick={()=>setShowApprovalModal(false)}>إلغاء</Button>
+                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={async ()=>{
+                    try {
+                      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                      const payload = {
+                        vehicleId: id,
+                        customerId: vehicle.customerId,
+                        title: approvalForm.title || 'طلب اعتماد إصلاح',
+                        amount: Number(approvalForm.amount || 0),
+                        notes: approvalForm.notes || ''
+                      };
+                      const res = await fetch(`${API_URL}/approvals`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                      if (!res.ok) throw new Error('fail');
+                      const data = await res.json();
+                      setShowApprovalModal(false);
+                      toast({ title: 'تم الإنشاء', description: `تم إنشاء طلب اعتماد ${data.token}` });
+                      fetchData();
+                    } catch (e) {
+                      toast({ title: 'خطأ', description: 'فشل إنشاء طلب الاعتماد', variant: 'destructive' });
+                    }
+                  }}>حفظ وإرسال</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
               <div>
                 <div className="text-sm text-slate-600">الخدمات</div>
                 <div className="font-semibold">{(vehicle.services || []).join('، ') || '-'}</div>

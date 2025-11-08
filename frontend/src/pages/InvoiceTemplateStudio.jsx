@@ -49,15 +49,15 @@ const InvoiceTemplateStudio = () => {
   const addCol = () => setGrid(grid.map(r => [...r, '']));
 
   const saveGrid = async () => {
+    if(!selected) return;
+    await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid });
+    alert('تم حفظ القالب كـ Excel');
+  };
+
   const saveMapping = async () => {
     if(!selected) return;
     await axios.post(`${API_URL}/invoice-templates/${selected.id}/update-mapping`, { mapping, items: itemsConfig });
     alert('تم حفظ الربط والحقول');
-  };
-
-    if(!selected) return;
-    await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid });
-    alert('تم حفظ القالب كـ Excel');
   };
 
   const downloadFilled = async () => {

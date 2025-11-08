@@ -755,6 +755,18 @@ backend:
           agent: "testing"
           comment: "✅ BACKEND READINESS HEALTH PING COMPLETE: Successfully executed all 6 requested backend readiness tests with 100% pass rate (6/6 tests passed). (1) ✅ GET /api/settings returns 200 + JSON with proper structure including currency, taxRate, language, timezone fields (0.083s). (2) ✅ GET /api/operations/analytics/summary returns 200 + JSON with today, week, month, accountsSummary fields (0.079s). (3) ✅ GET /api/approvals/stream returns 200 + text/event-stream content-type, SSE connection established successfully (0.051s). (4) ✅ POST /api/ceo/ai-analysis-multi with empty payload {} returns 200 + JSON with accounts and totals fields, AI field is null as expected when no LLM key configured (0.073s). (5) ✅ GET /api/customers returns 200 + array with 6 customers (0.049s). (6) ✅ GET /api/customers/{id}/approvals returns 200 + array with 1 approval for existing customer (0.047s). All endpoints responding correctly with average response time of 0.064s. Backend is production-ready and all critical health check endpoints are operational."
 
+  - task: "Invoice Template APIs Smoke Test"
+    implemented: true
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "✅ INVOICE TEMPLATE APIs SMOKE TEST COMPLETE: Executed 4 requested invoice template API tests with 75% pass rate (3/4 tests passed). **PASSED TESTS:** (1) ✅ POST /api/invoice-templates/import-url with Excel URL 'https://customer-assets.emergentagent.com/job_autoworkshopai/artifacts/l3knvrsj_%D9%86%D9%85%D9%88%D8%B0%D8%AC%20%D8%A7.xlsx' returns 200 with required fields: id='ef1a5c78-d102-4e83-bf4d-e417a5d7768c', format='xlsx', fields=[], preview=30 rows. Template import working correctly. (2) ✅ GET /api/invoice-templates includes imported template - found template in list of 1 templates. (3) ✅ POST /api/invoice-templates/{id}/make-default sets isDefault=true and GET verification confirms template is default. **FAILED TEST:** (4) ❌ POST /api/print/invoice-xlsx returns 404 Not Found - endpoint does not exist. **CRITICAL ISSUE:** The /api/print/invoice-xlsx endpoint is missing and needs to be implemented by main agent. All invoice template CRUD operations are working correctly, but the print functionality for XLSX output is not available. Backend logs confirm 404 response for print endpoint."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

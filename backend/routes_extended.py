@@ -117,6 +117,12 @@ async def get_operations(account_id: Optional[str] = None, type: Optional[str] =
                 o['date'] = o['date'].isoformat()
         return ops
     except Exception as e:
+                "baseTemplates": {
+                    "repair": "invoice_template_repair_ar.html",
+                    "invoice": "invoice_template_repair_ar.html",
+                    "vehicle_status": "invoice_template_repair_ar.html"
+                },
+
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/operations')

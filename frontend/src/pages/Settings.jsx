@@ -53,6 +53,8 @@ const Settings = () => {
         taxRate: response.data.taxRate || 15,
         language: savedLanguage,
         themeName: response.data.themeName || 'light'
+        baseRepairTemplateActive: response.data.baseRepairTemplateActive ?? true,
+        baseRepairTemplateHtml: response.data.baseRepairTemplateHtml || '',
       });
     } catch (error) {
       console.error('Error fetching settings:', error);

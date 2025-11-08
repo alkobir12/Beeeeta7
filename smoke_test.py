@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from environment
-BACKEND_URL = "https://autoworkshopai.preview.emergentagent.com/api"
+BACKEND_URL = "http://localhost:8001/api"
 
 class Colors:
     GREEN = '\033[92m'

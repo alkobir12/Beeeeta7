@@ -225,12 +225,6 @@ async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...))
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-                if i >= 30: break
-                preview.append(row[:20])
-                for cell in row:
-                    if isinstance(cell, str):
-                        fields += _extract_placeholders_from_text(cell)
         elif ext == '.html' or ext == '.htm':
             fmt = 'html'
             text = content.decode('utf-8', errors='ignore')

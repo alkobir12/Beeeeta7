@@ -77,6 +77,17 @@ async def get_settings():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def _download_file_from_gridfs(file_id: str) -> bytes:
+    if not templates_bucket:
+        raise HTTPException(status_code=500, detail='Templates bucket not initialized')
+    try:
+        oid = ObjectId(file_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid file id')
+    buf = io.BytesIO()
+    await templates_bucket.download_to_stream(oid, buf)
+    return buf.getvalue()
+
 @router.get('/parts')
 async def get_parts():
     try:

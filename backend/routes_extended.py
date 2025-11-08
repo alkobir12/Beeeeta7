@@ -58,6 +58,17 @@ async def get_settings():
                 for ch in it.get('children', []) or []:
                     if ch.get('path') == path:
                         return True
+async def _download_file_from_gridfs(file_id: str) -> bytes:
+    if not templates_bucket:
+        raise HTTPException(status_code=500, detail='Templates bucket not initialized')
+    try:
+        oid = ObjectId(file_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid file id')
+    buf = io.BytesIO()
+    await templates_bucket.download_to_stream(oid, buf)
+    return buf.getvalue()
+
             return False
         changed = False
         # CEO route

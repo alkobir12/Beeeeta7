@@ -38,9 +38,10 @@ db = client[os.environ.get('DB_NAME', 'workshop_db')]
 set_db_extended(db)
 set_db_advanced(db)
 
-# Initialize WhatsApp service
+# Initialize WhatsApp service (optional) — using whatsapp_service.py if configured
 try:
-    whatsapp_svc = init_whatsapp_service(db)
+    from whatsapp_service import WhatsAppService
+    whatsapp_svc = WhatsAppService(db)
     print(f"✅ WhatsApp Service initialized - Mode: {'Twilio' if whatsapp_svc.twilio_enabled else 'Deeplink'}")
 except Exception as e:
     print(f"⚠️  WhatsApp Service initialization warning: {e}")

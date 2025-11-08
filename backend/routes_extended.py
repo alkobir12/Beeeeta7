@@ -168,6 +168,58 @@ async def import_invoice_template(file: UploadFile = File(...)):
             s = content.decode('utf-8', errors='ignore')
             reader = csv.reader(io.StringIO(s))
             for i, row in enumerate(reader):
+@router.post('/invoice-templates/create-blank')
+async def create_blank_template(payload: Dict[str, Any] = Body(...)):
+    try:
+        name = (payload or {}).get('name') or f"قالب جديد {datetime.utcnow().strftime('%H%M%S')}"
+        tid = str(uuid.uuid4())
+        doc = {
+            'id': tid,
+            'name': name,
+            'format': 'xlsx',
+            'fileId': None,
+            'fields': [],
+            'preview': [],
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/make-default')
+async def make_default_template(tid: str):
+    try:
+        await db.invoice_templates.update_many({}, {'$set': {'isDefault': False}})
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'isDefault': True, 'updatedAt': datetime.utcnow()}})
+        doc = await db.invoice_templates.find_one({'id': tid})
+        if not doc:
+            raise HTTPException(status_code=404, detail='Template not found')
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/update-mapping')
+async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        mapping = (payload or {}).get('mapping') or {}
+        items = (payload or {}).get('items') or {}
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'mapping': mapping, 'itemsConfig': items, 'updatedAt': datetime.utcnow()}})
+        doc = await db.invoice_templates.find_one({'id': tid})
+        if not doc:
+            raise HTTPException(status_code=404, detail='Template not found')
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
                 if i >= 30: break
                 preview.append(row[:20])
                 for cell in row:

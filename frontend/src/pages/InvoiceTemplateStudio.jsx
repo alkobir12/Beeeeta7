@@ -110,6 +110,57 @@ const InvoiceTemplateStudio = () => {
                   <div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>
                 )}
               </div>
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>إعدادات الحقول وربط البنود</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>WORKSHOP_NAME</Label>
+                  <Input value={mapping.WORKSHOP_NAME} onChange={e=>setMapping({...mapping, WORKSHOP_NAME: e.target.value})} placeholder="A1 أو {{WORKSHOP_NAME}}" />
+                </div>
+                <div>
+                  <Label>CUSTOMER_NAME</Label>
+                  <Input value={mapping.CUSTOMER_NAME} onChange={e=>setMapping({...mapping, CUSTOMER_NAME: e.target.value})} placeholder="B3 أو {{CUSTOMER_NAME}}" />
+                </div>
+                <div>
+                  <Label>VEHICLE_PLATE</Label>
+                  <Input value={mapping.VEHICLE_PLATE} onChange={e=>setMapping({...mapping, VEHICLE_PLATE: e.target.value})} placeholder="C5 أو {{VEHICLE_PLATE}}" />
+                </div>
+                <div>
+                  <Label>TOTAL</Label>
+                  <Input value={mapping.TOTAL} onChange={e=>setMapping({...mapping, TOTAL: e.target.value})} placeholder="E10 أو {{TOTAL}}" />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <Label>مرساة البنود (صف يحتوي {{ITEMS}})</Label>
+                <Input value={itemsConfig.anchor} onChange={e=>setItemsConfig({...itemsConfig, anchor: e.target.value})} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
+                <div>
+                  <Label>عمود الوصف</Label>
+                  <Input value={itemsConfig.columns.description} onChange={e=>setItemsConfig({...itemsConfig, columns:{...itemsConfig.columns, description: e.target.value}})} placeholder="مثل D" />
+                </div>
+                <div>
+                  <Label>عمود الكمية</Label>
+                  <Input value={itemsConfig.columns.qty} onChange={e=>setItemsConfig({...itemsConfig, columns:{...itemsConfig.columns, qty: e.target.value}})} placeholder="مثل E" />
+                </div>
+                <div>
+                  <Label>عمود السعر</Label>
+                  <Input value={itemsConfig.columns.price} onChange={e=>setItemsConfig({...itemsConfig, columns:{...itemsConfig.columns, price: e.target.value}})} placeholder="مثل F" />
+                </div>
+                <div>
+                  <Label>عمود الإجمالي</Label>
+                  <Input value={itemsConfig.columns.total} onChange={e=>setItemsConfig({...itemsConfig, columns:{...itemsConfig.columns, total: e.target.value}})} placeholder="مثل G" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Button onClick={saveMapping} className="bg-purple-600 hover:bg-purple-700">حفظ الربط</Button>
+              </div>
+            </CardContent>
+          </Card>
+
             </CardContent>
           </Card>
 

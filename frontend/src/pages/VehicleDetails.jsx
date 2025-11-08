@@ -27,6 +27,9 @@ const VehicleDetails = () => {
   const [statusImages, setStatusImages] = useState([]);
   const [approvals, setApprovals] = useState([]);
 
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalForm, setApprovalForm] = useState({ title: 'طلب اعتماد إصلاح', amount: '', notes: '' });
+
 
   useEffect(() => {
     fetchData();

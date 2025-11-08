@@ -28,6 +28,17 @@ const InvoiceTemplateStudio = () => {
     }catch(e){ console.error(e); }
   };
 
+  const importFromUrl = async () => {
+    if(!importUrl) return;
+    try{
+      const res = await axios.post(`${API_URL}/invoice-templates/import-url`, { url: importUrl });
+      await loadTemplates();
+      setSelected(res.data);
+      const prev = res.data.preview || [];
+      setGrid(prev.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c))));
+    }catch(e){ alert('فشل الاستيراد من الرابط'); }
+  };
+
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if(!file) return;

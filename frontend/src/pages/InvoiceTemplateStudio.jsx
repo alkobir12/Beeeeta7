@@ -19,6 +19,8 @@ const InvoiceTemplateStudio = () => {
 
   useEffect(()=>{ loadTemplates(); },[]);
 
+  const [loading, setLoading] = useState(false);
+
   const loadTemplates = async () => {
     try{
   const [importUrl, setImportUrl] = useState('');

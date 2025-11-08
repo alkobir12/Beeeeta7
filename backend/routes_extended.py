@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any, List
 import asyncio
 import json
 import uuid
+import os
 
 router = APIRouter(prefix="/api")
 
@@ -31,6 +32,14 @@ async def get_settings():
                 "language": "ar",
                 "timezone": "Asia/Riyadh",
                 "invoicePrefix": "INV",
+                # Base templates flags (new)
+                "baseRepairTemplateActive": True,
+                "baseTemplates": {
+                    "repair": "invoice_template_repair_ar.html",
+                    "invoice": "invoice_template_repair_ar.html",
+                    "vehicle_status": "invoice_template_repair_ar.html"
+                },
+                # Menu configuration
                 "menuConfig": {
                     "simple": False,
                     "items": [
@@ -54,15 +63,9 @@ async def get_settings():
                         {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [
                             {"path": "/settings", "label": "الإعدادات العامة", "enabled": True},
                             {"path": "/templates", "label": "نماذج الفواتير/التقارير", "enabled": True},
-                        {"path": "/users", "label": "المستخدمون", "enabled": True}
+                            {"path": "/users", "label": "المستخدمون", "enabled": True}
                         ]}
                     ]
-                },
-                "baseRepairTemplateActive": True,
-                "baseTemplates": {
-                    "repair": "invoice_template_repair_ar.html",
-                    "invoice": "invoice_template_repair_ar.html",
-                    "vehicle_status": "invoice_template_repair_ar.html"
                 }
             }
             await db.settings.insert_one(default)
@@ -83,7 +86,7 @@ async def save_settings(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# -------------- PARTS (minimal for operations page) --------------
+# -------------- PARTS --------------
 @router.get('/parts')
 async def get_parts():
     try:
@@ -94,7 +97,7 @@ async def get_parts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# -------------- BUSINESS ACCOUNTS (minimal) --------------
+# -------------- BUSINESS ACCOUNTS --------------
 @router.get('/biz-accounts')
 async def list_accounts():
     try:
@@ -121,12 +124,6 @@ async def get_operations(account_id: Optional[str] = None, type: Optional[str] =
                 o['date'] = o['date'].isoformat()
         return ops
     except Exception as e:
-                "baseTemplates": {
-                    "repair": "invoice_template_repair_ar.html",
-                    "invoice": "invoice_template_repair_ar.html",
-                    "vehicle_status": "invoice_template_repair_ar.html"
-                },
-
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/operations')
@@ -154,15 +151,6 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             'createdAt': datetime.utcnow()
         }
         await db.operations.insert_one(op)
-        # Inventory adjust (minimal)
-        if op['type'] == 'purchase':
-            for it in items:
-                if it.get('itemType') == 'part' and it.get('itemId'):
-                    await db.parts.update_one({'id': it['itemId']}, {'$inc': {'quantity': int(float(it.get('quantity', 0)))}})
-        if op['type'] == 'sale':
-            for it in items:
-                if it.get('itemType') == 'part' and it.get('itemId'):
-                    await db.parts.update_one({'id': it['itemId']}, {'$inc': {'quantity': -int(float(it.get('quantity', 0)))}})
         # Auto transaction
         try:
             tx = {
@@ -173,29 +161,6 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 'amount': subtotal,
                 'description': f"{op['type']} - {op.get('partnerName') or 'عملية'}",
                 'date': datetime.utcnow(),
-@router.post('/print/resolve-template')
-async def resolve_template(payload: Dict[str, Any] = Body(...)):
-    """Resolve template by type. If override_type provided == 'repair', return the new base repair template"""
-    try:
-        t = (payload or {}).get('override_type') or (payload or {}).get('type') or 'repair'
-        if t in ('repair','invoice','repair_invoice','vehicle_status'):
-            # Always return base repair template if requested
-            import os
-            template_path = os.path.join(os.path.dirname(__file__), 'invoice_template_repair_ar.html')
-            with open(template_path, 'r', encoding='utf-8') as f:
-                html = f.read()
-            return { 'type': 'repair', 'template': { 'content': html, 'name': 'القالب الأساسي - إصلاح مركبة' } }
-        # fallback: try existing templates collection
-        doc = await db.templates.find_one({'type': t, 'isActive': True})
-        if not doc:
-            raise HTTPException(status_code=404, detail='لم يتم العثور على قالب')
-        doc.pop('_id', None)
-        return { 'type': t, 'template': doc }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
                 'reference': op['id'],
                 'createdAt': datetime.utcnow()
             }
@@ -293,7 +258,8 @@ async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
         end = datetime.utcnow(); start = end - timedelta(days=days)
         tx = await db.transactions.find({'date': {'$gte': start, '$lte': end}, 'accountId': {'$in': account_ids}}).to_list(length=100000)
         per = []
-        name_map = {a.get('id'): a.get('name','Account') for a in await db.business_accounts.find({'id': {'$in': account_ids}}).to_list(length=1000)}
+        acc_docs = await db.business_accounts.find({'id': {'$in': account_ids}}).to_list(length=1000)
+        name_map = {a.get('id'): a.get('name','Account') for a in acc_docs}
         for aid in account_ids:
             ftx = [t for t in tx if t.get('accountId') == aid]
             income = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='income')
@@ -307,7 +273,6 @@ async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
         # Optional AI
         if question:
             try:
-                import os
                 from emergentintegrations.llm.chat import LlmChat, UserMessage
                 key = os.getenv('EMERGENT_LLM_KEY')
                 if key:
@@ -421,7 +386,6 @@ async def respond_public_approval(token: str, status: str = 'approved', name: st
         for k in ('createdAt','expiresAt','respondedAt'):
             if nd.get(k) and hasattr(nd[k],'isoformat'):
                 nd[k] = nd[k].isoformat()
-        # broadcast
         await _approvals_broadcast({'type':'approval_updated','token': token,'vehicleId': nd.get('vehicleId'),'customerId': nd.get('customerId'),'status': nd.get('status'),'respondedAt': nd.get('respondedAt')})
         return nd
     except HTTPException:
@@ -444,7 +408,7 @@ async def approvals_stream(request: Request):
             approvals_subscribers.discard(q)
     return StreamingResponse(gen(), media_type='text/event-stream')
 
-# -------------- NOTIFICATIONS (WhatsApp deeplink helper) --------------
+# -------------- NOTIFICATIONS (WhatsApp Deeplink) --------------
 @router.post('/notifications/prepare')
 async def prepare_notification(payload: Dict[str, Any] = Body(...)):
     try:
@@ -469,7 +433,27 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# -------------- PRINT: REPAIR INVOICE --------------
+# -------------- TEMPLATES --------------
+@router.post('/print/resolve-template')
+async def resolve_template(payload: Dict[str, Any] = Body(...)):
+    """Resolve template by type. If override_type provided == 'repair' (or invoice/vehicle_status), return the new base repair template"""
+    try:
+        t = (payload or {}).get('override_type') or (payload or {}).get('type') or 'repair'
+        if t in ('repair','invoice','repair_invoice','vehicle_status'):
+            template_path = os.path.join(os.path.dirname(__file__), 'invoice_template_repair_ar.html')
+            with open(template_path, 'r', encoding='utf-8') as f:
+                html = f.read()
+            return { 'type': 'repair', 'template': { 'content': html, 'name': 'القالب الأساسي - إصلاح مركبة' } }
+        doc = await db.templates.find_one({'type': t, 'isActive': True})
+        if not doc:
+            raise HTTPException(status_code=404, detail='لم يتم العثور على قالب')
+        doc.pop('_id', None)
+        return { 'type': t, 'template': doc }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/print/repair-invoice', response_class=HTMLResponse)
 async def print_repair_invoice(payload: Dict[str, Any] = Body(...)):
     """
@@ -485,8 +469,6 @@ async def print_repair_invoice(payload: Dict[str, Any] = Body(...)):
     }
     """
     try:
-        # Load template file
-        import os
         template_path = os.path.join(os.path.dirname(__file__), 'invoice_template_repair_ar.html')
         with open(template_path, 'r', encoding='utf-8') as f:
             tpl = f.read()
@@ -495,7 +477,6 @@ async def print_repair_invoice(payload: Dict[str, Any] = Body(...)):
         customer = data.get('customer', {})
         vehicle = data.get('vehicle', {})
         items = data.get('items', [])
-        # Build rows
         rows = []
         for it in items:
             desc = it.get('description','-')

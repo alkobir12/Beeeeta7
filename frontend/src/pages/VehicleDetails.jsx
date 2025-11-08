@@ -518,6 +518,45 @@ const VehicleDetails = () => {
               <div className="space-y-2">
                 <h4 className="font-semibold mb-2">الملفات المرفوعة ({vehicleFiles.length})</h4>
                 {vehicleFiles.map((file, idx) => (
+
+        {/* بطاقة حالة المركبة للطباعة */}
+        <Card className="mt-6 shadow-lg">
+          <CardHeader>
+            <CardTitle>حالة المركبة (جاهزة للطباعة)</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-slate-600">العميل</div>
+                <div className="font-semibold">{vehicle.customerName}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">رقم الجوال</div>
+                <div className="font-semibold">{vehicle.customerPhone}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">السيارة</div>
+                <div className="font-semibold">{vehicle.brand} {vehicle.model} {vehicle.year} — {vehicle.plateNumber}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">الحالة الحالية</div>
+                <div className="font-semibold">{getStatusLabel(status)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">ملاحظات</div>
+                <div className="font-semibold whitespace-pre-wrap">{notes || '-'}</div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">الخدمات</div>
+                <div className="font-semibold">{(vehicle.services || []).join('، ') || '-'}</div>
+              </div>
+            </div>
+            <div className="pt-4">
+              <Button onClick={() => window.print()} className="bg-emerald-600 hover:bg-emerald-700">طباعة الحالة</Button>
+            </div>
+          </CardContent>
+        </Card>
+
                   <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                     <div className="flex items-center gap-3">
                       <FileText className="text-godaddy-green" size={20} />

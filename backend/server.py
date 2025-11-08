@@ -23,7 +23,7 @@ from models import (
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 # Import extended routes
-from routes_extended import router as extended_router, set_db as set_db_extended, init_whatsapp_service
+from routes_extended import router as extended_router, set_db as set_db_extended
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 ROOT_DIR = Path(__file__).parent

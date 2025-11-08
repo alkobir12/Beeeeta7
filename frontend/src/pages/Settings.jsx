@@ -230,6 +230,51 @@ const Settings = () => {
                   </div>
                 )}
               </CardContent>
+
+            {/* Base Repair Template Settings */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-l from-purple-50">
+                <CardTitle>قالب الطباعة الأساسي (فاتورة/حالة إصلاح)</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">تفعيل القالب الأساسي</Label>
+                    <p className="text-sm text-slate-500">عند التفعيل سيتم استخدام القالب الأساسي للفاتورة/الحالة والصفحات المطبوعة.</p>
+                  </div>
+                  <Switch
+                    checked={!!settings.baseRepairTemplateActive}
+                    onCheckedChange={(checked) => setSettings({...settings, baseRepairTemplateActive: checked})}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">تحرير HTML للقالب</Label>
+                  <Textarea
+                    className="min-h-[260px] font-mono text-xs"
+                    value={settings.baseRepairTemplateHtml}
+                    onChange={(e)=> setSettings({...settings, baseRepairTemplateHtml: e.target.value})}
+                    placeholder="<!DOCTYPE html> ..."
+                  />
+                  <p className="text-xs text-slate-500 mt-2">يمكنك لصق قالب HTML مخصص بالكامل هنا. إن تركته فارغًا سيتم استخدام القالب الافتراضي المدمج.</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={async ()=>{
+                    try{
+                      const res = await axios.post(`${API_URL}/print/resolve-template`, { override_type: 'repair' });
+                      const html = res.data?.template?.content || '';
+                      const w = window.open('', '_blank');
+                      w.document.write(html);
+                      w.document.close();
+                    }catch(e){
+                      console.error(e);
+                    }
+                  }}>معاينة القالب</Button>
+                </div>
+              </CardContent>
+            </Card>
+
             </Card>
           </div>
         </div>

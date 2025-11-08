@@ -112,6 +112,11 @@ const InvoiceTemplateStudio = () => {
               <Button asChild className="bg-green-600 hover:bg-green-700 cursor-pointer"><span>استيراد قالب</span></Button>
               <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.html,.htm,.docx,.pdf" className="hidden" onChange={handleImport} />
             </label>
+            <div className="flex items-center gap-2">
+              <Input value={importUrl} onChange={e=>setImportUrl(e.target.value)} placeholder="أدخل رابط نموذج للاستيراد" className="w-72" />
+              <Button onClick={importFromUrl} variant="outline">استيراد من رابط</Button>
+              <Button onClick={createBlank} variant="outline">قالب فارغ</Button>
+            </div>
             <Button onClick={saveGrid} className="bg-blue-600 hover:bg-blue-700">حفظ كـ Excel</Button>
             <Button onClick={downloadFilled} className="bg-emerald-600 hover:bg-emerald-700">توليد فاتورة من القالب</Button>
           </div>

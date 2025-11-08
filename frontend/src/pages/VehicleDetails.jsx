@@ -33,6 +33,16 @@ const VehicleDetails = () => {
 
     // Poll approvals status for live update after customer responds
     const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+    const es = new EventSource(`${API_URL}/approvals/stream`);
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data?.type === 'approval_updated' && data?.vehicleId === id) {
+          fetchData();
+        }
+      } catch {}
+    };
+
     const interval = setInterval(async () => {
       try {
         // If vehicle has approval(s), refresh vehicle data to reflect any derived changes

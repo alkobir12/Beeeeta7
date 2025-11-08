@@ -440,6 +440,16 @@ async def resolve_template(payload: Dict[str, Any] = Body(...)):
     try:
         t = (payload or {}).get('override_type') or (payload or {}).get('type') or 'repair'
         if t in ('repair','invoice','repair_invoice','vehicle_status'):
+            # Check settings for custom base HTML
+            s = await db.settings.find_one({"id": "app_settings"})
+            custom_html = None
+            active = True
+            if s:
+                custom_html = s.get('baseRepairTemplateHtml')
+                active = s.get('baseRepairTemplateActive', True)
+            if active and custom_html:
+                return { 'type': 'repair', 'template': { 'content': custom_html, 'name': 'القالب الأساسي - إصلاح مركبة (مخصص)' } }
+            # Fallback to built-in file
             template_path = os.path.join(os.path.dirname(__file__), 'invoice_template_repair_ar.html')
             with open(template_path, 'r', encoding='utf-8') as f:
                 html = f.read()

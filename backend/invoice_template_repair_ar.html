@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>فاتورة إصلاح مركبة</title>
+  <style>
+    body { font-family: 'Tahoma', Arial, sans-serif; color: #0f172a; margin: 0; padding: 24px; background: #fff; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .workshop { font-weight: 800; font-size: 20px; color: #0f172a; }
+    .muted { color:#64748b; font-size: 12px; }
+    .inv-box { border:1px solid #e2e8f0; border-radius: 8px; padding: 12px; width: 320px; }
+    .section { border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-top:12px; }
+    .section h3 { margin:0 0 8px 0; font-size:14px; color:#0f172a; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border:1px solid #e2e8f0; padding: 8px; font-size: 12px; }
+    th { background:#f8fafc; text-align:right; }
+    .totals { margin-top:12px; max-width: 360px; margin-left:auto; }
+    .totals-row { display:flex; justify-content:space-between; padding:6px 0; }
+    .footer { margin-top:16px; display:flex; justify-content:space-between; align-items:flex-end; }
+    .notes { border:1px dashed #e2e8f0; border-radius:8px; padding:10px; min-height:60px; white-space:pre-wrap; }
+    .sign { text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="workshop">{{WORKSHOP_NAME}}</div>
+      <div class="muted">السجل: {{WORKSHOP_TAX}} · هاتف: {{WORKSHOP_PHONE}} · بريد: {{WORKSHOP_EMAIL}}</div>
+      <div class="muted">العنوان: {{WORKSHOP_ADDRESS}}</div>
+    </div>
+    <div class="inv-box">
+      <div style="font-weight:700;">فاتورة إصلاح مركبة</div>
+      <div class="muted">رقم الفاتورة: {{INVOICE_NO}}</div>
+      <div class="muted">التاريخ: {{INVOICE_DATE}}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>بيانات العميل</h3>
+    <div class="muted">الاسم: <span style="color:#0f172a;font-weight:600;">{{CUSTOMER_NAME}}</span></div>
+    <div class="muted">رقم الجوال: <span style="color:#0f172a;font-weight:600;">{{CUSTOMER_PHONE}}</span></div>
+  </div>
+
+  <div class="section">
+    <h3>بيانات المركبة</h3>
+    <div class="muted">السيارة: <span style="color:#0f172a;font-weight:600;">{{VEHICLE_INFO}}</span></div>
+    <div class="muted">رقم اللوحة: <span style="color:#0f172a;font-weight:600;">{{PLATE_NO}}</span></div>
+    <div class="muted">الحالة: <span style="color:#0f172a;font-weight:600;">{{STATUS_LABEL}}</span></div>
+  </div>
+
+  <div class="section">
+    <h3>بنود الإصلاح</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>الوصف</th>
+          <th>الكمية</th>
+          <th>السعر</th>
+          <th>الإجمالي</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ITEMS_ROWS}}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-row"><div>الإجمالي الفرعي</div><div>{{SUBTOTAL}}</div></div>
+      <div class="totals-row"><div>الضريبة</div><div>{{TAX}}</div></div>
+      <div class="totals-row" style="font-weight:700"><div>الإجمالي</div><div>{{TOTAL}}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>ملاحظات</h3>
+    <div class="notes">{{NOTES}}</div>
+  </div>
+
+  <div class="footer">
+    <div class="muted">رابط تتبع المركبة: {{TRACK_LINK}}</div>
+    <div class="sign">
+      <div class="muted">توقيع المسؤول</div>
+      <div style="border-top:1px solid #e2e8f0; margin-top:24px; width:200px; margin-left:auto; margin-right:auto;"></div>
+    </div>
+  </div>
+</body>
+</html>

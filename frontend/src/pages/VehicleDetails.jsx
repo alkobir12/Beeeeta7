@@ -399,6 +399,15 @@ const VehicleDetails = () => {
                 <Button 
                   onClick={handleNotify}
                   variant="outline"
+
+            <Button 
+              variant="outline"
+              className="w-full border-purple-600 text-purple-700 hover:bg-purple-50 transition-colors"
+              onClick={() => setShowApprovalModal(true)}
+            >
+              إنشاء طلب اعتماد للعميل
+            </Button>
+
                   className="w-full border-green-600 text-green-700 hover:bg-green-50 transition-colors"
                 >
                   <Phone className="ml-2" size={18} />

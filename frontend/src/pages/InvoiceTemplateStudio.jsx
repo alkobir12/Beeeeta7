@@ -110,6 +110,9 @@ const InvoiceTemplateStudio = () => {
                   <div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
           <Card className="lg:col-span-2">
             <CardHeader><CardTitle>إعدادات الحقول وربط البنود</CardTitle></CardHeader>
             <CardContent>

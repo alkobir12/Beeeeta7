@@ -57,9 +57,6 @@ async def get_settings():
                         {"path": "/users", "label": "المستخدمون", "enabled": True}
                         ]}
                     ]
-                }
-            }
-            await db.settings.insert_one(default)
                 },
                 "baseRepairTemplateActive": True,
                 "baseTemplates": {
@@ -67,7 +64,8 @@ async def get_settings():
                     "invoice": "invoice_template_repair_ar.html",
                     "vehicle_status": "invoice_template_repair_ar.html"
                 }
-
+            }
+            await db.settings.insert_one(default)
             doc = default
         doc.pop('_id', None)
         return doc

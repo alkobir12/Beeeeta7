@@ -227,7 +227,7 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
                     try:
                         from routes_extended import router as ext_router
                         # Get app URL from environment or use backend URL
-                        app_url = os.getenv('APP_URL') or os.getenv('REACT_APP_BACKEND_URL', 'https://autoworkshopai.preview.emergentagent.com')
+                        app_url = os.getenv('APP_URL') or os.getenv('REACT_APP_BACKEND_URL')
                         app_url = app_url.replace('/api', '')  # Remove /api if present
                         approval_link = f"{app_url}/approval/{token}"
                         # Prepare notification

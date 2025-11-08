@@ -28,8 +28,7 @@ def set_db(database):
     global db, templates_bucket
     db = database
     try:
-from bson import ObjectId
-
+        from bson import ObjectId
         templates_bucket = AsyncIOMotorGridFSBucket(db, bucket_name='invoice_templates')
     except Exception as e:
         print(f"GridFS bucket init failed: {e}")

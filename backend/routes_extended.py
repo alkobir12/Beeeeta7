@@ -236,3 +236,121 @@ async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...))
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/save-json')
+async def save_template_from_json(tid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        grid = payload.get('grid')
+        if not isinstance(grid, list):
+            raise HTTPException(status_code=400, detail='grid required')
+        out = io.BytesIO()
+        book = xlsxwriter.Workbook(out, {'in_memory': True})
+        sheet = book.add_worksheet('Template')
+        for r, row in enumerate(grid):
+            if not isinstance(row, list):
+                continue
+            for c, val in enumerate(row):
+                sheet.write(r, c, '' if val is None else str(val))
+        book.close()
+        xlsx_bytes = out.getvalue()
+        file_id = await templates_bucket.upload_from_stream(f'template_{tid}.xlsx', io.BytesIO(xlsx_bytes), metadata={'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'format': 'xlsx', 'fileId': str(file_id), 'updatedAt': datetime.utcnow()}})
+        return {'status': 'ok', 'fileId': str(file_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/print/invoice-xlsx')
+async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
+    try:
+        t_id = (payload or {}).get('templateId') or (payload or {}).get('template_id')
+        data = (payload or {}).get('data') or payload
+        if not t_id:
+            t_doc = await db.invoice_templates.find_one({'isDefault': True})
+            if not t_doc:
+                raise HTTPException(status_code=404, detail='لا يوجد قالب افتراضي للطباعة')
+        else:
+            t_doc = await db.invoice_templates.find_one({'id': t_id})
+            if not t_doc:
+                raise HTTPException(status_code=404, detail='القالب غير موجود')
+        if t_doc.get('fileId'):
+            file_bytes = await _download_file_from_gridfs(t_doc['fileId'])
+        else:
+            out = io.BytesIO()
+            book = xlsxwriter.Workbook(out, {'in_memory': True})
+            sheet = book.add_worksheet('Template')
+            for r, row in enumerate(t_doc.get('preview') or []):
+                for c, val in enumerate(row):
+                    sheet.write(r, c, '' if val is None else str(val))
+            book.close()
+            file_bytes = out.getvalue()
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes))
+        ws = wb.active
+        max_r = ws.max_row
+        max_c = ws.max_column
+        items = data.get('ITEMS') or data.get('items') or []
+        items_anchor_row = None
+        for r in range(1, max_r+1):
+            anchor = False
+            for c in range(1, max_c+1):
+                cell = ws.cell(r, c)
+                v = cell.value
+                if isinstance(v, str):
+                    if v.strip() == '{{ITEMS}}':
+                        anchor = True
+                    else:
+                        phs = []
+                        s = v
+                        start = 0
+                        while True:
+                            i = s.find('{{', start)
+                            if i == -1: break
+                            j = s.find('}}', i+2)
+                            if j == -1: break
+                            phs.append(s[i:j+2]); start = j+2
+                        nv = v
+                        for ph in phs:
+                            key = ph.strip('{}')
+                            nv = nv.replace(ph, str(data.get(key, '')))
+                        if nv != v:
+                            cell.value = nv
+            if anchor and items_anchor_row is None:
+                items_anchor_row = r
+        if items_anchor_row:
+            template_row_idx = min(items_anchor_row+1, ws.max_row)
+            template_vals = [ws.cell(template_row_idx, c).value for c in range(1, max_c+1)]
+            ws.delete_rows(items_anchor_row, 2)
+            insert_at = items_anchor_row
+            for it in items:
+                new_vals = []
+                for val in template_vals:
+                    if isinstance(val, str):
+                        nv = val
+                        phs = []
+                        s = val
+                        start = 0
+                        while True:
+                            i = s.find('{{', start)
+                            if i == -1: break
+                            j = s.find('}}', i+2)
+                            if j == -1: break
+                            phs.append(s[i:j+2]); start = j+2
+                        for ph in phs:
+                            k = ph.strip('{}')
+                            if k.startswith('ITEMS.'):
+                                field = k.split('.',1)[1]
+                                nv = nv.replace(ph, str(it.get(field, '')))
+                        new_vals.append(nv)
+                    else:
+                        new_vals.append(val)
+                ws.insert_rows(insert_at)
+                for c, v in enumerate(new_vals, start=1):
+                    ws.cell(insert_at, c).value = v
+                insert_at += 1
+        out = io.BytesIO()
+        wb.save(out)
+        out.seek(0)
+        return Response(content=out.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': 'attachment; filename="invoice.xlsx"'})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

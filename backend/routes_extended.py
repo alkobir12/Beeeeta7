@@ -57,6 +57,8 @@ async def get_settings():
                 for ch in it.get('children', []) or []:
                     if ch.get('path') == path:
                         return True
+            return False
+
 async def _download_file_from_gridfs(file_id: str) -> bytes:
     if not templates_bucket:
         raise HTTPException(status_code=500, detail='Templates bucket not initialized')

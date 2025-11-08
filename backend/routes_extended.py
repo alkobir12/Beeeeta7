@@ -54,9 +54,7 @@ async def get_settings():
                         {"group": True, "path": "/settings", "label": "الإعدادات", "enabled": True, "children": [
                             {"path": "/settings", "label": "الإعدادات العامة", "enabled": True},
                             {"path": "/templates", "label": "نماذج الفواتير/التقارير", "enabled": True},
-                "baseRepairTemplateActive": True,
-
-                            {"path": "/users", "label": "المستخدمون", "enabled": True}
+                        {"path": "/users", "label": "المستخدمون", "enabled": True}
                         ]}
                     ]
                 }

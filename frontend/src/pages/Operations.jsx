@@ -396,6 +396,8 @@ const Operations = () => {
 
           <Card>
             <CardHeader>
+              <CardTitle>آخر العمليات</CardTitle>
+            </CardHeader>
             <CardContent className="p-6 space-y-3">
               {ops.map(op => (
                 <div key={op.id} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
@@ -420,8 +422,7 @@ const Operations = () => {
                 </div>
               ))}
             </CardContent>
-              <CardTitle>آخر العمليات</CardTitle>
-            </CardHeader>
+          </Card>
 
 // CEO Embedded Components
 const CeoFilters = ({ accounts, onChange }) => {

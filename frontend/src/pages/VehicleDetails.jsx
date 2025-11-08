@@ -406,11 +406,35 @@ const VehicleDetails = () => {
           </div>
         </div>
 
-        {/* Timeline */}
+        {/* التواريخ */}
         <Card className="mt-6 shadow-lg">
           <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar size={24} />
+              التواريخ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 mb-1">تاريخ الاستقبال</p>
+                <p className="font-semibold text-blue-900">{vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleString('ar-SA') : '-'}</p>
+              </div>
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <p className="text-sm text-orange-700 mb-1">التسليم المتوقع</p>
+                <p className="font-semibold text-orange-900">{vehicle.estimatedCompletion ? new Date(vehicle.estimatedCompletion).toLocaleString('ar-SA') : '-'}</p>
+              </div>
+              {vehicle.completionDate && (
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-700 mb-1">تاريخ الإنجاز</p>
+                  <p className="font-semibold text-green-900">{new Date(vehicle.completionDate).toLocaleString('ar-SA')}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Vehicle Approvals Section */}
+        {/* موافقات المركبة */}
         <Card className="mt-6 shadow-lg">
           <CardHeader>
             <CardTitle>موافقات المركبة</CardTitle>
@@ -421,9 +445,9 @@ const VehicleDetails = () => {
             ) : (
               <div className="space-y-3">
                 {approvals.map((appr) => (
-                  <div key={appr.id} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
+                  <div key={appr.id || appr.token} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
                     <div>
-                      <div className="font-bold">{appr.title || 'طلب اعتماد'} • {appr.amount?.toFixed ? appr.amount.toFixed(2) : appr.amount} ر.س</div>
+                      <div className="font-bold">{appr.title || 'طلب اعتماد'} • {(() => { const n = Number(appr.amount); return isNaN(n) ? (appr.amount || '-') : n.toFixed(2); })()} ر.س</div>
                       <div className="text-xs text-slate-500">
                         الحالة: {appr.status === 'approved' ? 'تمت الموافقة' : appr.status === 'rejected' ? 'مرفوض' : appr.status === 'deferred' ? 'مؤجل' : appr.status === 'requote' ? 'إعادة تسعير' : 'بانتظار الموافقة'}
                         {appr.respondedAt && ` — ${new Date(appr.respondedAt).toLocaleString('ar-SA')}`}
@@ -438,31 +462,6 @@ const VehicleDetails = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-            <CardTitle className="flex items-center gap-2">
-              <Calendar size={24} />
-              التواريخ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700 mb-1">تاريخ الاستقبال</p>
-                <p className="font-semibold text-blue-900">{new Date(vehicle.entryDate).toLocaleString('ar-SA')}</p>
-              </div>
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <p className="text-sm text-orange-700 mb-1">التسليم المتوقع</p>
-                <p className="font-semibold text-orange-900">{new Date(vehicle.estimatedCompletion).toLocaleString('ar-SA')}</p>
-              </div>
-              {vehicle.completionDate && (
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700 mb-1">تاريخ الإنجاز</p>
-                  <p className="font-semibold text-green-900">{new Date(vehicle.completionDate).toLocaleString('ar-SA')}</p>
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
         

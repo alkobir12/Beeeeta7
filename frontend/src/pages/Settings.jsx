@@ -52,7 +52,7 @@ const Settings = () => {
         taxEnabled: response.data.taxEnabled || false,
         taxRate: response.data.taxRate || 15,
         language: savedLanguage,
-        themeName: response.data.themeName || 'light'
+        themeName: response.data.themeName || 'light',
         baseRepairTemplateActive: response.data.baseRepairTemplateActive ?? true,
         baseRepairTemplateHtml: response.data.baseRepairTemplateHtml || '',
       });

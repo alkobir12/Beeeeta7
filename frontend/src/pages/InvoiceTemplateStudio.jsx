@@ -13,6 +13,8 @@ const InvoiceTemplateStudio = () => {
   const [templates, setTemplates] = useState([]);
   const [selected, setSelected] = useState(null);
   const [grid, setGrid] = useState([]); // simple 2D array as our grid model
+  const [mapping, setMapping] = useState({ WORKSHOP_NAME: '', CUSTOMER_NAME: '', VEHICLE_PLATE: '', TOTAL: '' });
+  const [itemsConfig, setItemsConfig] = useState({ anchor: '{{ITEMS}}', columns: { description: '', qty: '', price: '', total: '' } });
   const fileRef = useRef();
 
   useEffect(()=>{ loadTemplates(); },[]);

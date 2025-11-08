@@ -173,6 +173,59 @@ async def import_invoice_template(file: UploadFile = File(...)):
                 for cell in row:
                     if isinstance(cell, str):
                         fields += _extract_placeholders_from_text(cell)
+        elif ext == '.html' or ext == '.htm':
+            fmt = 'html'
+            text = content.decode('utf-8', errors='ignore')
+            fields += _extract_placeholders_from_text(text)
+            preview = [["HTML Template imported. Edit in studio."]]
+        elif ext == '.docx':
+            fmt = 'docx'
+            docx = DocxDocument(io.BytesIO(content))
+            for p in docx.paragraphs:
+                fields += _extract_placeholders_from_text(p.text)
+            for table in docx.tables:
+                for row in table.rows:
+                    preview.append([cell.text for cell in row.cells][:20])
+        elif ext == '.pdf':
+            fmt = 'pdf'
+            try:
+                import pdfplumber
+                with pdfplumber.open(io.BytesIO(content)) as pdf:
+                    if len(pdf.pages) > 0:
+                        page = pdf.pages[0]
+                        table = page.extract_table()
+                        if table:
+                            for i, row in enumerate(table):
+                                if i >= 30: break
+                                preview.append([str(x) for x in row][:20])
+                        else:
+                            text = page.extract_text() or ''
+                            fields += _extract_placeholders_from_text(text)
+                            preview = [["PDF imported. No table detected."]]
+            except Exception:
+                preview = [["PDF imported (raw). Consider converting to Excel in studio."]]
+        else:
+            raise HTTPException(status_code=400, detail='صيغة غير مدعومة حالياً')
+        fields = list(dict.fromkeys(fields))
+        file_id = await _store_file_to_gridfs(name, content, file.content_type or 'application/octet-stream')
+        tid = str(uuid.uuid4())
+        doc = {
+            'id': tid,
+            'name': os.path.splitext(name)[0],
+            'format': fmt,
+            'fileId': file_id,
+            'fields': fields,
+            'preview': preview,
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/invoice-templates/create-blank')
 async def create_blank_template(payload: Dict[str, Any] = Body(...)):

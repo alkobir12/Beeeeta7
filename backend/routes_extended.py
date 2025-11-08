@@ -551,7 +551,7 @@ async def import_customers(file: UploadFile = File(...), mode: str = 'skip'):
             'total': len(df)
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ------------------ APPROVALS (Customer Approval Requests) ------------------
 @router.post('/approvals')
@@ -640,7 +640,7 @@ async def get_public_approval(token: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def _approvals_broadcast(event: Dict[str, Any]):
     dead = []
@@ -698,7 +698,7 @@ async def respond_to_approval(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/approvals/stream')
 async def approvals_stream(request: Request):
@@ -741,4 +741,4 @@ async def prepare_notification(payload: Dict[str, Any]):
         deeplink = f"https://wa.me/{norm}?text={encoded}"
         return {'whatsappDeeplink': deeplink}
     except Exception as e:
-        raise HTTPException(status_code=500, detail:str(e))
+        raise HTTPException(status_code=500, detail=str(e))

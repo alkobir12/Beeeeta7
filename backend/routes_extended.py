@@ -88,6 +88,16 @@ async def get_parts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get('/biz-accounts')
+async def list_accounts():
+    try:
+        docs = await db.business_accounts.find({}).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get('/services')
 async def get_services():
     try:

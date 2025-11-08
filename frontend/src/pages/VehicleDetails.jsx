@@ -57,7 +57,7 @@ const VehicleDetails = () => {
         }
       } catch (e) {}
     }, 5000);
-    return () => clearInterval(interval);
+    return () => { try { es.close(); } catch {} clearInterval(interval); };
   }, [id]);
 
   const fetchData = async () => {

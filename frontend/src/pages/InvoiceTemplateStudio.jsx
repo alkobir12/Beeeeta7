@@ -164,9 +164,6 @@ const InvoiceTemplateStudio = () => {
             </CardContent>
           </Card>
 
-            </CardContent>
-          </Card>
-
           <Card className="lg:col-span-2">
             <CardHeader><CardTitle>المحرّر الشبكي (مبسّط)</CardTitle></CardHeader>
             <CardContent>

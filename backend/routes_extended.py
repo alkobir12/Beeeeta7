@@ -163,6 +163,29 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 'amount': subtotal,
                 'description': f"{op['type']} - {op.get('partnerName') or 'عملية'}",
                 'date': datetime.utcnow(),
+@router.post('/print/resolve-template')
+async def resolve_template(payload: Dict[str, Any] = Body(...)):
+    """Resolve template by type. If override_type provided == 'repair', return the new base repair template"""
+    try:
+        t = (payload or {}).get('override_type') or (payload or {}).get('type') or 'repair'
+        if t in ('repair','invoice','repair_invoice','vehicle_status'):
+            # Always return base repair template if requested
+            import os
+            template_path = os.path.join(os.path.dirname(__file__), 'invoice_template_repair_ar.html')
+            with open(template_path, 'r', encoding='utf-8') as f:
+                html = f.read()
+            return { 'type': 'repair', 'template': { 'content': html, 'name': 'القالب الأساسي - إصلاح مركبة' } }
+        # fallback: try existing templates collection
+        doc = await db.templates.find_one({'type': t, 'isActive': True})
+        if not doc:
+            raise HTTPException(status_code=404, detail='لم يتم العثور على قالب')
+        doc.pop('_id', None)
+        return { 'type': t, 'template': doc }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
                 'reference': op['id'],
                 'createdAt': datetime.utcnow()
             }

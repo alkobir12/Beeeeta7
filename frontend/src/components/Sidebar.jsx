@@ -39,6 +39,8 @@ const PATH_ICONS = {
   '/profile': Building2,
   '/import': FileText,
   '/settings': Cog,
+  '/invoice-templates': FileText,
+  '/ceo': Brain,
   '/knowledge': BookOpen,
   '/users': UsersIcon
 };

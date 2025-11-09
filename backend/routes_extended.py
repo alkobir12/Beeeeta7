@@ -238,6 +238,161 @@ async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ---------------- Operations Endpoints ----------------
+@router.get('/operations')
+async def get_operations(account_id: Optional[str] = None, type: Optional[str] = None):
+    try:
+        q: Dict[str, Any] = {}
+        if account_id:
+            q['accountId'] = account_id
+        if type:
+            q['type'] = type
+        docs = await db.operations.find(q).sort('date', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            if d.get('date') and hasattr(d['date'], 'isoformat'):
+                d['date'] = d['date'].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/operations')
+async def create_operation(payload: Dict[str, Any] = Body(...)):
+    try:
+        items = payload.get('items', [])
+        subtotal = 0.0
+        for it in items:
+            qty = float(it.get('quantity', 1))
+            price = float(it.get('price', 0))
+            it['total'] = qty * price
+            subtotal += it['total']
+        op = {
+            'id': str(uuid.uuid4()),
+            'accountId': payload.get('accountId', ''),
+            'type': payload.get('type', 'purchase'),
+            'partnerType': payload.get('partnerType', 'supplier'),
+            'partnerName': payload.get('partnerName'),
+            'items': items,
+            'subtotal': subtotal,
+            'total': subtotal,
+            'paymentMethod': payload.get('paymentMethod', 'cash'),
+            'notes': payload.get('notes'),
+            'date': datetime.utcnow(),
+            'createdAt': datetime.utcnow()
+        }
+        await db.operations.insert_one(op)
+        # adjust inventory for parts
+        if op['type'] in ('purchase', 'sale'):
+            for it in items:
+                if it.get('itemType') == 'part' and it.get('itemId'):
+                    delta = int(float(it.get('quantity', 0)))
+                    if op['type'] == 'sale':
+                        delta = -delta
+                    await db.parts.update_one({'id': it['itemId']}, {'$inc': {'quantity': delta}})
+        # create transaction
+        try:
+            tx = {
+                'id': str(uuid.uuid4()),
+                'accountId': op['accountId'],
+                'type': 'income' if op['type'] == 'sale' else 'expense',
+                'category': f"operation_{op['type']}",
+                'amount': subtotal,
+                'description': f"{op['type']} - {op.get('partnerName') or ''}",
+                'date': datetime.utcnow(),
+                'reference': op['id'],
+                'createdAt': datetime.utcnow()
+            }
+            await db.transactions.insert_one(tx)
+        except Exception as ex:
+            print(f"TX create failed: {ex}")
+        op.pop('_id', None)
+        op['date'] = op['date'].isoformat()
+        return op
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/operations/analytics/summary')
+async def operations_analytics(account_id: Optional[str] = None):
+    try:
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = today - timedelta(days=7)
+        month_start = today.replace(day=1)
+        q: Dict[str, Any] = {}
+        if account_id:
+            q['accountId'] = account_id
+        ops = await db.operations.find(q).to_list(length=100000)
+        def parse_date(x):
+            d = x.get('date')
+            if isinstance(d, str):
+                try:
+                    return datetime.fromisoformat(d.replace('Z','+00:00'))
+                except Exception:
+                    return today
+            return d or today
+        def agg(start):
+            s=e=sc=ec=0
+            for o in ops:
+                d = parse_date(o)
+                if d >= start:
+                    t = float(o.get('total', 0))
+                    if o.get('type') == 'sale': s += t; sc += 1
+                    elif o.get('type') == 'purchase': e += t; ec += 1
+            return s,e,s-e,sc,ec
+        tS,tE,tP,tSc,tEc = agg(today)
+        wS,wE,wP,wSc,wEc = agg(week_ago)
+        mS,mE,mP,mSc,mEc = agg(month_start)
+        return {
+            'today': {'sales': tS, 'expenses': tE, 'profit': tP, 'salesCount': tSc, 'expensesCount': tEc},
+            'week': {'sales': wS, 'expenses': wE, 'profit': wP, 'salesCount': wSc, 'expensesCount': wEc},
+            'month': {'sales': mS, 'expenses': mE, 'profit': mP, 'salesCount': mSc, 'expensesCount': mEc}
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ---------------- CEO multi account ----------------
+@router.post('/ceo/ai-analysis-multi')
+async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
+    try:
+        account_ids = (payload or {}).get('accountIds') or []
+        question = (payload or {}).get('question') or ''
+        days = int((payload or {}).get('days') or 30)
+        if not account_ids:
+            accs = await db.business_accounts.find({}).to_list(length=1000)
+            account_ids = [a.get('id') for a in accs if a.get('id')]
+        end = datetime.utcnow(); start = end - timedelta(days=days)
+        tx = await db.transactions.find({'date': {'$gte': start, '$lte': end}, 'accountId': {'$in': account_ids}}).to_list(length=100000)
+        per = []
+        acc_docs = await db.business_accounts.find({'id': {'$in': account_ids}}).to_list(length=1000)
+        name_map = {a.get('id'): a.get('name','Account') for a in acc_docs}
+        for aid in account_ids:
+            ftx = [t for t in tx if t.get('accountId') == aid]
+            income = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='income')
+            expense = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='expense')
+            profit = income - expense
+            per.append({'id': aid, 'name': name_map.get(aid,'Account'), 'income': income, 'expenses': expense, 'profit': profit, 'profitMargin': (profit/income*100.0) if income>0 else 0.0})
+        totals_income = sum(a['income'] for a in per)
+        totals_expenses = sum(a['expenses'] for a in per)
+        totals_profit = totals_income - totals_expenses
+        result = {'accounts': per, 'totals': {'income': totals_income, 'expenses': totals_expenses, 'profit': totals_profit, 'profitMargin': (totals_profit/totals_income*100.0) if totals_income>0 else 0.0}, 'ai': None, 'periodDays': days}
+        # optional AI
+        if question:
+            try:
+                import os
+                from emergentintegrations.llm.chat import LlmChat, UserMessage
+                key = os.getenv('EMERGENT_LLM_KEY')
+                if key:
+                    sys = "أنت مساعد المدير التنفيذي. حلّل البيانات وقدّم توصيات مختصرة."
+                    ctx = "\n".join([f"{a['name']}: دخل {a['income']:.0f}، مصروف {a['expenses']:.0f}، ربح {a['profit']:.0f}" for a in per])
+                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('anthropic','claude-sonnet-4-20250514')
+                    ans = await chat.send_message(UserMessage(text=f"السؤال: {question}\nالبيانات:\n{ctx}"))
+                    result['ai'] = {'answer': ans, 'model': 'anthropic/claude-sonnet-4-20250514'}
+            except Exception as ex:
+                print(f"AI error: {ex}")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post('/invoice-templates/{tid}/save-json')
 async def save_template_from_json(tid: str, payload: Dict[str, Any] = Body(...)):
     try:

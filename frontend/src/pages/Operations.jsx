@@ -265,6 +265,19 @@ const Operations = () => {
                       </tr>
                     </thead>
                     <tbody>
+                {item.itemType === 'service' && (
+                  <Button variant="outline" onClick={async ()=>{
+                    if(!item.name){ alert('أدخل اسم الخدمة'); return; }
+                    try{
+                      const res = await axios.post(`${API_URL}/services`, { name: item.name, price: item.price, category: item.category || 'عام' });
+                      // refresh services list and set selected id
+                      const list = await axios.get(`${API_URL}/services`);
+                      setServices(list.data || []);
+                      setItem({...item, itemId: res.data.id});
+                    }catch(e){ alert('تعذر حفظ الخدمة'); }
+                  }}>حفظ الخدمة في قاعدة البيانات</Button>
+                )}
+
                       {form.items.map((it, idx)=> (
                         <tr key={idx} className="border-b">
                           <td className="p-2">{it.itemType==='part'?'قطعة':'خدمة'}</td>

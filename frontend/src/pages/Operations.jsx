@@ -218,6 +218,63 @@ const Operations = () => {
 
                 <Card className={`border-2 ${analytics.month.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
                   <CardContent className="p-6">
+
+          {/* Items Form */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>إضافة بند</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <select value={item.itemType} onChange={e=>setItem({...item, itemType: e.target.value})} className="border p-2 rounded">
+                  <option value="part">قطعة</option>
+                  <option value="service">خدمة</option>
+                </select>
+                {item.itemType === 'part' ? (
+                  <select value={item.itemId} onChange={e=>{ const it = parts.find(p=>p.id===e.target.value); setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.price || 0}); }} className="border p-2 rounded">
+                    <option value="">اختر قطعة</option>
+                    {parts.map(p=> (<option key={p.id} value={p.id}>{p.name}</option>))}
+                  </select>
+                ) : (
+                  <select value={item.itemId} onChange={e=>{ const s = services.find(s=>s.id===e.target.value); setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); }} className="border p-2 rounded">
+                    <option value="">اختر خدمة</option>
+                    {services.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
+                  </select>
+                )}
+                <Input type="number" value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value)})} placeholder="الكمية" />
+                <Input type="number" value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value)})} placeholder="السعر" />
+                <Button onClick={addItem} className="bg-blue-600 hover:bg-blue-700">إضافة</Button>
+              </div>
+              {form.items.length>0 && (
+                <div className="mt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="p-2 text-right">النوع</th>
+                        <th className="p-2 text-right">الاسم</th>
+                        <th className="p-2 text-right">الكمية</th>
+                        <th className="p-2 text-right">السعر</th>
+                        <th className="p-2 text-right">الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.items.map((it, idx)=> (
+                        <tr key={idx} className="border-b">
+                          <td className="p-2">{it.itemType==='part'?'قطعة':'خدمة'}</td>
+                          <td className="p-2">{it.name}</td>
+                          <td className="p-2">{it.quantity}</td>
+                          <td className="p-2">{it.price}</td>
+                          <td className="p-2">{(it.quantity*it.price).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="text-right mt-2 font-bold">الإجمالي: {subtotal.toFixed(2)} ر.س</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold" style={{color: analytics.month.profit >= 0 ? '#047857' : '#be123c'}}>صافي ربح الشهر</p>

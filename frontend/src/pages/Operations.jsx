@@ -219,7 +219,7 @@ const Operations = () => {
                 <Card className={`border-2 ${analytics.month.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
                   <CardContent className="p-6">
 
-          {/* Items Form */}
+          {/* Items Form (Quick add cleaned) */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>إضافة بند</CardTitle>

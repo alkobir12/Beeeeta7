@@ -773,6 +773,18 @@ backend:
           agent: "testing"
           comment: "✅ REVIEW REQUEST TESTING COMPLETE: Successfully executed all 5 requested invoice template tests with 100% pass rate (5/5 tests passed). **TEST RESULTS:** (1) ✅ Import Template A from URL 'https://customer-assets.emergentagent.com/job_autoworkshopai/artifacts/4gfupvnp_%D9%86%D9%85%D9%88%D8%B0%D8%AC%20%D8%A7.xlsx' - imported successfully with ID: 36235c68-1bc6-4786-9923-2af203177359, format: xlsx, 30 preview rows. (2) ✅ Import Template B from URL 'https://customer-assets.emergentagent.com/job_autoworkshopai/artifacts/fa15iq7h_%D9%81%D8%A7%D8%AA%D9%88%D8%B1%D8%A9%20%D9%86%D9%85%D9%88%D8%B0%D8%AC.xlsx' - imported successfully with ID: 5f9803cb-c5f7-4c1f-badf-aa8ca05da835, format: xlsx, 30 preview rows. (3) ✅ GET /api/invoice-templates returns list with both templates present (total: 7 templates). (4) ✅ POST /api/invoice-templates/{id}/make-default successfully sets Template B as default (isDefault: true). (5) ✅ POST /api/print/invoice-xlsx with templateId of Template B and sample data with ITEMS returns valid XLSX file (35,488 bytes, content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet). **ISSUE RESOLVED:** Fixed missing ObjectId import in routes_extended.py that was causing 'Invalid file id' error in print endpoint. All invoice template functionality now working correctly as specified in review request."
 
+  - task: "Comprehensive UI Test Sweep"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Operations.jsx, /app/frontend/src/pages/InvoiceTemplateStudio.jsx, /app/frontend/src/pages/Settings.jsx, /app/frontend/src/pages/VehicleDetails.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE UI TEST SWEEP COMPLETE: Executed comprehensive UI testing across 4 major pages with 75% pass rate (3/4 tests passed). **OPERATIONS PAGE (✅ PASS):** (1) ✅ Load /operations: Parts and services dropdowns load and handle empty state gracefully, (2) ✅ Switch itemType between part and service working correctly, (3) ✅ Service creation flow: Successfully type name 'خدمة تجريبية للاختبار', category 'صيانة عامة', set price 150 and quantity 1, (4) ✅ Click 'حفظ الخدمة في قاعدة البيانات' button working, (5) ⚠️ Multiple 'إضافة' buttons found (minor UI issue), (6) ✅ Totals update correctly, no 404 errors, (7) ✅ Operation submit flow available and functional. **INVOICE TEMPLATE STUDIO (❌ FAIL):** (1) ❌ Load /invoice-templates: Page has critical JavaScript error 'createBlank is not defined', (2) ❌ Cannot test import via URL due to page error, (3) ❌ Cannot test template selection due to page error, (4) ❌ Cannot test grid cell modification due to page error, (5) ❌ Cannot test save as Excel due to page error, (6) ❌ Cannot test template deletion due to page error. **SETTINGS (✅ PASS):** (1) ✅ Load /settings: Page renders correctly, (2) ✅ Base Repair Template section visible, (3) ✅ Toggle switch working (can change baseRepairTemplateActive), (4) ✅ Preview template button functional (calls /api/print/resolve-template). **VEHICLE DETAILS (✅ PASS):** (1) ✅ Successfully navigated to vehicle details page, (2) ✅ Approvals section 'موافقات المركبة' exists and visible, (3) ✅ 'طباعة الحالة' button exists and functional, (4) ✅ No console errors occur during page load and interaction. **CRITICAL ISSUE:** InvoiceTemplateStudio.jsx has undefined 'createBlank' function causing complete page failure. This needs immediate fix by main agent."
+
 frontend:
   - task: "Dashboard with API Integration"
     implemented: true

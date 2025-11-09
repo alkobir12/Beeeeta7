@@ -167,7 +167,7 @@ const InvoiceTemplateStudio = () => {
               </div>
 
               <div className="mt-4">
-                <Label>مرساة البنود (صف يحتوي {{ITEMS}})</Label>
+                <Label>مرساة البنود (صف يحتوي {'{{ITEMS}}'})</Label>
                 <Input value={itemsConfig.anchor} onChange={e=>setItemsConfig({...itemsConfig, anchor: e.target.value})} />
               </div>
 

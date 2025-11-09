@@ -17,14 +17,13 @@ const InvoiceTemplateStudio = () => {
   const [itemsConfig, setItemsConfig] = useState({ anchor: '{{ITEMS}}', columns: { description: '', qty: '', price: '', total: '' } });
   const fileRef = useRef();
 
-  useEffect(()=>{ loadTemplates(); },[]);
-
+  const [importUrl, setImportUrl] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(()=>{ loadTemplates(); },[]);
 
   const loadTemplates = async () => {
     try{
-  const [importUrl, setImportUrl] = useState('');
-
       const res = await axios.get(`${API_URL}/invoice-templates`);
       setTemplates(res.data || []);
     }catch(e){ console.error(e); }

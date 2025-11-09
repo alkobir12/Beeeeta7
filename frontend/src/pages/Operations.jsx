@@ -21,14 +21,16 @@ const Operations = () => {
   const [item, setItem] = useState({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
 
   const load = async () => {
-    const [accRes, partsRes, opsRes, analyticsRes] = await Promise.all([
+    const [accRes, partsRes, servicesRes, opsRes, analyticsRes] = await Promise.all([
       axios.get(`${API_URL}/biz-accounts`),
       axios.get(`${API_URL}/parts`),
+      axios.get(`${API_URL}/services`),
       axios.get(`${API_URL}/operations`),
       axios.get(`${API_URL}/operations/analytics/summary`)
     ]);
     setAccounts(accRes.data || []);
     setParts(partsRes.data || []);
+    setServices(servicesRes.data || []);
     setOps(opsRes.data || []);
     setAnalytics(analyticsRes.data || null);
   };

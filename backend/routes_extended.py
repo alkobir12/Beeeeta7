@@ -99,6 +99,37 @@ async def get_parts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post('/parts')
+async def create_part(payload: Dict[str, Any] = Body(...)):
+    try:
+        name = (payload or {}).get('name')
+        if not name:
+            raise HTTPException(status_code=400, detail='name required')
+        price = float((payload or {}).get('price') or 0)
+        quantity = int(float((payload or {}).get('quantity') or 0))
+        category = (payload or {}).get('category') or 'عام'
+        existing = await db.parts.find_one({'name': name, 'category': category})
+        if existing:
+            await db.parts.update_one({'id': existing.get('id')}, {'$set': {'price': price, 'updatedAt': datetime.utcnow()}, '$inc': {'quantity': quantity}})
+            doc = await db.parts.find_one({'id': existing.get('id')})
+            doc.pop('_id', None)
+            return doc
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'price': price,
+            'quantity': quantity,
+            'category': category,
+            'createdAt': datetime.utcnow()
+        }
+        await db.parts.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get('/biz-accounts')
 async def list_accounts():
     try:

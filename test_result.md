@@ -757,7 +757,7 @@ backend:
 
   - task: "Invoice Template APIs Smoke Test"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/routes_extended.py"
     stuck_count: 0
     priority: "high"
@@ -769,6 +769,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "✅ SMOKE TEST RE-RUN COMPLETE: Executed all 5 requested smoke test scenarios with 80% pass rate (4/5 tests passed). **PASSED TESTS:** (1) ✅ GET /api/settings contains both /ceo and /invoice-templates in menuConfig (total items: 7), (2) ✅ GET /api/biz-accounts returns 200 with array of 44 accounts, (3) ✅ POST /api/invoice-templates/import-url with Excel URL successfully imports template with ID: 3f6162c7-131a-4a4a-a388-9605fec675e3, (4) ✅ POST /api/invoice-templates/{id}/make-default successfully sets template as default. **FAILED TEST:** (5) ❌ POST /api/print/invoice-xlsx returns 404 Not Found - endpoint does not exist. **CRITICAL ISSUE CONFIRMED:** The /api/print/invoice-xlsx endpoint is missing and must be implemented by main agent to complete the invoice template workflow. Fixed syntax errors in routes_extended.py during testing (indentation and function placement issues). All other invoice template functionality working correctly."
+        - working: true
+          agent: "testing"
+          comment: "✅ REVIEW REQUEST TESTING COMPLETE: Successfully executed all 5 requested invoice template tests with 100% pass rate (5/5 tests passed). **TEST RESULTS:** (1) ✅ Import Template A from URL 'https://customer-assets.emergentagent.com/job_autoworkshopai/artifacts/4gfupvnp_%D9%86%D9%85%D9%88%D8%B0%D8%AC%20%D8%A7.xlsx' - imported successfully with ID: 36235c68-1bc6-4786-9923-2af203177359, format: xlsx, 30 preview rows. (2) ✅ Import Template B from URL 'https://customer-assets.emergentagent.com/job_autoworkshopai/artifacts/fa15iq7h_%D9%81%D8%A7%D8%AA%D9%88%D8%B1%D8%A9%20%D9%86%D9%85%D9%88%D8%B0%D8%AC.xlsx' - imported successfully with ID: 5f9803cb-c5f7-4c1f-badf-aa8ca05da835, format: xlsx, 30 preview rows. (3) ✅ GET /api/invoice-templates returns list with both templates present (total: 7 templates). (4) ✅ POST /api/invoice-templates/{id}/make-default successfully sets Template B as default (isDefault: true). (5) ✅ POST /api/print/invoice-xlsx with templateId of Template B and sample data with ITEMS returns valid XLSX file (35,488 bytes, content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet). **ISSUE RESOLVED:** Fixed missing ObjectId import in routes_extended.py that was causing 'Invalid file id' error in print endpoint. All invoice template functionality now working correctly as specified in review request."
 
 frontend:
   - task: "Dashboard with API Integration"

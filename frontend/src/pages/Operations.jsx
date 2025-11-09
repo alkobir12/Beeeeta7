@@ -234,6 +234,22 @@ const Operations = () => {
                   <select value={item.itemId} onChange={e=>{ const it = parts.find(p=>p.id===e.target.value); setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.price || 0}); }} className="border p-2 rounded">
                     <option value="">اختر قطعة</option>
                     {parts.map(p=> (<option key={p.id} value={p.id}>{p.name}</option>))}
+                {item.itemType === 'part' && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Input value={item.name} onChange={e=> setItem({...item, name: e.target.value})} placeholder="اسم القطعة (يدوي)" />
+                    <Input value={item.category} onChange={e=> setItem({...item, category: e.target.value})} placeholder="تصنيف القطعة" />
+                    <Button variant="outline" onClick={async ()=>{
+                      if(!item.name){ alert('أدخل اسم القطعة'); return; }
+                      try{
+                        const res = await axios.post(`${API_URL}/parts`, { name: item.name, price: item.price, quantity: item.quantity, category: item.category || 'عام' });
+                        const list = await axios.get(`${API_URL}/parts`);
+                        setParts(list.data || []);
+                        setItem({...item, itemId: res.data.id});
+                      }catch(e){ alert('تعذر حفظ القطعة'); }
+                    }}>حفظ القطعة في قاعدة البيانات</Button>
+                  </div>
+                )}
+
                   </select>
                 ) : (
                   <select value={item.itemId} onChange={e=>{ const s = services.find(s=>s.id===e.target.value); setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); }} className="border p-2 rounded">

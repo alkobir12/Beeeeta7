@@ -202,6 +202,60 @@ async def import_invoice_template_url(payload: Dict[str, Any] = Body(...)):
             name = url.split('/')[-1] or f'template_{uuid.uuid4().hex}'
             # Reuse existing import logic by extension
             ext = (os.path.splitext(name)[1] or '').lower()
+
+# -------- Approval Logs helpers --------
+async def _log_approval_event(token: str, vehicle_id: str, customer_id: str, title: str, amount: float, status: str, service_items: list = None, service_items_text: str = None, responded_at: datetime = None):
+    try:
+        doc = await db.customer_approval_logs.find_one({'token': token})
+        base = {
+            'token': token,
+            'vehicleId': vehicle_id,
+            'customerId': customer_id,
+            'title': title,
+            'amount': amount,
+            'status': status,
+            'serviceItems': service_items or [],
+            'serviceItemsText': service_items_text,
+        }
+        if doc:
+            update = { **base, 'updatedAt': datetime.utcnow() }
+            if responded_at:
+                update['respondedAt'] = responded_at
+            await db.customer_approval_logs.update_one({'token': token}, {'$set': update})
+        else:
+            newdoc = { 'id': str(uuid.uuid4()), **base, 'createdAt': datetime.utcnow() }
+            if responded_at:
+                newdoc['respondedAt'] = responded_at
+            await db.customer_approval_logs.insert_one(newdoc)
+    except Exception as e:
+        print(f"approval log error: {e}")
+
+@router.get('/customers/{customer_id}/approval-logs')
+async def get_customer_approval_logs(customer_id: str):
+    try:
+        docs = await db.customer_approval_logs.find({'customerId': customer_id}).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            for k in ('createdAt','updatedAt','respondedAt'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/vehicles/{vehicle_id}/approval-logs')
+async def get_vehicle_approval_logs(vehicle_id: str):
+    try:
+        docs = await db.customer_approval_logs.find({'vehicleId': vehicle_id}).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            for k in ('createdAt','updatedAt','respondedAt'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
             fields: List[str] = []
             preview: List[List[str]] = []
             fmt = None

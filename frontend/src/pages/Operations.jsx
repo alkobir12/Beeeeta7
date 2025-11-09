@@ -250,6 +250,13 @@ const Operations = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-50">
+                {item.itemType === 'service' && (
+                  <Input value={item.name} onChange={e=> setItem({...item, name: e.target.value})} placeholder="اسم الخدمة (يدوي)" />
+                )}
+                {item.itemType === 'service' && (
+                  <Input value={item.category} onChange={e=> setItem({...item, category: e.target.value})} placeholder="تصنيف الخدمة" />
+                )}
+
                         <th className="p-2 text-right">النوع</th>
                         <th className="p-2 text-right">الاسم</th>
                         <th className="p-2 text-right">الكمية</th>

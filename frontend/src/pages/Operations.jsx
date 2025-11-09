@@ -18,7 +18,7 @@ const Operations = () => {
   const [ops, setOps] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [form, setForm] = useState({ accountId: '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '', receiptFile: null });
-  const [item, setItem] = useState({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
+  const [item, setItem] = useState({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0, category: '' });
 
   const load = async () => {
     const [accRes, partsRes, servicesRes, opsRes, analyticsRes] = await Promise.all([

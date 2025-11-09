@@ -1110,6 +1110,17 @@ frontend:
         - working: "NA"
           agent: "main"
           comment: "Added Open and Edit buttons per row in 'آخر العمليات' with API integration to new endpoints."
+  - task: "Operations Quick Add Part/Service UI Testing"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ OPERATIONS QUICK ADD TESTING FAILED: Comprehensive testing of Operations page quick add functionality reveals CRITICAL JSX STRUCTURE ISSUES. **TEST RESULTS:** (1) ✅ Navigation to /operations successful - page loads with title 'عمليات الشراء/البيع'. (2) ❌ Service Quick Add BROKEN - Cannot find service name input, service category input, or 'حفظ الخدمة في قاعدة البيانات' button. (3) ❌ Part Quick Add BROKEN - Cannot find part name input, part category input, or 'حفظ القطعة في قاعدة البيانات' button. (4) ❌ Items Table BROKEN - Neither service nor part items appear in table after clicking add buttons. (5) ❌ CRITICAL JSX ERROR - Console shows hydration error: '<div> cannot be a child of <select>' indicating malformed JSX structure. **ROOT CAUSE:** Operations.jsx has broken JSX structure with misplaced elements, causing UI components to not render properly. The quick add functionality code exists but JSX structure prevents proper rendering. **IMMEDIATE ACTION REQUIRED:** Fix JSX structure in Operations.jsx to resolve hydration errors and restore quick add functionality."
 
   - task: "Parts import button"
     implemented: true

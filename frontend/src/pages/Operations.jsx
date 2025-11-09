@@ -217,6 +217,101 @@ const Operations = () => {
                 </Card>
 
                 <Card className={`border-2 ${analytics.month.profit >= 0 ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300' : 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-300'}`}>
+
+          {/* Items Form (Quick add cleaned) */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>إضافة بند</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <Select value={item.itemType} onValueChange={v=>setItem({...item, itemType: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="part">قطعة</SelectItem>
+                    <SelectItem value="service">خدمة</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Selector by id depends on type */}
+                {item.itemType === 'part' ? (
+                  <Select value={item.itemId} onValueChange={v=>{ const it = parts.find(p=>p.id===v); setItem({...item, itemId: v, name: it?.name || '', price: it?.price || 0}); }}>
+                    <SelectTrigger><SelectValue placeholder="اختر قطعة (اختياري)" /></SelectTrigger>
+                    <SelectContent>
+                      {parts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select value={item.itemId} onValueChange={v=>{ const s = services.find(s=>s.id===v); setItem({...item, itemId: v, name: s?.name || '', price: s?.price || 0}); }}>
+                    <SelectTrigger><SelectValue placeholder="اختر خدمة (اختياري)" /></SelectTrigger>
+                    <SelectContent>
+                      {services.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                <Input placeholder="الاسم (مخصص)" value={item.name} onChange={e=> setItem({...item, name: e.target.value})} />
+                <Input type="number" placeholder="الكمية" value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value)})} />
+                <Input type="number" placeholder="السعر" value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value)})} />
+              </div>
+
+              {/* Quick save row for creating DB record */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input placeholder="تصنيف (اختياري)" value={item.category} onChange={e=> setItem({...item, category: e.target.value})} />
+                {item.itemType === 'part' ? (
+                  <Button type="button" variant="outline" onClick={async ()=>{
+                    if(!item.name){ alert('أدخل اسم القطعة'); return; }
+                    try{
+                      const res = await axios.post(`${API_URL}/parts`, { name: item.name, price: item.price, quantity: item.quantity, category: item.category || 'عام' });
+                      const list = await axios.get(`${API_URL}/parts`);
+                      setParts(list.data || []);
+                      setItem({...item, itemId: res.data.id});
+                    }catch(e){ alert('تعذر حفظ القطعة'); }
+                  }}>حفظ القطعة في قاعدة البيانات</Button>
+                ) : (
+                  <Button type="button" variant="outline" onClick={async ()=>{
+                    if(!item.name){ alert('أدخل اسم الخدمة'); return; }
+                    try{
+                      const res = await axios.post(`${API_URL}/services`, { name: item.name, price: item.price, category: item.category || 'عام' });
+                      const list = await axios.get(`${API_URL}/services`);
+                      setServices(list.data || []);
+                      setItem({...item, itemId: res.data.id});
+                    }catch(e){ alert('تعذر حفظ الخدمة'); }
+                  }}>حفظ الخدمة في قاعدة البيانات</Button>
+                )}
+                <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={addItem}>إضافة للبنود</Button>
+              </div>
+
+              {form.items.length>0 && (
+                <div className="mt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="p-2 text-right">النوع</th>
+                        <th className="p-2 text-right">الاسم</th>
+                        <th className="p-2 text-right">الكمية</th>
+                        <th className="p-2 text-right">السعر</th>
+                        <th className="p-2 text-right">الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.items.map((it, idx)=> (
+                        <tr key={idx} className="border-b">
+                          <td className="p-2">{it.itemType==='part'?'قطعة':'خدمة'}</td>
+                          <td className="p-2">{it.name}</td>
+                          <td className="p-2">{it.quantity}</td>
+                          <td className="p-2">{it.price}</td>
+                          <td className="p-2">{(it.quantity*it.price).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="text-right mt-2 font-bold">الإجمالي: {subtotal.toFixed(2)} ر.س</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
                   <CardContent className="p-6">
 
           {/* Items Form (Quick add cleaned) */}

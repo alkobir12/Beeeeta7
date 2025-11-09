@@ -14,6 +14,7 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const Operations = () => {
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
+  const [services, setServices] = useState([]);
   const [ops, setOps] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [form, setForm] = useState({ accountId: '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '', receiptFile: null });

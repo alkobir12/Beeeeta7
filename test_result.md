@@ -202,7 +202,7 @@ backend:
     implemented: true
     working: false
     file: "/app/frontend/src/pages/Operations.jsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: true
     status_history:
@@ -212,6 +212,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ BLOCKED: Cannot access /operations page due to authentication barrier. All pages redirect to login form. Deep links /operations?tab=sales and /operations?tab=expenses return 200 status but show login page content. Frontend authentication system prevents testing of Operations tabs functionality."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL ISSUE: Operations page accessible after login but shows red error screen due to missing /api/biz-accounts endpoint (404 errors). Operations tabs visible but functionality impacted by backend errors. Red error overlay prevents proper testing of operations functionality."
 
   - task: "CEO moved into Operations"
     implemented: true

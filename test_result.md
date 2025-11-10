@@ -1397,6 +1397,29 @@ agent_communication:
       message: "✅ PRODUCTION ACTIVATION END-TO-END TESTING COMPLETE: Successfully executed comprehensive production activation workflow with 100% pass rate (7/7 tests passed). STEP-BY-STEP RESULTS: (1) ✅ POST /api/settings with sample workshop info and dynamic menuConfig - persisted correctly with Arabic workshop name, SAR currency, tax settings, and complete menu structure. (2) ✅ POST /api/seed/clone-basics - created 3 accounts (Main Workshop, Family, Personal), 3 budgets for current month, and sample transactions as expected. (3) ✅ POST /api/seed/print-templates - seeded all required templates (invoice, sales_invoice, diagnosis, vehicle_estimate, quote, purchase_order, vendor_bill, receipt) with idempotent behavior. (4) ✅ POST /api/admin/create-indexes - successfully created all database indexes for production optimization. (5) ✅ GET /api/settings verification - confirmed menuConfig and updated fields properly persisted. (6) ✅ GET /api/biz-accounts verification - confirmed 3 accounts available as expected. Added missing POST /api/settings endpoint to routes_extended.py during testing. All production activation steps working correctly - system is production-ready."
     - agent: "testing"
       message: "✅ END-TO-END OPERATIONAL FLOW TESTING COMPLETE: Successfully executed comprehensive 10-step operational workflow with 100% pass rate (11/11 tests passed). DETAILED RESULTS: (1) ✅ POST /api/customers with Arabic name 'عميل تجريبي' - customer created successfully. (2) ✅ POST /api/vehicles with Arabic services ['فحص شامل','زيت'] - vehicle created with auto-approval generated (APR- token). (3) ✅ GET /api/approvals?vehicle_id= - verified pending non-revoked approval with token present. (4) ✅ POST /api/diagnosis-cases with Arabic title 'تشخيص شامل', findings ['تسريب زيت'], recommendations ['تغيير جوان'] - diagnosis case created. (5) ✅ POST /api/quotes with Arabic service 'تغيير زيت', totals computed correctly (120 subtotal/total). (6) ✅ POST /api/sales linking to quote - sales order created with dependency. (7) ✅ POST /api/print/resolve-template with Arabic service category 'فحص شامل' - returned vehicle_estimate type with template. (8) ✅ POST /api/purchase-orders with Arabic part 'فلتر زيت' - purchase order created. (9) ✅ POST /api/vendor-bills linking to purchase order - vendor bill created with dependency. (10) ✅ GET /api/activities?doc_type=quote - activity entries found. (11) ✅ GET /api/dependencies?doc_type=quote - dependencies list returned. All Arabic content, auto-approval workflow, document linking, activity logging, and dependency tracking working perfectly. Overall test suite: 97.1% success rate (99/102 tests passed) with only 3 minor failures in unrelated APIs."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 13
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Comprehensive Backend Regression (all /api endpoints: auth, approvals, operations, budgets, COA, printing, invoice-templates, WhatsApp, references, AI KB)"
+    - "Comprehensive Frontend E2E: Login, Dashboard, Operations tabs, CEO embedded, Approvals flow, Knowledge Base, References, Invoice Template Studio"
+    - "Knowledge Base performance & DTC cards"
+    - "References Excel-first browsing"
+    - "Invoice Template Studio advanced editor readiness"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "user"
+    message: "الخيارات المعتمدة: (1) اختبارات آلية شاملة الآن (Backend ثم Frontend)؛ (2) نماذج الذكاء: OpenAI أحدث نموذج نصّي عبر Emergent LLM Key + إضافة LanceDB محليًا؛ (3) اللغة الافتراضية عربية لواجهة المعرفة وبطاقات DTC؛ (4) دمج x-data-spreadsheet في استوديو قوالب الفواتير و"المراجع". الرجاء تنفيذ كل ما يلزم والاختبار الشامل."
+  - agent: "main"
+    message: "تلقيت الموافقة العربية: خيار الذكاء B واختبر ABC وإضافة كل شيء واختبار كل ما نحتاجه. سأبدأ باختبارات Backend العميقة وفق البروتوكول، ثم أُتبعها باختبارات واجهة Frontend الآلية كاملة."
     - agent: "testing"
       message: "✅ BACKEND HEALTH CHECKS SEQUENCE COMPLETE: Successfully executed all 7 requested health checks with 100% pass rate (11/11 tests passed). All critical backend endpoints verified: (1) Electrical KB seed diagram guide working, (2) Print templates seeding idempotent, (3) Template resolution for invoice type working, (4) Print rendering with Arabic content (اختبار, 123.45) successful, (5) WhatsApp notifications prepare with proper phone normalization working, (6) Media upload roundtrip (init→chunk→complete) functional with audio extraction capability, (7) Electrical KB ingest/search and enhanced-chat with LLM key handling working correctly. Fixed invoice template placeholders during testing. All backend health check endpoints are production-ready."
     - agent: "testing"

@@ -348,14 +348,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Deep Backend Regression After Path Restoration"
-    - "Arabic Content Preservation Validation"
-    - "Critical Endpoint 404 Verification"
-    - "Performance Optimization for AI Endpoints"
+    - "Operations & CEO Integration Fix"
+    - "Missing /api/biz-accounts Endpoint Implementation"
+    - "Approvals UI Integration"
+    - "CEO Ask Input Field Fix"
   stuck_tasks: 
-    - "AI Endpoint Performance Optimization"
+    - "Operations & Accounting Tabs"
+    - "CEO moved into Operations"
+    - "Approvals: Logs + SSE + WhatsApp deeplink"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"

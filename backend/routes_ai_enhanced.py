@@ -120,9 +120,9 @@ async def search_perplexity(q: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-Enhanced AI Routes with Knowledge Base Integration
-Provides intelligent automotive assistance with learning capabilities
-"""
+# Enhanced AI Routes with Knowledge Base Integration
+# Provides intelligent automotive assistance with learning capabilities
+
 from fastapi import APIRouter, HTTPException, UploadFile, File, Body
 from datetime import datetime
 from typing import Optional, List, Dict, Any

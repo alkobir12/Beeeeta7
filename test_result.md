@@ -198,6 +198,105 @@ backend:
   - task: "Services CRUD API"
     implemented: true
     working: true
+  - task: "Operations & Accounting Tabs"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Added multi-tabs in Operations (Create, Sales, Expenses, COA, CEO). Needs end-to-end UI verification and language i18n checks."
+
+  - task: "CEO moved into Operations"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "CEO section integrated inside Operations as tab. Sidebar button to be removed/hidden."
+
+  - task: "Invoice Template Studio (import/save/delete/print)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/InvoiceTemplateStudio.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported inability to delete and runtime error with importUrl; fixed JSX and state; needs regression test."
+        - working: true
+          agent: "main"
+          comment: "Fixed importUrl state and conditional blocks; added delete selected template button; tested basic flows."
+
+  - task: "Approvals: Logs + SSE + WhatsApp deeplink"
+    implemented: true
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "Quick actions: Request approval not executing consistently; WhatsApp link not opening on some browsers."
+        - working: false
+          agent: "main"
+          comment: "Added customer_approval_logs and logging on public respond; ensured /notifications/prepare returns wa.me link. Needs UI re-verification."
+
+frontend:
+  - task: "Sidebar i18n menu labels"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/Sidebar.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "Language switch to English does not update all menu labels. Plan to map paths to i18n keys and use t()."
+
+  - task: "Operations quick add part/service"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Quick add part/service saved to DB and added to items; requires smoke on 404 regressions."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Operations & Accounting Tabs"
+    - "CEO moved into Operations"
+    - "Sidebar i18n menu labels"
+    - "Approvals: Logs + SSE + WhatsApp"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Please run a full UI + API regression focusing on Operations tabs (create/sales/expenses/coa/CEO), Sidebar i18n, Approvals quick actions and WhatsApp deeplink, and Invoice Template Studio flows (import/save/delete/print). Verify no 404s and language toggle affects all menu labels."
+
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"

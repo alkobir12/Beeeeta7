@@ -250,6 +250,71 @@ DEFAULT_COA = {
     'Equity': {
         'Owner Equity': []
     },
+
+# --------------------- Business Accounts ---------------------
+@router.get('/biz-accounts')
+async def list_biz_accounts():
+    try:
+        docs = await db.business_accounts.find({}).sort('createdAt', -1).to_list(length=2000)
+        out = []
+        for d in docs:
+            out.append({
+                'id': d.get('id'),
+                'name': d.get('name'),
+                'code': d.get('code'),
+                'currency': d.get('currency') or 'SAR',
+                'createdAt': d.get('createdAt').isoformat() if d.get('createdAt') and hasattr(d.get('createdAt'), 'isoformat') else d.get('createdAt')
+            })
+        return out
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/biz-accounts')
+async def create_biz_account(payload: Dict[str, Any] = Body(...)):
+    try:
+        name = (payload or {}).get('name')
+        code = (payload or {}).get('code') or (name or '')[:4].upper()
+        currency = (payload or {}).get('currency') or 'SAR'
+        if not name:
+            raise HTTPException(status_code=400, detail='name required')
+        # ensure unique code if exists
+        exist = await db.business_accounts.find_one({'code': code})
+        if exist:
+            code = f"{code}-{str(uuid.uuid4())[:4].upper()}"
+        doc = {'id': str(uuid.uuid4()), 'name': name, 'code': code, 'currency': currency, 'createdAt': datetime.utcnow()}
+        await db.business_accounts.insert_one(doc)
+        doc.pop('_id', None)
+        doc['createdAt'] = doc['createdAt'].isoformat()
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/biz-accounts/{aid}')
+async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        upd = {}
+        for k in ('name','currency'):
+            if (payload or {}).get(k) is not None:
+                upd[k] = payload[k]
+        if not upd:
+            return {'status': 'no_changes'}
+        await db.business_accounts.update_one({'id': aid}, {'$set': {**upd, 'updatedAt': datetime.utcnow()}})
+        d = await db.business_accounts.find_one({'id': aid})
+        if not d:
+            raise HTTPException(status_code=404, detail='not found')
+        d.pop('_id', None)
+        if d.get('createdAt') and hasattr(d['createdAt'], 'isoformat'):
+            d['createdAt'] = d['createdAt'].isoformat()
+        if d.get('updatedAt') and hasattr(d['updatedAt'], 'isoformat'):
+            d['updatedAt'] = d['updatedAt'].isoformat()
+        return d
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     'Income': {
         'Sales': ['Services Income', 'Parts Income'],
         'Other Income': []

@@ -1,4 +1,123 @@
 """
+from fastapi import APIRouter, HTTPException, Body
+from typing import Dict, Any, List
+from datetime import datetime
+import uuid
+
+router = APIRouter(prefix="/api")
+
+db = None
+
+def set_db(database):
+    global db
+    db = database
+
+# ============== LlamaIndex BM25 local search (no keys) ==============
+try:
+    from llama_index.core import VectorStoreIndex, Document, SimpleDirectoryReader, StorageContext
+    from llama_index.core.indices.vector_store.base import VectorStoreIndex
+    from llama_index.core import Settings
+    from llama_index.readers.file import UnstructuredReader
+    HAS_LLAMA = True
+except Exception:
+    HAS_LLAMA = False
+
+_index_cache = None
+
+@router.post('/ai/kb/rebuild-local-index')
+async def rebuild_local_index():
+    try:
+        global _index_cache
+        if not HAS_LLAMA:
+            return {'ok': False, 'reason': 'llama-index not installed'}
+        # build docs from Mongo KB
+        docs = await db.knowledge_documents.find({}).to_list(length=5000)
+        llama_docs = []
+        for d in docs:
+            content = d.get('content') or ''
+            if not content:
+                continue
+            meta = {k: d.get(k) for k in ('title','filename','type','tags')}
+            llama_docs.append(Document(text=content, metadata=meta))
+        if not llama_docs:
+            _index_cache = None
+            return {'ok': True, 'empty': True}
+        _index_cache = VectorStoreIndex.from_documents(llama_docs)
+        return {'ok': True, 'count': len(llama_docs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/ai/kb/local-search')
+async def local_search(query: str, k: int = 5):
+    try:
+        if not HAS_LLAMA:
+            return {'results': [], 'count': 0, 'ok': False, 'reason': 'llama-index not installed'}
+        global _index_cache
+        if _index_cache is None:
+            # try quick rebuild
+            await rebuild_local_index()
+        if _index_cache is None:
+            return {'results': [], 'count': 0, 'ok': True, 'empty': True}
+        engine = _index_cache.as_query_engine(similarity_top_k=k)
+        resp = engine.query(query)
+        out = []
+        # pack results
+        try:
+            for nd in resp.source_nodes:
+                out.append({'score': float(getattr(nd, 'score', 0.0) or 0.0), 'text': nd.node.get_content()[:800], 'metadata': nd.node.metadata})
+        except Exception:
+            pass
+        return {'results': out, 'count': len(out), 'ok': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============== Optional external providers (disabled w/o keys) ==============
+@router.get('/search/brave')
+async def search_brave(q: str):
+    try:
+        import os, httpx
+        key = os.getenv('BRAVE_API_KEY')
+        if not key:
+            return {'ok': False, 'reason': 'BRAVE_API_KEY not set'}
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get('https://api.search.brave.com/res/v1/web/search', params={'q': q}, headers={'X-Subscription-Token': key})
+            if r.status_code != 200:
+                return {'ok': False, 'status': r.status_code}
+            data = r.json()
+            return {'ok': True, 'data': data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/search/you')
+async def search_you(q: str):
+    try:
+        import os, httpx
+        key = os.getenv('YOU_API_KEY')
+        if not key:
+            return {'ok': False, 'reason': 'YOU_API_KEY not set'}
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get('https://api.you.com/search', params={'q': q, 'num_web_results': 5}, headers={'X-API-Key': key})
+            if r.status_code != 200:
+                return {'ok': False, 'status': r.status_code}
+            return {'ok': True, 'data': r.json()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/search/perplexity')
+async def search_perplexity(q: str):
+    try:
+        import os, httpx
+        key = os.getenv('PERPLEXITY_API_KEY')
+        if not key:
+            return {'ok': False, 'reason': 'PERPLEXITY_API_KEY not set'}
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get('https://api.perplexity.ai/search', params={'q': q}, headers={'Authorization': f'Bearer {key}'})
+            if r.status_code != 200:
+                return {'ok': False, 'status': r.status_code}
+            return {'ok': True, 'data': r.json()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 Enhanced AI Routes with Knowledge Base Integration
 Provides intelligent automotive assistance with learning capabilities
 """

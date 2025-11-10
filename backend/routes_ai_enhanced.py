@@ -705,7 +705,7 @@ async def compare_vehicles(payload: Dict[str, Any]):
 المركبة 1: {v1.get('brand')} {v1.get('model')} {v1.get('year')} - {v1.get('plateNumber')}
 المركبة 2: {v2.get('brand')} {v2.get('model')} {v2.get('year')} - {v2.get('plateNumber')}
 
-حلل الفروقات في: الموديل، السنة، الخدمات المطلوبة، الحالة، أي معلومات مهمة."""
+حلل الفروقات في: الموديل, السنة, الخدمات المطلوبة, الحالة, أي معلومات مهمة."""
         
         response = await llm.send_message(UserMessage(text=prompt))
         
@@ -762,7 +762,7 @@ async def get_engine_info(payload: Dict[str, Any]):
             "id": str(uuid.uuid4()),
             "title": "دليل قراءة مخططات كهرباء السيارات",
             "tags": ["electrical","diagram","schematic","tutorial"],
-            "content_excerpt": "خطوات قراءة المخطط: تحديد المصدر B+/IG/ACC، تتبع الفيوز والريلاي، ألوان الأسلاك، أطراف الموصلات، اتجاه السريان، نقاط القياس.",
+            "content_excerpt": "خطوات قراءة المخطط: تحديد المصدر B+/IG/ACC, تتبع الفيوز والريلاي, ألوان الأسلاك, أطراف الموصلات, اتجاه السريان, نقاط القياس.",
             "structured": {
                 "symbols": {
                     "battery": "B+",
@@ -851,12 +851,12 @@ async def ai_diagnostics_compare(payload: CompareRequest):
         ctx_docs = "\n\n".join([f"[مرجع] {d.get('title') or d.get('file_name')}:\n{(d.get('content') or '')[:500]}" for d in (doc_hits or [])])
         system_prompt = f"""أنت خبير كهرباء ومحركات ديزل وأنظمة DENSO CRS.
 قارن بين مركبتين وحدد الطبيعي/غير الطبيعي بناءً على المراجع الكهربائية المختصرة أدناه.
-اكتب: ملخص، مقارنة نصية، القيم الحرجة، الأسباب المحتملة، خطوات فحص بالمِلتميتر/الاسكانر، توصيات، مخاطر السلامة.
+اكتب: ملخص, مقارنة نصية, القيم الحرجة, الأسباب المحتملة, خطوات فحص بالمِلتميتر/الاسكانر, توصيات, مخاطر السلامة.
 
 مراجع مختصرة:
 {ctx_docs}
 """
-        user_prompt = f"""المركبة أ:\n{to_lines(payload.vehicle_a)}\n\nالمركبة ب:\n{to_lines(payload.vehicle_b)}\n\nالمطلوب: تقرير مقارنة عربي احترافي مع حكم (طبيعي/غير طبيعي) لكل مؤشر كهربائي وحقن، وتوصيات عملية."""
+        user_prompt = f"""المركبة أ:\n{to_lines(payload.vehicle_a)}\n\nالمركبة ب:\n{to_lines(payload.vehicle_b)}\n\nالمطلوب: تقرير مقارنة عربي احترافي مع حكم (طبيعي/غير طبيعي) لكل مؤشر كهربائي وحقن, وتوصيات عملية."""
         provider = (payload.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()
         model = payload.model or ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         llm_key = os.getenv('EMERGENT_LLM_KEY')
@@ -908,7 +908,7 @@ async def ai_analyze_fleet(payload: dict = Body(default={})):
         model = ("gpt-5" if provider == "openai" else "claude-sonnet-4-20250514")
         system_prompt = "محلل عمليات للورشة يقدّم مؤشرات وتنبيهات ذكية حول حالة المركبات وتدفق العمل."
         context = f"إجمالي المركبات: {total}\nحسب الحالة: {by_status}\nأكثر 10 علامات: {kpi['topBrands']}"
-        ask = "حلّل المؤشرات وقدّم 3 تنبيهات مبكرة، و3 توصيات قابلة للتنفيذ."
+        ask = "حلّل المؤشرات وقدّم 3 تنبيهات مبكرة, و3 توصيات قابلة للتنفيذ."
         chat = LlmChat(api_key=llm_key, session_id=str(uuid.uuid4()), system_message=system_prompt).with_model(provider, model)
         ai_resp = await chat.send_message(UserMessage(text=context + "\n\n" + ask))
         return {"kpi": kpi, "ai": ai_resp}
@@ -1105,7 +1105,7 @@ async def electrical_qa(request: ElectricalQARequest):
             h.pop('_id', None)
         ctx = "\n\n".join([f"[مرجع كهربائي] {h.get('title')}:\n{h.get('content_excerpt')}\nمُنظم: {str(h.get('structured'))[:400]}" for h in hits])
         system_prompt = f"""أنت خبير كهرباء مركبات.
-استخدم المراجع الكهربائية أدناه لتقديم تشخيص وخطوات فحص دقيقة بالمِلتميتر والاسكانر، مع قيم جهد/مقاومة متوقعة إن أمكن.
+استخدم المراجع الكهربائية أدناه لتقديم تشخيص وخطوات فحص دقيقة بالمِلتميتر والاسكانر, مع قيم جهد/مقاومة متوقعة إن أمكن.
 {ctx}
 """
         provider = (request.provider or os.getenv("DEFAULT_AI_PROVIDER") or "anthropic").strip().lower()

@@ -98,6 +98,43 @@ async def save_settings(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --------------------- Auth (WhatsApp OTP) ---------------------
+@router.post('/auth/request-otp')
+async def request_otp(payload: Dict[str, Any] = Body(...)):
+    try:
+        phone = (payload or {}).get('phone', '')
+        otp_type = (payload or {}).get('type', 'login')
+        if not phone:
+            raise HTTPException(status_code=400, detail='phone required')
+        # normalize phone (reuse logic similar to notifications/prepare)
+        norm = ''.join([c for c in phone if c.isdigit() or c == '+'])
+        if norm.startswith('00'): norm = norm[2:]
+        if norm.startswith('+'): norm = norm[1:]
+        if norm.startswith('05'): norm = '966' + norm[1:]
+        if norm.startswith('5') and len(norm) == 9: norm = '966' + norm
+        if not norm.startswith('966'): norm = '966' + norm
+        token = f"OTP-{str(uuid.uuid4())[:6].upper()}"
+        doc = {
+            'id': str(uuid.uuid4()),
+            'phone': norm,
+            'token': token,
+            'type': otp_type,
+            'createdAt': datetime.utcnow(),
+            'expiresAt': datetime.utcnow() + timedelta(minutes=10),
+            'used': False
+        }
+        await db.auth_otps.insert_one(doc)
+        import urllib.parse
+        msg = f"رمز الدخول الخاص بك: {token} — صالح لمدة 10 دقائق"
+        deeplink = f"https://wa.me/{norm}?text={urllib.parse.quote(msg)}"
+        ret = {"token": token, "whatsappDeeplink": deeplink, "expiresAt": doc['expiresAt'].isoformat()}
+        return ret
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --------------------- Vehicles minimal ---------------------
 @router.get('/vehicles/minimal')
 async def vehicles_minimal():
@@ -525,7 +562,7 @@ async def list_approvals(vehicle_id: Optional[str] = None):
                     d[k] = d[k].isoformat()
         return docs
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail(str(e)))
 
 @router.get('/approvals/public/{token}')
 async def public_approval(token: str):
@@ -648,6 +685,39 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         for k, v in data.items():
             html = html.replace(f"{{{{{k}}}}}", str(v))
         return HTMLResponse(content=html)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Print: Resolve Template ---------------------
+@router.post('/print/resolve-template')
+async def print_resolve_template(payload: Dict[str, Any] = Body(...)):
+    try:
+        override_type = (payload or {}).get('override_type') or (payload or {}).get('type') or 'invoice'
+        # Try DB first
+        tpl = await db.print_templates.find_one({'type': override_type, 'isActive': True})
+        if tpl:
+            tpl.pop('_id', None)
+            return {'type': override_type, 'template': tpl}
+        # Fallback to bundled files
+        root = os.path.dirname(os.path.abspath(__file__))
+        fname = None
+        if override_type in ('invoice','sales_invoice'):
+            fname = os.path.join(root, 'invoice_template_repair_ar.html')
+            if not os.path.exists(fname):
+                fname = os.path.join(root, 'invoice_template_mechanic.html')
+        elif override_type in ('diagnosis','vehicle_estimate'):
+            fname = os.path.join(root, 'invoice_template_modern.html')
+        elif override_type in ('quote','receipt'):
+            fname = os.path.join(root, 'invoice_template_modern.html')
+        content = None
+        if fname and os.path.exists(fname):
+            with open(fname, 'r', encoding='utf-8') as f:
+                content = f.read()
+        else:
+            content = "<html><body><h1>قالب طباعة افتراضي</h1><div>{{CUSTOMER_NAME}}</div></body></html>"
+        tpl = {'id': str(uuid.uuid4()), 'name': f'Default {override_type}', 'content': content, 'isActive': True, 'type': override_type}
+        return {'type': override_type, 'template': tpl}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -978,11 +1048,132 @@ async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
                     sys = "أنت مساعد المدير التنفيذي. حلّل بيانات المبيعات والمصروفات التشغيلية والشخصية لكل حساب وقدّم توصيات تنفيذية مختصرة."
                     ctx_lines = [f"{a['name']}: دخل {a['income']:.0f}، مصروف {a['expenses']:.0f}، تشغيلي {a['operatingExpenses']:.0f}، شخصي {a['personalExpenses']:.0f}، ربح {a['profit']:.0f}" for a in per]
                     ctx = "\n".join(ctx_lines)
-                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('anthropic','claude-sonnet-4-5-pro')
+                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('openai','gpt-5')
                     ans = await chat.send_message(UserMessage(text=f"السؤال: {question}\nالبيانات:\n{ctx}"))
-                    result['ai'] = {'answer': ans, 'model': 'anthropic/claude-sonnet-4-5-pro'}
+                    result['ai'] = {'answer': ans, 'model': 'openai/gpt-5'}
             except Exception as ex:
                 print(f"AI error: {ex}")
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- CEO Accounts (seed + get) ---------------------
+@router.post('/ceo/seed-accounts')
+async def ceo_seed_accounts():
+    try:
+        created = 0
+        # simple idempotent seeding of 24 accounts
+        existing = await db.business_accounts.count_documents({})
+        if existing < 24:
+            base = [
+                ('Main Workshop','MAIN'),
+                ('Family','FAM'),
+                ('Personal','PER'),
+            ]
+            for name, code in base:
+                doc = {'id': str(uuid.uuid4()), 'name': name, 'code': code, 'currency': 'SAR', 'createdAt': datetime.utcnow()}
+                await db.business_accounts.insert_one(doc)
+                created += 1
+            # add revenue/expense leaves
+            for i in range(1,22):
+                doc = {'id': str(uuid.uuid4()), 'name': f'Branch {i}', 'code': f'BR{i:02d}', 'currency': 'SAR', 'createdAt': datetime.utcnow()}
+                await db.business_accounts.insert_one(doc)
+                created += 1
+        return {'status': 'ok', 'created': created}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/ceo/accounts')
+async def ceo_accounts_tree():
+    try:
+        tree = {
+            'الإيرادات': [
+                {'name': 'الخدمات', 'code': 'SRV'},
+                {'name': 'قطع الغيار', 'code': 'PRT'}
+            ],
+            'المصروفات': [
+                {'name': 'رواتب', 'code': 'SAL'},
+                {'name': 'كهرباء', 'code': 'ELEC'},
+                {'name': 'ماء', 'code': 'WTR'},
+                {'name': 'وقود', 'code': 'FUEL'},
+                {'name': 'إيجار', 'code': 'RENT'}
+            ]
+        }
+        return {'tree': tree}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Production Activation ---------------------
+@router.post('/seed/print-templates')
+async def seed_print_templates():
+    try:
+        added = []
+        defaults = [
+            ('invoice','قالب فاتورة افتراضي'),
+            ('sales_invoice','قالب فاتورة مبيعات'),
+            ('diagnosis','قالب تقرير تشخيص'),
+            ('vehicle_estimate','قالب تقدير مركبة'),
+            ('quote','قالب عرض سعر'),
+            ('purchase_order','قالب أمر شراء'),
+            ('vendor_bill','قالب فاتورة مورد'),
+            ('receipt','قالب إيصال')
+        ]
+        for t, name in defaults:
+            exists = await db.print_templates.find_one({'type': t})
+            if not exists:
+                content = f"<html><body><h1>{name}</h1><div>{{{{CUSTOMER_NAME}}}}</div></body></html>"
+                doc = {'id': str(uuid.uuid4()), 'type': t, 'name': name, 'content': content, 'isActive': True, 'createdAt': datetime.utcnow()}
+                await db.print_templates.insert_one(doc)
+                added.append(t)
+        return {'added': added}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/admin/create-indexes')
+async def admin_create_indexes():
+    try:
+        await db.approval_requests.create_index('token', unique=True)
+        await db.approval_requests.create_index('vehicleId')
+        await db.transactions.create_index('date')
+        await db.transactions.create_index('accountId')
+        await db.vehicles.create_index('customerId')
+        await db.quotes.create_index('customerId')
+        await db.sales_orders.create_index('customerId')
+        await db.vendor_bills.create_index('supplierId')
+        await db.document_dependencies.create_index([('fromDoc.docId', 1)])
+        await db.document_dependencies.create_index([('toDoc.docId', 1)])
+        return {'status': 'ok'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/seed/clone-basics')
+async def seed_clone_basics():
+    try:
+        # accounts
+        accounts = []
+        names = [('Main Workshop','MAIN'), ('Family','FAM'), ('Personal','PER')]
+        for name, code in names:
+            acc = await db.business_accounts.find_one({'code': code})
+            if not acc:
+                acc = {'id': str(uuid.uuid4()), 'name': name, 'code': code, 'currency': 'SAR', 'createdAt': datetime.utcnow()}
+                await db.business_accounts.insert_one(acc)
+            accounts.append(acc)
+        # budgets for current month
+        from calendar import monthrange
+        now = datetime.utcnow()
+        period = now.strftime('%Y-%m')
+        for acc in accounts:
+            b = await db.budgets.find_one({'accountId': acc['id'], 'period': period})
+            if not b:
+                b = {'id': str(uuid.uuid4()), 'accountId': acc['id'], 'period': period, 'incomeTarget': 30000.0, 'expenseTarget': 15000.0, 'createdAt': datetime.utcnow()}
+                await db.budgets.insert_one(b)
+        # sample transactions
+        inc = {'id': str(uuid.uuid4()), 'accountId': accounts[0]['id'], 'type': 'income', 'category': 'customer_receipt', 'amount': 1200.0, 'description': 'إيراد اختباري', 'date': now, 'createdAt': now}
+        exp = {'id': str(uuid.uuid4()), 'accountId': accounts[0]['id'], 'type': 'expense', 'category': 'Electricity', 'amount': 300.0, 'description': 'مصروف كهرباء', 'date': now, 'createdAt': now}
+        await db.transactions.insert_one(inc)
+        await db.transactions.insert_one(exp)
+        return {'status': 'ok', 'accounts': [{'id': a['id'], 'name': a['name']} for a in accounts], 'budgets': period}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

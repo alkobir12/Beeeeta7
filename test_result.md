@@ -296,6 +296,8 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Please run a full UI + API regression focusing on Operations tabs (create/sales/expenses/coa/CEO), Sidebar i18n, Approvals quick actions and WhatsApp deeplink, and Invoice Template Studio flows (import/save/delete/print). Verify no 404s and language toggle affects all menu labels."
+  - agent: "testing"
+    message: "CRITICAL BACKEND ISSUES FOUND: Multiple API endpoints returning 404 including /api/settings, /api/approvals, /api/templates. Frontend authentication system blocking access to main application - all pages redirect to login. Unable to complete comprehensive UI testing due to authentication barrier and missing backend endpoints. Backend service restarted but extended routes not properly loading settings endpoint."
 
     file: "/app/backend/server.py"
     stuck_count: 0

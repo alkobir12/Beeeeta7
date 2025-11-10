@@ -137,9 +137,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from ai_knowledge_base import AIKnowledgeBase, INITIAL_KNOWLEDGE
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/api")
+# router already defined above
 
-db = None
+# db = None  # already defined above
 knowledge_base = None
 
 # Use relative path from current file location (deployment-safe)

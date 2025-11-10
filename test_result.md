@@ -202,13 +202,16 @@ backend:
     implemented: true
     working: false
     file: "/app/frontend/src/pages/Operations.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
         - working: false
           agent: "main"
           comment: "Added multi-tabs in Operations (Create, Sales, Expenses, COA, CEO). Needs end-to-end UI verification and language i18n checks."
+        - working: false
+          agent: "testing"
+          comment: "❌ BLOCKED: Cannot access /operations page due to authentication barrier. All pages redirect to login form. Deep links /operations?tab=sales and /operations?tab=expenses return 200 status but show login page content. Frontend authentication system prevents testing of Operations tabs functionality."
 
   - task: "CEO moved into Operations"
     implemented: true

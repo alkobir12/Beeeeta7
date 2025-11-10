@@ -250,6 +250,42 @@ DEFAULT_COA = {
     'Equity': {
         'Owner Equity': []
     },
+    'Income': {
+        'Sales': ['Services Income', 'Parts Income'],
+        'Other Income': []
+    },
+    'Expenses': {
+        'Operating Expenses': ['Electricity', 'Water', 'Fuel', 'Rent', 'Salaries', 'Utilities', 'Marketing', 'Misc'],
+        'Personal Expenses': ['Personal']
+    }
+}
+
+@router.get('/coa/tree')
+async def coa_tree():
+    try:
+        doc = await db.coa.find_one({'id': 'root_tree'})
+    except Exception:
+        doc = None
+    if not doc:
+        doc = {'id': 'root_tree', 'tree': DEFAULT_COA, 'createdAt': datetime.utcnow()}
+        await db.coa.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+@router.post('/coa/tree')
+async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
+    try:
+        tree = (payload or {}).get('tree')
+        if not isinstance(tree, dict):
+            raise HTTPException(status_code=400, detail='tree invalid')
+        await db.coa.update_one({'id': 'root_tree'}, {'$set': {'tree': tree, 'updatedAt': datetime.utcnow()}}, upsert=True)
+        doc = await db.coa.find_one({'id': 'root_tree'})
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --------------------- Business Accounts ---------------------
 @router.get('/biz-accounts')
@@ -310,43 +346,6 @@ async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
         if d.get('updatedAt') and hasattr(d['updatedAt'], 'isoformat'):
             d['updatedAt'] = d['updatedAt'].isoformat()
         return d
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    'Income': {
-        'Sales': ['Services Income', 'Parts Income'],
-        'Other Income': []
-    },
-    'Expenses': {
-        'Operating Expenses': ['Electricity', 'Water', 'Fuel', 'Rent', 'Salaries', 'Utilities', 'Marketing', 'Misc'],
-        'Personal Expenses': ['Personal']
-    }
-}
-
-@router.get('/coa/tree')
-async def coa_tree():
-    try:
-        doc = await db.coa.find_one({'id': 'root_tree'})
-    except Exception:
-        doc = None
-    if not doc:
-        doc = {'id': 'root_tree', 'tree': DEFAULT_COA, 'createdAt': datetime.utcnow()}
-        await db.coa.insert_one(doc)
-    doc.pop('_id', None)
-    return doc
-
-@router.post('/coa/tree')
-async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
-    try:
-        tree = (payload or {}).get('tree')
-        if not isinstance(tree, dict):
-            raise HTTPException(status_code=400, detail='tree invalid')
-        await db.coa.update_one({'id': 'root_tree'}, {'$set': {'tree': tree, 'updatedAt': datetime.utcnow()}}, upsert=True)
-        doc = await db.coa.find_one({'id': 'root_tree'})
-        doc.pop('_id', None)
-        return doc
     except HTTPException:
         raise
     except Exception as e:

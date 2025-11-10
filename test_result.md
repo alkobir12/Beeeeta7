@@ -295,16 +295,17 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
-  run_ui: true
+  test_sequence: 13
+  run_ui: false
 
 test_plan:
   current_focus:
-    - "Operations & Accounting Tabs"
-    - "CEO moved into Operations"
-    - "Sidebar i18n menu labels"
-    - "Approvals: Logs + SSE + WhatsApp"
-  stuck_tasks: []
+    - "Comprehensive Backend Regression Test"
+    - "Arabic Data Support Validation"
+    - "API Response Format Validation"
+    - "Critical Endpoint Functionality"
+  stuck_tasks: 
+    - "Missing Backend Endpoints Implementation"
   test_all: true
   test_priority: "high_first"
 
@@ -313,6 +314,8 @@ agent_communication:
     message: "Please run a full UI + API regression focusing on Operations tabs (create/sales/expenses/coa/CEO), Sidebar i18n, Approvals quick actions and WhatsApp deeplink, and Invoice Template Studio flows (import/save/delete/print). Verify no 404s and language toggle affects all menu labels."
   - agent: "testing"
     message: "CRITICAL BACKEND ISSUES FOUND: Multiple API endpoints returning 404 including /api/settings, /api/approvals, /api/templates. Frontend authentication system blocking access to main application - all pages redirect to login. Unable to complete comprehensive UI testing due to authentication barrier and missing backend endpoints. Backend service restarted but extended routes not properly loading settings endpoint."
+  - agent: "testing"
+    message: "COMPREHENSIVE BACKEND REGRESSION TEST SEQUENCE 13 COMPLETE: Executed comprehensive backend testing with 70.0% pass rate (21/30 tests passed). **CRITICAL FINDINGS:** 9 endpoints missing from implementation including /api/auth/request-otp, /api/biz-accounts, /api/print/resolve-template, /api/ceo/seed-accounts, /api/seed/print-templates, /api/admin/create-indexes, /api/seed/clone-basics. **WORKING SYSTEMS:** Core Entities (100% - customers, vehicles, tracking), Approvals & Notifications (100% - full lifecycle), AI Knowledge & DTC (100% - search, references), Settings (partial - GET/POST working). **VALIDATION SUCCESS:** No _id leakage confirmed, ISO date serialization working, Arabic content preservation verified in multiple endpoints. **PERFORMANCE:** All working endpoints <1s response time, no timeout issues. **RECOMMENDATION:** Implement missing endpoints for full production readiness, particularly auth flow and business accounts management."
 
     file: "/app/backend/server.py"
     stuck_count: 0

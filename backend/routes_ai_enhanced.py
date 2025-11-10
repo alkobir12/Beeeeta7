@@ -1,4 +1,6 @@
 """
+AI Enhanced Routes for Workshop Management System
+"""
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List
 from datetime import datetime

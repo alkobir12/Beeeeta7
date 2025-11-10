@@ -1,97 +1,158 @@
 <analysis>
-The AI engineer's work primarily focused on expanding a Workshop Management System from its MVP stage. Initially, the core involved CRUD and UI, then moved to advanced features like AI diagnostics, dynamic reporting, robust printing, and user management. Key challenges were refining sidebar navigation, fixing printing, and enhancing import capabilities. The engineer adapted to evolving requests, introducing , , and backend routes. Recent efforts addressed UI configurability (editable sidebar), detailed analytics, import/export, and crucial print preview issues. Backend stability, especially for print, and environment variable issues were recurring. The engineer also tackled login flow (OTP, then name-only), extensive WhatsApp integration (deeplink vs. automatic sending), and fixed numerous syntax and 404 errors. The trajectory concludes with the engineer fixing a broken sidebar scroll, adjusting layout for a watermark, and preparing to implement a comprehensive budget system for business accounts.
+The trajectory details the evolution of a Workshop Management System, initially built by an AI engineer, into a feature-rich application. The work began with integrating CEO analytics into the Operations page, then progressed to developing a comprehensive approval workflow with real-time updates (SSE) and customer logging. A major shift involved overhauling the invoice and templating system from HTML to a robust Excel-based approach, complete with a dedicated Invoice Template Studio for multi-format imports and in-app editing. Critical issues like frontend parsing errors, missing backend API routes, and language localization in menus were systematically addressed. The system was enhanced with accounting features, including a Chart of Accounts and categorized transactions. Performance for smart search and seamless WhatsApp integration were also identified as key improvement areas. The current state reflects a functional, albeit complex, application with a strong foundation for further development, facing an immediate need for comprehensive automated testing and significant UI/UX improvements to the Knowledge and References sections, along with deep-seated performance optimizations for AI features.
 </analysis>
 
 <product_requirements>
-The user requires a comprehensive Workshop Management System to digitalize auto repair operations, covering vehicle lifecycle, customer/financial management, service/inventory, AI integration, reporting/printing, UX, and authentication.
-**Key features include:**
--   **Vehicle Management**: Intake, detailed vehicle data, status updates (abandoned, awaiting parts, quote/approval banners), quick actions (edit, delete, print, status change, approval), customer approval pages, public tracking links. Printing must dynamically link to actual documents.
--   **Customer & Financial Management**: Customer database, visit history, receipts, multi-account/branch management, detailed budgeting (expenses: electricity, water, food, fuel), separated accounts, purchase/sale operations, worker salary lists, diverse payment methods (credit/آجل), import/export.
--   **Service & Inventory**: Management of services, pricing, parts inventory, suppliers. Import/export for customers, services, and parts.
--   **AI Integration**: Floating AI Helper, CEO bot for financial analysis, ChatGPT/Claude integration, RAG search, knowledge base for technical docs, electrical knowledge, diagram reading, vehicle comparison (PDF, video, all formats), fleet analysis, video processing.
--   **Reporting & Printing**: A4 printable templates, print/export functionality, backend rendering, print preview. User-editable dialogs for print (diagnosis, invoice, report) to input data and select templates, with data saving.
--   **User Experience & Scalability**: Responsive design, multi-language (Arabic/English/Hindi), dynamic and editable navigation (drag-and-drop), sidebar scroll, database indexing/pagination.
--   **User Authentication & Authorization**: Initially WhatsApp OTP login, then simplified to name-only login. User management with roles/permissions, customizable WhatsApp message templates. Automatic WhatsApp sending (OTP, approvals, invoices) requested.
+The Workshop Management System digitalizes auto repair, featuring vehicle management (intake, status, quick actions, public tracking, dynamic printing with editable templates). It includes customer and financial management (database, receipts, multi-account budgeting, detailed analytics by day/week/month/branch, import/export). Core AI integration offers a CEO bot for financial analysis, RAG search, a knowledge base (PDF, DOCX, Excel, video), vehicle comparison, and intelligent DTC card extraction with causes/fixes. UX prioritizes responsive design, multi-language support (Arabic, English, Hindi), and a dynamic sidebar. Authentication uses name-only login with granular three-tier user permissions and a new three-tier approval workflow (technician->manager->client) with image attachments. A GoDaddy-inspired theme was implemented. Recent additions include a full Excel-based invoicing system, detailed accounting (Sales, Operating/Personal Expenses, Electricity/Water/Fuel categories), and a Chart of Accounts.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Architecture**: React.js (Frontend), FastAPI (Backend), MongoDB (Database).
--   **State Management**: React Context, Shadcn UI components.
--   **API Integration**: Axios, Pydantic models for data validation.
--   **AI Integration**: Claude AI, ChatGPT, RAG, ffmpeg for media processing, emergentintegrations for LLM access.
--   **Internationalization**: i18next for multi-language support.
--   **Deployment**: Kubernetes, Supervisor for process management,  for environment variables.
--   **Data Processing**: Pandas, Openpyxl for Excel import/export.
+-   **AI Integration**: Claude Sonnet 4.5 Pro (via Emergent LLM Key), RAG, , , , usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
+
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing., , usage: pypdfium2 [-h] [--version]
+                 {arrange,attachments,extract-images,extract-text,imgtopdf,pageobjects,pdfinfo,render,tile,toc}
+                 ...
+
+Command line interface to the pypdfium2 library (Python binding to PDFium)
+
+positional arguments:
+  {arrange,attachments,extract-images,extract-text,imgtopdf,pageobjects,pdfinfo,render,tile,toc}
+    arrange             Rearrange/merge documents
+    attachments         List/extract/edit embedded files
+    extract-images      Extract images
+    extract-text        Extract text
+    imgtopdf            Convert images to PDF
+    pageobjects         Print info on pageobjects
+    pdfinfo             Print info on document and pages
+    render              Rasterize pages
+    tile                Tile pages (N-up)
+    toc                 Print table of contents
+
+options:
+  -h, --help            show this help message and exit
+  --version, -v         show program's version number and exit.
+-   **UI/State Management**: React Context, Shadcn UI, , , i18next.
+-   **Data Processing**: Pandas, Openpyxl, chunked file uploads, , .
+-   **Real-time Communication**: Server-Sent Events (SSE).
+-   **Deployment**: Kubernetes, Supervisor, .
 </key_technical_concepts>
 
 <code_architecture>
 
--   ****: Main FastAPI entry. Updated to initialize  and registered .
--   ****: Defines core Pydantic models.  model updated with , ,  fields.
--   ****: Defines extended Pydantic models.  and  models were defined.
--   ****: Contains many API endpoints.
-    -   Multiple fixes for syntax errors (,  blocks).
-    -   Added ,  endpoints.
-    -   Updated  for phone normalization and random OTP generation. Later updated to integrate .
-    -   Added  for  (default config, moved Knowledge).
-    -   Added  endpoint.
-    -   Added  endpoint for purchases/sales.
-    -   Added  endpoint for Excel import.
-    -   Added  CRUD endpoints.
-    -   Updated  and  to support  and use selected HTML.
--   ****: Manages AI-related APIs. Fixed  usage with new path variables for robust file handling.
--   ****: **NEW** File. Implements logic for WhatsApp messaging, supporting deeplink and prepared for Twilio integration.
--   ****: **NEW** File. A professional A4 HTML template for mechanic invoices, added to the system via an API endpoint.
--   ****: **NEW** Script to remove dummy data and seed specialized mechanical services.
--   ****: Main React router. Updated to include the  route.
--   ****: Navigation menu. Updated for dynamic  loading, made scrollable with .
--   ****: Modal for quick vehicle actions.
-    -   Updated to use  and .
-    -   Added إرسال للواتساب (Send to WhatsApp) buttons for documents.
-    -   Added quick action buttons directly to vehicle cards.
--   ****: Interactive sidebar menu editing. Updated for drag-and-drop functionality (using ).
--   ****: Displays document HTML in a modal. Modified to render HTML via  from backend and offer Open Full Page option.
--   ****: **NEW** Component. A dialog for filling out and saving document data (diagnosis, invoice, report) before printing, and selecting templates.
--   ****: Main layout. Added padding to adjust for the emergent watermark.
--   ****: WhatsApp OTP login page. Modified for name-only login.
--   ****: Updated with new analytics banners (Abandoned vehicles, Awaiting parts, Awaiting quote/approval, Parts in waiting) and a credit/آجل payment banner. Cleaned up and reorganized the layout to fix overlapping banners.
--   ****: Customer management.
-    -   Form updated with , ,  fields.
-    -   Added Excel import functionality.
--   ****: Updated to include credit/آجل payment method in UI.
--   ****: Fixed  issue (empty value).
--   ****: **NEW** File. Comprehensive AI knowledge interface for reading, searching, analyzing, and comparing files/videos of all formats.
--   ****: Centralized API service. Updated to use  for consistency.
--   ****: **NEW** File. Documentation for the new WhatsApp APIs.
+-   ****: Central FastAPI app.
+    -   Importance: Registers all API routers, handles main application logic.
+    -   Changes: Updated to include numerous new routes (, , , , , , , , ), fixed  import, removed hardcoded URL fallback, corrected  for exceptions.
+-   ****: Pydantic data models.
+    -   Importance: Defines data structures for new features.
+    -   Changes: Added models for , , , , , , , and .
+-   ****: Core API logic.
+    -   Importance: Manages most backend functionalities.
+    -   Changes: Added ; adjusted ; enhanced  (sales, expenses, profit); integrated automatic transaction creation. Implemented . Added endpoints for , ,  (SSE). Updated  to accept . Added , , , , , , . Implemented  and . Corrected syntax errors and variable scoping.
+-   ****: AI-related APIs.
+    -   Importance: AI document analysis, search.
+    -   Changes: Improved text extraction (PDF/DOCX/Excel); refined  usage; optimized search (timeouts, relevance); corrected  payload.
+-   ** (NEW)**: DTC extraction APIs.
+    -   Importance: Analyzes documents for DTCs, causes, and fixes.
+-   ** (NEW)**: Manages technical references.
+    -   Importance: Imports/queries Excel/PDFs for specs.
+-   ** (NEW)**: User/permissions management.
+    -   Importance: CRUD for users, RBAC.
+-   ** (NEW)**: Maintenance orders, multi-tier approvals.
+    -   Importance: Manages vehicle maintenance lifecycle.
+-   ** (NEW)**: Employee payroll.
+    -   Importance: Records salaries, links to expenses.
+-   ** (NEW)**: HTML template for repair invoices.
+    -   Importance: Provides a customizable base template for printing.
+-   ****: Main React router.
+    -   Importance: Defines frontend routing, wraps components.
+    -   Changes: Updated routes to include , , ,  pages; integrated .
+-   ****: Navigation menu.
+    -   Importance: Primary navigation.
+    -   Changes: Dynamic  update, displays workshop/user info, filters menu items based on permissions. Modified to use i18n keys for labels instead of raw text. Removes CEO button.
+-   ** (NEW)**: Guards nested dialogs.
+    -   Importance: Prevents  errors in React dialogs.
+-   ** (NEW)**: AI chatbot for customer interaction.
+    -   Importance: Customer support on tracking pages.
+-   ****: Quick actions for vehicles.
+    -   Importance: Provides fast access to actions like request approval.
+    -   Changes: Reworked logic for opening document forms, linking to WhatsApp, and passing  for approval requests.
+-   ** (NEW)**: Manages user permissions.
+    -   Importance: Centralizes permission data.
+-   ** (NEW)**: Custom CSS.
+    -   Importance: Defines new visual style.
+-   ****: User authentication.
+    -   Importance: Authenticates users, loads permissions.
+    -   Changes: Integrated with new permissions system.
+-   ****: Manages purchases/sales.
+    -   Importance: Displays operations and financial analytics.
+    -   Changes: Added comprehensive analytics cards; integrated CEO analytics section (KPIs, Ask CEO, filters); split into tabs (Create Operation, Sales, Expenses, Chart of Accounts, CEO Analytics); implemented quick add for parts/services with auto-save; fixed various JSX/parsing errors.
+-   ** (NEW)**: AI knowledge hub.
+    -   Importance: Document browsing, smart search, DTC cards.
+    -   Changes: Enhanced UI for document reading, search modes, DTC card display.
+-   ** (NEW)**: Technical references.
+    -   Importance: Interface to browse/search/import technical references.
+-   ****: Application settings.
+    -   Importance: Configures currency, tax, language, theme.
+    -   Changes: Logic to update i18n language; added Base Printing Template section with toggle and editable HTML textarea for invoice templates, and a preview button. Fixed syntax.
+-   ** (NEW)**: Replaced .
+    -   Importance: Manages users and permissions.
+-   ****: Vehicle-specific info.
+    -   Importance: Manages vehicle status, notes.
+    -   Changes: Added image upload, Vehicle Approvals card with SSE real-time updates, Printable Vehicle Status card, and Create Approval Request button with a modal. Fixed numerous JSX errors.
+-   ****: Customer-specific information.
+    -   Importance: Displays customer details.
+    -   Changes: Added Approvals List card and Approval Logs card.
+-   ** (NEW)**: Dedicated page for managing Excel invoice templates.
+    -   Importance: Upload, import (multi-format), preview, edit (simple grid), save as Excel, generate invoice, delete templates.
+    -   Changes: Implemented initial structure, import from URL, list templates, simple grid editor, save JSON to XLSX, generate invoice. Fixed  scope and various JSX parsing errors. Added Delete Selected Template button.
+-   ****: Frontend API calls.
+    -   Importance: Centralized API call definitions.
+    -   Changes: Added numerous new API calls for CEO, approvals, invoice templates, printing, transactions, expenses, COA, parts/services. Fixed syntax errors.
+-   ****: Tailwind CSS config.
+    -   Importance: Customizes Tailwind.
+    -   Changes: Integrated GoDaddy theme colors.
 </code_architecture>
 
 <pending_tasks>
--   **Frontend Implementation**:
-    -   Add analytics credit/آجل cards to Dashboard. (Partially done, banner added, but not analysis cards)
-    -   Add Payroll list page analytics summary and year filter options.
-    -   Implement ability to edit analytics banners (colors/icons/data source).
-    -   Complete Batch 2 for smooth movement of sidebar items (drag-and-drop for  is implemented, but final visual fluidity might need checking).
-    -   Integrate Supply/Import links into Customers, Services, and PartsInventory pages. (Customers import is done, but for services/parts it is pending).
--   **Backend Enhancements**:
-    -   Further support for advanced permissions matrix for user roles.
-    -   Implement detailed financial fields (Debtor, Creditor, Due) for Supplier form.
-    -   Implement detailed financial system in CEO for budget management per branch.
-    -   Implement AI bot for analysis in Business Accounts page.
+-   **Knowledge Base UI/UX Overhaul**: Completely redesign the Knowledge Base interface.
+-   **DTC Card Enhancements**: Display problem/solution cards and normal electrical values (voltage, resistance) when searching for DTCs (e.g., P2565).
+-   **References System Transformation**: Convert the existing references system to a full Excel-based system, capable of reading and managing Excel files comprehensively.
+-   **Comprehensive Automated Testing**: Perform a full suite of automated UI and API tests for all implemented features, including authentication and edge cases.
+-   **Smart Search Performance Optimization**: Further improve response time for intelligent search queries.
+-   **Advanced Spreadsheet Editor Integration**: Integrate a more powerful spreadsheet editor (e.g., ) into the Invoice Template Studio for advanced cell properties (merge, borders, lines).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively addressing several user complaints and continuing feature development:
-1.  **Sidebar Usability**: The user reported that the sidebar navigation was not scrollable, hindering access to lower menu items. The AI engineer addressed this by adding  to the  component, making it scrollable.
-    -   **File**: 
-    -   **Change**: Added  CSS property.
-2.  **Watermark Visibility**: The user pointed out that the Made with Emergent watermark was obscuring content. The AI engineer rectified this by adding padding to the main content area in the  component.
-    -   **File**: 
-    -   **Change**: Added padding (e.g.,  or similar) to the main content div to lift the content above the watermark.
-3.  **Upcoming Feature: Budget System for Business Accounts**: Having resolved the immediate UI/UX issues, the engineer was poised to implement a comprehensive budget management system tailored for individual branches within the Business Accounts section, as requested by the user. This is part of a larger plan to enhance the financial system in the CEO dashboard.
-
-The engineer is following a step-by-step approach, fixing issues and adding features incrementally, testing each change before proceeding. The current focus is on the integrated budget system for business accounts.
+Immediately before this summary request, the AI engineer had just completed a round of critical backend fixes related to various API routes (settings, approvals, parts, services, operations, COA, invoice templates, CEO analytics) which were returning  errors during automated testing. This was in response to the user's explicit command to اصلح كل شي (fix everything) after a comprehensive UI check failed due to authentication issues and unresponsive backend endpoints. The engineer stated that these backend routes are now fixed and running, and the next logical step identified was to اعملي اختبار الي لكل شي (run automated test for everything). Following this, the user also provided several new, significant feature requests for the Knowledge Base and References system. Thus, the current work concluded with fixing the foundational backend issues that were blocking frontend testing and receiving new feature requests.
 </current_work>
 
 <optional_next_step>
-Implement the comprehensive budget management system for branches within the Business Accounts page, including AI analysis capabilities, as per the user's request.
+Run automated UI and API tests for all pages and services, and then proceed with the requested Knowledge Base and References system overhauls.
 </optional_next_step>

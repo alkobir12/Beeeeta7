@@ -259,7 +259,7 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/routes_extended.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: true
     status_history:
@@ -272,6 +272,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL BACKEND ISSUE: /api/approvals endpoint returns 404 Not Found. Backend logs show multiple failed requests to POST /api/approvals. Cannot test approvals functionality due to missing backend endpoint. VehicleDetails.jsx shows approval modal state but missing implementation. Authentication barrier also prevents UI testing."
+        - working: false
+          agent: "testing"
+          comment: "❌ UI INTEGRATION MISSING: Vehicle details pages accessible but no approvals section found in vehicle cards. Cannot locate approval request buttons or approval workflow UI components. Frontend integration appears incomplete despite backend endpoints being available."
 
 frontend:
   - task: "Sidebar i18n menu labels"

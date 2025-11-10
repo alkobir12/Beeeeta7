@@ -220,7 +220,7 @@ backend:
     implemented: true
     working: false
     file: "/app/frontend/src/pages/Operations.jsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: true
     status_history:
@@ -230,6 +230,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ BLOCKED: Cannot verify CEO integration in Operations due to authentication barrier. Code review shows CEO embedded section exists in Operations.jsx with tabs (المؤشرات, الترند, اسأل CEO) and CeoAskPanel component with /api/ceo/ai-analysis-multi integration, but cannot test functionality due to login requirement."
+        - working: false
+          agent: "testing"
+          comment: "❌ PARTIAL FUNCTIONALITY: CEO tabs (المؤشرات، الترند، اسأل CEO) are visible and clickable in Operations page. However, Ask CEO input field is missing when clicking on 'اسأل CEO' tab, preventing AI analysis testing. CEO integration is present but incomplete."
 
   - task: "Invoice Template Studio (import/save/delete/print)"
     implemented: true

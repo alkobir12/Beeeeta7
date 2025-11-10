@@ -562,7 +562,7 @@ async def list_approvals(vehicle_id: Optional[str] = None):
                     d[k] = d[k].isoformat()
         return docs
     except Exception as e:
-        raise HTTPException(status_code=500, detail(str(e)))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/approvals/public/{token}')
 async def public_approval(token: str):

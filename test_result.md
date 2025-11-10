@@ -230,9 +230,9 @@ backend:
 
   - task: "Invoice Template Studio (import/save/delete/print)"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/pages/InvoiceTemplateStudio.jsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: true
     status_history:
@@ -242,6 +242,9 @@ backend:
         - working: true
           agent: "main"
           comment: "Fixed importUrl state and conditional blocks; added delete selected template button; tested basic flows."
+        - working: false
+          agent: "testing"
+          comment: "❌ BLOCKED: Cannot test Invoice Template Studio functionality due to authentication barrier. Page accessible (200 status) but shows login form. Backend /api/templates endpoint returns 404. Cannot verify import URL, template selection, editing, saving, or deletion functionality. Code review shows implementation exists but backend endpoints missing."
 
   - task: "Approvals: Logs + SSE + WhatsApp deeplink"
     implemented: true

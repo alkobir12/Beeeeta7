@@ -295,18 +295,18 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 13
+  test_sequence: 14
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Comprehensive Backend Regression Test"
-    - "Arabic Data Support Validation"
-    - "API Response Format Validation"
-    - "Critical Endpoint Functionality"
+    - "Deep Backend Regression After Path Restoration"
+    - "Arabic Content Preservation Validation"
+    - "Critical Endpoint 404 Verification"
+    - "Performance Optimization for AI Endpoints"
   stuck_tasks: 
-    - "Missing Backend Endpoints Implementation"
-  test_all: true
+    - "AI Endpoint Performance Optimization"
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:

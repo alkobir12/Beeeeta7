@@ -257,13 +257,16 @@ frontend:
     implemented: false
     working: false
     file: "/app/frontend/src/components/Sidebar.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
         - working: false
           agent: "user"
           comment: "Language switch to English does not update all menu labels. Plan to map paths to i18n keys and use t()."
+        - working: false
+          agent: "testing"
+          comment: "❌ BLOCKED: Cannot test i18n functionality due to authentication barrier. Frontend redirects all pages to login, preventing access to /settings page. Backend /api/settings endpoint returns 404. Authentication system requires proper login flow that cannot be automated in current test environment."
 
   - task: "Operations quick add part/service"
     implemented: true

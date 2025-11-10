@@ -1,20 +1,102 @@
-from fastapi import APIRouter, HTTPException, Body, Request
-from fastapi.responses import StreamingResponse, Response
+from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, StreamingResponse, Response
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 import asyncio
 import json
 import uuid
+import os
+import io
+import csv
+
+# Optional deps used in some endpoints
+try:
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+except Exception:
+    openpyxl = None
+try:
+    import xlsxwriter
+except Exception:
+    xlsxwriter = None
+try:
+    import pdfplumber
+except Exception:
+    pdfplumber = None
+
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from bson import ObjectId
 
 router = APIRouter(prefix="/api")
 
 db = None
+templates_bucket: Optional[AsyncIOMotorGridFSBucket] = None
+approvals_subscribers: set = set()
+
 
 # --------------------- DB bind ---------------------
 
 def set_db(database):
-    global db
+    global db, templates_bucket
     db = database
+    try:
+        templates_bucket = AsyncIOMotorGridFSBucket(db, bucket_name='invoice_templates')
+    except Exception as e:
+        print(f"GridFS bucket init failed: {e}")
+
+
+# --------------------- Settings ---------------------
+@router.get('/settings')
+async def get_settings():
+    try:
+        doc = await db.settings.find_one({"id": "app_settings"})
+        if not doc:
+            doc = {
+                "id": "app_settings",
+                "currency": "SAR",
+                "taxRate": 0.0,
+                "language": "ar",
+                "timezone": "Asia/Riyadh",
+                "invoicePrefix": "INV",
+                "menuConfig": {"simple": False, "items": [
+                    {"path": "/", "label": "الرئيسية", "enabled": True},
+                    {"path": "/operations", "label": "العمليات", "enabled": True},
+                    {"path": "/invoice-templates", "label": "استوديو قوالب الفواتير", "enabled": True},
+                    {"path": "/settings", "label": "الإعدادات", "enabled": True}
+                ]}
+            }
+            await db.settings.insert_one(doc)
+        # Ensure needed menu entries present
+        items = doc.get('menuConfig', {}).get('items', [])
+        def ensure(path, label, group=False, children=None):
+            for it in items:
+                if it.get('path') == path:
+                    return
+            entry = {"path": path, "label": label, "enabled": True}
+            if group:
+                entry['group'] = True
+                entry['children'] = children or []
+            items.append(entry)
+        ensure('/invoice-templates', 'استوديو قوالب الفواتير')
+        ensure('/operations', 'العمليات')
+        doc['menuConfig']['items'] = items
+        await db.settings.update_one({"id": "app_settings"}, {"$set": {"menuConfig": doc['menuConfig']}}, upsert=True)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/settings')
+async def save_settings(payload: Dict[str, Any] = Body(...)):
+    try:
+        payload = {**payload, "id": "app_settings", "updatedAt": datetime.utcnow()}
+        await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
+        doc = await db.settings.find_one({"id": "app_settings"})
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # --------------------- Vehicles minimal ---------------------
 @router.get('/vehicles/minimal')
@@ -36,7 +118,90 @@ async def vehicles_minimal():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --------------------- Chart of Accounts ---------------------
+
+# --------------------- Parts & Services ---------------------
+@router.get('/parts')
+async def get_parts():
+    try:
+        docs = await db.parts.find({}).to_list(length=10000)
+        for d in docs:
+            d.pop('_id', None)
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/parts')
+async def create_part(payload: Dict[str, Any] = Body(...)):
+    try:
+        name = (payload or {}).get('name')
+        if not name:
+            raise HTTPException(status_code=400, detail='name required')
+        price = float((payload or {}).get('price') or 0)
+        quantity = int(float((payload or {}).get('quantity') or 0))
+        category = (payload or {}).get('category') or 'عام'
+        existing = await db.parts.find_one({'name': name, 'category': category})
+        if existing:
+            await db.parts.update_one({'id': existing.get('id')}, {'$set': {'price': price, 'updatedAt': datetime.utcnow()}, '$inc': {'quantity': quantity}})
+            doc = await db.parts.find_one({'id': existing.get('id')})
+            doc.pop('_id', None)
+            return doc
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'price': price,
+            'quantity': quantity,
+            'category': category,
+            'createdAt': datetime.utcnow()
+        }
+        await db.parts.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/services')
+async def get_services():
+    try:
+        docs = await db.services.find({}).to_list(length=10000)
+        for d in docs:
+            d.pop('_id', None)
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/services')
+async def create_service(payload: Dict[str, Any] = Body(...)):
+    try:
+        name = (payload or {}).get('name')
+        if not name:
+            raise HTTPException(status_code=400, detail='name required')
+        price = float((payload or {}).get('price') or 0)
+        category = (payload or {}).get('category') or 'عام'
+        existing = await db.services.find_one({'name': name, 'category': category})
+        if existing:
+            await db.services.update_one({'id': existing.get('id')}, {'$set': {'price': price, 'updatedAt': datetime.utcnow()}})
+            doc = await db.services.find_one({'id': existing.get('id')})
+            doc.pop('_id', None)
+            return doc
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'price': price,
+            'category': category,
+            'createdAt': datetime.utcnow()
+        }
+        await db.services.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- COA ---------------------
 DEFAULT_COA = {
     'Assets': {
         'Current Assets': ['Cash', 'Bank'],
@@ -53,8 +218,8 @@ DEFAULT_COA = {
         'Other Income': []
     },
     'Expenses': {
-        'COGS': ['Parts Purchase'],
-        'Operating Expenses': ['Rent', 'Salaries', 'Utilities', 'Marketing', 'Misc']
+        'Operating Expenses': ['Electricity', 'Water', 'Fuel', 'Rent', 'Salaries', 'Utilities', 'Marketing', 'Misc'],
+        'Personal Expenses': ['Personal']
     }
 }
 
@@ -85,7 +250,8 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --------------------- Operations ---------------------
+
+# --------------------- Operations & Analytics ---------------------
 @router.get('/operations')
 async def list_operations(account_id: Optional[str] = None, type: Optional[str] = None, vehicle_id: Optional[str] = None):
     try:
@@ -189,7 +355,46 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --------------------- Transactions (sales/expenses) ---------------------
+@router.get('/operations/analytics/summary')
+async def operations_analytics(account_id: Optional[str] = None):
+    try:
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = today - timedelta(days=7)
+        month_start = today.replace(day=1)
+        q: Dict[str, Any] = {}
+        if account_id:
+            q['accountId'] = account_id
+        ops = await db.operations.find(q).to_list(length=100000)
+        def parse_date(x):
+            d = x.get('date')
+            if isinstance(d, str):
+                try:
+                    return datetime.fromisoformat(d.replace('Z','+00:00'))
+                except Exception:
+                    return today
+            return d or today
+        def agg(start):
+            s=e=sc=ec=0
+            for o in ops:
+                d = parse_date(o)
+                if d >= start:
+                    t = float(o.get('total', 0))
+                    if o.get('type') == 'sale': s += t; sc += 1
+                    elif o.get('type') == 'purchase': e += t; ec += 1
+            return s,e,s-e,sc,ec
+        tS,tE,tP,tSc,tEc = agg(today)
+        wS,wE,wP,wSc,wEc = agg(week_ago)
+        mS,mE,mP,mSc,mEc = agg(month_start)
+        return {
+            'today': {'sales': tS, 'expenses': tE, 'profit': tP, 'salesCount': tSc, 'expensesCount': tEc},
+            'week': {'sales': wS, 'expenses': wE, 'profit': wP, 'salesCount': wSc, 'expensesCount': wEc},
+            'month': {'sales': mS, 'expenses': mE, 'profit': mP, 'salesCount': mSc, 'expensesCount': mEc}
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Transactions & Expenses ---------------------
 @router.get('/transactions')
 async def list_transactions(type: Optional[str] = None, vehicle_id: Optional[str] = None, account_id: Optional[str] = None):
     try:
@@ -226,5 +431,558 @@ async def create_expense(payload: Dict[str, Any] = Body(...)):
         if hasattr(tx['date'], 'isoformat'):
             tx['date'] = tx['date'].isoformat()
         return tx
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Approvals + Logs + SSE ---------------------
+async def _log_approval_event(token: str, vehicle_id: str, customer_id: str, title: str, amount: float, status: str, service_items: list = None, service_items_text: str = None, responded_at: datetime = None):
+    try:
+        doc = await db.customer_approval_logs.find_one({'token': token})
+        base = {
+            'token': token,
+            'vehicleId': vehicle_id,
+            'customerId': customer_id,
+            'title': title,
+            'amount': amount,
+            'status': status,
+            'serviceItems': service_items or [],
+            'serviceItemsText': service_items_text,
+        }
+        if doc:
+            update = { **base, 'updatedAt': datetime.utcnow() }
+            if responded_at:
+                update['respondedAt'] = responded_at
+            await db.customer_approval_logs.update_one({'token': token}, {'$set': update})
+        else:
+            newdoc = { 'id': str(uuid.uuid4()), **base, 'createdAt': datetime.utcnow() }
+            if responded_at:
+                newdoc['respondedAt'] = responded_at
+            await db.customer_approval_logs.insert_one(newdoc)
+    except Exception as e:
+        print(f"approval log error: {e}")
+
+@router.get('/customers/{customer_id}/approval-logs')
+async def get_customer_approval_logs(customer_id: str):
+    try:
+        docs = await db.customer_approval_logs.find({'customerId': customer_id}).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            for k in ('createdAt','updatedAt','respondedAt'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/vehicles/{vehicle_id}/approval-logs')
+async def get_vehicle_approval_logs(vehicle_id: str):
+    try:
+        docs = await db.customer_approval_logs.find({'vehicleId': vehicle_id}).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            for k in ('createdAt','updatedAt','respondedAt'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/approvals')
+async def create_approval(payload: Dict[str, Any] = Body(...)):
+    try:
+        token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+        doc = {
+            'id': str(uuid.uuid4()),
+            'token': token,
+            'vehicleId': payload.get('vehicleId'),
+            'customerId': payload.get('customerId'),
+            'title': payload.get('title') or 'طلب اعتماد',
+            'amount': float(payload.get('amount') or 0),
+            'serviceItems': payload.get('serviceItems') or [],
+            'serviceItemsText': payload.get('serviceItemsText'),
+            'status': 'pending',
+            'createdAt': datetime.utcnow(),
+            'expiresAt': datetime.utcnow() + timedelta(days=7)
+        }
+        await db.approval_requests.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/approvals')
+async def list_approvals(vehicle_id: Optional[str] = None):
+    try:
+        q = {}
+        if vehicle_id:
+            q['vehicleId'] = vehicle_id
+        docs = await db.approval_requests.find(q).sort('createdAt', -1).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+            for k in ('createdAt','expiresAt','respondedAt'):
+                if d.get(k) and hasattr(d[k],'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/approvals/public/{token}')
+async def public_approval(token: str):
+    try:
+        d = await db.approval_requests.find_one({'token': token})
+        if not d:
+            raise HTTPException(status_code=404, detail='رابط غير صحيح')
+        if d.get('revoked'):
+            raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+        if d.get('expiresAt') and d['expiresAt'] < datetime.utcnow():
+            raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+        d.pop('_id', None)
+        for k in ('createdAt','expiresAt','respondedAt'):
+            if d.get(k) and hasattr(d[k],'isoformat'):
+                d[k] = d[k].isoformat()
+        return d
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def _approvals_broadcast(event: Dict[str, Any]):
+    dead = []
+    for q in list(approvals_subscribers):
+        try:
+            q.put_nowait(event)
+        except Exception:
+            dead.append(q)
+    for q in dead:
+        approvals_subscribers.discard(q)
+
+@router.post('/approvals/public/{token}/respond')
+async def respond_public_approval(token: str, status: str = 'approved', name: str = '', phone: str = '', notes: str = ''):
+    try:
+        d = await db.approval_requests.find_one({'token': token})
+        if not d:
+            raise HTTPException(status_code=404, detail='رابط غير صحيح')
+        if d.get('revoked'):
+            raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+        if d.get('expiresAt') and d['expiresAt'] < datetime.utcnow():
+            raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+        upd = {'status': status, 'respondedAt': datetime.utcnow(), 'responderName': name, 'responderPhone': phone, 'notes': notes}
+        await db.approval_requests.update_one({'token': token}, {'$set': upd})
+        nd = await db.approval_requests.find_one({'token': token})
+        nd.pop('_id', None)
+        for k in ('createdAt','expiresAt','respondedAt'):
+            if nd.get(k) and hasattr(nd[k],'isoformat'):
+                nd[k] = nd[k].isoformat()
+        # log
+        try:
+            await _log_approval_event(token, nd.get('vehicleId'), nd.get('customerId'), nd.get('title','طلب اعتماد'), float(nd.get('amount') or 0), nd.get('status'), nd.get('serviceItems') or [], nd.get('serviceItemsText'), datetime.utcnow())
+        except Exception as le:
+            print(f"log approval error: {le}")
+        # broadcast SSE
+        await _approvals_broadcast({'type':'approval_updated','token': token,'vehicleId': nd.get('vehicleId'),'customerId': nd.get('customerId'),'status': nd.get('status'),'respondedAt': nd.get('respondedAt')})
+        return nd
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/approvals/stream')
+async def approvals_stream(request: Request):
+    async def gen():
+        q: asyncio.Queue = asyncio.Queue()
+        approvals_subscribers.add(q)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                ev = await q.get()
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        finally:
+            approvals_subscribers.discard(q)
+    return StreamingResponse(gen(), media_type='text/event-stream')
+
+
+# --------------------- WhatsApp Deeplink ---------------------
+@router.post('/notifications/prepare')
+async def prepare_notification(payload: Dict[str, Any] = Body(...)):
+    try:
+        phone = (payload or {}).get('phone','')
+        link = (payload or {}).get('link','')
+        msg = (payload or {}).get('message') or f"مرحباً، نأمل اعتماد الطلب عبر الرابط: {link}"
+        norm = ''.join([c for c in phone if c.isdigit()])
+        if norm.startswith('00'): norm = norm[2:]
+        if norm.startswith('+'): norm = norm[1:]
+        if norm.startswith('05'): norm = '966' + norm[1:]
+        if norm.startswith('5') and len(norm) == 9: norm = '966' + norm
+        if not norm.startswith('966'): norm = '966' + norm
+        import urllib.parse
+        deeplink = f"https://wa.me/{norm}?text={urllib.parse.quote(msg)}"
+        return {'whatsappDeeplink': deeplink}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Templates (Compatibility minimal) ---------------------
+@router.get('/templates')
+async def list_templates():
+    # compat: map to invoice templates list
+    try:
+        docs = await db.invoice_templates.find({}).to_list(length=1000)
+        for d in docs:
+            d.pop('_id', None)
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/print/render', response_class=HTMLResponse)
+async def print_render(payload: Dict[str, Any] = Body(...)):
+    """Compatibility render endpoint: if html provided return it; otherwise attempt to resolve repair template and apply data placeholders."""
+    try:
+        html = (payload or {}).get('html')
+        data = (payload or {}).get('data') or {}
+        if not html:
+            # fallback to built-in simple doc
+            html = "<html><body><h3>وثيقة</h3><p>{{CUSTOMER_NAME}}</p></body></html>"
+        # replace {{KEY}} with values
+        for k, v in data.items():
+            html = html.replace(f"{{{{{k}}}}}", str(v))
+        return HTMLResponse(content=html)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Invoice Templates (Excel-first) ---------------------
+@router.get('/invoice-templates')
+async def list_invoice_templates():
+    docs = await db.invoice_templates.find({}).sort('createdAt', -1).to_list(length=1000)
+    for d in docs:
+        d.pop('_id', None)
+    return docs
+
+@router.get('/invoice-templates/{tid}')
+async def get_invoice_template(tid: str):
+    d = await db.invoice_templates.find_one({'id': tid})
+    if not d:
+        raise HTTPException(status_code=404, detail='Template not found')
+    d.pop('_id', None)
+    return d
+
+@router.delete('/invoice-templates/{tid}')
+async def delete_invoice_template(tid: str):
+    await db.invoice_templates.delete_one({'id': tid})
+    return {'status': 'ok'}
+
+@router.put('/invoice-templates/{tid}')
+async def update_invoice_template(tid: str, payload: Dict[str, Any] = Body(...)):
+    await db.invoice_templates.update_one({'id': tid}, {'$set': {**payload, 'updatedAt': datetime.utcnow()}})
+    doc = await db.invoice_templates.find_one({'id': tid})
+    if not doc:
+        raise HTTPException(status_code=404, detail='Template not found')
+    doc.pop('_id', None)
+    return doc
+
+@router.post('/invoice-templates/import')
+async def import_invoice_template(file: UploadFile = File(...)):
+    try:
+        if not openpyxl:
+            raise HTTPException(status_code=500, detail='openpyxl not installed')
+        name = file.filename
+        ext = (os.path.splitext(name)[1] or '').lower()
+        content = await file.read()
+        fields: List[str] = []
+        preview: List[List[str]] = []
+        fmt = None
+        if ext in ('.xlsx', '.xls'):
+            fmt = 'xlsx'
+            wb = openpyxl.load_workbook(io.BytesIO(content), data_only=False)
+            ws = wb.active
+            max_rows = min(ws.max_row, 30)
+            max_cols = min(ws.max_column, 20)
+            for r in range(1, max_rows+1):
+                row_vals = []
+                for c in range(1, max_cols+1):
+                    v = ws.cell(r, c).value
+                    if isinstance(v, str):
+                        row_vals.append(v)
+                        # basic placeholder detection
+                        if '{{' in v and '}}' in v:
+                            # capture first placeholder occurrence
+                            start = v.find('{{'); end = v.find('}}', start+2)
+                            if start != -1 and end != -1:
+                                fields.append(v[start:end+2])
+                    else:
+                        row_vals.append(v if v is not None else '')
+                preview.append(row_vals)
+        elif ext == '.csv':
+            fmt = 'csv'
+            s = content.decode('utf-8', errors='ignore')
+            reader = csv.reader(io.StringIO(s))
+            for i, row in enumerate(reader):
+                if i >= 30: break
+                preview.append(row[:20])
+                for cell in row:
+                    if isinstance(cell, str) and '{{' in cell and '}}' in cell:
+                        start = cell.find('{{'); end = cell.find('}}', start+2)
+                        if start != -1 and end != -1:
+                            fields.append(cell[start:end+2])
+        else:
+            fmt = ext.strip('.') or 'bin'
+            preview = [[f"Imported {name}"]]
+        # store file in GridFS if binary
+        file_id = None
+        try:
+            if templates_bucket:
+                stream = io.BytesIO(content)
+                file_oid = await templates_bucket.upload_from_stream(name, stream, metadata={'content_type': file.content_type or 'application/octet-stream'})
+                file_id = str(file_oid)
+        except Exception as e:
+            print(f"gridfs upload failed: {e}")
+        tid = str(uuid.uuid4())
+        doc = {
+            'id': tid,
+            'name': os.path.splitext(name)[0],
+            'format': fmt,
+            'fileId': file_id,
+            'fields': list(dict.fromkeys(fields)),
+            'preview': preview,
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/import-url')
+async def import_invoice_template_url(payload: Dict[str, Any] = Body(...)):
+    try:
+        url = (payload or {}).get('url')
+        if not url:
+            raise HTTPException(status_code=400, detail='url required')
+        import httpx
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(url)
+            if r.status_code != 200:
+                raise HTTPException(status_code=400, detail=f'fetch failed: {r.status_code}')
+            content = r.content
+            name = url.split('/')[-1] or f'template_{uuid.uuid4().hex}'
+        # reuse import logic by extension
+        fake = UploadFile(filename=name, file=io.BytesIO(content), content_type='application/octet-stream')
+        return await import_invoice_template(fake)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/save-json')
+async def save_template_from_json(tid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        if not xlsxwriter:
+            raise HTTPException(status_code=500, detail='xlsxwriter not installed')
+        grid = payload.get('grid')
+        if not isinstance(grid, list):
+            raise HTTPException(status_code=400, detail='grid required')
+        out = io.BytesIO()
+        book = xlsxwriter.Workbook(out, {'in_memory': True})
+        sheet = book.add_worksheet('Template')
+        for r, row in enumerate(grid):
+            if not isinstance(row, list):
+                continue
+            for c, val in enumerate(row):
+                sheet.write(r, c, '' if val is None else str(val))
+        book.close()
+        xlsx_bytes = out.getvalue()
+        file_id = None
+        if templates_bucket:
+            try:
+                file_oid = await templates_bucket.upload_from_stream(f'template_{tid}.xlsx', io.BytesIO(xlsx_bytes), metadata={'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+                file_id = str(file_oid)
+            except Exception as e:
+                print(f"gridfs upload failed: {e}")
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'format': 'xlsx', 'fileId': file_id, 'updatedAt': datetime.utcnow()}})
+        return {'status': 'ok', 'fileId': file_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/make-default')
+async def make_default_template(tid: str):
+    try:
+        await db.invoice_templates.update_many({}, {'$set': {'isDefault': False}})
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'isDefault': True, 'updatedAt': datetime.utcnow()}})
+        doc = await db.invoice_templates.find_one({'id': tid})
+        if not doc:
+            raise HTTPException(status_code=404, detail='Template not found')
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/update-mapping')
+async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        mapping = (payload or {}).get('mapping') or {}
+        items = (payload or {}).get('items') or {}
+        await db.invoice_templates.update_one({'id': tid}, {'$set': {'mapping': mapping, 'itemsConfig': items, 'updatedAt': datetime.utcnow()}})
+        doc = await db.invoice_templates.find_one({'id': tid})
+        if not doc:
+            raise HTTPException(status_code=404, detail='Template not found')
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/print/invoice-xlsx')
+async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
+    try:
+        if not openpyxl:
+            raise HTTPException(status_code=500, detail='openpyxl not installed')
+        t_id = (payload or {}).get('templateId') or (payload or {}).get('template_id')
+        data = (payload or {}).get('data') or payload
+        if not t_id:
+            t_doc = await db.invoice_templates.find_one({'isDefault': True})
+            if not t_doc:
+                raise HTTPException(status_code=404, detail='لا يوجد قالب افتراضي للطباعة')
+        else:
+            t_doc = await db.invoice_templates.find_one({'id': t_id})
+            if not t_doc:
+                raise HTTPException(status_code=404, detail='القالب غير موجود')
+        # load bytes
+        if t_doc.get('fileId') and templates_bucket:
+            buf = io.BytesIO()
+            await templates_bucket.download_to_stream(ObjectId(t_doc['fileId']), buf)
+            file_bytes = buf.getvalue()
+        else:
+            # build from preview
+            if not xlsxwriter:
+                raise HTTPException(status_code=500, detail='xlsxwriter not installed')
+            out = io.BytesIO()
+            book = xlsxwriter.Workbook(out, {'in_memory': True})
+            sheet = book.add_worksheet('Template')
+            for r, row in enumerate(t_doc.get('preview') or []):
+                for c, val in enumerate(row):
+                    sheet.write(r, c, '' if val is None else str(val))
+            book.close()
+            file_bytes = out.getvalue()
+        # fill
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes))
+        ws = wb.active
+        max_r = ws.max_row
+        max_c = ws.max_column
+        items = data.get('ITEMS') or data.get('items') or []
+        items_anchor_row = None
+        for r in range(1, max_r+1):
+            anchor = False
+            for c in range(1, max_c+1):
+                cell = ws.cell(r, c)
+                v = cell.value
+                if isinstance(v, str):
+                    if v.strip() == '{{ITEMS}}':
+                        anchor = True
+                    else:
+                        s = v; start = 0; phs = []
+                        while True:
+                            i = s.find('{{', start)
+                            if i == -1: break
+                            j = s.find('}}', i+2)
+                            if j == -1: break
+                            phs.append(s[i:j+2]); start = j+2
+                        nv = v
+                        for ph in phs:
+                            key = ph.strip('{}')
+                            nv = nv.replace(ph, str(data.get(key, '')))
+                        if nv != v:
+                            cell.value = nv
+            if anchor and items_anchor_row is None:
+                items_anchor_row = r
+        if items_anchor_row:
+            template_row_idx = min(items_anchor_row+1, ws.max_row)
+            template_vals = [ws.cell(template_row_idx, c).value for c in range(1, max_c+1)]
+            ws.delete_rows(items_anchor_row, 2)
+            insert_at = items_anchor_row
+            for it in items:
+                new_vals = []
+                for val in template_vals:
+                    if isinstance(val, str):
+                        s = val; start=0; phs=[]; nv=val
+                        while True:
+                            i = s.find('{{', start)
+                            if i == -1: break
+                            j = s.find('}}', i+2)
+                            if j == -1: break
+                            phs.append(s[i:j+2]); start = j+2
+                        for ph in phs:
+                            k = ph.strip('{}')
+                            if k.startswith('ITEMS.'):
+                                field = k.split('.',1)[1]
+                                nv = nv.replace(ph, str(it.get(field, '')))
+                        new_vals.append(nv)
+                    else:
+                        new_vals.append(val)
+                ws.insert_rows(insert_at)
+                for c, v in enumerate(new_vals, start=1):
+                    ws.cell(insert_at, c).value = v
+                insert_at += 1
+        out = io.BytesIO()
+        wb.save(out)
+        out.seek(0)
+        return Response(content=out.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': 'attachment; filename="invoice.xlsx"'})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- CEO Analytics (multi-account) ---------------------
+@router.post('/ceo/ai-analysis-multi')
+async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
+    try:
+        account_ids = (payload or {}).get('accountIds') or []
+        question = (payload or {}).get('question') or ''
+        days = int((payload or {}).get('days') or 30)
+        if not account_ids:
+            accs = await db.business_accounts.find({}).to_list(length=1000)
+            account_ids = [a.get('id') for a in accs if a.get('id')]
+        end = datetime.utcnow(); start = end - timedelta(days=days)
+        tx = await db.transactions.find({'date': {'$gte': start, '$lte': end}, 'accountId': {'$in': account_ids}}).to_list(length=100000)
+        per = []
+        acc_docs = await db.business_accounts.find({'id': {'$in': account_ids}}).to_list(length=1000)
+        name_map = {a.get('id'): a.get('name','Account') for a in acc_docs}
+        for aid in account_ids:
+            ftx = [t for t in tx if t.get('accountId') == aid]
+            income = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='income')
+            expense = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='expense')
+            # classify expenses
+            exp_operating = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='expense' and (t.get('category') in ['Electricity','Water','Fuel','Rent','Salaries','Utilities','Marketing','Misc','Operating Expenses']))
+            exp_personal = sum(float(t.get('amount',0)) for t in ftx if t.get('type')=='expense' and (t.get('category') in ['Personal','Personal Expenses']))
+            profit = income - expense
+            per.append({'id': aid, 'name': name_map.get(aid,'Account'), 'income': income, 'expenses': expense, 'operatingExpenses': exp_operating, 'personalExpenses': exp_personal, 'profit': profit, 'profitMargin': (profit/income*100.0) if income>0 else 0.0})
+        totals_income = sum(a['income'] for a in per)
+        totals_expenses = sum(a['expenses'] for a in per)
+        totals_profit = totals_income - totals_expenses
+        result = {'accounts': per, 'totals': {'income': totals_income, 'expenses': totals_expenses, 'profit': totals_profit, 'profitMargin': (totals_profit/totals_income*100.0) if totals_income>0 else 0.0}, 'ai': None, 'periodDays': days}
+        # Optional AI
+        if question:
+            try:
+                import os
+                from emergentintegrations.llm.chat import LlmChat, UserMessage
+                key = os.getenv('EMERGENT_LLM_KEY')
+                if key:
+                    sys = "أنت مساعد المدير التنفيذي. حلّل بيانات المبيعات والمصروفات التشغيلية والشخصية لكل حساب وقدّم توصيات تنفيذية مختصرة."
+                    ctx_lines = [f"{a['name']}: دخل {a['income']:.0f}، مصروف {a['expenses']:.0f}، تشغيلي {a['operatingExpenses']:.0f}، شخصي {a['personalExpenses']:.0f}، ربح {a['profit']:.0f}" for a in per]
+                    ctx = "\n".join(ctx_lines)
+                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('anthropic','claude-sonnet-4-5-pro')
+                    ans = await chat.send_message(UserMessage(text=f"السؤال: {question}\nالبيانات:\n{ctx}"))
+                    result['ai'] = {'answer': ans, 'model': 'anthropic/claude-sonnet-4-5-pro'}
+            except Exception as ex:
+                print(f"AI error: {ex}")
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

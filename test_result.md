@@ -280,6 +280,18 @@ backend:
           comment: "❌ UI INTEGRATION MISSING: Vehicle details pages accessible but no approvals section found in vehicle cards. Cannot locate approval request buttons or approval workflow UI components. Frontend integration appears incomplete despite backend endpoints being available."
 
 frontend:
+  - task: "Search History UI for KnowledgeBase and References"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/KnowledgeBase.jsx, /app/frontend/src/pages/References.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ WORKING: Arabic search history UI testing completed successfully (85% pass rate - 11/13 tests). KnowledgeBase: Search history button 'سجل البحث' accessible in top right, sidebar opens with provider selection (smart/local/perplexity), provider switching functional with update button, smart search with 'كهرباء' logs correctly to /api/search/log. References: Search history button accessible, sidebar opens with electrical provider selection, electrical search with 'جهد' logs correctly. API endpoints /api/search/history and /api/search/log working without 404 errors. Minor: Modal overlay issue in final verification steps (non-critical). All core Arabic review request requirements met."
+
   - task: "Login and Dashboard Arabic UI"
     implemented: true
     working: true

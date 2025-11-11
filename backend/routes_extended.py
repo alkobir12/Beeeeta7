@@ -914,6 +914,14 @@ async def import_invoice_template_url(payload: Dict[str, Any] = Body(...)):
 
 @router.post('/invoice-templates/{tid}/save-json')
 async def save_template_from_json(tid: str, payload: Dict[str, Any] = Body(...)):
+    # also persist mapping/items if provided for unified save
+    alt_mapping = (payload or {}).get('mapping')
+    alt_items = (payload or {}).get('items')
+    if alt_mapping is not None or alt_items is not None:
+        try:
+            await db.invoice_templates.update_one({'id': tid}, {'$set': {'mapping': alt_mapping or {}, 'itemsConfig': alt_items or {}, 'updatedAt': datetime.utcnow()}})
+        except Exception:
+            pass
     try:
         if not xlsxwriter:
             raise HTTPException(status_code=500, detail='xlsxwriter not installed')

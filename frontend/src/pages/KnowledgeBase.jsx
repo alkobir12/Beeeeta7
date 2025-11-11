@@ -214,7 +214,7 @@ const KnowledgeBase = () => {
                               </div>
                             )}
                             
-                            {/* Electrical Values - NEW */}
+                            {/* Electrical Values - ALWAYS SHOW */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                               <div className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-2">
                                 ⚡ القيم الكهربائية الطبيعية
@@ -239,7 +239,7 @@ const KnowledgeBase = () => {
                               </div>
                             </div>
                             
-                            {/* Related Components - NEW */}
+                            {/* Related Components - ALWAYS SHOW */}
                             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                               <div className="text-xs font-semibold text-purple-800 mb-2 flex items-center gap-2">
                                 🔌 المكونات المرتبطة

@@ -4,192 +4,126 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { useToast } from '../hooks/use-toast';
-import { Download, Upload, Search, Zap, Database } from 'lucide-react';
+import { History, Zap, Database, Globe } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
-const References = () => {
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResult, setSearchResult] = useState(null);
+export default function References(){
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [dtcRefs, setDtcRefs] = useState([]);
-  const [elecRefs, setElecRefs] = useState([]);
 
-  useEffect(() => {
-    loadReferences();
-  }, []);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyProvider, setHistoryProvider] = useState('');
+  const [historyItems, setHistoryItems] = useState([]);
 
-  const loadReferences = async () => {
-    try {
-      const [dtcRes, elecRes] = await Promise.all([
-        axios.get(`${API_URL}/references/dtc`),
-        axios.get(`${API_URL}/references/electrical`)
-      ]);
-      setDtcRefs(dtcRes.data.references || []);
-      setElecRefs(elecRes.data.references || []);
-    } catch (e) {
-      console.error('Error loading references:', e);
-    }
+  const fetchHistory = async (provider='') => {
+    try{
+      const r = await axios.get(`${API_URL}/search/history`, { params: provider? {provider}: {} });
+      setHistoryItems(r.data?.items || []);
+    }catch(e){ setHistoryItems([]); }
   };
 
-  const handleSmartSearch = async () => {
-    if (!searchQuery.trim()) {
-      toast({ title: 'أدخل سؤالك', variant: 'destructive' });
-      return;
-    }
-    try {
+  const searchElectrical = async () => {
+    if (!query.trim()) return;
+    try{
       setLoading(true);
-      const res = await axios.post(`${API_URL}/references/electrical/smart-search`, { query: searchQuery });
-      setSearchResult(res.data);
-      toast({ title: '✅ تم البحث', description: `وجدنا ${res.data.count} مطابقة` });
-    } catch (e) {
-      toast({ title: 'خطأ', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
+      const r = await axios.post(`${API_URL}/references/electrical/smart-search`, { query });
+      setResult(r.data);
+      await axios.post(`${API_URL}/search/log`, { provider: 'electrical', query, ok: true, mode:'ui', count: (r.data?.matches||[]).length });
+    }catch(e){ setResult(null); }
+    finally{ setLoading(false); }
   };
 
-  const handleImport = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
+  const searchProvider = async (provider) => {
+    if (!query.trim()) return;
+    try{
       setLoading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await axios.post(`${API_URL}/references/import-excel`, formData);
-      toast({ title: '✅ تم الاستيراد', description: `DTC: ${res.data.imported.dtc}, كهرباء: ${res.data.imported.electrical}` });
-      loadReferences();
-    } catch (e) {
-      toast({ title: 'خطأ في الاستيراد', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-      e.target.value = '';
-    }
-  };
-
-  const downloadExcelProgram = () => {
-    window.open(`${API_URL}/references/download-excel-program`, '_blank');
-    toast({ title: '📥 جاري التحميل', description: 'برنامج Excel للبحث' });
+      const url = provider==='perplexity'? '/search/perplexity' : provider==='you'? '/search/you' : '/search/brave';
+      const r = await axios.get(`${API_URL}${url}`, { params: { q: query } });
+      setResult(r.data);
+    }catch(e){ setResult({ ok:false, error: 'failed' }); }
+    finally{ setLoading(false); }
   };
 
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50" dir="rtl">
         <div className="container mx-auto p-6 max-w-7xl">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Database className="text-godaddy-green" size={40} />
-                  <h1 className="text-4xl font-bold text-godaddy-black">المراجع الفنية</h1>
-                </div>
-                <p className="text-godaddy-gray text-lg">الجهد الكهربائي وأكواد الأعطال</p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Database className="text-godaddy-green" size={40} />
+                <h1 className="text-3xl font-bold">المراجع الفنية</h1>
               </div>
-              <Button onClick={downloadExcelProgram} className="btn-godaddy-primary">
-                <Download className="ml-2" size={20} />
-                تحميل برنامج Excel
-              </Button>
+              <p className="text-godaddy-gray">الجهد الكهربائي وأكواد الأعطال</p>
             </div>
+            <Button variant="outline" onClick={async ()=>{ setShowHistory(true); await fetchHistory(historyProvider); }}><History className="ml-2" size={18}/> سجل البحث</Button>
           </div>
 
-          {/* Smart Search */}
-          <Card className="card-godaddy mb-6">
-            <CardHeader className="bg-gradient-to-l from-green-50">
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="text-godaddy-green" />
-                بحث ذكي عن الجهد الكهربائي
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="flex gap-3 mb-4">
-                <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSmartSearch()} placeholder="مثال: جهد حساس الهواء في الوضع الطبيعي؟ كم جهد البطارية؟" className="input-godaddy flex-1 text-lg" />
-                <Button onClick={handleSmartSearch} disabled={loading} className="btn-godaddy-primary px-8">{loading ? '⏳' : 'بحث'}</Button>
+          <Card className="card-godaddy mb-4">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="text-godaddy-green"/>بحث كهربائي ذكي</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex gap-2 mb-3">
+                <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="مثال: جهد حساس الهواء الطبيعي" className="flex-1" />
+                <Button onClick={searchElectrical} disabled={loading}>بحث</Button>
               </div>
-              {searchResult && (
-                <div className="space-y-4">
-                  <Card className="border-2 border-godaddy-green">
-                    <CardContent className="p-6 bg-green-50">
-                      <h3 className="font-bold text-lg mb-3 text-godaddy-black">📋 الإجابة:</h3>
-                      <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed text-godaddy-black">{searchResult.answer}</pre>
-                    </CardContent>
-                  </Card>
-                  {searchResult.matches && searchResult.matches.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {searchResult.matches.map((match, idx) => (
-                        <Card key={idx} className="border-2 border-blue-200">
-                          <CardContent className="p-5">
-                            <h4 className="font-bold text-lg mb-3">{match.componentAr}</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between p-2 bg-green-100 rounded">
-                                <span>الجهد الطبيعي:</span>
-                                <span className="font-bold text-green-700">{match.voltageNormal} {match.unit}</span>
-                              </div>
-                              <div className="flex justify-between p-2 bg-blue-50 rounded">
-                                <span>النطاق:</span>
-                                <span className="font-bold">{match.voltageMin} - {match.voltageMax} {match.unit}</span>
-                              </div>
-                              <div className="p-2 bg-amber-50 rounded">
-                                <span className="font-semibold">القياس: </span>
-                                <span>{match.measurementMethod}</span>
-                              </div>
-                              <div className="text-xs text-gray-600">💡 {match.notes}</div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {result && (
+                <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
               )}
             </CardContent>
           </Card>
 
-          {/* Import Excel */}
-          <Card className="card-godaddy mb-6">
-            <CardHeader className="bg-gradient-to-l from-blue-50">
-              <CardTitle>📥 استيراد مراجع من Excel</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                <Upload className="mx-auto text-godaddy-green mb-3" size={40} />
-                <Label htmlFor="excel-upload" className="cursor-pointer">
-                  <p className="font-semibold mb-2">اضغط لاختيار ملف Excel</p>
-                  <p className="text-sm text-gray-600">يجب أن يحتوي: DTC Codes, Electrical Components</p>
-                </Label>
-                <Input id="excel-upload" type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+          <Card className="card-godaddy">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="text-blue-600"/>مزودات خارجية (fallback تلقائي)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex gap-2 mb-2">
+                <Button variant="outline" onClick={()=>searchProvider('perplexity')}>Perplexity</Button>
+                <Button variant="outline" onClick={()=>searchProvider('you')}>You.com</Button>
+                <Button variant="outline" onClick={()=>searchProvider('brave')}>Brave</Button>
               </div>
+              {result && (
+                <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
+              )}
             </CardContent>
           </Card>
 
-          {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="card-godaddy">
-              <CardContent className="p-6 text-center">
-                <div className="text-5xl font-bold text-godaddy-green mb-2">{dtcRefs.length}</div>
-                <div className="text-godaddy-gray">كود عطل (DTC)</div>
-              </CardContent>
-            </Card>
-            <Card className="card-godaddy">
-              <CardContent className="p-6 text-center">
-                <div className="text-5xl font-bold text-godaddy-green mb-2">{elecRefs.length}</div>
-                <div className="text-godaddy-gray">مكون كهربائي</div>
-              </CardContent>
-            </Card>
-            <Card className="card-godaddy">
-              <CardContent className="p-6 text-center">
-                <div className="text-5xl font-bold text-godaddy-green mb-2">{new Set(dtcRefs.map(d => d.vehicle)).size}</div>
-                <div className="text-godaddy-gray">سيارة</div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Search History Drawer */}
+          {showHistory && (
+            <div className="fixed inset-0 bg-black/40 z-50" onClick={()=>setShowHistory(false)}>
+              <div className="absolute top-0 left-0 w-full md:w-[520px] h-full bg-white shadow-2xl p-4" onClick={(e)=>e.stopPropagation()} dir="rtl">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-bold text-lg">سجل البحث</div>
+                  <Button variant="ghost" onClick={()=>setShowHistory(false)}>إغلاق</Button>
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Label>المزوّد</Label>
+                  <select className="border rounded px-2 py-1" value={historyProvider} onChange={async (e)=>{ setHistoryProvider(e.target.value); await fetchHistory(e.target.value); }}>
+                    <option value="">الكل</option>
+                    <option value="electrical">electrical</option>
+                    <option value="local">local</option>
+                    <option value="brave">brave</option>
+                    <option value="you">you</option>
+                    <option value="perplexity">perplexity</option>
+                  </select>
+                  <Button size="sm" onClick={async ()=>{ await fetchHistory(historyProvider); }}>تحديث</Button>
+                </div>
+                <div className="space-y-2 overflow-auto h-[80vh] pr-2">
+                  {historyItems.map((it, idx)=> (
+                    <div key={idx} className="p-2 border rounded">
+                      <div className="text-xs text-slate-500">{it.provider} • {new Date(it.createdAt).toLocaleString('ar-SA')}</div>
+                      <div className="font-semibold">{it.query}</div>
+                      <div className="text-xs">النتائج: {it.count} • الحالة: {it.ok? 'ناجح':'فشل'}</div>
+                    </div>
+                  ))}
+                  {historyItems.length===0 && <div className="text-sm text-slate-500">لا يوجد سجلات حالياً.</div>}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
   );
-};
-
-export default References;
+}

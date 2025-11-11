@@ -1178,6 +1178,55 @@ async def seed_print_templates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post('/seed/professional-templates')
+async def seed_professional_templates():
+    """إضافة قوالب الفواتير الاحترافية الجديدة"""
+    try:
+        import os
+        added = []
+        
+        # Modern Professional Template
+        modern_path = os.path.join(os.path.dirname(__file__), 'invoice_template_modern_pro.html')
+        if os.path.exists(modern_path):
+            with open(modern_path, 'r', encoding='utf-8') as f:
+                modern_content = f.read()
+            exists = await db.print_templates.find_one({'type': 'invoice_modern_pro'})
+            if not exists:
+                doc = {
+                    'id': str(uuid.uuid4()),
+                    'type': 'invoice_modern_pro',
+                    'name': 'قالب فاتورة احترافي - عصري',
+                    'content': modern_content,
+                    'isActive': True,
+                    'createdAt': datetime.utcnow(),
+                    'description': 'قالب عصري مع تدرجات لونية وتصميم نظيف'
+                }
+                await db.print_templates.insert_one(doc)
+                added.append('invoice_modern_pro')
+        
+        # Classic Professional Template
+        classic_path = os.path.join(os.path.dirname(__file__), 'invoice_template_classic_pro.html')
+        if os.path.exists(classic_path):
+            with open(classic_path, 'r', encoding='utf-8') as f:
+                classic_content = f.read()
+            exists = await db.print_templates.find_one({'type': 'invoice_classic_pro'})
+            if not exists:
+                doc = {
+                    'id': str(uuid.uuid4()),
+                    'type': 'invoice_classic_pro',
+                    'name': 'قالب فاتورة احترافي - كلاسيكي',
+                    'content': classic_content,
+                    'isActive': True,
+                    'createdAt': datetime.utcnow(),
+                    'description': 'قالب كلاسيكي رسمي مع إطارات وجداول منظمة'
+                }
+                await db.print_templates.insert_one(doc)
+                added.append('invoice_classic_pro')
+        
+        return {'status': 'success', 'added': added, 'count': len(added)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ---------- Helpers ----------
 def _is_template_empty(doc: Dict[str, Any]) -> bool:
     if not doc:

@@ -998,6 +998,87 @@ async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
             if not xlsxwriter:
                 raise HTTPException(status_code=500, detail='xlsxwriter not installed')
             out = io.BytesIO()
+
+@router.post('/invoice-templates/create-blank')
+async def create_blank_template(payload: Dict[str, Any] = Body(None)):
+    try:
+        name = (payload or {}).get('name') or 'قالب فارغ'
+        rows = int((payload or {}).get('rows') or 12)
+        cols = int((payload or {}).get('cols') or 8)
+        preview = [[ '' for _ in range(cols) ] for _ in range(rows)]
+        # place a default ITEMS anchor and headers row
+        if rows >= 2:
+            preview[0][0] = '{{WORKSHOP_NAME}}'
+            preview[0][3] = '{{CUSTOMER_NAME}}'
+            preview[1][0] = '{{ITEMS}}'
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'format': 'xlsx',
+            'fileId': None,
+            'fields': ['{{WORKSHOP_NAME}}','{{CUSTOMER_NAME}}','{{ITEMS}}'],
+            'preview': preview,
+            'mapping': {},
+            'itemsConfig': {'anchor': '{{ITEMS}}', 'columns': {'description':'','qty':'','price':'','total':''}},
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/invoice-templates/{tid}/save-named')
+async def save_named_copy(tid: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        if not xlsxwriter:
+            raise HTTPException(status_code=500, detail='xlsxwriter not installed')
+        name = (payload or {}).get('name') or 'فاتوره'
+        grid = (payload or {}).get('grid') or []
+        mapping = (payload or {}).get('mapping') or {}
+        items_cfg = (payload or {}).get('itemsConfig') or {}
+        sample_data = (payload or {}).get('data') or {}
+        # build xlsx from grid
+        out = io.BytesIO()
+        book = xlsxwriter.Workbook(out, {'in_memory': True})
+        sheet = book.add_worksheet('Template')
+        for r, row in enumerate(grid):
+            if not isinstance(row, list):
+                continue
+            for c, val in enumerate(row):
+                sheet.write(r, c, '' if val is None else str(val))
+        book.close()
+        xlsx_bytes = out.getvalue()
+        file_id = None
+        if templates_bucket:
+            try:
+                file_oid = await templates_bucket.upload_from_stream(f'{name}_{uuid.uuid4().hex}.xlsx', io.BytesIO(xlsx_bytes), metadata={'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+                file_id = str(file_oid)
+            except Exception as e:
+                print(f"gridfs upload failed: {e}")
+        new_id = str(uuid.uuid4())
+        doc = {
+            'id': new_id,
+            'name': name,
+            'format': 'xlsx',
+            'fileId': file_id,
+            'fields': [],
+            'preview': grid,
+            'mapping': mapping,
+            'itemsConfig': items_cfg,
+            'sampleData': sample_data,
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
             book = xlsxwriter.Workbook(out, {'in_memory': True})
             sheet = book.add_worksheet('Template')
             for r, row in enumerate(t_doc.get('preview') or []):

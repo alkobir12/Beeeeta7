@@ -654,6 +654,24 @@ async def list_templates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post('/templates')
+async def create_print_template(payload: Dict[str, Any] = Body(...)):
+    """إنشاء نموذج طباعة جديد من المصمم"""
+    try:
+        doc = {
+            'id': str(uuid.uuid4()),
+            'type': payload.get('type', 'invoice'),
+            'name': payload.get('name', 'قالب جديد'),
+            'content': payload.get('content', ''),
+            'isActive': payload.get('isActive', False),
+            'createdAt': datetime.now(timezone.utc).isoformat()
+        }
+        await db.print_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/print/render', response_class=HTMLResponse)
 async def print_render(payload: Dict[str, Any] = Body(...)):
     """Compatibility render endpoint: if html provided return it; otherwise attempt to resolve repair template and apply data placeholders."""

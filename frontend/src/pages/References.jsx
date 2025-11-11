@@ -94,32 +94,143 @@ export default function References(){
             <Button variant="outline" onClick={async ()=>{ setShowHistory(true); await fetchHistory(historyProvider); }}><History className="ml-2" size={18}/> سجل البحث</Button>
           </div>
 
-          <Card className="card-godaddy mb-4">
-            <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="text-godaddy-green"/>بحث كهربائي ذكي</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mb-3">
-                <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="مثال: جهد حساس الهواء الطبيعي" className="flex-1" />
-                <Button onClick={searchElectrical} disabled={loading}>بحث</Button>
-              </div>
-              {result && (
-                <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
-              )}
-            </CardContent>
-          </Card>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+            <TabsList className="grid grid-cols-2 w-full max-w-md">
+              <TabsTrigger value="search">
+                <Zap className="w-4 h-4 ml-2" />
+                البحث الذكي
+              </TabsTrigger>
+              <TabsTrigger value="excel">
+                <FileSpreadsheet className="w-4 h-4 ml-2" />
+                متصفح Excel
+              </TabsTrigger>
+            </TabsList>
 
-          <Card className="card-godaddy">
-            <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="text-blue-600"/>مزودات خارجية (fallback تلقائي)</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mb-2">
-                <Button variant="outline" onClick={()=>searchProvider('perplexity')}>Perplexity</Button>
-                <Button variant="outline" onClick={()=>searchProvider('you')}>You.com</Button>
-                <Button variant="outline" onClick={()=>searchProvider('brave')}>Brave</Button>
-              </div>
-              {result && (
-                <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
-              )}
-            </CardContent>
-          </Card>
+            {/* Search Tab */}
+            <TabsContent value="search">
+              <Card className="card-godaddy mb-4">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="text-godaddy-green"/>بحث كهربائي ذكي</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mb-3">
+                    <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="مثال: جهد حساس الهواء الطبيعي" className="flex-1" />
+                    <Button onClick={searchElectrical} disabled={loading}>بحث</Button>
+                  </div>
+                  {result && (
+                    <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="card-godaddy">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="text-blue-600"/>مزودات خارجية (fallback تلقائي)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mb-2">
+                    <Button variant="outline" onClick={()=>searchProvider('perplexity')}>Perplexity</Button>
+                    <Button variant="outline" onClick={()=>searchProvider('you')}>You.com</Button>
+                    <Button variant="outline" onClick={()=>searchProvider('brave')}>Brave</Button>
+                  </div>
+                  {result && (
+                    <pre className="whitespace-pre-wrap text-xs bg-slate-50 p-3 rounded border">{JSON.stringify(result, null, 2)}</pre>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Excel Browser Tab */}
+            <TabsContent value="excel">
+              <Card className="shadow-xl border-2 border-blue-100">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-5 h-5" />
+                      متصفح المراجع الفنية
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="bg-white/10 text-white border-white/30" onClick={exportToExcel}>
+                        <Download className="w-4 h-4 ml-1" />
+                        تصدير Excel
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {/* Sheet Tabs */}
+                  <div className="flex gap-1 p-2 bg-slate-50 border-b">
+                    {excelSheets.map((sheet, idx) => (
+                      <Button
+                        key={idx}
+                        size="sm"
+                        variant={currentSheet === idx ? 'default' : 'ghost'}
+                        onClick={() => setCurrentSheet(idx)}
+                        className="text-xs"
+                      >
+                        <Table className="w-3 h-3 ml-1" />
+                        {sheet}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Search/Filter Bar */}
+                  <div className="p-3 bg-white border-b">
+                    <div className="flex gap-2">
+                      <Search className="w-5 h-5 text-slate-400 mt-2" />
+                      <Input
+                        value={searchFilter}
+                        onChange={(e) => setSearchFilter(e.target.value)}
+                        placeholder="ابحث في البيانات..."
+                        className="flex-1"
+                      />
+                      {searchFilter && (
+                        <Button variant="ghost" onClick={() => setSearchFilter('')}>
+                          مسح
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Data Table */}
+                  <div className="overflow-auto max-h-[600px]">
+                    <table className="w-full text-sm">
+                      <thead className="bg-blue-600 text-white sticky top-0 z-10">
+                        <tr>
+                          <th className="p-3 text-right border-l border-blue-500">#</th>
+                          <th className="p-3 text-right border-l border-blue-500">المكون</th>
+                          <th className="p-3 text-right border-l border-blue-500">الجهد</th>
+                          <th className="p-3 text-right border-l border-blue-500">التيار</th>
+                          <th className="p-3 text-right border-l border-blue-500">الموقع</th>
+                          <th className="p-3 text-right">ملاحظات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredData.map((row, idx) => (
+                          <tr key={idx} className="border-b hover:bg-blue-50 transition-colors">
+                            <td className="p-3 border-l font-semibold text-slate-600">{idx + 1}</td>
+                            <td className="p-3 border-l font-semibold">{row.component}</td>
+                            <td className="p-3 border-l text-blue-700 font-bold">{row.voltage}</td>
+                            <td className="p-3 border-l text-slate-600">{row.amperage}</td>
+                            <td className="p-3 border-l text-slate-600">{row.location}</td>
+                            <td className="p-3 text-xs text-slate-500">{row.notes}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {filteredData.length === 0 && (
+                      <div className="text-center py-12 text-slate-400">
+                        <Database className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                        <p>لا توجد نتائج</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer Stats */}
+                  <div className="p-3 bg-slate-50 border-t text-xs text-slate-600 flex justify-between">
+                    <span>الصف {excelSheets[currentSheet]}</span>
+                    <span>{filteredData.length} من {excelData.length} صف</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           {/* Search History Drawer */}
           {showHistory && (

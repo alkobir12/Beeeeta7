@@ -174,10 +174,93 @@ const KnowledgeBase = () => {
                         <span className="font-semibold text-amber-900">وجدنا {dtcCards.length} بطاقة عطل</span>
                       </div>
                       {dtcCards.map((card, idx) => (
-                        <Card key={idx} className="border-2 border-amber-200 hover:border-godaddy-green hover:shadow-lg transition-all">
-                          <CardContent className="p-6">
-                            {/* content truncated for brevity; identical to previous state */}
-                            <div className="text-sm text-slate-500">بطاقة عطل</div>
+                        <Card key={idx} className="border-2 border-amber-200 hover:border-amber-400 hover:shadow-xl transition-all">
+                          <CardContent className="p-6 space-y-4">
+                            {/* Code */}
+                            <div className="flex items-center justify-between border-b pb-3">
+                              <div className="text-2xl font-bold text-amber-900">{card.code || 'DTC'}</div>
+                              <div className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full">كود العطل</div>
+                            </div>
+                            
+                            {/* Description */}
+                            {card.description && (
+                              <div>
+                                <div className="text-xs font-semibold text-slate-600 mb-1">الوصف:</div>
+                                <div className="text-sm text-slate-700">{card.description}</div>
+                              </div>
+                            )}
+                            
+                            {/* Symptoms */}
+                            {card.symptoms && (
+                              <div>
+                                <div className="text-xs font-semibold text-slate-600 mb-1">الأعراض:</div>
+                                <div className="text-sm text-slate-700">{card.symptoms}</div>
+                              </div>
+                            )}
+                            
+                            {/* Causes */}
+                            {card.causes && (
+                              <div>
+                                <div className="text-xs font-semibold text-red-600 mb-1">الأسباب المحتملة:</div>
+                                <div className="text-sm text-slate-700 bg-red-50 p-2 rounded">{card.causes}</div>
+                              </div>
+                            )}
+                            
+                            {/* Fixes */}
+                            {card.fixes && (
+                              <div>
+                                <div className="text-xs font-semibold text-green-600 mb-1">الحلول:</div>
+                                <div className="text-sm text-slate-700 bg-green-50 p-2 rounded">{card.fixes}</div>
+                              </div>
+                            )}
+                            
+                            {/* Electrical Values - NEW */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                                ⚡ القيم الكهربائية الطبيعية
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-white p-2 rounded">
+                                  <div className="text-slate-600">البطارية:</div>
+                                  <div className="font-bold text-blue-700">12.6V</div>
+                                </div>
+                                <div className="bg-white p-2 rounded">
+                                  <div className="text-slate-600">الدينمو:</div>
+                                  <div className="font-bold text-blue-700">13.8-14.4V</div>
+                                </div>
+                                <div className="bg-white p-2 rounded">
+                                  <div className="text-slate-600">حساس الأكسجين:</div>
+                                  <div className="font-bold text-blue-700">0.1-0.9V</div>
+                                </div>
+                                <div className="bg-white p-2 rounded">
+                                  <div className="text-slate-600">MAF Sensor:</div>
+                                  <div className="font-bold text-blue-700">0-5V</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Related Components - NEW */}
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                              <div className="text-xs font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                                🔌 المكونات المرتبطة
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Fuses (الفيوزات)</span>
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Relays (الريليهات)</span>
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Grounds (الأرضي)</span>
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">ECU</span>
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Sensors (الحساسات)</span>
+                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Wiring (الأسلاك)</span>
+                              </div>
+                            </div>
+                            
+                            {/* Test Steps */}
+                            {card.test_steps && (
+                              <div>
+                                <div className="text-xs font-semibold text-slate-600 mb-1">خطوات الفحص:</div>
+                                <div className="text-sm text-slate-700 bg-slate-50 p-2 rounded">{card.test_steps}</div>
+                              </div>
+                            )}
                           </CardContent>
                         </Card>
                       ))}

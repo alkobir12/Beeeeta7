@@ -66,7 +66,11 @@ const InvoiceTemplateStudio = () => {
   const [zoom, setZoom] = useState(1);
 
   // Tool panel state (right)
-  const [toolTab, setToolTab] = useState('elements'); // elements | columns
+  const [toolTab, setToolTab] = useState('elements'); // elements | columns | fields
+
+  // Field management state
+  const [showFieldDialog, setShowFieldDialog] = useState(false);
+  const [editingField, setEditingField] = useState(null);
 
   useEffect(()=>{ loadTemplates(); },[]);
 

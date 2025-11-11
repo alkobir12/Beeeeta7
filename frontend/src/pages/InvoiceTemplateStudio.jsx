@@ -324,11 +324,12 @@ const InvoiceTemplateStudio = () => {
     reader.readAsDataURL(file);
   };
 
-  // ---------- Apply design to grid ----------
+  // ---------- Apply design to grid (Enhanced Algorithm) ----------
   const applyDesignToGrid = async () => {
     if (!selected) return;
-    const cellW = 100; // px per col
-    const cellH = 32;  // px per row
+    // Better cell sizing based on A4 dimensions
+    const cellW = Math.round(A4_WIDTH / 8);  // ~99px per col (8 columns for A4)
+    const cellH = 28;  // Slightly smaller for better fit
     let g = grid && grid.length ? grid.map(r => [...r]) : [];
     const ensureSize = (rows, cols) => {
       const curRows = g.length;
@@ -338,37 +339,93 @@ const InvoiceTemplateStudio = () => {
         for (let c=g[r].length; c<cols; c++) g[r].push('');
       }
     };
-    // place text bindings
-    elements.forEach(el => {
+    
+    // Auto-generate mapping from bound elements
+    const newMapping = { ...mapping };
+    
+    // Sort elements by Y position (top to bottom)
+    const sortedElements = [...elements].sort((a, b) => a.y - b.y);
+    
+    // Place all elements with intelligent positioning
+    sortedElements.forEach(el => {
       if (el.type === 'text') {
         const r = Math.max(0, Math.round(el.y / cellH));
         const c = Math.max(0, Math.round(el.x / cellW));
         ensureSize(r+1, c+1);
-        const val = el.binding ? `{{${el.binding}}}` : (el.text || '');
-        g[r][c] = val;
+        
+        if (el.binding) {
+          const placeholder = `{{${el.binding}}}`;
+          g[r][c] = placeholder;
+          // Auto-update mapping with cell reference
+          const cellRef = String.fromCharCode(65 + c) + (r + 1);
+          newMapping[el.binding] = cellRef;
+        } else {
+          g[r][c] = el.text || '';
+        }
+      }
+      // Handle image elements (mark position)
+      else if (el.type === 'image') {
+        const r = Math.max(0, Math.round(el.y / cellH));
+        const c = Math.max(0, Math.round(el.x / cellW));
+        ensureSize(r+1, c+1);
+        if (!g[r][c]) g[r][c] = '[صورة]';
+      }
+      // Handle QR codes
+      else if (el.type === 'qr') {
+        const r = Math.max(0, Math.round(el.y / cellH));
+        const c = Math.max(0, Math.round(el.x / cellW));
+        ensureSize(r+1, c+1);
+        if (el.binding) {
+          g[r][c] = `{{${el.binding}}}`;
+        } else {
+          g[r][c] = '[QR]';
+        }
       }
     });
-    // ensure items anchor and template row for itemsTable
+    
+    // Handle items table with better column mapping
     const table = elements.find(e => e.type==='itemsTable');
     if (table) {
       const r = Math.max(0, Math.round(table.y / cellH));
       const c = Math.max(0, Math.round(table.x / cellW));
       const visibleCols = (table.cols||[]).filter(col=>col.visible!==false);
       const colsCount = Math.max(1, visibleCols.length);
-      ensureSize(r+2, c+colsCount);
-      g[r][c] = '{{ITEMS}}';
-      const tRow = r+1;
+      ensureSize(r+3, c+colsCount); // +3 for header + anchor + template row
+      
+      // Place header labels
+      visibleCols.forEach((col, i) => {
+        g[r][c+i] = col.label || col.key;
+      });
+      
+      // Place anchor
+      g[r+1][c] = '{{ITEMS}}';
+      
+      // Place template row
+      const newItemsCols = {};
       visibleCols.forEach((col, i) => {
         const key = col.key || `col${i+1}`;
-        g[tRow][c+i] = `{{ITEMS.${key}}}`;
+        g[r+2][c+i] = `{{ITEMS.${key}}}`;
+        // Auto-update itemsConfig columns
+        const cellCol = String.fromCharCode(65 + c + i);
+        newItemsCols[key] = cellCol;
       });
+      
+      // Update itemsConfig
+      const newItemsConfig = {
+        anchor: `{{ITEMS}}`,
+        columns: newItemsCols
+      };
+      setItemsConfig(newItemsConfig);
     }
+    
     setGrid(g);
+    setMapping(newMapping);
+    
     try{
-      await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid: g, mapping, items: itemsConfig });
-      await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid: g, mapping, itemsConfig, elements, schema, page });
-      alert('تم تطبيق التصميم على الشبكة وحفظه');
-    }catch(e){ alert('تعذر تطبيق التصميم على الشبكة'); }
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid: g, mapping: newMapping, items: itemsConfig });
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid: g, mapping: newMapping, itemsConfig, elements, schema, page });
+      alert('✅ تم تطبيق التصميم على الشبكة وتحديث الربط تلقائياً');
+    }catch(e){ alert('❌ تعذر تطبيق التصميم على الشبكة'); }
   };
 
   // ---------- Columns panel actions ----------

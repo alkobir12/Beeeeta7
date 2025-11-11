@@ -70,7 +70,7 @@ function App() {
                     <Route path="/parts" element={<PartsInventory />} />
                     <Route path="/services" element={<ServicesManagement />} />
                     <Route path="/templates" element={<Templates />} />
-                    <Route path="/invoice-templates" element={<InvoiceTemplateStudio />} />
+                    <Route path="/invoice-templates" element={<InvoiceTemplateStudioV2 />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/ai-assistant" element={<AIAssistant />} />
                     <Route path="/analytics" element={<Analytics />} />

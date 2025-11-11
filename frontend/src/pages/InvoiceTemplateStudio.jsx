@@ -539,10 +539,13 @@ const InvoiceTemplateStudio = () => {
                   <Card className="bg-gradient-to-b from-slate-50 to-white sticky top-2 max-h-[88vh] overflow-auto">
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle>{toolTab==='elements'? 'العناصر المتاحة' : 'كل الأعمدة'}</CardTitle>
+                        <CardTitle>
+                          {toolTab==='elements'? 'العناصر المتاحة' : toolTab==='columns'? 'كل الأعمدة' : 'حقول القاعدة'}
+                        </CardTitle>
                         <div className="flex gap-1">
                           <Button size="sm" variant={toolTab==='elements'? 'default':'outline'} onClick={()=>setToolTab('elements')}>العناصر</Button>
                           <Button size="sm" variant={toolTab==='columns'? 'default':'outline'} onClick={()=>setToolTab('columns')}>الأعمدة</Button>
+                          <Button size="sm" variant={toolTab==='fields'? 'default':'outline'} onClick={()=>setToolTab('fields')}>الحقول</Button>
                         </div>
                       </div>
                     </CardHeader>

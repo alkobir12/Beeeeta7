@@ -14,6 +14,7 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api'
 // A4 canvas size approx at 96dpi
 const A4_WIDTH = 794; // px
 const A4_HEIGHT = 1123; // px
+const GRID_SIZE = 10; // snap grid
 
 const defaultPage = { size: 'A4', orientation: 'portrait', bg: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)' };
 

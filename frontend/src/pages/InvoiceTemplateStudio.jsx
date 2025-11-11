@@ -586,6 +586,34 @@ const InvoiceTemplateStudio = () => {
                           )}
                         </div>
                       )}
+                      {toolTab==='fields' && (
+                        <div className="space-y-3">
+                          <Button size="sm" className="w-full" onClick={addField}>+ إضافة حقل جديد</Button>
+                          <div className="space-y-2">
+                            {schema.map((field, idx) => (
+                              <div key={idx} className="p-3 border rounded bg-white hover:bg-slate-50">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-semibold text-sm">{field.label || field.name}</span>
+                                  <div className="flex gap-1">
+                                    <Button size="sm" variant="ghost" onClick={()=>editField(field)}>✏️</Button>
+                                    <Button size="sm" variant="ghost" onClick={()=>deleteField(field.name)}>🗑️</Button>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-slate-600">
+                                  <div>الاسم: {field.name}</div>
+                                  <div>النوع: {field.type}</div>
+                                  {field.validation && <div>التحقق: {field.validation}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {schema.length === 0 && (
+                              <div className="text-sm text-slate-500 text-center py-4">
+                                لا توجد حقول بعد. اضغط "إضافة حقل جديد" للبدء.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

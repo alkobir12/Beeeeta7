@@ -1,14 +1,21 @@
 <analysis>
-The trajectory details the evolution of a Workshop Management System, initially built by an AI engineer, into a feature-rich application. The work began with integrating CEO analytics into the Operations page, then progressed to developing a comprehensive approval workflow with real-time updates (SSE) and customer logging. A major shift involved overhauling the invoice and templating system from HTML to a robust Excel-based approach, complete with a dedicated Invoice Template Studio for multi-format imports and in-app editing. Critical issues like frontend parsing errors, missing backend API routes, and language localization in menus were systematically addressed. The system was enhanced with accounting features, including a Chart of Accounts and categorized transactions. Performance for smart search and seamless WhatsApp integration were also identified as key improvement areas. The current state reflects a functional, albeit complex, application with a strong foundation for further development, facing an immediate need for comprehensive automated testing and significant UI/UX improvements to the Knowledge and References sections, along with deep-seated performance optimizations for AI features.
+The previous AI engineer meticulously developed a comprehensive Workshop Management System, iteratively building upon initial requirements. The core task involved integrating analytics, a robust approval workflow with SSE, and advanced customer logging. A significant pivot occurred with the overhaul of the invoicing system, moving from HTML to an Excel-based approach featuring an Invoice Template Studio with multi-format import, in-app editing, and auto-save capabilities. Critical backend and frontend issues, such as  API routes,  import errors, and UI inconsistencies, were systematically addressed. AI features were enhanced with local LlamaIndex integration, a sophisticated fallback mechanism for external search providers (Perplexity, Brave, You.com) without API keys, and a dedicated search history database. The current focus is on refining the Invoice Template Studio with a Canva-like A4 designer, ensuring full Arabic/English i18n support, and preparing for comprehensive UI/API testing.
 </analysis>
 
 <product_requirements>
-The Workshop Management System digitalizes auto repair, featuring vehicle management (intake, status, quick actions, public tracking, dynamic printing with editable templates). It includes customer and financial management (database, receipts, multi-account budgeting, detailed analytics by day/week/month/branch, import/export). Core AI integration offers a CEO bot for financial analysis, RAG search, a knowledge base (PDF, DOCX, Excel, video), vehicle comparison, and intelligent DTC card extraction with causes/fixes. UX prioritizes responsive design, multi-language support (Arabic, English, Hindi), and a dynamic sidebar. Authentication uses name-only login with granular three-tier user permissions and a new three-tier approval workflow (technician->manager->client) with image attachments. A GoDaddy-inspired theme was implemented. Recent additions include a full Excel-based invoicing system, detailed accounting (Sales, Operating/Personal Expenses, Electricity/Water/Fuel categories), and a Chart of Accounts.
+The Workshop Management System aims to digitalize auto repair operations. Key features include:
+1.  **Vehicle & Customer Management:** Intake, status tracking, quick actions (e.g., approval requests), public tracking, customer database, receipts.
+2.  **Financial Management:** Multi-account budgeting, detailed analytics (day/week/month/branch), import/export, accounting features (Sales, Expenses by category, Chart of Accounts), payroll.
+3.  **AI Integration:** CEO bot for financial analysis, RAG search, extensive knowledge base (PDF, DOCX, Excel, video), vehicle comparison, intelligent DTC card extraction (causes/fixes). Integration of local LlamaIndex, and optional (with fallback) Brave Search API, You.com, and Perplexity AI for enhanced search/analysis.
+4.  **User Experience:** Responsive design, multi-language support (Arabic, English, Hindi), dynamic sidebar, GoDaddy-inspired theme.
+5.  **Authentication & Permissions:** Name-only login, granular three-tier user permissions (RBAC).
+6.  **Approval Workflow:** Three-tier approval (technician -> manager -> client) with image attachments and real-time updates (SSE).
+7.  **Invoicing & Templating:** Excel-based invoicing system, Invoice Template Studio for multi-format import, in-app editing, dynamic template saving, and generation (PDF/XLSX). Support for A4 designer.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Architecture**: React.js (Frontend), FastAPI (Backend), MongoDB (Database).
--   **AI Integration**: Claude Sonnet 4.5 Pro (via Emergent LLM Key), RAG, , , , usage: pdfplumber [-h] [--structure | --structure-text]
+-   **Full-stack Architecture:** React.js (Frontend), FastAPI (Backend), MongoDB (Database).
+-   **AI Integration:** Claude Sonnet 4.5 Pro (via Emergent LLM Key), RAG, , , , usage: pdfplumber [-h] [--structure | --structure-text]
                   [--format {csv,json,text}] [--types TYPES [TYPES ...]]
                   [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
                   [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
@@ -57,102 +64,151 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --version, -v         show program's version number and exit.
--   **UI/State Management**: React Context, Shadcn UI, , , i18next.
--   **Data Processing**: Pandas, Openpyxl, chunked file uploads, , .
--   **Real-time Communication**: Server-Sent Events (SSE).
--   **Deployment**: Kubernetes, Supervisor, .
+  --version, -v         show program's version number and exit, LlamaIndex (BM25), Emergent LLM Key.
+-   **UI/State Management:** React Context, Shadcn UI, i18next, , .
+-   **Data Processing:** Pandas, Openpyxl, chunked file uploads, .
+-   **Real-time Communication:** Server-Sent Events (SSE).
+-   **Deployment:** Kubernetes, Supervisor, .
+-   **Version Control:** usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
+
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
+
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
+
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system..
 </key_technical_concepts>
 
 <code_architecture>
 
--   ****: Central FastAPI app.
-    -   Importance: Registers all API routers, handles main application logic.
-    -   Changes: Updated to include numerous new routes (, , , , , , , , ), fixed  import, removed hardcoded URL fallback, corrected  for exceptions.
--   ****: Pydantic data models.
-    -   Importance: Defines data structures for new features.
-    -   Changes: Added models for , , , , , , , and .
--   ****: Core API logic.
-    -   Importance: Manages most backend functionalities.
-    -   Changes: Added ; adjusted ; enhanced  (sales, expenses, profit); integrated automatic transaction creation. Implemented . Added endpoints for , ,  (SSE). Updated  to accept . Added , , , , , , . Implemented  and . Corrected syntax errors and variable scoping.
--   ****: AI-related APIs.
-    -   Importance: AI document analysis, search.
-    -   Changes: Improved text extraction (PDF/DOCX/Excel); refined  usage; optimized search (timeouts, relevance); corrected  payload.
--   ** (NEW)**: DTC extraction APIs.
-    -   Importance: Analyzes documents for DTCs, causes, and fixes.
--   ** (NEW)**: Manages technical references.
-    -   Importance: Imports/queries Excel/PDFs for specs.
--   ** (NEW)**: User/permissions management.
-    -   Importance: CRUD for users, RBAC.
--   ** (NEW)**: Maintenance orders, multi-tier approvals.
-    -   Importance: Manages vehicle maintenance lifecycle.
--   ** (NEW)**: Employee payroll.
-    -   Importance: Records salaries, links to expenses.
--   ** (NEW)**: HTML template for repair invoices.
-    -   Importance: Provides a customizable base template for printing.
--   ****: Main React router.
-    -   Importance: Defines frontend routing, wraps components.
-    -   Changes: Updated routes to include , , ,  pages; integrated .
--   ****: Navigation menu.
-    -   Importance: Primary navigation.
-    -   Changes: Dynamic  update, displays workshop/user info, filters menu items based on permissions. Modified to use i18n keys for labels instead of raw text. Removes CEO button.
--   ** (NEW)**: Guards nested dialogs.
-    -   Importance: Prevents  errors in React dialogs.
--   ** (NEW)**: AI chatbot for customer interaction.
-    -   Importance: Customer support on tracking pages.
--   ****: Quick actions for vehicles.
-    -   Importance: Provides fast access to actions like request approval.
-    -   Changes: Reworked logic for opening document forms, linking to WhatsApp, and passing  for approval requests.
--   ** (NEW)**: Manages user permissions.
-    -   Importance: Centralizes permission data.
--   ** (NEW)**: Custom CSS.
-    -   Importance: Defines new visual style.
--   ****: User authentication.
-    -   Importance: Authenticates users, loads permissions.
+-   ****: The main FastAPI application where all API routers are registered.
+    -   Importance: Central hub for all backend routes.
+    -   Changes: Updated to include numerous new and modified routes for various features (dtc, references, vehicle files, maintenance, payroll, coa, invoice templates, print, expense, search, AI logs).  import fixed.
+-   ****: Contains Pydantic data models for the database.
+    -   Importance: Defines data structures for core business logic, including new entities like Invoice Templates with design properties.
+    -   Changes: Added models for , , , ,  (with added , ,  fields for A4 designer), , , , and .
+-   ****: Handles core API logic for many functionalities.
+    -   Importance: Implements key business operations, including CEO analytics, approvals, operations, transactions.
+    -   Changes: Fixed  routes (, , , , , , ). Added  (GET/POST/PUT). Lint errors (E701/E702) addressed.  serialization issues handled.
+-   ****: Manages AI-related APIs.
+    -   Importance: Central to AI document analysis, smart search, and LLM integrations.
+    -   Changes: Integrated fallback logic for external search providers (Perplexity, Brave, You.com) when API keys are absent, leveraging local KB search and Emergent LLM Key for summaries. Added , , , , , . Improved  with regex fallback if LlamaIndex is unavailable.
+-   ****: New router for DTC extraction APIs.
+-   ****: New router for managing technical references.
+-   ****: New router for user/permissions management.
+-   ****: New router for maintenance orders and approvals.
+-   ****: New router for employee payroll.
+-   ****: Lists Python dependencies.
+    -   Importance: Ensures all necessary backend libraries are installed.
+    -   Changes: ,  added.
+-   ****: Main React router setup.
+    -   Importance: Defines frontend routing.
+    -   Changes: Routes updated to include , , , .
+-   ****: Main navigation menu.
+    -   Importance: Provides access to all major app sections.
+    -   Changes: Dynamic menu configuration based on permissions, i18n support.
+-   ****: English translation file.
+    -   Importance: Centralizes English text for internationalization.
+    -   Changes: Updated with new keys for UI elements, especially for the Invoice Template Studio and search features.
+-   ****: User authentication page.
+    -   Importance: Entry point for authenticated users.
     -   Changes: Integrated with new permissions system.
--   ****: Manages purchases/sales.
-    -   Importance: Displays operations and financial analytics.
-    -   Changes: Added comprehensive analytics cards; integrated CEO analytics section (KPIs, Ask CEO, filters); split into tabs (Create Operation, Sales, Expenses, Chart of Accounts, CEO Analytics); implemented quick add for parts/services with auto-save; fixed various JSX/parsing errors.
--   ** (NEW)**: AI knowledge hub.
-    -   Importance: Document browsing, smart search, DTC cards.
-    -   Changes: Enhanced UI for document reading, search modes, DTC card display.
--   ** (NEW)**: Technical references.
-    -   Importance: Interface to browse/search/import technical references.
+-   ****: Manages purchases, sales, and CEO analytics.
+    -   Importance: Core financial and operational oversight.
+    -   Changes: Integrated Ask CEO panel, linked  functionality.
+-   ****: AI knowledge hub.
+    -   Importance: Document browsing, smart search, DTCs.
+    -   Changes: Fixed duplicate  import. Integrated search history drawer and external search provider selection with fallback UI.
+-   ****: Technical references.
+    -   Importance: Interface for technical data.
+    -   Changes: Fixed duplicate  import. Integrated search history drawer and external search provider selection with fallback UI.
 -   ****: Application settings.
-    -   Importance: Configures currency, tax, language, theme.
-    -   Changes: Logic to update i18n language; added Base Printing Template section with toggle and editable HTML textarea for invoice templates, and a preview button. Fixed syntax.
--   ** (NEW)**: Replaced .
-    -   Importance: Manages users and permissions.
--   ****: Vehicle-specific info.
-    -   Importance: Manages vehicle status, notes.
-    -   Changes: Added image upload, Vehicle Approvals card with SSE real-time updates, Printable Vehicle Status card, and Create Approval Request button with a modal. Fixed numerous JSX errors.
--   ****: Customer-specific information.
-    -   Importance: Displays customer details.
-    -   Changes: Added Approvals List card and Approval Logs card.
--   ** (NEW)**: Dedicated page for managing Excel invoice templates.
-    -   Importance: Upload, import (multi-format), preview, edit (simple grid), save as Excel, generate invoice, delete templates.
-    -   Changes: Implemented initial structure, import from URL, list templates, simple grid editor, save JSON to XLSX, generate invoice. Fixed  scope and various JSX parsing errors. Added Delete Selected Template button.
--   ****: Frontend API calls.
-    -   Importance: Centralized API call definitions.
-    -   Changes: Added numerous new API calls for CEO, approvals, invoice templates, printing, transactions, expenses, COA, parts/services. Fixed syntax errors.
--   ****: Tailwind CSS config.
-    -   Importance: Customizes Tailwind.
-    -   Changes: Integrated GoDaddy theme colors.
+    -   Importance: Configures global app behavior.
+    -   Changes: Language switching logic.
+-   ****: Displays vehicle-specific information.
+    -   Importance: Vehicle lifecycle management.
+    -   Changes: Vehicle Approvals card with SSE.
+-   ****: Displays customer-specific information.
+    -   Importance: Customer relationship management.
+    -   Changes: Approvals List card.
+-   ****: Dedicated page for managing invoice templates.
+    -   Importance: Allows creation, import, editing, and management of invoice templates.
+    -   Changes: Transformed into a Canva-like A4 designer with three sidebars (elements, properties, layers), A4 canvas, drag-and-drop elements. Implemented auto-save, save as invoice template, cleanup empty templates button, and soft/hard delete for templates. Integrated Apply design to grid functionality.
+-   ****: Centralized frontend API call definitions.
+    -   Importance: Handles all communication with the backend.
+    -   Changes: Numerous new API calls for CEO, approvals, invoice templates, printing, transactions, expenses, COA, parts/services, and the new search/AI logging features.
 </code_architecture>
 
 <pending_tasks>
--   **Knowledge Base UI/UX Overhaul**: Completely redesign the Knowledge Base interface.
--   **DTC Card Enhancements**: Display problem/solution cards and normal electrical values (voltage, resistance) when searching for DTCs (e.g., P2565).
--   **References System Transformation**: Convert the existing references system to a full Excel-based system, capable of reading and managing Excel files comprehensively.
--   **Comprehensive Automated Testing**: Perform a full suite of automated UI and API tests for all implemented features, including authentication and edge cases.
--   **Smart Search Performance Optimization**: Further improve response time for intelligent search queries.
--   **Advanced Spreadsheet Editor Integration**: Integrate a more powerful spreadsheet editor (e.g., ) into the Invoice Template Studio for advanced cell properties (merge, borders, lines).
+-   **A4 Designer UX Improvements:** Snap-to-grid, resize handles, arrow key movement, print preview, fixed header for buttons on mobile.
+-   **A4 Designer Linking:** Improve Apply design to grid algorithm for better field mapping to XLSX cells.
+-   **A4 Designer Field Management:** Enhance UI for managing template database fields (rename, additional types, validation).
+-   **Knowledge Base/References UX:** Fix modal overlay issue for search history drawer.
+-   **DTC Card Enhancements:** Standardize fields and display normal electrical values/related components.
+-   **References Excel-First:** Develop a multi-sheet Excel browser with filters, search, merge/export functionality.
+-   **Smart Search Performance:** Optionally install  for improved accuracy in local KB search.
+-   **Automated Testing:** Conduct extended E2E UI tests for A4 Designer, Search History, Operations/CEO, and Approvals.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer had just completed a round of critical backend fixes related to various API routes (settings, approvals, parts, services, operations, COA, invoice templates, CEO analytics) which were returning  errors during automated testing. This was in response to the user's explicit command to اصلح كل شي (fix everything) after a comprehensive UI check failed due to authentication issues and unresponsive backend endpoints. The engineer stated that these backend routes are now fixed and running, and the next logical step identified was to اعملي اختبار الي لكل شي (run automated test for everything). Following this, the user also provided several new, significant feature requests for the Knowledge Base and References system. Thus, the current work concluded with fixing the foundational backend issues that were blocking frontend testing and receiving new feature requests.
+Immediately before this summary request, the AI engineer was focused on implementing and refining the Invoice Template Studio based on user feedback, specifically integrating a Canva-like A4 designer.
+
+**What was done:**
+1.  **A4 Designer UI:** A fully new A4 designer interface has been implemented within the  page. This includes:
+    *   **Canvas:** An A4-sized canvas with a background grid and zoom capabilities, supporting drag-and-drop for elements.
+    *   **Right Panel (Elements):** A panel listing ready-to-use elements, matching user's visual requirements (Text, Image/Logo, Main Title, Customer/Company fields, QR Code, Invoice Number, Items Table).
+    *   **Left Panel (Properties & Layers):** A panel to modify properties of selected elements (text content, size, alignment, color, RTL, binding; image URL/upload; table header colors, column configuration). It also manages layers (order, delete).
+    *   **All Columns Tab:** For showing/hiding columns of the items table.
+2.  **Functionality for A4 Designer:**
+    *   **Editable Properties:** Text, images (including direct upload), and table properties are configurable.
+    *   **Apply Design to Grid Button:** This button maps bound text elements to XLSX cells and generates  placeholders and the item template based on selected columns.
+    *   **Auto-save:** Changes to elements, properties, or the A4 page are auto-saved every 600ms via . This process also automatically creates or updates a template named invoice ().
+    *   **Saving and Exporting:** Save as Excel saves grid, mapping, and items config. Save as Invoice creates a new version. Cleanup Empty Templates is accessible.
+    *   **Deletion:** Templates use soft delete by default, with a hard delete option requiring confirmation.
+    *   **i18n:** The interface is predominantly in Arabic (RTL) with full English support planned.
+3.  **Backend Integration:** Corresponding backend routes (, , , , soft/hard delete logic) have been updated/created to support the A4 designer's features and the new saving/deletion behaviors.
+4.  **Quick Tests:** Initial Backend (e.g., , , , , , delete functions) and UI tests (adding/moving elements, image upload, Apply design to grid, saving, generating XLSX) were performed and confirmed working.
+
+The engineer has addressed most visual and functional requirements for the Invoice Template Studio, drawing inspiration from the user's video, and is now at a stage of minor visual/UX refinements.
 </current_work>
 
 <optional_next_step>
-Run automated UI and API tests for all pages and services, and then proceed with the requested Knowledge Base and References system overhauls.
+Finalize the A4 Designer's visual and interactive elements (snap-to-grid, resize handles, arrow keys, print preview) and then run extended UI tests focusing on the mobile experience.
 </optional_next_step>

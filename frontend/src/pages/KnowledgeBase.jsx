@@ -220,8 +220,8 @@ const KnowledgeBase = () => {
 
           {/* Search History Drawer */}
           {showHistory && (
-            <div className="fixed inset-0 bg-black/40 z-50" onClick={()=>setShowHistory(false)}>
-              <div className="absolute top-0 left-0 w-full md:w-[520px] h-full bg-white shadow-2xl p-4" onClick={(e)=>e.stopPropagation()} dir="rtl">
+            <div className="fixed inset-0 bg-black/40 z-[60]" onClick={()=>setShowHistory(false)} style={{pointerEvents: 'auto'}}>
+              <div className="absolute top-0 left-0 w-full md:w-[520px] h-full bg-white shadow-2xl p-4 overflow-auto" onClick={(e)=>e.stopPropagation()} dir="rtl">
                 <div className="flex items-center justify-between mb-3">
                   <div className="font-bold text-lg">سجل البحث</div>
                   <Button variant="ghost" onClick={()=>setShowHistory(false)}>إغلاق</Button>
@@ -238,9 +238,9 @@ const KnowledgeBase = () => {
                   </select>
                   <Button size="sm" onClick={async ()=>{ await fetchHistory(historyProvider); }}>تحديث</Button>
                 </div>
-                <div className="space-y-2 overflow-auto h-[80vh] pr-2">
+                <div className="space-y-2 overflow-auto max-h-[70vh] pr-2">
                   {historyItems.map((it, idx)=> (
-                    <div key={idx} className="p-2 border rounded">
+                    <div key={idx} className="p-2 border rounded bg-white">
                       <div className="text-xs text-slate-500">{it.provider} • {new Date(it.createdAt).toLocaleString('ar-SA')}</div>
                       <div className="font-semibold">{it.query}</div>
                       <div className="text-xs">النتائج: {it.count} • الحالة: {it.ok? 'ناجح':'فشل'}</div>

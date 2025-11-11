@@ -11,7 +11,7 @@ import Suppliers from "./pages/Suppliers";
 import PartsInventory from "./pages/PartsInventory";
 import ServicesManagement from "./pages/ServicesManagement";
 import Templates from "./pages/Templates";
-import InvoiceTemplateStudio from "./pages/InvoiceTemplateStudio";
+import InvoiceTemplateStudioV2 from "./pages/InvoiceTemplateStudioV2";
 import Settings from "./pages/Settings";
 import AIAssistant from "./pages/AIAssistant";
 import Analytics from "./pages/Analytics";

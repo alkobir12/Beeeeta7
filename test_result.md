@@ -236,9 +236,9 @@ backend:
 
   - task: "Invoice Template Studio (import/save/delete/print)"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/pages/InvoiceDesignerStudio.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:

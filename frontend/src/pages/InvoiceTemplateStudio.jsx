@@ -545,6 +545,15 @@ const InvoiceTemplateStudio = () => {
                                   <span className="text-xs text-slate-700">QR • {`{${el.binding}}`}</span>
                                 </div>
                               )}
+                              {/* Resize handles for selected element */}
+                              {selectedElId === el.id && (
+                                <>
+                                  <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full cursor-nw-resize" />
+                                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full cursor-ne-resize" />
+                                  <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 rounded-full cursor-sw-resize" />
+                                  <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full cursor-se-resize" />
+                                </>
+                              )}
                             </div>
                           ))}
                         </div>

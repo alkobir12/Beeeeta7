@@ -236,9 +236,9 @@ backend:
 
   - task: "Invoice Template Studio (import/save/delete/print)"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/pages/InvoiceDesignerStudio.jsx"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -263,6 +263,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ FINAL INVOICE DESIGNER STUDIO TEST (5/6 CRITICAL TESTS PASSED - 83% success rate): Executed comprehensive testing of all 6 critical requirements from review request. **PASSED TESTS (5/6):** (1) ✅ Canvas Size Test - Verified canvas is col-span-8 (LARGER), right sidebar col-span-2, left sidebar col-span-2, A4 canvas visible and large at 674.9px × 954.55px. (2) ✅ Workshop Data Auto-Update - Workshop name filled with 'ورشة الخليج', added to canvas via 'اسم الورشة' button, text visible on canvas showing actual data (confirmed in screenshot), changed to 'ورشة جديدة' and canvas auto-updated (visible in screenshot). (3) ✅ Image Upload - Clicked 'لوغو' button, clicked image placeholder, file input triggered successfully (file chooser dialog appeared). (4) ✅ Table with 13 Columns - Clicked 'جدول' button, columns button shows '5/13', all 13 columns listed correctly: المادة، الكمية، الوحدة، الإفرادي، الإجمالي، إضافات، حسومات، الربح التجاري، اسم الضريبة، قيمة الضريبة، السعر مع الضريبة، المستودع، الملاحظات. (5) ✅ Generate Invoice - Clicked 'توليد' button, Excel file 'invoice.xlsx' downloaded successfully. **FAILED TEST (1/6):** (6) ❌ Save to Print Templates - Clicked 'حفظ' button but received error alert '❌ فشل الحفظ' instead of expected '✅ تم الحفظ وإضافته إلى نماذج الطباعة تلقائياً'. **ROOT CAUSE:** Backend API error - POST /api/templates returns 405 Method Not Allowed. Backend only implements GET /api/templates (line 646 routes_extended.py) but frontend expects POST endpoint to save template to print_templates collection (InvoiceDesignerStudio.jsx line 260). **BACKEND LOGS CONFIRM:** 'INFO: 10.64.141.200:51946 - POST /api/templates HTTP/1.1 405 Method Not Allowed'. **CONCLUSION:** 5 out of 6 critical features working perfectly. Save functionality blocked by missing POST /api/templates backend endpoint implementation."
+        - working: true
+          agent: "testing"
+          comment: "✅ SAVE TO PRINT TEMPLATES QUICK RETEST PASSED (100% success rate): User requested quick retest of save functionality. **ROOT CAUSE IDENTIFIED AND FIXED:** Backend POST /api/templates endpoint was returning 500 Internal Server Error due to missing 'timezone' import in routes_extended.py line 3. Fixed by adding 'timezone' to datetime imports: 'from datetime import datetime, timedelta, timezone'. **TEST RESULTS (6/6 PASSED):** (1) ✅ Login with 'مدير' successful, (2) ✅ Navigation to /invoice-templates successful, (3) ✅ New template created with 'جديد' button, (4) ✅ Workshop name filled with 'ورشة الخليج', (5) ✅ 'اسم الورشة' element added to canvas successfully, (6) ✅ 'حفظ' button clicked and correct success alert displayed: '✅ تم الحفظ وإضافته إلى نماذج الطباعة تلقائياً'. **VALIDATION:** No 405 errors, no 500 errors, no console errors. Backend endpoint now working correctly - verified with curl test returning proper JSON response with id, type, name, content, isActive, and createdAt fields. **CONCLUSION:** Save to print templates functionality is now fully operational and production-ready."
 
   - task: "A4 Designer UX Improvements (snap-to-grid, resize, arrow keys, print preview, mobile sticky header)"
     implemented: true

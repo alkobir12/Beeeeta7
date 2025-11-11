@@ -180,7 +180,7 @@ const InvoiceTemplateStudio = () => {
                 {templates.length===0 && (<div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>)}
                 {templates.length>0 && (
                   <div className="mt-4 text-right">
-                    <Button variant="destructive" onClick={async ()=>{ if(!selected){ alert('اختر قالباً أولاً'); return; } if(!window.confirm('هل تريد حذف القالب؟')) return; try{ await axios.delete(`${API_URL}/invoice-templates/${selected.id}`); setSelected(null); await loadTemplates(); } catch(e){ alert('تعذر حذف القالب'); } }}>حذف القالب المحدد</Button>
+                    <Button variant="destructive" onClick={async ()=>{ if(!selected){ alert('اختر قالباً أولاً'); return; } const mode = window.prompt('اكتب soft للأرشفة أو hard للحذف النهائي', 'soft'); if(!mode) return; try{ if(mode==='hard'){ await axios.delete(`${API_URL}/invoice-templates/${selected.id}/hard`);} else { await axios.delete(`${API_URL}/invoice-templates/${selected.id}`);} setSelected(null); await loadTemplates(); } catch(e){ alert(e?.response?.data?.detail || 'تعذر تنفيذ الحذف'); } }}>حذف القالب المحدد</Button>
                   </div>
                 )}
               </div>

@@ -992,6 +992,60 @@ const InvoiceTemplateStudio = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Field Management Dialog */}
+        {showFieldDialog && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={()=>setShowFieldDialog(false)}>
+            <div className="bg-white p-6 rounded-lg w-full max-w-md" onClick={(e)=>e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-4">{editingField?.name && schema.find(f=>f.name===editingField.name) ? 'تعديل حقل' : 'إضافة حقل جديد'}</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label>اسم الحقل (بالإنجليزية)</Label>
+                  <Input 
+                    value={editingField?.name || ''} 
+                    onChange={e=>setEditingField({...editingField, name: e.target.value})}
+                    placeholder="CUSTOMER_NAME"
+                  />
+                </div>
+                <div>
+                  <Label>التسمية (بالعربية)</Label>
+                  <Input 
+                    value={editingField?.label || ''} 
+                    onChange={e=>setEditingField({...editingField, label: e.target.value})}
+                    placeholder="اسم العميل"
+                  />
+                </div>
+                <div>
+                  <Label>نوع الحقل</Label>
+                  <select 
+                    className="w-full p-2 border rounded"
+                    value={editingField?.type || 'text'}
+                    onChange={e=>setEditingField({...editingField, type: e.target.value})}
+                  >
+                    <option value="text">نص</option>
+                    <option value="number">رقم</option>
+                    <option value="date">تاريخ</option>
+                    <option value="email">إيميل</option>
+                    <option value="phone">هاتف</option>
+                    <option value="textarea">نص طويل</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>قواعد التحقق (اختياري)</Label>
+                  <Input 
+                    value={editingField?.validation || ''} 
+                    onChange={e=>setEditingField({...editingField, validation: e.target.value})}
+                    placeholder="required, min:3, max:50"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={saveField} className="flex-1">حفظ</Button>
+                <Button onClick={()=>setShowFieldDialog(false)} variant="outline" className="flex-1">إلغاء</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

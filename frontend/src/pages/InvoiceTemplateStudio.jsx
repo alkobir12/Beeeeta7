@@ -127,7 +127,18 @@ const InvoiceTemplateStudio = () => {
     <Layout>
       <div className="container mx-auto p-6" dir="rtl">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">استوديو قوالب الفواتير (Excel)</h1>
+          <div>
+            <h1 className="text-3xl font-bold">استوديو قوالب الفواتير (Excel)</h1>
+            {selected && (
+              <div className="mt-1 text-sm">
+                <span className={`px-2 py-1 rounded ${selected.isDefault ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                  {selected.isDefault ? 'القالب الافتراضي' : 'قالب عادي'}
+                </span>
+                <span className="mx-2 text-slate-400">•</span>
+                <span className="text-slate-500">الصيغة: {selected.format?.toUpperCase()}</span>
+              </div>
+            )}
+          </div>
           <div className="flex gap-2">
             <label>
               <Button asChild className="bg-green-600 hover:bg-green-700 cursor-pointer"><span>استيراد قالب</span></Button>

@@ -224,6 +224,23 @@ const InvoiceTemplateStudio = () => {
     }, 600);
   };
 
+  // ---------- Helper: snap to grid ----------
+  const snapToGrid = (val) => Math.round(val / GRID_SIZE) * GRID_SIZE;
+
+  // ---------- Keyboard: Arrow keys to move selected element ----------
+  useEffect(() => {
+    const handler = (e) => {
+      if (!selectedElId || !selEl) return;
+      const step = e.shiftKey ? GRID_SIZE : 1;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); updateElement(selectedElId, { x: Math.max(0, selEl.x - step) }); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); updateElement(selectedElId, { x: Math.min(A4_WIDTH - selEl.w, selEl.x + step) }); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); updateElement(selectedElId, { y: Math.max(0, selEl.y - step) }); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); updateElement(selectedElId, { y: Math.min(A4_HEIGHT - selEl.h, selEl.y + step) }); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedElId, selEl]);
+
   // ---------- Canvas interactions ----------
   const onCanvasMouseDown = (e) => {
     if (!canvasRef.current) return;

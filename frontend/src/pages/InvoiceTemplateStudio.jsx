@@ -469,7 +469,7 @@ const InvoiceTemplateStudio = () => {
                               {el.type==='note' && (<div className="w-full h-full p-2 text-sm" style={{ color: el.color }}>{el.text}</div>)}
                               {el.type==='qr' && (
                                 <div className="w-full h-full bg-white flex items-center justify-center border">
-                                  <span className="text-xs text-slate-700">QR • {{'{'}}{el.binding}{'}'}}</span>
+                                  <span className="text-xs text-slate-700">QR • {`{${el.binding}}`}</span>
                                 </div>
                               )}
                             </div>

@@ -642,6 +642,101 @@ const InvoiceTemplateStudio = () => {
             )}
           </TabsContent>
 
+          {/* Print Preview */}
+          <TabsContent value="preview">
+            {!selected && (
+              <Card><CardContent className="p-4 text-slate-600">اختر قالبًا لمعاينة الطباعة.</CardContent></Card>
+            )}
+            {selected && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>معاينة الطباعة</CardTitle>
+                  <p className="text-sm text-slate-600">معاينة A4 للعناصر المصممة (بدون بيانات)</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-center bg-slate-100 p-6 rounded-lg">
+                    <div 
+                      className="shadow-2xl bg-white relative overflow-hidden"
+                      style={{ 
+                        width: `${A4_WIDTH}px`, 
+                        height: `${A4_HEIGHT}px`,
+                        background: page.bg || '#ffffff',
+                        transform: 'scale(0.7)',
+                        transformOrigin: 'top center'
+                      }}
+                    >
+                      {elements.map(el => (
+                        <div 
+                          key={el.id}
+                          className="absolute border border-dashed border-slate-300"
+                          style={{ 
+                            left: el.x, 
+                            top: el.y, 
+                            width: el.w, 
+                            height: el.h,
+                          }}
+                        >
+                          {el.type==='text' && (
+                            <div 
+                              className="w-full h-full flex items-center px-2"
+                              style={{ 
+                                fontSize: el.fontSize || 16,
+                                fontWeight: el.bold ? 'bold' : 'normal',
+                                textAlign: el.align || 'right',
+                                color: el.color || '#111827',
+                                direction: el.rtl ? 'rtl' : 'ltr'
+                              }}
+                            >
+                              {el.text || ''}
+                              {el.binding && <span className="text-xs text-blue-600 mr-1">[{el.binding}]</span>}
+                            </div>
+                          )}
+                          {el.type==='image' && (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                              {el.src ? (
+                                <img src={el.src} alt="preview" className="max-w-full max-h-full object-contain" />
+                              ) : (
+                                <ImageIcon className="w-8 h-8 text-slate-400" />
+                              )}
+                            </div>
+                          )}
+                          {el.type==='itemsTable' && (
+                            <div className="w-full h-full overflow-hidden text-xs">
+                              <div className="flex" style={{ background: el.headerBg, color: el.headerColor }}>
+                                {(el.cols||[]).filter(c=>c.visible!==false).map((col,i)=>(
+                                  <div key={i} className="px-1 py-1 border-l border-white" style={{ width: `${col.w||80}px` }}>
+                                    {col.label}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="text-slate-500 p-2 text-center">جدول البنود (معاينة)</div>
+                            </div>
+                          )}
+                          {el.type==='qr' && (
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center border">
+                              <QrCode className="w-12 h-12 text-slate-400" />
+                            </div>
+                          )}
+                          {el.type==='line' && (
+                            <div className="w-full h-full" style={{ background: el.color }} />
+                          )}
+                          {el.type==='note' && (
+                            <div className="w-full h-full p-2 text-sm overflow-auto" style={{ color: el.color }}>
+                              {el.text}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center text-sm text-slate-600">
+                    للطباعة الفعلية، استخدم زر "توليد فاتورة" من الأعلى
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Grid editor */}
           <TabsContent value="studio">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

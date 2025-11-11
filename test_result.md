@@ -237,8 +237,8 @@ backend:
   - task: "Invoice Template Studio (import/save/delete/print)"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/InvoiceTemplateStudio.jsx"
-    stuck_count: 2
+    file: "/app/frontend/src/pages/InvoiceDesignerStudio.jsx"
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -257,6 +257,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ COMPREHENSIVE A4 DESIGNER TEST COMPLETE: Successfully executed Arabic review request with 90% pass rate (9/10 tests passed). **MAJOR SUCCESS:** (1) ✅ Login with Arabic name 'أحمد المهندس' working perfectly, (2) ✅ Empty template creation 'قالب فارغ' successful - template appears in list, (3) ✅ A4 Designer tab 'مصمم A4' accessible and functional, (4) ✅ Text element addition working - added and edited to 'اسم العميل', (5) ✅ CUSTOMER_NAME binding successful via dropdown selection, (6) ✅ Items table 'جدول البنود' addition working correctly, (7) ✅ Save Design 'حفظ التصميم' and Apply Design to Grid 'تطبيق التصميم على الشبكة' both functional, (8) ✅ Save as Excel 'حفظ كـ Excel' working, (9) ✅ Save as Invoice 'حفظ باسم فاتوره' with default name confirmation working, (10) ✅ Generate Invoice 'توليد فاتورة' successfully downloads .xlsx file, (11) ✅ Clean Empty Forms 'تنظيف النماذج الخالية' working. **MINOR ISSUE:** Delete template functionality not accessible during test (button not found in final state). **FIXED DURING TESTING:** Corrected JSX syntax errors in template literal expressions (lines 487-491 and 432). **VALIDATION SUCCESS:** All Arabic UI elements properly displayed, A4 canvas rendering correctly, element properties panel functional, template list management working. Invoice Template Studio with A4 Designer is production-ready for comprehensive template creation and management workflows."
+        - working: true
+          agent: "testing"
+          comment: "✅ INVOICE DESIGNER STUDIO COMPLETE WORKFLOW TEST PASSED (14/14 tests - 100% success rate): Comprehensive testing of /invoice-templates page (InvoiceDesignerStudio.jsx) completed successfully. **ALL CRITICAL FUNCTIONALITY VERIFIED:** (1) ✅ Login with 'مدير' working, (2) ✅ Navigation to /invoice-templates successful, (3) ✅ 'جديد' button creates new template, (4) ✅ Workshop info card visible on right with all required fields (اسم الورشة, السجل التجاري, الرقم الضريبي), (5) ✅ Canvas 'لوح التصميم - A4' visible in center, (6) ✅ Add elements section 'إضافة عناصر' with all buttons visible (صورة/لوغو, جدول البنود, workshop/customer/invoice fields), (7) ✅ Workshop data successfully filled (ورشة الخليج, CR-123, TAX-456), (8) ✅ 'اسم الورشة' element added to canvas, (9) ✅ Text element 'ورشة الخليج' appears on canvas with proper Arabic rendering, (10) ✅ 'صورة/لوغو' element added successfully, (11) ✅ Image placeholder visible on canvas, (12) ✅ Properties panel 'خصائص العنصر' visible with font controls (حجم الخط, اللون, alignment buttons), (13) ✅ 'حفظ' button functional - save operation successful, (14) ✅ 'توليد' button functional - Excel file downloaded successfully (invoice-1762897308625.xlsx). **SCREENSHOTS CAPTURED:** All 4 test stages documented showing initial view, text element added, image element added, and final state. **CONCLUSION:** Invoice Designer Studio is fully functional and production-ready. All requested features from review request working correctly."
 
   - task: "A4 Designer UX Improvements (snap-to-grid, resize, arrow keys, print preview, mobile sticky header)"
     implemented: true

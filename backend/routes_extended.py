@@ -724,8 +724,9 @@ async def get_invoice_template(tid: str):
 
 @router.delete('/invoice-templates/{tid}')
 async def delete_invoice_template(tid: str):
-    await db.invoice_templates.delete_one({'id': tid})
-    return {'status': 'ok'}
+    # Soft delete: archive instead of physical delete
+    await db.invoice_templates.update_one({'id': tid}, {'$set': {'archived': True, 'archivedAt': datetime.utcnow()}})
+    return {'status': 'archived'}
 
 @router.put('/invoice-templates/{tid}')
 async def update_invoice_template(tid: str, payload: Dict[str, Any] = Body(...)):

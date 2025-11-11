@@ -8,6 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Type, Image as ImageIcon, User, QrCode, Barcode, Hash } from 'lucide-react';
 import axios from 'axios';
+import '../styles/invoice-studio.css';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
 

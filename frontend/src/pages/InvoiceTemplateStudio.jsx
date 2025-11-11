@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Type, Image as ImageIcon, User, QrCode, Barcode, Hash } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
@@ -23,20 +24,24 @@ const defaultNewElement = (type) => {
   if (type === 'text') return { id, type, name: `نص ${id}`, x: 40, y: 60, w: 300, h: 40, text: 'نص تجريبي', fontSize: 18, bold: false, align: 'right', color: '#111827', rtl: true };
   if (type === 'image') return { id, type, name: `صورة ${id}`, x: 40, y: 20, w: 140, h: 60, src: '', fit: 'contain' };
   if (type === 'itemsTable') return { id, type, name: `جدول البنود ${id}`, x: 30, y: 200, w: 730, h: 240, headerBg: '#f1f5f9', headerColor: '#0f172a', cols: [
-    { key: 'description', label: 'الوصف', w: 360 },
-    { key: 'qty', label: 'الكمية', w: 80 },
-    { key: 'price', label: 'سعر الوحدة', w: 120 },
-    { key: 'total', label: 'الإجمالي', w: 120 },
+    { key: 'description', label: 'المادة', w: 360, visible: true },
+    { key: 'qty', label: 'الكمية', w: 80, visible: true },
+    { key: 'unit', label: 'الوحدة', w: 80, visible: true },
+    { key: 'price', label: 'الفردي', w: 120, visible: true },
+    { key: 'total', label: 'الإجمالي', w: 120, visible: true },
+    { key: 'additions', label: 'إضافات', w: 100, visible: false },
+    { key: 'discount', label: 'خصومات', w: 100, visible: false },
+    { key: 'profit', label: 'الربح التجاري', w: 120, visible: false },
+    { key: 'tax_name', label: 'اسم الضريبة', w: 120, visible: false },
+    { key: 'tax_value', label: 'قيمة الضريبة', w: 120, visible: false },
+    { key: 'with_tax', label: 'السعر مع الضريبة', w: 140, visible: false },
+    { key: 'warehouse', label: 'المستودع', w: 120, visible: false },
+    { key: 'notes', label: 'الملاحظات', w: 160, visible: false },
   ], itemsBinding: 'ITEMS' };
   if (type === 'line') return { id, type, name: `خط ${id}`, x: 30, y: 160, w: 730, h: 2, color: '#e2e8f0' };
   if (type === 'note') return { id, type, name: `ملاحظة ${id}`, x: 30, y: 460, w: 730, h: 80, text: 'ملاحظات:', fontSize: 14, color: '#374151' };
+  if (type === 'qr') return { id, type, name: `QR ${id}`, x: 620, y: 40, w: 120, h: 120, binding: 'INVOICE_LINK' };
   return { id, type, name: `${type} ${id}`, x: 40, y: 40, w: 200, h: 40 };
-};
-
-const hitTest = (e, rect) => {
-  const x = e.nativeEvent.offsetX;
-  const y = e.nativeEvent.offsetY;
-  return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
 };
 
 const InvoiceTemplateStudio = () => {
@@ -49,20 +54,22 @@ const InvoiceTemplateStudio = () => {
   const fileRef = useRef();
 
   // Designer state
-  const [tab, setTab] = useState('studio'); // studio | designer
+  const [tab, setTab] = useState('designer'); // studio | designer
   const [elements, setElements] = useState([]); // absolute elements on canvas
   const [schema, setSchema] = useState([]); // DB fields: [{name,type}]
   const [page, setPage] = useState(defaultPage);
   const [selectedElId, setSelectedElId] = useState(null);
-  const [dragging, setDragging] = useState(null); // {id, dx, dy, startX, startY}
+  const [dragging, setDragging] = useState(null);
   const canvasRef = useRef();
   const [zoom, setZoom] = useState(1);
+
+  // Tool panel state (right)
+  const [toolTab, setToolTab] = useState('elements'); // elements | columns
 
   useEffect(()=>{ loadTemplates(); },[]);
 
   useEffect(()=>{
     if (selected) {
-      // hydrate designer from selected
       setElements(selected.elements || []);
       setSchema(selected.schema || []);
       setPage(selected.page || defaultPage);
@@ -102,9 +109,7 @@ const InvoiceTemplateStudio = () => {
     setSelected(res.data);
   };
 
-  const handleSelect = async (tpl) => {
-    setSelected(tpl);
-  };
+  const handleSelect = async (tpl) => { setSelected(tpl); };
 
   const addRow = () => setGrid([...grid, Array(grid[0]?.length || 10).fill('')]);
   const addCol = () => setGrid(grid.map(r => [...r, '']));
@@ -112,58 +117,8 @@ const InvoiceTemplateStudio = () => {
   const saveGrid = async () => {
     if(!selected) return;
     await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid, mapping, items: itemsConfig });
-    await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid, mapping, itemsConfig });
+    await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid, mapping, itemsConfig, elements, schema, page });
     alert('تم الحفظ وإنشاء/تحديث نموذج "فاتوره" تلقائياً');
-  };
-
-  // ---------- Apply design to grid ----------
-  const applyDesignToGrid = async () => {
-    if (!selected) return;
-    // heuristic cell size
-    const cellW = 100; // px per col
-    const cellH = 32;  // px per row
-    let g = grid && grid.length ? grid.map(r => [...r]) : [];
-    const ensureSize = (rows, cols) => {
-      const curRows = g.length;
-      const curCols = g[0]?.length || 0;
-      for (let r=curRows; r<rows; r++) g.push(Array(Math.max(cols, curCols||10)).fill(''));
-      for (let r=0; r<g.length; r++) {
-        for (let c=g[r].length; c<cols; c++) g[r].push('');
-      }
-    };
-    // place text bindings
-    elements.forEach(el => {
-      if (el.type === 'text') {
-        const r = Math.max(0, Math.round(el.y / cellH));
-        const c = Math.max(0, Math.round(el.x / cellW));
-        ensureSize(r+1, c+1);
-        const val = el.binding ? `{{${el.binding}}}` : (el.text || '');
-        g[r][c] = val;
-      }
-    });
-    // ensure items anchor and template row for itemsTable
-    const table = elements.find(e => e.type==='itemsTable');
-    if (table) {
-      const r = Math.max(0, Math.round(table.y / cellH));
-      const c = Math.max(0, Math.round(table.x / cellW));
-      const colsCount = Math.max(4, table.cols?.length || 4);
-      ensureSize(r+2, c+colsCount);
-      // anchor
-      g[r][c] = '{{ITEMS}}';
-      // template row values
-      const tRow = r+1;
-      for (let i=0; i<colsCount; i++) {
-        const col = table.cols?.[i];
-        const key = col?.key || `col${i+1}`;
-        g[tRow][c+i] = `{{ITEMS.${key}}}`;
-      }
-    }
-    setGrid(g);
-    try{
-      await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid: g, mapping, items: itemsConfig });
-      await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid: g, mapping, itemsConfig, elements, schema, page });
-      alert('تم تطبيق التصميم على الشبكة وحفظه');
-    }catch(e){ alert('تعذر تطبيق التصميم على الشبكة'); }
   };
 
   const saveMapping = async () => {
@@ -206,8 +161,8 @@ const InvoiceTemplateStudio = () => {
       VEHICLE_PLATE: 'س ع د 1234',
       TOTAL: '1500.00',
       ITEMS: [
-        { description: 'زيت محرك', qty: 1, price: 200, total: 200 },
-        { description: 'فلتر زيت', qty: 1, price: 50, total: 50 }
+        { description: 'زيت محرك', qty: 1, unit: 'حبة', price: 200, total: 200 },
+        { description: 'فلتر زيت', qty: 1, unit: 'حبة', price: 50, total: 50 }
       ]
     };
     const resp = await fetch(`${API_URL}/print/invoice-xlsx`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ templateId: selected.id, data }) });
@@ -220,6 +175,14 @@ const InvoiceTemplateStudio = () => {
   // ---------- Designer: elements ops ----------
   const addElement = (type) => {
     const el = defaultNewElement(type);
+    setElements(prev => [...prev, el]);
+    setSelectedElId(el.id);
+    autoSaveDebounced({ elements: [...elements, el] });
+  };
+
+  const addBoundText = (binding, label, fontSize=16) => {
+    const el = defaultNewElement('text');
+    el.text = label; el.binding = binding; el.fontSize = fontSize; el.name = label;
     setElements(prev => [...prev, el]);
     setSelectedElId(el.id);
     autoSaveDebounced({ elements: [...elements, el] });
@@ -255,9 +218,7 @@ const InvoiceTemplateStudio = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const payload = { elements, schema, page, ...partial };
     debounceRef.current = setTimeout(async ()=>{
-      try{
-        await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, payload);
-      }catch(e){ /* silent */ }
+      try{ await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, payload); } catch(e){ /* silent */ }
     }, 600);
   };
 
@@ -267,7 +228,6 @@ const InvoiceTemplateStudio = () => {
     const bounds = canvasRef.current.getBoundingClientRect();
     const cx = (e.clientX - bounds.left) / zoom;
     const cy = (e.clientY - bounds.top) / zoom;
-    // check topmost element
     const rev = [...elements].reverse();
     const found = rev.find(el => cx >= el.x && cx <= el.x + el.w && cy >= el.y && cy <= el.y + el.h);
     if (found) {
@@ -291,18 +251,77 @@ const InvoiceTemplateStudio = () => {
   // ---------- Properties panel helpers ----------
   const selEl = useMemo(()=> elements.find(e => e.id === selectedElId) || null, [selectedElId, elements]);
 
-  const cleanupEmpty = async (purge=false) => {
-    const r = await axios.post(`${API_URL}/invoice-templates/cleanup-empty?purge=${purge}`);
-    alert(`تمت العملية. مؤرشف: ${r.data.archived}، محذوف: ${r.data.deleted}`);
-    await loadTemplates();
+  const imageFileInput = useRef();
+  const importImageFromFile = () => { if (imageFileInput.current) imageFileInput.current.click(); };
+  const onImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selEl) return;
+    const reader = new FileReader();
+    reader.onload = () => { updateElement(selEl.id, { src: reader.result }); };
+    reader.readAsDataURL(file);
+  };
+
+  // ---------- Apply design to grid ----------
+  const applyDesignToGrid = async () => {
+    if (!selected) return;
+    const cellW = 100; // px per col
+    const cellH = 32;  // px per row
+    let g = grid && grid.length ? grid.map(r => [...r]) : [];
+    const ensureSize = (rows, cols) => {
+      const curRows = g.length;
+      const curCols = g[0]?.length || 0;
+      for (let r=curRows; r<rows; r++) g.push(Array(Math.max(cols, curCols||10)).fill(''));
+      for (let r=0; r<g.length; r++) {
+        for (let c=g[r].length; c<cols; c++) g[r].push('');
+      }
+    };
+    // place text bindings
+    elements.forEach(el => {
+      if (el.type === 'text') {
+        const r = Math.max(0, Math.round(el.y / cellH));
+        const c = Math.max(0, Math.round(el.x / cellW));
+        ensureSize(r+1, c+1);
+        const val = el.binding ? `{{${el.binding}}}` : (el.text || '');
+        g[r][c] = val;
+      }
+    });
+    // ensure items anchor and template row for itemsTable
+    const table = elements.find(e => e.type==='itemsTable');
+    if (table) {
+      const r = Math.max(0, Math.round(table.y / cellH));
+      const c = Math.max(0, Math.round(table.x / cellW));
+      const visibleCols = (table.cols||[]).filter(col=>col.visible!==false);
+      const colsCount = Math.max(1, visibleCols.length);
+      ensureSize(r+2, c+colsCount);
+      g[r][c] = '{{ITEMS}}';
+      const tRow = r+1;
+      visibleCols.forEach((col, i) => {
+        const key = col.key || `col${i+1}`;
+        g[tRow][c+i] = `{{ITEMS.${key}}}`;
+      });
+    }
+    setGrid(g);
+    try{
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid: g, mapping, items: itemsConfig });
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid: g, mapping, itemsConfig, elements, schema, page });
+      alert('تم تطبيق التصميم على الشبكة وحفظه');
+    }catch(e){ alert('تعذر تطبيق التصميم على الشبكة'); }
+  };
+
+  // ---------- Columns panel actions ----------
+  const toggleColumn = (key) => {
+    const table = elements.find(e=>e.type==='itemsTable');
+    if (!table) return;
+    const cols = (table.cols||[]).map(c => c.key===key? {...c, visible: !(c.visible!==false)}: c);
+    updateElement(table.id, { cols });
   };
 
   return (
     <Layout>
-      <div className="container mx-auto p-6" dir="rtl">
-        <div className="flex items-center justify-between mb-6">
+      <div className="container mx-auto p-3 md:p-6" dir="rtl">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="text-3xl font-bold">استوديو قوالب الفواتير (Excel)</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">استوديو قوالب الفواتير (Excel)</h1>
             {selected && (
               <div className="mt-1 text-sm">
                 <span className={`px-2 py-1 rounded ${selected.isDefault ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
@@ -313,16 +332,15 @@ const InvoiceTemplateStudio = () => {
               </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <label>
               <Button asChild className="bg-green-600 hover:bg-green-700 cursor-pointer"><span>استيراد قالب</span></Button>
               <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.html,.htm,.docx,.pdf" className="hidden" onChange={handleImport} />
             </label>
-            <div className="flex items-center gap-2">
-              <Input value={importUrl} onChange={e=>setImportUrl(e.target.value)} placeholder="أدخل رابط نموذج للاستيراد" className="w-72" />
+            <div className="hidden md:flex items-center gap-2">
+              <Input value={importUrl} onChange={e=>setImportUrl(e.target.value)} placeholder="أدخل رابط نموذج للاستيراد" className="w-60" />
               <Button onClick={importFromUrl} variant="outline">استيراد من رابط</Button>
               <Button onClick={createBlank} variant="outline">قالب فارغ</Button>
-              <Button onClick={()=>cleanupEmpty(false)} variant="outline">تنظيف النماذج الخالية</Button>
             </div>
             <Button onClick={saveGrid} className="bg-blue-600 hover:bg-blue-700">حفظ كـ Excel</Button>
             <Button onClick={saveMapping} className="bg-purple-600 hover:bg-purple-700">حفظ الربط</Button>
@@ -343,46 +361,62 @@ const InvoiceTemplateStudio = () => {
               <Card className="mb-6"><CardContent className="p-4 text-slate-600">اختر قالبًا أو أنشئ قالبًا فارغًا للبدء.</CardContent></Card>
             )}
             {selected && (
-              <div className="grid grid-cols-12 gap-4">
-                {/* Left palette */}
-                <div className="col-span-3">
-                  <Card className="bg-gradient-to-b from-slate-50 to-white">
-                    <CardHeader><CardTitle>العناصر المتاحة</CardTitle></CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" onClick={()=>addElement('text')}>نص</Button>
-                        <Button variant="outline" onClick={()=>addElement('image')}>صورة/شعار</Button>
-                        <Button variant="outline" onClick={()=>addElement('itemsTable')}>جدول البنود</Button>
-                        <Button variant="outline" onClick={()=>addElement('line')}>خط فاصل</Button>
-                        <Button variant="outline" onClick={()=>addElement('note')}>ملاحظة</Button>
+              <div className="grid grid-cols-12 gap-3 md:gap-4">
+                {/* Right Tool Panel to match provided design */}
+                <div className="order-2 md:order-3 col-span-12 md:col-span-3">
+                  <Card className="bg-gradient-to-b from-slate-50 to-white sticky top-2 max-h-[88vh] overflow-auto">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>{toolTab==='elements'? 'العناصر المتاحة' : 'كل الأعمدة'}</CardTitle>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant={toolTab==='elements'? 'default':'outline'} onClick={()=>setToolTab('elements')}>العناصر</Button>
+                          <Button size="sm" variant={toolTab==='columns'? 'default':'outline'} onClick={()=>setToolTab('columns')}>الأعمدة</Button>
+                        </div>
                       </div>
-                      <div className="mt-4">
-                        <Label className="block mb-2">حقول القالب (قاعدة البيانات)</Label>
-                        <div className="space-y-2 max-h-40 overflow-auto">
-                          {schema.map((f, i)=> (
-                            <div key={i} className="flex items-center gap-2">
-                              <Input value={f.name} onChange={(e)=>{ const s=[...schema]; s[i]={...s[i], name:e.target.value}; setSchema(s); autoSaveDebounced({schema:s}); }} className="flex-1" />
-                              <select className="border rounded px-2 py-1 text-sm" value={f.type} onChange={(e)=>{ const s=[...schema]; s[i]={...s[i], type:e.target.value}; setSchema(s); autoSaveDebounced({schema:s}); }}>
-                                <option value="text">نص</option>
-                                <option value="number">رقم</option>
-                                <option value="date">تاريخ</option>
-                              </select>
-                              <Button size="sm" variant="destructive" onClick={()=>{ const s=schema.filter((_,idx)=>idx!==i); setSchema(s); autoSaveDebounced({schema:s}); }}>حذف</Button>
+                    </CardHeader>
+                    <CardContent>
+                      {toolTab==='elements' && (
+                        <div className="space-y-2">
+                          <ToolItem icon={<Type/>} label="نص" onClick={()=>addElement('text')} />
+                          <ToolItem icon={<ImageIcon/>} label="صورة" onClick={()=>addElement('image')} />
+                          <ToolItem icon={<Type/>} label="العنوان الرئيسي" onClick={()=>addBoundText('TITLE','العنوان الرئيسي',22)} />
+                          <ToolItem icon={<User/>} label="العميل" onClick={()=>addBoundText('CUSTOMER_NAME','العميل')} />
+                          <ToolItem icon={<Hash/>} label="الرقم الضريبي/عميل" onClick={()=>addBoundText('CUSTOMER_TAX','الرقم الضريبي/عميل')} />
+                          <ToolItem icon={<Barcode/>} label="سجل تجاري/عميل" onClick={()=>addBoundText('CUSTOMER_CR','سجل تجاري/عميل')} />
+                          <ToolItem icon={<Type/>} label="إيميل/عميل" onClick={()=>addBoundText('CUSTOMER_EMAIL','إيميل/عميل')} />
+                          <ToolItem icon={<Hash/>} label="الرقم الضريبي/شركة" onClick={()=>addBoundText('COMPANY_TAX','الرقم الضريبي/شركة')} />
+                          <ToolItem icon={<Barcode/>} label="سجل تجاري/شركة" onClick={()=>addBoundText('COMPANY_CR','سجل تجاري/شركة')} />
+                          <ToolItem icon={<QrCode/>} label="كود QR" onClick={()=>addElement('qr')} />
+                          <ToolItem icon={<Type/>} label="رقم الفاتورة" onClick={()=>addBoundText('INVOICE_NO','رقم الفاتورة')} />
+                          <div className="pt-2 border-t mt-2">
+                            <ToolItem icon={<Type/>} label="جدول البنود" onClick={()=>addElement('itemsTable')} />
+                          </div>
+                        </div>
+                      )}
+                      {toolTab==='columns' && (
+                        <div className="space-y-2">
+                          {(elements.find(e=>e.type==='itemsTable')?.cols || []).map(col => (
+                            <div key={col.key} className="flex items-center justify-between p-2 rounded bg-slate-50">
+                              <div className="flex items-center gap-2">
+                                <span className="w-6 h-1 bg-slate-400 rounded" />
+                                <span>{col.label}</span>
+                              </div>
+                              <Button size="sm" variant={col.visible!==false? 'default':'outline'} onClick={()=>toggleColumn(col.key)}>
+                                {col.visible!==false? 'إخفاء' : 'إظهار'}
+                              </Button>
                             </div>
                           ))}
+                          {!(elements.find(e=>e.type==='itemsTable')) && (
+                            <div className="text-xs text-slate-500">أضف "جدول البنود" أولاً لعرض الأعمدة.</div>
+                          )}
                         </div>
-                        <div className="flex gap-2 mt-2">
-                          <Button size="sm" onClick={()=>{ const s=[...schema, {name:`FIELD_${schema.length+1}`, type:'text'}]; setSchema(s); autoSaveDebounced({schema:s}); }}>+ حقل</Button>
-                          <Button size="sm" variant="outline" onClick={async ()=>{ await axios.post(`${API_URL}/invoice-templates/${selected.id}/design`, { elements, schema, page }); alert('تم حفظ التصميم'); }}>حفظ التصميم</Button>
-                          <Button size="sm" className="bg-blue-600 text-white" onClick={applyDesignToGrid}>تطبيق التصميم على الشبكة</Button>
-                        </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Canvas */}
-                <div className="col-span-6">
+                <div className="order-1 md:order-2 col-span-12 md:col-span-6">
                   <Card className="overflow-hidden">
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
@@ -390,6 +424,7 @@ const InvoiceTemplateStudio = () => {
                         <div className="flex items-center gap-2">
                           <Label>تكبير</Label>
                           <input type="range" min="0.6" max="1.4" step="0.05" value={zoom} onChange={(e)=>setZoom(parseFloat(e.target.value))} />
+                          <Button size="sm" onClick={applyDesignToGrid}>تطبيق التصميم على الشبكة</Button>
                         </div>
                       </CardTitle>
                     </CardHeader>
@@ -403,9 +438,7 @@ const InvoiceTemplateStudio = () => {
                           className="relative shadow-2xl border bg-white"
                           style={{ width: A4_WIDTH*zoom, height: A4_HEIGHT*zoom, background: page.bg, transformOrigin:'top left' }}
                         >
-                          {/* Grid pattern */}
                           <div className="absolute inset-0" style={{ backgroundImage:'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)', backgroundSize:`20px 20px` }} />
-                          {/* Elements */}
                           {elements.map(el => (
                             <div key={el.id}
                               className={`absolute ${selectedElId===el.id? 'ring-2 ring-blue-500': 'ring-1 ring-slate-200'}`}
@@ -414,7 +447,7 @@ const InvoiceTemplateStudio = () => {
                             >
                               {el.type==='text' && (
                                 <div className="w-full h-full p-2" style={{ color: el.color, fontWeight: el.bold? '700':'400', fontSize: (el.fontSize||16)*zoom, textAlign: el.align||'right', direction: el.rtl? 'rtl':'ltr' }}>
-                                  {el.text || 'نص'}
+                                  {el.text || 'نص'}{el.binding? ` — {{${el.binding}}}`: ''}
                                 </div>
                               )}
                               {el.type==='image' && (
@@ -425,18 +458,19 @@ const InvoiceTemplateStudio = () => {
                               {el.type==='itemsTable' && (
                                 <div className="w-full h-full bg-white">
                                   <div className="flex w-full" style={{ background: el.headerBg}}>
-                                    {el.cols.map((c,idx)=> (
+                                    {(el.cols||[]).filter(c=>c.visible!==false).map((c,idx)=> (
                                       <div key={idx} className="px-2 py-1 text-xs font-semibold" style={{ width: c.w*zoom, color: el.headerColor}}>{c.label}</div>
                                     ))}
                                   </div>
                                   <div className="p-2 text-xs text-slate-600">مصدر البنود: {el.itemsBinding}</div>
                                 </div>
                               )}
-                              {el.type==='line' && (
-                                <div className="w-full h-full" style={{ background: el.color }} />
-                              )}
-                              {el.type==='note' && (
-                                <div className="w-full h-full p-2 text-sm" style={{ color: el.color }}>{el.text}</div>
+                              {el.type==='line' && (<div className="w-full h-full" style={{ background: el.color }} />)}
+                              {el.type==='note' && (<div className="w-full h-full p-2 text-sm" style={{ color: el.color }}>{el.text}</div>)}
+                              {el.type==='qr' && (
+                                <div className="w-full h-full bg-white flex items-center justify-center border">
+                                  <span className="text-xs text-slate-700">QR • {{'{'}}{el.binding}{'}'}}</span>
+                                </div>
                               )}
                             </div>
                           ))}
@@ -446,8 +480,8 @@ const InvoiceTemplateStudio = () => {
                   </Card>
                 </div>
 
-                {/* Right properties / layers */}
-                <div className="col-span-3 space-y-4">
+                {/* Left properties / layers */}
+                <div className="order-3 md:order-1 col-span-12 md:col-span-3 space-y-3">
                   <Card>
                     <CardHeader><CardTitle>خصائص العنصر</CardTitle></CardHeader>
                     <CardContent>
@@ -484,11 +518,9 @@ const InvoiceTemplateStudio = () => {
                                 <select className="border rounded px-2 py-1 w-full" value={selEl.binding||''} onChange={(e)=>updateElement(selEl.id,{binding:e.target.value})}>
                                   <option value="">— غير مربوط —</option>
                                   {schema.map((f,i)=>(<option key={i} value={f.name}>{`{{${f.name}}}`}</option>))}
-                                  <option value="CUSTOMER_NAME">{`{{CUSTOMER_NAME}}`}</option>
-                                  <option value="VEHICLE_PLATE">{`{{VEHICLE_PLATE}}`}</option>
-                                  <option value="INVOICE_NO">{`{{INVOICE_NO}}`}</option>
-                                  <option value="DATE">{`{{DATE}}`}</option>
-                                  <option value="TOTAL">{`{{TOTAL}}`}</option>
+                                  {['CUSTOMER_NAME','VEHICLE_PLATE','INVOICE_NO','DATE','TOTAL','TITLE','CUSTOMER_TAX','CUSTOMER_CR','CUSTOMER_EMAIL','COMPANY_TAX','COMPANY_CR','INVOICE_LINK'].map(k=>(
+                                    <option key={k} value={k}>{`{{${k}}}`}</option>
+                                  ))}
                                 </select>
                               </div>
                             </>
@@ -497,6 +529,10 @@ const InvoiceTemplateStudio = () => {
                             <>
                               <Label>رابط الصورة/الشعار</Label>
                               <Input value={selEl.src||''} onChange={(e)=>updateElement(selEl.id,{src:e.target.value})} placeholder="https://..." />
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={importImageFromFile}>رفع صورة</Button>
+                                <input ref={imageFileInput} type="file" accept="image/*" className="hidden" onChange={onImageFile} />
+                              </div>
                             </>
                           )}
                           {selEl.type==='itemsTable' && (
@@ -505,44 +541,36 @@ const InvoiceTemplateStudio = () => {
                                 <div><Label>لون الهيدر</Label><Input type="color" value={selEl.headerBg||'#f1f5f9'} onChange={(e)=>updateElement(selEl.id,{headerBg:e.target.value})} /></div>
                                 <div><Label>لون النص</Label><Input type="color" value={selEl.headerColor||'#0f172a'} onChange={(e)=>updateElement(selEl.id,{headerColor:e.target.value})} /></div>
                               </div>
-                              <div className="mt-2 space-y-1">
-                                <Label>الأعمدة</Label>
-                                {selEl.cols?.map((c,idx)=> (
-                                  <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-                                    <Input className="col-span-3" value={c.label} onChange={(e)=>{
-                                      const cols=[...selEl.cols]; cols[idx]={...cols[idx], label:e.target.value}; updateElement(selEl.id,{cols});
-                                    }} />
-                                    <Input className="col-span-2" value={c.key} onChange={(e)=>{ const cols=[...selEl.cols]; cols[idx]={...cols[idx], key:e.target.value}; updateElement(selEl.id,{cols}); }} />
-                                    <Input className="col-span-2" type="number" value={c.w} onChange={(e)=>{ const cols=[...selEl.cols]; cols[idx]={...cols[idx], w: parseInt(e.target.value||60)}; updateElement(selEl.id,{cols}); }} />
-                                  </div>
-                                ))}
-                                <Button size="sm" onClick={()=>{ updateElement(selEl.id,{ cols:[...selEl.cols,{key:`col${selEl.cols.length+1}`,label:'عمود',w:80}] }); }}>+ عمود</Button>
-                              </div>
-                              <div className="mt-2">
-                                <Label>مصدر العناصر</Label>
-                                <Input value={selEl.itemsBinding||'ITEMS'} onChange={(e)=>updateElement(selEl.id,{itemsBinding:e.target.value})} />
-                              </div>
+                              <div className="mt-2 text-xs text-slate-500">تحكم بالأعمدة من لوحة "الأعمدة" على اليمين.</div>
                             </>
                           )}
+                          <div className="pt-2 border-t mt-2 flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={()=>moveLayer(selEl.id,'up')}>↑ رفع</Button>
+                            <Button size="sm" variant="outline" onClick={()=>moveLayer(selEl.id,'down')}>↓ خفض</Button>
+                            <Button size="sm" variant="destructive" onClick={()=>removeElement(selEl.id)}>حذف</Button>
+                          </div>
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
                   <Card>
-                    <CardHeader><CardTitle>العناصر المضافة</CardTitle></CardHeader>
-                    <CardContent className="space-y-2">
-                      {elements.length===0 && <div className="text-slate-500 text-sm">لا توجد عناصر.</div>}
-                      {elements.map(el => (
-                        <div key={el.id} className={`p-2 border rounded flex items-center justify-between ${selectedElId===el.id? 'bg-blue-50 border-blue-300':'bg-white'}`}>
-                          <div className="truncate" onClick={()=>setSelectedElId(el.id)}>{el.name || `${el.type} (${el.id})`}</div>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={()=>moveLayer(el.id,'up')}>↑</Button>
-                            <Button size="sm" variant="outline" onClick={()=>moveLayer(el.id,'down')}>↓</Button>
-                            <Button size="sm" variant="destructive" onClick={()=>removeElement(el.id)}>حذف</Button>
+                    <CardHeader><CardTitle>القوالب</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 max-h-[40vh] overflow-auto">
+                        {templates.map(t => (
+                          <div key={t.id} className={`p-3 border rounded cursor-pointer ${selected?.id===t.id?'bg-blue-50 border-blue-300':'hover:bg-slate-50'}`} onClick={()=>handleSelect(t)}>
+                            <div className="font-semibold">{t.name}</div>
+                            <div className="text-xs text-slate-500">{t.format?.toUpperCase()} • {t.fields?.length||0} حقول</div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                        {templates.length===0 && (<div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>)}
+                        {templates.length>0 && (
+                          <div className="mt-2 text-right">
+                            <Button variant="destructive" onClick={async ()=>{ if(!selected){ alert('اختر قالباً أولاً'); return; } const mode = window.prompt('اكتب soft للأرشفة أو hard للحذف النهائي', 'soft'); if(!mode) return; try{ if(mode==='hard'){ await axios.delete(`${API_URL}/invoice-templates/${selected.id}/hard`);} else { await axios.delete(`${API_URL}/invoice-templates/${selected.id}`);} setSelected(null); await loadTemplates(); } catch(e){ alert(e?.response?.data?.detail || 'تعذر تنفيذ الحذف'); } }}>حذف القالب المحدد</Button>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -661,5 +689,14 @@ const InvoiceTemplateStudio = () => {
     </Layout>
   );
 };
+
+const ToolItem = ({ icon, label, onClick }) => (
+  <button onClick={onClick} className="w-full p-3 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-between">
+    <div className="flex items-center gap-2">
+      <span className="text-slate-700">{label}</span>
+    </div>
+    <div className="text-slate-500">{icon}</div>
+  </button>
+);
 
 export default InvoiceTemplateStudio;

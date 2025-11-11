@@ -440,6 +440,44 @@ const InvoiceTemplateStudio = () => {
     updateElement(table.id, { cols });
   };
 
+  // ---------- Field Management ----------
+  const addField = () => {
+    setEditingField({ name: '', type: 'text', label: '', validation: '' });
+    setShowFieldDialog(true);
+  };
+
+  const editField = (field) => {
+    setEditingField({ ...field });
+    setShowFieldDialog(true);
+  };
+
+  const saveField = () => {
+    if (!editingField || !editingField.name) {
+      alert('يرجى إدخال اسم الحقل');
+      return;
+    }
+    const existing = schema.find(f => f.name === editingField.name);
+    let newSchema;
+    if (existing) {
+      // Update existing
+      newSchema = schema.map(f => f.name === editingField.name ? editingField : f);
+    } else {
+      // Add new
+      newSchema = [...schema, editingField];
+    }
+    setSchema(newSchema);
+    autoSaveDebounced({ schema: newSchema });
+    setShowFieldDialog(false);
+    setEditingField(null);
+  };
+
+  const deleteField = (fieldName) => {
+    if (!window.confirm(`هل تريد حذف الحقل "${fieldName}"؟`)) return;
+    const newSchema = schema.filter(f => f.name !== fieldName);
+    setSchema(newSchema);
+    autoSaveDebounced({ schema: newSchema });
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-3 md:p-6" dir="rtl">

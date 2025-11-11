@@ -868,6 +868,48 @@ async def save_named_copy(tid: str, payload: Dict[str, Any] = Body(...)):
         sample_data = (payload or {}).get('data') or {}
         elements = (payload or {}).get('elements') or []
         schema = (payload or {}).get('schema') or []
+
+@router.post('/invoice-templates/{tid}/auto-save')
+async def auto_save_template(tid: str, payload: Dict[str, Any] = Body(...)):
+    """Auto-save from Studio: persist design/grid/mapping/items and ensure a snapshot model copy saved-named=فاتوره if not exists."""
+    try:
+        grid = (payload or {}).get('grid')
+        mapping = (payload or {}).get('mapping')
+        items_cfg = (payload or {}).get('itemsConfig')
+        elements = (payload or {}).get('elements')
+        schema = (payload or {}).get('schema')
+        page = (payload or {}).get('page')
+        updates = {'updatedAt': datetime.utcnow()}
+        if grid is not None:
+            updates['preview'] = grid
+        if mapping is not None:
+            updates['mapping'] = mapping
+        if items_cfg is not None:
+            updates['itemsConfig'] = items_cfg
+        if elements is not None:
+            updates['elements'] = elements
+        if schema is not None:
+            updates['schema'] = schema
+        if page is not None:
+            updates['page'] = page
+        if updates:
+            await db.invoice_templates.update_one({'id': tid}, {'$set': updates})
+        # create snapshot if no previous snapshot with name startswith 'فاتوره'
+        snap = await db.invoice_templates.find_one({'name': {'$regex': '^فاتوره'}, 'sourceId': tid, 'archived': {'$ne': True}})
+        if not snap:
+            # minimal snapshot without heavy XLSX write for performance
+            new_id = str(uuid.uuid4())
+            base = await db.invoice_templates.find_one({'id': tid})
+            if base:
+                base.pop('_id', None)
+                base.update({'id': new_id, 'name': 'فاتوره', 'sourceId': tid, 'isDefault': False, 'createdAt': datetime.utcnow(), 'updatedAt': datetime.utcnow()})
+                await db.invoice_templates.insert_one(base)
+        doc = await db.invoice_templates.find_one({'id': tid})
+        doc.pop('_id', None)
+        return {'status': 'ok', 'template': doc}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         page = (payload or {}).get('page') or {'size': 'A4', 'orientation': 'portrait'}
         # build xlsx from grid
         out = io.BytesIO()

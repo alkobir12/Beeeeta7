@@ -707,7 +707,7 @@ async def print_resolve_template(payload: Dict[str, Any] = Body(...)):
 # --------------------- Invoice Templates (Excel-first + Design) ---------------------
 @router.get('/invoice-templates')
 async def list_invoice_templates():
-    docs = await db.invoice_templates.find({}).sort('createdAt', -1).to_list(length=1000)
+    docs = await db.invoice_templates.find({'archived': {'$ne': True}}).sort('createdAt', -1).to_list(length=1000)
     out = []
     for d in docs:
         d.pop('_id', None)

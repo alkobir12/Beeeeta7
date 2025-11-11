@@ -484,11 +484,11 @@ const InvoiceTemplateStudio = () => {
                                 <select className="border rounded px-2 py-1 w-full" value={selEl.binding||''} onChange={(e)=>updateElement(selEl.id,{binding:e.target.value})}>
                                   <option value="">— غير مربوط —</option>
                                   {schema.map((f,i)=>(<option key={i} value={f.name}>{`{{${f.name}}}`}</option>))}
-                                  <option value="CUSTOMER_NAME">{{`{{CUSTOMER_NAME}}`}}</option>
-                                  <option value="VEHICLE_PLATE">{{`{{VEHICLE_PLATE}}`}}</option>
-                                  <option value="INVOICE_NO">{{`{{INVOICE_NO}}`}}</option>
-                                  <option value="DATE">{{`{{DATE}}`}}</option>
-                                  <option value="TOTAL">{{`{{TOTAL}}`}}</option>
+                                  <option value="CUSTOMER_NAME">{`{{CUSTOMER_NAME}}`}</option>
+                                  <option value="VEHICLE_PLATE">{`{{VEHICLE_PLATE}}`}</option>
+                                  <option value="INVOICE_NO">{`{{INVOICE_NO}}`}</option>
+                                  <option value="DATE">{`{{DATE}}`}</option>
+                                  <option value="TOTAL">{`{{TOTAL}}`}</option>
                                 </select>
                               </div>
                             </>

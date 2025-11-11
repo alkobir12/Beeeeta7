@@ -1,0 +1,398 @@
+/* Invoice Template Studio - Enhanced Styling */
+
+/* ========================================
+   Color Palette - Modern Professional
+======================================== */
+:root {
+  --studio-primary: #3b82f6;
+  --studio-primary-hover: #2563eb;
+  --studio-secondary: #8b5cf6;
+  --studio-accent: #10b981;
+  --studio-danger: #ef4444;
+  --studio-bg: #f8fafc;
+  --studio-card: #ffffff;
+  --studio-border: #e2e8f0;
+  --studio-text: #1e293b;
+  --studio-text-muted: #64748b;
+}
+
+/* ========================================
+   Studio Container
+======================================== */
+.invoice-studio-container {
+  background: var(--studio-bg);
+  min-height: 100vh;
+}
+
+/* ========================================
+   Header - Enhanced
+======================================== */
+.studio-header {
+  background: linear-gradient(135deg, var(--studio-primary) 0%, var(--studio-secondary) 100%);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.studio-header h1 {
+  color: white;
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.studio-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ========================================
+   Buttons - Enhanced
+======================================== */
+.studio-btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  border: none;
+}
+
+.studio-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.studio-btn-primary {
+  background: var(--studio-primary);
+  color: white;
+}
+
+.studio-btn-primary:hover {
+  background: var(--studio-primary-hover);
+}
+
+.studio-btn-success {
+  background: var(--studio-accent);
+  color: white;
+}
+
+.studio-btn-success:hover {
+  background: #059669;
+}
+
+/* ========================================
+   Tool Panel - Enhanced
+======================================== */
+.studio-tool-panel {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  height: fit-content;
+  max-height: 88vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 1rem;
+}
+
+.studio-tool-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.studio-tool-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.studio-tool-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.studio-tool-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ========================================
+   Element Cards - Enhanced
+======================================== */
+.studio-element-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border: 2px solid var(--studio-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.studio-element-card:hover {
+  border-color: var(--studio-primary);
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+.studio-element-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--studio-primary);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* ========================================
+   Canvas - Enhanced
+======================================== */
+.studio-canvas-container {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.studio-canvas {
+  background: white;
+  border: 2px solid var(--studio-border);
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Canvas Grid - Enhanced */
+.studio-canvas-grid {
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(59, 130, 246, 0.05) 19px, rgba(59, 130, 246, 0.05) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(59, 130, 246, 0.05) 19px, rgba(59, 130, 246, 0.05) 20px);
+  background-size: 20px 20px;
+}
+
+/* ========================================
+   Elements on Canvas - Enhanced
+======================================== */
+.studio-canvas-element {
+  position: absolute;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+  cursor: move;
+}
+
+.studio-canvas-element:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.studio-canvas-element.selected {
+  border-color: var(--studio-primary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  z-index: 10;
+}
+
+/* Resize Handles - Enhanced */
+.studio-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--studio-primary);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.studio-resize-handle:hover {
+  width: 14px;
+  height: 14px;
+  background: var(--studio-primary-hover);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.studio-resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+.studio-resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+.studio-resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.studio-resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+/* ========================================
+   Properties Panel - Enhanced
+======================================== */
+.studio-properties {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border: 2px solid var(--studio-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.studio-properties-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--studio-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.studio-properties-input {
+  width: 100%;
+  padding: 0.625rem;
+  border: 2px solid var(--studio-border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.studio-properties-input:focus {
+  outline: none;
+  border-color: var(--studio-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   Tabs - Enhanced
+======================================== */
+.studio-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--studio-bg);
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.studio-tab {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.studio-tab:hover {
+  background: var(--studio-bg);
+  border-color: var(--studio-border);
+}
+
+.studio-tab.active {
+  background: var(--studio-primary);
+  color: white;
+  border-color: var(--studio-primary);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   Field Management Dialog - Enhanced
+======================================== */
+.studio-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.studio-dialog {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   Mobile Sticky Header - Enhanced
+======================================== */
+.studio-mobile-header {
+  background: linear-gradient(135deg, var(--studio-primary) 0%, var(--studio-secondary) 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1rem;
+  border-radius: 0 0 1rem 1rem;
+}
+
+/* ========================================
+   Print Preview - Enhanced
+======================================== */
+.studio-print-preview {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  padding: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 600px;
+}
+
+.studio-print-preview-page {
+  background: white;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* ========================================
+   Animations
+======================================== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.studio-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================
+   Responsive
+======================================== */
+@media (max-width: 768px) {
+  .studio-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .studio-tool-panel {
+    max-height: none;
+    position: relative;
+  }
+  
+  .studio-canvas-container {
+    padding: 1rem;
+  }
+}

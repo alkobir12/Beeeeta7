@@ -1542,13 +1542,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Comprehensive Backend Regression (all /api endpoints: auth, approvals, operations, budgets, COA, printing, invoice-templates, WhatsApp, references, AI KB)"
-    - "Comprehensive Frontend E2E: Login, Dashboard, Operations tabs, CEO embedded, Approvals flow, Knowledge Base, References, Invoice Template Studio"
-    - "Knowledge Base performance & DTC cards"
-    - "References Excel-first browsing"
-    - "Invoice Template Studio advanced editor readiness"
+    - "A4 Designer UX Improvements: Test snap-to-grid (10px), resize handles (all 4 corners), arrow key movement (1px/10px), print preview tab, mobile sticky header"
+    - "Invoice Template Studio E2E: Create template, add elements, drag/resize/arrow keys, apply design to grid, save, print preview"
+    - "Mobile responsiveness: Verify sticky header behavior and touch interactions"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:

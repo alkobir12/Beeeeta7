@@ -314,9 +314,6 @@ const InvoiceTemplateStudio = () => {
   
   const onCanvasMouseUp = () => { setDragging(null); setResizing(null); };
 
-  // ---------- Properties panel helpers ----------
-  const selEl = useMemo(()=> elements.find(e => e.id === selectedElId) || null, [selectedElId, elements]);
-
   const imageFileInput = useRef();
   const importImageFromFile = () => { if (imageFileInput.current) imageFileInput.current.click(); };
   const onImageFile = (e) => {

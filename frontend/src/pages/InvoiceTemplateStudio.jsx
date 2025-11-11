@@ -139,6 +139,15 @@ const InvoiceTemplateStudio = () => {
               </div>
             )}
           </div>
+                  <div className="flex items-center justify-between p-2 bg-slate-50 rounded border">
+                    <div className="text-xs text-slate-600">الاسم: {selected?.name}</div>
+                    <div className="flex gap-2">
+                      {!selected?.isDefault && (
+                        <Button size="sm" variant="outline" onClick={async ()=>{ try{ const r = await axios.post(`${API_URL}/invoice-templates/${selected.id}/make-default`); setSelected(r.data); await loadTemplates(); } catch(e){ alert('تعذر التعيين كافتراضي'); } }}>تعيين كافتراضي</Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={async ()=>{ const n = window.prompt('اسم جديد للقالب', selected?.name || ''); if(!n) return; try{ await axios.put(`${API_URL}/invoice-templates/${selected.id}`, { name: n }); await loadTemplates(); setSelected(prev => ({...prev, name: n})); } catch(e){ alert('تعذر إعادة التسمية'); } }}>إعادة تسمية</Button>
+                    </div>
+                  </div>
           <div className="flex gap-2">
             <label>
               <Button asChild className="bg-green-600 hover:bg-green-700 cursor-pointer"><span>استيراد قالب</span></Button>

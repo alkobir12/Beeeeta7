@@ -157,3 +157,8 @@ xlrd==2.0.2
 xlsxwriter==3.2.9
 yarl==1.22.0
 zipp==3.23.0
+llama-index-core==0.14.7
+llama-index-embeddings-openai==0.5.1
+llama-index-instrumentation==0.4.2
+llama-index-readers-file==0.5.4
+llama-index-workflows==2.11.1

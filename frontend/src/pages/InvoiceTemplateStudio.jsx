@@ -55,12 +55,13 @@ const InvoiceTemplateStudio = () => {
   const fileRef = useRef();
 
   // Designer state
-  const [tab, setTab] = useState('designer'); // studio | designer
+  const [tab, setTab] = useState('designer'); // studio | designer | preview
   const [elements, setElements] = useState([]); // absolute elements on canvas
   const [schema, setSchema] = useState([]); // DB fields: [{name,type}]
   const [page, setPage] = useState(defaultPage);
   const [selectedElId, setSelectedElId] = useState(null);
   const [dragging, setDragging] = useState(null);
+  const [resizing, setResizing] = useState(null); // { id, corner, startX, startY, ox, oy, ow, oh }
   const canvasRef = useRef();
   const [zoom, setZoom] = useState(1);
 

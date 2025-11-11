@@ -1158,6 +1158,72 @@ async def seed_print_templates():
         defaults = [
             ('invoice','قالب فاتورة افتراضي'),
             ('sales_invoice','قالب فاتورة مبيعات'),
+
+# ---------- Helpers ----------
+def _is_template_empty(doc: Dict[str, Any]) -> bool:
+    if not doc:
+        return True
+    if doc.get('fileId'):
+        return False
+    if doc.get('elements'):
+        return False
+    # preview grid check: if empty or only empty strings
+    prev = doc.get('preview') or []
+    non_empty = False
+    for row in prev:
+        for cell in (row or []):
+            if str(cell or '').strip():
+                non_empty = True
+                break
+        if non_empty:
+            break
+    if non_empty:
+        return False
+    # mapping/items
+    if (doc.get('mapping') or {}) or (doc.get('itemsConfig') or {}):
+        return False
+    return True
+
+@router.post('/invoice-templates/cleanup-empty')
+async def cleanup_empty_templates(purge: Optional[bool] = False):
+    try:
+        docs = await db.invoice_templates.find({}).to_list(length=5000)
+        to_archive = []
+        to_delete = []
+        for d in docs:
+            if _is_template_empty(d) and not d.get('isDefault'):
+                if purge:
+                    to_delete.append(d.get('id'))
+                else:
+                    to_archive.append(d.get('id'))
+        archived = 0
+        deleted = 0
+        if to_archive:
+            await db.invoice_templates.update_many({'id': {'$in': to_archive}}, {'$set': {'archived': True, 'archivedAt': datetime.utcnow()}})
+            archived = len(to_archive)
+        if to_delete:
+            await db.invoice_templates.delete_many({'id': {'$in': to_delete}})
+            deleted = len(to_delete)
+        return {'archived': archived, 'deleted': deleted}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# improve delete safety
+@router.delete('/invoice-templates/{tid}/hard')
+async def hard_delete_template(tid: str):
+    try:
+        d = await db.invoice_templates.find_one({'id': tid})
+        if not d:
+            return {'status': 'ok'}
+        if d.get('isDefault'):
+            raise HTTPException(status_code=400, detail='لا يمكن حذف القالب الافتراضي')
+        await db.invoice_templates.delete_one({'id': tid})
+        return {'status': 'deleted'}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
             ('diagnosis','قالب تقرير تشخيص'),
             ('vehicle_estimate','قالب تقدير مركبة'),
             ('quote','قالب عرض سعر'),

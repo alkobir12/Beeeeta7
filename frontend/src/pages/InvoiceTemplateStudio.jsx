@@ -429,7 +429,7 @@ const InvoiceTemplateStudio = () => {
                                       <div key={idx} className="px-2 py-1 text-xs font-semibold" style={{ width: c.w*zoom, color: el.headerColor}}>{c.label}</div>
                                     ))}
                                   </div>
-                                  <div className="p-2 text-xs text-slate-600">مصدر البنود: {{}}{el.itemsBinding}</div>
+                                  <div className="p-2 text-xs text-slate-600">مصدر البنود: {el.itemsBinding}</div>
                                 </div>
                               )}
                               {el.type==='line' && (

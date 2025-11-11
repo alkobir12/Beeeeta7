@@ -242,12 +242,32 @@ const InvoiceTemplateStudio = () => {
   }, [selectedElId, selEl]);
 
   // ---------- Canvas interactions ----------
+  // ---------- Canvas interactions ----------
   const onCanvasMouseDown = (e) => {
     if (!canvasRef.current) return;
     const bounds = canvasRef.current.getBoundingClientRect();
     const cx = (e.clientX - bounds.left) / zoom;
     const cy = (e.clientY - bounds.top) / zoom;
     const rev = [...elements].reverse();
+    // check for resize handle first (8px area on corners)
+    if (selectedElId) {
+      const el = elements.find(e => e.id === selectedElId);
+      if (el) {
+        const handleSize = 8 / zoom;
+        const corners = [
+          { name: 'se', x: el.x + el.w, y: el.y + el.h },
+          { name: 'ne', x: el.x + el.w, y: el.y },
+          { name: 'sw', x: el.x, y: el.y + el.h },
+          { name: 'nw', x: el.x, y: el.y },
+        ];
+        for (const c of corners) {
+          if (Math.abs(cx - c.x) <= handleSize && Math.abs(cy - c.y) <= handleSize) {
+            setResizing({ id: el.id, corner: c.name, startX: cx, startY: cy, ox: el.x, oy: el.y, ow: el.w, oh: el.h });
+            return;
+          }
+        }
+      }
+    }
     const found = rev.find(el => cx >= el.x && cx <= el.x + el.w && cy >= el.y && cy <= el.y + el.h);
     if (found) {
       setSelectedElId(found.id);
@@ -256,16 +276,40 @@ const InvoiceTemplateStudio = () => {
       setSelectedElId(null);
     }
   };
+  
   const onCanvasMouseMove = (e) => {
-    if (!dragging || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const bounds = canvasRef.current.getBoundingClientRect();
     const cx = (e.clientX - bounds.left) / zoom;
     const cy = (e.clientY - bounds.top) / zoom;
-    const dx = cx - dragging.startX;
-    const dy = cy - dragging.startY;
-    updateElement(dragging.id, { x: Math.max(0, Math.min(A4_WIDTH-10, Math.round(dragging.ox + dx))), y: Math.max(0, Math.min(A4_HEIGHT-10, Math.round(dragging.oy + dy))) });
+    
+    if (resizing) {
+      const dx = cx - resizing.startX;
+      const dy = cy - resizing.startY;
+      let newX = resizing.ox, newY = resizing.oy, newW = resizing.ow, newH = resizing.oh;
+      if (resizing.corner.includes('e')) newW = Math.max(20, resizing.ow + dx);
+      if (resizing.corner.includes('w')) { newW = Math.max(20, resizing.ow - dx); newX = resizing.ox + dx; }
+      if (resizing.corner.includes('s')) newH = Math.max(20, resizing.oh + dy);
+      if (resizing.corner.includes('n')) { newH = Math.max(20, resizing.oh - dy); newY = resizing.oy + dy; }
+      // snap
+      newX = snapToGrid(newX);
+      newY = snapToGrid(newY);
+      newW = snapToGrid(newW);
+      newH = snapToGrid(newH);
+      updateElement(resizing.id, { x: Math.max(0, Math.min(A4_WIDTH - 10, newX)), y: Math.max(0, Math.min(A4_HEIGHT - 10, newY)), w: newW, h: newH });
+    } else if (dragging) {
+      const dx = cx - dragging.startX;
+      const dy = cy - dragging.startY;
+      let newX = dragging.ox + dx;
+      let newY = dragging.oy + dy;
+      // snap to grid
+      newX = snapToGrid(newX);
+      newY = snapToGrid(newY);
+      updateElement(dragging.id, { x: Math.max(0, Math.min(A4_WIDTH - 10, newX)), y: Math.max(0, Math.min(A4_HEIGHT - 10, newY)) });
+    }
   };
-  const onCanvasMouseUp = () => setDragging(null);
+  
+  const onCanvasMouseUp = () => { setDragging(null); setResizing(null); };
 
   // ---------- Properties panel helpers ----------
   const selEl = useMemo(()=> elements.find(e => e.id === selectedElId) || null, [selectedElId, elements]);

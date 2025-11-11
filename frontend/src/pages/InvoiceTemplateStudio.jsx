@@ -382,6 +382,15 @@ const InvoiceTemplateStudio = () => {
   return (
     <Layout>
       <div className="container mx-auto p-3 md:p-6" dir="rtl">
+        {/* Sticky header for mobile */}
+        <div className="sticky top-0 z-50 bg-white shadow-md p-2 mb-2 md:static md:shadow-none md:p-0 md:mb-0 flex items-center justify-between md:hidden">
+          <h2 className="text-sm font-bold">استوديو القوالب</h2>
+          <div className="flex gap-1">
+            <Button size="sm" onClick={saveGrid} className="bg-blue-600 hover:bg-blue-700 text-xs">حفظ</Button>
+            <Button size="sm" onClick={downloadFilled} className="bg-emerald-600 hover:bg-emerald-700 text-xs">توليد</Button>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">استوديو قوالب الفواتير (Excel)</h1>

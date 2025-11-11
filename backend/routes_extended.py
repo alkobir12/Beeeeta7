@@ -868,6 +868,50 @@ async def save_named_copy(tid: str, payload: Dict[str, Any] = Body(...)):
         sample_data = (payload or {}).get('data') or {}
         elements = (payload or {}).get('elements') or []
         schema = (payload or {}).get('schema') or []
+        page = (payload or {}).get('page') or {'size': 'A4', 'orientation': 'portrait'}
+        
+        # build xlsx from grid
+        out = io.BytesIO()
+        book = xlsxwriter.Workbook(out, {'in_memory': True})
+        sheet = book.add_worksheet('Template')
+        for r, row in enumerate(grid):
+            if not isinstance(row, list):
+                continue
+            for c, val in enumerate(row):
+                sheet.write(r, c, '' if val is None else str(val))
+        book.close()
+        xlsx_bytes = out.getvalue()
+        file_id = None
+        if templates_bucket:
+            try:
+                file_oid = await templates_bucket.upload_from_stream(f'{name}_{uuid.uuid4().hex}.xlsx', io.BytesIO(xlsx_bytes), metadata={'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+                file_id = str(file_oid)
+            except Exception as e:
+                print(f"gridfs upload failed: {e}")
+        new_id = str(uuid.uuid4())
+        doc = {
+            'id': new_id,
+            'name': name,
+            'format': 'xlsx',
+            'fileId': file_id,
+            'fields': [],
+            'preview': grid,
+            'mapping': mapping,
+            'itemsConfig': items_cfg,
+            'elements': elements,
+            'schema': schema,
+            'page': page,
+            'sampleData': sample_data,
+            'isDefault': False,
+            'createdAt': datetime.utcnow()
+        }
+        await db.invoice_templates.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/invoice-templates/{tid}/auto-save')
 async def auto_save_template(tid: str, payload: Dict[str, Any] = Body(...)):

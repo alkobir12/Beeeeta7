@@ -71,8 +71,9 @@ const InvoiceTemplateStudio = () => {
 
   const saveGrid = async () => {
     if(!selected) return;
-    await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid });
-    alert('تم حفظ القالب كـ Excel');
+    await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid, mapping, items: itemsConfig });
+    await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid, mapping, itemsConfig });
+    alert('تم الحفظ وإنشاء/تحديث نموذج "فاتوره" تلقائياً');
   };
 
   const saveMapping = async () => {

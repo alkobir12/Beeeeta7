@@ -14,10 +14,17 @@ export default function References(){
   const [query, setQuery] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('search'); // search | excel
 
   const [showHistory, setShowHistory] = useState(false);
   const [historyProvider, setHistoryProvider] = useState('');
   const [historyItems, setHistoryItems] = useState([]);
+
+  // Excel Browser State
+  const [excelData, setExcelData] = useState([]);
+  const [excelSheets, setExcelSheets] = useState([]);
+  const [currentSheet, setCurrentSheet] = useState(0);
+  const [searchFilter, setSearchFilter] = useState('');
 
   const fetchHistory = async (provider='') => {
     try{
@@ -46,6 +53,30 @@ export default function References(){
       setResult(r.data);
     }catch(e){ setResult({ ok:false, error: 'failed' }); }
     finally{ setLoading(false); }
+  };
+
+  // Load sample Excel data
+  useEffect(() => {
+    // Sample electrical reference data
+    const sampleData = [
+      { component: 'بطارية', voltage: '12.6V', amperage: '45-70A', location: 'صندوق المحرك', notes: 'فحص الشحن كل 6 أشهر' },
+      { component: 'دينمو', voltage: '13.8-14.4V', amperage: '80-120A', location: 'جانب المحرك', notes: 'فحص الحزام والتوصيلات' },
+      { component: 'حساس O2', voltage: '0.1-0.9V', amperage: '-', location: 'أنبوب العادم', notes: 'استبدال كل 100,000 كم' },
+      { component: 'MAF', voltage: '0-5V', amperage: '-', location: 'مجرى الهواء', notes: 'تنظيف دوري' },
+      { component: 'فيوز رئيسي', voltage: '12V', amperage: '100-150A', location: 'صندوق الفيوزات', notes: 'التحقق من التآكل' },
+    ];
+    setExcelData(sampleData);
+    setExcelSheets(['المكونات الكهربائية', 'الحساسات', 'نظام الوقود']);
+  }, []);
+
+  const filteredData = excelData.filter(row =>
+    searchFilter === '' || Object.values(row).some(val => 
+      String(val).toLowerCase().includes(searchFilter.toLowerCase())
+    )
+  );
+
+  const exportToExcel = () => {
+    alert('جاري التصدير... (Excel Export)');
   };
 
   return (

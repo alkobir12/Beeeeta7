@@ -258,6 +258,18 @@ backend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE A4 DESIGNER TEST COMPLETE: Successfully executed Arabic review request with 90% pass rate (9/10 tests passed). **MAJOR SUCCESS:** (1) ✅ Login with Arabic name 'أحمد المهندس' working perfectly, (2) ✅ Empty template creation 'قالب فارغ' successful - template appears in list, (3) ✅ A4 Designer tab 'مصمم A4' accessible and functional, (4) ✅ Text element addition working - added and edited to 'اسم العميل', (5) ✅ CUSTOMER_NAME binding successful via dropdown selection, (6) ✅ Items table 'جدول البنود' addition working correctly, (7) ✅ Save Design 'حفظ التصميم' and Apply Design to Grid 'تطبيق التصميم على الشبكة' both functional, (8) ✅ Save as Excel 'حفظ كـ Excel' working, (9) ✅ Save as Invoice 'حفظ باسم فاتوره' with default name confirmation working, (10) ✅ Generate Invoice 'توليد فاتورة' successfully downloads .xlsx file, (11) ✅ Clean Empty Forms 'تنظيف النماذج الخالية' working. **MINOR ISSUE:** Delete template functionality not accessible during test (button not found in final state). **FIXED DURING TESTING:** Corrected JSX syntax errors in template literal expressions (lines 487-491 and 432). **VALIDATION SUCCESS:** All Arabic UI elements properly displayed, A4 canvas rendering correctly, element properties panel functional, template list management working. Invoice Template Studio with A4 Designer is production-ready for comprehensive template creation and management workflows."
 
+  - task: "A4 Designer UX Improvements (snap-to-grid, resize, arrow keys, print preview, mobile sticky header)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/InvoiceTemplateStudio.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented 5 UX improvements: (1) Snap-to-grid with GRID_SIZE=10px for precise alignment during drag/resize, (2) Resize handles on all 4 corners (nw,ne,sw,se) for selected elements with visual blue dots, (3) Arrow key movement (1px default, 10px with Shift), (4) Print Preview tab with read-only A4 view of all elements at 0.7 scale, (5) Mobile sticky header with quick save/generate buttons (z-50, visible only on mobile). Fixed syntax error in line 472 (QR display). Build successful with no linting errors."
+
   - task: "Approvals: Logs + SSE + WhatsApp deeplink"
     implemented: true
     working: false

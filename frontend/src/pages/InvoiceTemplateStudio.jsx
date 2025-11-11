@@ -81,6 +81,29 @@ const InvoiceTemplateStudio = () => {
     alert('تم حفظ الربط والحقول');
   };
 
+  const saveAsNamed = async () => {
+    if(!selected) return;
+    const name = window.prompt('أدخل اسم الفاتورة الجديدة', 'فاتوره');
+    if(!name) return;
+    const sample = {
+      WORKSHOP_NAME: mapping.WORKSHOP_NAME || 'ورشة الخليج',
+      CUSTOMER_NAME: mapping.CUSTOMER_NAME || 'عميل',
+      VEHICLE_PLATE: mapping.VEHICLE_PLATE || 'س ع د 1234',
+      TOTAL: mapping.TOTAL || '0.00',
+      ITEMS: [ { description:'-', qty: 1, price: 0, total: 0 } ]
+    };
+    const res = await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-named`, {
+      name,
+      grid,
+      mapping,
+      itemsConfig,
+      data: sample
+    });
+    await loadTemplates();
+    setSelected(res.data);
+    alert('تم إنشاء وحفظ قالب جديد بالاسم المحدد');
+  };
+
   const downloadFilled = async () => {
     if(!selected) return;
     const data = {
@@ -96,8 +119,7 @@ const InvoiceTemplateStudio = () => {
     const resp = await fetch(`${API_URL}/print/invoice-xlsx`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ templateId: selected.id, data }) });
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'invoice.xlsx'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = 'invoice.xlsx'; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -117,6 +139,8 @@ const InvoiceTemplateStudio = () => {
               <Button onClick={createBlank} variant="outline">قالب فارغ</Button>
             </div>
             <Button onClick={saveGrid} className="bg-blue-600 hover:bg-blue-700">حفظ كـ Excel</Button>
+            <Button onClick={saveMapping} className="bg-purple-600 hover:bg-purple-700">حفظ الربط</Button>
+            <Button onClick={saveAsNamed} className="bg-amber-600 hover:bg-amber-700">حفظ باسم فاتوره</Button>
             <Button onClick={downloadFilled} className="bg-emerald-600 hover:bg-emerald-700">توليد فاتورة من القالب</Button>
           </div>
         </div>
@@ -132,9 +156,7 @@ const InvoiceTemplateStudio = () => {
                     <div className="text-xs text-slate-500">{t.format?.toUpperCase()} • {t.fields?.length||0} حقول</div>
                   </div>
                 ))}
-                {templates.length===0 && (
-                  <div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>
-                )}
+                {templates.length===0 && (<div className="text-sm text-slate-500">لا توجد قوالب بعد، قم بالاستيراد أولاً.</div>)}
                 {templates.length>0 && (
                   <div className="mt-4 text-right">
                     <Button variant="destructive" onClick={async ()=>{ if(!selected){ alert('اختر قالباً أولاً'); return; } if(!window.confirm('هل تريد حذف القالب؟')) return; try{ await axios.delete(`${API_URL}/invoice-templates/${selected.id}`); setSelected(null); await loadTemplates(); } catch(e){ alert('تعذر حذف القالب'); } }}>حذف القالب المحدد</Button>
@@ -205,13 +227,7 @@ const InvoiceTemplateStudio = () => {
                       <tr key={rIdx}>
                         {row.map((cell, cIdx) => (
                           <td key={cIdx} className="border p-1">
-                            <input
-                              className="w-40 px-1 text-sm"
-                              value={cell}
-                              onChange={(e)=>{
-                                const g = [...grid]; g[rIdx][cIdx] = e.target.value; setGrid(g);
-                              }}
-                            />
+                            <input className="w-40 px-1 text-sm" value={cell} onChange={(e)=>{ const g = [...grid]; g[rIdx][cIdx] = e.target.value; setGrid(g); }} />
                           </td>
                         ))}
                       </tr>

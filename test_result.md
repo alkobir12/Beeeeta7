@@ -269,6 +269,9 @@ backend:
         - working: "NA"
           agent: "main"
           comment: "Implemented 5 UX improvements: (1) Snap-to-grid with GRID_SIZE=10px for precise alignment during drag/resize, (2) Resize handles on all 4 corners (nw,ne,sw,se) for selected elements with visual blue dots, (3) Arrow key movement (1px default, 10px with Shift), (4) Print Preview tab with read-only A4 view of all elements at 0.7 scale, (5) Mobile sticky header with quick save/generate buttons (z-50, visible only on mobile). Fixed syntax error in line 472 (QR display). Build successful with no linting errors."
+        - working: "NA"
+          agent: "main"
+          comment: "Fixed runtime error 'Cannot access uninitialized variable' - moved selEl definition before useEffect for arrow keys. Build successful (298.61 KB). Dashboard loads correctly without errors."
 
   - task: "Approvals: Logs + SSE + WhatsApp deeplink"
     implemented: true

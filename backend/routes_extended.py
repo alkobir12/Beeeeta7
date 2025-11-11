@@ -1243,23 +1243,6 @@ async def hard_delete_template(tid: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-            ('diagnosis','قالب تقرير تشخيص'),
-            ('vehicle_estimate','قالب تقدير مركبة'),
-            ('quote','قالب عرض سعر'),
-            ('purchase_order','قالب أمر شراء'),
-            ('vendor_bill','قالب فاتورة مورد'),
-            ('receipt','قالب إيصال')
-        ]
-        for t, name in defaults:
-            exists = await db.print_templates.find_one({'type': t})
-            if not exists:
-                content = f"<html><body><h1>{name}</h1><div>{{{{CUSTOMER_NAME}}}}</div></body></html>"
-                doc = {'id': str(uuid.uuid4()), 'type': t, 'name': name, 'content': content, 'isActive': True, 'createdAt': datetime.utcnow()}
-                await db.print_templates.insert_one(doc)
-                added.append(t)
-        return {'added': added}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/admin/create-indexes')
 async def admin_create_indexes():

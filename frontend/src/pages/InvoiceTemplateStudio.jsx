@@ -116,6 +116,56 @@ const InvoiceTemplateStudio = () => {
     alert('تم الحفظ وإنشاء/تحديث نموذج "فاتوره" تلقائياً');
   };
 
+  // ---------- Apply design to grid ----------
+  const applyDesignToGrid = async () => {
+    if (!selected) return;
+    // heuristic cell size
+    const cellW = 100; // px per col
+    const cellH = 32;  // px per row
+    let g = grid && grid.length ? grid.map(r => [...r]) : [];
+    const ensureSize = (rows, cols) => {
+      const curRows = g.length;
+      const curCols = g[0]?.length || 0;
+      for (let r=curRows; r<rows; r++) g.push(Array(Math.max(cols, curCols||10)).fill(''));
+      for (let r=0; r<g.length; r++) {
+        for (let c=g[r].length; c<cols; c++) g[r].push('');
+      }
+    };
+    // place text bindings
+    elements.forEach(el => {
+      if (el.type === 'text') {
+        const r = Math.max(0, Math.round(el.y / cellH));
+        const c = Math.max(0, Math.round(el.x / cellW));
+        ensureSize(r+1, c+1);
+        const val = el.binding ? `{{${el.binding}}}` : (el.text || '');
+        g[r][c] = val;
+      }
+    });
+    // ensure items anchor and template row for itemsTable
+    const table = elements.find(e => e.type==='itemsTable');
+    if (table) {
+      const r = Math.max(0, Math.round(table.y / cellH));
+      const c = Math.max(0, Math.round(table.x / cellW));
+      const colsCount = Math.max(4, table.cols?.length || 4);
+      ensureSize(r+2, c+colsCount);
+      // anchor
+      g[r][c] = '{{ITEMS}}';
+      // template row values
+      const tRow = r+1;
+      for (let i=0; i<colsCount; i++) {
+        const col = table.cols?.[i];
+        const key = col?.key || `col${i+1}`;
+        g[tRow][c+i] = `{{ITEMS.${key}}}`;
+      }
+    }
+    setGrid(g);
+    try{
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/save-json`, { grid: g, mapping, items: itemsConfig });
+      await axios.post(`${API_URL}/invoice-templates/${selected.id}/auto-save`, { grid: g, mapping, itemsConfig, elements, schema, page });
+      alert('تم تطبيق التصميم على الشبكة وحفظه');
+    }catch(e){ alert('تعذر تطبيق التصميم على الشبكة'); }
+  };
+
   const saveMapping = async () => {
     if(!selected) return;
     await axios.post(`${API_URL}/invoice-templates/${selected.id}/update-mapping`, { mapping, items: itemsConfig });

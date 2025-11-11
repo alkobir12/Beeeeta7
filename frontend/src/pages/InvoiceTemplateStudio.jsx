@@ -374,6 +374,7 @@ const InvoiceTemplateStudio = () => {
                         <div className="flex gap-2 mt-2">
                           <Button size="sm" onClick={()=>{ const s=[...schema, {name:`FIELD_${schema.length+1}`, type:'text'}]; setSchema(s); autoSaveDebounced({schema:s}); }}>+ حقل</Button>
                           <Button size="sm" variant="outline" onClick={async ()=>{ await axios.post(`${API_URL}/invoice-templates/${selected.id}/design`, { elements, schema, page }); alert('تم حفظ التصميم'); }}>حفظ التصميم</Button>
+                          <Button size="sm" className="bg-blue-600 text-white" onClick={applyDesignToGrid}>تطبيق التصميم على الشبكة</Button>
                         </div>
                       </div>
                     </CardContent>

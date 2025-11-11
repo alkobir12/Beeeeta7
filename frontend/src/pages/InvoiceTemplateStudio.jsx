@@ -227,6 +227,9 @@ const InvoiceTemplateStudio = () => {
   // ---------- Helper: snap to grid ----------
   const snapToGrid = (val) => Math.round(val / GRID_SIZE) * GRID_SIZE;
 
+  // ---------- Properties panel helpers ----------
+  const selEl = useMemo(()=> elements.find(e => e.id === selectedElId) || null, [selectedElId, elements]);
+
   // ---------- Keyboard: Arrow keys to move selected element ----------
   useEffect(() => {
     const handler = (e) => {

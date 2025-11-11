@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة - {{INVOICE_NO}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.5;
+            color: #2c3e50;
+            background: #ecf0f1;
+            padding: 20px;
+        }
+        
+        .invoice-container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            border: 3px solid #2c3e50;
+        }
+        
+        /* Header with Borders */
+        .invoice-header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 40px;
+            border-bottom: 8px double #34495e;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .company-logo {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        
+        .invoice-title {
+            text-align: left;
+            background: white;
+            color: #2c3e50;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 24px;
+            font-weight: 700;
+            border: 2px solid #34495e;
+        }
+        
+        .company-details {
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        
+        /* Invoice Meta Info */
+        .invoice-meta {
+            padding: 25px 40px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .meta-block {
+            flex: 1;
+        }
+        
+        .meta-block h4 {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 6px;
+            display: inline-block;
+        }
+        
+        .meta-block p {
+            font-size: 13px;
+            margin: 6px 0;
+            color: #495057;
+        }
+        
+        /* Client Info Box */
+        .client-section {
+            padding: 30px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .client-box {
+            border: 2px solid #dee2e6;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .client-box h3 {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            margin: -20px -20px 15px -20px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .client-box table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .client-box table td {
+            padding: 6px 0;
+            font-size: 13px;
+            color: #495057;
+        }
+        
+        .client-box table td:first-child {
+            font-weight: 600;
+            color: #2c3e50;
+            width: 120px;
+        }
+        
+        /* Services Table - Classic Style */
+        .services-section {
+            padding: 20px 40px;
+        }
+        
+        .services-section h3 {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            margin-bottom: 0;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #2c3e50;
+        }
+        
+        .services-table thead {
+            background: #34495e;
+            color: white;
+        }
+        
+        .services-table th {
+            padding: 12px 15px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid #2c3e50;
+        }
+        
+        .services-table tbody td {
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            font-size: 13px;
+            color: #495057;
+        }
+        
+        .services-table tbody tr:nth-child(odd) {
+            background: #f8f9fa;
+        }
+        
+        /* Totals Table */
+        .totals-section {
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-top: 3px double #2c3e50;
+        }
+        
+        .totals-table {
+            width: 400px;
+            margin-right: auto;
+            border: 2px solid #2c3e50;
+            background: white;
+        }
+        
+        .totals-table tr {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .totals-table tr:last-child {
+            border-bottom: none;
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .totals-table td {
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+        
+        .totals-table td:first-child {
+            font-weight: 600;
+        }
+        
+        .totals-table td:last-child {
+            text-align: left;
+            font-weight: 700;
+        }
+        
+        .totals-table tr:last-child td {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        /* Terms & Conditions */
+        .terms-section {
+            padding: 25px 40px;
+            background: white;
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .terms-section h4 {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .terms-section p {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.8;
+            margin: 6px 0;
+        }
+        
+        /* Footer */
+        .invoice-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+            border-top: 8px double #34495e;
+        }
+        
+        .invoice-footer p {
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        
+        .signature-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .signature-box {
+            text-align: center;
+        }
+        
+        .signature-line {
+            width: 200px;
+            height: 60px;
+            border-bottom: 2px solid white;
+            margin: 0 auto 10px;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .invoice-container {
+                border: 2px solid #2c3e50;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="header-top">
+                <div class="company-logo">{{WORKSHOP_NAME}}</div>
+                <div class="invoice-title">فــاتــورة</div>
+            </div>
+            <div class="company-details">
+                <p>📍 العنوان: {{WORKSHOP_ADDRESS}}</p>
+                <p>📞 الهاتف: {{WORKSHOP_PHONE}} | ✉️ البريد: {{WORKSHOP_EMAIL}}</p>
+                <p>🏢 السجل التجاري: {{COMPANY_CR}} | 🔢 الرقم الضريبي: {{COMPANY_TAX}}</p>
+            </div>
+        </div>
+        
+        <!-- Invoice Meta -->
+        <div class="invoice-meta">
+            <div class="meta-block">
+                <h4>معلومات الفاتورة</h4>
+                <p><strong>رقم الفاتورة:</strong> {{INVOICE_NO}}</p>
+                <p><strong>التاريخ:</strong> {{DATE}}</p>
+                <p><strong>تاريخ الاستحقاق:</strong> {{DUE_DATE}}</p>
+            </div>
+            <div class="meta-block">
+                <h4>حالة الدفع</h4>
+                <p><strong>الحالة:</strong> {{PAYMENT_STATUS}}</p>
+                <p><strong>طريقة الدفع:</strong> {{PAYMENT_METHOD}}</p>
+            </div>
+        </div>
+        
+        <!-- Client & Vehicle Info -->
+        <div class="client-section">
+            <div class="client-box">
+                <h3>بيانات العميل</h3>
+                <table>
+                    <tr>
+                        <td>اسم العميل:</td>
+                        <td>{{CUSTOMER_NAME}}</td>
+                    </tr>
+                    <tr>
+                        <td>رقم الهاتف:</td>
+                        <td>{{CUSTOMER_PHONE}}</td>
+                    </tr>
+                    <tr>
+                        <td>البريد الإلكتروني:</td>
+                        <td>{{CUSTOMER_EMAIL}}</td>
+                    </tr>
+                    <tr>
+                        <td>الرقم الضريبي:</td>
+                        <td>{{CUSTOMER_TAX}}</td>
+                    </tr>
+                    <tr>
+                        <td>السجل التجاري:</td>
+                        <td>{{CUSTOMER_CR}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="client-box">
+                <h3>بيانات المركبة</h3>
+                <table>
+                    <tr>
+                        <td>رقم اللوحة:</td>
+                        <td>{{VEHICLE_PLATE}}</td>
+                    </tr>
+                    <tr>
+                        <td>الطراز:</td>
+                        <td>{{VEHICLE_MODEL}}</td>
+                    </tr>
+                    <tr>
+                        <td>السنة:</td>
+                        <td>{{VEHICLE_YEAR}}</td>
+                    </tr>
+                    <tr>
+                        <td>رقم الهيكل (VIN):</td>
+                        <td>{{VEHICLE_VIN}}</td>
+                    </tr>
+                    <tr>
+                        <td>القراءة:</td>
+                        <td>{{VEHICLE_MILEAGE}} كم</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Services Table -->
+        <div class="services-section">
+            <h3>تفاصيل الخدمات والقطع</h3>
+            <table class="services-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>الوصف</th>
+                        <th style="width: 80px;">الكمية</th>
+                        <th style="width: 100px;">السعر</th>
+                        <th style="width: 100px;">الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ITEMS}}
+                    <tr>
+                        <td>{{ITEMS.index}}</td>
+                        <td>{{ITEMS.description}}</td>
+                        <td>{{ITEMS.qty}}</td>
+                        <td>{{ITEMS.price}} ريال</td>
+                        <td>{{ITEMS.total}} ريال</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Totals -->
+        <div class="totals-section">
+            <table class="totals-table">
+                <tr>
+                    <td>المجموع الفرعي:</td>
+                    <td>{{SUBTOTAL}} ريال</td>
+                </tr>
+                <tr>
+                    <td>الخصم:</td>
+                    <td>- {{DISCOUNT}} ريال</td>
+                </tr>
+                <tr>
+                    <td>ضريبة القيمة المضافة (15%):</td>
+                    <td>{{TAX}} ريال</td>
+                </tr>
+                <tr>
+                    <td>الإجمالي الكلي:</td>
+                    <td>{{TOTAL}} ريال</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Terms -->
+        <div class="terms-section">
+            <h4>الشروط والأحكام</h4>
+            <p>• {{PAYMENT_TERMS}}</p>
+            <p>• الأسعار شاملة ضريبة القيمة المضافة.</p>
+            <p>• القطع المستبدلة ملك للورشة ما لم يطلب العميل استلامها.</p>
+            <p>• الضمان على القطع والعمالة حسب سياسة الورشة.</p>
+            <p>• نحتفظ بحق تعديل الأسعار حسب تقلبات السوق.</p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <p style="font-size: 18px; margin-bottom: 15px; font-weight: 600;">شكراً لثقتكم</p>
+            <p>نسعد بخدمتكم دائماً</p>
+            
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>توقيع المستلم</p>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>توقيع المسؤول</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

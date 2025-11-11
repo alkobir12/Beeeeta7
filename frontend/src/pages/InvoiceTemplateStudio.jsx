@@ -415,6 +415,7 @@ const InvoiceTemplateStudio = () => {
         <Tabs defaultValue="designer" value={tab} onValueChange={setTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="designer">مصمم A4</TabsTrigger>
+            <TabsTrigger value="preview">معاينة الطباعة</TabsTrigger>
             <TabsTrigger value="studio">محرر الشبكة</TabsTrigger>
           </TabsList>
 

@@ -264,6 +264,7 @@ const DocumentFormDialog = ({
             <DialogTitle className="text-2xl">
               إنشاء {docTitles[documentType]}
             </DialogTitle>
+            <DialogDescription>املأ البيانات المطلوبة</DialogDescription>
           </DialogHeader>
 
           {/* Inline Preview Overlay */}

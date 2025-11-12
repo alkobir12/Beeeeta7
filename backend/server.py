@@ -883,6 +883,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Payroll router not loaded: {e}")
 
+# Import and include Notion MCP router
+try:
+    from routes_notion import router as notion_router
+    app.include_router(notion_router)
+    logger.info("✅ Notion MCP router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Notion MCP router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

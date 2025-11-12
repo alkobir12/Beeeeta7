@@ -164,3 +164,6 @@ llama-index-readers-file==0.5.4
 llama-index-workflows==2.11.1
 mcp==1.21.0
 notion-client==2.7.0
+supabase==2.24.0
+supabase-auth==2.24.0
+supabase-functions==2.24.0

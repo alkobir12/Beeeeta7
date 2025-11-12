@@ -891,6 +891,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Notion MCP router not loaded: {e}")
 
+# Import and include Supabase router
+try:
+    from routes_supabase import router as supabase_router
+    app.include_router(supabase_router, prefix='/api')
+    logger.info("✅ Supabase router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Supabase router not loaded: {e}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

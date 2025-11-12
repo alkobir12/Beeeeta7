@@ -907,6 +907,17 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Supabase router not loaded: {e}")
 
+# Auto-Sync Status endpoint
+@api_router.get('/sync/status')
+async def get_sync_status():
+    """الحصول على حالة المزامنة التلقائية"""
+    try:
+        from auto_sync_service import AutoSyncService
+        sync = AutoSyncService(db)
+        return sync.get_sync_status()
+    except Exception as e:
+        return {"error": str(e), "mongodb": "active"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

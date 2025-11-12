@@ -122,6 +122,14 @@ async def create_vehicle(vehicle_data: VehicleCreate):
             }
         )
         
+        # ✅ AUTO-SYNC to Notion/Supabase
+        try:
+            from auto_sync_service import AutoSyncService
+            sync = AutoSyncService(db)
+            sync_result = await sync.save_vehicle(vehicle.dict())
+            logger.info(f"✅ Auto-sync result: {sync_result}")
+        except Exception as sync_err:
+            logger.warning(f"⚠️ Auto-sync failed (non-critical): {sync_err}")
         
         # Auto-create approval link for this vehicle (7-day expiry)
         try:

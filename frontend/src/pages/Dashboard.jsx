@@ -304,9 +304,9 @@ const Dashboard = () => {
 
         {/* Vehicles List */}
         <div className="grid grid-cols-1 gap-4">
-          {filteredVehicles.map(vehicle => (
+          {filteredVehicles.map((vehicle, index) => (
             <Card 
-              key={vehicle.id} 
+              key={`${vehicle.id}-${index}`} 
               className="shadow-md hover:shadow-xl transition-all duration-300 border-r-4"
               style={{ borderRightColor: getStatusColor(vehicle.status).replace('bg-', '#') }}
             >

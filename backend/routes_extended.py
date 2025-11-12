@@ -672,6 +672,77 @@ async def create_print_template(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.delete('/templates/{template_id}')
+async def delete_template(template_id: str):
+    """حذف نموذج طباعة"""
+    try:
+        result = await db.print_templates.delete_one({'id': template_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail='Template not found')
+        return {'message': 'Template deleted successfully'}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/templates/{template_id}/make-default')
+async def make_template_default(template_id: str):
+    """جعل النموذج افتراضي"""
+    try:
+        # Get template first
+        template = await db.print_templates.find_one({'id': template_id})
+        if not template:
+            raise HTTPException(status_code=404, detail='Template not found')
+        
+        template_type = template.get('type', 'invoice')
+        
+        # Remove default from all templates of same type
+        await db.print_templates.update_many(
+            {'type': template_type},
+            {'$set': {'isActive': False}}
+        )
+        
+        # Set this template as default
+        await db.print_templates.update_one(
+            {'id': template_id},
+            {'$set': {'isActive': True}}
+        )
+        
+        return {'message': 'Template set as default', 'id': template_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/templates/{template_id}/apply-to-all')
+async def apply_template_to_all(template_id: str):
+    """تطبيق النموذج على جميع الأنواع"""
+    try:
+        template = await db.print_templates.find_one({'id': template_id})
+        if not template:
+            raise HTTPException(status_code=404, detail='Template not found')
+        
+        content = template.get('content', '')
+        name = template.get('name', 'قالب')
+        
+        # Apply to all types
+        types = ['invoice', 'diagnosis', 'quote', 'receipt', 'vehicle_estimate']
+        applied = []
+        
+        for t in types:
+            await db.print_templates.update_one(
+                {'type': t},
+                {'$set': {'content': content, 'name': f'{name} - {t}', 'isActive': True}},
+                upsert=True
+            )
+            applied.append(t)
+        
+        return {'message': 'Template applied to all types', 'applied': applied}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/print/render', response_class=HTMLResponse)
 async def print_render(payload: Dict[str, Any] = Body(...)):
     """Compatibility render endpoint: if html provided return it; otherwise attempt to resolve repair template and apply data placeholders."""

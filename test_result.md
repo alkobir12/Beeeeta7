@@ -174,6 +174,18 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Templates CRUD API working correctly. POST creates templates with name/type/content fields, GET lists templates with content/html present, PUT updates name/type/content successfully, DELETE removes templates. Fixed ObjectId serialization issues during testing."
 
+  - task: "Missing Template Endpoints"
+    implemented: false
+    working: false
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ NOT IMPLEMENTED: Quick endpoint check revealed 3 missing template endpoints causing 404 errors. (1) DELETE /api/templates/{id} - Only GET and POST /api/templates exist, no DELETE endpoint implemented. (2) POST /api/templates/{id}/make-default - Endpoint does not exist (note: /api/invoice-templates/{tid}/make-default exists but not for /api/templates path). (3) POST /api/templates/{id}/apply-to-all - Endpoint does not exist in routes_extended.py. These endpoints are being called by frontend but return 404. Implementation needed if frontend requires these features."
+
   - task: "Settings API"
     implemented: true
     working: true

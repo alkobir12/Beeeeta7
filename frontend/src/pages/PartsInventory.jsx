@@ -173,6 +173,7 @@ const PartsInventory = () => {
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                   <DialogTitle>{editingPart ? 'تعديل قطعة غيار' : 'إضافة قطعة غيار جديدة'}</DialogTitle>
+                  <DialogDescription>املأ بيانات القطعة</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">

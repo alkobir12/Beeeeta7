@@ -58,6 +58,7 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
       <DialogContent className="max-w-[900px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>معاينة وطباعة المستند</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="flex gap-2 justify-end flex-wrap">

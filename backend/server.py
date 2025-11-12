@@ -908,7 +908,7 @@ except Exception as e:
     logger.warning(f"⚠️ Supabase router not loaded: {e}")
 
 # Auto-Sync Status endpoint
-@api_router.get('/sync/status')
+@app.get('/api/sync/status')
 async def get_sync_status():
     """الحصول على حالة المزامنة التلقائية"""
     try:

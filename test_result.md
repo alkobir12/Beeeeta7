@@ -210,6 +210,33 @@ backend:
   - task: "Services CRUD API"
     implemented: true
     working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added POST/PUT/DELETE for /api/services for ServicesManagement page."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Services CRUD API working correctly. POST creates services with name/category/price/duration fields, PUT updates service price successfully, DELETE removes services and returns proper message."
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATION VERIFIED: POST /api/services returns 422 with proper validation errors when empty payload sent. Required fields: name, category, price, duration. Endpoint is working correctly and properly validates input."
+
+  - task: "Parts CRUD API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATION VERIFIED: POST /api/parts returns 422 with proper validation errors when empty payload sent. Required fields: partNumber, name, category, purchasePrice, sellingPrice, quantity. Endpoint is working correctly and properly validates input."
+
   - task: "Operations & Accounting Tabs"
     implemented: true
     working: false

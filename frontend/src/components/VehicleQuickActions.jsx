@@ -159,6 +159,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               <span>إدارة المركبة</span>
               <Button variant="ghost" size="icon" onClick={onClose}><X size={20} /></Button>
             </DialogTitle>
+            <DialogDescription>خيارات سريعة للمركبة</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">

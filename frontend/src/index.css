@@ -15,10 +15,10 @@ html, body, #root { height: 100%; }
 body { background: var(--color-background); font-size: var(--base-font-size); }
 
 /* Canva-like card accents */
-.canva-accent-emerald { border-color: #a7f3d0; background: linear-gradient(135deg,#ffffff, #ecfdf5); }
-.canva-accent-blue { border-color: #bfdbfe; background: linear-gradient(135deg,#ffffff, #eff6ff); }
-.canva-accent-purple { border-color: #e9d5ff; background: linear-gradient(135deg,#ffffff, #faf5ff); }
-.canva-accent-rose { border-color: #fecdd3; background: linear-gradient(135deg,#ffffff, #fff1f2); }
+.canva-accent-emerald { border-color: #10b981; background: #d1fae5; }
+.canva-accent-blue { border-color: #3b82f6; background: #dbeafe; }
+.canva-accent-purple { border-color: #8b5cf6; background: #ede9fe; }
+.canva-accent-rose { border-color: #f43f5e; background: #ffe4e6; }
 
 /* Godaddy primary reused */
 .btn-godaddy-primary { background:#1BDB4F; color:#0b4214; border:1px solid #0b4214; }

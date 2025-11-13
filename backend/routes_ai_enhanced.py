@@ -109,6 +109,59 @@ async def search_history(provider: Optional[str] = None, limit: int = 50):
             if r.get('createdAt') and hasattr(r['createdAt'],'isoformat'):
                 r['createdAt'] = r['createdAt'].isoformat()
         return {'items': rows, 'count': len(rows)}
+
+@router.get('/ai/kb/docs')
+async def kb_list_docs(limit: int = 200):
+    """List knowledge base documents from multiple collections with projection."""
+    try:
+        out = []
+        # knowledge_documents
+        try:
+            docs1 = await db.knowledge_documents.find({}, {
+                '_id': 0,
+                'id': 1,
+                'title': 1,
+                'filename': 1,
+                'type': 1,
+                'tags': 1,
+                'createdAt': 1,
+            }).sort('createdAt', -1).limit(limit).to_list(length=limit)
+            for d in docs1:
+                out.append({
+                    'id': d.get('id') or d.get('filename') or str(uuid.uuid4()),
+                    'title': d.get('title') or d.get('filename') or 'Document',
+                    'filename': d.get('filename'),
+                    'type': d.get('type') or 'doc',
+                    'tags': d.get('tags') or [],
+                    'createdAt': d.get('createdAt')
+                })
+        except Exception:
+            pass
+        # ai_kb_docs
+        try:
+            docs2 = await db.ai_kb_docs.find({}, {
+                '_id': 0,
+                'id': 1,
+                'title': 1,
+                'file_name': 1,
+                'tags': 1,
+                'createdAt': 1,
+            }).sort('createdAt', -1).limit(limit).to_list(length=limit)
+            for d in docs2:
+                out.append({
+                    'id': d.get('id') or d.get('file_name') or str(uuid.uuid4()),
+                    'title': d.get('title') or d.get('file_name') or 'Doc',
+                    'filename': d.get('file_name'),
+                    'type': 'doc',
+                    'tags': d.get('tags') or [],
+                    'createdAt': d.get('createdAt')
+                })
+        except Exception:
+            pass
+        return {'docs': out, 'count': len(out)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

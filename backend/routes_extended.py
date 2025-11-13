@@ -309,7 +309,7 @@ async def list_operations(account_id: Optional[str] = None, type: Optional[str] 
             q['type'] = type
         if vehicle_id:
             q['vehicleId'] = vehicle_id
-        ops = await db.operations.find(q).sort('date', -1).to_list(length=2000)
+        ops = await db.operations.find(q, {'_id': 0, 'id':1, 'type':1, 'partnerName':1, 'total':1, 'items':1, 'date':1}).sort('date', -1).to_list(length=2000)
         for o in ops:
             o.pop('_id', None)
             if o.get('date') and hasattr(o['date'], 'isoformat'):

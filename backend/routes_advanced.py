@@ -198,12 +198,12 @@ async def get_ceo_metrics(days: int = 30):
     # Get transactions
     transactions = await db.transactions.find({
         "date": {"$gte": start_date, "$lte": end_date}
-    }).to_list(10000)
+    }, {"_id": 0, "amount": 1, "type": 1}).to_list(10000)
     
-    # Get vehicles
-    vehicles = await db.vehicles.find({
+    # Vehicles count only (no full docs)
+    vehicles_count = await db.vehicles.count_documents({
         "entryDate": {"$gte": start_date, "$lte": end_date}
-    }).to_list(10000)
+    })
     
     # Get customers
     total_customers = await db.customers.count_documents({})
@@ -212,19 +212,19 @@ async def get_ceo_metrics(days: int = 30):
     })
     
     # Calculate metrics
-    revenue = sum(t['amount'] for t in transactions if t['type'] == 'income')
-    expenses = sum(t['amount'] for t in transactions if t['type'] == 'expense')
+    revenue = sum(t.get('amount', 0) for t in transactions if t.get('type') == 'income')
+    expenses = sum(t.get('amount', 0) for t in transactions if t.get('type') == 'expense')
     profit = revenue - expenses
     
-    # Get inventory value
-    parts = await db.parts.find().to_list(10000)
-    inventory_value = sum(p['purchasePrice'] * p['quantity'] for p in parts)
+    # Get inventory value (project needed fields only)
+    parts = await db.parts.find({}, {"_id": 0, "purchasePrice": 1, "quantity": 1}).to_list(10000)
+    inventory_value = sum((p.get('purchasePrice', 0) or 0) * (p.get('quantity', 0) or 0) for p in parts)
     
-    # Get feedback
+    # Get feedback (project needed fields only)
     feedbacks = await db.customer_feedback.find({
         "createdAt": {"$gte": start_date}
-    }).to_list(1000)
-    avg_satisfaction = sum(f['overallRating'] for f in feedbacks) / len(feedbacks) if feedbacks else 0
+    }, {"_id": 0, "overallRating": 1, "wouldRecommend": 1, "serviceQuality": 1, "staffBehavior": 1, "pricing": 1}).to_list(1000)
+    avg_satisfaction = sum(f.get('overallRating', 0) for f in feedbacks) / len(feedbacks) if feedbacks else 0
     
     return {
         "period": f"{days} days",
@@ -232,13 +232,13 @@ async def get_ceo_metrics(days: int = 30):
         "expenses": expenses,
         "profit": profit,
         "profitMargin": (profit / revenue * 100) if revenue > 0 else 0,
-        "vehiclesServiced": len(vehicles),
+        "vehiclesServiced": vehicles_count,
         "totalCustomers": total_customers,
         "newCustomers": new_customers,
         "customerSatisfaction": round(avg_satisfaction, 2),
         "inventoryValue": inventory_value,
         "cashFlow": revenue - expenses,
-        "avgTicketValue": revenue / len(vehicles) if vehicles else 0
+        "avgTicketValue": revenue / vehicles_count if vehicles_count else 0
     }
 
 @router.get("/ceo/alerts")

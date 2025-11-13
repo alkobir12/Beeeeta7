@@ -110,6 +110,9 @@ async def search_history(provider: Optional[str] = None, limit: int = 50):
                 r['createdAt'] = r['createdAt'].isoformat()
         return {'items': rows, 'count': len(rows)}
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get('/ai/kb/docs')
 async def kb_list_docs(limit: int = 200):
     """List knowledge base documents from multiple collections with projection."""

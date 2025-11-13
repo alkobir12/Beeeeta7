@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://repairshop-ai.preview.emergentagent.com/api"
+BACKEND_URL = "https://workshop-genius-6.preview.emergentagent.com/api"
 
 def test_operations_analytics_summary():
     """Test GET /api/operations/analytics/summary endpoint"""

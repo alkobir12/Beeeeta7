@@ -416,7 +416,7 @@ async def operations_analytics(account_id: Optional[str] = None):
         q: Dict[str, Any] = {}
         if account_id:
             q['accountId'] = account_id
-        ops = await db.operations.find(q).to_list(length=100000)
+        ops = await db.operations.find(q, {'_id': 0, 'type': 1, 'total': 1, 'date': 1}).to_list(length=100000)
         def parse_date(x):
             d = x.get('date')
             if isinstance(d, str):

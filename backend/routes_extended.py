@@ -79,6 +79,7 @@ async def get_settings():
             items.append(entry)
         ensure('/invoice-templates', 'استوديو قوالب الفواتير')
         ensure('/operations', 'العمليات')
+        ensure('/services', 'إدارة الخدمات')
         doc['menuConfig']['items'] = items
         await db.settings.update_one({"id": "app_settings"}, {"$set": {"menuConfig": doc['menuConfig']}}, upsert=True)
         doc.pop('_id', None)

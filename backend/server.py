@@ -818,6 +818,35 @@ async def get_dashboard_stats():
         }
     }
 
+# ============ i18n (Language Resources) APIs ============
+@api_router.get("/i18n/resources")
+async def get_i18n_resources(lang: Optional[str] = None):
+    try:
+        if lang:
+            doc = await db.i18n.find_one({"lang": lang})
+            return {"lang": lang, "resources": (doc.get("resources") if doc else {})}
+        # return all languages
+        docs = await db.i18n.find().to_list(100)
+        return {d.get("lang"): d.get("resources", {}) for d in docs}
+    except Exception as e:
+        logger.error(f"Error fetching i18n resources: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/i18n/resources")
+async def save_i18n_resources(payload: dict):
+    try:
+        lang = payload.get("lang")
+        resources = payload.get("resources")
+        if not lang or resources is None:
+            raise HTTPException(status_code=400, detail="lang and resources required")
+        await db.i18n.update_one({"lang": lang}, {"$set": {"resources": resources}}, upsert=True)
+        return {"ok": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving i18n resources: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Root endpoint
 @api_router.get("/")
 async def root():

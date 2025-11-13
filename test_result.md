@@ -634,6 +634,43 @@ agent_communication:
     priority: "high"
     needs_retesting: false
     status_history:
+
+  - task: "i18n Resources API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added /api/i18n/resources GET/POST to store language resources in Mongo (per user request: 'create a database for language')."
+
+frontend:
+  - task: "Operations Canva-style + Drag & Drop"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Rewrote Operations into Canva-style cards with draggable ordering (localStorage persistence)."
+  - task: "Global i18n initialization"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/i18n.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Ensure i18n is initialized globally and window.i18n exposed; fix immediate language switch without full reload."
+
         - working: true
           agent: "testing"
           comment: "✅ PASSED: Budget Report API working correctly. Successfully creates business accounts, transactions with accountId, and budgets. GET /api/budgets/{id}/report returns accurate incomeActual (2300.0), expenseActual (800.0), profitActual (1500.0) and percentages (76.7% income, 80.0% expense). HTML format (format=html) returns proper HTML string with Arabic content. Fixed Transaction model to support accountId field during testing."

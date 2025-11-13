@@ -955,13 +955,6 @@ async def save_i18n_resources(payload: dict):
         logger.error(f"Error saving i18n resources: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

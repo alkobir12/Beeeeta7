@@ -640,15 +640,18 @@ agent_communication:
 
   - task: "i18n Resources API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added /api/i18n/resources GET/POST to store language resources in Mongo (per user request: 'create a database for language')."
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE i18n REGRESSION TEST COMPLETE (100% success rate - 12/12 tests passed): Successfully executed backend regression testing focusing on new i18n endpoints and existing API stability. **i18n ENDPOINTS FULLY FUNCTIONAL (4/4 tests passed):** (1) ✅ GET /api/i18n/resources returns all languages correctly (found 'en' language), (2) ✅ POST /api/i18n/resources saves English resources successfully with proper structure {lang:'en', resources:{common:{ok:'OK'}}}, (3) ✅ GET /api/i18n/resources?lang=en verifies persistence - data correctly saved and retrieved with lang=en and common.ok=OK, (4) ✅ POST /api/i18n/resources saves Arabic resources successfully with proper Arabic content preservation {common:{ok:'موافق', cancel:'إلغاء', save:'حفظ'}}. **SERVICES API STRUCTURE VERIFIED (1/1 test passed):** ✅ GET /api/services returns correct list structure with 556 services, all required fields present (id, name, category, price, duration) - supports frontend bug fix where services were not visible. **OPERATIONS DEPENDENCIES STABLE (3/3 tests passed):** ✅ GET /api/biz-accounts returns 49 business accounts, ✅ GET /api/operations returns 4 operations, ✅ GET /api/operations/analytics/summary returns proper analytics data structure. **NO REGRESSIONS DETECTED (4/4 tests passed):** ✅ GET /api/settings returns complete settings with all expected keys, ✅ GET /api/vehicles returns 6 vehicles, ✅ GET /api/parts returns parts list (0 parts currently), ✅ GET /api/approvals returns 39 approvals. **TECHNICAL FIX APPLIED:** Fixed i18n endpoint routing issue by moving endpoint definitions before app.include_router() call in server.py - endpoints were defined after router inclusion causing 404 errors. **PERFORMANCE:** Average response time 0.038s across all endpoints. **CONCLUSION:** All requested regression testing completed successfully. New i18n endpoints working perfectly with proper persistence verification. No regressions detected on existing endpoints. Services API structure confirmed correct for frontend integration."
 
 frontend:
   - task: "Operations Canva-style + Drag & Drop"

@@ -239,7 +239,7 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
                         app_url = app_url.replace('/api', '')  # Remove /api if present
                         approval_link = f"{app_url}/approval/{token}"
                         # Prepare notification
-                        notif_response = await db.whatsapp_messages.insert_one({
+                        await db.whatsapp_messages.insert_one({}
                             "id": str(uuid.uuid4()),
                             "phone": customer_phone,
                             "message": f"🔔 طلب اعتماد جديد\n\nمركبتك: {vehicle.get('plateNumber')}\nالحالة: تسعير\n\nللاعتماد: {approval_link}\n\nصالح لمدة 7 أيام",

@@ -919,6 +919,12 @@ async def get_sync_status():
         return {"error": str(e), "mongodb": "active"}
 
 app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ============ i18n (Language Resources) APIs ============
 @api_router.get("/i18n/resources")

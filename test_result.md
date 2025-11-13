@@ -501,6 +501,9 @@ test_plan:
     - "CEO moved into Operations"
     - "Approvals: Logs + SSE + WhatsApp deeplink"
   test_all: false
+  test_all: true
+  test_priority: "high_first"
+
   test_priority: "stuck_first"
 
 agent_communication:

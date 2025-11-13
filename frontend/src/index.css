@@ -3,13 +3,17 @@
 @tailwind utilities;
 
 :root{
-  --color-primary: #00c4cc; /* Canva teal */
-  --color-secondary: #7b8ba1;
-  --color-background: #f7f9fb;
+  --color-primary: #2563eb; /* Stronger primary (blue-600) */
+  --color-secondary: #0ea5e9; /* sky-500 */
+  --color-background: #f3f4f6; /* slate-100 */
   --color-surface: #ffffff;
-  --color-text: #0f172a;
+  --color-text: #0f172a; /* slate-900 */
   --base-font-size: 16px;
 }
+
+/* Buttons and accents */
+.btn-godaddy-primary { background:#1BDB4F; color:#0b4214; border:1px solid #0b4214; }
+.btn-godaddy-primary:hover { background:#17c046; }
 
 html, body, #root { height: 100%; }
 body { background: var(--color-background); font-size: var(--base-font-size); }

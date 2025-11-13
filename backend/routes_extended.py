@@ -118,6 +118,8 @@ async def request_otp(payload: Dict[str, Any] = Body(...)):
         if norm.startswith('5') and len(norm) == 9:
             norm = '966' + norm
         if not norm.startswith('966'):
+            norm = '966' + norm
+        
 # --------------------- Budgets ---------------------
 @router.get('/budgets')
 async def list_budgets(account_id: Optional[str] = None, period: Optional[str] = None):

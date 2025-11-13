@@ -183,6 +183,46 @@ async def create_biz_account(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --------------------- Budgets ---------------------
+@router.get('/budgets')
+async def list_budgets(account_id: Optional[str] = None, period: Optional[str] = None):
+    try:
+        q = {}
+        if account_id:
+            q['accountId'] = account_id
+        if period:
+            q['period'] = period
+        items = await db.budgets.find(q).sort('period', -1).to_list(1000)
+        for it in items:
+            it.pop('_id', None)
+        return items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/budgets')
+async def create_budget(payload: Dict[str, Any] = Body(...)):
+    try:
+        account_id = payload.get('accountId')
+        if not account_id:
+            raise HTTPException(status_code=400, detail='accountId required')
+        doc = {
+            'id': str(uuid.uuid4()),
+            'accountId': account_id,
+            'period': payload.get('period') or datetime.utcnow().strftime('%Y-%m'),
+            'incomeTarget': float(payload.get('incomeTarget') or 0),
+            'expenseTarget': float(payload.get('expenseTarget') or 0),
+            'notes': payload.get('notes') or '',
+            'createdAt': datetime.utcnow()
+        }
+        await db.budgets.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.put('/biz-accounts/{aid}')
 async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
     try:

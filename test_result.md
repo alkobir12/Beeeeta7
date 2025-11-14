@@ -558,6 +558,31 @@ agent_communication:
     priority: "high"
     needs_retesting: false
     status_history:
+
+  - task: "Pending Operations API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added GET /api/operations/pending and GET /api/operations/analytics/pending with projections for performance."
+
+  - task: "Branches Cleanup API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added POST /api/biz-accounts/cleanup to hard delete all branches and keep only 2 most recent (as per user)."
+
         - working: "NA"
           agent: "main"
           comment: "Added /api/approvals (public token + respond) and /api/reports/diagnosis with public retrieval. Used for request approval and diagnosis report."

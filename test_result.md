@@ -576,15 +576,18 @@ agent_communication:
 
   - task: "Branches Cleanup API"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/routes_extended.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added POST /api/biz-accounts/cleanup to hard delete all branches and keep only 2 most recent (as per user)."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL DATABASE ISSUE: POST /api/biz-accounts/cleanup and GET /api/biz-accounts both returning 502 errors due to MongoDB SSL connection failure. Cannot test cleanup functionality due to database connectivity issues. The endpoint implementation exists but is blocked by infrastructure problems."
 
         - working: "NA"
           agent: "main"

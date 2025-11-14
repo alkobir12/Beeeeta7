@@ -1268,13 +1268,19 @@ async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
                 new_vals = []
                 for val in template_vals:
                     if isinstance(val, str):
-                        s = val; start=0; phs=[]; nv=val
+                        s = val
+                        start = 0
+                        phs = []
+                        nv = val
                         while True:
                             i = s.find('{{', start)
-                            if i == -1: break
+                            if i == -1:
+                                break
                             j = s.find('}}', i+2)
-                            if j == -1: break
-                            phs.append(s[i:j+2]); start = j+2
+                            if j == -1:
+                                break
+                            phs.append(s[i:j+2])
+                            start = j+2
                         for ph in phs:
                             k = ph.strip('{}')
                             if k.startswith('ITEMS.'):

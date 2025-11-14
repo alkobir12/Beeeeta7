@@ -1313,7 +1313,8 @@ async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
         if not account_ids:
             accs = await db.business_accounts.find({}).to_list(length=1000)
             account_ids = [a.get('id') for a in accs if a.get('id')]
-        end = datetime.utcnow(); start = end - timedelta(days=days)
+        end = datetime.utcnow()
+        start = end - timedelta(days=days)
         tx = await db.transactions.find({'date': {'$gte': start, '$lte': end}, 'accountId': {'$in': account_ids}}).to_list(length=100000)
         per = []
         acc_docs = await db.business_accounts.find({'id': {'$in': account_ids}}).to_list(length=1000)

@@ -524,19 +524,24 @@ async def operations_analytics(account_id: Optional[str] = None):
                     return today
             return d or today
         def agg(start):
-            s=e=sc=ec=0
+            sales = 0.0
+            expenses = 0.0
+            sales_count = 0
+            expenses_count = 0
             for o in ops:
                 d = parse_date(o)
                 if d >= start:
                     t = float(o.get('total', 0))
                     if o.get('type') == 'sale':
-                        s += t; sc += 1
+                        sales += t
+                        sales_count += 1
                     elif o.get('type') == 'purchase':
-                        e += t; ec += 1
-            return s,e,s-e,sc,ec
-        tS,tE,tP,tSc,tEc = agg(today)
-        wS,wE,wP,wSc,wEc = agg(week_ago)
-        mS,mE,mP,mSc,mEc = agg(month_start)
+                        expenses += t
+                        expenses_count += 1
+            return sales, expenses, sales - expenses, sales_count, expenses_count
+        tS, tE, tP, tSc, tEc = agg(today)
+        wS, wE, wP, wSc, wEc = agg(week_ago)
+        mS, mE, mP, mSc, mEc = agg(month_start)
         return {
             'today': {'sales': tS, 'expenses': tE, 'profit': tP, 'salesCount': tSc, 'expensesCount': tEc},
             'week': {'sales': wS, 'expenses': wE, 'profit': wP, 'salesCount': wSc, 'expensesCount': wEc},

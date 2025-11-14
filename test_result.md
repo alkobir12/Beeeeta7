@@ -561,15 +561,18 @@ agent_communication:
 
   - task: "Pending Operations API"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/routes_extended.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added GET /api/operations/pending and GET /api/operations/analytics/pending with projections for performance."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL DATABASE ISSUE: All endpoints returning 500/502 errors due to MongoDB SSL connection failure. Error: 'SSL handshake failed: ac-nfkxlbb-shard-00-02.gf653th.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error'. Both GET /api/operations/pending and GET /api/operations/analytics/pending fail with database connectivity issues. Backend service is running but cannot connect to MongoDB cluster. This is a critical infrastructure issue preventing all database operations."
 
   - task: "Branches Cleanup API"
     implemented: true

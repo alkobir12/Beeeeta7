@@ -475,17 +475,20 @@ frontend:
           agent: "testing"
           comment: "✅ PASSED: POST /api/vehicles successfully creates vehicle with auto-sync integration. Vehicle created with ID 29777ddb-673d-4b6d-a171-9ca5e429d8bf. MongoDB save succeeds. Auto-sync logs show: mongodb=saved, supabase=failed (401 Invalid API key), success=True. Core functionality working but Supabase sync fails due to authentication issue. Backend logs confirm: '✅ Auto-sync result: {mongodb: saved, supabase: failed: Invalid API key}'."
 
-  - task: "Missing Budgets Endpoint"
-    implemented: false
+  - task: "Budgets API Regression"
+    implemented: true
     working: false
-    file: "N/A"
-    stuck_count: 0
-    priority: "medium"
+    file: "/app/backend/routes_extended.py"
+    stuck_count: 1
+    priority: "high"
     needs_retesting: false
     status_history:
         - working: false
           agent: "testing"
           comment: "❌ NOT IMPLEMENTED: GET /api/budgets returns 404 NOT FOUND. Endpoint does not exist in backend codebase. No routes defined for /budgets in any backend files. This is expected as budgets functionality may not be part of current implementation scope."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL DATABASE ISSUE: GET /api/budgets and POST /api/budgets both returning 502 errors due to MongoDB SSL connection failure. Cannot test budgets regression (GET list, POST with accountId/period/incomeTarget/expenseTarget, GET filtered) due to database connectivity issues. Endpoints are implemented in routes_extended.py but blocked by infrastructure problems."
 
 metadata:
   created_by: "main_agent"

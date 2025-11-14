@@ -1239,13 +1239,18 @@ async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
                     if v.strip() == '{{ITEMS}}':
                         anchor = True
                     else:
-                        s = v; start = 0; phs = []
+                        s = v
+                        start = 0
+                        phs = []
                         while True:
                             i = s.find('{{', start)
-                            if i == -1: break
+                            if i == -1:
+                                break
                             j = s.find('}}', i+2)
-                            if j == -1: break
-                            phs.append(s[i:j+2]); start = j+2
+                            if j == -1:
+                                break
+                            phs.append(s[i:j+2])
+                            start = j+2
                         nv = v
                         for ph in phs:
                             key = ph.strip('{}')

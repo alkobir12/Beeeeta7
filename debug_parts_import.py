@@ -7,7 +7,7 @@ import requests
 import os
 from io import BytesIO
 
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://workshop-genius-6.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://autoshop-app-1.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Create CSV content

@@ -24,25 +24,28 @@ const Login = () => {
       // Check if user exists by name
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       const response = await fetch(`${API_URL}/users`);
+      if (!response.ok) {
+        throw new Error(`Server error ${response.status}`);
+      }
       const users = await response.json();
-      
+
       // Find user by name (case-insensitive)
-      const user = users.find(u => u.name.toLowerCase() === name.trim().toLowerCase());
-      
+      const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
+
       if (!user) {
-        toast({ 
-          title: 'مستخدم غير موجود', 
+        toast({
+          title: 'مستخدم غير موجود',
           description: 'الاسم غير مسجل في النظام. تواصل مع المدير.',
-          variant: 'destructive' 
+          variant: 'destructive'
         });
         return;
       }
-      
-      if (!user.isActive) {
-        toast({ 
-          title: 'حساب معطل', 
+
+      if (user.isActive === false) {
+        toast({
+          title: 'حساب معطل',
           description: 'هذا الحساب معطل. تواصل مع المدير.',
-          variant: 'destructive' 
+          variant: 'destructive'
         });
         return;
       }

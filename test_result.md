@@ -508,6 +508,9 @@ test_plan:
     - "Operations & Accounting Tabs"
     - "CEO moved into Operations"
     - "Approvals: Logs + SSE + WhatsApp deeplink"
+  - agent: "main"
+    message: "Initiating Supabase phased migration: created backend/.env entries for SUPABASE_URL and service role key, prepared supabase_schema.sql (core tables + RLS enable + storage bucket). Awaiting execution on Supabase side or admin API to run SQL. Will implement DAL and dual-write next."
+
     - "Services CRUD API"
     - "Pending Operations API"
     - "Branches Cleanup API"

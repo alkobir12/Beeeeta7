@@ -209,11 +209,11 @@ backend:
 
   - task: "Services CRUD API"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
@@ -224,6 +224,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ VALIDATION VERIFIED: POST /api/services returns 422 with proper validation errors when empty payload sent. Required fields: name, category, price, duration. Endpoint is working correctly and properly validates input."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL DATABASE ISSUE: POST /api/services with Arabic data (تنظيف بخاخات, محرك, price: 150, duration: 45) returning 500 error due to MongoDB SSL connection failure. All CRUD operations blocked by database connectivity issues. Backend logs show: 'SSL handshake failed: ac-nfkxlbb-shard-00-02.gf653th.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error'. This is an infrastructure issue, not an API implementation problem."
 
   - task: "Parts CRUD API"
     implemented: true

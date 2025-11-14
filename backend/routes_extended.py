@@ -223,6 +223,104 @@ async def create_budget(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --------------------- Branch Cleanup (Keep only 2) ---------------------
+@router.post('/biz-accounts/cleanup')
+async def cleanup_biz_accounts(keep: int = 2, mode: str = 'hard'):
+    """Delete all branches and keep only N (default 2) most recent.
+    mode: 'hard' = physical delete, 'soft' = set {'archived': True, 'active': False}
+    Ensures at least 2 accounts exist by creating defaults if needed.
+    """
+    try:
+        keep = max(0, int(keep or 2))
+        # Sort by updatedAt desc then createdAt desc
+        docs = await db.business_accounts.find({}).sort([('updatedAt', -1), ('createdAt', -1)]).to_list(length=5000)
+        to_keep = [d.get('id') for d in docs[:keep] if d.get('id')]
+        to_drop = [d.get('id') for d in docs[keep:] if d.get('id')]
+        if to_drop:
+            if mode == 'soft':
+                await db.business_accounts.update_many({'id': {'$in': to_drop}}, {'$set': {'archived': True, 'active': False, 'updatedAt': datetime.utcnow()}})
+            else:
+                await db.business_accounts.delete_many({'id': {'$in': to_drop}})
+        # Ensure at least 2 exist
+        remain_count = await db.business_accounts.count_documents({'archived': {'$ne': True}})
+        created = []
+        while remain_count < 2:
+            base_code = 'ACC' if remain_count == 0 else f'BR{remain_count+1:02d}'
+            doc = {
+                'id': str(uuid.uuid4()),
+                'name': 'Main Workshop' if remain_count == 0 else f'Branch {remain_count+1}',
+                'code': base_code,
+                'currency': 'SAR',
+                'createdAt': datetime.utcnow()
+            }
+            await db.business_accounts.insert_one(doc)
+            created.append({'id': doc['id'], 'name': doc['name']})
+            remain_count += 1
+        # return final state (2 accounts)
+        final_docs = await db.business_accounts.find({'archived': {'$ne': True}}).sort([('updatedAt', -1), ('createdAt', -1)]).to_list(length=10)
+        for d in final_docs:
+            d.pop('_id', None)
+            if d.get('createdAt') and hasattr(d['createdAt'], 'isoformat'):
+                d['createdAt'] = d['createdAt'].isoformat()
+            if d.get('updatedAt') and hasattr(d['updatedAt'], 'isoformat'):
+                d['updatedAt'] = d['updatedAt'].isoformat()
+        return {'status': 'ok', 'kept': to_keep, 'created': created, 'final': final_docs[:2]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --------------------- Pending Operations (Vehicles awaiting action) ---------------------
+@router.get('/operations/pending')
+async def operations_pending(status: Optional[str] = None, technician_id: Optional[str] = None):
+    """Return list of vehicles considered 'pending' = not ready/delivered.
+    Optional filter by single status or technician_id.
+    """
+    try:
+        pending_statuses = ['diagnosis', 'quotation', 'repair']
+        q: Dict[str, Any] = {'status': {'$in': pending_statuses}}
+        if status:
+            if status == 'all':
+                pass
+            else:
+                q['status'] = status
+        if technician_id:
+            q['technicianId'] = technician_id
+        fields = {'_id': 0, 'id': 1, 'plateNumber': 1, 'brand': 1, 'model': 1, 'year': 1, 'status': 1, 'technicianId': 1, 'technicianName': 1, 'entryDate': 1, 'estimatedCompletion': 1, 'customerName': 1, 'customerPhone': 1}
+        docs = await db.vehicles.find(q, fields).sort('entryDate', -1).to_list(length=2000)
+        for d in docs:
+            for k in ('entryDate','estimatedCompletion'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return {'count': len(docs), 'items': docs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get('/operations/analytics/pending')
+async def operations_pending_analytics():
+    """Summary counts for pending vehicles and overdue stats."""
+    try:
+        pending_statuses = ['diagnosis', 'quotation', 'repair']
+        now = datetime.utcnow()
+        fields = {'_id': 0, 'status': 1, 'estimatedCompletion': 1}
+        docs = await db.vehicles.find({'status': {'$in': pending_statuses}}, fields).to_list(length=20000)
+        by_status: Dict[str, int] = {s: 0 for s in pending_statuses}
+        overdue = 0
+        for d in docs:
+            st = d.get('status')
+            if st in by_status:
+                by_status[st] += 1
+            est = d.get('estimatedCompletion')
+            if est and hasattr(est, 'isoformat'):
+                # est is datetime
+                if est < now:
+                    overdue += 1
+        total = len(docs)
+        return {'total': total, 'byStatus': by_status, 'overdue': overdue}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.put('/biz-accounts/{aid}')
 async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
     try:

@@ -65,12 +65,15 @@ const Login = () => {
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
       
-      // Update last login
-      await fetch(`${API_URL}/users/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lastLogin: new Date().toISOString() })
-      });
+      // Update last login (best-effort, ignore errors)
+      try {
+        await fetch(`${API_URL}/users/${user.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lastLogin: new Date().toISOString() })
+        });
+      } catch (_) {}
+      
       
       toast({ 
         title: 'مرحباً', 

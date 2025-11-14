@@ -498,19 +498,22 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Operations & CEO Integration Fix"
-    - "Missing /api/biz-accounts Endpoint Implementation"
-    - "Approvals UI Integration"
-    - "CEO Ask Input Field Fix"
+    - "MongoDB SSL Connection Fix"
+    - "Database Infrastructure Recovery"
+    - "Services CRUD API Retest"
+    - "Pending Operations API Retest"
+    - "Branches Cleanup API Retest"
+    - "Budgets API Retest"
   stuck_tasks: 
     - "Operations & Accounting Tabs"
     - "CEO moved into Operations"
     - "Approvals: Logs + SSE + WhatsApp deeplink"
+    - "Services CRUD API"
+    - "Pending Operations API"
+    - "Branches Cleanup API"
+    - "Budgets API Regression"
   test_all: false
-  test_all: true
-  test_priority: "high_first"
-
-  test_priority: "stuck_first"
+  test_priority: "infrastructure_first"
 
 agent_communication:
   - agent: "main"

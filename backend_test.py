@@ -1,547 +1,343 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Workshop Management System
-Testing Order:
-1. Workshop Profile (معلومات الورشة)
-2. Add New Vehicle (إضافة مركبة جديدة)
-3. Knowledge Management - AI Endpoints (إدارة المعرفة)
-4. Basic Services (الخدمات الأساسية)
+Backend API Testing Script for Workshop Management System
+Tests the specific endpoints requested in the review:
+1. Services CRUD (confirm with new DB)
+2. Pending Operations APIs
+3. Branches Cleanup
+4. Budgets minimal regression
 """
 
-import requests
+import asyncio
+import aiohttp
 import json
-import time
+import os
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Backend URL from environment
-BACKEND_URL = "https://autoshop-app-1.preview.emergentagent.com/api"
+# Get backend URL from environment
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://autoshop-app-1.preview.emergentagent.com')
+API_BASE = f"{BACKEND_URL}/api"
 
-class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    RESET = '\033[0m'
-
-def log_test(test_name: str, status: str, details: str = "", response_time: float = 0):
-    """Log test results with colors"""
-    color = Colors.GREEN if status == "PASS" else Colors.RED if status == "FAIL" else Colors.YELLOW
-    print(f"{color}[{status}]{Colors.RESET} {test_name}")
-    if details:
-        print(f"  {details}")
-    if response_time > 0:
-        print(f"  ⏱️  Response Time: {response_time:.3f}s")
-    print()
-
-def test_workshop_profile():
-    """Test 1: Workshop Profile APIs"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"TEST 1: Workshop Profile (معلومات الورشة)")
-    print(f"{'='*80}{Colors.RESET}\n")
-    
-    results = []
-    
-    # Test 1.1: GET /api/profile - Check current data
-    try:
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/profile", timeout=10)
-        response_time = time.time() - start_time
+class BackendTester:
+    def __init__(self):
+        self.session = None
+        self.test_results = []
+        self.created_service_id = None
+        self.remaining_account_ids = []
         
-        if response.status_code == 200:
-            data = response.json()
-            log_test(
-                "GET /api/profile - تحقق من البيانات الحالية",
-                "PASS",
-                f"Status: {response.status_code}, Data keys: {list(data.keys())}",
-                response_time
-            )
-            results.append(("GET /api/profile", True, response_time))
-            initial_profile = data
-        else:
-            log_test(
-                "GET /api/profile - تحقق من البيانات الحالية",
-                "FAIL",
-                f"Status: {response.status_code}, Response: {response.text[:200]}"
-            )
-            results.append(("GET /api/profile", False, 0))
-            return results
-    except Exception as e:
-        log_test("GET /api/profile", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/profile", False, 0))
-        return results
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+        
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
     
-    # Test 1.2: PUT /api/profile - Update with new data
-    try:
-        new_profile_data = {
-            "workshopName": "ورشة الاختبار الشاملة",
-            "phone": "+966501234567",
-            "email": "test@workshop.sa",
-            "address": "الرياض، المملكة العربية السعودية",
-            "taxNumber": "123456789"
-        }
+    def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        if response_data and isinstance(response_data, dict):
+            if 'error' in response_data or 'detail' in response_data:
+                print(f"   Error: {response_data}")
         
-        start_time = time.time()
-        response = requests.put(
-            f"{BACKEND_URL}/profile",
-            json=new_profile_data,
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-        response_time = time.time() - start_time
-        
-        if response.status_code == 200:
-            data = response.json()
-            log_test(
-                "PUT /api/profile - تحديث البيانات",
-                "PASS",
-                f"Status: {response.status_code}, Updated profile with new data",
-                response_time
-            )
-            results.append(("PUT /api/profile", True, response_time))
-        else:
-            log_test(
-                "PUT /api/profile - تحديث البيانات",
-                "FAIL",
-                f"Status: {response.status_code}, Response: {response.text[:200]}"
-            )
-            results.append(("PUT /api/profile", False, 0))
-    except Exception as e:
-        log_test("PUT /api/profile", "FAIL", f"Exception: {str(e)}")
-        results.append(("PUT /api/profile", False, 0))
+        self.test_results.append({
+            'test': test_name,
+            'success': success,
+            'details': details,
+            'response': response_data
+        })
     
-    # Test 1.3: GET /api/profile again - Verify data was saved
-    try:
-        time.sleep(0.5)  # Small delay to ensure data is persisted
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/profile", timeout=10)
-        response_time = time.time() - start_time
-        
-        if response.status_code == 200:
-            data = response.json()
-            # Verify the data was actually saved
-            saved_correctly = (
-                data.get("workshopName") == "ورشة الاختبار الشاملة" and
-                data.get("phone") == "+966501234567" and
-                data.get("email") == "test@workshop.sa"
-            )
-            
-            if saved_correctly:
-                log_test(
-                    "GET /api/profile - التحقق من حفظ البيانات",
-                    "PASS",
-                    f"✅ Data persisted correctly: workshopName={data.get('workshopName')}, phone={data.get('phone')}",
-                    response_time
-                )
-                results.append(("GET /api/profile (verify)", True, response_time))
-            else:
-                log_test(
-                    "GET /api/profile - التحقق من حفظ البيانات",
-                    "FAIL",
-                    f"❌ Data NOT persisted correctly. Expected 'ورشة الاختبار الشاملة', got: {data.get('workshopName')}"
-                )
-                results.append(("GET /api/profile (verify)", False, 0))
-        else:
-            log_test(
-                "GET /api/profile - التحقق من حفظ البيانات",
-                "FAIL",
-                f"Status: {response.status_code}"
-            )
-            results.append(("GET /api/profile (verify)", False, 0))
-    except Exception as e:
-        log_test("GET /api/profile (verify)", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/profile (verify)", False, 0))
-    
-    return results
-
-def test_vehicle_management():
-    """Test 2: Vehicle Management APIs"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"TEST 2: Vehicle Management (إضافة مركبة جديدة)")
-    print(f"{'='*80}{Colors.RESET}\n")
-    
-    results = []
-    vehicle_id = None
-    
-    # Test 2.1: POST /api/vehicles - Create new vehicle with complete data
-    try:
-        # First, get some service IDs from the database
-        services_response = requests.get(f"{BACKEND_URL}/services", timeout=10)
-        service_ids = []
-        if services_response.status_code == 200:
-            services = services_response.json()
-            # Get at least 2 service IDs
-            service_ids = [s.get("id") for s in services[:2] if s.get("id")]
-        
-        # If no services found, use empty list (still valid)
-        if not service_ids:
-            service_ids = []
-        
-        vehicle_data = {
-            "customerName": "أحمد محمد الراشد",
-            "customerPhone": "+966555123456",
-            "customerEmail": "ahmed@example.sa",
-            "plateNumber": "ABC-7890",
-            "brand": "تويوتا",
-            "model": "كامري",
-            "year": 2022,
-            "color": "أبيض",
-            "mileage": 45000,
-            "status": "diagnosis",
-            "services": service_ids,  # List of service IDs
-            "notes": "العميل يشتكي من صوت غريب في المحرك"
-        }
-        
-        start_time = time.time()
-        response = requests.post(
-            f"{BACKEND_URL}/vehicles",
-            json=vehicle_data,
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-        response_time = time.time() - start_time
-        
-        if response.status_code == 200:
-            data = response.json()
-            vehicle_id = data.get("id")
-            log_test(
-                "POST /api/vehicles - إضافة مركبة جديدة",
-                "PASS",
-                f"✅ Vehicle created: ID={vehicle_id}, Plate={data.get('plateNumber')}, Services count={len(data.get('services', []))}",
-                response_time
-            )
-            results.append(("POST /api/vehicles", True, response_time))
-        else:
-            log_test(
-                "POST /api/vehicles - إضافة مركبة جديدة",
-                "FAIL",
-                f"Status: {response.status_code}, Response: {response.text[:200]}"
-            )
-            results.append(("POST /api/vehicles", False, 0))
-            return results
-    except Exception as e:
-        log_test("POST /api/vehicles", "FAIL", f"Exception: {str(e)}")
-        results.append(("POST /api/vehicles", False, 0))
-        return results
-    
-    # Test 2.2: GET /api/vehicles - Verify vehicle appears in list
-    try:
-        time.sleep(0.5)
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/vehicles", timeout=10)
-        response_time = time.time() - start_time
-        
-        if response.status_code == 200:
-            vehicles = response.json()
-            vehicle_found = any(v.get("id") == vehicle_id for v in vehicles)
-            
-            if vehicle_found:
-                log_test(
-                    "GET /api/vehicles - التحقق من ظهور المركبة",
-                    "PASS",
-                    f"✅ Vehicle found in list. Total vehicles: {len(vehicles)}",
-                    response_time
-                )
-                results.append(("GET /api/vehicles", True, response_time))
-            else:
-                log_test(
-                    "GET /api/vehicles - التحقق من ظهور المركبة",
-                    "FAIL",
-                    f"❌ Vehicle NOT found in list. Total vehicles: {len(vehicles)}"
-                )
-                results.append(("GET /api/vehicles", False, 0))
-        else:
-            log_test(
-                "GET /api/vehicles - التحقق من ظهور المركبة",
-                "FAIL",
-                f"Status: {response.status_code}"
-            )
-            results.append(("GET /api/vehicles", False, 0))
-    except Exception as e:
-        log_test("GET /api/vehicles", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/vehicles", False, 0))
-    
-    # Test 2.3: GET /api/vehicles/{id} - Verify vehicle details
-    if vehicle_id:
+    async def make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> tuple:
+        """Make HTTP request and return (success, response_data, status_code)"""
+        url = f"{API_BASE}{endpoint}"
         try:
-            start_time = time.time()
-            response = requests.get(f"{BACKEND_URL}/vehicles/{vehicle_id}", timeout=10)
-            response_time = time.time() - start_time
-            
-            if response.status_code == 200:
-                data = response.json()
-                # Verify all important fields
-                has_customer = data.get("customerName") == "أحمد محمد الراشد"
-                has_plate = data.get("plateNumber") == "ABC-7890"
-                has_services = len(data.get("services", [])) >= 2
+            kwargs = {}
+            if data:
+                kwargs['json'] = data
+            if params:
+                kwargs['params'] = params
                 
-                if has_customer and has_plate and has_services:
-                    log_test(
-                        "GET /api/vehicles/{id} - التحقق من تفاصيل المركبة",
-                        "PASS",
-                        f"✅ All details correct: Customer={data.get('customerName')}, Plate={data.get('plateNumber')}, Services={len(data.get('services', []))}",
-                        response_time
-                    )
-                    results.append(("GET /api/vehicles/{id}", True, response_time))
-                else:
-                    log_test(
-                        "GET /api/vehicles/{id} - التحقق من تفاصيل المركبة",
-                        "FAIL",
-                        f"❌ Details incomplete or incorrect"
-                    )
-                    results.append(("GET /api/vehicles/{id}", False, 0))
-            else:
-                log_test(
-                    "GET /api/vehicles/{id} - التحقق من تفاصيل المركبة",
-                    "FAIL",
-                    f"Status: {response.status_code}"
-                )
-                results.append(("GET /api/vehicles/{id}", False, 0))
+            async with self.session.request(method, url, **kwargs) as response:
+                try:
+                    response_data = await response.json()
+                except:
+                    response_data = await response.text()
+                
+                return response.status < 400, response_data, response.status
         except Exception as e:
-            log_test("GET /api/vehicles/{id}", "FAIL", f"Exception: {str(e)}")
-            results.append(("GET /api/vehicles/{id}", False, 0))
+            return False, {"error": str(e)}, 0
     
-    return results
-
-def test_ai_knowledge_base():
-    """Test 3: AI Knowledge Base Endpoints"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"TEST 3: AI Knowledge Base (إدارة المعرفة - AI Endpoints)")
-    print(f"{'='*80}{Colors.RESET}\n")
-    
-    results = []
-    
-    # Test 3.1: POST /api/ai/kb/engine-info - Simple Arabic query
-    try:
-        query_data = {
-            "query": "ما هي أسباب ارتفاع حرارة المحرك؟"
+    async def test_services_crud(self):
+        """Test Services CRUD operations with Arabic data"""
+        print("\n🔧 Testing Services CRUD API...")
+        
+        # Test 1: POST /api/services with Arabic data
+        service_data = {
+            "name": "تنظيف بخاخات",
+            "category": "محرك", 
+            "price": 150,
+            "duration": 45
         }
         
-        start_time = time.time()
-        response = requests.post(
-            f"{BACKEND_URL}/ai/kb/engine-info",
-            json=query_data,
-            headers={"Content-Type": "application/json"},
-            timeout=30  # Increased timeout for AI processing
-        )
-        response_time = time.time() - start_time
+        success, response, status = await self.make_request('POST', '/services', service_data)
+        if success and 'id' in response:
+            self.created_service_id = response['id']
+            self.log_test("POST /api/services (Arabic data)", True, 
+                         f"Created service with ID: {self.created_service_id}")
+        else:
+            self.log_test("POST /api/services (Arabic data)", False, 
+                         f"Status: {status}", response)
+            return
         
-        if response.status_code == 200:
-            data = response.json()
-            log_test(
-                "POST /api/ai/kb/engine-info - استعلام عربي بسيط",
-                "PASS",
-                f"✅ Response received: {str(data)[:100]}...",
-                response_time
-            )
-            results.append(("POST /api/ai/kb/engine-info", True, response_time))
+        # Test 2: GET /api/services and verify created service
+        success, response, status = await self.make_request('GET', '/services')
+        if success and isinstance(response, list):
+            created_service = next((s for s in response if s.get('id') == self.created_service_id), None)
+            if created_service:
+                self.log_test("GET /api/services (verify creation)", True,
+                             f"Found created service: {created_service.get('name')}")
+            else:
+                self.log_test("GET /api/services (verify creation)", False,
+                             "Created service not found in list")
+        else:
+            self.log_test("GET /api/services (verify creation)", False,
+                         f"Status: {status}", response)
+        
+        # Test 3: PUT /api/services/{id} to update price
+        update_data = {"price": 180}
+        success, response, status = await self.make_request('PUT', f'/services/{self.created_service_id}', update_data)
+        if success and response.get('price') == 180:
+            self.log_test("PUT /api/services/{id} (update price)", True,
+                         f"Updated price to {response.get('price')}")
+        else:
+            self.log_test("PUT /api/services/{id} (update price)", False,
+                         f"Status: {status}", response)
+        
+        # Test 4: DELETE /api/services/{id}
+        success, response, status = await self.make_request('DELETE', f'/services/{self.created_service_id}')
+        if success:
+            self.log_test("DELETE /api/services/{id}", True, "Service deleted successfully")
+        else:
+            self.log_test("DELETE /api/services/{id}", False,
+                         f"Status: {status}", response)
+    
+    async def test_pending_operations_apis(self):
+        """Test Pending Operations APIs"""
+        print("\n⏳ Testing Pending Operations APIs...")
+        
+        # Test 1: GET /api/operations/pending (no params)
+        success, response, status = await self.make_request('GET', '/operations/pending')
+        if success and 'count' in response and 'items' in response:
+            # Verify ISO dates
+            items = response.get('items', [])
+            iso_dates_valid = True
+            for item in items[:3]:  # Check first 3 items
+                for date_field in ['entryDate', 'estimatedCompletion']:
+                    if date_field in item and item[date_field]:
+                        try:
+                            datetime.fromisoformat(item[date_field].replace('Z', '+00:00'))
+                        except:
+                            iso_dates_valid = False
+                            break
+                if not iso_dates_valid:
+                    break
             
-            # Check response speed
-            if response_time > 10.0:
-                print(f"  {Colors.YELLOW}⚠️  Warning: Response time is slow ({response_time:.3f}s){Colors.RESET}")
+            self.log_test("GET /api/operations/pending", True,
+                         f"Count: {response['count']}, ISO dates valid: {iso_dates_valid}")
         else:
-            log_test(
-                "POST /api/ai/kb/engine-info - استعلام عربي بسيط",
-                "FAIL",
-                f"Status: {response.status_code}, Response: {response.text[:200]}"
-            )
-            results.append(("POST /api/ai/kb/engine-info", False, 0))
-    except requests.exceptions.Timeout:
-        log_test(
-            "POST /api/ai/kb/engine-info", 
-            "FAIL", 
-            f"⚠️  Timeout after 30s - AI endpoint is too slow or unresponsive"
-        )
-        results.append(("POST /api/ai/kb/engine-info", False, 0))
-    except Exception as e:
-        log_test("POST /api/ai/kb/engine-info", "FAIL", f"Exception: {str(e)}")
-        results.append(("POST /api/ai/kb/engine-info", False, 0))
-    
-    # Test 3.2: POST /api/ai/kb/smart-search - Arabic search term
-    try:
-        search_data = {
-            "query": "فرامل"
-        }
+            self.log_test("GET /api/operations/pending", False,
+                         f"Status: {status}", response)
         
-        start_time = time.time()
-        response = requests.post(
-            f"{BACKEND_URL}/ai/kb/smart-search",
-            json=search_data,
-            headers={"Content-Type": "application/json"},
-            timeout=15
-        )
-        response_time = time.time() - start_time
-        
-        if response.status_code == 200:
-            data = response.json()
-            log_test(
-                "POST /api/ai/kb/smart-search - كلمة بحث عربية",
-                "PASS",
-                f"✅ Search results received: {str(data)[:100]}...",
-                response_time
-            )
-            results.append(("POST /api/ai/kb/smart-search", True, response_time))
+        # Test 2: GET /api/operations/analytics/pending
+        success, response, status = await self.make_request('GET', '/operations/analytics/pending')
+        if success and all(key in response for key in ['total', 'byStatus', 'overdue']):
+            by_status = response.get('byStatus', {})
+            expected_statuses = ['diagnosis', 'quotation', 'repair']
+            has_all_statuses = all(status in by_status for status in expected_statuses)
             
-            # Check response speed
-            if response_time > 5.0:
-                print(f"  {Colors.YELLOW}⚠️  Warning: Response time is slow ({response_time:.3f}s){Colors.RESET}")
+            self.log_test("GET /api/operations/analytics/pending", True,
+                         f"Total: {response['total']}, Overdue: {response['overdue']}, Has all statuses: {has_all_statuses}")
         else:
-            log_test(
-                "POST /api/ai/kb/smart-search - كلمة بحث عربية",
-                "FAIL",
-                f"Status: {response.status_code}, Response: {response.text[:200]}"
-            )
-            results.append(("POST /api/ai/kb/smart-search", False, 0))
-    except Exception as e:
-        log_test("POST /api/ai/kb/smart-search", "FAIL", f"Exception: {str(e)}")
-        results.append(("POST /api/ai/kb/smart-search", False, 0))
+            self.log_test("GET /api/operations/analytics/pending", False,
+                         f"Status: {status}", response)
     
-    return results
-
-def test_basic_services():
-    """Test 4: Basic Service Endpoints"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"TEST 4: Basic Services (الخدمات الأساسية)")
-    print(f"{'='*80}{Colors.RESET}\n")
-    
-    results = []
-    
-    # Test 4.1: GET /api/services - Verify services exist
-    try:
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/services", timeout=10)
-        response_time = time.time() - start_time
+    async def test_branches_cleanup(self):
+        """Test Branches Cleanup API"""
+        print("\n🏢 Testing Branches Cleanup API...")
         
-        if response.status_code == 200:
-            services = response.json()
-            log_test(
-                "GET /api/services - التحقق من وجود خدمات",
-                "PASS",
-                f"✅ Services found: {len(services)} services available",
-                response_time
-            )
-            results.append(("GET /api/services", True, response_time))
-        else:
-            log_test(
-                "GET /api/services - التحقق من وجود خدمات",
-                "FAIL",
-                f"Status: {response.status_code}"
-            )
-            results.append(("GET /api/services", False, 0))
-    except Exception as e:
-        log_test("GET /api/services", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/services", False, 0))
-    
-    # Test 4.2: GET /api/parts - Verify parts access
-    try:
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/parts", timeout=10)
-        response_time = time.time() - start_time
+        # First, get current biz-accounts to see what we have
+        success, response, status = await self.make_request('GET', '/biz-accounts')
+        if success:
+            initial_count = len(response) if isinstance(response, list) else 0
+            print(f"   Initial biz-accounts count: {initial_count}")
         
-        if response.status_code == 200:
-            parts = response.json()
-            log_test(
-                "GET /api/parts - التحقق من إمكانية الوصول للقطع",
-                "PASS",
-                f"✅ Parts accessible: {len(parts)} parts available",
-                response_time
-            )
-            results.append(("GET /api/parts", True, response_time))
+        # Test: POST /api/biz-accounts/cleanup with keep=2 and mode=hard
+        cleanup_data = {"keep": 2, "mode": "hard"}
+        success, response, status = await self.make_request('POST', '/biz-accounts/cleanup', cleanup_data)
+        if success and 'status' in response and response['status'] == 'ok':
+            final_accounts = response.get('final', [])
+            self.log_test("POST /api/biz-accounts/cleanup", True,
+                         f"Cleanup successful, final count: {len(final_accounts)}")
+            
+            # Store remaining account IDs for budget test
+            self.remaining_account_ids = [acc.get('id') for acc in final_accounts if acc.get('id')]
         else:
-            log_test(
-                "GET /api/parts - التحقق من إمكانية الوصول للقطع",
-                "FAIL",
-                f"Status: {response.status_code}"
-            )
-            results.append(("GET /api/parts", False, 0))
-    except Exception as e:
-        log_test("GET /api/parts", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/parts", False, 0))
-    
-    # Test 4.3: GET /api/customers - Verify customer list
-    try:
-        start_time = time.time()
-        response = requests.get(f"{BACKEND_URL}/customers", timeout=10)
-        response_time = time.time() - start_time
+            self.log_test("POST /api/biz-accounts/cleanup", False,
+                         f"Status: {status}", response)
         
-        if response.status_code == 200:
-            customers = response.json()
-            log_test(
-                "GET /api/customers - التحقق من قائمة العملاء",
-                "PASS",
-                f"✅ Customers accessible: {len(customers)} customers in database",
-                response_time
-            )
-            results.append(("GET /api/customers", True, response_time))
+        # Verify: GET /api/biz-accounts and confirm only 2 active remain
+        success, response, status = await self.make_request('GET', '/biz-accounts')
+        if success and isinstance(response, list):
+            active_accounts = [acc for acc in response if not acc.get('archived')]
+            if len(active_accounts) == 2:
+                self.log_test("GET /api/biz-accounts (verify cleanup)", True,
+                             f"Confirmed 2 active accounts remain")
+            else:
+                self.log_test("GET /api/biz-accounts (verify cleanup)", False,
+                             f"Expected 2 active accounts, found {len(active_accounts)}")
         else:
-            log_test(
-                "GET /api/customers - التحقق من قائمة العملاء",
-                "FAIL",
-                f"Status: {response.status_code}"
-            )
-            results.append(("GET /api/customers", False, 0))
-    except Exception as e:
-        log_test("GET /api/customers", "FAIL", f"Exception: {str(e)}")
-        results.append(("GET /api/customers", False, 0))
+            self.log_test("GET /api/biz-accounts (verify cleanup)", False,
+                         f"Status: {status}", response)
     
-    return results
+    async def test_budgets_regression(self):
+        """Test Budgets minimal regression"""
+        print("\n💰 Testing Budgets API...")
+        
+        # Test 1: GET /api/budgets (should return 200 list)
+        success, response, status = await self.make_request('GET', '/budgets')
+        if success and isinstance(response, list):
+            self.log_test("GET /api/budgets", True,
+                         f"Returned list with {len(response)} budgets")
+        else:
+            self.log_test("GET /api/budgets", False,
+                         f"Status: {status}", response)
+        
+        # Test 2: POST /api/budgets with sample body
+        if self.remaining_account_ids:
+            account_id = self.remaining_account_ids[0]
+            budget_data = {
+                "accountId": account_id,
+                "period": "2025-11",
+                "incomeTarget": 50000,
+                "expenseTarget": 25000
+            }
+            
+            success, response, status = await self.make_request('POST', '/budgets', budget_data)
+            if success and 'id' in response:
+                created_budget_id = response['id']
+                self.log_test("POST /api/budgets", True,
+                             f"Created budget with ID: {created_budget_id}")
+                
+                # Test 3: GET /api/budgets with filters
+                params = {"account_id": account_id, "period": "2025-11"}
+                success, response, status = await self.make_request('GET', '/budgets', params=params)
+                if success and isinstance(response, list) and len(response) > 0:
+                    found_budget = next((b for b in response if b.get('id') == created_budget_id), None)
+                    if found_budget:
+                        self.log_test("GET /api/budgets (filtered)", True,
+                                     f"Found created budget in filtered results")
+                    else:
+                        self.log_test("GET /api/budgets (filtered)", False,
+                                     "Created budget not found in filtered results")
+                else:
+                    self.log_test("GET /api/budgets (filtered)", False,
+                                 f"Status: {status}", response)
+            else:
+                self.log_test("POST /api/budgets", False,
+                             f"Status: {status}", response)
+        else:
+            self.log_test("POST /api/budgets", False,
+                         "No account IDs available from cleanup test")
+    
+    async def check_no_id_leakage(self):
+        """Verify no _id fields leak in responses"""
+        print("\n🔍 Checking for _id field leakage...")
+        
+        endpoints_to_check = [
+            '/services',
+            '/biz-accounts', 
+            '/budgets',
+            '/operations/pending'
+        ]
+        
+        for endpoint in endpoints_to_check:
+            success, response, status = await self.make_request('GET', endpoint)
+            if success:
+                has_id_leak = False
+                if isinstance(response, list):
+                    for item in response[:5]:  # Check first 5 items
+                        if '_id' in item:
+                            has_id_leak = True
+                            break
+                elif isinstance(response, dict):
+                    if '_id' in response:
+                        has_id_leak = True
+                    # Check items array if present
+                    items = response.get('items', [])
+                    for item in items[:5]:
+                        if isinstance(item, dict) and '_id' in item:
+                            has_id_leak = True
+                            break
+                
+                self.log_test(f"No _id leakage in {endpoint}", not has_id_leak,
+                             "Found _id field in response" if has_id_leak else "No _id fields found")
+            else:
+                self.log_test(f"No _id leakage in {endpoint}", False,
+                             f"Could not test - endpoint failed: {status}")
+    
+    async def run_all_tests(self):
+        """Run all backend tests"""
+        print(f"🚀 Starting Backend API Tests")
+        print(f"Backend URL: {API_BASE}")
+        print("=" * 60)
+        
+        # Run all test suites
+        await self.test_services_crud()
+        await self.test_pending_operations_apis()
+        await self.test_branches_cleanup()
+        await self.test_budgets_regression()
+        await self.check_no_id_leakage()
+        
+        # Summary
+        print("\n" + "=" * 60)
+        print("📊 TEST SUMMARY")
+        print("=" * 60)
+        
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result['success'])
+        failed_tests = total_tests - passed_tests
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"✅ Passed: {passed_tests}")
+        print(f"❌ Failed: {failed_tests}")
+        print(f"Success Rate: {(passed_tests/total_tests*100):.1f}%")
+        
+        if failed_tests > 0:
+            print(f"\n❌ FAILED TESTS:")
+            for result in self.test_results:
+                if not result['success']:
+                    print(f"   • {result['test']}: {result['details']}")
+        
+        return passed_tests, failed_tests, total_tests
 
-def print_summary(all_results: List[tuple]):
-    """Print comprehensive test summary"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"TEST SUMMARY (ملخص الاختبار)")
-    print(f"{'='*80}{Colors.RESET}\n")
-    
-    total_tests = len(all_results)
-    passed_tests = sum(1 for _, passed, _ in all_results if passed)
-    failed_tests = total_tests - passed_tests
-    
-    # Calculate average response time
-    response_times = [rt for _, passed, rt in all_results if passed and rt > 0]
-    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
-    
-    print(f"Total Tests: {total_tests}")
-    print(f"{Colors.GREEN}Passed: {passed_tests}{Colors.RESET}")
-    print(f"{Colors.RED}Failed: {failed_tests}{Colors.RESET}")
-    print(f"Success Rate: {(passed_tests/total_tests*100):.1f}%")
-    print(f"Average Response Time: {avg_response_time:.3f}s\n")
-    
-    # Detailed results
-    print("Detailed Results:")
-    print("-" * 80)
-    for test_name, passed, response_time in all_results:
-        status = f"{Colors.GREEN}✅ PASS{Colors.RESET}" if passed else f"{Colors.RED}❌ FAIL{Colors.RESET}"
-        time_str = f"({response_time:.3f}s)" if response_time > 0 else ""
-        print(f"{status} {test_name} {time_str}")
-    
-    print("\n" + "="*80)
-    
-    # Final verdict
-    if failed_tests == 0:
-        print(f"{Colors.GREEN}🎉 ALL TESTS PASSED! System is working correctly.{Colors.RESET}")
-    else:
-        print(f"{Colors.RED}⚠️  {failed_tests} TEST(S) FAILED. Please review the issues above.{Colors.RESET}")
-    print("="*80 + "\n")
-
-def main():
+async def main():
     """Main test execution"""
-    print(f"\n{Colors.BLUE}{'='*80}")
-    print(f"WORKSHOP MANAGEMENT SYSTEM - COMPREHENSIVE BACKEND TESTING")
-    print(f"نظام إدارة الورش - اختبار شامل للوظائف الأساسية")
-    print(f"{'='*80}{Colors.RESET}\n")
-    print(f"Backend URL: {BACKEND_URL}")
-    print(f"Test Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    
-    all_results = []
-    
-    # Run all tests in order
-    all_results.extend(test_workshop_profile())
-    all_results.extend(test_vehicle_management())
-    all_results.extend(test_ai_knowledge_base())
-    all_results.extend(test_basic_services())
-    
-    # Print summary
-    print_summary(all_results)
+    async with BackendTester() as tester:
+        passed, failed, total = await tester.run_all_tests()
+        
+        # Exit with appropriate code
+        if failed == 0:
+            print(f"\n🎉 All tests passed!")
+            return 0
+        else:
+            print(f"\n⚠️  {failed} test(s) failed")
+            return 1
 
 if __name__ == "__main__":
-    main()
+    import sys
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code)

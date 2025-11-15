@@ -577,11 +577,20 @@ async def delete_customer(customer_id: str):
 # ============ Technician APIs ============
 @api_router.get("/technicians", response_model=List[Technician])
 async def get_technicians():
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('technicians')
+        return [Technician(**r) for r in rows]
     technicians = await db.technicians.find().to_list(1000)
     return [Technician(**t) for t in technicians]
 
 @api_router.get("/technicians/{tech_id}", response_model=Technician)
 async def get_technician(tech_id: str):
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('technicians')
+        for r in rows:
+            if r.get('id') == tech_id:
+                return Technician(**r)
+        raise HTTPException(status_code=404, detail="Technician not found")
     tech = await db.technicians.find_one({"id": tech_id})
     if not tech:
         raise HTTPException(status_code=404, detail="Technician not found")

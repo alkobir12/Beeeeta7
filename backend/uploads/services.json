@@ -1,0 +1,18 @@
+[
+  {
+    "id": "9884870e-e752-400f-af08-70f3cb8563d9",
+    "name": "تغيير زيت",
+    "category": "زيوت",
+    "price": 120,
+    "duration": 30,
+    "active": true
+  },
+  {
+    "id": "70b7cc38-7b49-433f-a4a6-d6d7fbb4c922",
+    "name": "فحص كمبيوتر",
+    "category": "تشخيص",
+    "price": 150,
+    "duration": 40,
+    "active": true
+  }
+]

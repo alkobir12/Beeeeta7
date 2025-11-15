@@ -24,10 +24,12 @@ const Login = () => {
       // Check if user exists by name
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       const response = await fetch(`${API_URL}/users`);
+      const resClone = response.clone();
       if (!response.ok) {
-        throw new Error(`Server error ${response.status}`);
+        const msg = await resClone.text().catch(()=> '');
+        throw new Error(msg || `Server error ${response.status}`);
       }
-      const users = await response.json();
+      const users = await resClone.json();
 
       // Find user by name (case-insensitive)
       const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());

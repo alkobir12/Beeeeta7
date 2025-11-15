@@ -418,6 +418,121 @@ async def get_customer_history(customer_id: str):
     }
 
 @api_router.delete("/customers/{customer_id}")
+
+if DB_PROVIDER == 'memory':
+    # ============ Service APIs (Memory) ============
+    @api_router.get("/services", response_model=List[Service])
+    async def get_services_mem():
+        rows = _mem_read('services')
+        return [Service(**{
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'price': r.get('price', 0),
+            'duration': r.get('duration', 0),
+            'active': r.get('active', True)
+        }) for r in rows]
+
+    @api_router.post("/services", response_model=Service)
+    async def create_service_mem(service: Service):
+        rows = _mem_read('services')
+        doc = service.dict()
+        rows.append(doc)
+        _mem_write('services', rows)
+        return service
+
+    @api_router.put("/services/{service_id}", response_model=Service)
+    async def update_service_mem(service_id: str, payload: dict):
+        rows = _mem_read('services')
+        for i, r in enumerate(rows):
+            if r.get('id') == service_id:
+                rows[i] = {**r, **payload}
+                _mem_write('services', rows)
+                return Service(**rows[i])
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    @api_router.delete("/services/{service_id}")
+    async def delete_service_mem(service_id: str):
+        rows = _mem_read('services')
+        nrows = [r for r in rows if r.get('id') != service_id]
+        if len(nrows) == len(rows):
+            raise HTTPException(status_code=404, detail="Service not found")
+        _mem_write('services', nrows)
+        return {"message": "deleted"}
+
+    # ============ Parts APIs (Memory) ============
+    @api_router.get("/parts", response_model=List[Part])
+    async def get_parts_mem():
+        rows = _mem_read('parts')
+        return [Part(**r) for r in rows]
+
+    @api_router.post("/parts", response_model=Part)
+    async def create_part_mem(part_data: PartCreate):
+        rows = _mem_read('parts')
+        doc = Part(**part_data.dict()).dict()
+        rows.append(doc)
+        _mem_write('parts', rows)
+        return Part(**doc)
+
+    @api_router.put("/parts/{part_id}", response_model=Part)
+    async def update_part_mem(part_id: str, update_data: PartUpdate):
+        rows = _mem_read('parts')
+        for i, r in enumerate(rows):
+            if r.get('id') == part_id:
+                upd = {k: v for k, v in update_data.dict().items() if v is not None}
+                rows[i] = {**r, **upd}
+                _mem_write('parts', rows)
+                return Part(**rows[i])
+        raise HTTPException(status_code=404, detail="Part not found")
+
+    @api_router.delete("/parts/{part_id}")
+    async def delete_part_mem(part_id: str):
+        rows = _mem_read('parts')
+        nrows = [r for r in rows if r.get('id') != part_id]
+        if len(nrows) == len(rows):
+            raise HTTPException(status_code=404, detail="Part not found")
+        _mem_write('parts', nrows)
+        return {"message": "Part deleted successfully"}
+
+    # ============ Vehicles APIs (Memory) ============
+    @api_router.get("/vehicles", response_model=List[Vehicle])
+    async def get_vehicles_mem():
+        rows = _mem_read('vehicles')
+        return [Vehicle(**r) for r in rows]
+
+    @api_router.post("/vehicles", response_model=Vehicle)
+    async def create_vehicle_mem(vehicle_data: VehicleCreate):
+        rows = _mem_read('vehicles')
+        doc = Vehicle(**{
+            **vehicle_data.dict(),
+            'id': str(uuid.uuid4()),
+            'trackingLink': f"TRK-{str(uuid.uuid4())[:8].upper()}",
+            'estimatedCompletion': datetime.utcnow() + timedelta(days=2)
+        }).dict()
+        rows.append(doc)
+        _mem_write('vehicles', rows)
+        return Vehicle(**doc)
+
+    @api_router.put("/vehicles/{vehicle_id}", response_model=Vehicle)
+    async def update_vehicle_mem(vehicle_id: str, update_data: VehicleUpdate):
+        rows = _mem_read('vehicles')
+        for i, r in enumerate(rows):
+            if r.get('id') == vehicle_id:
+                upd = {k: v for k, v in update_data.dict().items() if v is not None}
+                rows[i] = {**r, **upd}
+                _mem_write('vehicles', rows)
+                return Vehicle(**rows[i])
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
+    @api_router.delete("/vehicles/{vehicle_id}")
+    async def delete_vehicle_mem(vehicle_id: str):
+        rows = _mem_read('vehicles')
+        nrows = [r for r in rows if r.get('id') != vehicle_id]
+        if len(nrows) == len(rows):
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        _mem_write('vehicles', nrows)
+        return {"message": "Vehicle deleted"}
+
 async def delete_customer(customer_id: str):
     """Delete a customer and all related data"""
     try:

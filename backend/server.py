@@ -598,6 +598,105 @@ async def get_technician(tech_id: str):
 
 # ============ Service APIs ============
 @api_router.get("/services", response_model=List[Service])
+
+# ============ Memory Provider: Business Accounts, Budgets, Operations ============
+if DB_PROVIDER == 'memory':
+    # Business Accounts
+    @api_router.get('/biz-accounts')
+    async def mem_biz_accounts_list():
+        rows = _mem_read('accounts')
+        return rows
+
+    @api_router.post('/biz-accounts')
+    async def mem_biz_accounts_create(payload: dict):
+        rows = _mem_read('accounts')
+        doc = {
+            'id': str(uuid.uuid4()),
+            'name': payload.get('name') or f'فرع {len(rows)+1}',
+            'code': payload.get('code') or f'BR{len(rows)+1:02d}',
+            'currency': payload.get('currency') or 'SAR',
+            'createdAt': datetime.utcnow().isoformat()
+        }
+        rows.append(doc)
+        _mem_write('accounts', rows)
+        return doc
+
+    @api_router.post('/biz-accounts/cleanup')
+    async def mem_biz_accounts_cleanup(keep: int = 2, mode: str = 'hard'):
+        rows = sorted(_mem_read('accounts'), key=lambda r: r.get('createdAt',''), reverse=True)
+        kept = rows[:keep]
+        _mem_write('accounts', kept)
+        return {'status':'ok','final': kept}
+
+    # Budgets
+    @api_router.get('/budgets')
+    async def mem_budgets_list(account_id: str | None = None, period: str | None = None):
+        rows = _mem_read('budgets')
+        out = [r for r in rows if (not account_id or r.get('accountId')==account_id) and (not period or r.get('period')==period)]
+        return out
+
+    @api_router.post('/budgets')
+    async def mem_budgets_create(payload: dict):
+        rows = _mem_read('budgets')
+        doc = {
+            'id': str(uuid.uuid4()),
+            'accountId': payload.get('accountId'),
+            'period': payload.get('period'),
+            'incomeTarget': payload.get('incomeTarget', 0),
+            'expenseTarget': payload.get('expenseTarget', 0),
+            'notes': payload.get('notes')
+        }
+        rows.append(doc)
+        _mem_write('budgets', rows)
+        return doc
+
+    # Operations
+    @api_router.get('/operations')
+    async def mem_operations_list():
+        rows = _mem_read('operations')
+        return rows
+
+    @api_router.post('/operations')
+    async def mem_operations_create(payload: dict):
+        rows = _mem_read('operations')
+        items = payload.get('items') or []
+        subtotal = sum((it.get('price',0)*it.get('qty',1)) for it in items)
+        total = subtotal
+        doc = {
+            'id': str(uuid.uuid4()),
+            'type': payload.get('type','service'),
+            'accountId': payload.get('accountId'),
+            'vehicleId': payload.get('vehicleId'),
+            'partnerType': payload.get('partnerType'),
+            'partnerName': payload.get('partnerName'),
+            'items': items,
+            'subtotal': subtotal,
+            'total': total,
+            'paymentMethod': payload.get('paymentMethod','cash'),
+            'notes': payload.get('notes'),
+            'opDate': datetime.utcnow().isoformat()
+        }
+        rows.append(doc)
+        _mem_write('operations', rows)
+        return doc
+
+    @api_router.get('/operations/pending')
+    async def mem_operations_pending():
+        vrows = _mem_read('vehicles')
+        pending = [v for v in vrows if v.get('status') in ['diagnosis','quotation','repair']]
+        return {'count': len(pending), 'items': pending}
+
+    @api_router.get('/operations/analytics/pending')
+    async def mem_operations_pending_analytics():
+        vrows = _mem_read('vehicles')
+        by = {'diagnosis':0,'quotation':0,'repair':0}
+        for v in vrows:
+            st = v.get('status')
+            if st in by:
+                by[st]+=1
+        total = sum(by.values())
+        return {'total': total, 'byStatus': by, 'overdue': 0}
+
 async def get_services():
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')

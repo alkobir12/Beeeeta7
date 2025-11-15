@@ -418,6 +418,16 @@ async def get_customer_history(customer_id: str):
     }
 
 @api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    try:
+        result = await db.customers.delete_one({"id": customer_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        return {"message": "Customer deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting customer: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if DB_PROVIDER == 'memory':
     # ============ Service APIs (Memory) ============

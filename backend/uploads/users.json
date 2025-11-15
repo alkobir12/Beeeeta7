@@ -1,0 +1,24 @@
+[
+  {
+    "id": "88fe138a-0768-47d1-aa66-d67679b5f2ff",
+    "name": "مدير",
+    "email": null,
+    "phone": "0500000000",
+    "role": "admin",
+    "permissions": {
+      "canViewDashboard": true,
+      "canManageVehicles": true,
+      "canManageCustomers": true,
+      "canManageParts": false,
+      "canManageServices": false,
+      "canViewReports": true,
+      "canManageFinance": false,
+      "canManageUsers": false,
+      "canAccessCEO": false,
+      "canManageSettings": false
+    },
+    "isActive": true,
+    "createdAt": "2025-11-15T15:31:38.451018",
+    "lastLogin": null
+  }
+]

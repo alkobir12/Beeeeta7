@@ -90,7 +90,27 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
         setMenuConfig(mc || null);
       } catch (_) {
-        setMenuConfig(null);
+        // Fallback default menu when API not available (memory mode)
+        const defaultMenu = {
+          items: [
+            { path:'/', label:'الرئيسية', enabled:true },
+            { path:'/operations', label:'العمليات', enabled:true },
+            { path:'/services', label:'الخدمات', enabled:true },
+            { path:'/parts', label:'قطع الغيار', enabled:true },
+            { path:'/customers', label:'العملاء', enabled:true },
+            { path:'/technicians', label:'الفنيون', enabled:true },
+            { path:'/business-accounts', label:'الفروع', enabled:true },
+            { path:'/invoice-templates', label:'مصمم الفواتير', enabled:true },
+            { path:'/analytics', label:'التحليلات', enabled:true },
+            { path:'/knowledge', label:'المراجع/المعرفة', enabled:true },
+            { group:true, path:'/settings', label:'الإعدادات', enabled:true, children:[
+              { path:'/settings', label:'الإعدادات العامة', enabled:true },
+              { path:'/templates', label:'نماذج الطباعة', enabled:true },
+              { path:'/users', label:'المستخدمون', enabled:true },
+            ]}
+          ]
+        };
+        setMenuConfig(defaultMenu);
       }
     };
     load();

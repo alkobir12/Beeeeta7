@@ -49,6 +49,29 @@ def set_db(database):
 @router.get('/settings')
 async def get_settings():
     try:
+        # Memory provider fallback
+        if os.environ.get('DB_PROVIDER', 'mongo').lower() == 'memory':
+            return {
+                "id": "app_settings",
+                "currency": "SAR",
+                "taxRate": 0.0,
+                "language": "ar",
+                "timezone": "Asia/Riyadh",
+                "invoicePrefix": "INV",
+                "menuConfig": {"simple": False, "items": [
+                    {"path": "/", "label": "الرئيسية", "enabled": True},
+                    {"path": "/operations", "label": "العمليات", "enabled": True},
+                    {"path": "/services", "label": "الخدمات", "enabled": True},
+                    {"path": "/parts", "label": "قطع الغيار", "enabled": True},
+                    {"path": "/customers", "label": "العملاء", "enabled": True},
+                    {"path": "/technicians", "label": "الفنيون", "enabled": True},
+                    {"path": "/business-accounts", "label": "الفروع", "enabled": True},
+                    {"path": "/invoice-templates", "label": "مصمم الفواتير", "enabled": True},
+                    {"path": "/analytics", "label": "التحليلات", "enabled": True},
+                    {"path": "/knowledge", "label": "المراجع/المعرفة", "enabled": True},
+                    {"path": "/settings", "label": "الإعدادات", "enabled": True}
+                ]}
+            }
         doc = await db.settings.find_one({"id": "app_settings"})
         if not doc:
             doc = {

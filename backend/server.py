@@ -597,7 +597,6 @@ async def get_technician(tech_id: str):
     return Technician(**tech)
 
 # ============ Service APIs ============
-@api_router.get("/services", response_model=List[Service])
 
 # ============ Memory Provider: Business Accounts, Budgets, Operations ============
 if DB_PROVIDER == 'memory':

@@ -599,16 +599,40 @@ async def get_technician(tech_id: str):
 # ============ Service APIs ============
 @api_router.get("/services", response_model=List[Service])
 async def get_services():
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        return [Service(**{
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'price': r.get('price', 0),
+            'duration': r.get('duration', 0),
+            'active': r.get('active', True)
+        }) for r in rows]
     services = await db.services.find().to_list(1000)
     return [Service(**s) for s in services]
 
 @api_router.post("/services", response_model=Service)
 async def create_service(service: Service):
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        doc = service.dict()
+        rows.append(doc)
+        _mem_write('services', rows)
+        return service
     await db.services.insert_one(service.dict())
     return service
 
 @api_router.put("/services/{service_id}", response_model=Service)
 async def update_service(service_id: str, payload: dict):
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        for i, r in enumerate(rows):
+            if r.get('id') == service_id:
+                rows[i] = {**r, **payload}
+                _mem_write('services', rows)
+                return Service(**rows[i])
+        raise HTTPException(status_code=404, detail="Service not found")
     update = {k: v for k, v in payload.items() if v is not None}
     await db.services.update_one({"id": service_id}, {"$set": update})
     doc = await db.services.find_one({"id": service_id})
@@ -618,6 +642,13 @@ async def update_service(service_id: str, payload: dict):
 
 @api_router.delete("/services/{service_id}")
 async def delete_service(service_id: str):
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        nrows = [r for r in rows if r.get('id') != service_id]
+        if len(nrows) == len(rows):
+            raise HTTPException(status_code=404, detail="Service not found")
+        _mem_write('services', nrows)
+        return {"message": "deleted"}
     res = await db.services.delete_one({"id": service_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Service not found")

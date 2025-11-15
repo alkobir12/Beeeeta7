@@ -29,6 +29,50 @@ from routes_advanced import router as advanced_router, set_db as set_db_advanced
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+
+# Provider mode
+DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
+
+# Simple file-based storage for memory mode
+import json
+MEM_DIR = ROOT_DIR / 'uploads'
+MEM_DIR.mkdir(exist_ok=True)
+
+def _mem_path(name: str) -> Path:
+    return MEM_DIR / f'{name}.json'
+
+def _mem_read(name: str) -> list:
+    p = _mem_path(name)
+    if not p.exists():
+        # seed minimal datasets
+        seed = []
+        if name == 'services':
+            seed = [
+                {"id": str(uuid.uuid4()), "name": "تغيير زيت", "category": "زيوت", "price": 120, "duration": 30, "active": True},
+                {"id": str(uuid.uuid4()), "name": "فحص كمبيوتر", "category": "تشخيص", "price": 150, "duration": 40, "active": True}
+            ]
+        elif name == 'technicians':
+            seed = [
+                {"id": str(uuid.uuid4()), "name": "فني أحمد", "phone": "", "specialty": "ميكانيكا"},
+                {"id": str(uuid.uuid4()), "name": "فني علي", "phone": "", "specialty": "كهرباء"}
+            ]
+        elif name == 'vehicles':
+            seed = []
+        elif name == 'parts':
+            seed = []
+        with open(p, 'w', encoding='utf-8') as f:
+            json.dump(seed, f, ensure_ascii=False, indent=2)
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _mem_write(name: str, items: list):
+    p = _mem_path(name)
+    with open(p, 'w', encoding='utf-8') as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)

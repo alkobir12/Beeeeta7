@@ -14,5 +14,12 @@
     "price": 150,
     "duration": 40,
     "active": true
+  },
+  {
+    "id": "42db03dc-d5e0-47a7-a972-cc6eb14a8bc2",
+    "name": "تركيب دوده",
+    "category": "اصلاح",
+    "price": 0.0,
+    "duration": 0
   }
 ]

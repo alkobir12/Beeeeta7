@@ -14,14 +14,64 @@ except ImportError:
     SUPABASE_AVAILABLE = False
     print("⚠️ supabase not installed")
 
+# -------- Mapping helpers --------
+
+def to_snake_vehicle(api: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        'id': api.get('id'),
+        'plate_number': api.get('plateNumber'),
+        'brand': api.get('brand'),
+        'model': api.get('model'),
+        'year': api.get('year'),
+        'color': api.get('color'),
+        'vin': api.get('vin'),
+        'file_number': api.get('fileNumber'),
+        'customer_id': api.get('customerId'),
+        'status': api.get('status'),
+        'entry_date': api.get('entryDate'),
+        'estimated_completion': api.get('estimatedCompletion'),
+        'completion_date': api.get('completionDate'),
+        'tracking_link': api.get('trackingLink'),
+        'images': api.get('images') or [],
+        'services': api.get('services') or [],
+        'parts': api.get('parts') or [],
+        'technician_id': api.get('technicianId'),
+        'technician_name': api.get('technicianName'),
+        'notes': api.get('notes')
+    }
+
+def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        'id': dbrow.get('id'),
+        'plateNumber': dbrow.get('plate_number'),
+        'brand': dbrow.get('brand'),
+        'model': dbrow.get('model'),
+        'year': dbrow.get('year'),
+        'color': dbrow.get('color'),
+        'vin': dbrow.get('vin'),
+        'fileNumber': dbrow.get('file_number'),
+        'customerId': dbrow.get('customer_id'),
+        'customerName': dbrow.get('customer_name'),
+        'customerPhone': dbrow.get('customer_phone'),
+        'status': dbrow.get('status', 'diagnosis'),
+        'entryDate': dbrow.get('entry_date'),
+        'estimatedCompletion': dbrow.get('estimated_completion'),
+        'completionDate': dbrow.get('completion_date'),
+        'trackingLink': dbrow.get('tracking_link'),
+        'images': dbrow.get('images') or [],
+        'services': dbrow.get('services') or [],
+        'parts': dbrow.get('parts') or [],
+        'technicianId': dbrow.get('technician_id'),
+        'technicianName': dbrow.get('technician_name'),
+        'notes': dbrow.get('notes')
+    }
+
 class SupabaseService:
     """Service for Supabase database operations"""
     
     def __init__(self):
-        """Initialize Supabase client"""
         self.supabase_url = os.environ.get('SUPABASE_URL', '')
         self.supabase_key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
-        
         if self.supabase_url and self.supabase_key and SUPABASE_AVAILABLE:
             self.client: Client = create_client(self.supabase_url, self.supabase_key)
             self.mock_mode = False
@@ -29,142 +79,190 @@ class SupabaseService:
             self.client = None
             self.mock_mode = True
             print("⚠️ Supabase running in MOCK mode. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to enable.")
-    
-    # -------------------- Vehicles (existing) --------------------
-    def get_vehicles(self) -> List[Dict[str, Any]]:
-        if self.mock_mode:
-            return self._get_mock_vehicles()
-        try:
-            response = self.client.table('vehicles').select('*').execute()
-            return response.data or []
-        except Exception as e:
-            print(f"Supabase vehicles error: {e}")
-            return []
-    
-    def create_vehicle(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        if self.mock_mode:
-            return {"id": f"mock-{datetime.now().timestamp()}", **data, "status": "mocked"}
-        try:
-            response = self.client.table('vehicles').insert(data).execute()
-            return (response.data or [{}])[0]
-        except Exception as e:
-            print(f"Supabase create_vehicle error: {e}")
-            raise
-    
-    def get_analytics(self) -> Dict[str, Any]:
-        if self.mock_mode:
-            return {"total_vehicles": 5, "completed_today": 3, "revenue_today": 1500.00, "pending_appointments": 2, "mode": "mock"}
-        try:
-            # Example: count vehicles
-            res = self.client.rpc('count_table', {"tbl": "vehicles"}).execute() if hasattr(self.client, 'rpc') else None
-            total = 0
-            if res and isinstance(res.data, dict) and 'count' in res.data:
-                total = res.data['count']
-            return {"total_vehicles": total, "mode": "live"}
-        except Exception as e:
-            return {"error": str(e)}
-    
-    # -------------------- Users --------------------
-    def users_list(self) -> List[Dict[str, Any]]:
-        if self.mock_mode:
-            # minimal mock
-            return [{"id": "mock-user", "name": "مدير", "phone": "", "email": None, "role": "admin", "permissions": {}, "isActive": True, "createdAt": datetime.utcnow().isoformat()}]
-        try:
-            res = self.client.table('users').select('*').order('created_at', desc=True).execute()
-            rows = res.data or []
-            # map fields to backend model naming
-            out = []
-            for r in rows:
-                out.append({
-                    'id': r.get('id'),
-                    'name': r.get('name'),
-                    'email': r.get('email'),
-                    'phone': r.get('phone'),
-                    'role': r.get('role') or 'employee',
-                    'permissions': r.get('permissions') or {},
-                    'isActive': r.get('is_active', True),
-                    'createdAt': r.get('created_at'),
-                    'lastLogin': r.get('last_login'),
-                })
-            return out
-        except Exception as e:
-            print(f"Supabase users_list error: {e}")
-            raise
-    
-    def users_create(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        if self.mock_mode:
-            return {**data, 'id': f"mock-{datetime.utcnow().timestamp()}", 'createdAt': datetime.utcnow().isoformat()}
-        try:
-            row = {
-                'id': data.get('id'),
-                'name': data.get('name'),
-                'email': data.get('email'),
-                'phone': data.get('phone'),
-                'role': data.get('role') or 'employee',
-                'permissions': data.get('permissions') or {},
-                'is_active': data.get('isActive', True),
-                'created_at': data.get('createdAt') or datetime.utcnow().isoformat(),
-                'last_login': data.get('lastLogin'),
-            }
-            resp = self.client.table('users').insert(row).execute()
-            r = (resp.data or [{}])[0]
-            return {
-                'id': r.get('id'),
-                'name': r.get('name'),
-                'email': r.get('email'),
-                'phone': r.get('phone'),
-                'role': r.get('role'),
-                'permissions': r.get('permissions') or {},
-                'isActive': r.get('is_active', True),
-                'createdAt': r.get('created_at'),
-                'lastLogin': r.get('last_login'),
-            }
-        except Exception as e:
-            print(f"Supabase users_create error: {e}")
-            raise
-    
-    def users_update(self, user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        if self.mock_mode:
-            return {**data, 'id': user_id}
-        try:
-            upd = {}
-            if 'name' in data: upd['name'] = data['name']
-            if 'email' in data: upd['email'] = data['email']
-            if 'phone' in data: upd['phone'] = data['phone']
-            if 'role' in data: upd['role'] = data['role']
-            if 'permissions' in data: upd['permissions'] = data['permissions']
-            if 'isActive' in data: upd['is_active'] = data['isActive']
-            if 'lastLogin' in data: upd['last_login'] = data['lastLogin']
-            resp = self.client.table('users').update(upd).eq('id', user_id).execute()
-            r = (resp.data or [{}])[0]
-            return {
-                'id': r.get('id'),
-                'name': r.get('name'),
-                'email': r.get('email'),
-                'phone': r.get('phone'),
-                'role': r.get('role'),
-                'permissions': r.get('permissions') or {},
-                'isActive': r.get('is_active', True),
-                'createdAt': r.get('created_at'),
-                'lastLogin': r.get('last_login'),
-            }
-        except Exception as e:
-            print(f"Supabase users_update error: {e}")
-            raise
-    
-    def users_delete(self, user_id: str) -> bool:
-        if self.mock_mode:
-            return True
-        try:
-            self.client.table('users').delete().eq('id', user_id).execute()
-            return True
-        except Exception as e:
-            print(f"Supabase users_delete error: {e}")
-            raise
 
-    # -------------------- Mock helpers --------------------
-    def _get_mock_vehicles(self) -> List[Dict[str, Any]]:
-        return [
-            {"id": "mock-v1", "plateNumber": "س ع د 1234", "make": "تويوتا", "model": "كامري", "year": 2020, "customerName": "أحمد محمد"},
-            {"id": "mock-v2", "plateNumber": "أ ب ج 5678", "make": "هيونداي", "model": "سوناتا", "year": 2021, "customerName": "فاطمة علي"},
-        ]
+    # -------------------- Vehicles --------------------
+    def vehicles_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('vehicles').select('*').order('entry_date', desc=True).execute()
+        return [to_camel_vehicle(r) for r in (res.data or [])]
+
+    def vehicles_create(self, api_doc: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return api_doc
+        row = to_snake_vehicle(api_doc)
+        res = self.client.table('vehicles').insert(row).execute()
+        data = (res.data or [{}])[0]
+        return to_camel_vehicle(data)
+
+    def vehicles_get(self, vid: str) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        res = self.client.table('vehicles').select('*').eq('id', vid).single().execute()
+        return to_camel_vehicle(res.data) if res.data else None
+
+    def vehicles_update(self, vid: str, upd_api: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        upd = to_snake_vehicle(upd_api)
+        # remove None to avoid overwriting
+        upd = {k: v for k, v in upd.items() if v is not None}
+        res = self.client.table('vehicles').update(upd).eq('id', vid).execute()
+        data = (res.data or [{}])[0]
+        return to_camel_vehicle(data)
+
+    def vehicles_delete(self, vid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('vehicles').delete().eq('id', vid).execute()
+        return True
+
+    # -------------------- Technicians --------------------
+    def technicians_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('technicians').select('*').order('created_at', desc=True).execute()
+        return res.data or []
+
+    # -------------------- Services --------------------
+    def services_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('services').select('*').order('created_at', desc=True).execute()
+        rows = res.data or []
+        out = []
+        for r in rows:
+            out.append({
+                'id': r.get('id'),
+                'name': r.get('name'),
+                'category': r.get('category'),
+                'price': float(r.get('price') or 0),
+                'duration': r.get('duration_minutes') or 0,
+                'active': r.get('active', True)
+            })
+        return out
+
+    def services_create(self, doc: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return doc
+        row = {
+            'id': doc.get('id'),
+            'name': doc.get('name'),
+            'category': doc.get('category'),
+            'price': doc.get('price', 0),
+            'duration_minutes': doc.get('duration', 0),
+            'vat_percent': 0,
+            'active': doc.get('active', True),
+            'notes': doc.get('notes')
+        }
+        res = self.client.table('services').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'price': float(r.get('price') or 0),
+            'duration': r.get('duration_minutes') or 0,
+            'active': r.get('active', True)
+        }
+
+    def services_update(self, sid: str, upd: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return upd
+        row = {}
+        if 'name' in upd: row['name'] = upd['name']
+        if 'category' in upd: row['category'] = upd['category']
+        if 'price' in upd: row['price'] = upd['price']
+        if 'duration' in upd: row['duration_minutes'] = upd['duration']
+        if 'active' in upd: row['active'] = upd['active']
+        if 'notes' in upd: row['notes'] = upd['notes']
+        res = self.client.table('services').update(row).eq('id', sid).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'price': float(r.get('price') or 0),
+            'duration': r.get('duration_minutes') or 0,
+            'active': r.get('active', True)
+        }
+
+    def services_delete(self, sid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('services').delete().eq('id', sid).execute()
+        return True
+
+    # -------------------- Business Accounts --------------------
+    def accounts_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('business_accounts').select('*').order('created_at', desc=True).execute()
+        rows = res.data or []
+        return [{
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'code': r.get('code'),
+            'currency': r.get('currency') or 'SAR',
+            'createdAt': r.get('created_at')
+        } for r in rows]
+
+    def accounts_create(self, name: str, code: Optional[str], currency: str) -> Dict[str, Any]:
+        if self.mock_mode:
+            return {'id': 'mock', 'name': name, 'code': code or 'BR01', 'currency': currency, 'createdAt': datetime.utcnow().isoformat()}
+        row = {'name': name, 'code': code or name[:4].upper(), 'currency': currency}
+        res = self.client.table('business_accounts').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {'id': r.get('id'), 'name': r.get('name'), 'code': r.get('code'), 'currency': r.get('currency') or 'SAR', 'createdAt': r.get('created_at')}
+
+    # -------------------- Budgets --------------------
+    def budgets_list(self, account_id: Optional[str], period: Optional[str]) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        q = self.client.table('budgets').select('*')
+        if account_id:
+            q = q.eq('account_id', account_id)
+        if period:
+            q = q.eq('period', period)
+        res = q.order('period', desc=True).execute()
+        return res.data or []
+
+    def budgets_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        row = {
+            'account_id': payload.get('accountId'),
+            'period': payload.get('period'),
+            'income_target': payload.get('incomeTarget', 0),
+            'expense_target': payload.get('expenseTarget', 0),
+            'notes': payload.get('notes')
+        }
+        res = self.client.table('budgets').insert(row).execute()
+        return (res.data or [{}])[0]
+
+    # -------------------- Operations (minimal) --------------------
+    def operations_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('operations').select('*').order('op_date', desc=True).execute()
+        return res.data or []
+
+    def operations_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        items = payload.get('items') or []
+        subtotal = sum((it.get('price',0)*it.get('qty',1)) for it in items)
+        row = {
+            'type': payload.get('type','service'),
+            'account_id': payload.get('accountId'),
+            'vehicle_id': payload.get('vehicleId'),
+            'partner_type': payload.get('partnerType'),
+            'partner_name': payload.get('partnerName'),
+            'items': items,
+            'subtotal': subtotal,
+            'total': subtotal,
+            'payment_method': payload.get('paymentMethod','cash'),
+            'notes': payload.get('notes')
+        }
+        res = self.client.table('operations').insert(row).execute()
+        return (res.data or [{}])[0]

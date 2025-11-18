@@ -983,13 +983,25 @@ async def build_workshop_context() -> str:
 
 @api_router.post("/ai/groq-chat", response_model=ChatResponse)
 async def groq_chat_endpoint(chat_request: ChatRequest):
-    """Simple Groq-backed chat endpoint for the global assistant.
+    """Groq-backed assistant endpoint linked to workshop data.
 
-    Does not persist sessions yet; it just returns the AI reply.
+    Uses a small live snapshot from MongoDB (vehicles/customers) as context
+    so the model can answer questions about the workshop status.
     """
+    context = await build_workshop_context()
+    user_text = chat_request.message or ""
+
+    # Build a multi-lingual system prompt with workshop snapshot
+    system_prompt = (
+        "You are an intelligent assistant for an auto workshop management system. "
+        "Answer succinctly and professionally. If the user writes in Arabic, respond in Arabic; "
+        "if in English, respond in English. Use the workshop snapshot below whenever helpful.\n\n"
+        f"Workshop snapshot (for your reference):\n{context}"
+    )
+
     result = await call_groq_chat(
-        chat_request.message,
-        system_prompt="You are a helpful workshop management assistant. Answer briefly in the same language as the user.",
+        user_text,
+        system_prompt=system_prompt,
     )
     return ChatResponse(response=result["content"], sessionId=chat_request.sessionId or None)
 

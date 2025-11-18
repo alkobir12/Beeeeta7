@@ -25,12 +25,12 @@ const Login = () => {
 
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       const response = await fetch(`${API_URL}/users`);
-      const resClone = response.clone();
       if (!response.ok) {
-        const msg = await resClone.text().catch(()=> '');
+        // نقرأ الـ body مرة واحدة فقط لتفادي خطأ Response body is already used
+        const msg = await response.text().catch(() => '');
         throw new Error(msg || `Server error ${response.status}`);
       }
-      const users = await resClone.json();
+      const users = await response.json();
 
       const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
 

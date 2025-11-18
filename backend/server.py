@@ -959,8 +959,6 @@ async def groq_chat_endpoint(chat_request: ChatRequest):
     )
     return ChatResponse(response=result["content"], sessionId=chat_request.sessionId or None)
 
-    }
-
 # ============ AI Assistant APIs ============
 @api_router.post("/ai/chat", response_model=ChatResponse)
 async def chat_with_ai(chat_request: ChatRequest):

@@ -925,6 +925,27 @@ async def call_groq_chat(message: str, system_prompt: Optional[str] = None) -> d
     }
 
     try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPError as e:
+        logger.error(f"Groq API error: {e}")
+        raise HTTPException(status_code=502, detail="Groq API request failed")
+
+    try:
+        choice = (data.get("choices") or [{}])[0]
+        content = choice.get("message", {}).get("content") or ""
+        usage = data.get("usage") or {}
+        return {
+            "content": content,
+            "model": data.get("model", GROQ_MODEL),
+            "tokens": usage.get("total_tokens", 0),
+        }
+    except Exception as e:
+        logger.error(f"Groq API response parse error: {e} | raw={data}")
+        raise HTTPException(status_code=500, detail="Failed to parse Groq API response")
+
 
 async def build_workshop_context() -> str:
     """Build a small textual snapshot from workshop data (vehicles, customers, etc.).

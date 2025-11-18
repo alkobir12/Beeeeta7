@@ -48,7 +48,30 @@ const GroqAssistant = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Groq API error');
+        // حاول قراءة رسالة الخطأ من السيرفر لتوضيح سبب عدم الاستجابة
+        const text = await res.text().catch(() => '');
+        let detail = '';
+        try {
+          const parsed = JSON.parse(text);
+          detail = parsed.detail || '';
+        } catch (_) {
+          detail = text;
+        }
+
+        if (detail.includes('GROQ_API_KEY is not configured')) {
+          setError(
+            lang === 'ar'
+              ? 'المساعد غير مفعّل: يجب إعداد مفتاح GROQ_API_KEY في إعدادات الخادم.'
+              : 'Assistant is not enabled: GROQ_API_KEY must be configured on the server.'
+          );
+        } else {
+          setError(
+            lang === 'ar'
+              ? 'حدث خطأ أثناء الاتصال بالمساعد.'
+              : 'An error occurred while contacting the assistant.'
+          );
+        }
+        return;
       }
 
       const data = await res.json();
@@ -56,7 +79,11 @@ const GroqAssistant = () => {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
       console.error('Groq assistant error', err);
-      setError(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالمساعد.' : 'An error occurred while contacting the assistant.');
+      setError(
+        lang === 'ar'
+          ? 'تعذّر الاتصال بالمساعد. تحقّق من الاتصال أو أعد المحاولة لاحقاً.'
+          : 'Unable to reach the assistant. Please check your connection and try again.'
+      );
     } finally {
       setLoading(false);
     }

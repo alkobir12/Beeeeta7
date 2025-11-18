@@ -925,6 +925,40 @@ async def call_groq_chat(message: str, system_prompt: Optional[str] = None) -> d
     }
 
     try:
+
+async def build_workshop_context() -> str:
+    """Build a small textual snapshot from workshop data (vehicles, customers, etc.).
+
+    This links the Groq assistant to live workshop data so it can answer
+    questions about current status (counts, ready vehicles, etc.).
+    """
+    try:
+        total_vehicles = await db.vehicles.count_documents({})
+        ready = await db.vehicles.count_documents({"status": "ready"})
+        in_progress = await db.vehicles.count_documents({"status": {"$ne": "ready"}})
+        total_customers = await db.customers.count_documents({})
+
+        recent = await db.vehicles.find().sort("entryDate", -1).to_list(5)
+        lines = [
+            "Current workshop snapshot:",
+            f"- Total vehicles: {total_vehicles}",
+            f"- Ready vehicles: {ready}",
+            f"- In-progress vehicles: {in_progress}",
+            f"- Total customers: {total_customers}",
+        ]
+        if recent:
+            lines.append("- Recent vehicles:")
+            for v in recent:
+                plate = v.get("plateNumber", "?")
+                status = v.get("status", "unknown")
+                brand = v.get("brand", "")
+                model = v.get("model", "")
+                lines.append(f"  • {plate} | {brand} {model} | status: {status}")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Failed to build workshop context for Groq assistant: {e}")
+        return ""
+
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             resp.raise_for_status()

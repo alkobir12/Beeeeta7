@@ -207,6 +207,21 @@ backend:
           agent: "testing"
           comment: "✅ NEW SETTINGS ENDPOINTS VERIFICATION COMPLETE: All 3 requested verification tests passed successfully (3/3 tests passed). (1) ✅ GET /api/settings returns structure with menuConfig.items containing exactly 10 items (>=10 required), including proper Arabic labels and paths for dashboard, archive, import, etc. (2) ✅ POST /api/settings successfully updates language to 'ar' and persists correctly - verified through subsequent GET request showing language='ar' maintained. (3) ✅ POST /api/print/render returns valid HTML structure with proper <html>, <body>, and </html> tags, preserving Arabic content (customer name 'أحمد الراشد' found in output). All endpoints working correctly as specified in review request."
 
+  - task: "Groq AI Chat Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added POST /api/ai/groq-chat endpoint with httpx integration for Groq API calls"
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: Groq endpoint quick test complete (4/4 tests passed). Fixed syntax errors in server.py (missing closing brace line 892, extra closing brace line 962). POST /api/ai/groq-chat returns 500 with correct error message 'GROQ_API_KEY is not configured on the server' when API key missing. No conflict with existing /api/ai/chat endpoint. Server stable, httpx integration doesn't break application. All Arabic review requirements satisfied."
+
   - task: "Services CRUD API"
     implemented: true
     working: false

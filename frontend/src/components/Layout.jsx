@@ -38,6 +38,9 @@ const Layout = ({ children }) => {
       <div className="lg:mr-64 pb-16">
         {children}
       </div>
+
+      {/* Global Groq Assistant - appears on all pages */}
+      <GroqAssistant />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 import uuid
 import os
 import json
@@ -68,7 +68,9 @@ async def get_users():
             out.append(User(**u))
         return out
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Fallback to memory on any error (e.g., Mongo down)
+        rows = _read_users()
+        return [User(**r) for r in rows]
 
 @router.post('/users', response_model=User)
 async def create_user(user_data: UserCreate):
@@ -110,7 +112,18 @@ async def create_user(user_data: UserCreate):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # fallback to memory
+        users = _read_users()
+        doc = user_data.dict()
+        doc['id'] = str(uuid.uuid4())
+        doc['createdAt'] = datetime.utcnow().isoformat()
+        doc['lastLogin'] = None
+        doc['isActive'] = True
+        if not doc.get('permissions'):
+            doc['permissions'] = UserPermissions().dict()
+        users.append(doc)
+        _write_users(users)
+        return User(**doc)
 
 @router.put('/users/{user_id}', response_model=User)
 async def update_user(user_id: str, update_data: UserUpdate):
@@ -142,7 +155,15 @@ async def update_user(user_id: str, update_data: UserUpdate):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # fallback to memory
+        users = _read_users()
+        idx = next((i for i, u in enumerate(users) if u.get('id') == user_id), -1)
+        if idx == -1:
+            raise HTTPException(status_code=404, detail='المستخدم غير موجود')
+        upd = {k: v for k, v in update_data.dict().items() if v is not None}
+        users[idx].update(upd)
+        _write_users(users)
+        return User(**users[idx])
 
 @router.delete('/users/{user_id}')
 async def delete_user(user_id: str):
@@ -165,4 +186,10 @@ async def delete_user(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # fallback to memory
+        users = _read_users()
+        nusers = [u for u in users if u.get('id') != user_id]
+        if len(nusers) == len(users):
+            raise HTTPException(status_code=404, detail='المستخدم غير موجود')
+        _write_users(nusers)
+        return {'status': 'ok', 'message': 'تم حذف المستخدم'}

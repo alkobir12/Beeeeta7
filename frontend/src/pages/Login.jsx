@@ -5,23 +5,24 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!name.trim()) {
-      toast({ title: 'الاسم مطلوب', variant: 'destructive' });
+      toast({ title: t('common.error'), description: i18n.language==='ar'?'الاسم مطلوب':'Name is required', variant: 'destructive' });
       return;
     }
-    
+
     try {
       setLoading(true);
-      
-      // Check if user exists by name
+
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       const response = await fetch(`${API_URL}/users`);
       const resClone = response.clone();
@@ -31,28 +32,18 @@ const Login = () => {
       }
       const users = await resClone.json();
 
-      // Find user by name (case-insensitive)
       const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
 
       if (!user) {
-        toast({
-          title: 'مستخدم غير موجود',
-          description: 'الاسم غير مسجل في النظام. تواصل مع المدير.',
-          variant: 'destructive'
-        });
+        toast({ title: t('common.error'), description: i18n.language==='ar'?'مستخدم غير موجود':'User not found', variant: 'destructive' });
         return;
       }
 
       if (user.isActive === false) {
-        toast({
-          title: 'حساب معطل',
-          description: 'هذا الحساب معطل. تواصل مع المدير.',
-          variant: 'destructive'
-        });
+        toast({ title: t('common.error'), description: i18n.language==='ar'?'هذا الحساب معطل':'This account is disabled', variant: 'destructive' });
         return;
       }
-      
-      // Create session with user data and permissions
+
       const session = { 
         id: user.id,
         name: user.name,
@@ -62,12 +53,10 @@ const Login = () => {
         permissions: user.permissions || {},
         loginTime: new Date().toISOString()
       };
-      
-      // Save session
+
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
-      
-      // Update last login (best-effort, ignore errors)
+
       try {
         await fetch(`${API_URL}/users/${user.id}`, {
           method: 'PUT',
@@ -75,16 +64,15 @@ const Login = () => {
           body: JSON.stringify({ lastLogin: new Date().toISOString() })
         });
       } catch (_) {}
-      
-      
+
       toast({ 
-        title: 'مرحباً', 
-        description: `تم تسجيل دخول ${user.name} - ${user.role === 'admin' ? 'مدير النظام' : user.role === 'technician' ? 'فني' : user.role === 'manager' ? 'مدير' : 'موظف'}` 
+        title: t('common.welcome'),
+        description: `${user.name}`
       });
       navigate('/');
     } catch (e) {
       console.error('Login error:', e);
-      toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول', variant: 'destructive' });
+      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في تسجيل الدخول':'Login failed', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -97,16 +85,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">تسجيل الدخول</CardTitle>
+          <CardTitle className="text-center text-2xl">{i18n.language==='ar'?'تسجيل الدخول':'Sign In'}</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div>
-            <Label className="text-lg">الاسم</Label>
+            <Label className="text-lg">{i18n.language==='ar'?'الاسم':'Name'}</Label>
             <Input 
-              placeholder="أدخل اسمك" 
+              placeholder={i18n.language==='ar'?'أدخل اسمك':'Enter your name'} 
               value={name} 
               onChange={e=>setName(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -119,10 +107,10 @@ const Login = () => {
             disabled={loading} 
             className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
           >
-            دخول
+            {i18n.language==='ar'?'دخول':'Sign In'}
           </Button>
           <p className="text-sm text-slate-500 text-center mt-4">
-            نظام إدارة الورش - دخول مباشر
+            {i18n.language==='ar'?'نظام إدارة الورش - دخول مباشر':'Workshop Management System - Direct Login'}
           </p>
         </CardContent>
       </Card>

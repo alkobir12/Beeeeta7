@@ -4,7 +4,6 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import {
   LayoutDashboard,
-  Car,
   Users as UsersIcon,
   Wrench,
   Brain,
@@ -19,6 +18,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
@@ -53,60 +53,52 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [workshopName, setWorkshopName] = useState('ورشتي');
   const [userPermissions, setUserPermissions] = useState({});
   const [userRole, setUserRole] = useState('admin');
+  const { t, i18n } = useTranslation();
+
+  const pathToLabelKey = {
+    '/': 'nav.dashboard',
+    '/operations': 'nav.analytics', // keep label consistent or create nav.operations if needed
+    '/services': 'nav.inventory', // or create nav.services
+    '/parts': 'parts.title',
+    '/customers': 'nav.customers',
+    '/technicians': 'nav.technicians',
+    '/business-accounts': 'settings.profile',
+    '/invoice-templates': 'templates',
+    '/analytics': 'nav.analytics',
+    '/knowledge': 'nav.aiAssistant',
+    '/settings': 'nav.settings',
+    '/users': 'users'
+  };
 
   useEffect(() => {
-    // Load user permissions from session
     try {
       const session = JSON.parse(localStorage.getItem('session') || '{}');
       setUserPermissions(session.permissions || {});
       setUserRole(session.role || 'admin');
-    } catch (e) {
-      console.error('Error loading permissions:', e);
-    }
-    
+    } catch (e) {}
     const load = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/settings`);
-        
-        // Load workshop name
-        setWorkshopName(data?.workshopName || 'ورشتي');
-        
+        setWorkshopName(data?.workshopName || (i18n.language === 'ar' ? 'ورشتي' : 'My Workshop'));
         let mc = data?.menuConfig || null;
-        if (mc) {
-          // Ensure Settings group contains Users and Templates
-          const hasSettingsGroup = (mc.items||[]).some(it => it.path === '/settings' && it.group);
-          if (!hasSettingsGroup) {
-            mc.items.push({ group:true, path:'/settings', label:'الإعدادات', enabled:true, children:[
-              { path:'/settings', label:'الإعدادات العامة', enabled:true },
-              { path:'/templates', label:'نماذج الفواتير/التقارير', enabled:true },
-              { path:'/users', label:'المستخدمون', enabled:true },
-            ]});
-          } else {
-            const s = mc.items.find(it => it.path === '/settings' && it.group);
-            const setChild = (p,l) => { if (!s.children.some(c => c.path===p)) s.children.push({path:p,label:l,enabled:true}); };
-            setChild('/users','المستخدمون');
-            setChild('/templates','نماذج الفواتير/التقارير');
-          }
-        }
         setMenuConfig(mc || null);
       } catch (_) {
-        // Fallback default menu when API not available (memory mode)
         const defaultMenu = {
           items: [
-            { path:'/', label:'الرئيسية', enabled:true },
-            { path:'/operations', label:'العمليات', enabled:true },
-            { path:'/services', label:'الخدمات', enabled:true },
-            { path:'/parts', label:'قطع الغيار', enabled:true },
-            { path:'/customers', label:'العملاء', enabled:true },
-            { path:'/technicians', label:'الفنيون', enabled:true },
-            { path:'/business-accounts', label:'الفروع', enabled:true },
-            { path:'/invoice-templates', label:'مصمم الفواتير', enabled:true },
-            { path:'/analytics', label:'التحليلات', enabled:true },
-            { path:'/knowledge', label:'المراجع/المعرفة', enabled:true },
-            { group:true, path:'/settings', label:'الإعدادات', enabled:true, children:[
-              { path:'/settings', label:'الإعدادات العامة', enabled:true },
-              { path:'/templates', label:'نماذج الطباعة', enabled:true },
-              { path:'/users', label:'المستخدمون', enabled:true },
+            { path:'/', label:'', enabled:true },
+            { path:'/operations', label:'', enabled:true },
+            { path:'/services', label:'', enabled:true },
+            { path:'/parts', label:'', enabled:true },
+            { path:'/customers', label:'', enabled:true },
+            { path:'/technicians', label:'', enabled:true },
+            { path:'/business-accounts', label:'', enabled:true },
+            { path:'/invoice-templates', label:'', enabled:true },
+            { path:'/analytics', label:'', enabled:true },
+            { path:'/knowledge', label:'', enabled:true },
+            { group:true, path:'/settings', label:'', enabled:true, children:[
+              { path:'/settings', label:'', enabled:true },
+              { path:'/templates', label:'', enabled:true },
+              { path:'/users', label:'', enabled:true },
             ]}
           ]
         };
@@ -114,23 +106,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       }
     };
     load();
-  }, []);
+  }, [i18n.language]);
 
   const handleNavigate = (path) => {
-    // Check permissions before navigating
     const canNavigate = checkPathPermission(path);
-    if (!canNavigate) {
-      return; // Silently block navigation
-    }
+    if (!canNavigate) return;
     navigate(path);
     if (onClose) onClose();
   };
 
   const checkPathPermission = (path) => {
-    // Admin can access everything
     if (userRole === 'admin') return true;
-    
-    // Map paths to permissions
     const pathPermissions = {
       '/': 'canViewDashboard',
       '/customers': 'canManageCustomers',
@@ -144,62 +130,51 @@ const Sidebar = ({ isOpen, onClose }) => {
       '/services': 'canManageServices',
       '/technicians': 'canManageServices',
       '/ceo': 'canAccessCEO',
-      '/ceo-group': 'canAccessCEO',  // CEO group
+      '/ceo-group': 'canAccessCEO',
       '/business-accounts': 'canAccessCEO',
       '/payroll': 'canManageFinance',
       '/settings': 'canManageSettings',
-      '/settings-group': 'canManageSettings',  // Settings group
+      '/settings-group': 'canManageSettings',
       '/templates': 'canManageSettings',
       '/users': 'canManageUsers',
-      '/knowledge': 'canViewDashboard' // Everyone can access knowledge
+      '/knowledge': 'canViewDashboard'
     };
-    
     const requiredPermission = pathPermissions[path];
-    if (!requiredPermission) return true; // Unknown paths allowed
-    
+    if (!requiredPermission) return true;
     return userPermissions[requiredPermission] === true;
   };
 
-  const filterMenuByPermissions = (items) => {
-    if (userRole === 'admin') return items; // Admin sees everything
-    
-    return items.filter(item => {
-      if (!item.enabled) return false;
-      
-      if (item.group && item.children) {
-        const filteredChildren = item.children.filter(ch => checkPathPermission(ch.path));
-        if (filteredChildren.length === 0) return false;
-        item.children = filteredChildren;
-      } else {
-        if (!checkPathPermission(item.path)) return false;
-      }
-      
-      return true;
-    });
+  const localizeLabel = (path, fallback) => {
+    const key = pathToLabelKey[path];
+    if (key) return t(key);
+    return fallback || path;
   };
 
   const filteredMenu = useMemo(() => {
     if (!menuConfig?.items) return null;
-    return {
-      ...menuConfig,
-      items: filterMenuByPermissions([...menuConfig.items])
-    };
-  }, [menuConfig, userPermissions, userRole]);
+    const clone = JSON.parse(JSON.stringify(menuConfig));
+    clone.items = clone.items.map(item => {
+      if (item.group && item.children) {
+        item.label = localizeLabel(item.path, item.label);
+        item.children = item.children.map(ch => ({...ch, label: localizeLabel(ch.path, ch.label)}));
+      } else {
+        item.label = localizeLabel(item.path, item.label);
+      }
+      return item;
+    });
+    return clone;
+  }, [menuConfig, i18n.language]);
 
   return (
     <>
       {isOpen && (<div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />)}
 
-      <div className={`sidebar-godaddy fixed right-0 top-0 h-full shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72 overflow-y-auto`} dir="rtl">
+      <div className={`sidebar-godaddy fixed right-0 top-0 h-full shadow-2xl z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} w-64 lg:w-72 overflow-y-auto`}>
         <div className="p-6 pb-24">
           <div className="flex items-center justify-between mb-8">
             <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
               <h2 className="text-2xl font-bold text-white">{workshopName}</h2>
-              <p className="text-sm text-gray-400">نظام الإدارة</p>
-              {/* Only show CEO button if user has permission */}
-              {(userRole === 'admin' || userPermissions.canAccessCEO) && (
-                <Button variant="outline" size="sm" className="mt-3 w-full justify-center bg-transparent border-gray-600 text-white hover:bg-gray-800 hover:border-green-400" onClick={(e) => { e.stopPropagation(); handleNavigate('/ceo'); }}>المدير (CEO)</Button>
-              )}
+              <p className="text-sm text-gray-400">{t('common.appName')}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>
           </div>
@@ -248,14 +223,13 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <div className="mt-8">
             <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 p-4">
-              <p className="text-sm text-slate-800 mb-3 font-medium">اختصارات</p>
+              <p className="text-sm text-slate-800 mb-3 font-medium">{t('nav.settings')}</p>
               <div className="space-y-2">
-                <Button onClick={() => handleNavigate('/settings')} variant="outline" className="w-full justify-start" title="إعدادات النظام والقوائم"><Cog className="ml-2" size={18} />الإعدادات</Button>
-                <Button onClick={() => handleNavigate('/knowledge')} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"><BookOpen className="ml-2" size={18} />إدارة المعرفة</Button>
+                <Button onClick={() => handleNavigate('/settings')} variant="outline" className="w-full justify-start" title={t('nav.settings')}><Cog className="ml-2" size={18} />{t('nav.settings')}</Button>
+                <Button onClick={() => handleNavigate('/knowledge')} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"><BookOpen className="ml-2" size={18} />{t('nav.aiAssistant')}</Button>
               </div>
             </Card>
-            
-            {/* User Info & Logout */}
+
             <Card className="mt-4 bg-gradient-to-br from-slate-50 to-slate-100">
               <CardContent className="p-4">
                 <div className="space-y-3">
@@ -275,13 +249,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {(() => {
                           try {
                             const session = JSON.parse(localStorage.getItem('session') || '{}');
-                            return session.name || 'مدير النظام';
+                            return session.name || (i18n.language==='ar'?'مدير النظام':'System Admin');
                           } catch(e) {
-                            return 'مدير النظام';
+                            return (i18n.language==='ar'?'مدير النظام':'System Admin');
                           }
                         })()}
                       </p>
-                      <p className="text-xs text-slate-500">مسجل دخول</p>
+                      <p className="text-xs text-slate-500">{i18n.language==='ar'?'مسجل دخول':'Signed in'}</p>
                     </div>
                   </div>
                   <Button 
@@ -293,7 +267,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     className="w-full justify-center"
                     size="sm"
                   >
-                    تسجيل خروج
+                    {i18n.language==='ar'?'تسجيل خروج':'Logout'}
                   </Button>
                 </div>
               </CardContent>

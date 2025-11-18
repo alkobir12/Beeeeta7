@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, Trash2, MoreVertical } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ import VehicleQuickActions from '../components/VehicleQuickActions';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [vehicles, setVehicles] = useState([]);
@@ -21,10 +22,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const dir = (i18n.language === 'ar') ? 'rtl' : 'ltr';
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [i18n.language]);
 
   const fetchData = async () => {
     try {
@@ -38,9 +40,9 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
-        title: "خطأ",
-        description: "فشل في تحميل البيانات",
-        variant: "destructive"
+        title: t('common.error'),
+        description: t('common.loading'),
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -48,42 +50,27 @@ const Dashboard = () => {
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه المركبة؟')) {
+    if (!window.confirm(i18n.language==='ar'?'هل أنت متأكد من حذف هذه المركبة؟':'Are you sure to delete this vehicle?')) {
       return;
     }
-    
     try {
       await vehicleAPI.delete(vehicleId);
-      toast({
-        title: "نجح",
-        description: "تم حذف المركبة بنجاح"
-      });
+      toast({ title: t('common.success'), description: i18n.language==='ar'?'تم حذف المركبة بنجاح':'Vehicle deleted successfully' });
       fetchData();
     } catch (error) {
       console.error('Error deleting vehicle:', error);
-      toast({
-        title: "خطأ",
-        description: "فشل في حذف المركبة",
-        variant: "destructive"
-      });
+      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في حذف المركبة':'Failed to delete vehicle', variant: 'destructive' });
     }
   };
 
   const handleStatusUpdate = async (vehicleId, newStatus) => {
     try {
       await vehicleAPI.update(vehicleId, { status: newStatus });
-      toast({
-        title: "نجح",
-        description: "تم تحديث الحالة بنجاح"
-      });
+      toast({ title: t('common.success'), description: i18n.language==='ar'?'تم تحديث الحالة بنجاح':'Status updated successfully' });
       fetchData();
     } catch (error) {
       console.error('Error updating status:', error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحديث الحالة",
-        variant: "destructive"
-      });
+      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في تحديث الحالة':'Failed to update status', variant: 'destructive' });
     }
   };
 
@@ -98,24 +85,13 @@ const Dashboard = () => {
     inProgress: vehicles.filter(v => v.status !== 'ready').length,
     ready: vehicles.filter(v => v.status === 'ready').length,
     technicians: technicians.length,
-    // New analytics
-    abandoned: vehicles.filter(v => {
-      if (!v.updatedAt) return false;
-      const daysSinceUpdate = (Date.now() - new Date(v.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
-      return daysSinceUpdate > 7 && !['delivered', 'ready'].includes(v.status);
-    }).length,
-    awaitingParts: vehicles.filter(v => v.status === 'awaiting_parts' || (v.notes && v.notes.includes('انتظار قطع'))).length,
-    awaitingApproval: vehicles.filter(v => v.status === 'quotation' || v.status === 'awaiting_approval' || (v.notes && v.notes.includes('انتظار اعتماد'))).length,
-    creditPayments: vehicles.filter(v => v.paymentMethod === 'credit' || v.paymentMethod === 'آجل').length
   };
 
   const filteredVehicles = vehicles.filter(vehicle => {
-  const matchesCustom = (filterStatus === 'abandoned') ? (() => {
-      try { const d = new Date(vehicle.entryDate); const days = (Date.now() - d.getTime())/(1000*60*60*24); return days >= 30 && vehicle.status !== 'delivered'; } catch(_) { return false; }
-    })() : (filterStatus === 'awaiting_parts') ? ((vehicle.status === 'repair') && (!vehicle.parts || vehicle.parts.length === 0)) : (filterStatus === 'awaiting_quote_approval') ? (vehicle.status === 'quotation') : true;
-    const matchesSearch = vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         vehicle.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || vehicle.status === filterStatus || matchesCustom;
+    const matchesCustom = (filterStatus === 'all') ? true : (vehicle.status === filterStatus);
+    const matchesSearch = (vehicle.plateNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         (vehicle.customerName || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || matchesCustom;
     return matchesSearch && matchesFilter;
   });
 
@@ -125,7 +101,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">جاري التحميل...</p>
+            <p className="text-slate-600">{t('common.loading')}</p>
           </div>
         </div>
       </Layout>
@@ -134,84 +110,30 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
+      <div className="min-h-screen" dir={dir}>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">نظام إدارة الورش</h1>
-            <p className="text-slate-600">لوحة التحكم الرئيسية</p>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">{t('dashboard.title')}</h1>
+            <p className="text-slate-600">{t('common.appName')}</p>
           </div>
           <Button 
             onClick={() => navigate('/new-vehicle')}
             className="btn-godaddy-primary px-6 py-3 text-lg font-semibold"
           >
             <Plus className="ml-2" size={20} />
-            استقبال مركبة جديدة
+            {i18n.language==='ar'?'استقبال مركبة جديدة':'New Vehicle Intake'}
           </Button>
         </div>
 
-        {/* Extended Vehicle Status Banners */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Abandoned vehicles: no activity for 30+ days and not delivered */}
-          <Card onClick={() => setFilterStatus('abandoned')} className="cursor-pointer bg-gradient-to-br from-rose-50 to-rose-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-rose-700 text-sm font-medium mb-1">مركبات متروكة</p>
-                  <p className="text-3xl font-bold text-rose-900">{vehicles.filter(v => {
-                    try { 
-                      const d = new Date(v.entryDate);
-                      const days = (Date.now() - d.getTime()) / (1000*60*60*24);
-                      return days >= 30 && v.status !== 'delivered';
-                    } catch(_) { return false; }
-                  }).length}</p>
-                </div>
-                <div className="bg-rose-600 p-3 rounded-full">
-                  <Car className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Awaiting parts */}
-          <Card onClick={() => setFilterStatus('awaiting_parts')} className="cursor-pointer bg-gradient-to-br from-amber-50 to-amber-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-700 text-sm font-medium mb-1">في انتظار قطع الغيار</p>
-                  <p className="text-3xl font-bold text-amber-900">{vehicles.filter(v => (v.status === 'repair') && (!v.parts || v.parts.length === 0)).length}</p>
-                </div>
-                <div className="bg-amber-600 p-3 rounded-full">
-                  <Wrench className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Awaiting quotation/approval */}
-          <Card onClick={() => setFilterStatus('awaiting_quote_approval')} className="cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-cyan-700 text-sm font-medium mb-1">تنتظر تسعير/اعتماد</p>
-                  <p className="text-3xl font-bold text-cyan-900">{vehicles.filter(v => v.status === 'quotation').length}</p>
-                </div>
-                <div className="bg-cyan-600 p-3 rounded-full">
-                  <CheckCircle className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stats Cards */}
+        {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card onClick={() => setFilterStatus('all')} className="cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-700 text-sm font-medium mb-1">إجمالي المركبات</p>
+                  <p className="text-blue-700 text-sm font-medium mb-1">{t('dashboard.totalVehicles')}</p>
                   <p className="text-3xl font-bold text-blue-900">{stats.totalVehicles}</p>
                 </div>
                 <div className="bg-blue-600 p-3 rounded-full">
@@ -225,7 +147,7 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-700 text-sm font-medium mb-1">قيد العمل</p>
+                  <p className="text-orange-700 text-sm font-medium mb-1">{t('dashboard.inProgress')}</p>
                   <p className="text-3xl font-bold text-orange-900">{stats.inProgress}</p>
                 </div>
                 <div className="bg-orange-600 p-3 rounded-full">
@@ -239,7 +161,7 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-700 text-sm font-medium mb-1">جاهز للتسليم</p>
+                  <p className="text-green-700 text-sm font-medium mb-1">{t('dashboard.ready')}</p>
                   <p className="text-3xl font-bold text-green-900">{stats.ready}</p>
                 </div>
                 <div className="bg-green-600 p-3 rounded-full">
@@ -253,7 +175,7 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-700 text-sm font-medium mb-1">الفنيين</p>
+                  <p className="text-purple-700 text-sm font-medium mb-1">{t('dashboard.technicians')}</p>
                   <p className="text-3xl font-bold text-purple-900">{stats.technicians}</p>
                 </div>
                 <div className="bg-purple-600 p-3 rounded-full">
@@ -272,7 +194,7 @@ const Dashboard = () => {
                 <div className="relative">
                   <Search className="absolute right-3 top-3 text-slate-400" size={20} />
                   <Input
-                    placeholder="بحث برقم اللوحة أو اسم العميل..."
+                    placeholder={t('dashboard.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pr-10 border-slate-300 focus:border-blue-500 transition-colors"
@@ -285,16 +207,16 @@ const Dashboard = () => {
                   onClick={() => setFilterStatus('all')}
                   className="transition-all duration-200"
                 >
-                  الكل
+                  {t('common.all')}
                 </Button>
-                {statusSteps.map(step => (
+                {['diagnosis','quotation','repair','ready'].map(key => (
                   <Button
-                    key={step.key}
-                    variant={filterStatus === step.key ? 'default' : 'outline'}
-                    onClick={() => setFilterStatus(step.key)}
+                    key={key}
+                    variant={filterStatus === key ? 'default' : 'outline'}
+                    onClick={() => setFilterStatus(key)}
                     className="transition-all duration-200"
                   >
-                    {step.label}
+                    {t(`status.${key}`)}
                   </Button>
                 ))}
               </div>
@@ -308,7 +230,6 @@ const Dashboard = () => {
             <Card 
               key={`${vehicle.id}-${index}`} 
               className="shadow-md hover:shadow-xl transition-all duration-300 border-r-4"
-              style={{ borderRightColor: getStatusColor(vehicle.status).replace('bg-', '#') }}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
@@ -328,11 +249,11 @@ const Dashboard = () => {
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="text-sm text-slate-500 mb-1">الفني المسؤول</p>
-                      <p className="font-semibold text-slate-700">{vehicle.technicianName || 'غير محدد'}</p>
+                      <p className="text-sm text-slate-500 mb-1">{t('vehicle.technician')}</p>
+                      <p className="font-semibold text-slate-700">{vehicle.technicianName || (i18n.language==='ar'?'غير محدد':'Unassigned')}</p>
                     </div>
-                    <Badge className={`${getStatusColor(vehicle.status)} text-white px-4 py-2 text-sm`}>
-                      {getStatusLabel(vehicle.status)}
+                    <Badge className={`px-4 py-2 text-sm`}>
+                      {t(`status.${vehicle.status}`)}
                     </Badge>
                     <Button
                       variant="outline"
@@ -344,43 +265,6 @@ const Dashboard = () => {
                     </Button>
                   </div>
                 </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex justify-between items-center">
-                    <div className="flex gap-2 flex-wrap flex-1">
-                      {vehicle.services && vehicle.services.map((service, idx) => (
-                        <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {service}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/vehicle-details/${vehicle.id}`);
-                        }}
-                        className="hover:bg-blue-50"
-                      >
-                        تعديل
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedVehicle(vehicle);
-                          setShowQuickActions(true);
-                        }}
-                        className="hover:bg-green-50"
-                      >
-                        تشخيص
-                      </Button>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -390,14 +274,13 @@ const Dashboard = () => {
           <Card className="shadow-md">
             <CardContent className="p-12 text-center">
               <Car className="mx-auto text-slate-300 mb-4" size={64} />
-              <p className="text-slate-500 text-lg">لا توجد مركبات</p>
+              <p className="text-slate-500 text-lg">{t('common.noData')}</p>
             </CardContent>
           </Card>
         )}
       </div>
       </div>
 
-      {/* Quick Actions Modal */}
       {selectedVehicle && (
         <VehicleQuickActions
           isOpen={showQuickActions}

@@ -890,6 +890,74 @@ async def get_transactions(
             "expenses": expenses,
             "profit": income - expenses
         }
+
+# ============ Groq AI Chat (Global Assistant) ============
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+GROQ_API_BASE_URL = os.environ.get('GROQ_API_BASE_URL', 'https://api.groq.com/openai/v1')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+
+async def call_groq_chat(message: str, system_prompt: Optional[str] = None) -> dict:
+    """Call Groq chat completion API and return basic response dict.
+
+    This is used by the floating assistant that appears on all pages.
+    """
+    if not GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured on the server")
+
+    url = f"{GROQ_API_BASE_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    messages_payload = []
+    if system_prompt:
+        messages_payload.append({"role": "system", "content": system_prompt})
+    messages_payload.append({"role": "user", "content": message})
+
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": messages_payload,
+        "temperature": 0.6,
+        "max_tokens": 512,
+        "top_p": 1.0,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPError as e:
+        logger.error(f"Groq API error: {e}")
+        raise HTTPException(status_code=502, detail="Groq API request failed")
+
+    try:
+        choice = (data.get("choices") or [{}])[0]
+        content = choice.get("message", {}).get("content") or ""
+        usage = data.get("usage") or {}
+        return {
+            "content": content,
+            "model": data.get("model", GROQ_MODEL),
+            "tokens": usage.get("total_tokens", 0),
+        }
+    except Exception as e:
+        logger.error(f"Groq API response parse error: {e} | raw={data}")
+        raise HTTPException(status_code=500, detail="Failed to parse Groq API response")
+
+
+@api_router.post("/ai/groq-chat", response_model=ChatResponse)
+async def groq_chat_endpoint(chat_request: ChatRequest):
+    """Simple Groq-backed chat endpoint for the global assistant.
+
+    Does not persist sessions yet; it just returns the AI reply.
+    """
+    result = await call_groq_chat(
+        chat_request.message,
+        system_prompt="You are a helpful workshop management assistant. Answer briefly in the same language as the user.",
+    )
+    return ChatResponse(response=result["content"], sessionId=chat_request.sessionId or None)
+
     }
 
 # ============ AI Assistant APIs ============

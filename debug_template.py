@@ -6,7 +6,7 @@ Debug script to check what's stored in the invoice templates
 import requests
 import json
 
-BASE_URL = "https://autoshop-app-1.preview.emergentagent.com/api"
+BASE_URL = "https://mechanix-hub-3.preview.emergentagent.com/api"
 
 def debug_templates():
     print("🔍 Debugging Invoice Templates...")

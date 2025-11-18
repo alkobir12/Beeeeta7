@@ -1,214 +1,123 @@
 <analysis>
-The previous AI engineer meticulously developed a comprehensive Workshop Management System, iteratively building upon initial requirements. The core task involved integrating analytics, a robust approval workflow with SSE, and advanced customer logging. A significant pivot occurred with the overhaul of the invoicing system, moving from HTML to an Excel-based approach featuring an Invoice Template Studio with multi-format import, in-app editing, and auto-save capabilities. Critical backend and frontend issues, such as  API routes,  import errors, and UI inconsistencies, were systematically addressed. AI features were enhanced with local LlamaIndex integration, a sophisticated fallback mechanism for external search providers (Perplexity, Brave, You.com) without API keys, and a dedicated search history database. The current focus is on refining the Invoice Template Studio with a Canva-like A4 designer, ensuring full Arabic/English i18n support, and preparing for comprehensive UI/API testing.
+The trajectory documents a complex and reactive development cycle, primarily driven by user requests in Arabic. The project began with UI enhancements, which morphed into a major architectural overhaul. The initial CANVA-style UI implementation broke core functionalities and was rejected by the user, leading to a request for a full rollback.
+
+The most significant pivot was the user's decision to migrate the entire data layer from MongoDB to Supabase (PostgreSQL). This introduced substantial challenges, as the AI's execution environment lacked direct PostgreSQL access, preventing it from running DDL commands. A key workaround was the development of a Memory Provider, using local JSON files as a temporary database to keep the frontend functional and demonstrate progress while awaiting the user to manually execute the provided SQL schema in their Supabase console.
+
+Throughout this process, the AI tackled numerous frontend bugs, including login failures and UI rendering issues, often stemming from the backend's instability. The most recent task, initiated by the user, is to implement full English language support (i18n) across the application. The basic framework for this is in place, but the translation is incomplete. The current state is a transitional one: the backend is partially migrated in code but running on a temporary memory provider, and a new internationalization feature is in mid-implementation.
+
+The user's primary language is Arabic. The next agent MUST respond in Arabic to maintain consistency and ensure clear communication.
 </analysis>
 
 <product_requirements>
-The Workshop Management System aims to digitalize auto repair operations. Key features include:
-1.  **Vehicle & Customer Management:** Intake, status tracking, quick actions (e.g., approval requests), public tracking, customer database, receipts.
-2.  **Financial Management:** Multi-account budgeting, detailed analytics (day/week/month/branch), import/export, accounting features (Sales, Expenses by category, Chart of Accounts), payroll.
-3.  **AI Integration:** CEO bot for financial analysis, RAG search, extensive knowledge base (PDF, DOCX, Excel, video), vehicle comparison, intelligent DTC card extraction (causes/fixes). Integration of local LlamaIndex, and optional (with fallback) Brave Search API, You.com, and Perplexity AI for enhanced search/analysis.
-4.  **User Experience:** Responsive design, multi-language support (Arabic, English, Hindi), dynamic sidebar, GoDaddy-inspired theme.
-5.  **Authentication & Permissions:** Name-only login, granular three-tier user permissions (RBAC).
-6.  **Approval Workflow:** Three-tier approval (technician -> manager -> client) with image attachments and real-time updates (SSE).
-7.  **Invoicing & Templating:** Excel-based invoicing system, Invoice Template Studio for multi-format import, in-app editing, dynamic template saving, and generation (PDF/XLSX). Support for A4 designer.
+The application is a Workshop Management System designed to digitize and manage operations for an auto repair shop.
+
+**Core Features:**
+1.  **Workshop Operations:** Manage customers, vehicles, parts, services, and repair jobs from intake to completion.
+2.  **Financials:** Provide a CEO-level dashboard for financial oversight, invoicing, and budget tracking.
+3.  **Data Persistence:** The user has mandated a complete migration of the data layer from the original MongoDB to Supabase (PostgreSQL) for better data structure and relations. All new features must be built on Supabase.
+4.  **Internationalization (i18n):** The application must support both Arabic and English. A language toggle should be present, allowing users to switch languages seamlessly, with the preference stored in . All UI text, including menus, labels, buttons, and messages, must be translated.
+5.  **User Interface:** The user initially requested a CANVA-style UI but was dissatisfied with the implementation and its resulting bugs. There is an outstanding request to revert to a more traditional UI theme.
+6.  **Bug Fixes & Stability:** Address numerous reported issues, including broken JavaScript on the Operations page, login failures, and non-functional business branch management (deletion and activation). The system must be stable and usable.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Architecture:** React.js (Frontend), FastAPI (Backend), MongoDB (Database).
--   **AI Integration:** Claude Sonnet 4.5 Pro (via Emergent LLM Key), RAG, , , , usage: pdfplumber [-h] [--structure | --structure-text]
-                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
-                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
-                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
-                  [--laparams LAPARAMS] [--precision PRECISION]
-                  [--pages PAGES [PAGES ...]] [--indent INDENT]
-                  [infile]
-
-positional arguments:
-  infile
-
-options:
-  -h, --help            show this help message and exit
-  --structure           Write the structure tree as JSON. All other arguments
-                        except --pages, --laparams, and --indent will be
-                        ignored
-  --structure-text      Write the structure tree as JSON including text
-                        contents. All other arguments except --pages,
-                        --laparams, and --indent will be ignored
-  --format {csv,json,text}
-  --types TYPES [TYPES ...]
-  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
-                        Include *only* these object attributes in output.
-  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
-                        Exclude these object attributes from output.
-  --laparams LAPARAMS
-  --precision PRECISION
-  --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing., , usage: pypdfium2 [-h] [--version]
-                 {arrange,attachments,extract-images,extract-text,imgtopdf,pageobjects,pdfinfo,render,tile,toc}
-                 ...
-
-Command line interface to the pypdfium2 library (Python binding to PDFium)
-
-positional arguments:
-  {arrange,attachments,extract-images,extract-text,imgtopdf,pageobjects,pdfinfo,render,tile,toc}
-    arrange             Rearrange/merge documents
-    attachments         List/extract/edit embedded files
-    extract-images      Extract images
-    extract-text        Extract text
-    imgtopdf            Convert images to PDF
-    pageobjects         Print info on pageobjects
-    pdfinfo             Print info on document and pages
-    render              Rasterize pages
-    tile                Tile pages (N-up)
-    toc                 Print table of contents
-
-options:
-  -h, --help            show this help message and exit
-  --version, -v         show program's version number and exit, LlamaIndex (BM25), Emergent LLM Key.
--   **UI/State Management:** React Context, Shadcn UI, i18next, , .
--   **Data Processing:** Pandas, Openpyxl, chunked file uploads, .
--   **Real-time Communication:** Server-Sent Events (SSE).
--   **Deployment:** Kubernetes, Supervisor, .
--   **Version Control:** usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-           <command> [<args>]
-
-These are common Git commands used in various situations:
-
-start a working area (see also: git help tutorial)
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change (see also: git help everyday)
-   add       Add file contents to the index
-   mv        Move or rename a file, a directory, or a symlink
-   restore   Restore working tree files
-   rm        Remove files from the working tree and from the index
-
-examine the history and state (see also: git help revisions)
-   bisect    Use binary search to find the commit that introduced a bug
-   diff      Show changes between commits, commit and working tree, etc
-   grep      Print lines matching a pattern
-   log       Show commit logs
-   show      Show various types of objects
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   branch    List, create, or delete branches
-   commit    Record changes to the repository
-   merge     Join two or more development histories together
-   rebase    Reapply commits on top of another base tip
-   reset     Reset current HEAD to the specified state
-   switch    Switch branches
-   tag       Create, list, delete or verify a tag object signed with GPG
-
-collaborate (see also: git help workflows)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-
-'git help -a' and 'git help -g' list available subcommands and some
-concept guides. See 'git help <command>' or 'git help <concept>'
-to read about a specific subcommand or concept.
-See 'git help git' for an overview of the system..
+- **Backend:** FastAPI (Python).
+- **Frontend:** React.js,  for internationalization.
+- **Database:**
+    - **Legacy:** MongoDB (via ).
+    - **Target:** Supabase (PostgreSQL).
+    - **Workaround:** A temporary Memory Provider using JSON files for backend data to unblock development.
+- **Environment:** Monorepo with a  and  directory, managed by backend                          RUNNING   pid 30, uptime 0:00:02
+code-server                      STOPPED   Not started
+frontend                         STOPPED   Nov 18 09:56 AM
+mongodb                          RUNNING   pid 34, uptime 0:00:02
+nginx-code-proxy                 STARTING  
+supervisor> .
+- **API Design:** RESTful API with a  environment variable (, , ) to switch between data sources.
 </key_technical_concepts>
 
 <code_architecture>
+The application is a monorepo containing a FastAPI backend and a React frontend.
 
--   ****: The main FastAPI application where all API routers are registered.
-    -   Importance: Central hub for all backend routes.
-    -   Changes: Updated to include numerous new and modified routes for various features (dtc, references, vehicle files, maintenance, payroll, coa, invoice templates, print, expense, search, AI logs).  import fixed.
--   ****: Contains Pydantic data models for the database.
-    -   Importance: Defines data structures for core business logic, including new entities like Invoice Templates with design properties.
-    -   Changes: Added models for , , , ,  (with added , ,  fields for A4 designer), , , , and .
--   ****: Handles core API logic for many functionalities.
-    -   Importance: Implements key business operations, including CEO analytics, approvals, operations, transactions.
-    -   Changes: Fixed  routes (, , , , , , ). Added  (GET/POST/PUT). Lint errors (E701/E702) addressed.  serialization issues handled.
--   ****: Manages AI-related APIs.
-    -   Importance: Central to AI document analysis, smart search, and LLM integrations.
-    -   Changes: Integrated fallback logic for external search providers (Perplexity, Brave, You.com) when API keys are absent, leveraging local KB search and Emergent LLM Key for summaries. Added , , , , , . Improved  with regex fallback if LlamaIndex is unavailable.
--   ****: New router for DTC extraction APIs.
--   ****: New router for managing technical references.
--   ****: New router for user/permissions management.
--   ****: New router for maintenance orders and approvals.
--   ****: New router for employee payroll.
--   ****: Lists Python dependencies.
-    -   Importance: Ensures all necessary backend libraries are installed.
-    -   Changes: ,  added.
--   ****: Main React router setup.
-    -   Importance: Defines frontend routing.
-    -   Changes: Routes updated to include , , , .
--   ****: Main navigation menu.
-    -   Importance: Provides access to all major app sections.
-    -   Changes: Dynamic menu configuration based on permissions, i18n support.
--   ****: English translation file.
-    -   Importance: Centralizes English text for internationalization.
-    -   Changes: Updated with new keys for UI elements, especially for the Invoice Template Studio and search features.
--   ****: User authentication page.
-    -   Importance: Entry point for authenticated users.
-    -   Changes: Integrated with new permissions system.
--   ****: Manages purchases, sales, and CEO analytics.
-    -   Importance: Core financial and operational oversight.
-    -   Changes: Integrated Ask CEO panel, linked  functionality.
--   ****: AI knowledge hub.
-    -   Importance: Document browsing, smart search, DTCs.
-    -   Changes: Fixed duplicate  import. Integrated search history drawer and external search provider selection with fallback UI.
--   ****: Technical references.
-    -   Importance: Interface for technical data.
-    -   Changes: Fixed duplicate  import. Integrated search history drawer and external search provider selection with fallback UI.
--   ****: Application settings.
-    -   Importance: Configures global app behavior.
-    -   Changes: Language switching logic.
--   ****: Displays vehicle-specific information.
-    -   Importance: Vehicle lifecycle management.
-    -   Changes: Vehicle Approvals card with SSE.
--   ****: Displays customer-specific information.
-    -   Importance: Customer relationship management.
-    -   Changes: Approvals List card.
--   ****: Dedicated page for managing invoice templates.
-    -   Importance: Allows creation, import, editing, and management of invoice templates.
-    -   Changes: Transformed into a Canva-like A4 designer with three sidebars (elements, properties, layers), A4 canvas, drag-and-drop elements. Implemented auto-save, save as invoice template, cleanup empty templates button, and soft/hard delete for templates. Integrated Apply design to grid functionality.
--   ****: Centralized frontend API call definitions.
-    -   Importance: Handles all communication with the backend.
-    -   Changes: Numerous new API calls for CEO, approvals, invoice templates, printing, transactions, expenses, COA, parts/services, and the new search/AI logging features.
+
+
+-   ****
+    -   **Importance:** The main FastAPI entry point. It has been significantly refactored to support a dynamic data provider model.
+    -   **Changes:** Logic was added to check the  environment variable and route data requests to either the , a MongoDB connection, or an in-memory JSON file reader. This allows the application to function without a live database connection, a crucial workaround implemented to bypass environmental limitations and login issues.
+
+-   ****
+    -   **Importance:** This is the new Data Access Layer (DAL) created for interacting with the target Supabase (PostgreSQL) database.
+    -   **Changes:** It contains functions for CRUD operations on various tables (, , , etc.), handling the connection to Supabase via the  SDK and translating data models (e.g., camelCase to snake_case).
+
+-   ****
+    -   **Importance:** Contains the complete DDL (Data Definition Language) script to create the entire database schema in Supabase.
+    -   **Changes:** This file was generated by the AI for the user to execute manually in the Supabase SQL Editor. It defines all tables, columns, data types, indexes, and Row Level Security (RLS) policies.
+
+-   ****
+    -   **Importance:** Initializes the  library for internationalization.
+    -   **Changes:** A new file created to configure , load Arabic () and English () translation resources, and set the default language from .
+
+-   ****
+    -   **Importance:** A new UI component that allows the user to switch between Arabic and English.
+    -   **Changes:** This component displays AR and EN buttons, calls  on click, and saves the user's preference to . It was added to the main layout's top navigation bar.
+
+-   ****
+    -   **Importance:** The user entry point. It was a major source of bugs.
+    -   **Changes:** The  function was modified multiple times to fix a  error caused by a conflict with the  session recording tool. The fix involves cloning the  response before reading its body.
+
+-   ****
+    -   **Importance:** The main navigation component. It was breaking and appearing empty.
+    -   **Changes:** A fallback  was added. If the API call to  fails (which was happening frequently due to backend instability), the sidebar now renders a default set of menu items, ensuring the UI remains navigable.
 </code_architecture>
 
 <pending_tasks>
--   **A4 Designer UX Improvements:** Snap-to-grid, resize handles, arrow key movement, print preview, fixed header for buttons on mobile.
--   **A4 Designer Linking:** Improve Apply design to grid algorithm for better field mapping to XLSX cells.
--   **A4 Designer Field Management:** Enhance UI for managing template database fields (rename, additional types, validation).
--   **Knowledge Base/References UX:** Fix modal overlay issue for search history drawer.
--   **DTC Card Enhancements:** Standardize fields and display normal electrical values/related components.
--   **References Excel-First:** Develop a multi-sheet Excel browser with filters, search, merge/export functionality.
--   **Smart Search Performance:** Optionally install  for improved accuracy in local KB search.
--   **Automated Testing:** Conduct extended E2E UI tests for A4 Designer, Search History, Operations/CEO, and Approvals.
+- **Complete Supabase Migration:** Fully transition all backend endpoints from the temporary Memory Provider and legacy MongoDB logic to use .
+- **UI Theme Revert:** Remove the CANVA-style UI and restore the previous Shadcn/GoDaddy-inspired theme as originally requested.
+- **Fix Branch Management:** Implement the logic to delete and manage business branches () on the Supabase backend.
+- **Test All Features:** After the migration is complete, conduct a full end-to-end test of all features (Operations, New Vehicle, Reporting, etc.) to ensure they work correctly with the new Supabase backend.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was focused on implementing and refining the Invoice Template Studio based on user feedback, specifically integrating a Canva-like A4 designer.
+The current task is the implementation of full English language support (internationalization), as explicitly requested by the user. The previous AI engineer has already set up the foundational pieces for this feature.
 
-**What was done:**
-1.  **A4 Designer UI:** A fully new A4 designer interface has been implemented within the  page. This includes:
-    *   **Canvas:** An A4-sized canvas with a background grid and zoom capabilities, supporting drag-and-drop for elements.
-    *   **Right Panel (Elements):** A panel listing ready-to-use elements, matching user's visual requirements (Text, Image/Logo, Main Title, Customer/Company fields, QR Code, Invoice Number, Items Table).
-    *   **Left Panel (Properties & Layers):** A panel to modify properties of selected elements (text content, size, alignment, color, RTL, binding; image URL/upload; table header colors, column configuration). It also manages layers (order, delete).
-    *   **All Columns Tab:** For showing/hiding columns of the items table.
-2.  **Functionality for A4 Designer:**
-    *   **Editable Properties:** Text, images (including direct upload), and table properties are configurable.
-    *   **Apply Design to Grid Button:** This button maps bound text elements to XLSX cells and generates  placeholders and the item template based on selected columns.
-    *   **Auto-save:** Changes to elements, properties, or the A4 page are auto-saved every 600ms via . This process also automatically creates or updates a template named invoice ().
-    *   **Saving and Exporting:** Save as Excel saves grid, mapping, and items config. Save as Invoice creates a new version. Cleanup Empty Templates is accessible.
-    *   **Deletion:** Templates use soft delete by default, with a hard delete option requiring confirmation.
-    *   **i18n:** The interface is predominantly in Arabic (RTL) with full English support planned.
-3.  **Backend Integration:** Corresponding backend routes (, , , , soft/hard delete logic) have been updated/created to support the A4 designer's features and the new saving/deletion behaviors.
-4.  **Quick Tests:** Initial Backend (e.g., , , , , , delete functions) and UI tests (adding/moving elements, image upload, Apply design to grid, saving, generating XLSX) were performed and confirmed working.
+**Work Completed So Far:**
+1.  **i18n Framework:** The  library has been installed and configured in . It is set up to load translations for English ('en') and Arabic ('ar').
+2.  **Language Persistence:** The user's language selection is now saved to  and is automatically loaded when the application starts, ensuring the preference persists across sessions. The document's AUTO_SYNC_GUIDE.md		  focused_backend_test.py
+DEPLOYMENT_GUIDE.md		  focused_ceo_test.py
+FINAL_STATUS.md			  frontend
+NOTION_MCP_SETUP.md		  health_check_test.py
+README.md			  i18n_regression_test.py
+SUPABASE_SETUP.md		  invoice_designer_test.py
+WHATSAPP_API_DOCS.md		  invoice_template_backend_test.py
+ai_backend_test.py		  invoice_template_regression_test.py
+ai_kb_test.py			  invoice_template_test.py
+ai_kb_test_results.json		  mechanic_template_test.py
+approvals_flow_test.py		  menu_settings_test.py
+backend				  quick_endpoint_test.py
+backend_health_check.py		  restored_endpoints_test.py
+backend_readiness_test.py	  review_backend_test.py
+backend_test.py			  review_test.py
+backend_test_new_apis.py	  settings_test.py
+backend_validation_test.py	  smoke_test.py
+comprehensive_backend_test.py	  sync_integration_test.py
+comprehensive_regression_test.py  test_approvals_only.py
+comprehensive_whatsapp_test.py	  test_create_indexes.py
+contracts.md			  test_diagnosis_only.py
+debug_parts_import.py		  test_invoice.xlsx
+debug_template.py		  test_output.log
+deep_backend_regression_test.py   test_result.md
+deep_backend_test.py		  test_specific.py
+electrical_kb_test.py		  tests
+final_comprehensive_test.py	  uploads
+final_health_check.py		  yarn.lock
+focused_backend_retest.py (RTL/LTR) and  attributes are updated dynamically.
+3.  **Language Toggle:** A new component, , has been created and integrated into the top navigation bar. It allows the user to switch between AR and EN.
+4.  **Initial Page Translation:** The translation has been applied to the main entry points of the application: the **Login page**, the **Sidebar** menu, and the main **Dashboard** cards.
 
-The engineer has addressed most visual and functional requirements for the Invoice Template Studio, drawing inspiration from the user's video, and is now at a stage of minor visual/UX refinements.
+**Immediate Task at Hand:**
+The user confirmed they want to proceed with translating the rest of the application. The previous AI was about to start extending the  implementation to the remaining pages, using the Workshop Management System - English Content Guide.md artifact provided by the user for the correct terminology. The last action was reading , indicating this was the next page to be translated.
 </current_work>
 
 <optional_next_step>
-Finalize the A4 Designer's visual and interactive elements (snap-to-grid, resize handles, arrow keys, print preview) and then run extended UI tests focusing on the mobile experience.
+Continue the internationalization task by translating the  page and other remaining pages, using the English content guide provided by the user.
 </optional_next_step>

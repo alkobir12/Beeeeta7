@@ -890,6 +890,7 @@ async def get_transactions(
             "expenses": expenses,
             "profit": income - expenses
         }
+    }
 
 # ============ Groq AI Chat (Global Assistant) ============
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')

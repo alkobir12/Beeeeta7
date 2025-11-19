@@ -168,7 +168,7 @@ const Operations = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-            <Input placeholder="تصنيف (اختياري)" value={item.category} onChange={e=> setItem({...item, category: e.target.value})} />
+            <Input placeholder={t('operations.categoryOptional')} value={item.category} onChange={e=> setItem({...item, category: e.target.value})} />
             {item.itemType === 'part' ? (
               <Button type="button" variant="outline" onClick={async ()=>{
                 if(!item.name){ alert('أدخل اسم القطعة'); return; }

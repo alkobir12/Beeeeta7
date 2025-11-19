@@ -110,7 +110,7 @@ const Operations = () => {
       items.push({
         id: 'accounts-summary',
         render: () => (
-          <CanvaCard title="تحليلات الفروع" className="border-2">
+          <CanvaCard title={t('operations.branchesAnalyticsTitle')} className="border-2">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {analytics.accountsSummary.map(acc => (
                 <Card key={acc.id} className="border-2 hover:shadow-md transition">

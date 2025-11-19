@@ -64,7 +64,7 @@ const Operations = () => {
     items.push({
       id: 'ceo',
       render: () => (
-        <CanvaCard title="لوحة المدير التنفيذي">
+        <CanvaCard title={t('operations.ceoPanelTitle')}>
           <CeoFilters accounts={accounts} onChange={()=>{}} />
           <div className="h-4" />
           <CeoSection accounts={accounts} ops={ops} />

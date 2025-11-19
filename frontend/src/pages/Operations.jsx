@@ -14,6 +14,7 @@ import DraggableGrid from '../components/DraggableGrid';
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
+  const { t, i18n } = useTranslation();
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
   const [services, setServices] = useState([]);

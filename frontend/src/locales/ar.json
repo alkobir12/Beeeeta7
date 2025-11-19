@@ -144,9 +144,7 @@
     "workshopPhone": "رقم الهاتف",
     "workshopAddress": "العنوان",
     "taxNumber": "الرقم الضريبي"
-  }
-}
-,
+  },
   "operations": {
     "title": "عمليات الشراء/البيع",
     "ceoPanelTitle": "لوحة المدير التنفيذي",

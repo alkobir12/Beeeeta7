@@ -93,7 +93,7 @@ const Operations = () => {
               </Card>
               <Card className="border-2 canva-accent-purple">
                 <CardContent className="p-6">
-                  <div className="text-sm text-purple-700 font-semibold">مبيعات الشهر</div>
+                  <div className="text-sm text-purple-700 font-semibold">{t('operations.monthSales')}</div>
                   <div className="text-3xl font-bold text-purple-900 mt-2">{analytics.month.sales.toFixed(2)} ر.س</div>
                 </CardContent>
               </Card>

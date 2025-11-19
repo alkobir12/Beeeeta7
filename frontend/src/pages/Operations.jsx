@@ -178,7 +178,7 @@ const Operations = () => {
                   setParts(list.data || []);
                   setItem(prev=>({...prev, itemId: res.data.id}));
                 }catch(e){ alert(t('operations.savePartError')); }
-              }}>حفظ القطعة في قاعدة البيانات</Button>
+              }}>{t('operations.savePartToDb')}</Button>
             ) : (
               <Button type="button" variant="outline" onClick={async ()=>{
                 if(!item.name){ alert('أدخل اسم الخدمة'); return; }

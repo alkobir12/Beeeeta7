@@ -314,9 +314,9 @@ const Operations = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
+      <div className="min-h-screen" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
         <div className="container mx-auto p-6 max-w-7xl">
-          <h1 className="text-3xl font-bold text-slate-800 mb-6">عمليات الشراء/البيع</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-6">{t('operations.title')}</h1>
 
           <DraggableGrid items={gridItems} storageKey="operations_cards_order" columns="grid-cols-1" />
         </div>

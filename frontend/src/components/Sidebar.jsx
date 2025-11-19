@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const pathToLabelKey = {
     '/': 'nav.dashboard',
-    '/operations': 'nav.analytics', // keep label consistent or create nav.operations if needed
+    '/operations': 'nav.operations',
     '/services': 'nav.inventory', // or create nav.services
     '/parts': 'parts.title',
     '/customers': 'nav.customers',

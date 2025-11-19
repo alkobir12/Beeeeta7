@@ -37,9 +37,6 @@ const Layout = ({ children }) => {
       <div className="lg:mr-64 pb-16">
         {children}
       </div>
-
-      {/* Global z.ai Chat Widget - appears on all pages */}
-      <ZaiChatWidget />
     </div>
   );
 };

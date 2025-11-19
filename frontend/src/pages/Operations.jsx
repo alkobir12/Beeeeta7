@@ -148,7 +148,7 @@ const Operations = () => {
             {/* Selector by id depends on type */}
             {item.itemType === 'part' ? (
               <Select value={item.itemId} onValueChange={v=>{ const it = parts.find(p=>p.id===v); setItem({...item, itemId: v, name: it?.name || '', price: it?.sellingPrice || it?.price || 0}); }}>
-                <SelectTrigger><SelectValue placeholder="اختر قطعة (اختياري)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('operations.selectPartOptional')} /></SelectTrigger>
                 <SelectContent>
                   {parts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                 </SelectContent>

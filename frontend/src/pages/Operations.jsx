@@ -171,7 +171,7 @@ const Operations = () => {
             <Input placeholder={t('operations.categoryOptional')} value={item.category} onChange={e=> setItem({...item, category: e.target.value})} />
             {item.itemType === 'part' ? (
               <Button type="button" variant="outline" onClick={async ()=>{
-                if(!item.name){ alert('أدخل اسم القطعة'); return; }
+                if(!item.name){ alert(t('operations.enterPartNameAlert')); return; }
                 try{
                   const res = await axios.post(`${API_URL}/parts`, { partNumber: `P-${Date.now()}`, name: item.name, category: item.category || 'عام', purchasePrice: item.price || 0, sellingPrice: item.price || 0, quantity: item.quantity || 1 });
                   const list = await axios.get(`${API_URL}/parts`);

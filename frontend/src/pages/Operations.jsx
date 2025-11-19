@@ -155,7 +155,7 @@ const Operations = () => {
               </Select>
             ) : (
               <Select value={item.itemId} onValueChange={v=>{ const s = services.find(s=>s.id===v); setItem({...item, itemId: v, name: s?.name || '', price: s?.price || 0}); }}>
-                <SelectTrigger><SelectValue placeholder="اختر خدمة (اختياري)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('operations.selectServiceOptional')} /></SelectTrigger>
                 <SelectContent>
                   {services.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>

@@ -146,3 +146,27 @@
     "taxNumber": "Tax Number"
   }
 }
+,
+  "operations": {
+    "title": "Purchase / Sales Operations",
+    "ceoPanelTitle": "CEO Dashboard",
+    "quickKpisTitle": "Quick KPIs",
+    "todaySales": "Today Sales",
+    "weekSales": "Weekly Sales",
+    "monthSales": "Monthly Sales",
+    "branchesAnalyticsTitle": "Branch Analytics",
+    "addItemTitle": "Add Line Item",
+    "itemTypePart": "Part",
+    "itemTypeService": "Service",
+    "selectPartOptional": "Select part (optional)",
+    "selectServiceOptional": "Select service (optional)",
+    "customNamePlaceholder": "Custom name",
+    "quantityPlaceholder": "Quantity",
+    "pricePlaceholder": "Price",
+    "categoryOptional": "Category (optional)",
+    "enterPartNameAlert": "Enter part name",
+    "defaultCategory": "General",
+    "savePartError": "Failed to save part",
+    "savePartToDb": "Save part to database"
+  }
+

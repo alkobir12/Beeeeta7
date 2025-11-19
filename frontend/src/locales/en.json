@@ -144,9 +144,7 @@
     "workshopPhone": "Phone Number",
     "workshopAddress": "Address",
     "taxNumber": "Tax Number"
-  }
-}
-,
+  },
   "operations": {
     "title": "Purchase / Sales Operations",
     "ceoPanelTitle": "CEO Dashboard",

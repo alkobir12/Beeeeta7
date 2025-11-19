@@ -76,7 +76,7 @@ const Operations = () => {
     items.push({
       id: 'kpis',
       render: () => (
-        <CanvaCard title="مؤشرات سريعة" className="canva-accent-blue border-2">
+        <CanvaCard title={t('operations.quickKpisTitle')} className="canva-accent-blue border-2">
           {analytics ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="border-2 canva-accent-emerald">

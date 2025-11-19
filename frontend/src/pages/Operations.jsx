@@ -87,7 +87,7 @@ const Operations = () => {
               </Card>
               <Card className="border-2 canva-accent-blue">
                 <CardContent className="p-6">
-                  <div className="text-sm text-blue-700 font-semibold">مبيعات الأسبوع</div>
+                  <div className="text-sm text-blue-700 font-semibold">{t('operations.weekSales')}</div>
                   <div className="text-3xl font-bold text-blue-900 mt-2">{analytics.week.sales.toFixed(2)} ر.س</div>
                 </CardContent>
               </Card>

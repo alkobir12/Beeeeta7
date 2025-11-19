@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import LanguageToggle from './LanguageToggle';
+import ZaiChatWidget from './ZaiChatWidget';
 import { useTranslation } from 'react-i18next';
 
 const Layout = ({ children }) => {

@@ -146,3 +146,26 @@
     "taxNumber": "الرقم الضريبي"
   }
 }
+,
+  "operations": {
+    "title": "عمليات الشراء/البيع",
+    "ceoPanelTitle": "لوحة المدير التنفيذي",
+    "quickKpisTitle": "مؤشرات سريعة",
+    "todaySales": "مبيعات اليوم",
+    "weekSales": "مبيعات الأسبوع",
+    "monthSales": "مبيعات الشهر",
+    "branchesAnalyticsTitle": "تحليلات الفروع",
+    "addItemTitle": "إضافة بند",
+    "itemTypePart": "قطعة",
+    "itemTypeService": "خدمة",
+    "selectPartOptional": "اختر قطعة (اختياري)",
+    "selectServiceOptional": "اختر خدمة (اختياري)",
+    "customNamePlaceholder": "الاسم (مخصص)",
+    "quantityPlaceholder": "الكمية",
+    "pricePlaceholder": "السعر",
+    "categoryOptional": "تصنيف (اختياري)",
+    "enterPartNameAlert": "أدخل اسم القطعة",
+    "defaultCategory": "عام",
+    "savePartError": "تعذر حفظ القطعة",
+    "savePartToDb": "حفظ القطعة في قاعدة البيانات"
+  }

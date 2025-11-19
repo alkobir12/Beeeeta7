@@ -162,9 +162,9 @@ const Operations = () => {
               </Select>
             )}
 
-            <Input placeholder="الاسم (مخصص)" value={item.name} onChange={e=> setItem({...item, name: e.target.value})} />
-            <Input type="number" placeholder="الكمية" value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value) || 0})} />
-            <Input type="number" placeholder="السعر" value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value) || 0})} />
+            <Input placeholder={t('operations.customNamePlaceholder')} value={item.name} onChange={e=> setItem({...item, name: e.target.value})} />
+            <Input type="number" placeholder={t('operations.quantityPlaceholder')} value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value) || 0})} />
+            <Input type="number" placeholder={t('operations.pricePlaceholder')} value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value) || 0})} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">

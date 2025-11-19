@@ -26,6 +26,7 @@ except Exception:
 
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from bson import ObjectId
+from supabase_service import SupabaseService
 
 router = APIRouter(prefix="/api")
 

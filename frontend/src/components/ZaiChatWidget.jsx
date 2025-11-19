@@ -1,35 +1,32 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 /**
- * z.ai Chat Widget
+ * z.ai Chat Widget (بسيط)
  *
- * يستبدل مساعد Groq الحالي بويدجت z.ai على كل الصفحات.
- * يعتمد على كود التضمين (Embed) من z.ai.
+ * يستبدل مساعد Groq الحالي بزر عائم يفتح صفحة شات z.ai
+ * بالرابط الذي زودتني به.
  */
+const CHAT_URL = 'https://chat.z.ai/c/9a9e62f0-62fa-4b5e-9042-d78f02e06062';
+
 const ZaiChatWidget = () => {
-  useEffect(() => {
-    // إذا كان السكربت موجود مسبقًا لا نضيفه مرة أخرى
-    if (document.getElementById('zai-chat-script')) return;
+  const handleClick = () => {
+    try {
+      window.open(CHAT_URL, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      // تجاهل أي أخطاء بسيطة في فتح النافذة
+    }
+  };
 
-    const script = document.createElement('script');
-    script.id = 'zai-chat-script';
-    script.async = true;
-    script.src = 'https://cdn.z-ai.chat/widget.js';
-
-    // مثال: تمرير الـ chat id / token الذي أعطيتني إياه
-    // (إذا كان z.ai يقدم كود مختلف يمكننا تعديله حسب الكود الرسمي من لوحة التحكم)
-    script.setAttribute('data-chat-id', 'ef76cd62-ddc4-4e7a-951a-fe9d06f04b6c');
-    script.setAttribute('data-api-key', 'a42c9f7f1c1348858cc53d0c7f6fde93.qYRWUOPG1zoMtZOQ');
-
-    document.body.appendChild(script);
-
-    return () => {
-      // لا نحذف السكربت عادةً لأن الواجهة كاملة تعتمد عليه
-      // لكن إن أردت تنظيفًا أقوى يمكن إزالة السكربت هنا
-    };
-  }, []);
-
-  return null; // لا نرسم أي JSX؛ السكربت نفسه يضيف الودجت
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="fixed z-50 bottom-4 right-4 w-12 h-12 rounded-full bg-indigo-600 text-white shadow-lg flex items-center justify-center hover:bg-indigo-700 transition-colors text-xs font-semibold"
+      aria-label="Open z.ai chat"
+    >
+      Chat
+    </button>
+  );
 };
 
 export default ZaiChatWidget;

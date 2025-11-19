@@ -173,7 +173,7 @@ const Operations = () => {
               <Button type="button" variant="outline" onClick={async ()=>{
                 if(!item.name){ alert(t('operations.enterPartNameAlert')); return; }
                 try{
-                  const res = await axios.post(`${API_URL}/parts`, { partNumber: `P-${Date.now()}`, name: item.name, category: item.category || 'عام', purchasePrice: item.price || 0, sellingPrice: item.price || 0, quantity: item.quantity || 1 });
+                  const res = await axios.post(`${API_URL}/parts`, { partNumber: `P-${Date.now()}`, name: item.name, category: item.category || t('operations.defaultCategory'), purchasePrice: item.price || 0, sellingPrice: item.price || 0, quantity: item.quantity || 1 });
                   const list = await axios.get(`${API_URL}/parts`);
                   setParts(list.data || []);
                   setItem(prev=>({...prev, itemId: res.data.id}));

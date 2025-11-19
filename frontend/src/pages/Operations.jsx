@@ -140,8 +140,8 @@ const Operations = () => {
             <Select value={item.itemType} onValueChange={v=>setItem({...item, itemType: v})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="part">قطعة</SelectItem>
-                <SelectItem value="service">خدمة</SelectItem>
+                <SelectItem value="part">{t('operations.itemTypePart')}</SelectItem>
+                <SelectItem value="service">{t('operations.itemTypeService')}</SelectItem>
               </SelectContent>
             </Select>
 

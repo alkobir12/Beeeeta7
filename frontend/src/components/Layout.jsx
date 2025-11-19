@@ -39,8 +39,8 @@ const Layout = ({ children }) => {
         {children}
       </div>
 
-      {/* Global Groq Assistant - appears on all pages */}
-      <GroqAssistant />
+      {/* Global z.ai Chat Widget - appears on all pages */}
+      <ZaiChatWidget />
     </div>
   );
 };

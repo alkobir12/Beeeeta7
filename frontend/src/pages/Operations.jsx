@@ -177,7 +177,7 @@ const Operations = () => {
                   const list = await axios.get(`${API_URL}/parts`);
                   setParts(list.data || []);
                   setItem(prev=>({...prev, itemId: res.data.id}));
-                }catch(e){ alert('تعذر حفظ القطعة'); }
+                }catch(e){ alert(t('operations.savePartError')); }
               }}>حفظ القطعة في قاعدة البيانات</Button>
             ) : (
               <Button type="button" variant="outline" onClick={async ()=>{

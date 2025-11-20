@@ -74,10 +74,11 @@ def _mem_write(name: str, items: list):
     with open(p, 'w', encoding='utf-8') as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'workshop_db')]
+# MongoDB connection (used when DB_PROVIDER is 'mongo')
+# In 'memory' or 'supabase' modes, some endpoints will avoid using Mongo.
+mongo_url = os.environ.get('MONGO_URL')
+client = AsyncIOMotorClient(mongo_url) if mongo_url else None
+db = client[os.environ.get('DB_NAME', 'workshop_db')] if client is not None else None
 
 # Set database for extended and advanced routes
 set_db_extended(db)

@@ -54,8 +54,16 @@ const Login = () => {
         loginTime: new Date().toISOString()
       };
 
+      // تخزين الجلسة في localStorage (توافقية مع الكود القديم)
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
+
+      // تخزين الجلسة أيضًا في كوكي بسيط (7 أيام)
+      try {
+        document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; max-age=${60 * 60 * 24 * 7}; path=/`;
+      } catch (e) {
+        console.warn('Failed to set session cookie', e);
+      }
 
       try {
         await fetch(`${API_URL}/users/${user.id}`, {

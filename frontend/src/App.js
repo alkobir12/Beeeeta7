@@ -36,8 +36,28 @@ import Login from "./pages/Login";
 import Users from "./pages/UsersManagement";
 import { ThemeProvider } from './contexts/ThemeContext';
 
+const getSessionFromCookie = () => {
+  try {
+    const cookieStr = document.cookie || '';
+    const parts = cookieStr.split(';').map(p => p.trim());
+    const sessionPart = parts.find(p => p.startsWith('session='));
+    if (!sessionPart) return null;
+    const value = decodeURIComponent(sessionPart.split('=')[1] || '');
+    return JSON.parse(value || 'null');
+  } catch (e) {
+    return null;
+  }
+};
+
 const Protected = ({ children }) => {
-  const session = (() => { try { return JSON.parse(localStorage.getItem('session')||'null'); } catch(e){ return null; } })();
+  const session = (() => {
+    // أولوية القراءة من الكوكي
+    const fromCookie = getSessionFromCookie();
+    if (fromCookie) return fromCookie;
+    // توافق مع التخزين القديم في localStorage
+    try { return JSON.parse(localStorage.getItem('session')||'null'); } catch(e){ return null; }
+  })();
+
   if (!session) {
     window.location.href = '/login';
     return null;

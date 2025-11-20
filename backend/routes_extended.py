@@ -971,6 +971,9 @@ async def print_resolve_template(payload: Dict[str, Any] = Body(...)):
 # --------------------- Invoice Templates (Excel-first + Design) ---------------------
 @router.get('/invoice-templates')
 async def list_invoice_templates():
+    # In memory mode, avoid hitting Mongo (returns empty list instead of 500)
+    if os.environ.get('DB_PROVIDER', 'mongo').lower() == 'memory':
+        return []
     docs = await db.invoice_templates.find({'archived': {'$ne': True}}).sort('createdAt', -1).to_list(length=1000)
     out = []
     for d in docs:

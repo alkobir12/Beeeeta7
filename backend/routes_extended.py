@@ -176,6 +176,14 @@ async def request_otp(payload: Dict[str, Any] = Body(...)):
 @router.get('/biz-accounts')
 async def list_biz_accounts():
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.accounts_list()
+        if provider == 'memory' or db is None:
+            # وضع معاينة بدون قاعدة بيانات حقيقية
+            return []
+
         docs = await db.business_accounts.find({}).sort('createdAt', -1).to_list(length=2000)
         out = []
         for d in docs:

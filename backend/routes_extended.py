@@ -206,7 +206,22 @@ async def create_biz_account(payload: Dict[str, Any] = Body(...)):
         currency = (payload or {}).get('currency') or 'SAR'
         if not name:
             raise HTTPException(status_code=400, detail='name required')
-        # ensure unique code if exists
+
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.accounts_create(name=name, code=code, currency=currency)
+        if provider == 'memory' or db is None:
+            # وضع معاينة: نرجع كائن وهمي بدون تخزين حقيقي
+            return {
+                'id': str(uuid.uuid4()),
+                'name': name,
+                'code': code,
+                'currency': currency,
+                'createdAt': datetime.utcnow().isoformat()
+            }
+
+        # ensure unique code if exists (Mongo)
         exist = await db.business_accounts.find_one({'code': code})
         if exist:
             code = f"{code}-{str(uuid.uuid4())[:4].upper()}"

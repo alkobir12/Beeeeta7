@@ -1,5 +1,12 @@
 [
   {
+    "id": "cf0a4ccc-e2e9-4edf-8955-eb97796412a9",
+    "name": "فرع تجريبي",
+    "code": "TEST",
+    "currency": "SAR",
+    "createdAt": "2025-11-21T07:12:09.274601"
+  },
+  {
     "id": "030ec4f0-bb9c-4bfe-ac99-de4ebe82f124",
     "name": "12",
     "code": "001",

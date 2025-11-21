@@ -283,7 +283,43 @@ async def cleanup_biz_accounts(keep: int = 2, mode: str = 'hard'):
     Ensures at least 2 accounts exist by creating defaults if needed.
     """
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
         keep = max(0, int(keep or 2))
+
+        if provider == 'supabase':
+            supa = SupabaseService()
+            # لجعل السلوك بسيط في Supabase: نحذف كل شيء ونحتفظ بعدد N الأحدث
+            rows = supa.accounts_list()
+            to_keep = [r['id'] for r in rows[:keep] if r.get('id')]
+            to_drop = [r['id'] for r in rows[keep:] if r.get('id')]
+            if to_drop:
+                if mode == 'soft':
+                    # لا يوجد archived في السكيمة الحالية، نستخدم active=False كبديل
+                    supa.client.table('business_accounts').update({'active': False}).in_('id', to_drop).execute()
+                else:
+                    supa.client.table('business_accounts').delete().in_('id', to_drop).execute()
+            # ضمان وجود فرعين على الأقل
+            created = []
+            remain_count = len(to_keep)
+            while remain_count < 2:
+                base_code = 'ACC' if remain_count == 0 else f'BR{remain_count+1:02d}'
+                doc = {
+                    'name': 'Main Workshop' if remain_count == 0 else f'Branch {remain_count+1}',
+                    'code': base_code,
+                    'currency': 'SAR',
+                }
+                res = supa.client.table('business_accounts').insert(doc).execute()
+                row = (res.data or [{}])[0]
+                created.append({'id': row.get('id'), 'name': row.get('name')})
+                to_keep.append(row.get('id'))
+                remain_count += 1
+            return {'status': 'ok', 'kept': to_keep, 'created': created, 'final': []}
+
+        if provider == 'memory' or db is None:
+            # في وضع المعاينة لا نقوم بأي حذف حقيقي
+            return {'status': 'ok', 'kept': [], 'created': [], 'final': []}
+
+        # Mongo behavior (قديم)
         # Sort by updatedAt desc then createdAt desc
         docs = await db.business_accounts.find({}).sort([('updatedAt', -1), ('createdAt', -1)]).to_list(length=5000)
         to_keep = [d.get('id') for d in docs[:keep] if d.get('id')]

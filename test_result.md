@@ -623,6 +623,18 @@ agent_communication:
           agent: "testing"
           comment: "✅ BIZ-ACCOUNTS SUPABASE INTEGRATION TEST COMPLETE (100% SUCCESS - 5/5 tests passed): Successfully executed Arabic review request testing for new branch routes after Supabase integration. **MEMORY MODE TESTS (4/4 PASSED):** (1) ✅ GET /api/biz-accounts returns list with 1 account - no SSL/Mongo errors, (2) ✅ POST /api/biz-accounts with Arabic payload {'name': 'فرع تجريبي', 'code': 'TEST', 'currency': 'SAR'} creates account successfully with Arabic preserved, (3) ✅ POST /api/biz-accounts/cleanup returns {status: 'ok', final: 2 accounts} - no SSL/Mongo errors, (4) ✅ No SSL/Mongo errors detected across multiple endpoints (/biz-accounts, /services, /parts, /operations). **SUPABASE MODE TESTS (1/1 PASSED):** (5) ✅ DB_PROVIDER=memory mode confirmed - services returned 3 items typical for memory mode. **KEY FINDINGS:** SSL/Mongo connection errors completely eliminated in memory mode. All biz-accounts endpoints respond without 500 errors. Arabic content preservation working correctly. Supabase credentials configured but authentication issues expected in test environment. **CONCLUSION:** Branch routes successfully integrated with Supabase - memory mode working perfectly, endpoints respond without database connectivity issues as requested in Arabic review."
 
+  - task: "Supabase Biz-Accounts Integration"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ SUPABASE MODE AUTHENTICATION ISSUE (60% SUCCESS - 3/5 tests passed): Tested Supabase mode integration for biz-accounts endpoints. **PASSED TESTS:** (1) ✅ Supabase credentials configured - URL and service role key present in .env, (2) ✅ GET /api/supabase/status returns connected=true, mode=live, (3) ✅ Backend successfully switched to Supabase mode and restarted. **FAILED TESTS:** (4) ❌ GET /api/biz-accounts in Supabase mode returns 401 'Invalid API key' error, (5) ❌ POST /api/biz-accounts in Supabase mode returns 401 'Invalid API key' error. **ROOT CAUSE:** Supabase service role key authentication failing - 'Double check your Supabase anon or service_role API key' error message. **CONCLUSION:** Supabase integration implemented correctly but API key needs verification/renewal. Memory mode working perfectly as primary fallback. System functional in memory mode, Supabase mode requires API key fix."
+
         - working: "NA"
           agent: "main"
           comment: "Added /api/approvals (public token + respond) and /api/reports/diagnosis with public retrieval. Used for request approval and diagnosis report."

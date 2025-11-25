@@ -1,0 +1,12 @@
+[
+  {
+    "id": "cc91709e-31b4-4600-a4ff-85f222ceee47",
+    "name": "أحمد محمد",
+    "phone": "966501234567",
+    "email": "ahmed@example.com",
+    "totalVisits": 1,
+    "lastVisit": "2025-11-25T21:15:20.707819",
+    "createdAt": "2025-11-25T21:15:20.707825",
+    "vehicles": []
+  }
+]

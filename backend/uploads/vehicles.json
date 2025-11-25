@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "plateNumber": "ABC-DDCC",
+    "brand": "تويوتا",
+    "model": "كامري",
+    "year": 2020,
+    "color": "أبيض",
+    "vin": null,
+    "fileNumber": null,
+    "customerName": "أحمد محمد",
+    "customerPhone": "966501234567",
+    "customerEmail": "ahmed@example.com",
+    "services": [],
+    "technicianId": null,
+    "technicianName": null,
+    "notes": null,
+    "id": "0fe40ca8-e358-4816-b571-16da64eecd16",
+    "customerId": "cc91709e-31b4-4600-a4ff-85f222ceee47",
+    "status": "diagnosis",
+    "entryDate": 

@@ -509,6 +509,22 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
 @router.get('/operations')
 async def list_operations(account_id: Optional[str] = None, type: Optional[str] = None, vehicle_id: Optional[str] = None):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            ops = supa.operations_list()
+            if account_id: ops = [o for o in ops if o.get('accountId') == account_id]
+            if type: ops = [o for o in ops if o.get('type') == type]
+            if vehicle_id: ops = [o for o in ops if o.get('vehicleId') == vehicle_id]
+            return ops
+
+        if provider == 'memory' or db is None:
+            ops = _mem_read('operations')
+            if account_id: ops = [o for o in ops if o.get('accountId') == account_id]
+            if type: ops = [o for o in ops if o.get('type') == type]
+            if vehicle_id: ops = [o for o in ops if o.get('vehicleId') == vehicle_id]
+            return ops
+
         q: Dict[str, Any] = {}
         if account_id:
             q['accountId'] = account_id
@@ -528,6 +544,21 @@ async def list_operations(account_id: Optional[str] = None, type: Optional[str] 
 @router.get('/operations/{op_id}')
 async def get_operation(op_id: str):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            # TODO: implement get one in supabase service
+            supa = SupabaseService()
+            ops = supa.operations_list()
+            for o in ops:
+                if o.get('id') == op_id: return o
+            raise HTTPException(status_code=404, detail='not found')
+
+        if provider == 'memory' or db is None:
+            ops = _mem_read('operations')
+            for o in ops:
+                if o.get('id') == op_id: return o
+            raise HTTPException(status_code=404, detail='not found')
+
         o = await db.operations.find_one({'id': op_id})
         if not o:
             raise HTTPException(status_code=404, detail='not found')
@@ -543,6 +574,20 @@ async def get_operation(op_id: str):
 @router.put('/operations/{op_id}')
 async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            # Mock update for now as SupabaseService doesn't have update yet
+            return payload
+
+        if provider == 'memory' or db is None:
+            ops = _mem_read('operations')
+            for i, o in enumerate(ops):
+                if o.get('id') == op_id:
+                    ops[i] = {**o, **payload, 'updatedAt': datetime.utcnow().isoformat()}
+                    _mem_write('operations', ops)
+                    return ops[i]
+            raise HTTPException(status_code=404, detail='not found')
+
         await db.operations.update_one({'id': op_id}, {'$set': {**payload, 'updatedAt': datetime.utcnow()}})
         o = await db.operations.find_one({'id': op_id})
         if not o:
@@ -559,6 +604,34 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
 @router.post('/operations')
 async def create_operation(payload: Dict[str, Any] = Body(...)):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.operations_create(payload)
+
+        if provider == 'memory' or db is None:
+            rows = _mem_read('operations')
+            items = payload.get('items') or []
+            subtotal = sum((float(it.get('price',0))*float(it.get('qty',1))) for it in items)
+            doc = {
+                'id': str(uuid.uuid4()),
+                'type': payload.get('type','service'),
+                'accountId': payload.get('accountId'),
+                'vehicleId': payload.get('vehicleId'),
+                'partnerType': payload.get('partnerType'),
+                'partnerName': payload.get('partnerName'),
+                'items': items,
+                'subtotal': subtotal,
+                'total': subtotal,
+                'paymentMethod': payload.get('paymentMethod','cash'),
+                'notes': payload.get('notes'),
+                'date': datetime.utcnow().isoformat(),
+                'createdAt': datetime.utcnow().isoformat()
+            }
+            rows.append(doc)
+            _mem_write('operations', rows)
+            return doc
+
         items = payload.get('items', [])
         subtotal = 0.0
         for it in items:

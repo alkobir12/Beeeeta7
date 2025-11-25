@@ -27,6 +27,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from routes_extended import router as extended_router, set_db as set_db_extended
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
+from supabase_service import SupabaseService
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 

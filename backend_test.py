@@ -1,53 +1,53 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Script for Workshop Management System
-Tests the specific endpoints requested in the review:
-1. Services CRUD (confirm with new DB)
-2. Pending Operations APIs
-3. Branches Cleanup
-4. Budgets minimal regression
+Backend API Testing for Review Request
+Testing specific endpoints to verify they work correctly and return data without 500 errors
+DB_PROVIDER: memory or supabase
 """
 
-import asyncio
-import aiohttp
+import requests
 import json
-import os
+import uuid
 from datetime import datetime
-from typing import Dict, Any, List
 
-# Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://autofix-flow.preview.emergentagent.com')
-API_BASE = f"{BACKEND_URL}/api"
+# Backend URL from frontend/.env
+BACKEND_URL = "https://autofix-flow.preview.emergentagent.com/api"
 
-class BackendTester:
-    def __init__(self):
-        self.session = None
-        self.test_results = []
-        self.created_service_id = None
-        self.remaining_account_ids = []
-        
-    async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
-        return self
-        
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session:
-            await self.session.close()
+def test_endpoint(method, endpoint, data=None, expected_status=200):
+    """Test an API endpoint and return result"""
+    url = f"{BACKEND_URL}{endpoint}"
     
-    def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name}")
-        if details:
-            print(f"   Details: {details}")
-        if response_data and isinstance(response_data, dict):
-            if 'error' in response_data or 'detail' in response_data:
-                print(f"   Error: {response_data}")
+    try:
+        if method.upper() == "GET":
+            response = requests.get(url, timeout=30)
+        elif method.upper() == "POST":
+            response = requests.post(url, json=data, timeout=30)
+        else:
+            return {"success": False, "error": f"Unsupported method: {method}"}
         
-        self.test_results.append({
-            'test': test_name,
-            'success': success,
-            'details': details,
+        result = {
+            "success": response.status_code == expected_status,
+            "status_code": response.status_code,
+            "endpoint": endpoint,
+            "method": method
+        }
+        
+        # Try to parse JSON response
+        try:
+            result["data"] = response.json()
+            result["data_type"] = type(result["data"]).__name__
+            if isinstance(result["data"], list):
+                result["count"] = len(result["data"])
+        except:
+            result["data"] = response.text[:200] if response.text else ""
+            result["data_type"] = "text"
+        
+        return result
+        
+    except requests.exceptions.Timeout:
+        return {"success": False, "error": "Request timeout", "endpoint": endpoint}
+    except requests.exceptions.RequestException as e:
+        return {"success": False, "error": str(e), "endpoint": endpoint}
             'response': response_data
         })
     

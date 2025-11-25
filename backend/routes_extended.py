@@ -693,10 +693,25 @@ async def operations_analytics(account_id: Optional[str] = None):
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         week_ago = today - timedelta(days=7)
         month_start = today.replace(day=1)
-        q: Dict[str, Any] = {}
-        if account_id:
-            q['accountId'] = account_id
-        ops = await db.operations.find(q, {'_id': 0, 'type': 1, 'total': 1, 'date': 1}).to_list(length=100000)
+        
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        ops = []
+        
+        if provider == 'supabase':
+            supa = SupabaseService()
+            ops = supa.operations_list()
+            if account_id:
+                ops = [o for o in ops if o.get('accountId') == account_id]
+        elif provider == 'memory' or db is None:
+            ops = _mem_read('operations')
+            if account_id:
+                ops = [o for o in ops if o.get('accountId') == account_id]
+        else:
+            q: Dict[str, Any] = {}
+            if account_id:
+                q['accountId'] = account_id
+            ops = await db.operations.find(q, {'_id': 0, 'type': 1, 'total': 1, 'date': 1}).to_list(length=100000)
+
         def parse_date(x):
             d = x.get('date')
             if isinstance(d, str):
@@ -712,6 +727,10 @@ async def operations_analytics(account_id: Optional[str] = None):
             expenses_count = 0
             for o in ops:
                 d = parse_date(o)
+                # naive comparison fix
+                if d.tzinfo is not None and start.tzinfo is None:
+                    d = d.replace(tzinfo=None)
+                
                 if d >= start:
                     t = float(o.get('total', 0))
                     if o.get('type') == 'sale':

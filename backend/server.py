@@ -376,6 +376,22 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
             raise HTTPException(status_code=404, detail="Vehicle not found")
         return Vehicle(**v)
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('vehicles')
+        for i, r in enumerate(rows):
+            if r.get('id') == vehicle_id:
+                upd = {k: v for k, v in update_data.dict().items() if v is not None}
+                # handle date serialization
+                if 'estimatedCompletion' in upd and isinstance(upd['estimatedCompletion'], datetime):
+                    upd['estimatedCompletion'] = upd['estimatedCompletion'].isoformat()
+                if 'completionDate' in upd and isinstance(upd['completionDate'], datetime):
+                    upd['completionDate'] = upd['completionDate'].isoformat()
+                
+                rows[i] = {**r, **upd}
+                _mem_write('vehicles', rows)
+                return Vehicle(**rows[i])
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
@@ -477,6 +493,18 @@ async def delete_vehicle(vehicle_id: str):
             res = supa.vehicles_delete(vehicle_id)
             if not res:
                 raise HTTPException(status_code=404, detail="Vehicle not found")
+            return {"message": "Vehicle deleted successfully", "deleted_id": vehicle_id}
+
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('vehicles')
+            nrows = [r for r in rows if r.get('id') != vehicle_id]
+            if len(nrows) == len(rows):
+                raise HTTPException(status_code=404, detail="Vehicle not found")
+            _mem_write('vehicles', nrows)
+            # delete invoices too
+            irows = _mem_read('invoices')
+            nirows = [r for r in irows if r.get('vehicleId') != vehicle_id]
+            _mem_write('invoices', nirows)
             return {"message": "Vehicle deleted successfully", "deleted_id": vehicle_id}
 
         vehicle = await db.vehicles.find_one({"id": vehicle_id})

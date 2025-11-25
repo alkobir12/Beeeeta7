@@ -1,6 +1,6 @@
 [
   {
-    "plateNumber": "ABC-DDCC",
+    "plateNumber": "TEST-3236",
     "brand": "تويوتا",
     "model": "كامري",
     "year": 2020,
@@ -14,7 +14,14 @@
     "technicianId": null,
     "technicianName": null,
     "notes": null,
-    "id": "0fe40ca8-e358-4816-b571-16da64eecd16",
+    "id": "5d7915cb-6b0e-400f-a73e-14d5c9069d6a",
     "customerId": "cc91709e-31b4-4600-a4ff-85f222ceee47",
     "status": "diagnosis",
-    "entryDate": 
+    "entryDate": "2025-11-25T21:15:50.746135",
+    "estimatedCompletion": "2025-11-27T21:15:50.746128",
+    "completionDate": null,
+    "trackingLink": "TRK-EFF31DF4",
+    "images": [],
+    "parts": []
+  }
+]

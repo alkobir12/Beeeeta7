@@ -4,9 +4,11 @@
     "name": "أحمد محمد",
     "phone": "966501234567",
     "email": "ahmed@example.com",
-    "totalVisits": 1,
-    "lastVisit": "2025-11-25T21:15:20.707819",
+    "totalVisits": 2,
+    "lastVisit": "2025-11-25T21:15:50.746476",
     "createdAt": "2025-11-25T21:15:20.707825",
-    "vehicles": []
+    "vehicles": [
+      "TEST-3236"
+    ]
   }
 ]

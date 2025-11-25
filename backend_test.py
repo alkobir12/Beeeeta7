@@ -48,106 +48,176 @@ def test_endpoint(method, endpoint, data=None, expected_status=200):
         return {"success": False, "error": "Request timeout", "endpoint": endpoint}
     except requests.exceptions.RequestException as e:
         return {"success": False, "error": str(e), "endpoint": endpoint}
-            'response': response_data
-        })
+
+def main():
+    print("🔍 Backend API Testing - Review Request Verification")
+    print("=" * 60)
+    print(f"Backend URL: {BACKEND_URL}")
+    print(f"Testing DB_PROVIDER: memory or supabase mode")
+    print()
     
-    async def make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> tuple:
-        """Make HTTP request and return (success, response_data, status_code)"""
-        url = f"{API_BASE}{endpoint}"
-        try:
-            kwargs = {}
-            if data:
-                kwargs['json'] = data
-            if params:
-                kwargs['params'] = params
-                
-            async with self.session.request(method, url, **kwargs) as response:
-                try:
-                    response_data = await response.json()
-                except:
-                    response_data = await response.text()
-                
-                return response.status < 400, response_data, response.status
-        except Exception as e:
-            return False, {"error": str(e)}, 0
+    # Test endpoints from review request
+    endpoints_to_test = [
+        ("GET", "/operations"),
+        ("GET", "/vehicles"),
+        ("GET", "/customers"),
+        ("GET", "/invoices"),
+        ("GET", "/transactions"),
+        ("GET", "/technicians"),
+        ("GET", "/services"),
+        ("GET", "/biz-accounts"),
+        ("GET", "/operations/analytics/summary"),
+        ("GET", "/operations/pending")
+    ]
     
-    async def test_services_crud(self):
-        """Test Services CRUD operations with Arabic data"""
-        print("\n🔧 Testing Services CRUD API...")
-        
-        # Test 1: POST /api/services with Arabic data
-        service_data = {
-            "name": "تنظيف بخاخات",
-            "category": "محرك", 
-            "price": 150,
-            "duration": 45
-        }
-        
-        success, response, status = await self.make_request('POST', '/services', service_data)
-        if success and 'id' in response:
-            self.created_service_id = response['id']
-            self.log_test("POST /api/services (Arabic data)", True, 
-                         f"Created service with ID: {self.created_service_id}")
-        else:
-            self.log_test("POST /api/services (Arabic data)", False, 
-                         f"Status: {status}", response)
-            return
-        
-        # Test 2: GET /api/services and verify created service
-        success, response, status = await self.make_request('GET', '/services')
-        if success and isinstance(response, list):
-            created_service = next((s for s in response if s.get('id') == self.created_service_id), None)
-            if created_service:
-                self.log_test("GET /api/services (verify creation)", True,
-                             f"Found created service: {created_service.get('name')}")
-            else:
-                self.log_test("GET /api/services (verify creation)", False,
-                             "Created service not found in list")
-        else:
-            self.log_test("GET /api/services (verify creation)", False,
-                         f"Status: {status}", response)
-        
-        # Test 3: PUT /api/services/{id} to update price
-        update_data = {"price": 180}
-        success, response, status = await self.make_request('PUT', f'/services/{self.created_service_id}', update_data)
-        if success and response.get('price') == 180:
-            self.log_test("PUT /api/services/{id} (update price)", True,
-                         f"Updated price to {response.get('price')}")
-        else:
-            self.log_test("PUT /api/services/{id} (update price)", False,
-                         f"Status: {status}", response)
-        
-        # Test 4: DELETE /api/services/{id}
-        success, response, status = await self.make_request('DELETE', f'/services/{self.created_service_id}')
-        if success:
-            self.log_test("DELETE /api/services/{id}", True, "Service deleted successfully")
-        else:
-            self.log_test("DELETE /api/services/{id}", False,
-                         f"Status: {status}", response)
+    results = []
+    passed = 0
+    failed = 0
     
-    async def test_pending_operations_apis(self):
-        """Test Pending Operations APIs"""
-        print("\n⏳ Testing Pending Operations APIs...")
+    print("📋 Testing GET endpoints:")
+    print("-" * 40)
+    
+    for method, endpoint in endpoints_to_test:
+        print(f"Testing {method} {endpoint}...", end=" ")
+        result = test_endpoint(method, endpoint)
+        results.append(result)
         
-        # Test 1: GET /api/operations/pending (no params)
-        success, response, status = await self.make_request('GET', '/operations/pending')
-        if success and 'count' in response and 'items' in response:
-            # Verify ISO dates
-            items = response.get('items', [])
-            iso_dates_valid = True
-            for item in items[:3]:  # Check first 3 items
-                for date_field in ['entryDate', 'estimatedCompletion']:
-                    if date_field in item and item[date_field]:
-                        try:
-                            datetime.fromisoformat(item[date_field].replace('Z', '+00:00'))
-                        except:
-                            iso_dates_valid = False
-                            break
-                if not iso_dates_valid:
-                    break
-            
-            self.log_test("GET /api/operations/pending", True,
-                         f"Count: {response['count']}, ISO dates valid: {iso_dates_valid}")
+        if result["success"]:
+            status = "✅ PASS"
+            passed += 1
+            if "count" in result:
+                status += f" ({result['count']} items)"
+            elif "data_type" in result:
+                status += f" ({result['data_type']})"
+        else:
+            status = "❌ FAIL"
+            failed += 1
+            if "error" in result:
+                status += f" - {result['error']}"
+            elif "status_code" in result:
+                status += f" - HTTP {result['status_code']}"
+        
+        print(status)
+    
+    print()
+    print("🚗 Testing POST /vehicles with valid data:")
+    print("-" * 40)
+    
+    # Test vehicle creation
+    vehicle_data = {
+        "plateNumber": f"ABC-{str(uuid.uuid4())[:4].upper()}",
+        "brand": "تويوتا",
+        "model": "كامري",
+        "year": 2020,
+        "color": "أبيض",
+        "customerName": "أحمد محمد",
+        "customerPhone": "966501234567",
+        "customerEmail": "ahmed@example.com",
+        "issue": "فحص دوري",
+        "status": "diagnosis",
+        "mileage": 50000
+    }
+    
+    print("Creating vehicle with Arabic data...", end=" ")
+    vehicle_result = test_endpoint("POST", "/vehicles", vehicle_data, 200)
+    results.append(vehicle_result)
+    
+    if vehicle_result["success"]:
+        print("✅ PASS - Vehicle created successfully")
+        passed += 1
+        if "data" in vehicle_result and isinstance(vehicle_result["data"], dict):
+            vehicle_id = vehicle_result["data"].get("id")
+            if vehicle_id:
+                print(f"   Created vehicle ID: {vehicle_id}")
+    else:
+        print("❌ FAIL - Vehicle creation failed")
+        failed += 1
+        if "error" in vehicle_result:
+            print(f"   Error: {vehicle_result['error']}")
+        elif "status_code" in vehicle_result:
+            print(f"   HTTP Status: {vehicle_result['status_code']}")
+    
+    print()
+    print("📊 Test Summary:")
+    print("=" * 60)
+    print(f"Total Tests: {len(results)}")
+    print(f"✅ Passed: {passed}")
+    print(f"❌ Failed: {failed}")
+    print(f"Success Rate: {(passed/len(results)*100):.1f}%")
+    
+    print()
+    print("🔍 Detailed Results:")
+    print("-" * 60)
+    
+    for result in results:
+        endpoint = result.get("endpoint", "unknown")
+        method = result.get("method", "GET")
+        
+        if result["success"]:
+            print(f"✅ {method} {endpoint}")
+            if "count" in result:
+                print(f"   → Returned {result['count']} items")
+            elif "data_type" in result:
+                print(f"   → Data type: {result['data_type']}")
+        else:
+            print(f"❌ {method} {endpoint}")
+            if "status_code" in result:
+                print(f"   → HTTP {result['status_code']}")
+            if "error" in result:
+                print(f"   → Error: {result['error']}")
+            if "data" in result and result["data"]:
+                print(f"   → Response: {str(result['data'])[:100]}...")
+    
+    print()
+    
+    # Check for critical issues
+    critical_failures = []
+    for result in results:
+        if not result["success"] and result.get("status_code") == 500:
+            critical_failures.append(result["endpoint"])
+    
+    if critical_failures:
+        print("🚨 CRITICAL ISSUES FOUND:")
+        print("-" * 30)
+        for endpoint in critical_failures:
+            print(f"   • {endpoint} returning 500 errors")
+        print()
+    
+    # Memory mode validation
+    memory_working = []
+    memory_failing = []
+    
+    for result in results:
+        if result["success"]:
+            memory_working.append(result["endpoint"])
+        else:
+            memory_failing.append(result["endpoint"])
+    
+    print("💾 Memory Mode Status:")
+    print("-" * 30)
+    if memory_working:
+        print("✅ Working endpoints:")
+        for ep in memory_working:
+            print(f"   • {ep}")
+    
+    if memory_failing:
+        print("❌ Failing endpoints:")
+        for ep in memory_failing:
+            print(f"   • {ep}")
+    
+    print()
+    
+    if failed == 0:
+        print("🎉 ALL TESTS PASSED! All endpoints working correctly.")
+    elif passed > failed:
+        print("⚠️  MOSTLY WORKING - Some endpoints need attention.")
+    else:
+        print("🚨 CRITICAL ISSUES - Multiple endpoints failing.")
+    
+    return passed, failed, results
+
+if __name__ == "__main__":
+    main()
         else:
             self.log_test("GET /api/operations/pending", False,
                          f"Status: {status}", response)

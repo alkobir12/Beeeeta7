@@ -1619,7 +1619,7 @@ async def ceo_ai_analysis_multi(payload: Dict[str, Any] = Body(...)):
                     sys = "أنت مساعد المدير التنفيذي. حلّل بيانات المبيعات والمصروفات التشغيلية والشخصية لكل حساب وقدّم توصيات تنفيذية مختصرة."
                     ctx_lines = [f"{a['name']}: دخل {a['income']:.0f}، مصروف {a['expenses']:.0f}، تشغيلي {a['operatingExpenses']:.0f}، شخصي {a['personalExpenses']:.0f}، ربح {a['profit']:.0f}" for a in per]
                     ctx = "\n".join(ctx_lines)
-                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('openai','gpt-5')
+                    chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('anthropic','claude-sonnet-4.5-20250929')
                     ans = await chat.send_message(UserMessage(text=f"السؤال: {question}\nالبيانات:\n{ctx}"))
                     result['ai'] = {'answer': ans, 'model': 'openai/gpt-5'}
             except Exception as ex:

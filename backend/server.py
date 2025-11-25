@@ -938,6 +938,25 @@ async def delete_part(part_id: str):
 # ============ Invoice APIs ============
 @api_router.post("/invoices", response_model=Invoice)
 async def create_invoice(invoice_data: InvoiceCreate):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        inv_dict = invoice_data.dict()
+        inv_dict['invoiceNumber'] = generate_invoice_number()
+        
+        # Create transaction
+        if invoice_data.type == "service":
+            supa.transactions_create({
+                'type': "income",
+                'category': "service",
+                'amount': invoice_data.total,
+                'description': f"Invoice {inv_dict['invoiceNumber']}",
+                'paymentMethod': invoice_data.paymentMethod,
+                'reference': inv_dict['invoiceNumber']
+            })
+        
+        new_inv = supa.invoices_create(inv_dict)
+        return Invoice(**new_inv)
+
     invoice = Invoice(
         **invoice_data.dict(),
         invoiceNumber=generate_invoice_number()
@@ -968,6 +987,11 @@ async def create_invoice(invoice_data: InvoiceCreate):
 
 @api_router.get("/invoices", response_model=List[Invoice])
 async def get_invoices(vehicle_id: Optional[str] = None, customer_id: Optional[str] = None):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        invs = supa.invoices_list(vehicle_id=vehicle_id, customer_id=customer_id)
+        return [Invoice(**i) for i in invs]
+
     query = {}
     if vehicle_id:
         query["vehicleId"] = vehicle_id
@@ -979,6 +1003,13 @@ async def get_invoices(vehicle_id: Optional[str] = None, customer_id: Optional[s
 
 @api_router.get("/invoices/{invoice_id}", response_model=Invoice)
 async def get_invoice(invoice_id: str):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        inv = supa.invoices_get(invoice_id)
+        if not inv:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        return Invoice(**inv)
+
     invoice = await db.invoices.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")

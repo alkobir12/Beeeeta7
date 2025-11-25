@@ -267,6 +267,150 @@ class SupabaseService:
             })
         return out
 
+
+    # -------------------- Customers --------------------
+    def customers_list(self, search: Optional[str] = None) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        q = self.client.table('customers').select('*')
+        if search:
+            # simple search on name or phone
+            q = q.or_(f"name.ilike.%{search}%,phone.ilike.%{search}%")
+        res = q.order('last_visit', desc=True).execute()
+        rows = res.data or []
+        return [{
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        } for r in rows]
+
+    def customers_get(self, cid: str) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        res = self.client.table('customers').select('*').eq('id', cid).single().execute()
+        r = res.data
+        if not r: return None
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        }
+
+    def customers_find_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        res = self.client.table('customers').select('*').eq('phone', phone).single().execute()
+        r = res.data
+        if not r: return None
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        }
+
+    def customers_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        row = {
+            'name': payload.get('name'),
+            'phone': payload.get('phone'),
+            'email': payload.get('email'),
+            'total_visits': payload.get('totalVisits', 0),
+            'last_visit': payload.get('lastVisit'),
+            'vehicles': payload.get('vehicles') or []
+        }
+        if payload.get('id'):
+            row['id'] = payload.get('id')
+            
+        res = self.client.table('customers').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        }
+
+    def customers_update(self, cid: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        row = {}
+        if 'name' in payload: row['name'] = payload['name']
+        if 'phone' in payload: row['phone'] = payload['phone']
+        if 'email' in payload: row['email'] = payload['email']
+        if 'totalVisits' in payload: row['total_visits'] = payload['totalVisits']
+        if 'lastVisit' in payload: row['last_visit'] = payload['lastVisit']
+        if 'vehicles' in payload: row['vehicles'] = payload['vehicles']
+        
+        res = self.client.table('customers').update(row).eq('id', cid).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        }
+
+    def customers_delete(self, cid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('customers').delete().eq('id', cid).execute()
+        return True
+
+    # -------------------- Invoices --------------------
+    def invoices_list(self, vehicle_id: Optional[str] = None, customer_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        q = self.client.table('invoices').select('*')
+        if vehicle_id: q = q.eq('vehicle_id', vehicle_id)
+        if customer_id: q = q.eq('customer_id', customer_id)
+        res = q.order('created_at', desc=True).execute()
+        rows = res.data or []
+        # Map snake to camel
+        return [{
+            'id': r.get('id'),
+            'invoiceNumber': r.get('invoice_number'),
+            'customerId': r.get('customer_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'items': r.get('items'),
+            'subtotal': r.get('subtotal'),
+            'discount': r.get('discount'),
+            'tax': r.get('tax'),
+            'total': r.get('total'),
+            'status': r.get('status'),
+            'type': r.get('type'),
+            'createdAt': r.get('created_at')
+        } for r in rows]
+
+    def invoices_delete_by_vehicle(self, vid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('invoices').delete().eq('vehicle_id', vid).execute()
+        return True
+
     def operations_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:
             return payload

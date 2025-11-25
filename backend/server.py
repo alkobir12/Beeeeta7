@@ -298,6 +298,14 @@ async def track_vehicle(tracking_link: str):
 
 @api_router.put("/vehicles/{vehicle_id}", response_model=Vehicle)
 async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        upd = update_data.dict(exclude_unset=True)
+        v = supa.vehicles_update(vehicle_id, upd)
+        if not v:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        return Vehicle(**v)
+
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
@@ -393,6 +401,14 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
 async def delete_vehicle(vehicle_id: str):
     """Delete a vehicle and its related invoices"""
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            supa.invoices_delete_by_vehicle(vehicle_id)
+            res = supa.vehicles_delete(vehicle_id)
+            if not res:
+                raise HTTPException(status_code=404, detail="Vehicle not found")
+            return {"message": "Vehicle deleted successfully", "deleted_id": vehicle_id}
+
         vehicle = await db.vehicles.find_one({"id": vehicle_id})
         if not vehicle:
             raise HTTPException(status_code=404, detail="Vehicle not found")

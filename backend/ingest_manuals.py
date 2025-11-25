@@ -2,39 +2,45 @@
 import asyncio
 import os
 import pdfplumber
-from motor.motor_asyncio import AsyncIOMotorClient
+import json
 from datetime import datetime
 import uuid
 
 # Config
-MONGO_URL = os.environ.get('MONGO_URL')
-DB_NAME = os.environ.get('DB_NAME', 'workshop_db')
+DB_PROVIDER = os.environ.get('DB_PROVIDER', 'memory')
+UPLOADS_DIR = '/app/backend/uploads'
+KB_FILE = os.path.join(UPLOADS_DIR, 'knowledge_documents.json')
 
 async def ingest_manuals():
-    if not MONGO_URL:
-        print("❌ MONGO_URL not set")
+    manuals_dir = os.path.join(UPLOADS_DIR, 'manuals')
+    if not os.path.exists(manuals_dir):
+        print(f"❌ Manuals directory not found: {manuals_dir}")
         return
 
-    client = AsyncIOMotorClient(MONGO_URL)
-    db = client[DB_NAME]
-    
-    manuals_dir = '/app/backend/uploads/manuals'
     files = [f for f in os.listdir(manuals_dir) if f.endswith('.pdf')]
-    
     print(f"📂 Found {len(files)} manuals to ingest...")
+    
+    # Load existing docs if any
+    existing_docs = []
+    if os.path.exists(KB_FILE):
+        try:
+            with open(KB_FILE, 'r', encoding='utf-8') as f:
+                existing_docs = json.load(f)
+        except:
+            existing_docs = []
+    
+    new_docs = []
     
     for fname in files:
         path = os.path.join(manuals_dir, fname)
         print(f"📖 Processing {fname}...")
         
-        try:
-            # Check if already ingested
-            existing = await db.knowledge_documents.count_documents({'filename': fname})
-            if existing > 0:
-                print(f"   ⚠️ Already ingested {existing} pages. Skipping.")
-                continue
+        # Check if already ingested (simple check by filename in existing docs)
+        if any(d.get('filename') == fname for d in existing_docs):
+             print(f"   ⚠️ Already ingested. Skipping.")
+             continue
 
-            chunks = []
+        try:
             with pdfplumber.open(path) as pdf:
                 total_pages = len(pdf.pages)
                 print(f"   📄 Total pages: {total_pages}")
@@ -52,23 +58,25 @@ async def ingest_manuals():
                         'content': text,
                         'type': 'manual',
                         'tags': ['manual', 'toyota', 'repair', fname],
-                        'createdAt': datetime.utcnow()
+                        'createdAt': datetime.utcnow().isoformat()
                     }
-                    chunks.append(doc)
+                    new_docs.append(doc)
                     
-                    if len(chunks) >= 50:
-                        await db.knowledge_documents.insert_many(chunks)
-                        print(f"   💾 Saved {len(chunks)} pages...")
-                        chunks = []
+                    if len(new_docs) % 50 == 0:
+                        print(f"   ... processed {len(new_docs)} pages so far")
                 
-                if chunks:
-                    await db.knowledge_documents.insert_many(chunks)
-                    print(f"   💾 Saved final {len(chunks)} pages.")
-                    
             print(f"✅ Finished {fname}")
             
         except Exception as e:
             print(f"❌ Error processing {fname}: {e}")
+
+    if new_docs:
+        all_docs = existing_docs + new_docs
+        with open(KB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(all_docs, f, ensure_ascii=False, indent=2)
+        print(f"💾 Saved {len(new_docs)} new pages to {KB_FILE}")
+    else:
+        print("No new documents to save.")
 
     print("🎉 Ingestion complete!")
 

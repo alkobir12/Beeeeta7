@@ -35,6 +35,27 @@ templates_bucket: Optional[AsyncIOMotorGridFSBucket] = None
 approvals_subscribers: set = set()
 
 
+# --------------------- Memory Helper ---------------------
+def _mem_read(name: str) -> list:
+    try:
+        p = os.path.join(os.path.dirname(__file__), 'uploads', f'{name}.json')
+        if not os.path.exists(p): return []
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _mem_write(name: str, items: list):
+    try:
+        d = os.path.join(os.path.dirname(__file__), 'uploads')
+        os.makedirs(d, exist_ok=True)
+        p = os.path.join(d, f'{name}.json')
+        with open(p, 'w', encoding='utf-8') as f:
+            json.dump(items, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
 # --------------------- DB bind ---------------------
 
 def set_db(database):

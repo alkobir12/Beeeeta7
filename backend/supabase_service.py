@@ -366,6 +366,68 @@ class SupabaseService:
         return {
             'id': r.get('id'),
             'name': r.get('name'),
+
+    def invoices_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        row = {
+            'invoice_number': payload.get('invoiceNumber'),
+            'customer_id': payload.get('customerId'),
+            'vehicle_id': payload.get('vehicleId'),
+            'items': payload.get('items'),
+            'subtotal': payload.get('subtotal'),
+            'discount': payload.get('discount'),
+            'tax': payload.get('tax'),
+            'total': payload.get('total'),
+            'status': payload.get('status'),
+            'type': payload.get('type'),
+            'payment_method': payload.get('paymentMethod'),
+            'notes': payload.get('notes')
+        }
+        if payload.get('id'): row['id'] = payload.get('id')
+        
+        res = self.client.table('invoices').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'invoiceNumber': r.get('invoice_number'),
+            'customerId': r.get('customer_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'items': r.get('items'),
+            'subtotal': r.get('subtotal'),
+            'discount': r.get('discount'),
+            'tax': r.get('tax'),
+            'total': r.get('total'),
+            'status': r.get('status'),
+            'type': r.get('type'),
+            'paymentMethod': r.get('payment_method'),
+            'notes': r.get('notes'),
+            'createdAt': r.get('created_at')
+        }
+
+    def invoices_get(self, iid: str) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        res = self.client.table('invoices').select('*').eq('id', iid).single().execute()
+        r = res.data
+        if not r: return None
+        return {
+            'id': r.get('id'),
+            'invoiceNumber': r.get('invoice_number'),
+            'customerId': r.get('customer_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'items': r.get('items'),
+            'subtotal': r.get('subtotal'),
+            'discount': r.get('discount'),
+            'tax': r.get('tax'),
+            'total': r.get('total'),
+            'status': r.get('status'),
+            'type': r.get('type'),
+            'paymentMethod': r.get('payment_method'),
+            'notes': r.get('notes'),
+            'createdAt': r.get('created_at')
+        }
+
             'phone': r.get('phone'),
             'email': r.get('email'),
             'totalVisits': r.get('total_visits', 0),

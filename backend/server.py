@@ -1518,7 +1518,7 @@ async def chat_with_ai(chat_request: ChatRequest):
             api_key=llm_key,
             session_id=session_id,
             system_message=enhanced_prompt
-        ).with_model("anthropic", "claude-sonnet-4-20250514")
+        ).with_model("anthropic", "claude-sonnet-4.5-20250929")
         
         # Send message
         user_message = UserMessage(text=chat_request.message)

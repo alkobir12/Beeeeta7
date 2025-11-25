@@ -31,6 +31,38 @@ _index_cache = None
 
 async def _fallback_local_results(query: str, k: int = 5) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
+    
+    # Memory mode support
+    provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+    if provider == 'memory' or db is None:
+        try:
+            p = os.path.join(os.path.dirname(__file__), 'uploads', 'knowledge_documents.json')
+            if os.path.exists(p):
+                with open(p, 'r', encoding='utf-8') as f:
+                    docs = json.load(f)
+                # Simple regex search
+                import re
+                pat = re.compile(re.escape(query), re.IGNORECASE)
+                matches = []
+                for d in docs:
+                    txt = d.get('content') or ''
+                    if pat.search(txt) or pat.search(d.get('title') or ''):
+                        matches.append(d)
+                
+                for d in matches[:k]:
+                    out.append({
+                        'text': (d.get('content') or '')[:1500], # Larger chunk for manuals
+                        'metadata': {
+                            'title': d.get('title'), 
+                            'filename': d.get('filename'), 
+                            'page': d.get('page_number'),
+                            'source': 'manual'
+                        }
+                    })
+        except Exception as e:
+            print(f"Memory search error: {e}")
+        return out
+
     try:
         # Search knowledge_documents
         q = {"$or": [
@@ -43,7 +75,7 @@ async def _fallback_local_results(query: str, k: int = 5) -> List[Dict[str, Any]
             d.pop('_id', None)
             out.append({
                 'text': (d.get('content') or d.get('summary') or '')[:800],
-                'metadata': {'title': d.get('title') or d.get('filename'), 'source': 'knowledge_documents'}
+                'metadata': {'title': d.get('title') or d.get('filename'), 'page': d.get('page_number'), 'source': 'knowledge_documents'}
             })
         # Also search ai_kb_docs
         q2 = {"$or": [
@@ -75,13 +107,39 @@ async def _maybe_summarize(query: str, results: List[Dict[str, Any]]) -> Optiona
             if not parts:
                 return None
             return 'ملخص تقريبي (بدون نموذج ذكاء):\n' + '\n---\n'.join(parts)
+            
         from emergentintegrations.llm.chat import LlmChat, UserMessage
-        ctx = '\n\n'.join([(r.get('metadata',{}).get('title') or 'مرجع') + "\n" + (r.get('text') or '')[:400] for r in results[:4]])
-        sys = "أنت مساعد يلخّص نتائج بحث تقنية للسيارات باختصار عربي (150-200 كلمة) مع 3 نقاط عملية."
-        chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model('openai','gpt-5')
-        ans = await chat.send_message(UserMessage(text=f"سؤال: {query}\nنتائج:\n{ctx}"))
+        
+        # Check if results contain manuals
+        has_manuals = any(r.get('metadata', {}).get('source') == 'manual' for r in results)
+        
+        ctx_parts = []
+        for r in results[:5]:
+            meta = r.get('metadata', {})
+            title = meta.get('title') or 'مرجع'
+            page = meta.get('page')
+            ref = f"{title} (ص {page})" if page else title
+            ctx_parts.append(f"--- {ref} ---\n{r.get('text')}")
+            
+        ctx = '\n\n'.join(ctx_parts)
+        
+        sys = "أنت مساعد خبير في صيانة السيارات. لخص المعلومات التالية للإجابة على سؤال المستخدم. اذكر رقم الصفحة واسم الملف لكل معلومة تستخدمها."
+        
+        # Use Gemini 1.5 Pro for manuals (larger context, better reasoning for docs) as requested
+        # Otherwise use Sonnet 4.5
+        model_provider = 'anthropic'
+        model_name = 'claude-sonnet-4.5-20250929'
+        
+        if has_manuals:
+            # User asked to use Gemini for displaying page/reference
+            model_provider = 'gemini'
+            model_name = 'gemini-1.5-pro'
+            
+        chat = LlmChat(api_key=key, session_id=str(uuid.uuid4()), system_message=sys).with_model(model_provider, model_name)
+        ans = await chat.send_message(UserMessage(text=f"سؤال: {query}\n\nالمصادر:\n{ctx}"))
         return ans if isinstance(ans, str) else getattr(ans, 'text', None)
-    except Exception:
+    except Exception as e:
+        print(f"Summarize error: {e}")
         return None
 
 async def _log_search(provider: str, query: str, ok: bool, mode: str, count: int):

@@ -432,6 +432,16 @@ async def delete_vehicle(vehicle_id: str):
 async def create_customer(customer: CustomerBase):
     """Create a new customer"""
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            c_dict = customer.dict()
+            c_dict['id'] = str(uuid.uuid4())
+            c_dict['createdAt'] = datetime.utcnow().isoformat()
+            c_dict['totalVisits'] = 0
+            c_dict['lastVisit'] = None
+            new_c = supa.customers_create(c_dict)
+            return Customer(**new_c)
+
         customer_dict = customer.dict()
         customer_dict["id"] = str(uuid.uuid4())
         customer_dict["createdAt"] = datetime.utcnow()
@@ -447,6 +457,11 @@ async def create_customer(customer: CustomerBase):
 @api_router.get("/customers", response_model=List[Customer])
 async def get_customers(search: Optional[str] = None):
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            custs = supa.customers_list(search=search)
+            return [Customer(**c) for c in custs]
+
         query = {}
         if search:
             query["$or"] = [
@@ -462,6 +477,13 @@ async def get_customers(search: Optional[str] = None):
 
 @api_router.get("/customers/{customer_id}", response_model=Customer)
 async def get_customer(customer_id: str):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        c = supa.customers_get(customer_id)
+        if not c:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        return Customer(**c)
+
     customer = await db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -471,6 +493,14 @@ async def get_customer(customer_id: str):
 async def update_customer(customer_id: str, update_data: CustomerBase):
     """Update customer information"""
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            upd = update_data.dict(exclude_unset=True)
+            c = supa.customers_update(customer_id, upd)
+            if not c:
+                raise HTTPException(status_code=404, detail="Customer not found")
+            return Customer(**c)
+
         customer = await db.customers.find_one({"id": customer_id})
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")
@@ -489,6 +519,22 @@ async def update_customer(customer_id: str, update_data: CustomerBase):
 @api_router.get("/customers/{customer_id}/history")
 async def get_customer_history(customer_id: str):
     """Get complete visit history for a customer"""
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        # Need to implement history fetch in SupabaseService or do multiple calls
+        # For now, just return empty or basic
+        cust = supa.customers_get(customer_id)
+        if not cust: raise HTTPException(status_code=404, detail="Customer not found")
+        # vehicles
+        vehs = supa.vehicles_list()
+        vehs = [v for v in vehs if v.get('customerId') == customer_id]
+        # invoices
+        invs = supa.invoices_list(customer_id=customer_id)
+        return {
+            "vehicles": [Vehicle(**v) for v in vehs],
+            "invoices": [Invoice(**i) for i in invs]
+        }
+
     vehicles = await db.vehicles.find({"customerId": customer_id}).sort("entryDate", -1).to_list(1000)
     invoices = await db.invoices.find({"customerId": customer_id}).sort("createdAt", -1).to_list(1000)
     
@@ -500,6 +546,13 @@ async def get_customer_history(customer_id: str):
 @api_router.delete("/customers/{customer_id}")
 async def delete_customer(customer_id: str):
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            res = supa.customers_delete(customer_id)
+            if not res:
+                raise HTTPException(status_code=404, detail="Customer not found")
+            return {"message": "Customer deleted successfully"}
+
         result = await db.customers.delete_one({"id": customer_id})
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Customer not found")

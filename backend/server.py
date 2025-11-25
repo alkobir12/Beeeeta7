@@ -138,6 +138,26 @@ async def get_or_create_customer(name: str, phone: str, email: Optional[str] = N
         })
         return new_cust['id']
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('customers')
+        for r in rows:
+            if r.get('phone') == phone:
+                return r['id']
+        
+        new_c = {
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'phone': phone,
+            'email': email,
+            'totalVisits': 1,
+            'lastVisit': datetime.utcnow().isoformat(),
+            'createdAt': datetime.utcnow().isoformat(),
+            'vehicles': []
+        }
+        rows.append(new_c)
+        _mem_write('customers', rows)
+        return new_c['id']
+
     customer = await db.customers.find_one({"phone": phone})
     if customer:
         return customer['id']

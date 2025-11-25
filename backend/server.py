@@ -540,6 +540,17 @@ async def create_customer(customer: CustomerBase):
             new_c = supa.customers_create(c_dict)
             return Customer(**new_c)
 
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('customers')
+            doc = customer.dict()
+            doc['id'] = str(uuid.uuid4())
+            doc['createdAt'] = datetime.utcnow().isoformat()
+            doc['totalVisits'] = 0
+            doc['lastVisit'] = None
+            rows.append(doc)
+            _mem_write('customers', rows)
+            return Customer(**doc)
+
         customer_dict = customer.dict()
         customer_dict["id"] = str(uuid.uuid4())
         customer_dict["createdAt"] = datetime.utcnow()
@@ -559,6 +570,13 @@ async def get_customers(search: Optional[str] = None):
             supa = SupabaseService()
             custs = supa.customers_list(search=search)
             return [Customer(**c) for c in custs]
+
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('customers')
+            if search:
+                s = search.lower()
+                rows = [r for r in rows if (s in (r.get('name') or '').lower() or s in (r.get('phone') or '').lower())]
+            return [Customer(**r) for r in rows]
 
         query = {}
         if search:
@@ -582,6 +600,13 @@ async def get_customer(customer_id: str):
             raise HTTPException(status_code=404, detail="Customer not found")
         return Customer(**c)
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('customers')
+        for r in rows:
+            if r.get('id') == customer_id:
+                return Customer(**r)
+        raise HTTPException(status_code=404, detail="Customer not found")
+
     customer = await db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -598,6 +623,16 @@ async def update_customer(customer_id: str, update_data: CustomerBase):
             if not c:
                 raise HTTPException(status_code=404, detail="Customer not found")
             return Customer(**c)
+
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('customers')
+            for i, r in enumerate(rows):
+                if r.get('id') == customer_id:
+                    upd = {k: v for k, v in update_data.dict().items() if v is not None}
+                    rows[i] = {**r, **upd}
+                    _mem_write('customers', rows)
+                    return Customer(**rows[i])
+            raise HTTPException(status_code=404, detail="Customer not found")
 
         customer = await db.customers.find_one({"id": customer_id})
         if not customer:
@@ -633,6 +668,16 @@ async def get_customer_history(customer_id: str):
             "invoices": [Invoice(**i) for i in invs]
         }
 
+    if DB_PROVIDER == 'memory':
+        vrows = _mem_read('vehicles')
+        irows = _mem_read('invoices')
+        vehs = [v for v in vrows if v.get('customerId') == customer_id]
+        invs = [i for i in irows if i.get('customerId') == customer_id]
+        return {
+            "vehicles": [Vehicle(**v) for v in vehs],
+            "invoices": [Invoice(**i) for i in invs]
+        }
+
     vehicles = await db.vehicles.find({"customerId": customer_id}).sort("entryDate", -1).to_list(1000)
     invoices = await db.invoices.find({"customerId": customer_id}).sort("createdAt", -1).to_list(1000)
     
@@ -649,6 +694,21 @@ async def delete_customer(customer_id: str):
             res = supa.customers_delete(customer_id)
             if not res:
                 raise HTTPException(status_code=404, detail="Customer not found")
+            return {"message": "Customer deleted successfully"}
+
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('customers')
+            nrows = [r for r in rows if r.get('id') != customer_id]
+            if len(nrows) == len(rows):
+                raise HTTPException(status_code=404, detail="Customer not found")
+            _mem_write('customers', nrows)
+            # delete related vehicles, invoices
+            vrows = _mem_read('vehicles')
+            nvrows = [r for r in vrows if r.get('customerId') != customer_id]
+            _mem_write('vehicles', nvrows)
+            irows = _mem_read('invoices')
+            nirows = [r for r in irows if r.get('customerId') != customer_id]
+            _mem_write('invoices', nirows)
             return {"message": "Customer deleted successfully"}
 
         result = await db.customers.delete_one({"id": customer_id})

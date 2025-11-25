@@ -218,36 +218,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-            
-            self.log_test("GET /api/operations/analytics/pending", True,
-                         f"Total: {response['total']}, Overdue: {response['overdue']}, Has all statuses: {has_all_statuses}")
-        else:
-            self.log_test("GET /api/operations/analytics/pending", False,
-                         f"Status: {status}", response)
-    
-    async def test_branches_cleanup(self):
-        """Test Branches Cleanup API"""
-        print("\n🏢 Testing Branches Cleanup API...")
-        
-        # First, get current biz-accounts to see what we have
-        success, response, status = await self.make_request('GET', '/biz-accounts')
-        if success:
-            initial_count = len(response) if isinstance(response, list) else 0
-            print(f"   Initial biz-accounts count: {initial_count}")
-        
-        # Test: POST /api/biz-accounts/cleanup with keep=2 and mode=hard
-        cleanup_data = {"keep": 2, "mode": "hard"}
-        success, response, status = await self.make_request('POST', '/biz-accounts/cleanup', cleanup_data)
-        if success and 'status' in response and response['status'] == 'ok':
-            final_accounts = response.get('final', [])
-            self.log_test("POST /api/biz-accounts/cleanup", True,
-                         f"Cleanup successful, final count: {len(final_accounts)}")
-            
-            # Store remaining account IDs for budget test
-            self.remaining_account_ids = [acc.get('id') for acc in final_accounts if acc.get('id')]
-        else:
-            self.log_test("POST /api/biz-accounts/cleanup", False,
-                         f"Status: {status}", response)
         
         # Verify: GET /api/biz-accounts and confirm only 2 active remain
         success, response, status = await self.make_request('GET', '/biz-accounts')

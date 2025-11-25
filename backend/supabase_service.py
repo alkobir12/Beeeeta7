@@ -366,6 +366,19 @@ class SupabaseService:
         return {
             'id': r.get('id'),
             'name': r.get('name'),
+            'phone': r.get('phone'),
+            'email': r.get('email'),
+            'totalVisits': r.get('total_visits', 0),
+            'lastVisit': r.get('last_visit'),
+            'vehicles': r.get('vehicles') or [],
+            'createdAt': r.get('created_at')
+        }
+
+    def customers_delete(self, cid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('customers').delete().eq('id', cid).execute()
+        return True
 
     def invoices_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:

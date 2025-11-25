@@ -218,16 +218,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-        else:
-            self.log_test("GET /api/operations/pending", False,
-                         f"Status: {status}", response)
-        
-        # Test 2: GET /api/operations/analytics/pending
-        success, response, status = await self.make_request('GET', '/operations/analytics/pending')
-        if success and all(key in response for key in ['total', 'byStatus', 'overdue']):
-            by_status = response.get('byStatus', {})
-            expected_statuses = ['diagnosis', 'quotation', 'repair']
-            has_all_statuses = all(status in by_status for status in expected_statuses)
             
             self.log_test("GET /api/operations/analytics/pending", True,
                          f"Total: {response['total']}, Overdue: {response['overdue']}, Has all statuses: {has_all_statuses}")

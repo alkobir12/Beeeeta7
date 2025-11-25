@@ -4,11 +4,12 @@
     "name": "أحمد محمد",
     "phone": "966501234567",
     "email": "ahmed@example.com",
-    "totalVisits": 2,
-    "lastVisit": "2025-11-25T21:15:50.746476",
+    "totalVisits": 3,
+    "lastVisit": "2025-11-25T21:15:56.803702",
     "createdAt": "2025-11-25T21:15:20.707825",
     "vehicles": [
-      "TEST-3236"
+      "TEST-3236",
+      "ABC-C40E"
     ]
   }
 ]

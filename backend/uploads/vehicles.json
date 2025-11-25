@@ -23,5 +23,30 @@
     "trackingLink": "TRK-EFF31DF4",
     "images": [],
     "parts": []
+  },
+  {
+    "plateNumber": "ABC-C40E",
+    "brand": "تويوتا",
+    "model": "كامري",
+    "year": 2020,
+    "color": "أبيض",
+    "vin": null,
+    "fileNumber": null,
+    "customerName": "أحمد محمد",
+    "customerPhone": "966501234567",
+    "customerEmail": "ahmed@example.com",
+    "services": [],
+    "technicianId": null,
+    "technicianName": null,
+    "notes": null,
+    "id": "8ed641ab-1be1-42a1-bee4-c384a09e7d04",
+    "customerId": "cc91709e-31b4-4600-a4ff-85f222ceee47",
+    "status": "diagnosis",
+    "entryDate": "2025-11-25T21:15:56.803367",
+    "estimatedCompletion": "2025-11-27T21:15:56.803360",
+    "completionDate": null,
+    "trackingLink": "TRK-B34A46A7",
+    "images": [],
+    "parts": []
   }
 ]

@@ -205,6 +205,41 @@ async def create_vehicle(vehicle_data: VehicleCreate):
                 })
             return Vehicle(**new_vehicle)
 
+        if DB_PROVIDER == 'memory':
+            customer_id = await get_or_create_customer(
+                vehicle_data.customerName,
+                vehicle_data.customerPhone,
+                vehicle_data.customerEmail
+            )
+            
+            rows = _mem_read('vehicles')
+            doc = Vehicle(**{
+                **vehicle_data.dict(),
+                'id': str(uuid.uuid4()),
+                'customerId': customer_id,
+                'trackingLink': f"TRK-{str(uuid.uuid4())[:8].upper()}",
+                'estimatedCompletion': datetime.utcnow() + timedelta(days=2),
+                'entryDate': datetime.utcnow()
+            }).dict()
+            rows.append(doc)
+            _mem_write('vehicles', rows)
+            
+            # Update customer visits (memory)
+            crows = _mem_read('customers')
+            for i, c in enumerate(crows):
+                if c.get('id') == customer_id:
+                    c['totalVisits'] = c.get('totalVisits', 0) + 1
+                    c['lastVisit'] = datetime.utcnow().isoformat()
+                    vehs = c.get('vehicles', [])
+                    if doc['plateNumber'] not in vehs:
+                        vehs.append(doc['plateNumber'])
+                    c['vehicles'] = vehs
+                    crows[i] = c
+                    _mem_write('customers', crows)
+                    break
+            
+            return Vehicle(**doc)
+
         # Get or create customer
         customer_id = await get_or_create_customer(
             vehicle_data.customerName,

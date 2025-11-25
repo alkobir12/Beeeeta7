@@ -1,123 +1,164 @@
-<analysis>
-The trajectory documents a complex and reactive development cycle, primarily driven by user requests in Arabic. The project began with UI enhancements, which morphed into a major architectural overhaul. The initial CANVA-style UI implementation broke core functionalities and was rejected by the user, leading to a request for a full rollback.
+<analysis>An analysis of the user's request and the conversation history.
 
-The most significant pivot was the user's decision to migrate the entire data layer from MongoDB to Supabase (PostgreSQL). This introduced substantial challenges, as the AI's execution environment lacked direct PostgreSQL access, preventing it from running DDL commands. A key workaround was the development of a Memory Provider, using local JSON files as a temporary database to keep the frontend functional and demonstrate progress while awaiting the user to manually execute the provided SQL schema in their Supabase console.
+**original_problem_statement:** The user wants to continue the development of their Workshop Management System. The priorities have shifted multiple times, but the current focus is on integrating a new AI agent from  for customer interaction. This is to be followed by the completion of a major data layer migration from a failing MongoDB instance to Supabase (PostgreSQL). The migration is crucial as it's the root cause of persistent 500 errors in the application. Additionally, the user has requested the implementation of several other features, including a digital signature mechanism for approvals, integration with Google Drive/Sheets for backups and invoicing, and the completion of the English language translation (i18n) for the entire application.
 
-Throughout this process, the AI tackled numerous frontend bugs, including login failures and UI rendering issues, often stemming from the backend's instability. The most recent task, initiated by the user, is to implement full English language support (i18n) across the application. The basic framework for this is in place, but the translation is incomplete. The current state is a transitional one: the backend is partially migrated in code but running on a temporary memory provider, and a new internationalization feature is in mid-implementation.
+**PRODUCT REQUIREMENTS:**
+1.  **AI Agent Integration:** Integrate a custom  agent (ID: ) for customer interaction. This should be accessible from a new menu item in the application.
+2.  **Supabase Migration:** Complete the full data migration from MongoDB to Supabase for all core entities (Operations, Transactions, Vehicles, Customers) to resolve ongoing 500 errors and stabilize the backend.
+3.  **Digital Signature for Approvals:** Implement a system to capture a digital signature for customer approvals. This includes saving the client's IP address, user agent, and a cryptographic hash of the approval data to serve as proof. This information should be logged in the customer's profile.
+4.  **Google Services Integration:**
+    *   Use the provided Google Service Account to enable saving customer data and full system backups to Google Drive.
+    *   Use Google Sheets for exporting invoice and report data.
+5.  **Internationalization (i18n):** Complete the English translation for all pages and components, ensuring the UI is fully bilingual.
+6.  **UI/UX Improvements:** Revert the CANVA-style UI on the Operations page to a more traditional and functional design.
 
-The user's primary language is Arabic. The next agent MUST respond in Arabic to maintain consistency and ensure clear communication.
-</analysis>
+**User's preferred language**: Arabic
 
-<product_requirements>
-The application is a Workshop Management System designed to digitize and manage operations for an auto repair shop.
+**what currently exists?**
+The application is in a transitional and partially broken state. The backend has a multi-provider data layer (, , ), but most endpoints still default to a failing MongoDB instance, causing frequent 500 errors. The  (branches) module is the only part that has been migrated to support Supabase. The frontend has a basic i18n setup, but most pages contain hardcoded Arabic text. A  external chat button has been added, and a cookie-based session persistence layer was implemented on top of the existing  method. The user has provided all necessary API keys for Groq, Google Services (API Key, OAuth Client, Service Account), and the agent ID for .
 
-**Core Features:**
-1.  **Workshop Operations:** Manage customers, vehicles, parts, services, and repair jobs from intake to completion.
-2.  **Financials:** Provide a CEO-level dashboard for financial oversight, invoicing, and budget tracking.
-3.  **Data Persistence:** The user has mandated a complete migration of the data layer from the original MongoDB to Supabase (PostgreSQL) for better data structure and relations. All new features must be built on Supabase.
-4.  **Internationalization (i18n):** The application must support both Arabic and English. A language toggle should be present, allowing users to switch languages seamlessly, with the preference stored in . All UI text, including menus, labels, buttons, and messages, must be translated.
-5.  **User Interface:** The user initially requested a CANVA-style UI but was dissatisfied with the implementation and its resulting bugs. There is an outstanding request to revert to a more traditional UI theme.
-6.  **Bug Fixes & Stability:** Address numerous reported issues, including broken JavaScript on the Operations page, login failures, and non-functional business branch management (deletion and activation). The system must be stable and usable.
-</product_requirements>
+**Last working item**:
+-   **Last item agent was working**: The agent was planning the integration of a new AI agent from . The user provided the agent ID and a Python code snippet for the integration. The agent's plan is to create a secure backend proxy endpoint and a new frontend page with a menu item to access the agent.
+-   **Status**: NOT STARTED
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: Backend testing agent for the new API endpoint, then the Frontend testing agent for the new page and menu item.
+-   **User Testing Done**: N
 
-<key_technical_concepts>
-- **Backend:** FastAPI (Python).
-- **Frontend:** React.js,  for internationalization.
-- **Database:**
-    - **Legacy:** MongoDB (via ).
-    - **Target:** Supabase (PostgreSQL).
-    - **Workaround:** A temporary Memory Provider using JSON files for backend data to unblock development.
-- **Environment:** Monorepo with a  and  directory, managed by backend                          RUNNING   pid 30, uptime 0:00:02
-code-server                      STOPPED   Not started
-frontend                         STOPPED   Nov 18 09:56 AM
-mongodb                          RUNNING   pid 34, uptime 0:00:02
-nginx-code-proxy                 STARTING  
-supervisor> .
-- **API Design:** RESTful API with a  environment variable (, , ) to switch between data sources.
-</key_technical_concepts>
+**All Pending/In progress Issue list**:
+-   **Issue 1: (P0) Persistent 500 Errors due to Incomplete DB Migration**
+    -   **Description:** The application backend frequently returns 500 errors because many API endpoints still try to connect to a failing MongoDB instance (SSL handshake errors), even though the  is set to .
+    -   **Attempted fixes:** The agent has applied a temporary fix for  and  to return empty data in  mode. The  endpoints were fully migrated.
+    -   **Next debug checklist:** The root cause is the incomplete migration. The next step is to continue migrating the remaining core endpoints (, , , ) to use  when  and to have a safe fallback (return empty list) when .
+    -   **Why fix this issue and what will be achieved with the fix?**: Fixing this will stabilize the entire application, eliminate the 500 errors, and allow the frontend to function correctly, unblocking all other development and testing.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?**: Both.
+    -   **Blocked on other issue**: No. This is the main blocker.
 
-<code_architecture>
-The application is a monorepo containing a FastAPI backend and a React frontend.
+**In progress Task List**:
+-   **Task 1: (P0) Integrate  Customer-Facing Agent**
+    -   **Where to resume**: Implement the plan designed by the previous agent.
+        1.  Create a new file  using the user's provided Python snippet, but adapted to read the API key from  and use  for the blocking  call.
+        2.  Add a new endpoint  in  to act as a secure proxy to the  API.
+        3.  Add a new menu item in  titled وكيل الجمهور / Public Agent.
+        4.  Create a new page component  with a simple chat interface that calls the new backend endpoint.
+    -   **What will be achieved with this?**: A new customer-facing AI chat feature will be available in the application.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: Both.
+    -   **Blocked on something**: No.
+
+-   **Task 2: (P1) Complete Supabase Migration**
+    -   **Where to resume**: The migration of  is complete. The next logical step is to migrate  and .
+        1.  Modify  for the operations-related endpoints.
+        2.  Implement the logic: if  is , call the corresponding methods in . If , return empty/mock data to prevent 500 errors.
+    -   **What will be achieved with this?**: This will move a core part of the application's functionality to the stable Supabase backend, resolving more 500 errors.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: Backend.
+    -   **Blocked on something**: No.
+
+**Upcoming and Future Tasks**
+-   **Upcoming Tasks:**
+    -   **(P2) Implement Digital Signature for Approvals:** Modify the  endpoint to capture  and . Calculate a SHA256 hash signature and store these details in the  collection and a new  array in the corresponding  document.
+    -   **(P3) Complete i18n for  and **: Continue replacing hardcoded Arabic strings with  keys from  in these core pages.
+    -   **(P4) Revert CANVA-style UI on **: Refactor the UI of the Operations page to use more standard components, removing the  and  for better clarity and performance.
+
+-   **Future Tasks:**
+    -   **(P5) Implement Google Drive & Sheets Integration:**
+        -   Using the provided Service Account, create a  in the backend.
+        -   Implement endpoints for:
+            -    to export all major collections (customers, vehicles, operations) to JSON/CSV files and upload them to a 'Backups' folder in Google Drive.
+            -   A function to be called after invoice creation that appends a summary row to a Google Sheet.
+        -   Add UI buttons in the admin/settings area to trigger these actions.
+    -   **(P6) Unify AI Assistant with Groq:** The user requested to use Groq as the sole AI provider. This involves creating a  endpoint that uses the Groq Python SDK and  from , and wiring the internal  page to this endpoint.
+    -   **(P7) Expose Hidden Backend Features:** Create frontend UI for powerful but currently unused backend endpoints like , , and .
+
+**Completed work in this session**
+-   Migrated  API endpoints to support Supabase and a  provider fallback.
+-   Fixed a critical login error ().
+-   Implemented session persistence using a browser cookie as a primary source, with  as a fallback.
+-   Replaced the internal Groq AI assistant with an external  chat button.
+-   Repaired malformed  and  translation files.
+-   Partially translated  and fixed i18n keys in .
+-   Added safety fallbacks for  and  to prevent 500 errors in  mode.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1: Hardcoded Arabic Text**
+    -   **Debug checklist**: Most pages outside of  and  (e.g., , , ) still contain hardcoded Arabic text. They need to be refactored to use the  hook.
+    -   **Why to solve this issue and what will be achieved with this?**: To make the application fully bilingual as requested by the user.
+    -   **Should Test frontend/backend/both after fix**: Frontend.
+    -   **Is recurring issue?** N
+
+**Known issue recurrence from previous fork**
+-   None explicitly mentioned, but the pattern of user changing priorities frequently is a recurring theme.
+
+**Code Architecture**
 
 
+**Key Technical Concepts**
+-   **Backend:** FastAPI
+-   **Frontend:** React, 
+-   **Database:**
+    -   **Legacy/Failing:** MongoDB
+    -   **Target:** Supabase (PostgreSQL)
+    -   **Workaround:** Memory Provider in the backend to return empty/mock data and avoid 500 errors from the failing MongoDB connection.
+-   **API Design:** A  environment variable (, , ) controls the data source for API endpoints.
+-   **AI/External Integrations:**  (planned),  (implemented as external link),  (keys provided, not implemented),  (keys provided, not implemented).
 
--   ****
-    -   **Importance:** The main FastAPI entry point. It has been significantly refactored to support a dynamic data provider model.
-    -   **Changes:** Logic was added to check the  environment variable and route data requests to either the , a MongoDB connection, or an in-memory JSON file reader. This allows the application to function without a live database connection, a crucial workaround implemented to bypass environmental limitations and login issues.
+**key DB schema**
+-   See  for the full DDL.
+-   **Upcoming changes:**
+    -   : Add  (JSONB) to store a log of customer approvals.
+    -   : Add  (String),  (String),  (Timestamp),  (String).
 
--   ****
-    -   **Importance:** This is the new Data Access Layer (DAL) created for interacting with the target Supabase (PostgreSQL) database.
-    -   **Changes:** It contains functions for CRUD operations on various tables (, , , etc.), handling the connection to Supabase via the  SDK and translating data models (e.g., camelCase to snake_case).
+**All files**
+-   : Heavily modified to begin adding multi-provider logic for  and . This file is the main target for the ongoing migration.
+-   : Contains the data access layer for Supabase. It has been reviewed and will be the destination for all database logic.
+-   : Modified to make the MongoDB connection optional, preventing the server from crashing if Mongo is unavailable.
+-   : Fixed a critical bug related to .
+-   : Modified to prioritize session cookies over .
+-   , : Repaired syntax and added new keys for  page.
+-   : i18n keys corrected to display all menu items correctly.
+-   : New component to display a floating button that links to an external z.ai chat page.
+-   : Modified to include the .
 
--   ****
-    -   **Importance:** Contains the complete DDL (Data Definition Language) script to create the entire database schema in Supabase.
-    -   **Changes:** This file was generated by the AI for the user to execute manually in the Supabase SQL Editor. It defines all tables, columns, data types, indexes, and Row Level Security (RLS) policies.
+**Critical Info for New Agent**
+-   The user is highly engaged and frequently introduces new features or changes priorities. It's crucial to confirm the current plan before starting work.
+-   The root of instability is the failing MongoDB connection in the preview environment. The highest technical priority is to complete the Supabase migration to eliminate 500 errors.
+-   Use the  environment variable to manage data sources. For the preview environment, assume  and ensure endpoints have a safe fallback that does *not* call the  (Mongo) object.
+-   The user has provided a wealth of API keys (Groq, Google, genspark.ai). Store them securely in  and create isolated services in the backend. Do not expose keys on the frontend.
+-   The user's latest request is to integrate the  agent. This should be the immediate next task, followed by continuing the Supabase migration.
 
--   ****
-    -   **Importance:** Initializes the  library for internationalization.
-    -   **Changes:** A new file created to configure , load Arabic () and English () translation resources, and set the default language from .
+**documents created in this job**
+-   None.
 
--   ****
-    -   **Importance:** A new UI component that allows the user to switch between Arabic and English.
-    -   **Changes:** This component displays AR and EN buttons, calls  on click, and saves the user's preference to . It was added to the main layout's top navigation bar.
+**Last 5 User Messages and any pending user messages**
+1.  **User**: Provides Python code for a  agent and its ID.
+    -   **Status**: In Progress. The agent has planned the integration.
+2.  **User**: Asks kul (cool).
+    -   **Status**: Acknowledged. Agent confirmed plan to proceed.
+3.  **User**: Asks to cancel all previous AI integrations and use only Groq SDK with a new code snippet.
+    -   **Status**: In Progress. The agent has planned to refactor the AI service to use the Groq SDK exclusively.
+4.  **User**: Asks for time estimate to finish.
+    -   **Status**: Responded. The agent provided a time estimate.
+5.  **User**: Asks about deployment readiness and provides a link to another  agent.
+    -   **Status**: Responded. The agent explained the project is not ready for deployment due to the incomplete migration and acknowledged the new agent ID.
 
--   ****
-    -   **Importance:** The user entry point. It was a major source of bugs.
-    -   **Changes:** The  function was modified multiple times to fix a  error caused by a conflict with the  session recording tool. The fix involves cloning the  response before reading its body.
+**Project Health Check:**
+-   **Broken**: The backend is partially broken. Any API endpoint that relies on MongoDB will fail in the preview environment, returning a 500 error. This affects , , , , and other core features.
+-   **Mocked**: In  mode,  and , and  return empty or mock data to avoid crashing. This will need to be applied to other endpoints as a temporary measure.
 
--   ****
-    -   **Importance:** The main navigation component. It was breaking and appearing empty.
-    -   **Changes:** A fallback  was added. If the API call to  fails (which was happening frequently due to backend instability), the sidebar now renders a default set of menu items, ensuring the UI remains navigable.
-</code_architecture>
+**Testing status**
+-   **Testing agent used after significant changes**: YES, a backend testing agent was used to verify the  migration.
+-   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Test files created**: None.
+-   **Known regressions**: None identified, but many features are non-functional due to the backend DB issue.
 
-<pending_tasks>
-- **Complete Supabase Migration:** Fully transition all backend endpoints from the temporary Memory Provider and legacy MongoDB logic to use .
-- **UI Theme Revert:** Remove the CANVA-style UI and restore the previous Shadcn/GoDaddy-inspired theme as originally requested.
-- **Fix Branch Management:** Implement the logic to delete and manage business branches () on the Supabase backend.
-- **Test All Features:** After the migration is complete, conduct a full end-to-end test of all features (Operations, New Vehicle, Reporting, etc.) to ensure they work correctly with the new Supabase backend.
-</pending_tasks>
+**Credentials to test flow:**
+-   **Groq:** A new API key was provided and is in .
+-   **Google:** API Keys, OAuth Client JSON, and a Service Account JSON have been provided by the user. They are ready for implementation.
+-   **genspark.ai:** An agent ID () has been provided. The user needs to provide the .
 
-<current_work>
-The current task is the implementation of full English language support (internationalization), as explicitly requested by the user. The previous AI engineer has already set up the foundational pieces for this feature.
-
-**Work Completed So Far:**
-1.  **i18n Framework:** The  library has been installed and configured in . It is set up to load translations for English ('en') and Arabic ('ar').
-2.  **Language Persistence:** The user's language selection is now saved to  and is automatically loaded when the application starts, ensuring the preference persists across sessions. The document's AUTO_SYNC_GUIDE.md		  focused_backend_test.py
-DEPLOYMENT_GUIDE.md		  focused_ceo_test.py
-FINAL_STATUS.md			  frontend
-NOTION_MCP_SETUP.md		  health_check_test.py
-README.md			  i18n_regression_test.py
-SUPABASE_SETUP.md		  invoice_designer_test.py
-WHATSAPP_API_DOCS.md		  invoice_template_backend_test.py
-ai_backend_test.py		  invoice_template_regression_test.py
-ai_kb_test.py			  invoice_template_test.py
-ai_kb_test_results.json		  mechanic_template_test.py
-approvals_flow_test.py		  menu_settings_test.py
-backend				  quick_endpoint_test.py
-backend_health_check.py		  restored_endpoints_test.py
-backend_readiness_test.py	  review_backend_test.py
-backend_test.py			  review_test.py
-backend_test_new_apis.py	  settings_test.py
-backend_validation_test.py	  smoke_test.py
-comprehensive_backend_test.py	  sync_integration_test.py
-comprehensive_regression_test.py  test_approvals_only.py
-comprehensive_whatsapp_test.py	  test_create_indexes.py
-contracts.md			  test_diagnosis_only.py
-debug_parts_import.py		  test_invoice.xlsx
-debug_template.py		  test_output.log
-deep_backend_regression_test.py   test_result.md
-deep_backend_test.py		  test_specific.py
-electrical_kb_test.py		  tests
-final_comprehensive_test.py	  uploads
-final_health_check.py		  yarn.lock
-focused_backend_retest.py (RTL/LTR) and  attributes are updated dynamically.
-3.  **Language Toggle:** A new component, , has been created and integrated into the top navigation bar. It allows the user to switch between AR and EN.
-4.  **Initial Page Translation:** The translation has been applied to the main entry points of the application: the **Login page**, the **Sidebar** menu, and the main **Dashboard** cards.
-
-**Immediate Task at Hand:**
-The user confirmed they want to proceed with translating the rest of the application. The previous AI was about to start extending the  implementation to the remaining pages, using the Workshop Management System - English Content Guide.md artifact provided by the user for the correct terminology. The last action was reading , indicating this was the next page to be translated.
-</current_work>
-
-<optional_next_step>
-Continue the internationalization task by translating the  page and other remaining pages, using the English content guide provided by the user.
-</optional_next_step>
+**What agent forgot to execute**
+-   The agent did not add a  block to the  in  to ensure loading state is always turned off, which could leave the UI in a hung state on error.
+-   The agent did not add the  dependency to  before implementing the cookie-based session, relying on native  which is more cumbersome. This might be a future point of refactoring.
+-   The agent did not ask for the  before planning the integration. The next agent must ask the user for this key.</analysis>

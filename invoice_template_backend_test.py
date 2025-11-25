@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BASE_URL = "https://mechanix-hub-3.preview.emergentagent.com/api"
+BASE_URL = "https://autofix-flow.preview.emergentagent.com/api"
 
 # Test results tracking
 tests_passed = 0

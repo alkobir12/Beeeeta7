@@ -441,14 +441,6 @@ class SupabaseService:
             'createdAt': r.get('created_at')
         }
 
-            'phone': r.get('phone'),
-            'email': r.get('email'),
-            'totalVisits': r.get('total_visits', 0),
-            'lastVisit': r.get('last_visit'),
-            'vehicles': r.get('vehicles') or [],
-            'createdAt': r.get('created_at')
-        }
-
     def customers_delete(self, cid: str) -> bool:
         if self.mock_mode:
             return True

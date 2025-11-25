@@ -710,6 +710,11 @@ async def delete_customer(customer_id: str):
 # ============ Technician APIs ============
 @api_router.get("/technicians", response_model=List[Technician])
 async def get_technicians():
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        techs = supa.technicians_list()
+        return [Technician(**t) for t in techs]
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('technicians')
         return [Technician(**r) for r in rows]
@@ -718,6 +723,13 @@ async def get_technicians():
 
 @api_router.get("/technicians/{tech_id}", response_model=Technician)
 async def get_technician(tech_id: str):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        techs = supa.technicians_list()
+        for t in techs:
+            if t.get('id') == tech_id: return Technician(**t)
+        raise HTTPException(status_code=404, detail="Technician not found")
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('technicians')
         for r in rows:
@@ -830,6 +842,11 @@ if DB_PROVIDER == 'memory':
         return {'total': total, 'byStatus': by, 'overdue': 0}
 
 async def get_services():
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        srvs = supa.services_list()
+        return [Service(**s) for s in srvs]
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')
         return [Service(**{
@@ -845,6 +862,11 @@ async def get_services():
 
 @api_router.post("/services", response_model=Service)
 async def create_service(service: Service):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        new_s = supa.services_create(service.dict())
+        return Service(**new_s)
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')
         doc = service.dict()
@@ -856,6 +878,11 @@ async def create_service(service: Service):
 
 @api_router.put("/services/{service_id}", response_model=Service)
 async def update_service(service_id: str, payload: dict):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        upd_s = supa.services_update(service_id, payload)
+        return Service(**upd_s)
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')
         for i, r in enumerate(rows):
@@ -873,6 +900,11 @@ async def update_service(service_id: str, payload: dict):
 
 @api_router.delete("/services/{service_id}")
 async def delete_service(service_id: str):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        supa.services_delete(service_id)
+        return {"message": "deleted"}
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')
         nrows = [r for r in rows if r.get('id') != service_id]

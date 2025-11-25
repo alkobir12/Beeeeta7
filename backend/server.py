@@ -124,6 +124,20 @@ def generate_invoice_number():
     return f"{prefix}-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
 async def get_or_create_customer(name: str, phone: str, email: Optional[str] = None):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        cust = supa.customers_find_by_phone(phone)
+        if cust:
+            return cust['id']
+        new_cust = supa.customers_create({
+            'name': name,
+            'phone': phone,
+            'email': email,
+            'totalVisits': 1,
+            'lastVisit': datetime.utcnow().isoformat()
+        })
+        return new_cust['id']
+
     customer = await db.customers.find_one({"phone": phone})
     if customer:
         return customer['id']
@@ -142,6 +156,35 @@ async def get_or_create_customer(name: str, phone: str, email: Optional[str] = N
 @api_router.post("/vehicles", response_model=Vehicle)
 async def create_vehicle(vehicle_data: VehicleCreate):
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            customer_id = await get_or_create_customer(
+                vehicle_data.customerName,
+                vehicle_data.customerPhone,
+                vehicle_data.customerEmail
+            )
+            
+            v_dict = vehicle_data.dict()
+            v_dict['customerId'] = customer_id
+            v_dict['trackingLink'] = generate_tracking_link()
+            v_dict['estimatedCompletion'] = (datetime.utcnow() + timedelta(days=2)).isoformat()
+            v_dict['entryDate'] = datetime.utcnow().isoformat()
+            
+            new_vehicle = supa.vehicles_create(v_dict)
+            
+            # Update customer visits
+            cust = supa.customers_get(customer_id)
+            if cust:
+                vehicles = cust.get('vehicles', [])
+                if new_vehicle['plateNumber'] not in vehicles:
+                    vehicles.append(new_vehicle['plateNumber'])
+                supa.customers_update(customer_id, {
+                    'totalVisits': (cust.get('totalVisits', 0) + 1),
+                    'lastVisit': datetime.utcnow().isoformat(),
+                    'vehicles': vehicles
+                })
+            return Vehicle(**new_vehicle)
+
         # Get or create customer
         customer_id = await get_or_create_customer(
             vehicle_data.customerName,
@@ -206,6 +249,17 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 @api_router.get("/vehicles", response_model=List[Vehicle])
 async def get_vehicles(status: Optional[str] = None, search: Optional[str] = None):
     try:
+        if DB_PROVIDER == 'supabase':
+            supa = SupabaseService()
+            # SupabaseService.vehicles_list doesn't support filters yet, filter in python
+            vehs = supa.vehicles_list()
+            if status:
+                vehs = [v for v in vehs if v.get('status') == status]
+            if search:
+                s = search.lower()
+                vehs = [v for v in vehs if (s in (v.get('plateNumber') or '').lower() or s in (v.get('customerName') or '').lower())]
+            return [Vehicle(**v) for v in vehs]
+
         query = {}
         if status:
             query["status"] = status
@@ -223,6 +277,13 @@ async def get_vehicles(status: Optional[str] = None, search: Optional[str] = Non
 
 @api_router.get("/vehicles/{vehicle_id}", response_model=Vehicle)
 async def get_vehicle(vehicle_id: str):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        v = supa.vehicles_get(vehicle_id)
+        if not v:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        return Vehicle(**v)
+
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")

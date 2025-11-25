@@ -221,6 +221,12 @@ async def create_vehicle(vehicle_data: VehicleCreate):
                 'estimatedCompletion': datetime.utcnow() + timedelta(days=2),
                 'entryDate': datetime.utcnow()
             }).dict()
+            
+            # Convert datetime objects to ISO strings for JSON serialization
+            if 'estimatedCompletion' in doc and isinstance(doc['estimatedCompletion'], datetime):
+                doc['estimatedCompletion'] = doc['estimatedCompletion'].isoformat()
+            if 'entryDate' in doc and isinstance(doc['entryDate'], datetime):
+                doc['entryDate'] = doc['entryDate'].isoformat()
             rows.append(doc)
             _mem_write('vehicles', rows)
             

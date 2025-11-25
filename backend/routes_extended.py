@@ -737,6 +737,14 @@ async def operations_analytics(account_id: Optional[str] = None):
 @router.get('/transactions')
 async def list_transactions(type: Optional[str] = None, vehicle_id: Optional[str] = None, account_id: Optional[str] = None):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.transactions_list(type=type, account_id=account_id)
+
+        if provider == 'memory' or db is None:
+            return []
+
         q: Dict[str, Any] = {}
         if type:
             q['type'] = type
@@ -756,6 +764,25 @@ async def list_transactions(type: Optional[str] = None, vehicle_id: Optional[str
 @router.post('/expenses')
 async def create_expense(payload: Dict[str, Any] = Body(...)):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.transactions_create(payload)
+
+        if provider == 'memory' or db is None:
+            return {
+                'id': str(uuid.uuid4()),
+                'accountId': payload.get('accountId', ''),
+                'vehicleId': payload.get('vehicleId'),
+                'type': 'expense',
+                'category': payload.get('category', 'Operating Expenses'),
+                'amount': float(payload.get('amount') or 0),
+                'description': payload.get('description', ''),
+                'date': datetime.utcnow().isoformat(),
+                'reference': payload.get('reference'),
+                'createdAt': datetime.utcnow().isoformat()
+            }
+
         tx = {
             'id': str(uuid.uuid4()),
             'accountId': payload.get('accountId', ''),

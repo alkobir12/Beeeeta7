@@ -1147,6 +1147,43 @@ async def create_invoice(invoice_data: InvoiceCreate):
         new_inv = supa.invoices_create(inv_dict)
         return Invoice(**new_inv)
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('invoices')
+        doc = invoice_data.dict()
+        doc['invoiceNumber'] = generate_invoice_number()
+        rows.append(doc)
+        _mem_write('invoices', rows)
+        
+        # update parts (memory)
+        prows = _mem_read('parts')
+        for item in invoice_data.items:
+            if item.type == "part":
+                for i, p in enumerate(prows):
+                    if p.get('id') == item.itemId:
+                        p['quantity'] = p.get('quantity', 0) - item.quantity
+                        prows[i] = p
+                        break
+        _mem_write('parts', prows)
+        
+        # create transaction (memory)
+        if invoice_data.type == "service":
+            trows = _mem_read('transactions')
+            tx = {
+                'id': str(uuid.uuid4()),
+                'type': "income",
+                'category': "service",
+                'amount': invoice_data.total,
+                'description': f"Invoice {doc['invoiceNumber']}",
+                'paymentMethod': invoice_data.paymentMethod,
+                'reference': doc['invoiceNumber'],
+                'date': datetime.utcnow().isoformat(),
+                'createdAt': datetime.utcnow().isoformat()
+            }
+            trows.append(tx)
+            _mem_write('transactions', trows)
+            
+        return Invoice(**doc)
+
     invoice = Invoice(
         **invoice_data.dict(),
         invoiceNumber=generate_invoice_number()
@@ -1182,6 +1219,14 @@ async def get_invoices(vehicle_id: Optional[str] = None, customer_id: Optional[s
         invs = supa.invoices_list(vehicle_id=vehicle_id, customer_id=customer_id)
         return [Invoice(**i) for i in invs]
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('invoices')
+        if vehicle_id:
+            rows = [r for r in rows if r.get('vehicleId') == vehicle_id]
+        if customer_id:
+            rows = [r for r in rows if r.get('customerId') == customer_id]
+        return [Invoice(**r) for r in rows]
+
     query = {}
     if vehicle_id:
         query["vehicleId"] = vehicle_id
@@ -1200,6 +1245,13 @@ async def get_invoice(invoice_id: str):
             raise HTTPException(status_code=404, detail="Invoice not found")
         return Invoice(**inv)
 
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('invoices')
+        for r in rows:
+            if r.get('id') == invoice_id:
+                return Invoice(**r)
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
     invoice = await db.invoices.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
@@ -1208,6 +1260,20 @@ async def get_invoice(invoice_id: str):
 # ============ Transaction APIs ============
 @api_router.post("/transactions", response_model=Transaction)
 async def create_transaction(transaction_data: TransactionCreate):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        new_t = supa.transactions_create(transaction_data.dict())
+        return Transaction(**new_t)
+
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('transactions')
+        doc = transaction_data.dict()
+        doc['id'] = str(uuid.uuid4())
+        doc['createdAt'] = datetime.utcnow().isoformat()
+        rows.append(doc)
+        _mem_write('transactions', rows)
+        return Transaction(**doc)
+
     transaction = Transaction(**transaction_data.dict())
     await db.transactions.insert_one(transaction.dict())
     return transaction
@@ -1219,6 +1285,44 @@ async def get_transactions(
     end_date: Optional[str] = None,
     account_id: Optional[str] = None
 ):
+    if DB_PROVIDER == 'supabase':
+        supa = SupabaseService()
+        txs = supa.transactions_list(type=type, account_id=account_id)
+        # filter by date in python
+        if start_date and end_date:
+            try:
+                sd = datetime.fromisoformat(start_date)
+                ed = datetime.fromisoformat(end_date)
+                txs = [t for t in txs if t.get('date') and sd <= datetime.fromisoformat(t['date'].replace('Z','+00:00').split('+')[0].replace('T',' ')) <= ed]
+            except: pass
+        
+        income = sum(t["amount"] for t in txs if t["type"] == "income")
+        expenses = sum(t["amount"] for t in txs if t["type"] == "expense")
+        return {
+            "transactions": [Transaction(**t) for t in txs],
+            "summary": {"income": income, "expenses": expenses, "profit": income - expenses}
+        }
+
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('transactions')
+        if type:
+            rows = [r for r in rows if r.get('type') == type]
+        if account_id:
+            rows = [r for r in rows if r.get('accountId') == account_id]
+        if start_date and end_date:
+            try:
+                sd = datetime.fromisoformat(start_date)
+                ed = datetime.fromisoformat(end_date)
+                rows = [r for r in rows if r.get('date') and sd <= datetime.fromisoformat(r['date'].replace('Z','+00:00').split('+')[0].replace('T',' ')) <= ed]
+            except: pass
+        
+        income = sum(r["amount"] for r in rows if r["type"] == "income")
+        expenses = sum(r["amount"] for r in rows if r["type"] == "expense")
+        return {
+            "transactions": [Transaction(**r) for r in rows],
+            "summary": {"income": income, "expenses": expenses, "profit": income - expenses}
+        }
+
     query = {}
     if type:
         query["type"] = type

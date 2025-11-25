@@ -245,13 +245,33 @@ class SupabaseService:
         if self.mock_mode:
             return []
         res = self.client.table('operations').select('*').order('op_date', desc=True).execute()
-        return res.data or []
+        rows = res.data or []
+        # map snake_case to camelCase if needed, or just return as is if frontend expects it
+        # The frontend likely expects camelCase.
+        out = []
+        for r in rows:
+            out.append({
+                'id': r.get('id'),
+                'type': r.get('type'),
+                'accountId': r.get('account_id'),
+                'vehicleId': r.get('vehicle_id'),
+                'partnerType': r.get('partner_type'),
+                'partnerName': r.get('partner_name'),
+                'items': r.get('items'),
+                'subtotal': r.get('subtotal'),
+                'total': r.get('total'),
+                'paymentMethod': r.get('payment_method'),
+                'notes': r.get('notes'),
+                'date': r.get('op_date'),
+                'createdAt': r.get('created_at')
+            })
+        return out
 
     def operations_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:
             return payload
         items = payload.get('items') or []
-        subtotal = sum((it.get('price',0)*it.get('qty',1)) for it in items)
+        subtotal = sum((float(it.get('price',0))*float(it.get('qty',1))) for it in items)
         row = {
             'type': payload.get('type','service'),
             'account_id': payload.get('accountId'),
@@ -262,7 +282,75 @@ class SupabaseService:
             'subtotal': subtotal,
             'total': subtotal,
             'payment_method': payload.get('paymentMethod','cash'),
-            'notes': payload.get('notes')
+            'notes': payload.get('notes'),
+            'op_date': datetime.utcnow().isoformat()
         }
         res = self.client.table('operations').insert(row).execute()
-        return (res.data or [{}])[0]
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'type': r.get('type'),
+            'accountId': r.get('account_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'partnerType': r.get('partner_type'),
+            'partnerName': r.get('partner_name'),
+            'items': r.get('items'),
+            'subtotal': r.get('subtotal'),
+            'total': r.get('total'),
+            'paymentMethod': r.get('payment_method'),
+            'notes': r.get('notes'),
+            'date': r.get('op_date'),
+            'createdAt': r.get('created_at')
+        }
+
+    # -------------------- Transactions --------------------
+    def transactions_list(self, type: Optional[str] = None, account_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        q = self.client.table('transactions').select('*')
+        if type:
+            q = q.eq('type', type)
+        if account_id:
+            q = q.eq('account_id', account_id)
+        res = q.order('date', desc=True).execute()
+        rows = res.data or []
+        return [{
+            'id': r.get('id'),
+            'accountId': r.get('account_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'type': r.get('type'),
+            'category': r.get('category'),
+            'amount': r.get('amount'),
+            'description': r.get('description'),
+            'date': r.get('date'),
+            'reference': r.get('reference'),
+            'createdAt': r.get('created_at')
+        } for r in rows]
+
+    def transactions_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        row = {
+            'account_id': payload.get('accountId'),
+            'vehicle_id': payload.get('vehicleId'),
+            'type': payload.get('type'),
+            'category': payload.get('category'),
+            'amount': payload.get('amount'),
+            'description': payload.get('description'),
+            'date': datetime.utcnow().isoformat(),
+            'reference': payload.get('reference')
+        }
+        res = self.client.table('transactions').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'accountId': r.get('account_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'type': r.get('type'),
+            'category': r.get('category'),
+            'amount': r.get('amount'),
+            'description': r.get('description'),
+            'date': r.get('date'),
+            'reference': r.get('reference'),
+            'createdAt': r.get('created_at')
+        }

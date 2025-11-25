@@ -385,6 +385,23 @@ async def operations_pending(status: Optional[str] = None, technician_id: Option
     Optional filter by single status or technician_id.
     """
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            vehs = supa.vehicles_list()
+            pending_statuses = ['diagnosis', 'quotation', 'repair']
+            vehs = [v for v in vehs if v.get('status') in pending_statuses]
+            if status and status != 'all':
+                vehs = [v for v in vehs if v.get('status') == status]
+            if technician_id:
+                vehs = [v for v in vehs if v.get('technicianId') == technician_id]
+            return {'count': len(vehs), 'items': vehs}
+
+        if provider == 'memory' or db is None:
+            vrows = _mem_read('vehicles')
+            pending = [v for v in vrows if v.get('status') in ['diagnosis','quotation','repair']]
+            return {'count': len(pending), 'items': pending}
+
         pending_statuses = ['diagnosis', 'quotation', 'repair']
         q: Dict[str, Any] = {'status': {'$in': pending_statuses}}
         if status:
@@ -409,6 +426,35 @@ async def operations_pending(status: Optional[str] = None, technician_id: Option
 async def operations_pending_analytics():
     """Summary counts for pending vehicles and overdue stats."""
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            vehs = supa.vehicles_list()
+            pending_statuses = ['diagnosis', 'quotation', 'repair']
+            vehs = [v for v in vehs if v.get('status') in pending_statuses]
+            by_status = {s: 0 for s in pending_statuses}
+            overdue = 0
+            now = datetime.utcnow()
+            for v in vehs:
+                st = v.get('status')
+                if st in by_status: by_status[st] += 1
+                est = v.get('estimatedCompletion')
+                if est:
+                    try:
+                        dt = datetime.fromisoformat(est.replace('Z','+00:00'))
+                        if dt.tzinfo: dt = dt.replace(tzinfo=None)
+                        if dt < now: overdue += 1
+                    except: pass
+            return {'total': len(vehs), 'byStatus': by_status, 'overdue': overdue}
+
+        if provider == 'memory' or db is None:
+            vrows = _mem_read('vehicles')
+            by = {'diagnosis':0,'quotation':0,'repair':0}
+            for v in vrows:
+                st = v.get('status')
+                if st in by: by[st]+=1
+            return {'total': sum(by.values()), 'byStatus': by, 'overdue': 0}
+
         pending_statuses = ['diagnosis', 'quotation', 'repair']
         now = datetime.utcnow()
         fields = {'_id': 0, 'status': 1, 'estimatedCompletion': 1}

@@ -251,7 +251,6 @@ async def get_vehicles(status: Optional[str] = None, search: Optional[str] = Non
     try:
         if DB_PROVIDER == 'supabase':
             supa = SupabaseService()
-            # SupabaseService.vehicles_list doesn't support filters yet, filter in python
             vehs = supa.vehicles_list()
             if status:
                 vehs = [v for v in vehs if v.get('status') == status]
@@ -259,6 +258,15 @@ async def get_vehicles(status: Optional[str] = None, search: Optional[str] = Non
                 s = search.lower()
                 vehs = [v for v in vehs if (s in (v.get('plateNumber') or '').lower() or s in (v.get('customerName') or '').lower())]
             return [Vehicle(**v) for v in vehs]
+
+        if DB_PROVIDER == 'memory':
+            rows = _mem_read('vehicles')
+            if status:
+                rows = [r for r in rows if r.get('status') == status]
+            if search:
+                s = search.lower()
+                rows = [r for r in rows if (s in (r.get('plateNumber') or '').lower() or s in (r.get('customerName') or '').lower())]
+            return [Vehicle(**r) for r in rows]
 
         query = {}
         if status:
@@ -283,6 +291,13 @@ async def get_vehicle(vehicle_id: str):
         if not v:
             raise HTTPException(status_code=404, detail="Vehicle not found")
         return Vehicle(**v)
+
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('vehicles')
+        for r in rows:
+            if r.get('id') == vehicle_id:
+                return Vehicle(**r)
+        raise HTTPException(status_code=404, detail="Vehicle not found")
 
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     if not vehicle:

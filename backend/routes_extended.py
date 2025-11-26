@@ -992,7 +992,7 @@ async def _approvals_broadcast(event: Dict[str, Any]):
         approvals_subscribers.discard(q)
 
 @router.post('/approvals/public/{token}/respond')
-async def respond_public_approval(token: str, status: str = 'approved', name: str = '', phone: str = '', notes: str = ''):
+async def respond_public_approval(token: str, request: Request, status: str = 'approved', name: str = '', phone: str = '', notes: str = ''):
     try:
         d = await db.approval_requests.find_one({'token': token})
         if not d:
@@ -1001,8 +1001,46 @@ async def respond_public_approval(token: str, status: str = 'approved', name: st
             raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
         if d.get('expiresAt') and d['expiresAt'] < datetime.utcnow():
             raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
-        upd = {'status': status, 'respondedAt': datetime.utcnow(), 'responderName': name, 'responderPhone': phone, 'notes': notes}
+        
+        # Digital Signature Logic
+        import hashlib
+        client_ip = request.client.host
+        user_agent = request.headers.get('user-agent', 'unknown')
+        timestamp = datetime.utcnow().isoformat()
+        
+        # Create a hash of the approval data
+        raw_data = f"{token}:{status}:{timestamp}:{client_ip}:{user_agent}"
+        signature = hashlib.sha256(raw_data.encode()).hexdigest()
+        
+        upd = {
+            'status': status, 
+            'respondedAt': datetime.utcnow(), 
+            'responderName': name, 
+            'responderPhone': phone, 
+            'notes': notes,
+            'clientIp': client_ip,
+            'userAgent': user_agent,
+            'signature': signature
+        }
+        
         await db.approval_requests.update_one({'token': token}, {'$set': upd})
+        
+        # Append to customer history
+        if d.get('customerId'):
+            history_entry = {
+                'token': token,
+                'vehicleId': d.get('vehicleId'),
+                'status': status,
+                'respondedAt': timestamp,
+                'clientIp': client_ip,
+                'signature': signature,
+                'title': d.get('title')
+            }
+            await db.customers.update_one(
+                {'id': d.get('customerId')},
+                {'$push': {'approvalsHistory': history_entry}}
+            )
+
         nd = await db.approval_requests.find_one({'token': token})
         nd.pop('_id', None)
         for k in ('createdAt','expiresAt','respondedAt'):

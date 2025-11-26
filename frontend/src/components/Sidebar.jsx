@@ -67,7 +67,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     '/analytics': 'nav.analytics',
     '/knowledge': 'nav.aiAssistant',
     '/settings': 'nav.settings',
-    '/users': 'users'
+    '/users': 'users',
+    '/public-agent': 'وكيل الجمهور'
   };
 
   useEffect(() => {
@@ -95,6 +96,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             { path:'/invoice-templates', label:'', enabled:true },
             { path:'/analytics', label:'', enabled:true },
             { path:'/knowledge', label:'', enabled:true },
+            { path:'/public-agent', label:'وكيل الجمهور', enabled:true },
             { group:true, path:'/settings', label:'', enabled:true, children:[
               { path:'/settings', label:'', enabled:true },
               { path:'/templates', label:'', enabled:true },

@@ -1005,6 +1005,24 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
         # Digital Signature Logic
         import hashlib
         client_ip = request.client.host
+
+# ============ Genspark Agent Proxy ============
+@router.post('/public-agent/chat')
+async def public_agent_chat(payload: Dict[str, Any] = Body(...)):
+    try:
+        message = payload.get('message')
+        session_id = payload.get('sessionId')
+        
+        # Import here to avoid circular imports if any
+        from genspark_service import chat_with_genspark
+        
+        # Run in thread pool to avoid blocking
+        result = await asyncio.to_thread(chat_with_genspark, message, session_id)
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         user_agent = request.headers.get('user-agent', 'unknown')
         timestamp = datetime.utcnow().isoformat()
         

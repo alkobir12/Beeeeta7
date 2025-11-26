@@ -106,6 +106,7 @@ function App() {
                     <Route path="/references" element={<References />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/users" element={<Users />} />
+                    <Route path="/public-agent" element={<PublicAgent />} />
                   </Routes>
                 </Layout>
               </Protected>

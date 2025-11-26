@@ -60,252 +60,201 @@ const Operations = () => {
   const gridItems = useMemo(() => {
     const items = [];
 
-    // CEO Embedded
+    // Create Operation form (Standard View)
     items.push({
-      id: 'ceo',
+      id: 'create-op',
       render: () => (
-        <CanvaCard title={t('operations.ceoPanelTitle')}>
-          <CeoFilters accounts={accounts} onChange={()=>{}} />
-          <div className="h-4" />
-          <CeoSection accounts={accounts} ops={ops} />
-        </CanvaCard>
+        <Card className="shadow-md">
+          <CardHeader className="bg-slate-50">
+            <CardTitle>إنشاء عملية جديدة</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form onSubmit={submit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>الفرع</Label>
+                  <Select value={form.accountId} onValueChange={v => setForm({ ...form, accountId: v })}>
+                    <SelectTrigger><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
+                    <SelectContent>
+                      {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>نوع العملية</Label>
+                  <Select value={form.type} onValueChange={v => setForm({ ...form, type: v, partnerType: v === 'purchase' ? 'supplier' : 'customer' })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="purchase">شراء (مصروفات)</SelectItem>
+                      <SelectItem value="sale">بيع (إيرادات)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{form.partnerType === 'supplier' ? 'اسم المورد' : 'اسم العميل'}</Label>
+                  <Input placeholder="الاسم..." value={form.partnerName} onChange={e => setForm({ ...form, partnerName: e.target.value })} />
+                </div>
+                <div>
+                  <Label>طريقة الدفع</Label>
+                  <Select value={form.paymentMethod} onValueChange={v => setForm({ ...form, paymentMethod: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">كاش</SelectItem>
+                      <SelectItem value="card">شبكة</SelectItem>
+                      <SelectItem value="transfer">تحويل بنكي</SelectItem>
+                      <SelectItem value="credit">آجل</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Items Section */}
+              <div className="border rounded-lg p-4 bg-slate-50">
+                <Label className="mb-2 block font-semibold">إضافة بنود</Label>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+                  <div className="md:col-span-1">
+                    <Label className="text-xs">النوع</Label>
+                    <Select value={item.itemType} onValueChange={v=>setItem({...item, itemType: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="part">قطعة غيار</SelectItem>
+                        <SelectItem value="service">خدمة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">البند</Label>
+                    {item.itemType === 'part' ? (
+                      <Select value={item.itemId} onValueChange={v=>{ const it = parts.find(p=>p.id===v); setItem({...item, itemId: v, name: it?.name || '', price: it?.sellingPrice || it?.price || 0}); }}>
+                        <SelectTrigger><SelectValue placeholder="اختر قطعة..." /></SelectTrigger>
+                        <SelectContent>
+                          {parts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Select value={item.itemId} onValueChange={v=>{ const s = services.find(s=>s.id===v); setItem({...item, itemId: v, name: s?.name || '', price: s?.price || 0}); }}>
+                        <SelectTrigger><SelectValue placeholder="اختر خدمة..." /></SelectTrigger>
+                        <SelectContent>
+                          {services.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs">الكمية</Label>
+                    <Input type="number" value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value) || 0})} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">السعر</Label>
+                    <Input type="number" value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value) || 0})} />
+                  </div>
+                  <div>
+                    <Button type="button" className="w-full bg-slate-800 hover:bg-slate-900" onClick={addItem}>إضافة +</Button>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                {form.items.length > 0 && (
+                  <div className="mt-4 bg-white rounded border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-100">
+                        <tr>
+                          <th className="p-2 text-right">النوع</th>
+                          <th className="p-2 text-right">الاسم</th>
+                          <th className="p-2 text-right">الكمية</th>
+                          <th className="p-2 text-right">السعر</th>
+                          <th className="p-2 text-right">الإجمالي</th>
+                          <th className="p-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.items.map((it, idx)=> (
+                          <tr key={idx} className="border-b last:border-0">
+                            <td className="p-2">{it.itemType==='part'?'قطعة':'خدمة'}</td>
+                            <td className="p-2">{it.name}</td>
+                            <td className="p-2">{it.quantity}</td>
+                            <td className="p-2">{it.price}</td>
+                            <td className="p-2">{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
+                            <td className="p-2 text-left">
+                              <Button size="sm" variant="ghost" className="text-red-500 h-6 w-6 p-0" onClick={()=>{
+                                const newItems = [...form.items];
+                                newItems.splice(idx, 1);
+                                setForm({...form, items: newItems});
+                              }}>×</Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-slate-50 font-bold">
+                        <tr>
+                          <td colSpan="4" className="p-2 text-left">الإجمالي الكلي:</td>
+                          <td className="p-2">{subtotal.toFixed(2)} ر.س</td>
+                          <td></td>
+                        </tr>
+                      tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8" disabled={form.items.length === 0}>
+                  حفظ العملية
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )
     });
 
-    // KPIs
+    // Recent Ops Table (Standard View)
     items.push({
-      id: 'kpis',
+      id: 'recent-ops',
       render: () => (
-        <CanvaCard title={t('operations.quickKpisTitle')} className="canva-accent-blue border-2">
-          {analytics ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="border-2 canva-accent-emerald">
-                <CardContent className="p-6">
-                  <div className="text-sm text-emerald-700 font-semibold">{t('operations.todaySales')}</div>
-                  <div className="text-3xl font-bold text-emerald-900 mt-2">{analytics.today.sales.toFixed(2)} ر.س</div>
-                </CardContent>
-              </Card>
-              <Card className="border-2 canva-accent-blue">
-                <CardContent className="p-6">
-                  <div className="text-sm text-blue-700 font-semibold">{t('operations.weekSales')}</div>
-                  <div className="text-3xl font-bold text-blue-900 mt-2">{analytics.week.sales.toFixed(2)} ر.س</div>
-                </CardContent>
-              </Card>
-              <Card className="border-2 canva-accent-purple">
-                <CardContent className="p-6">
-                  <div className="text-sm text-purple-700 font-semibold">{t('operations.monthSales')}</div>
-                  <div className="text-3xl font-bold text-purple-900 mt-2">{analytics.month.sales.toFixed(2)} ر.س</div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="text-slate-500 text-sm">لا توجد بيانات</div>
-          )}
-        </CanvaCard>
-      )
-    });
-
-    // Accounts Summary
-    if (analytics && analytics.accountsSummary && analytics.accountsSummary.length > 0) {
-      items.push({
-        id: 'accounts-summary',
-        render: () => (
-          <CanvaCard title={t('operations.branchesAnalyticsTitle')} className="border-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {analytics.accountsSummary.map(acc => (
-                <Card key={acc.id} className="border-2 hover:shadow-md transition">
-                  <CardHeader className="pb-2"><CardTitle className="text-base">{acc.name}</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>الأسبوع: {acc.weekSales.toFixed(0)}</span>
-                      <span className={acc.weekProfit>=0? 'text-emerald-700':'text-rose-700'}>
-                        {acc.weekProfit.toFixed(0)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CanvaCard>
-        )
-      });
-    }
-
-    // Quick item add
-    items.push({
-      id: 'quick-item',
-      render: () => (
-        <CanvaCard title={t('operations.addItemTitle')} className="border-2">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <Select value={item.itemType} onValueChange={v=>setItem({...item, itemType: v})}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="part">{t('operations.itemTypePart')}</SelectItem>
-                <SelectItem value="service">{t('operations.itemTypeService')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Selector by id depends on type */}
-            {item.itemType === 'part' ? (
-              <Select value={item.itemId} onValueChange={v=>{ const it = parts.find(p=>p.id===v); setItem({...item, itemId: v, name: it?.name || '', price: it?.sellingPrice || it?.price || 0}); }}>
-                <SelectTrigger><SelectValue placeholder={t('operations.selectPartOptional')} /></SelectTrigger>
-                <SelectContent>
-                  {parts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Select value={item.itemId} onValueChange={v=>{ const s = services.find(s=>s.id===v); setItem({...item, itemId: v, name: s?.name || '', price: s?.price || 0}); }}>
-                <SelectTrigger><SelectValue placeholder={t('operations.selectServiceOptional')} /></SelectTrigger>
-                <SelectContent>
-                  {services.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-
-            <Input placeholder={t('operations.customNamePlaceholder')} value={item.name} onChange={e=> setItem({...item, name: e.target.value})} />
-            <Input type="number" placeholder={t('operations.quantityPlaceholder')} value={item.quantity} onChange={e=> setItem({...item, quantity: Number(e.target.value) || 0})} />
-            <Input type="number" placeholder={t('operations.pricePlaceholder')} value={item.price} onChange={e=> setItem({...item, price: Number(e.target.value) || 0})} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-            <Input placeholder={t('operations.categoryOptional')} value={item.category} onChange={e=> setItem({...item, category: e.target.value})} />
-            {item.itemType === 'part' ? (
-              <Button type="button" variant="outline" onClick={async ()=>{
-                if(!item.name){ alert(t('operations.enterPartNameAlert')); return; }
-                try{
-                  const res = await axios.post(`${API_URL}/parts`, { partNumber: `P-${Date.now()}`, name: item.name, category: item.category || t('operations.defaultCategory'), purchasePrice: item.price || 0, sellingPrice: item.price || 0, quantity: item.quantity || 1 });
-                  const list = await axios.get(`${API_URL}/parts`);
-                  setParts(list.data || []);
-                  setItem(prev=>({...prev, itemId: res.data.id}));
-                }catch(e){ alert(t('operations.savePartError')); }
-              }}>{t('operations.savePartToDb')}</Button>
-            ) : (
-              <Button type="button" variant="outline" onClick={async ()=>{
-                if(!item.name){ alert('أدخل اسم الخدمة'); return; }
-                try{
-                  const res = await axios.post(`${API_URL}/services`, { name: item.name, price: item.price || 0, category: item.category || 'عام', duration: 30 });
-                  const list = await axios.get(`${API_URL}/services`);
-                  setServices(list.data || []);
-                  setItem(prev=>({...prev, itemId: res.data.id}));
-                }catch(e){ alert('تعذر حفظ الخدمة'); }
-              }}>حفظ الخدمة في قاعدة البيانات</Button>
-            )}
-            <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={addItem}>إضافة للبنود</Button>
-          </div>
-
-          {form.items.length>0 && (
-            <div className="mt-4">
+        <Card className="shadow-md mt-6">
+          <CardHeader>
+            <CardTitle>سجل العمليات الأخيرة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50">
-                    <th className="p-2 text-right">النوع</th>
-                    <th className="p-2 text-right">الاسم</th>
-                    <th className="p-2 text-right">الكمية</th>
-                    <th className="p-2 text-right">السعر</th>
-                    <th className="p-2 text-right">الإجمالي</th>
+                  <tr className="border-b bg-slate-50">
+                    <th className="p-3 text-right">التاريخ</th>
+                    <th className="p-3 text-right">النوع</th>
+                    <th className="p-3 text-right">الطرف</th>
+                    <th className="p-3 text-right">البنود</th>
+                    <th className="p-3 text-right">الإجمالي</th>
+                    <th className="p-3 text-right">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {form.items.map((it, idx)=> (
-                    <tr key={idx} className="border-b">
-                      <td className="p-2">{it.itemType==='part'?'قطعة':'خدمة'}</td>
-                      <td className="p-2">{it.name}</td>
-                      <td className="p-2">{it.quantity}</td>
-                      <td className="p-2">{it.price}</td>
-                      <td className="p-2">{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
+                  {ops.map(op => (
+                    <tr key={op.id} className="border-b hover:bg-slate-50">
+                      <td className="p-3">{new Date(op.date).toLocaleDateString('ar-SA')}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs ${op.type === 'sale' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {op.type === 'sale' ? 'بيع' : 'شراء'}
+                        </span>
+                      </td>
+                      <td className="p-3 font-medium">{op.partnerName}</td>
+                      <td className="p-3 text-slate-500">{op.items?.length || 0} بند</td>
+                      <td className="p-3 font-bold">{Number(op.total).toFixed(2)}</td>
+                      <td className="p-3">
+                        <Button size="sm" variant="outline" onClick={async ()=>{
+                          const res = await axios.get(`${API_URL}/operations/${op.id}`);
+                          const o = res.data;
+                          alert(`تفاصيل العملية:\nالنوع: ${o.type}\nالشريك: ${o.partnerName || '-'}\nالإجمالي: ${o.total}`);
+                        }}>عرض</Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-right mt-2 font-bold">الإجمالي: {subtotal.toFixed(2)} ر.س</div>
             </div>
-          )}
-        </CanvaCard>
-      )
-    });
-
-    // Create Operation form
-    items.push({
-      id: 'create-op',
-      render: () => (
-        <CanvaCard title="إنشاء عملية" className="border-2">
-          <form onSubmit={submit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <Select value={form.accountId} onValueChange={v => setForm({ ...form, accountId: v })}>
-                <SelectTrigger><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
-                <SelectContent>
-                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={form.type} onValueChange={v => setForm({ ...form, type: v, partnerType: v === 'purchase' ? 'supplier' : 'customer' })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="purchase">شراء</SelectItem>
-                  <SelectItem value="sale">بيع</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input placeholder={form.partnerType === 'supplier' ? 'اسم المورد' : 'اسم العميل'} value={form.partnerName} onChange={e => setForm({ ...form, partnerName: e.target.value })} />
-              <Select value={form.paymentMethod} onValueChange={v => setForm({ ...form, paymentMethod: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">كاش</SelectItem>
-                  <SelectItem value="card">شبكة</SelectItem>
-                  <SelectItem value="transfer">تحويل بنكي</SelectItem>
-                  <SelectItem value="credit">آجل</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {form.paymentMethod === 'transfer' && (
-              <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                <Label className="text-sm font-semibold text-blue-800 mb-2 block">📎 إرفاق إيصال التحويل البنكي</Label>
-                <Input type="file" accept="image/*,.pdf" onChange={(e)=>{ const file=e.target.files?.[0]; if(file){ setForm({...form, receiptFile:file}); }}} />
-                {form.receiptFile && (<p className="text-xs text-green-700 mt-2">✅ تم اختيار: {form.receiptFile.name}</p>)}
-              </div>
-            )}
-
-            <div className="p-4 bg-slate-50 rounded-lg">
-              <div className="font-bold text-slate-800">الإجمالي: {subtotal.toFixed(2)} ر.س</div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">حفظ العملية</Button>
-            </div>
-          </form>
-        </CanvaCard>
-      )
-    });
-
-    // Recent Ops
-    items.push({
-      id: 'recent-ops',
-      render: () => (
-        <CanvaCard title="آخر العمليات" className="border-2">
-          <div className="space-y-3">
-            {ops.map(op => (
-              <div key={op.id} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
-                <div>
-                  <div className="font-bold">{op.type === 'purchase' ? 'شراء' : 'بيع'} • {op.partnerName}</div>
-                  <div className="text-sm text-slate-500">{new Date(op.date).toLocaleString('ar-SA')} — بنود: {op.items?.length || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="font-bold text-blue-700">{Number(op.total).toFixed(2)} ر.س</div>
-                  <Button size="sm" variant="outline" onClick={async ()=>{
-                    const res = await axios.get(`${API_URL}/operations/${op.id}`);
-                    const o = res.data;
-                    alert(`تفاصيل العملية:\nالنوع: ${o.type}\nالشريك: ${o.partnerName || '-'}\nالإجمالي: ${o.total}`);
-                  }}>فتح</Button>
-                  <Button size="sm" variant="ghost" onClick={async ()=>{
-                    const name = prompt('تعديل اسم الشريك', op.partnerName || '');
-                    if (name === null) return;
-                    await axios.put(`${API_URL}/operations/${op.id}`, { partnerName: name });
-                    await load();
-                  }}>تعديل</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CanvaCard>
+          </CardContent>
+        </Card>
       )
     });
 

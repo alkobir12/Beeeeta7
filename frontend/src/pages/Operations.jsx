@@ -191,7 +191,7 @@ const Operations = () => {
                           <td className="p-2">{subtotal.toFixed(2)} ر.س</td>
                           <td></td>
                         </tr>
-                      tfoot>
+                      </tfoot>
                     </table>
                   </div>
                 )}

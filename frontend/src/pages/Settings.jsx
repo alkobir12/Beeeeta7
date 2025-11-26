@@ -231,6 +231,62 @@ const Settings = () => {
                 )}
               </CardContent>
 
+            {/* Google Integration */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-l from-yellow-50">
+                <CardTitle>تكامل Google Drive & Sheets</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base">النسخ الاحتياطي التلقائي</Label>
+                      <p className="text-sm text-slate-500">نسخ قاعدة البيانات إلى Google Drive</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          await axios.post(`${API_URL}/admin/backup/drive`);
+                          toast({ title: 'تم', description: 'تم النسخ الاحتياطي بنجاح' });
+                        } catch (e) {
+                          toast({ title: 'خطأ', description: 'فشل النسخ الاحتياطي', variant: 'destructive' });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >
+                      نسخ الآن
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base">تصدير الفواتير</Label>
+                      <p className="text-sm text-slate-500">تصدير الفواتير إلى Google Sheets</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          await axios.post(`${API_URL}/admin/export/sheets`);
+                          toast({ title: 'تم', description: 'تم التصدير بنجاح' });
+                        } catch (e) {
+                          toast({ title: 'خطأ', description: 'فشل التصدير', variant: 'destructive' });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >
+                      تصدير الآن
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Base Repair Template Settings */}
             <Card className="shadow-lg">
               <CardHeader className="bg-gradient-to-l from-purple-50">

@@ -435,6 +435,73 @@ async def get_faqs(category: Optional[str] = None):
     query = {"isActive": True}
     if category:
         query["category"] = category
+
+# ============ Google Integration APIs ============
+@router.post("/admin/backup/drive")
+async def backup_to_drive():
+    try:
+        google = GoogleService()
+        if not google.creds:
+            raise HTTPException(status_code=500, detail="Google credentials not configured")
+            
+        # Create backup folder
+        folder_id = google.create_folder(f"Backup_{datetime.utcnow().strftime('%Y-%m-%d')}")
+        
+        # Dump collections
+        collections = ['customers', 'vehicles', 'invoices', 'transactions']
+        for col_name in collections:
+            docs = await db[col_name].find({}).to_list(10000)
+            # Serialize dates
+            for d in docs:
+                d.pop('_id', None)
+                for k, v in d.items():
+                    if isinstance(v, datetime):
+                        d[k] = v.isoformat()
+            
+            fname = f"{col_name}.json"
+            fpath = f"/tmp/{fname}"
+            with open(fpath, 'w', encoding='utf-8') as f:
+                json.dump(docs, f, ensure_ascii=False, indent=2)
+                
+            google.upload_file(fpath, folder_id=folder_id, mime_type='application/json')
+            os.remove(fpath)
+            
+        return {"status": "success", "folderId": folder_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/admin/export/sheets")
+async def export_to_sheets():
+    try:
+        google = GoogleService()
+        if not google.creds:
+            raise HTTPException(status_code=500, detail="Google credentials not configured")
+            
+        # Create new sheet (or use existing if ID stored in settings - simplified here)
+        # For now, we'll just assume we want to create a new one or append to a fixed one if we had ID
+        # Since we don't have a fixed ID, let's just return a placeholder or create a new one if we added create_sheet to service
+        # But GoogleService only has append. Let's assume user provided a SHEET_ID in env or we skip creation.
+        
+        sheet_id = os.environ.get('GOOGLE_SHEET_ID')
+        if not sheet_id:
+             raise HTTPException(status_code=400, detail="GOOGLE_SHEET_ID not set in .env")
+
+        invoices = await db.invoices.find({}).sort("createdAt", -1).limit(100).to_list(100)
+        values = [['Date', 'Invoice #', 'Customer', 'Total', 'Status']]
+        for inv in invoices:
+            values.append([
+                inv.get('createdAt', '')[:10],
+                inv.get('invoiceNumber', ''),
+                inv.get('customerName', ''), # Assuming joined or available
+                str(inv.get('total', 0)),
+                inv.get('status', '')
+            ])
+            
+        google.append_to_sheet(sheet_id, 'Sheet1!A1', values)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
     faqs = await db.faqs.find(query).sort("order", 1).to_list(1000)
     return [FAQ(**f) for f in faqs]

@@ -9,12 +9,14 @@ import Layout from '../components/Layout';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTheme } from '../contexts/ThemeContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Settings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({
     workshopName: 'ورشتي',
@@ -52,10 +54,15 @@ const Settings = () => {
         taxEnabled: response.data.taxEnabled || false,
         taxRate: response.data.taxRate || 15,
         language: savedLanguage,
-        themeName: response.data.themeName || 'light',
+        themeName: response.data.themeName || theme, // Use context theme if not in DB
         baseRepairTemplateActive: response.data.baseRepairTemplateActive ?? true,
         baseRepairTemplateHtml: response.data.baseRepairTemplateHtml || '',
       });
+      
+      // Sync context theme if DB has a value
+      if (response.data.themeName && response.data.themeName !== theme) {
+        setTheme(response.data.themeName);
+      }
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
@@ -66,6 +73,9 @@ const Settings = () => {
   const saveSettings = async () => {
     try {
       setLoading(true);
+      // Update theme in context
+      setTheme(settings.themeName);
+      
       await axios.post(`${API_URL}/settings`, settings);
       
       // Save language to localStorage for i18n

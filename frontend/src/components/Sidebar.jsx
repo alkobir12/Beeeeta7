@@ -47,7 +47,8 @@ const PATH_ICONS = {
   '/ceo': Brain,
   '/knowledge': BookOpen,
   '/users': UsersIcon,
-  '/public-agent': Brain
+  '/public-agent': Brain,
+  '/quotations': FileText
 };
 
 const Sidebar = ({ isOpen, onClose }) => {

@@ -84,7 +84,16 @@ const ApprovalPublic = () => {
               <Button disabled={sending || data.status !== 'pending'} variant="outline" onClick={() => respond('requote')}>تسعير أخرى</Button>
             </div>
 
-            <div className="text-sm text-slate-500">الحالة الحالية: {data.status === 'pending' ? 'بانتظار الرد' : data.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}</div>
+            <div className="text-sm text-slate-500">
+              الحالة الحالية: {data.status === 'pending' ? 'بانتظار الرد' : data.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}
+              {data.signature && (
+                <div className="mt-2 p-2 bg-slate-100 rounded text-xs font-mono break-all">
+                  <div className="font-bold mb-1">التوقيع الرقمي:</div>
+                  {data.signature}
+                  <div className="mt-1 text-slate-400">IP: {data.clientIp}</div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -80,12 +80,21 @@ const PartsInventory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Convert numeric fields
+    const payload = {
+      ...formData,
+      purchasePrice: parseFloat(formData.purchasePrice) || 0,
+      sellingPrice: parseFloat(formData.sellingPrice) || 0,
+      quantity: parseInt(formData.quantity) || 0,
+      minQuantity: parseInt(formData.minQuantity) || 0
+    };
+    
     try {
       if (editingPart) {
-        await partAPI.update(editingPart.id, formData);
+        await partAPI.update(editingPart.id, payload);
         toast({ title: 'تم التحديث', description: 'تم تحديث القطعة بنجاح' });
       } else {
-        await partAPI.create(formData);
+        await partAPI.create(payload);
         toast({ title: 'تمت الإضافة', description: 'تمت إضافة القطعة بنجاح' });
       }
       

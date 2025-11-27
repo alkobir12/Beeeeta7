@@ -51,8 +51,16 @@ const serviceAPI = {
 };
 
 const aiAPI = {
+  // مساعد الذكاء الشامل (RAG + Claude)
   chat: (data) => axios.post(`${API_BASE}/ai/enhanced-chat`, data),
-  searchSolutions: (query) => axios.get(`${API_BASE}/ai/search-solutions`, { params: { query } })
+  searchSolutions: (query) => axios.get(`${API_BASE}/ai/search-solutions`, { params: { query } }),
+
+  // مساعد الورشة المتخصص (CarWorkshopAI + Genspark)
+  workshopInfo: () => axios.get(`${API_BASE}/ai/workshop/info`),
+  workshopDiagnose: (payload) => axios.post(`${API_BASE}/ai/workshop/diagnose`, payload),
+  workshopSearchTechnical: (payload) => axios.post(`${API_BASE}/ai/workshop/search-technical`, payload),
+  workshopAppointment: (payload) => axios.post(`${API_BASE}/ai/workshop/appointment`, payload),
+  workshopServiceReport: (payload) => axios.post(`${API_BASE}/ai/workshop/service-report`, payload),
 };
 
 const partAPI = {

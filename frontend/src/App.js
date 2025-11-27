@@ -36,6 +36,7 @@ import Users from "./pages/UsersManagement";
 import PublicAgent from "./pages/PublicAgent";
 import QuotationGenerator from "./pages/QuotationGenerator";
 import DocumentPrint from "./pages/DocumentPrint";
+import PartsCatalog from "./pages/PartsCatalog";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {
@@ -90,6 +91,7 @@ function App() {
                     <Route path="/technicians" element={<Technicians />} />
                     <Route path="/suppliers" element={<Suppliers />} />
                     <Route path="/parts" element={<PartsInventory />} />
+                    <Route path="/catalog" element={<PartsCatalog />} />
                     <Route path="/services" element={<ServicesManagement />} />
                     <Route path="/templates" element={<Templates />} />
                     <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />

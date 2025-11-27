@@ -42,6 +42,7 @@ const PATH_ICONS = {
   '/archive': Archive,
   '/suppliers': Truck,
   '/parts': Package,
+  '/catalog': Package,
   '/templates': FileText,
   '/ai-assistant': Brain,
   '/business-accounts': Building2,
@@ -70,6 +71,7 @@ const PAGE_NAMES = {
   '/archive': 'الأرشيف',
   '/suppliers': 'الموردين',
   '/parts': 'قطع الغيار',
+  '/catalog': 'كتالوج القطع',
   '/templates': 'القوالب',
   '/ai-assistant': 'المساعد الذكي',
   '/business-accounts': 'حسابات الأعمال',
@@ -93,6 +95,7 @@ const DEFAULT_MENU = [
   { path: '/customers', label: 'العملاء', enabled: true },
   { path: '/technicians', label: 'الفنيين', enabled: true },
   { path: '/parts', label: 'قطع الغيار', enabled: true },
+  { path: '/catalog', label: 'كتالوج القطع', enabled: true },
   { path: '/services', label: 'الخدمات', enabled: true },
   { path: '/operations', label: 'العمليات', enabled: true },
   { 

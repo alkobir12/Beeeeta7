@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { useTranslation } from 'react-i18next';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical } from 'lucide-react';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, AlertCircle } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -11,10 +10,19 @@ import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 
+// حالات المركبة
+const STATUS_CONFIG = {
+  diagnosis: { label: 'تشخيص', color: 'bg-orange-500', bgLight: 'bg-orange-50 text-orange-700' },
+  waiting_approval: { label: 'بانتظار الموافقة', color: 'bg-yellow-500', bgLight: 'bg-yellow-50 text-yellow-700' },
+  in_progress: { label: 'قيد العمل', color: 'bg-blue-500', bgLight: 'bg-blue-50 text-blue-700' },
+  quality_check: { label: 'فحص الجودة', color: 'bg-purple-500', bgLight: 'bg-purple-50 text-purple-700' },
+  ready: { label: 'جاهز للتسليم', color: 'bg-green-500', bgLight: 'bg-green-50 text-green-700' },
+  delivered: { label: 'تم التسليم', color: 'bg-gray-500', bgLight: 'bg-gray-50 text-gray-700' }
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [vehicles, setVehicles] = useState([]);
@@ -22,11 +30,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const dir = (i18n.language === 'ar') ? 'rtl' : 'ltr';
 
   useEffect(() => {
     fetchData();
-  }, [i18n.language]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -40,8 +47,8 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
-        title: t('common.error'),
-        description: t('common.loading'),
+        title: 'خطأ',
+        description: 'فشل في تحميل البيانات',
         variant: 'destructive'
       });
     } finally {
@@ -49,60 +56,34 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteVehicle = async (vehicleId) => {
-    if (!window.confirm(i18n.language==='ar'?'هل أنت متأكد من حذف هذه المركبة؟':'Are you sure to delete this vehicle?')) {
-      return;
-    }
-    try {
-      await vehicleAPI.delete(vehicleId);
-      toast({ title: t('common.success'), description: i18n.language==='ar'?'تم حذف المركبة بنجاح':'Vehicle deleted successfully' });
-      fetchData();
-    } catch (error) {
-      console.error('Error deleting vehicle:', error);
-      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في حذف المركبة':'Failed to delete vehicle', variant: 'destructive' });
-    }
-  };
-
-  const handleStatusUpdate = async (vehicleId, newStatus) => {
-    try {
-      await vehicleAPI.update(vehicleId, { status: newStatus });
-      toast({ title: t('common.success'), description: i18n.language==='ar'?'تم تحديث الحالة بنجاح':'Status updated successfully' });
-      fetchData();
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في تحديث الحالة':'Failed to update status', variant: 'destructive' });
-    }
-  };
-
-  const openQuickActions = (vehicle, e) => {
-    e.stopPropagation();
-    setSelectedVehicle(vehicle);
-    setShowQuickActions(true);
-  };
-
+  // إحصائيات
   const stats = {
     totalVehicles: vehicles.length,
-    inProgress: vehicles.filter(v => v.status !== 'ready').length,
+    inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check'].includes(v.status)).length,
     ready: vehicles.filter(v => v.status === 'ready').length,
-    technicians: technicians.length,
+    technicians: technicians.length
   };
 
+  // تصفية المركبات
   const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesCustom = (filterStatus === 'all') ? true : (vehicle.status === filterStatus);
-    const matchesSearch = (vehicle.plateNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         (vehicle.customerName || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || matchesCustom;
-    return matchesSearch && matchesFilter;
+    const matchesSearch = 
+      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = filterStatus === 'all' || vehicle.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
   });
+
+  const getStatusConfig = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">{t('common.loading')}</p>
-          </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="spinner" />
         </div>
       </Layout>
     );
@@ -110,113 +91,101 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir={dir}>
-      <div className="container mx-auto p-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div className="container-main">
+        {/* العنوان */}
+        <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">{t('dashboard.title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">{t('common.appName')}</p>
+            <h1 className="page-title">لوحة التحكم</h1>
+            <p className="page-subtitle">مرحباً بك في نظام إدارة الورشة</p>
           </div>
           <Button 
             onClick={() => navigate('/new-vehicle')}
-            className="btn-godaddy-primary px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-lg font-semibold w-full sm:w-auto"
+            className="btn-primary"
           >
-            <Plus className={`${i18n.language === 'ar' ? 'ml-2' : 'mr-2'}`} size={20} />
-            {i18n.language==='ar'?'استقبال مركبة جديدة':'New Vehicle Intake'}
+            <Plus size={20} />
+            <span>استقبال مركبة جديدة</span>
           </Button>
         </div>
 
-        {/* Status Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
-          <Card onClick={() => setFilterStatus('all')} className="cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-blue-700 dark:text-blue-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.totalVehicles')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100">{stats.totalVehicles}</p>
-                </div>
-                <div className="bg-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                  <Car className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* بطاقات الإحصائيات */}
+        <div className="grid-stats mb-8">
+          <div 
+            onClick={() => setFilterStatus('all')} 
+            className="stat-card stat-card-blue cursor-pointer"
+          >
+            <div>
+              <p className="stat-label">إجمالي المركبات</p>
+              <p className="stat-value text-blue-600">{stats.totalVehicles}</p>
+            </div>
+            <div className="stat-icon bg-blue-500 text-white">
+              <Car size={24} />
+            </div>
+          </div>
 
-          <Card onClick={() => setFilterStatus('diagnosis')} className="cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-orange-700 dark:text-orange-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.inProgress')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-orange-100">{stats.inProgress}</p>
-                </div>
-                <div className="bg-orange-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                  <Wrench className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div 
+            onClick={() => setFilterStatus('in_progress')} 
+            className="stat-card stat-card-orange cursor-pointer"
+          >
+            <div>
+              <p className="stat-label">قيد العمل</p>
+              <p className="stat-value text-orange-600">{stats.inProgress}</p>
+            </div>
+            <div className="stat-icon bg-orange-500 text-white">
+              <Wrench size={24} />
+            </div>
+          </div>
 
-          <Card onClick={() => setFilterStatus('ready')} className="cursor-pointer bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-green-700 dark:text-green-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.ready')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-900 dark:text-green-100">{stats.ready}</p>
-                </div>
-                <div className="bg-green-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                  <CheckCircle className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div 
+            onClick={() => setFilterStatus('ready')} 
+            className="stat-card stat-card-green cursor-pointer"
+          >
+            <div>
+              <p className="stat-label">جاهز للتسليم</p>
+              <p className="stat-value text-green-600">{stats.ready}</p>
+            </div>
+            <div className="stat-icon bg-green-500 text-white">
+              <CheckCircle size={24} />
+            </div>
+          </div>
 
-          <Card onClick={() => navigate('/technicians')} className="cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-purple-700 dark:text-purple-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.technicians')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-purple-100">{stats.technicians}</p>
-                </div>
-                <div className="bg-purple-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                  <Users className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div 
+            onClick={() => navigate('/technicians')} 
+            className="stat-card stat-card-purple cursor-pointer"
+          >
+            <div>
+              <p className="stat-label">الفنيين</p>
+              <p className="stat-value text-purple-600">{stats.technicians}</p>
+            </div>
+            <div className="stat-icon bg-purple-500 text-white">
+              <Users size={24} />
+            </div>
+          </div>
         </div>
 
-        {/* Search and Filter */}
-        <Card className="mb-6 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex gap-4 flex-wrap">
-              <div className="flex-1 min-w-64">
-                <div className="relative">
-                  <Search className="absolute right-3 top-3 text-slate-400" size={20} />
-                  <Input
-                    placeholder={t('dashboard.searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pr-10 border-slate-300 focus:border-blue-500 transition-colors"
-                  />
-                </div>
+        {/* البحث والتصفية */}
+        <Card className="card-modern mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+                <Input
+                  type="text"
+                  placeholder="بحث باسم العميل أو رقم اللوحة أو الماركة..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-modern pr-10"
+                />
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={filterStatus === 'all' ? 'default' : 'outline'}
-                  onClick={() => setFilterStatus('all')}
-                  className="transition-all duration-200"
-                >
-                  {t('common.all')}
-                </Button>
-                {['diagnosis','quotation','repair','ready'].map(key => (
+              <div className="flex gap-2 flex-wrap">
+                {['all', 'diagnosis', 'in_progress', 'ready'].map((status) => (
                   <Button
-                    key={key}
-                    variant={filterStatus === key ? 'default' : 'outline'}
-                    onClick={() => setFilterStatus(key)}
-                    className="transition-all duration-200"
+                    key={status}
+                    variant={filterStatus === status ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterStatus(status)}
+                    className={filterStatus === status ? 'bg-primary' : ''}
                   >
-                    {t(`status.${key}`)}
+                    {status === 'all' ? 'الكل' : getStatusConfig(status).label}
                   </Button>
                 ))}
               </div>
@@ -224,75 +193,101 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Vehicles List */}
-        <div className="grid grid-cols-1 gap-4">
-          {filteredVehicles.map((vehicle, index) => (
-            <Card 
-              key={`${vehicle.id}-${index}`} 
-              className="shadow-md hover:shadow-xl transition-all duration-300 border-r-4"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div 
-                    className="flex items-center gap-6 flex-1 cursor-pointer"
-                    onClick={() => navigate(`/vehicle/${vehicle.id}`)}
-                  >
-                    <div className="bg-slate-100 p-4 rounded-lg">
-                      <Car className="text-slate-700" size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-800 mb-1">{vehicle.plateNumber}</h3>
-                      <p className="text-slate-600">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
-                      <p className="text-sm text-slate-500 mt-1">{vehicle.customerName} - {vehicle.customerPhone}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-left">
-                      <p className="text-sm text-slate-500 mb-1">{t('vehicle.technician')}</p>
-                      <p className="font-semibold text-slate-700">{vehicle.technicianName || (i18n.language==='ar'?'غير محدد':'Unassigned')}</p>
-                    </div>
-                    <Badge className={`px-4 py-2 text-sm`}>
-                      {t(`status.${vehicle.status}`)}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => openQuickActions(vehicle, e)}
-                      className="hover:bg-slate-100"
-                    >
-                      <MoreVertical size={16} />
-                    </Button>
-                  </div>
-                </div>
+        {/* قائمة المركبات */}
+        <div className="grid-fluid">
+          {filteredVehicles.length === 0 ? (
+            <Card className="card-modern col-span-full">
+              <CardContent className="p-8 text-center">
+                <Car className="mx-auto mb-4 text-muted-foreground" size={48} />
+                <p className="text-muted-foreground">لا توجد مركبات</p>
+                <Button 
+                  onClick={() => navigate('/new-vehicle')}
+                  className="btn-primary mt-4"
+                >
+                  <Plus size={18} />
+                  <span>إضافة مركبة جديدة</span>
+                </Button>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            filteredVehicles.map((vehicle) => {
+              const statusConfig = getStatusConfig(vehicle.status);
+              return (
+                <Card 
+                  key={vehicle.id} 
+                  className="card-modern cursor-pointer"
+                  onClick={() => navigate(`/vehicle/${vehicle.id}`)}
+                >
+                  <CardContent className="p-4">
+                    {/* رأس البطاقة */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg ${statusConfig.color} flex items-center justify-center text-white`}>
+                          <Car size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {vehicle.brand} {vehicle.model}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{vehicle.plateNumber}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedVehicle(vehicle);
+                          setShowQuickActions(true);
+                        }}
+                        className="btn-icon"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+                    </div>
+
+                    {/* معلومات العميل */}
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Users size={14} className="text-muted-foreground" />
+                        <span>{vehicle.customerName}</span>
+                      </div>
+                      {vehicle.customerPhone && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span dir="ltr">{vehicle.customerPhone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* الحالة والتاريخ */}
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
+                      <Badge className={statusConfig.bgLight}>
+                        {statusConfig.label}
+                      </Badge>
+                      {vehicle.createdAt && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock size={12} />
+                          {new Date(vehicle.createdAt).toLocaleDateString('ar-SA')}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
-        {filteredVehicles.length === 0 && (
-          <Card className="shadow-md">
-            <CardContent className="p-12 text-center">
-              <Car className="mx-auto text-slate-300 mb-4" size={64} />
-              <p className="text-slate-500 text-lg">{t('common.noData')}</p>
-            </CardContent>
-          </Card>
+        {/* نافذة الإجراءات السريعة */}
+        {showQuickActions && selectedVehicle && (
+          <VehicleQuickActions
+            vehicle={selectedVehicle}
+            onClose={() => {
+              setShowQuickActions(false);
+              setSelectedVehicle(null);
+            }}
+            onRefresh={fetchData}
+          />
         )}
       </div>
-      </div>
-
-      {selectedVehicle && (
-        <VehicleQuickActions
-          isOpen={showQuickActions}
-          onClose={() => {
-            setShowQuickActions(false);
-            setSelectedVehicle(null);
-          }}
-          vehicle={selectedVehicle}
-          onStatusUpdate={(newStatus) => handleStatusUpdate(selectedVehicle.id, newStatus)}
-          onDelete={() => handleDeleteVehicle(selectedVehicle.id)}
-        />
-      )}
     </Layout>
   );
 };

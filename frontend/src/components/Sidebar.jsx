@@ -77,7 +77,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     '/knowledge': 'nav.aiAssistant',
     '/settings': 'nav.settings',
     '/users': 'users',
-    '/public-agent': 'وكيل الجمهور'
+    '/public-agent': 'وكيل الجمهور',
+    '/quotations': 'عروض الأسعار'
   };
 
   useEffect(() => {

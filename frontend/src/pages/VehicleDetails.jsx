@@ -619,7 +619,7 @@ const VehicleDetails = () => {
         {/* بطاقة حالة المركبة للطباعة */}
         <Card className="mt-6 shadow-lg">
           <CardHeader>
-            <CardTitle>حالة المركبة (جاهزة للطباعة)</CardTitle>
+            <CardTitle>طباعة المستندات</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -648,8 +648,32 @@ const VehicleDetails = () => {
                 <div className="font-semibold">{(vehicle?.services || []).join('، ') || '-'}</div>
               </div>
             </div>
-            <div className="pt-4">
-              <Button onClick={() => window.print()} className="bg-emerald-600 hover:bg-emerald-700">طباعة الحالة</Button>
+            <div className="pt-4 flex flex-wrap gap-2">
+              <Button 
+                onClick={() => navigate(`/print?type=diagnosis&vehicleId=${id}`)} 
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                <ClipboardList size={18} className="ml-2" />
+                طباعة تشخيص
+              </Button>
+              <Button 
+                onClick={() => navigate(`/print?type=invoice&vehicleId=${id}`)} 
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Receipt size={18} className="ml-2" />
+                طباعة فاتورة
+              </Button>
+              <Button 
+                onClick={() => navigate(`/print?type=quote&vehicleId=${id}`)} 
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <FileText size={18} className="ml-2" />
+                طباعة عرض سعر
+              </Button>
+              <Button onClick={() => window.print()} variant="outline">
+                <Printer size={18} className="ml-2" />
+                طباعة سريعة
+              </Button>
             </div>
           </CardContent>
         </Card>

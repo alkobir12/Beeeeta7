@@ -72,52 +72,36 @@ const PublicAgent = () => {
               <ExternalLink size={16} className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'} />
               {i18n.language === 'ar' ? 'فتح الوكيل الكامل' : 'Open Full Agent'}
             </Button> 
-              variant="ghost"
-              onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
-              size="sm"
-            >
-              <ExternalLink size={16} className="ml-1" />
-              {i18n.language === 'ar' ? 'فتح خارجي' : 'Open External'}
-            </Button>
           </div>
         </div>
 
-        {useIframe ? (
-          <Card className="flex-1 shadow-lg border-0 overflow-hidden">
-            <iframe 
-              src={GENSPARK_DIRECT_LINK}
-              className="w-full h-full min-h-[500px]"
-              title="Genspark Agent"
-              allow="microphone"
-            />
-          </Card>
-        ) : (
-          <Card className="flex-1 flex flex-col shadow-lg border-0">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg py-3 sm:py-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Bot className="h-5 w-5 sm:h-6 sm:w-6" />
-                {i18n.language === 'ar' ? 'وكيل الجمهور الذكي' : 'Smart Public Agent'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
-              <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-                <div className="space-y-4">
-                  {messages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                        msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-indigo-600 text-white'
-                      }`}>
-                        {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                      </div>
-                      <div className={`p-3 rounded-lg max-w-[80%] text-sm leading-relaxed shadow-sm ${
-                        msg.role === 'user' 
-                          ? 'bg-blue-600 text-white rounded-tr-none' 
-                          : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border dark:border-slate-700 rounded-tl-none'
-                      }`}>
-                        {msg.content}
+        {/* Chat Interface */}
+        <Card className="flex-1 flex flex-col shadow-lg border-0">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg py-3 sm:py-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Bot className="h-5 w-5 sm:h-6 sm:w-6" />
+              {i18n.language === 'ar' ? 'محادثة مع الوكيل' : 'Chat with Agent'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <div className="space-y-4">
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-indigo-600 text-white'
+                    }`}>
+                      {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+                    </div>
+                    <div className={`p-3 rounded-lg max-w-[80%] text-sm leading-relaxed shadow-sm ${
+                      msg.role === 'user' 
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border dark:border-slate-700 rounded-tl-none'
+                    }`}>
+                      {msg.content}
                       </div>
                     </div>
                   ))}

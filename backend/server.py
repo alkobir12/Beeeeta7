@@ -1865,6 +1865,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Supabase router not loaded: {e}")
 
+# Import and include Arabic Quotation router
+try:
+    quotation_router = APIRouter(prefix="/api")
+    create_quotation_routes(quotation_router)
+    app.include_router(quotation_router)
+    logger.info("✅ Arabic Quotation router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Arabic Quotation router not loaded: {e}")
+
 # Auto-Sync Status endpoint
 @app.get('/api/sync/status')
 async def get_sync_status():

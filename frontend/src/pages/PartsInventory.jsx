@@ -375,6 +375,7 @@ const PartsInventory = () => {
                 >
                   <AlertTriangle className="ml-2" size={18} />
                   قطع قليلة المخزون
+                </Button>
                 <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" id="parts-import" className="hidden" onChange={async (e)=>{
                   const f = e.target.files?.[0];
                   if(!f) return;
@@ -389,11 +390,10 @@ const PartsInventory = () => {
                   }
                 }} />
                 <label htmlFor="parts-import">
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="cursor-pointer">
                     <span><Upload className="ml-2" size={18}/>استيراد قطع (Excel)</span>
                   </Button>
                 </label>
-                </Button>
               </div>
             </CardContent>
           </Card>

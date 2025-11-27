@@ -7,15 +7,17 @@ import { Brain, Send, Loader, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { aiAPI } from '../services/api';
 import Layout from '../components/Layout';
+import { useTranslation } from 'react-i18next';
 
 const AIAssistant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'مرحباً! أنا مساعد الذكاء الاصطناعي الخاص بورشتك. يمكنني مساعدتك في:\n\n• إيجاد حلول للمشاكل الميكانيكية\n• البحث عن قطع الغيار\n• تقديم نصائح الصيانة\n• الإجابة على الاستفسارات الفنية\n\nكيف يمكنني مساعدتك اليوم؟'
+      content: t('ai.welcomeMessage') || 'مرحباً! أنا مساعد الذكاء الاصطناعي الخاص بورشتك. يمكنني مساعدتك في:\n\n• إيجاد حلول للمشاكل الميكانيكية\n• البحث عن قطع الغيار\n• تقديم نصائح الصيانة\n• الإجابة على الاستفسارات الفنية\n\nكيف يمكنني مساعدتك اليوم؟'
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +35,7 @@ const AIAssistant = () => {
     try {
       const response = await aiAPI.chat(question, sessionId);
       
-      if (!sessionId) {
+      if (!sessionId && response.data.sessionId) {
         setSessionId(response.data.sessionId);
       }
 
@@ -47,8 +49,8 @@ const AIAssistant = () => {
     } catch (error) {
       console.error('AI Error:', error);
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ في الاتصال بالمساعد الذكي. الرجاء المحاولة مرة أخرى.',
+        title: t('common.error'),
+        description: t('ai.connectionError') || 'حدث خطأ في الاتصال بالمساعد الذكي. الرجاء المحاولة مرة أخرى.',
         variant: 'destructive'
       });
       
@@ -63,7 +65,7 @@ const AIAssistant = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
+      <div className="min-h-screen" dir={i18n.dir()}>
         <div className="container mx-auto p-6 max-w-4xl">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
@@ -73,10 +75,10 @@ const AIAssistant = () => {
                   <Brain className="text-white" size={28} />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-slate-800">مساعد الذكاء الاصطناعي</h1>
+                  <h1 className="text-4xl font-bold text-slate-800">{t('nav.aiAssistant')}</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <Sparkles className="text-purple-600" size={16} />
-                    <p className="text-slate-600">مدعوم بـ Claude AI</p>
+                    <p className="text-slate-600">{t('ai.poweredBy')}</p>
                   </div>
                 </div>
               </div>
@@ -90,7 +92,7 @@ const AIAssistant = () => {
                 <div className="bg-purple-600 p-2 rounded-full">
                   <Brain className="text-white" size={20} />
                 </div>
-                Claude AI Assistant - متصل
+                {t('ai.assistantTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
@@ -115,7 +117,7 @@ const AIAssistant = () => {
                   <div className="flex justify-end">
                     <div className="bg-white text-slate-800 border border-slate-200 p-4 rounded-2xl shadow-md flex items-center gap-3">
                       <Loader className="animate-spin text-purple-600" size={20} />
-                      <span className="text-purple-600">Claude يفكر...</span>
+                      <span className="text-purple-600">{t('ai.thinking')}</span>
                     </div>
                   </div>
                 )}
@@ -130,7 +132,7 @@ const AIAssistant = () => {
                 <Textarea
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  placeholder="اكتب سؤالك هنا... مثل: ما هو سبب ارتفاع حرارة المحرك؟"
+                  placeholder={t('ai.placeholder')}
                   className="flex-1 min-h-24 border-slate-300 focus:border-purple-500 transition-colors resize-none"
                   disabled={isLoading}
                 />
@@ -140,7 +142,7 @@ const AIAssistant = () => {
                   className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Send className="ml-2" size={20} />
-                  إرسال
+                  {t('common.send')}
                 </Button>
               </form>
             </CardContent>

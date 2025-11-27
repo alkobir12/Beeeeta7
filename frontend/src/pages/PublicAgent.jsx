@@ -4,17 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { Send, Bot, User } from 'lucide-react';
+import { Send, Bot, User, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const GENSPARK_DIRECT_LINK = "https://www.genspark.ai/agent/fe62398f-faa9-4a8f-bae9-4d0b5dc25680";
 
 const PublicAgent = () => {
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'مرحباً! كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [useIframe, setUseIframe] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {

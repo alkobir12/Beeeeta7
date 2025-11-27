@@ -14,11 +14,10 @@ const GENSPARK_DIRECT_LINK = "https://www.genspark.ai/agent/fe62398f-faa9-4a8f-b
 const PublicAgent = () => {
   const { i18n } = useTranslation();
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'مرحباً! كيف يمكنني مساعدتك اليوم؟' }
+    { role: 'assistant', content: i18n.language === 'ar' ? 'مرحباً! كيف يمكنني مساعدتك اليوم؟ يمكنك أيضاً فتح الوكيل الكامل للحصول على تجربة أفضل.' : 'Hello! How can I help you today? You can also open the full agent for a better experience.' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [useIframe, setUseIframe] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -41,14 +40,17 @@ const PublicAgent = () => {
         sessionId: localStorage.getItem('genspark_session_id') || undefined
       });
 
-      const reply = res.data.response || 'عذراً، لم أتمكن من الرد.';
+      const reply = res.data.response || (i18n.language === 'ar' ? 'عذراً، لم أتمكن من الرد.' : 'Sorry, I could not respond.');
       if (res.data.session_id) {
         localStorage.setItem('genspark_session_id', res.data.session_id);
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ في الاتصال بالوكيل.' }]);
+      const errorMsg = i18n.language === 'ar' 
+        ? 'حدث خطأ في الاتصال. يرجى استخدام زر "فتح الوكيل الكامل" للتحدث مباشرة مع الوكيل.'
+        : 'Connection error. Please use "Open Full Agent" button to chat directly with the agent.';
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }]);
     } finally {
       setLoading(false);
     }
@@ -62,17 +64,24 @@ const PublicAgent = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             {i18n.language === 'ar' ? 'وكيل الجمهور الذكي' : 'Smart Public Agent'}
           </h2>
-          <div className="flex gap-2 flex-wrap">
-            <Button 
-              variant="default"
-              onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
-              size="sm"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-            >
-              <ExternalLink size={16} className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'} />
-              {i18n.language === 'ar' ? 'فتح الوكيل الكامل' : 'Open Full Agent'}
-            </Button> 
-          </div>
+          <Button 
+            variant="default"
+            onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
+            size="sm"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+          >
+            <ExternalLink size={16} className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'} />
+            {i18n.language === 'ar' ? 'فتح الوكيل الكامل' : 'Open Full Agent'}
+          </Button>
+        </div>
+
+        {/* Info Banner */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            {i18n.language === 'ar' 
+              ? '💡 للحصول على أفضل تجربة، انقر على "فتح الوكيل الكامل" للتحدث مباشرة مع وكيل Genspark الذكي.'
+              : '💡 For the best experience, click "Open Full Agent" to chat directly with the Genspark AI agent.'}
+          </p>
         </div>
 
         {/* Chat Interface */}
@@ -102,46 +111,45 @@ const PublicAgent = () => {
                         : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border dark:border-slate-700 rounded-tl-none'
                     }`}>
                       {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                      <Bot size={16} />
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border dark:border-slate-700 rounded-tl-none shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
                       </div>
                     </div>
-                  ))}
-                  {loading && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                        <Bot size={16} />
-                      </div>
-                      <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border dark:border-slate-700 rounded-tl-none shadow-sm">
-                        <div className="flex gap-1">
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-              
-              <div className="p-3 sm:p-4 bg-white dark:bg-slate-800 border-t dark:border-slate-700">
-                <form 
-                  onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
-                  className="flex gap-2"
-                >
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={i18n.language === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message here...'}
-                    className="flex-1"
-                    disabled={loading}
-                  />
-                  <Button type="submit" disabled={loading || !input.trim()} className="bg-blue-600 hover:bg-blue-700">
-                    <Send size={18} className={i18n.dir() === 'rtl' ? 'rotate-180' : ''} />
-                  </Button>
-                </form>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </ScrollArea>
+            
+            <div className="p-3 sm:p-4 bg-white dark:bg-slate-800 border-t dark:border-slate-700">
+              <form 
+                onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
+                className="flex gap-2"
+              >
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={i18n.language === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message here...'}
+                  className="flex-1"
+                  disabled={loading}
+                />
+                <Button type="submit" disabled={loading || !input.trim()} className="bg-blue-600 hover:bg-blue-700">
+                  <Send size={18} className={i18n.dir() === 'rtl' ? 'rotate-180' : ''} />
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

@@ -35,6 +35,7 @@ import Login from "./pages/Login";
 import Users from "./pages/UsersManagement";
 import PublicAgent from "./pages/PublicAgent";
 import QuotationGenerator from "./pages/QuotationGenerator";
+import DocumentPrint from "./pages/DocumentPrint";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {

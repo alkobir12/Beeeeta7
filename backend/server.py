@@ -1875,6 +1875,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Arabic Quotation router not loaded: {e}")
 
+# Import and include Unified Document router
+try:
+    document_router = APIRouter(prefix="/api")
+    create_unified_document_routes(document_router)
+    app.include_router(document_router)
+    logger.info("✅ Unified Document router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Unified Document router not loaded: {e}")
+
 # Auto-Sync Status endpoint
 @app.get('/api/sync/status')
 async def get_sync_status():

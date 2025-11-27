@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { MessageCircle, X, Loader2, Search, ClipboardList, FileText } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MessageCircle, X, Loader2, Search, ClipboardList, FileText, Receipt } from 'lucide-react';
 import { aiAPI, vehicleAPI } from '../services/api';
 
 // ويدجت مساعد الورشة الذكي العائم - يظهر في كل الصفحات داخل Layout
 const ChatWidget = () => {
+  const navigate = useNavigate();
+
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState('diagnosis'); // 'diagnosis' | 'technical' | 'invoice'
   const [loading, setLoading] = useState(false);
@@ -62,7 +65,7 @@ const ChatWidget = () => {
         vehicle_id: vehicle ? vehicle.id : undefined,
         make: vehicle?.brand || vehicle?.make || 'غير محدد',
         model: vehicle?.model || 'غير محدد',
-        year: vehicle?.modelYear || vehicle?.year || '',
+        year: vehicle?.year || vehicle?.modelYear || '',
         mileage: vehicle?.mileage || undefined,
         fuel_type: vehicle?.fuelType || 'بنزين',
         symptoms: symptoms || 'لا توجد أعراض مذكورة',
@@ -97,15 +100,36 @@ const ChatWidget = () => {
     }
   };
 
-  // لاحقاً يمكن ربط وضع "invoice" لتحليل/اقتراح فاتورة بناءً على المركبة أو العناصر
+  // تحديد المركبة الحالية من عنوان الصفحة مثل /vehicle/:id
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const currentVehicleIdFromPath = useMemo(() => {
+    const match = currentPath.match(/^\/vehicle\/(.+)$/);
+    return match ? match[1] : '';
+  }, [currentPath]);
+
+  const currentVehicle = useMemo(
+    () => vehicles.find((v) => v.id === currentVehicleIdFromPath) || null,
+    [vehicles, currentVehicleIdFromPath]
+  );
 
   // لا نظهر الودجت داخل شاشة تسجيل الدخول أو الشاشات العامة (approval/report)
   if (typeof window !== 'undefined') {
     const path = window.location.pathname;
-    if (path.startsWith('/login') || path.startsWith('/approval') || path.startsWith('/report') || path.startsWith('/track')) {
+    if (
+      path.startsWith('/login') ||
+      path.startsWith('/approval') ||
+      path.startsWith('/report') ||
+      path.startsWith('/track')
+    ) {
       return null;
     }
   }
+
+  const goToPrint = (type, vehicleId) => {
+    if (!vehicleId) return;
+    setIsOpen(false);
+    navigate(`/print?type=${encodeURIComponent(type)}&vehicleId=${encodeURIComponent(vehicleId)}`);
+  };
 
   return (
     <>
@@ -242,18 +266,21 @@ const ChatWidget = () => {
                     <p className="text-[11px] text-slate-800 whitespace-pre-wrap leading-relaxed">
                       {diagnosisResult.diagnosis || 'لم يتم استلام تشخيص من العميل الذكي.'}
                     </p>
-                    {Array.isArray(diagnosisResult.local_manuals_found) && diagnosisResult.local_manuals_found.length > 0 && (
-                      <div className="mt-2 border-t pt-2 border-slate-200">
-                        <div className="text-[11px] font-semibold mb-1 text-slate-700">كتيبات ذات صلة:</div>
-                        <ul className="list-disc pr-4 text-[11px] text-slate-700 space-y-0.5">
-                          {diagnosisResult.local_manuals_found.map((m) => (
-                            <li key={m.manual_id}>
-                              {m.name} — {m.engine}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {Array.isArray(diagnosisResult.local_manuals_found) &&
+                      diagnosisResult.local_manuals_found.length > 0 && (
+                        <div className="mt-2 border-t pt-2 border-slate-200">
+                          <div className="text-[11px] font-semibold mb-1 text-slate-700">
+                            كتيبات ذات صلة:
+                          </div>
+                          <ul className="list-disc pr-4 text-[11px] text-slate-700 space-y-0.5">
+                            {diagnosisResult.local_manuals_found.map((m) => (
+                              <li key={m.manual_id}>
+                                {m.name} — {m.engine}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 )}
               </>
@@ -304,14 +331,103 @@ const ChatWidget = () => {
 
             {mode === 'invoice' && (
               <>
-                <p className="text-slate-700 mb-1">
-                  هذا الوضع مخصص لمساعدتك في اختيار نوع الفاتورة المناسب وربطها بالتشخيص أو العملية.
-                  يمكننا تطوير هذا الجزء ليتكامل مع نظام الفواتير الموحد الذي بنيناه.
-                </p>
-                <p className="text-[11px] text-slate-600">
-                  مثال لاستخدام قادم: اختيار مركبة/تشخيص، ثم اقتراح نوع المستند (عرض سعر، فاتورة مبيعات، تقرير تشخيص)
-                  وربطه مباشرة بزر الطباعة في صفحة السيارة.
-                </p>
+                {currentVehicle ? (
+                  <>
+                    <p className="text-slate-700 mb-2">
+                      أنت حالياً في صفحة مركبة رقم{' '}
+                      <span className="font-semibold">{currentVehicle.plateNumber || currentVehicle.trackingLink}</span>.
+                      اختر نوع المستند الذي تريد طباعته لهذه المركبة:
+                    </p>
+                    <div className="bg-slate-50 border border-slate-200 rounded-md p-2.5 mb-2 text-[12px]">
+                      <div className="font-semibold mb-1 text-slate-800">ملخص سريع:</div>
+                      <div className="space-y-1 text-slate-700">
+                        <div>
+                          العميل: <span className="font-medium">{currentVehicle.customerName || '-'}</span>
+                        </div>
+                        <div>
+                          السيارة:{' '}
+                          <span className="font-medium">
+                            {[currentVehicle.brand, currentVehicle.model, currentVehicle.year]
+                              .filter(Boolean)
+                              .join(' ')}{' '}
+                            — {currentVehicle.plateNumber || '-'}
+                          </span>
+                        </div>
+                        <div>
+                          الحالة الحالية:{' '}
+                          <span className="font-medium">{currentVehicle.status || 'غير محددة'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => goToPrint('diagnosis', currentVehicle.id)}
+                        className="w-full inline-flex items-center justify-between rounded-md border border-orange-200 bg-orange-50 hover:bg-orange-100 px-3 py-2 text-[12px] text-orange-900"
+                      >
+                        <div className="flex items-center gap-2">
+                          <ClipboardList size={16} />
+                          <div className="flex flex-col items-start">
+                            <span className="font-semibold">تقرير تشخيص</span>
+                            <span className="text-[10px] text-orange-800/80">
+                              يستخدم للأعطال والتقارير قبل الإصلاح
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px]">طباعة</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => goToPrint('invoice', currentVehicle.id)}
+                        className="w-full inline-flex items-center justify-between rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-2 text-[12px] text-blue-900"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Receipt size={16} />
+                          <div className="flex flex-col items-start">
+                            <span className="font-semibold">فاتورة مبيعات</span>
+                            <span className="text-[10px] text-blue-800/80">
+                              بعد اعتماد العميل وإنهاء العمل
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px]">طباعة</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => goToPrint('quote', currentVehicle.id)}
+                        className="w-full inline-flex items-center justify-between rounded-md border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 text-[12px] text-green-900"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText size={16} />
+                          <div className="flex flex-col items-start">
+                            <span className="font-semibold">عرض سعر</span>
+                            <span className="text-[10px] text-green-800/80">
+                              قبل الإصلاح أو لإرسال عرض مكتوب للعميل
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px]">طباعة</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-slate-700 mb-2">
+                      لا يمكن تحديد مركبة حالياً.
+                    </p>
+                    <p className="text-[12px] text-slate-600 mb-2">
+                      لتمكين مساعد الفاتورة:
+                    </p>
+                    <ol className="list-decimal pr-4 text-[12px] text-slate-600 space-y-1">
+                      <li>اذهب إلى صفحة "تفاصيل المركبة" للمركبة المطلوبة.</li>
+                      <li>افتح مساعد الورشة الذكي من الزر العائم في الأسفل.</li>
+                      <li>اختر تبويب "مساعدة فاتورة" ليقترح عليك النوع المناسب ويحولك لصفحة الطباعة.</li>
+                    </ol>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -16,6 +16,8 @@ const LanguageToggle = () => {
       document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
       document.documentElement.lang = lng;
     }
+    // Force reload to ensure all components update
+    window.location.reload();
   };
 
   return (

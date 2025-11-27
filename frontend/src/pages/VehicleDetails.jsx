@@ -232,6 +232,72 @@ const VehicleDetails = () => {
           </CardContent>
         </Card>
 
+        {/* Approval Modal */}
+        {showApprovalModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md shadow-2xl">
+              <CardHeader>
+                <CardTitle>إنشاء طلب اعتماد جديد</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>عنوان الطلب</Label>
+                  <input 
+                    className="w-full p-2 border rounded" 
+                    value={approvalForm.title} 
+                    onChange={e => setApprovalForm({...approvalForm, title: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <Label>المبلغ المقدر (ر.س)</Label>
+                  <input 
+                    type="number" 
+                    className="w-full p-2 border rounded" 
+                    value={approvalForm.amount} 
+                    onChange={e => setApprovalForm({...approvalForm, amount: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <Label>تفاصيل إضافية</Label>
+                  <Textarea 
+                    value={approvalForm.notes} 
+                    onChange={e => setApprovalForm({...approvalForm, notes: e.target.value})} 
+                  />
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <Button variant="outline" onClick={() => setShowApprovalModal(false)}>إلغاء</Button>
+                  <Button 
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={async () => {
+                      try {
+                        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                        await fetch(`${API_URL}/approvals`, {
+                          method: 'POST',
+                          headers: {'Content-Type': 'application/json'},
+                          body: JSON.stringify({
+                            vehicleId: id,
+                            customerId: vehicle.customerId,
+                            title: approvalForm.title,
+                            amount: Number(approvalForm.amount) || 0,
+                            serviceItemsText: approvalForm.notes
+                          })
+                        });
+                        toast({ title: 'تم', description: 'تم إنشاء طلب الاعتماد' });
+                        setShowApprovalModal(false);
+                        fetchData();
+                      } catch (e) {
+                        toast({ title: 'خطأ', description: 'فشل إنشاء الطلب', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    إرسال الطلب
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Vehicle & Customer Info */}
           <div className="space-y-6">

@@ -104,6 +104,20 @@ app = FastAPI(title="Workshop Management API")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# ============ Invoice Studio Integration ============
+try:
+    # تحديد مسار مجلد استوديو الفواتير
+    static_path = ROOT_DIR.parent / "frontend" / "public" / "invoice-studio"
+    
+    if static_path.exists():
+        # تركيب المجلد كملفات ثابتة على الرابط /invoice-studio
+        app.mount("/invoice-studio", StaticFiles(directory=str(static_path), html=True), name="invoice-studio")
+        print(f"✅ Invoice Studio mounted successfully at /invoice-studio")
+    else:
+        print(f"⚠️ Warning: Invoice Studio path not found at {static_path}")
+except Exception as e:
+    print(f"❌ Error mounting Invoice Studio: {e}")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,

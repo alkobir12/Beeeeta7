@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -23,6 +23,9 @@ from models import (
 )
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+# Import Arabic Quotation Builder
+from arabic_quotation import ArabicQuotationBuilder, create_quotation_routes
 
 # Import extended routes
 from routes_extended import router as extended_router, set_db as set_db_extended

@@ -131,6 +131,25 @@ const ChatWidget = () => {
     navigate(`/print?type=${encodeURIComponent(type)}&vehicleId=${encodeURIComponent(vehicleId)}`);
   };
 
+  // اقتراح نوع المستند تلقائياً بناءً على حالة المركبة
+  const suggestedDocType = useMemo(() => {
+    if (!currentVehicle) return null;
+    const status = currentVehicle.status || '';
+    if (status === 'diagnosis') return 'diagnosis';
+    if (status === 'quotation') return 'quote';
+    if (status === 'ready' || status === 'delivered') return 'invoice';
+    return null;
+  }, [currentVehicle]);
+
+  const suggestedDocLabel =
+    suggestedDocType === 'diagnosis'
+      ? 'تقرير تشخيص'
+      : suggestedDocType === 'quote'
+      ? 'عرض سعر'
+      : suggestedDocType === 'invoice'
+      ? 'فاتورة مبيعات'
+      : null;
+
   return (
     <>
       {/* زر عائم لفتح/إغلاق المساعد */}
@@ -357,6 +376,17 @@ const ChatWidget = () => {
                           الحالة الحالية:{' '}
                           <span className="font-medium">{currentVehicle.status || 'غير محددة'}</span>
                         </div>
+                        {suggestedDocType && (
+                          <div className="text-[11px] text-blue-700 mt-1">
+                            اقتراح مساعد: الأنسب الآن هو{' '}
+                            <span className="font-semibold">{suggestedDocLabel}</span>
+                            {suggestedDocType === 'diagnosis'
+                              ? ' (الحالة ما زالت في مرحلة التشخيص).'
+                              : suggestedDocType === 'quote'
+                              ? ' (المركبة في مرحلة التسعير، مناسب لإرسال عرض سعر للعميل).'
+                              : ' (المركبة جاهزة/مسلمة، مناسب لإصدار فاتورة نهائية).'}
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -1,13 +1,13 @@
 [
   {
-    "partNumber": "اا",
-    "name": "5غ",
-    "category": "لل",
-    "purchasePrice": 987.0,
-    "sellingPrice": 6677.0,
-    "quantity": 5,
+    "partNumber": "PRT-79880-199",
+    "name": "ترس كرنك مازدا - 200",
+    "category": "مكينة",
+    "purchasePrice": 494.0,
+    "sellingPrice": 192.0,
+    "quantity": 44,
     "minQuantity": 5,
-    "supplier": "",
-    "image": "",
-    "id": "5a400e86-4dc1-4ccf-89b1-f33fd218d158",
+    "supplier": null,
+    "image": null,
+    "id": "121ba340-2765-4517-b1cb-753efd71a45d",
     "createdAt": 

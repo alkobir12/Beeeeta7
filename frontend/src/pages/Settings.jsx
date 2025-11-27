@@ -207,12 +207,24 @@ const Settings = () => {
                   <div>
                     <Label>اللغة</Label>
                     <select 
-                      className="w-full border rounded p-2" 
+                      className="w-full border rounded p-2 bg-background text-foreground" 
                       value={settings.language} 
                       onChange={(e) => setSettings({...settings, language: e.target.value})}
                     >
                       <option value="ar">العربية</option>
                       <option value="en">English</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label>المظهر</Label>
+                    <select 
+                      className="w-full border rounded p-2 bg-background text-foreground" 
+                      value={settings.themeName} 
+                      onChange={(e) => setSettings({...settings, themeName: e.target.value})}
+                    >
+                      <option value="light">فاتح</option>
+                      <option value="dark">داكن</option>
+                      <option value="system">النظام</option>
                     </select>
                   </div>
                 </div>

@@ -1514,6 +1514,12 @@ async def chat_with_ai(chat_request: ChatRequest):
         
         # Initialize Claude AI مع prompt محسّن
         llm_key = os.getenv('EMERGENT_LLM_KEY')
+        
+        # Ensure we have a key
+        if not llm_key:
+             # Fallback mock response if no key
+             return ChatResponse(response="عذراً، لم يتم تكوين مفتاح الذكاء الاصطناعي. يرجى التحقق من الإعدادات.", sessionId=session_id)
+
         chat = LlmChat(
             api_key=llm_key,
             session_id=session_id,

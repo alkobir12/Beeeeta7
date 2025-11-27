@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload } from 'lucide-react';
+import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import Layout from '../components/Layout';

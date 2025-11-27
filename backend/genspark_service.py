@@ -3,36 +3,44 @@ import os
 import requests
 from fastapi import HTTPException
 
-GENSPARK_API_URL = "https://api.genspark.ai/v1/agent/chat" # Hypothetical URL, will use standard structure
-GENSPARK_API_KEY = os.environ.get('GENSPARK_API_KEY', 'placeholder_key')
-GENSPARK_AGENT_ID = os.environ.get('GENSPARK_AGENT_ID')
+# Genspark Agent Configuration
+GENSPARK_AGENT_ID = os.environ.get('GENSPARK_AGENT_ID', 'fe62398f-faa9-4a8f-bae9-4d0b5dc25680')
+GENSPARK_API_URL = f"https://api.genspark.ai/agents/{GENSPARK_AGENT_ID}/chat"
+GENSPARK_API_KEY = os.environ.get('GENSPARK_API_KEY', '')
 
 def chat_with_genspark(message: str, session_id: str = None):
-    if not GENSPARK_AGENT_ID:
-        raise HTTPException(status_code=500, detail="Genspark Agent ID not configured")
-    
+    """
+    Send a message to the Genspark agent and get a response.
+    """
     headers = {
-        "Authorization": f"Bearer {GENSPARK_API_KEY}",
         "Content-Type": "application/json",
-        "X-Agent-ID": GENSPARK_AGENT_ID
     }
+    
+    # Add API key if available
+    if GENSPARK_API_KEY:
+        headers["Authorization"] = f"Bearer {GENSPARK_API_KEY}"
     
     payload = {
-        "agent_id": GENSPARK_AGENT_ID,
         "message": message,
-        "session_id": session_id
     }
     
+    if session_id:
+        payload["session_id"] = session_id
+    
     try:
-        # Note: This is a best-guess implementation based on common patterns
-        # If the user provided a specific snippet before, I'm mimicking a standard proxy
-        response = requests.post(GENSPARK_API_URL, json=payload, headers=headers, timeout=30)
+        response = requests.post(GENSPARK_API_URL, json=payload, headers=headers, timeout=60)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        return {
+            "response": data.get("response", data.get("message", data.get("answer", str(data)))),
+            "session_id": data.get("session_id", session_id)
+        }
+    except requests.exceptions.HTTPError as e:
+        print(f"Genspark HTTP Error: {e}, Response: {e.response.text if e.response else 'N/A'}")
+        raise HTTPException(status_code=502, detail=f"Genspark API error: {str(e)}")
+    except requests.exceptions.RequestException as e:
+        print(f"Genspark Request Error: {e}")
+        raise HTTPException(status_code=503, detail=f"Could not connect to Genspark: {str(e)}")
     except Exception as e:
         print(f"Genspark Error: {e}")
-        # Fallback mock response if API fails (since we might not have the real key)
-        return {
-            "response": "مرحباً! أنا وكيلك الذكي. (ملاحظة: لم يتم التحقق من مفتاح API، هذا رد تلقائي)",
-            "session_id": session_id
-        }
+        raise HTTPException(status_code=500, detail=f"Genspark service error: {str(e)}")

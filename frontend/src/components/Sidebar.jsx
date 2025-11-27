@@ -110,6 +110,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             { path:'/knowledge', label:'', enabled:true },
             { path:'/public-agent', label:'وكيل الجمهور', enabled:true },
             { path:'/quotations', label:'عروض الأسعار', enabled:true },
+            { path:'/print', label:'طباعة المستندات', enabled:true },
             { group:true, path:'/settings', label:'', enabled:true, children:[
               { path:'/settings', label:'', enabled:true },
               { path:'/templates', label:'', enabled:true },

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
 import {
   LayoutDashboard,
   Users as UsersIcon,
@@ -18,18 +17,24 @@ import {
   BookOpen,
   Moon,
   Sun,
-  LogOut
+  LogOut,
+  Menu,
+  ChevronDown,
+  ChevronLeft,
+  Printer,
+  Receipt,
+  Car
 } from 'lucide-react';
 import axios from 'axios';
-import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
+// أيقونات القائمة
 const PATH_ICONS = {
   '/': LayoutDashboard,
   '/customers': UsersIcon,
-  '/customer-receipts': FileText,
+  '/customer-receipts': Receipt,
   '/technicians': Wrench,
   '/services': Wrench,
   '/operations': Package,
@@ -49,243 +54,250 @@ const PATH_ICONS = {
   '/users': UsersIcon,
   '/public-agent': Brain,
   '/quotations': FileText,
-  '/print': FileText
+  '/print': Printer,
+  '/references': BookOpen
 };
+
+// أسماء الصفحات بالعربي
+const PAGE_NAMES = {
+  '/': 'لوحة التحكم',
+  '/customers': 'العملاء',
+  '/customer-receipts': 'إيصالات العملاء',
+  '/technicians': 'الفنيين',
+  '/services': 'الخدمات',
+  '/operations': 'العمليات',
+  '/analytics': 'التحليلات',
+  '/archive': 'الأرشيف',
+  '/suppliers': 'الموردين',
+  '/parts': 'قطع الغيار',
+  '/templates': 'القوالب',
+  '/ai-assistant': 'المساعد الذكي',
+  '/business-accounts': 'حسابات الأعمال',
+  '/profile': 'ملف الورشة',
+  '/import': 'استيراد',
+  '/settings': 'الإعدادات',
+  '/invoice-templates': 'قوالب الفواتير',
+  '/ceo': 'لوحة المدير',
+  '/knowledge': 'قاعدة المعرفة',
+  '/users': 'المستخدمين',
+  '/public-agent': 'الوكيل الذكي',
+  '/quotations': 'عروض الأسعار',
+  '/print': 'طباعة المستندات',
+  '/references': 'المراجع الفنية',
+  '/new-vehicle': 'استقبال مركبة'
+};
+
+// القائمة الافتراضية
+const DEFAULT_MENU = [
+  { path: '/', label: 'لوحة التحكم', enabled: true },
+  { path: '/customers', label: 'العملاء', enabled: true },
+  { path: '/technicians', label: 'الفنيين', enabled: true },
+  { path: '/parts', label: 'قطع الغيار', enabled: true },
+  { path: '/services', label: 'الخدمات', enabled: true },
+  { path: '/operations', label: 'العمليات', enabled: true },
+  { 
+    group: true, 
+    label: 'المستندات', 
+    enabled: true, 
+    children: [
+      { path: '/print', label: 'طباعة المستندات', enabled: true },
+      { path: '/quotations', label: 'عروض الأسعار', enabled: true },
+      { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
+    ]
+  },
+  { 
+    group: true, 
+    label: 'الذكاء الاصطناعي', 
+    enabled: true, 
+    children: [
+      { path: '/knowledge', label: 'قاعدة المعرفة', enabled: true },
+      { path: '/references', label: 'المراجع الفنية', enabled: true },
+      { path: '/public-agent', label: 'الوكيل الذكي', enabled: true },
+    ]
+  },
+  { 
+    group: true, 
+    label: 'الإدارة', 
+    enabled: true, 
+    children: [
+      { path: '/ceo', label: 'لوحة المدير', enabled: true },
+      { path: '/analytics', label: 'التحليلات', enabled: true },
+      { path: '/business-accounts', label: 'حسابات الأعمال', enabled: true },
+      { path: '/users', label: 'المستخدمين', enabled: true },
+    ]
+  },
+  { 
+    group: true, 
+    label: 'الإعدادات', 
+    enabled: true, 
+    children: [
+      { path: '/profile', label: 'ملف الورشة', enabled: true },
+      { path: '/settings', label: 'الإعدادات', enabled: true },
+      { path: '/archive', label: 'الأرشيف', enabled: true },
+    ]
+  },
+];
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuConfig, setMenuConfig] = useState(null);
+  const [menuItems, setMenuItems] = useState(DEFAULT_MENU);
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [workshopName, setWorkshopName] = useState('ورشتي');
-  const [userPermissions, setUserPermissions] = useState({});
-  const [userRole, setUserRole] = useState('admin');
-  const { t, i18n } = useTranslation();
-  const { theme, setTheme } = useTheme();
-
-  const isRTL = i18n.dir() === 'rtl';
-
-  const pathToLabelKey = {
-    '/': 'nav.dashboard',
-    '/operations': 'nav.operations',
-    '/services': 'nav.inventory',
-    '/parts': 'parts.title',
-    '/customers': 'nav.customers',
-    '/technicians': 'nav.technicians',
-    '/business-accounts': 'settings.profile',
-    '/invoice-templates': 'templates',
-    '/analytics': 'nav.analytics',
-    '/knowledge': 'nav.aiAssistant',
-    '/settings': 'nav.settings',
-    '/users': 'users',
-    '/public-agent': 'وكيل الجمهور',
-    '/quotations': 'عروض الأسعار',
-    '/print': 'طباعة المستندات'
-  };
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
     try {
-      const session = JSON.parse(localStorage.getItem('session') || '{}');
-      setUserPermissions(session.permissions || {});
-      setUserRole(session.role || 'admin');
-    } catch (e) {}
-    const load = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/settings`);
-        setWorkshopName(data?.workshopName || (i18n.language === 'ar' ? 'ورشتي' : 'My Workshop'));
-        let mc = data?.menuConfig || null;
-        setMenuConfig(mc || null);
-      } catch (_) {
-        const defaultMenu = {
-          items: [
-            { path:'/', label:'', enabled:true },
-            { path:'/operations', label:'', enabled:true },
-            { path:'/services', label:'', enabled:true },
-            { path:'/parts', label:'', enabled:true },
-            { path:'/customers', label:'', enabled:true },
-            { path:'/technicians', label:'', enabled:true },
-            { path:'/business-accounts', label:'', enabled:true },
-            { path:'/invoice-templates', label:'', enabled:true },
-            { path:'/analytics', label:'', enabled:true },
-            { path:'/knowledge', label:'', enabled:true },
-            { path:'/public-agent', label:'وكيل الجمهور', enabled:true },
-            { path:'/quotations', label:'عروض الأسعار', enabled:true },
-            { path:'/print', label:'طباعة المستندات', enabled:true },
-            { group:true, path:'/settings', label:'', enabled:true, children:[
-              { path:'/settings', label:'', enabled:true },
-              { path:'/templates', label:'', enabled:true },
-              { path:'/users', label:'', enabled:true },
-            ]}
-          ]
-        };
-        setMenuConfig(defaultMenu);
+      const { data } = await axios.get(`${API_URL}/settings`);
+      if (data?.workshopName) {
+        setWorkshopName(data.workshopName);
       }
-    };
-    load();
-  }, [i18n.language]);
+      if (data?.menuConfig?.items) {
+        setMenuItems(data.menuConfig.items);
+      }
+    } catch (e) {
+      console.error('Error loading settings:', e);
+    }
+  };
+
+  const toggleGroup = (label) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  };
 
   const handleNavigate = (path) => {
-    const canNavigate = checkPathPermission(path);
-    if (!canNavigate) return;
     navigate(path);
-    if (onClose) onClose();
+    if (window.innerWidth < 1024) {
+      onClose?.();
+    }
   };
 
-  const checkPathPermission = (path) => {
-    if (userRole === 'admin') return true;
-    // ... (permission logic same as before)
-    return true; 
+  const handleLogout = () => {
+    localStorage.removeItem('workshopUser');
+    navigate('/login');
   };
 
-  const localizeLabel = (path, fallback) => {
-    const key = pathToLabelKey[path];
-    if (key) return t(key);
-    return fallback || path;
-  };
+  const renderMenuItem = (item, index) => {
+    if (!item.enabled) return null;
 
-  const filteredMenu = useMemo(() => {
-    if (!menuConfig?.items) return null;
-    const clone = JSON.parse(JSON.stringify(menuConfig));
-    clone.items = clone.items.map(item => {
-      if (item.group && item.children) {
-        item.label = localizeLabel(item.path, item.label);
-        item.children = item.children.map(ch => ({...ch, label: localizeLabel(ch.path, ch.label)}));
-      } else {
-        item.label = localizeLabel(item.path, item.label);
-      }
-      return item;
-    });
-    return clone;
-  }, [menuConfig, i18n.language]);
+    if (item.group && item.children) {
+      const isCollapsed = collapsedGroups[item.label];
+      const hasActiveChild = item.children.some(child => location.pathname === child.path);
+      
+      return (
+        <div key={index} className="mb-2">
+          <button
+            onClick={() => toggleGroup(item.label)}
+            className={`sidebar-item w-full justify-between ${
+              hasActiveChild ? 'bg-white/5' : ''
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Cog className="sidebar-item-icon" />
+              <span>{item.label}</span>
+            </span>
+            {isCollapsed ? <ChevronLeft size={16} /> : <ChevronDown size={16} />}
+          </button>
+          
+          {!isCollapsed && (
+            <div className="mr-4 mt-1 border-r border-white/10 pr-2">
+              {item.children.map((child, childIndex) => {
+                if (!child.enabled) return null;
+                const Icon = PATH_ICONS[child.path] || FileText;
+                const isActive = location.pathname === child.path;
+                
+                return (
+                  <button
+                    key={childIndex}
+                    onClick={() => handleNavigate(child.path)}
+                    className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon className="sidebar-item-icon" />
+                    <span>{child.label || PAGE_NAMES[child.path]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const Icon = PATH_ICONS[item.path] || FileText;
+    const isActive = location.pathname === item.path;
+    
+    return (
+      <button
+        key={index}
+        onClick={() => handleNavigate(item.path)}
+        className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
+      >
+        <Icon className="sidebar-item-icon" />
+        <span>{item.label || PAGE_NAMES[item.path]}</span>
+      </button>
+    );
+  };
 
   return (
     <>
-      {isOpen && (<div className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm" onClick={onClose} />)}
-
-      <div className={`
-        fixed top-0 h-full shadow-2xl z-50 transition-transform duration-300 bg-card border-r border-border
-        w-64 lg:w-72 overflow-y-auto
-        ${isRTL ? 'right-0 border-l border-r-0' : 'left-0'}
-        ${isOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')}
-      `}>
-        <div className="p-6 pb-24 flex flex-col min-h-full">
-          <div className="flex items-center justify-between mb-8">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleNavigate('/') }>
-              <h2 className="text-2xl font-bold text-primary">{workshopName}</h2>
-              <p className="text-sm text-muted-foreground">{t('common.appName')}</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden"><X size={20} /></Button>
+      {/* Overlay for mobile */}
+      <div 
+        className={`sidebar-overlay ${isOpen ? 'visible' : ''}`}
+        onClick={onClose}
+      />
+      
+      {/* Sidebar */}
+      <aside className={`sidebar-modern ${isOpen ? 'open' : ''}`}>
+        {/* Header */}
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <Car size={24} />
           </div>
-
-          <div className="flex-1">
-            {filteredMenu?.items ? (
-              <nav className="space-y-1">
-                {filteredMenu.items.map((item) => {
-                  if (item.group && item.children?.length) {
-                    const isActive = location.pathname.startsWith(item.path);
-                    const collapsed = collapsedGroups[item.path];
-                    return (
-                      <div key={item.path} className="mb-2">
-                        <Button
-                          variant={isActive ? 'secondary' : 'ghost'}
-                          className={`w-full justify-between gap-3 py-2 h-auto font-normal ${isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                          onClick={() => setCollapsedGroups(prev => ({...prev, [item.path]: !prev[item.path]}))}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Cog size={18} />
-                            {item.label}
-                          </div>
-                          <span className="text-xs opacity-70">{collapsed ? '▼' : '▲'}</span>
-                        </Button>
-                        {!collapsed && (
-                          <div className={`mt-1 space-y-1 ${isRTL ? 'mr-4 border-r pr-2' : 'ml-4 border-l pl-2'} border-border`}>
-                            {item.children.map((ch) => (
-                              <Button 
-                                key={ch.path} 
-                                variant={location.pathname === ch.path ? 'secondary' : 'ghost'} 
-                                className={`w-full justify-start h-9 text-sm font-normal ${location.pathname === ch.path ? 'bg-secondary/50 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                                onClick={() => handleNavigate(ch.path)}
-                              >
-                                {ch.label}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  if (item.enabled === false) return null;
-                  const Icon = PATH_ICONS[item.path] || FileText;
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Button 
-                      key={item.path} 
-                      variant={isActive ? 'secondary' : 'ghost'} 
-                      className={`w-full justify-start gap-3 py-2 h-auto font-normal mb-1 ${isActive ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
-                      onClick={() => handleNavigate(item.path)}
-                    >
-                      <Icon size={18} />{item.label}
-                    </Button>
-                  );
-                })}
-              </nav>
-            ) : null}
+          <div className="flex-1 min-w-0">
+            <h2 className="sidebar-title">{workshopName}</h2>
+            <p className="text-xs opacity-60">نظام إدارة الورش</p>
           </div>
-
-          <div className="mt-auto pt-6 border-t border-border space-y-4">
-            {/* Theme Toggle */}
-            <div className="flex items-center justify-between px-2 py-2 bg-muted/30 rounded-lg">
-              <span className="text-sm text-muted-foreground">{theme === 'dark' ? 'الوضع الليلي' : 'الوضع النهاري'}</span>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              >
-                {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-              </Button>
-            </div>
-
-            <Card className="bg-muted/50 border-none shadow-none">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm">
-                    {(() => {
-                      try {
-                        const session = JSON.parse(localStorage.getItem('session') || '{}');
-                        return session.name?.[0]?.toUpperCase() || 'م';
-                      } catch(e) { return 'م'; }
-                    })()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">
-                      {(() => {
-                        try {
-                          const session = JSON.parse(localStorage.getItem('session') || '{}');
-                          return session.name || (i18n.language==='ar'?'مدير النظام':'System Admin');
-                        } catch(e) { return (i18n.language==='ar'?'مدير النظام':'System Admin'); }
-                      })()}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{i18n.language==='ar'?'مسجل دخول':'Signed in'}</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => {
-                    localStorage.removeItem('session');
-                    window.location.href = '/login';
-                  }} 
-                  variant="destructive" 
-                  className="w-full justify-center h-8 text-xs"
-                  size="sm"
-                >
-                  <LogOut size={14} className="mr-2" />
-                  {i18n.language==='ar'?'تسجيل خروج':'Logout'}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <button 
+            className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
         </div>
-      </div>
+
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          {menuItems.map((item, index) => renderMenuItem(item, index))}
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm opacity-70">الوضع</span>
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
+          
+          <button
+            onClick={handleLogout}
+            className="sidebar-item w-full text-red-400 hover:bg-red-500/10"
+          >
+            <LogOut className="sidebar-item-icon" />
+            <span>تسجيل خروج</span>
+          </button>
+        </div>
+      </aside>
     </>
   );
 };

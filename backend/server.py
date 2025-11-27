@@ -1884,6 +1884,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Unified Document router not loaded: {e}")
 
+# Import and include Workshop AI (CarWorkshopAI) router
+try:
+    from routes_workshop_ai import router as workshop_ai_router
+    app.include_router(workshop_ai_router)
+    logger.info("✅ Workshop AI router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Workshop AI router not loaded: {e}")
+
 # Auto-Sync Status endpoint
 @app.get('/api/sync/status')
 async def get_sync_status():

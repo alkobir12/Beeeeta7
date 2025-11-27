@@ -20,7 +20,14 @@
     "export": "تصدير",
     "filter": "تصفية",
     "all": "الكل",
-    "refresh": "تحديث"
+    "refresh": "تحديث",
+    "name": "الاسم",
+    "category": "الفئة",
+    "price": "السعر",
+    "currency": "ر.س",
+    "minute": "دقيقة",
+    "confirmDelete": "هل أنت متأكد من الحذف؟",
+    "send": "إرسال"
   },
   "nav": {
     "dashboard": "لوحة التحكم",

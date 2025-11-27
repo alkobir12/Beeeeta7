@@ -107,6 +107,7 @@ function App() {
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/users" element={<Users />} />
                     <Route path="/public-agent" element={<PublicAgent />} />
+                    <Route path="/quotations" element={<QuotationGenerator />} />
                   </Routes>
                 </Layout>
               </Protected>

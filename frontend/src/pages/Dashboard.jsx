@@ -129,57 +129,57 @@ const Dashboard = () => {
 
         {/* Status Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
-          <Card onClick={() => setFilterStatus('all')} className="cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+          <Card onClick={() => setFilterStatus('all')} className="cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-700 text-sm font-medium mb-1">{t('dashboard.totalVehicles')}</p>
-                  <p className="text-3xl font-bold text-blue-900">{stats.totalVehicles}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-blue-700 dark:text-blue-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.totalVehicles')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100">{stats.totalVehicles}</p>
                 </div>
-                <div className="bg-blue-600 p-3 rounded-full">
-                  <Car className="text-white" size={24} />
+                <div className="bg-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <Car className="text-white" size={20} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card onClick={() => setFilterStatus('diagnosis')} className="cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+          <Card onClick={() => setFilterStatus('diagnosis')} className="cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-700 text-sm font-medium mb-1">{t('dashboard.inProgress')}</p>
-                  <p className="text-3xl font-bold text-orange-900">{stats.inProgress}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-orange-700 dark:text-orange-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.inProgress')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-orange-100">{stats.inProgress}</p>
                 </div>
-                <div className="bg-orange-600 p-3 rounded-full">
-                  <Wrench className="text-white" size={24} />
+                <div className="bg-orange-600 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <Wrench className="text-white" size={20} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card onClick={() => setFilterStatus('ready')} className="cursor-pointer bg-gradient-to-br from-green-50 to-green-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+          <Card onClick={() => setFilterStatus('ready')} className="cursor-pointer bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-700 text-sm font-medium mb-1">{t('dashboard.ready')}</p>
-                  <p className="text-3xl font-bold text-green-900">{stats.ready}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-green-700 dark:text-green-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.ready')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-900 dark:text-green-100">{stats.ready}</p>
                 </div>
-                <div className="bg-green-600 p-3 rounded-full">
-                  <CheckCircle className="text-white" size={24} />
+                <div className="bg-green-600 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <CheckCircle className="text-white" size={20} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card onClick={() => navigate('/technicians')} className="cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+          <Card onClick={() => navigate('/technicians')} className="cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-none shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-700 text-sm font-medium mb-1">{t('dashboard.technicians')}</p>
-                  <p className="text-3xl font-bold text-purple-900">{stats.technicians}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-purple-700 dark:text-purple-300 text-xs sm:text-sm font-medium mb-1 truncate">{t('dashboard.technicians')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-purple-100">{stats.technicians}</p>
                 </div>
-                <div className="bg-purple-600 p-3 rounded-full">
-                  <Users className="text-white" size={24} />
+                <div className="bg-purple-600 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <Users className="text-white" size={20} />
                 </div>
               </div>
             </CardContent>

@@ -1,29 +1,82 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root{
-  --color-primary: #2563eb; /* Stronger primary (blue-600) */
-  --color-secondary: #0ea5e9; /* sky-500 */
-  --color-background: #f3f4f6; /* slate-100 */
-  --color-surface: #ffffff;
-  --color-text: #0f172a; /* slate-900 */
-  --base-font-size: 16px;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-/* Buttons and accents */
-.btn-godaddy-primary { background:#1BDB4F; color:#0b4214; border:1px solid #0b4214; }
-.btn-godaddy-primary:hover { background:#17c046; }
-
-html, body, #root { height: 100%; }
-body { background: var(--color-background); font-size: var(--base-font-size); }
-
-/* Canva-like card accents */
-.canva-accent-emerald { border-color: #10b981; background: #d1fae5; }
-.canva-accent-blue { border-color: #3b82f6; background: #dbeafe; }
-.canva-accent-purple { border-color: #8b5cf6; background: #ede9fe; }
-.canva-accent-rose { border-color: #f43f5e; background: #ffe4e6; }
-
-/* Godaddy primary reused */
-.btn-godaddy-primary { background:#1BDB4F; color:#0b4214; border:1px solid #0b4214; }
-.btn-godaddy-primary:hover { background:#17c046; }
+/* Custom Utilities */
+.canva-accent-emerald { @apply border-emerald-500 bg-emerald-50 dark:bg-emerald-950 dark:border-emerald-800; }
+.canva-accent-blue { @apply border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-800; }
+.canva-accent-purple { @apply border-purple-500 bg-purple-50 dark:bg-purple-950 dark:border-purple-800; }
+.canva-accent-rose { @apply border-rose-500 bg-rose-50 dark:bg-rose-950 dark:border-rose-800; }

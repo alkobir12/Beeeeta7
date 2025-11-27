@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -10,11 +9,11 @@ import axios from 'axios';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import CanvaCard from '../components/CanvaCard';
 import DraggableGrid from '../components/DraggableGrid';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
-  const { t, i18n } = useTranslation();
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
   const [services, setServices] = useState([]);
@@ -22,6 +21,8 @@ const Operations = () => {
   const [analytics, setAnalytics] = useState(null);
   const [form, setForm] = useState({ accountId: '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '', receiptFile: null });
   const [item, setItem] = useState({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0, category: '' });
+
+  const navigate = useNavigate();
 
   const load = async () => {
     const [accRes, partsRes, servicesRes, opsRes, analyticsRes] = await Promise.all([
@@ -176,7 +177,7 @@ const Operations = () => {
                             <td className="p-2">{it.price}</td>
                             <td className="p-2">{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
                             <td className="p-2 text-left">
-                              <Button size="sm" variant="ghost" className="text-red-500 h-6 w-6 p-0" onClick={()=>{
+                              <Button size="sm" variant="ghost" className="text-red-500 h-6 w-6 p-0" onClick={() =>{
                                 const newItems = [...form.items];
                                 newItems.splice(idx, 1);
                                 setForm({...form, items: newItems});
@@ -241,12 +242,28 @@ const Operations = () => {
                       <td className="p-3 font-medium">{op.partnerName}</td>
                       <td className="p-3 text-slate-500">{op.items?.length || 0} بند</td>
                       <td className="p-3 font-bold">{Number(op.total).toFixed(2)}</td>
-                      <td className="p-3">
-                        <Button size="sm" variant="outline" onClick={async ()=>{
-                          const res = await axios.get(`${API_URL}/operations/${op.id}`);
-                          const o = res.data;
-                          alert(`تفاصيل العملية:\nالنوع: ${o.type}\nالشريك: ${o.partnerName || '-'}\nالإجمالي: ${o.total}`);
-                        }}>عرض</Button>
+                      <td className="p-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const res = await axios.get(`${API_URL}/operations/${op.id}`);
+                            const o = res.data;
+                            alert(`تفاصيل العملية:\nالنوع: ${o.type}\nالشريك: ${o.partnerName || '-'}\nالإجمالي: ${o.total}`);
+                          }}
+                        >
+                          عرض
+                        </Button>
+                        {op.type === 'sale' && op.vehicleId && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-500 text-blue-700"
+                            onClick={() => navigate(`/print?type=invoice&vehicleId=${op.vehicleId}`)}
+                          >
+                            فاتورة للمركبة
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -259,126 +276,18 @@ const Operations = () => {
     });
 
     return items;
-  }, [accounts, ops, analytics, parts, services, item, form.items]);
+  }, [accounts, ops, analytics, parts, services, item, form.items, navigate]);
 
   return (
     <Layout>
-      <div className="min-h-screen" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="min-h-screen" dir="rtl">
         <div className="container mx-auto p-6 max-w-7xl">
-          <h1 className="text-3xl font-bold text-slate-800 mb-6">{t('operations.title')}</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-6">إدارة العمليات والمبيعات</h1>
 
           <DraggableGrid items={gridItems} storageKey="operations_cards_order" columns="grid-cols-1" />
         </div>
       </div>
     </Layout>
-  );
-};
-
-// CEO Embedded Components (unchanged)
-const CeoFilters = ({ accounts, onChange }) => {
-  const [range, setRange] = useState('month');
-  const [accountId, setAccountId] = useState('all');
-  useEffect(()=>{ onChange && onChange({range, accountId}); }, [range, accountId]);
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <Select value={range} onValueChange={setRange}>
-        <SelectTrigger><SelectValue placeholder="المدى الزمني" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="today">اليوم</SelectItem>
-          <SelectItem value="week">الأسبوع</SelectItem>
-          <SelectItem value="month">الشهر</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select value={accountId} onValueChange={setAccountId}>
-        <SelectTrigger><SelectValue placeholder="كل الفروع" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">كل الفروع</SelectItem>
-          {accounts.map(a => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
-        </SelectContent>
-      </Select>
-      <div className="text-slate-500 text-sm flex items-center">اختر الفترة والفرع لتحليل سريع</div>
-    </div>
-  );
-};
-
-const CeoSection = ({ accounts, ops }) => {
-  const [activeTab, setActiveTab] = useState('kpis');
-  const computeTotals = (ops, type) => ops.filter(o=>o.type===type).reduce((s,o)=>s+Number(o.total||0),0);
-  const totalSales = computeTotals(ops,'sale');
-  const totalExpenses = computeTotals(ops,'purchase');
-  const profit = totalSales - totalExpenses;
-
-  return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid grid-cols-3 w-full">
-        <TabsTrigger value="kpis">المؤشرات</TabsTrigger>
-        <TabsTrigger value="trends">الترند</TabsTrigger>
-        <TabsTrigger value="ask">اسأل CEO</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="kpis">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-4">
-              <div className="text-sm text-green-700">إجمالي المبيعات</div>
-              <div className="text-3xl font-bold text-green-800">{totalSales.toFixed(2)} ر.س</div>
-            </CardContent>
-          </Card>
-          <Card className="border-rose-200 bg-rose-50">
-            <CardContent className="p-4">
-              <div className="text-sm text-rose-700">إجمالي المصروفات</div>
-              <div className="text-3xl font-bold text-rose-800">{totalExpenses.toFixed(2)} ر.س</div>
-            </CardContent>
-          </Card>
-          <Card className={`border-2 ${profit>=0?'border-emerald-300 bg-emerald-50':'border-rose-300 bg-rose-50'}`}>
-            <CardContent className="p-4">
-              <div className="text-sm">صافي الربح</div>
-              <div className="text-3xl font-bold">{profit.toFixed(2)} ر.س</div>
-            </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-
-      <TabsContent value="trends">
-        <div className="text-sm text-slate-600">مخططات صغيرة (قريبًا) — سنعرض ترند أسبوعي/شهري للفروع.</div>
-      </TabsContent>
-
-      <TabsContent value="ask">
-        <CeoAskPanel accounts={accounts} />
-      </TabsContent>
-    </Tabs>
-  );
-};
-
-const CeoAskPanel = ({ accounts }) => {
-  const [question, setQuestion] = useState('حلل لي الربحية الشهرية لكل فرع واقترح قرارات.');
-  const [loading, setLoading] = useState(false);
-  const [answer, setAnswer] = useState('');
-
-  const run = async () => {
-    try {
-      setLoading(true);
-      setAnswer('');
-      const ids = accounts.slice(0,3).map(a=>a.id);
-      const res = await axios.post(`${API_URL}/ceo/ai-analysis-multi`, { accountIds: ids, question });
-      const txt = res.data?.ai?.answer || res.data?.ai || 'تم التحليل بنجاح. لا يوجد رد ذكي مُمكّن حالياً.';
-      setAnswer(JSON.stringify({ totals: res.data?.totals, summary: txt }, null, 2));
-    } catch (e) {
-      setAnswer('تعذر تنفيذ التحليل الآن.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <Label className="text-sm">سؤال إلى CEO</Label>
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
-        <Input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="اكتب سؤالك المالي هنا" />
-        <Button onClick={run} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">{loading?'جارٍ التحليل...':'تحليل ذكي'}</Button>
-      </div>
-      <pre className="p-3 bg-slate-50 border rounded text-xs whitespace-pre-wrap">{answer}</pre>
-    </div>
   );
 };
 

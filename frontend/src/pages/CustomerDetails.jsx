@@ -182,6 +182,11 @@ const CustomerDetails = () => {
                         <span className={`text-xs px-2 py-1 rounded ${appr.status==='approved'?'bg-green-100 text-green-700': appr.status==='rejected'?'bg-red-100 text-red-700': 'bg-yellow-100 text-yellow-700'}`}>
                           {appr.status}
                         </span>
+                        {appr.signature && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded" title={`IP: ${appr.clientIp}`}>
+                            موقع رقمياً
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}

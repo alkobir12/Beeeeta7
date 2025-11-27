@@ -18,7 +18,6 @@ import Analytics from "./pages/Analytics";
 import WorkshopProfile from "./pages/WorkshopProfile";
 import VehicleArchive from "./pages/VehicleArchive";
 import Layout from "./components/Layout";
-import Sidebar from "./components/Sidebar";
 import CEO from "./pages/CEO";
 import Payroll from "./pages/Payroll";
 import BusinessAccounts from "./pages/BusinessAccounts";

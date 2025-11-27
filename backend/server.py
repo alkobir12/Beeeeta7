@@ -26,6 +26,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 # Import Arabic Quotation Builder
 from arabic_quotation import ArabicQuotationBuilder, create_quotation_routes
+from unified_document_service import UnifiedDocumentGenerator, create_unified_document_routes
 
 # Import extended routes
 from routes_extended import router as extended_router, set_db as set_db_extended

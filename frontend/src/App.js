@@ -109,6 +109,7 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/public-agent" element={<PublicAgent />} />
                     <Route path="/quotations" element={<QuotationGenerator />} />
+                    <Route path="/print" element={<DocumentPrint />} />
                   </Routes>
                 </Layout>
               </Protected>

@@ -79,7 +79,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     '/settings': 'nav.settings',
     '/users': 'users',
     '/public-agent': 'وكيل الجمهور',
-    '/quotations': 'عروض الأسعار'
+    '/quotations': 'عروض الأسعار',
+    '/print': 'طباعة المستندات'
   };
 
   useEffect(() => {

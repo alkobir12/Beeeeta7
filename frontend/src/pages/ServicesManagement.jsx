@@ -4,8 +4,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { Edit } from 'lucide-react';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -15,6 +18,9 @@ const ServicesManagement = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [form, setForm] = useState({ name: '', category: '', price: 0, duration: 30 });
+  const [editingService, setEditingService] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', category: '', price: 0, duration: 30 });
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const load = async () => {
     const res = await axios.get(`${API_URL}/services`);
@@ -30,9 +36,30 @@ const ServicesManagement = () => {
     await load();
   };
 
+  const updateService = async (e) => {
+    e.preventDefault();
+    if (!editingService) return;
+    await axios.put(`${API_URL}/services/${editingService.id}`, editForm);
+    setIsEditOpen(false);
+    setEditingService(null);
+    await load();
+  };
+
   const remove = async (id) => {
+    if (!window.confirm(t('common.confirmDelete'))) return;
     await axios.delete(`${API_URL}/services/${id}`);
     await load();
+  };
+
+  const openEdit = (service) => {
+    setEditingService(service);
+    setEditForm({
+      name: service.name,
+      category: service.category,
+      price: service.price,
+      duration: service.duration
+    });
+    setIsEditOpen(true);
   };
 
   const categories = ['all', ...new Set(services.map(s => s.category))];
@@ -81,13 +108,49 @@ const ServicesManagement = () => {
                       <div className="text-sm text-slate-500">{s.category} • {Number(s.price).toFixed(2)} {t('common.currency')} • {s.duration} {t('common.minute')}</div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="destructive" onClick={()=>remove(s.id)}>{t('common.delete')}</Button>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
+                        <Edit size={16} className="ml-2" />
+                        {t('common.edit')}
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={()=>remove(s.id)}>{t('common.delete')}</Button>
                     </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('common.edit')}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={updateService} className="space-y-4">
+                <div>
+                  <Label>{t('common.name')}</Label>
+                  <Input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} />
+                </div>
+                <div>
+                  <Label>{t('common.category')}</Label>
+                  <Input value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t('common.price')}</Label>
+                    <Input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} />
+                  </div>
+                  <div>
+                    <Label>{t('services.duration')}</Label>
+                    <Input type="number" value={editForm.duration} onChange={e => setEditForm({...editForm, duration: e.target.value})} />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>{t('common.cancel')}</Button>
+                  <Button type="submit">{t('common.save')}</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </Layout>

@@ -113,16 +113,16 @@ const Dashboard = () => {
       <div className="min-h-screen" dir={dir}>
       <div className="container mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">{t('dashboard.title')}</h1>
-            <p className="text-slate-600">{t('common.appName')}</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">{t('dashboard.title')}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{t('common.appName')}</p>
           </div>
           <Button 
             onClick={() => navigate('/new-vehicle')}
-            className="btn-godaddy-primary px-6 py-3 text-lg font-semibold"
+            className="btn-godaddy-primary px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-lg font-semibold w-full sm:w-auto"
           >
-            <Plus className="ml-2" size={20} />
+            <Plus className={`${i18n.language === 'ar' ? 'ml-2' : 'mr-2'}`} size={20} />
             {i18n.language==='ar'?'استقبال مركبة جديدة':'New Vehicle Intake'}
           </Button>
         </div>

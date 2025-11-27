@@ -57,27 +57,21 @@ const PublicAgent = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 max-w-4xl h-[calc(100vh-100px)] flex flex-col">
-        {/* Toggle between Chat and Iframe */}
-        <div className="flex justify-between items-center mb-4">
+        {/* Header with actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             {i18n.language === 'ar' ? 'وكيل الجمهور الذكي' : 'Smart Public Agent'}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
-              variant={useIframe ? "outline" : "default"}
-              onClick={() => setUseIframe(false)}
+              variant="default"
+              onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
               size="sm"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
             >
-              {i18n.language === 'ar' ? 'محادثة' : 'Chat'}
-            </Button>
-            <Button 
-              variant={useIframe ? "default" : "outline"}
-              onClick={() => setUseIframe(true)}
-              size="sm"
-            >
-              {i18n.language === 'ar' ? 'النسخة الكاملة' : 'Full Version'}
-            </Button>
-            <Button 
+              <ExternalLink size={16} className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'} />
+              {i18n.language === 'ar' ? 'فتح الوكيل الكامل' : 'Open Full Agent'}
+            </Button> 
               variant="ghost"
               onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
               size="sm"

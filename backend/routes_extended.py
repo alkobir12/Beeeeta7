@@ -133,6 +133,27 @@ async def get_settings():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ----------- Manuals & YoshiParts helpers -----------
+@router.get('/manuals/yoshi/summary')
+async def get_yoshi_manual_summary(url: str):
+    """ملخص سريع لصفحة YoshiParts: عدّ الصور + قائمة المخططات.
+
+    الاستخدام: /api/manuals/yoshi/summary?url=...
+    """
+    try:
+        from ai_knowledge_base import count_images_in_page, extract_yoshi_diagrams
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unable to import helpers: {e}")
+
+    counts = count_images_in_page(url)
+    diagrams = extract_yoshi_diagrams(url)
+    return {
+        'url': url,
+        'counts': counts,
+        'diagrams': diagrams,
+    }
+
+
 @router.post('/settings')
 async def save_settings(payload: Dict[str, Any] = Body(...)):
     try:

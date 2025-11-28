@@ -9,22 +9,127 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import json
 
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+
 load_dotenv()
 
 
-def count_images_in_page(url: str) -> Dict[str, int]:
-    """عد الصور في الصفحة
+def _safe_get(url: str, timeout: int = 15) -> Optional[str]:
+    """Helper to fetch HTML content safely.
 
-    ملاحظة: هذه دالة مبدئية **وهمية** تستخدم لإرجاع أرقام ثابتة
-    لحين ربطها لاحقاً بنظام فعلي يقوم بجلب الصفحة وتحليلها.
+    Returns response text on success, or None on network/HTTP errors.
     """
-    # الكود لاحقاً سيستخرج الصور من الصفحة URL ويحسب الأنواع المختلفة
+    try:
+        headers = {
+            "User-Agent": "WorkshopManualBot/1.0 (+https://example.com)"
+        }
+        resp = requests.get(url, headers=headers, timeout=timeout)
+        if resp.status_code == 200 and "text/html" in resp.headers.get("Content-Type", ""):
+            return resp.text
+    except Exception:
+        pass
+    return None
+
+
+def extract_yoshi_diagrams(url: str) -> List[Dict[str, str]]:
+    """استخراج قائمة المخططات (Diagrams) من صفحة YoshiParts أو صفحات مشابهة.
+
+    تعتمد على البنية الحالية للصفحة التي تحتوي على عنصر بقيمة data-id="diagrams-list".
+    تعيد قائمة بالعناصر: العنوان، رابط صورة الدياجرام، ورابط صفحة المنتجات.
+    """
+    html = _safe_get(url)
+    if not html:
+        return []
+
+    soup = BeautifulSoup(html, "html.parser")
+    diagrams_container = soup.find(attrs={"data-id": "diagrams-list"})
+    if not diagrams_container:
+        # Fallback: ابحث عن عناصر ذات كلاس معروف للدياجرام
+        diagrams_container = soup
+
+    diagrams: List[Dict[str, str]] = []
+    for card in diagrams_container.select("._diagram_3pcga_1"):
+        img_tag = card.find("img")
+        footer = card.find(class_="_footer_3pcga_16") or card
+        link = footer.find("a")
+
+        img_url = img_tag["src"].strip() if img_tag and img_tag.get("src") else ""
+        title = link.get_text(strip=True) if link else ""
+        products_url = link["href"].strip() if link and link.get("href") else ""
+
+        if img_url or title or products_url:
+            diagrams.append({
+                "title": title,
+                "image_url": img_url,
+                "products_url": products_url,
+            })
+
+    return diagrams
+
+
+def count_images_in_page(url: str) -> Dict[str, int]:
+    """عد الصور في الصفحة بشكل حقيقي قدر الإمكان.
+
+    - total_images: كل الوسوم <img> في الصفحة.
+    - diagram_images: الصور الموجودة داخل حاوية الدياجرام (إن وُجدت) أو التي يبدو أنها مخططات.
+    - vehicle_images: صور لمركبة كاملة إن أمكن.
+
+    في حال فشل الجلب أو التحليل، تُعاد القيم 0.
+    """
+    html = _safe_get(url)
+    if not html:
+        return {
+            "total_images": 0,
+            "diagram_images": 0,
+            "vehicle_images": 0,
+            "high_res_diagrams": 0,
+            "medium_res_diagrams": 0,
+        }
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    all_imgs = soup.find_all("img")
+    total_images = len(all_imgs)
+
+    diagram_images = 0
+    vehicle_images = 0
+
+    # حاوية الدياجرام في YoshiParts
+    diagrams_container = soup.find(attrs={"data-id": "diagrams-list"})
+    if diagrams_container:
+        diagram_images = len(diagrams_container.find_all("img"))
+    else:
+        # خمن أن أي صورة من نطاق schemas هي دياجرام
+        for img in all_imgs:
+            src = img.get("src", "")
+            if "schemas/toyota" in src:
+                diagram_images += 1
+
+    # تخمين صورة المركبة من gen_.. أو مسار generations
+    for img in all_imgs:
+        src = img.get("src", "")
+        if any(key in src for key in ["generations/car/", "gen_", "vehicle"]):
+            vehicle_images += 1
+
+    # تقسيم تقريبي للـ diagrams حسب الدقة بناءً على امتداد/url
+    high_res_diagrams = 0
+    medium_res_diagrams = 0
+    for img in all_imgs:
+        src = img.get("src", "")
+        if "schemas/toyota" in src or src.endswith(".png"):
+            if any(w in src for w in ["@2x", "large", "big","2048"]):
+                high_res_diagrams += 1
+            else:
+                medium_res_diagrams += 1
+
     return {
-        "total_images": 30,
-        "diagram_images": 29,
-        "vehicle_images": 1,
-        "high_res_diagrams": 20,
-        "medium_res_diagrams": 9,
+        "total_images": total_images,
+        "diagram_images": diagram_images,
+        "vehicle_images": vehicle_images,
+        "high_res_diagrams": high_res_diagrams,
+        "medium_res_diagrams": medium_res_diagrams,
     }
 
 

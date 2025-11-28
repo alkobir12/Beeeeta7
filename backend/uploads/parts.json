@@ -1,13 +1,16 @@
 [
   {
-    "partNumber": "تت",
-    "name": "رت",
-    "category": "ت",
-    "purchasePrice": 87.0,
-    "sellingPrice": 87.0,
-    "quantity": 66,
+    "partNumber": "TEST-1",
+    "name": "قطعة اختبار",
+    "category": "اختبار",
+    "purchasePrice": 10.0,
+    "sellingPrice": 20.0,
+    "quantity": 5,
     "minQuantity": 5,
-    "supplier": "",
-    "image": "",
-    "id": "2d320048-5303-404e-b5a3-96df8b9f9b28",
-    "createdAt": 
+    "supplier": null,
+    "image": null,
+    "id": "815de0e6-4a1b-4a39-b020-899c5f828d43",
+    "createdAt": "2025-11-28T20:49:30.739353",
+    "updatedAt": "2025-11-28T20:49:30.739356"
+  }
+]

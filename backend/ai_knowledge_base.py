@@ -11,6 +11,23 @@ import json
 
 load_dotenv()
 
+
+def count_images_in_page(url: str) -> Dict[str, int]:
+    """عد الصور في الصفحة
+
+    ملاحظة: هذه دالة مبدئية **وهمية** تستخدم لإرجاع أرقام ثابتة
+    لحين ربطها لاحقاً بنظام فعلي يقوم بجلب الصفحة وتحليلها.
+    """
+    # الكود لاحقاً سيستخرج الصور من الصفحة URL ويحسب الأنواع المختلفة
+    return {
+        "total_images": 30,
+        "diagram_images": 29,
+        "vehicle_images": 1,
+        "high_res_diagrams": 20,
+        "medium_res_diagrams": 9,
+    }
+
+
 class AIKnowledgeBase:
     """
     Knowledge base for storing and retrieving automotive solutions
@@ -205,7 +222,7 @@ INITIAL_KNOWLEDGE = [
         "problem_type": "محرك",
         "vehicle_info": "تويوتا كامري 2015",
         "problem_description": "صوت طقطقة من المحرك عند بداية التشغيل",
-        "solution": "فحص مستوى الزيت وتغييره. في حالة استمرار المشكلة، فحص سير التايمن والسلسلة.",
+        "solution": "فحص مستوى الزيت وتغييره. في حالة استمرار المشكلة، فحص سير التايمين والسلسلة.",
         "technician_name": "أحمد محمد",
         "effectiveness_rating": 5
     },
@@ -243,7 +260,7 @@ INITIAL_KNOWLEDGE = [
     },
     {
         "problem_type": "محرك",
-        "vehicle_info": "تويوتا هايلوكس 2017",
+        "vehicle_info": "تويوتا هايلكس 2017",
         "problem_description": "استهلاك زائد للوقود",
         "solution": "تنظيف البخاخات وفحص فلتر الهواء وتبديله. فحص شمعات الاحتراق وتبديلها إذا كانت متسخة.",
         "technician_name": "محمد علي",
@@ -257,68 +274,4 @@ INITIAL_KNOWLEDGE = [
         "technician_name": "عبدالله سعد",
         "effectiveness_rating": 5
     },
-    {
-        "problem_type": "تعليق",
-        "vehicle_info": "هونداي توسان 2018",
-        "problem_description": "صوت طقطقة من الأمام عند المطبات",
-        "solution": "فحص المساعدات والمقصات. تبديل جلد المقصات أو البلي حسب الفحص.",
-        "technician_name": "سعود فهد",
-        "effectiveness_rating": 4
-    },
-    {
-        "problem_type": "محرك",
-        "vehicle_info": "نيسان التيما 2016",
-        "problem_description": "ارتفاع حرارة المحرك",
-        "solution": "فحص مستوى ماء الرديتر والتأكد من عدم وجود تسريب. فحص الثرموستات والمروحة الكهربائية.",
-        "technician_name": "أحمد محمد",
-        "effectiveness_rating": 5
-    },
-    {
-        "problem_type": "عادم",
-        "vehicle_info": "فورد اكسبلورر 2015",
-        "problem_description": "صوت عالٍ من العادم",
-        "solution": "فحص الشكمان بحثاً عن ثقوب أو صدأ. لحام أو تبديل الشكمان حسب الحالة.",
-        "technician_name": "سعود فهد",
-        "effectiveness_rating": 4
-    },
-    {
-        "problem_type": "كهرباء",
-        "vehicle_info": "تويوتا كورولا 2020",
-        "problem_description": "مشكلة في برمجة مفتاح السيارة",
-        "solution": "إعادة برمجة المفتاح باستخدام الماسح التشخيصي. في حالة فشل البرمجة، تبديل بطارية المفتاح.",
-        "technician_name": "محمد علي",
-        "effectiveness_rating": 5
-    },
-    {
-        "problem_type": "فرامل",
-        "vehicle_info": "شيفروليه تاهو 2018",
-        "problem_description": "صوت صرير عند الفرملة",
-        "solution": "تبديل فحمات الفرامل. تنظيف أو تبديل ديسكات الفرامل إذا كانت مخدوشة.",
-        "technician_name": "عبدالله سعد",
-        "effectiveness_rating": 5
-    },
-    {
-        "problem_type": "إطارات",
-        "vehicle_info": "هونداي اكسنت 2017",
-        "problem_description": "اهتزاز في السيارة عند السرعات العالية",
-        "solution": "عمل ترصيص للإطارات الأربعة. فحص ضغط الإطارات وضبطه حسب المواصفات.",
-        "technician_name": "سعود فهد",
-        "effectiveness_rating": 4
-    },
-    {
-        "problem_type": "محرك",
-        "vehicle_info": "بي ام دبليو X5 2019",
-        "problem_description": "لمبة المكينة مضيئة",
-        "solution": "فحص الماسح التشخيصي لقراءة الأعطال. الحلول الشائعة: تبديل حساس الأكسجين، تنظيف صمام EGR، فحص نظام العادم.",
-        "technician_name": "أحمد محمد",
-        "effectiveness_rating": 5
-    },
-    {
-        "problem_type": "تبريد",
-        "vehicle_info": "تويوتا لاندكروزر 2021",
-        "problem_description": "تسريب ماء من الرديتر",
-        "solution": "فحص الرديتر والخراطيم. تبديل الخراطيم المتشققة أو الرديتر إذا كان تالفاً. إضافة مادة Stop Leak كحل مؤقت.",
-        "technician_name": "خالد أحمد",
-        "effectiveness_rating": 4
-    }
 ]

@@ -85,6 +85,7 @@ async def get_settings():
                     {"path": "/operations", "label": "العمليات", "enabled": True},
                     {"path": "/services", "label": "الخدمات", "enabled": True},
                     {"path": "/parts", "label": "قطع الغيار", "enabled": True},
+                    {"path": "/catalog", "label": "كتالوج القطع", "enabled": True},
                     {"path": "/customers", "label": "العملاء", "enabled": True},
                     {"path": "/technicians", "label": "الفنيون", "enabled": True},
                     {"path": "/business-accounts", "label": "الفروع", "enabled": True},

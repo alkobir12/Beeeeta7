@@ -84,7 +84,11 @@ def _mem_write(name: str, items: list):
 # In 'memory' or 'supabase' modes, some endpoints will avoid using Mongo.
 mongo_url = os.environ.get('MONGO_URL')
 client = AsyncIOMotorClient(mongo_url) if mongo_url else None
-db = client[os.environ.get('DB_NAME', 'workshop_db')] if client is not None else None
+
+# Important: DB name must be provided explicitly via environment in deployment
+# to avoid accidentally pointing to a wrong or non-existent database.
+db_name = os.environ.get('DB_NAME') if client is not None else None
+db = client[db_name] if (client is not None and db_name) else None
 
 # Set database for extended and advanced routes
 set_db_extended(db)

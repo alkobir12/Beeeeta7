@@ -77,8 +77,22 @@ def _mem_read(name: str) -> list:
 
 def _mem_write(name: str, items: list):
     p = _mem_path(name)
+    # ensure all data is JSON-serializable (e.g., convert datetime to ISO strings)
+    serializable_items = []
+    for item in items:
+        if isinstance(item, dict):
+            cleaned = {}
+            for k, v in item.items():
+                if hasattr(v, "isoformat"):
+                    cleaned[k] = v.isoformat()
+                else:
+                    cleaned[k] = v
+            serializable_items.append(cleaned)
+        else:
+            serializable_items.append(item)
+
     with open(p, 'w', encoding='utf-8') as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
+        json.dump(serializable_items, f, ensure_ascii=False, indent=2)
 
 # MongoDB connection (used when DB_PROVIDER is 'mongo')
 # In 'memory' or 'supabase' modes, some endpoints will avoid using Mongo.

@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "partNumber": "تت",
+    "name": "رت",
+    "category": "ت",
+    "purchasePrice": 87.0,
+    "sellingPrice": 87.0,
+    "quantity": 66,
+    "minQuantity": 5,
+    "supplier": "",
+    "image": "",
+    "id": "2d320048-5303-404e-b5a3-96df8b9f9b28",
+    "createdAt": 

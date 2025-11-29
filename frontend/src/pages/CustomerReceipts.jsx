@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../components/ui/select';
+import { Plus, Filter } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -30,7 +27,6 @@ const CustomerReceipts = () => {
     setAccounts(accountsRes.data || []);
   };
 
-  useEffect(() => { load(); }, []);
   useEffect(() => { load(); }, [filters]);
 
   const addReceipt = async (e) => {
@@ -42,81 +38,59 @@ const CustomerReceipts = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
-        <div className="container mx-auto p-6 max-w-5xl">
-          <h1 className="text-3xl font-bold text-slate-800 mb-6">إيصالات العملاء</h1>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">إيصالات العملاء</h1>
+            <p className="text-gray-500 mt-1">إدارة سندات القبض والمدفوعات</p>
+          </div>
+        </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>إضافة إيصال</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={addReceipt} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <Select value={form.customerId} onValueChange={v => setForm({ ...form, customerId: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر العميل" /></SelectTrigger>
-                  <SelectContent>
-                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={form.accountId} onValueChange={v => setForm({ ...form, accountId: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
-                  <SelectContent>
-                    {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Input type="number" placeholder="المبلغ" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
-                <Select value={form.paymentMethod} onValueChange={v => setForm({ ...form, paymentMethod: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">كاش</SelectItem>
-                    <SelectItem value="card">شبكة</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">حفظ</Button>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="apple-card p-6">
+          <div className="flex items-center gap-2 mb-6 text-blue-600">
+            <Plus size={20} />
+            <h3 className="font-bold text-gray-900">إضافة إيصال جديد</h3>
+          </div>
+          <form onSubmit={addReceipt} className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <select className="apple-input text-sm" value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}>
+              <option value="">اختر العميل</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select className="apple-input text-sm" value={form.accountId} onChange={e => setForm({ ...form, accountId: e.target.value })}>
+              <option value="">اختر الفرع</option>
+              {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+            <input type="number" className="apple-input text-sm" placeholder="المبلغ" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
+            <select className="apple-input text-sm" value={form.paymentMethod} onChange={e => setForm({ ...form, paymentMethod: e.target.value })}>
+              <option value="cash">كاش</option>
+              <option value="card">شبكة</option>
+            </select>
+            <button type="submit" className="apple-button text-sm">حفظ</button>
+          </form>
+        </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>فلترة الإيصالات</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="flex gap-3">
-                <Select value={filters.customerId} onValueChange={v => setFilters({ ...filters, customerId: v })}>
-                  <SelectTrigger><SelectValue placeholder="فلترة بالعميل" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">الكل</SelectItem>
-                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={filters.accountId} onValueChange={v => setFilters({ ...filters, accountId: v })}>
-                  <SelectTrigger><SelectValue placeholder="فلترة بالفرع" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">الكل</SelectItem>
-                    {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+        <div className="apple-card p-4 flex gap-3 items-center">
+          <Filter size={18} className="text-gray-400" />
+          <select className="apple-input text-sm w-48" value={filters.customerId} onChange={e => setFilters({ ...filters, customerId: e.target.value })}>
+            <option value="all">كل العملاء</option>
+            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select className="apple-input text-sm w-48" value={filters.accountId} onChange={e => setFilters({ ...filters, accountId: e.target.value })}>
+            <option value="all">كل الفروع</option>
+            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          {receipts.map(receipt => (
+            <div key={receipt.id} className="apple-card p-4 flex items-center justify-between">
+              <div>
+                <div className="font-bold text-gray-900">{customers.find(c => c.id === receipt.customerId)?.name || 'عميل غير معروف'}</div>
+                <div className="text-xs text-gray-500 mt-1">{new Date(receipt.date).toLocaleString('ar-SA')} • {receipt.paymentMethod === 'cash' ? 'كاش' : 'شبكة'}</div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>قائمة الإيصالات</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-3">
-              {receipts.map(receipt => (
-                <div key={receipt.id} className="flex items-center justify-between p-3 rounded border">
-                  <div>
-                    <div className="font-bold">{customers.find(c => c.id === receipt.customerId)?.name || 'عميل غير معروف'}</div>
-                    <div className="text-sm text-slate-500">{new Date(receipt.date).toLocaleString('ar-SA')} • {receipt.paymentMethod}</div>
-                  </div>
-                  <div className="font-bold text-green-700">{Number(receipt.amount).toFixed(2)} ر.س</div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+              <div className="font-bold text-green-600 text-lg">{Number(receipt.amount).toLocaleString()} ر.س</div>
+            </div>
+          ))}
         </div>
       </div>
     </Layout>

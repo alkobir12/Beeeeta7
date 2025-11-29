@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { Wrench, Search, Phone, Star, CheckCircle } from 'lucide-react';
+import { Wrench, Search, Phone, Star, CheckCircle, Users } from 'lucide-react';
 import { technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import Layout from '../components/Layout';
@@ -45,11 +41,8 @@ const Technicians = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">جاري التحميل...</p>
-          </div>
+        <div className="flex items-center justify-center h-[50vh]">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
       </Layout>
     );
@@ -57,152 +50,127 @@ const Technicians = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
-      <div className="container mx-auto p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">قائمة الفنيين</h1>
-            <p className="text-slate-600">إدارة ومتابعة الفنيين</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">الفنيين</h1>
+          <p className="text-gray-500 mt-1">إدارة فريق العمل ومتابعة الأداء</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-none shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-700 text-sm font-medium mb-1">إجمالي الفنيين</p>
-                  <p className="text-3xl font-bold text-purple-900">{technicians.length}</p>
-                </div>
-                <div className="bg-purple-600 p-3 rounded-full">
-                  <Wrench className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="apple-card p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">إجمالي الفنيين</p>
+              <p className="text-2xl font-bold text-gray-900">{technicians.length}</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+              <Users size={20} />
+            </div>
+          </div>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-none shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-700 text-sm font-medium mb-1">أعمال جارية</p>
-                  <p className="text-3xl font-bold text-orange-900">{technicians.reduce((sum, t) => sum + t.activeJobs, 0)}</p>
-                </div>
-                <div className="bg-orange-600 p-3 rounded-full">
-                  <CheckCircle className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="apple-card p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">أعمال جارية</p>
+              <p className="text-2xl font-bold text-gray-900">{technicians.reduce((sum, t) => sum + t.activeJobs, 0)}</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+              <Wrench size={20} />
+            </div>
+          </div>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-none shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-700 text-sm font-medium mb-1">أعمال مكتملة</p>
-                  <p className="text-3xl font-bold text-green-900">{technicians.reduce((sum, t) => sum + t.completedJobs, 0)}</p>
-                </div>
-                <div className="bg-green-600 p-3 rounded-full">
-                  <Star className="text-white" size={24} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="apple-card p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">أعمال مكتملة</p>
+              <p className="text-2xl font-bold text-gray-900">{technicians.reduce((sum, t) => sum + t.completedJobs, 0)}</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+              <CheckCircle size={20} />
+            </div>
+          </div>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-700 text-sm font-medium mb-1">متوسط التقييم</p>
-                  <p className="text-3xl font-bold text-blue-900">
-                    {(technicians.reduce((sum, t) => sum + t.rating, 0) / technicians.length).toFixed(1)}
-                  </p>
-                </div>
-                <div className="bg-blue-600 p-3 rounded-full">
-                  <Star className="text-white" size={24} fill="white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="apple-card p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">متوسط التقييم</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {(technicians.reduce((sum, t) => sum + t.rating, 0) / (technicians.length || 1)).toFixed(1)}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
+              <Star size={20} fill="currentColor" />
+            </div>
+          </div>
         </div>
 
         {/* Search */}
-        <Card className="mb-6 shadow-lg">
-          <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute right-3 top-3 text-slate-400" size={20} />
-              <Input
-                placeholder="بحث بالاسم أو التخصص..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 border-slate-300 focus:border-blue-500 transition-colors"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="apple-card p-4">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              placeholder="بحث بالاسم أو التخصص..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="apple-input pr-10"
+            />
+          </div>
+        </div>
 
         {/* Technicians Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTechnicians.map(tech => (
-            <Card key={tech.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-br from-slate-50 to-white pb-4">
+            <div key={tech.id} className="apple-card p-6 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-full">
-                    <Wrench className="text-white" size={28} />
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-lg">
+                    {tech.name[0]}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-slate-800">{tech.name}</h3>
-                    <Badge className="bg-blue-100 text-blue-700 border-blue-200 mt-1">
+                  <div>
+                    <h3 className="font-bold text-gray-900">{tech.name}</h3>
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium mt-1">
                       {tech.specialty}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
+                  <Star size={14} className="text-yellow-500" fill="currentColor" />
+                  <span className="text-sm font-bold text-yellow-700">{tech.rating}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Phone size={16} />
-                  <span className="text-sm">{tech.phone}</span>
+                  <span dir="ltr">{tech.phone}</span>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-orange-50 rounded-lg text-center">
-                    <p className="text-2xl font-bold text-orange-600">{tech.activeJobs}</p>
-                    <p className="text-xs text-orange-700">أعمال جارية</p>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg text-center">
-                    <p className="text-2xl font-bold text-green-600">{tech.completedJobs}</p>
-                    <p className="text-xs text-green-700">مكتملة</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg text-center">
+                  <p className="text-lg font-bold text-gray-900">{tech.activeJobs}</p>
+                  <p className="text-xs text-gray-500">جارية</p>
                 </div>
-
-                <div className="flex items-center justify-center gap-2 p-3 bg-yellow-50 rounded-lg">
-                  <Star className="text-yellow-500" size={20} fill="#eab308" />
-                  <span className="text-lg font-bold text-yellow-700">{tech.rating}</span>
-                  <span className="text-sm text-yellow-600">/ 5.0</span>
+                <div className="p-3 bg-gray-50 rounded-lg text-center">
+                  <p className="text-lg font-bold text-gray-900">{tech.completedJobs}</p>
+                  <p className="text-xs text-gray-500">مكتملة</p>
                 </div>
+              </div>
 
-                {tech.activeJobs === 0 && (
-                  <Badge className="w-full justify-center bg-green-100 text-green-700 border-green-300">
-                    <CheckCircle size={14} className="ml-1" />
-                    متاح لأعمال جديدة
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
+              {tech.activeJobs === 0 && (
+                <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-sm font-medium">
+                  <CheckCircle size={16} />
+                  <span>متاح للعمل</span>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
         {filteredTechnicians.length === 0 && (
-          <Card className="shadow-md">
-            <CardContent className="p-12 text-center">
-              <Wrench className="mx-auto text-slate-300 mb-4" size={64} />
-              <p className="text-slate-500 text-lg">لا توجد نتائج</p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12 text-gray-500">
+            <Wrench className="mx-auto text-gray-300 mb-4" size={48} />
+            <p>لا توجد نتائج</p>
+          </div>
         )}
-      </div>
       </div>
     </Layout>
   );

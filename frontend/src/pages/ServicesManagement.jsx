@@ -1,65 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Label } from '../components/ui/label';
+import { Search, Plus, Edit, Trash2, Tag, Clock } from 'lucide-react';
 import axios from 'axios';
-import { useTranslation } from 'react-i18next';
-import { Edit } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ServicesManagement = () => {
-  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [services, setServices] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
-  const [form, setForm] = useState({ name: '', category: '', price: 0, duration: 30 });
+  const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', category: '', price: 0, duration: 30 });
-  const [isEditOpen, setIsEditOpen] = useState(false);
-
-  const load = async () => {
-    const res = await axios.get(`${API_URL}/services`);
-    setServices(res.data || []);
-  };
+  const [form, setForm] = useState({ name: '', category: '', price: 0, duration: 30 });
 
   useEffect(() => { load(); }, []);
 
-  const addService = async (e) => {
+  const load = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/services`);
+      setServices(res.data || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post(`${API_URL}/services`, { ...form });
-    setForm({ name: '', category: '', price: 0, duration: 30 });
-    await load();
+    try {
+      if (editingService) {
+        await axios.put(`${API_URL}/services/${editingService.id}`, form);
+        toast({ title: "تم التحديث", description: "تم تحديث الخدمة بنجاح" });
+      } else {
+        await axios.post(`${API_URL}/services`, form);
+        toast({ title: "تم الإضافة", description: "تم إضافة الخدمة بنجاح" });
+      }
+      setShowModal(false);
+      setEditingService(null);
+      setForm({ name: '', category: '', price: 0, duration: 30 });
+      load();
+    } catch (e) {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء الحفظ", variant: "destructive" });
+    }
   };
 
-  const updateService = async (e) => {
-    e.preventDefault();
-    if (!editingService) return;
-    await axios.put(`${API_URL}/services/${editingService.id}`, editForm);
-    setIsEditOpen(false);
-    setEditingService(null);
-    await load();
+  const handleDelete = async (id) => {
+    if (!window.confirm('هل أنت متأكد من الحذف؟')) return;
+    try {
+      await axios.delete(`${API_URL}/services/${id}`);
+      load();
+    } catch (e) { console.error(e); }
   };
 
-  const remove = async (id) => {
-    if (!window.confirm(t('common.confirmDelete'))) return;
-    await axios.delete(`${API_URL}/services/${id}`);
-    await load();
-  };
-
-  const openEdit = (service) => {
-    setEditingService(service);
-    setEditForm({
-      name: service.name,
-      category: service.category,
-      price: service.price,
-      duration: service.duration
-    });
-    setIsEditOpen(true);
+  const openModal = (service = null) => {
+    if (service) {
+      setEditingService(service);
+      setForm({
+        name: service.name,
+        category: service.category,
+        price: service.price,
+        duration: service.duration
+      });
+    } else {
+      setEditingService(null);
+      setForm({ name: '', category: '', price: 0, duration: 30 });
+    }
+    setShowModal(true);
   };
 
   const categories = ['all', ...new Set(services.map(s => s.category))];
@@ -67,91 +72,98 @@ const ServicesManagement = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen" dir={i18n.dir()}>
-        <div className="container mx-auto p-6 max-w-5xl">
-          <h1 className="text-3xl font-bold text-slate-800 mb-6">{t('nav.inventory')}</h1>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">الخدمات والأسعار</h1>
+            <p className="text-gray-500 mt-1">إدارة قائمة الخدمات وأسعارها</p>
+          </div>
+          <button onClick={() => openModal()} className="apple-button flex items-center gap-2">
+            <Plus size={18} />
+            <span>خدمة جديدة</span>
+          </button>
+        </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{t('services.addTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={addService} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <Input placeholder={t('common.name')} value={form.name} onChange={e=>setForm({ ...form, name: e.target.value })} required />
-                <Input placeholder={t('common.category')} value={form.category} onChange={e=>setForm({ ...form, category: e.target.value })} required />
-                <Input type="number" placeholder={t('common.price')} value={form.price} onChange={e=>setForm({ ...form, price: e.target.value })} />
-                <Input type="number" placeholder={t('services.duration')} value={form.duration} onChange={e=>setForm({ ...form, duration: e.target.value })} />
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">{t('common.save')}</Button>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="apple-card p-4 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              className="apple-input pr-10"
+              placeholder="بحث عن خدمة..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <select 
+            className="apple-input w-full sm:w-48"
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+          >
+            {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'كل الفئات' : c}</option>)}
+          </select>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('services.listTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex gap-3">
-                <Input placeholder={t('common.search')} value={search} onChange={e=>setSearch(e.target.value)} />
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {categories.map(c => <SelectItem key={c} value={c}>{c === 'all' ? t('common.all') : c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2 max-h-[480px] overflow-auto">
-                {filtered.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-3 rounded border">
-                    <div>
-                      <div className="font-bold">{s.name}</div>
-                      <div className="text-sm text-slate-500">{s.category} • {Number(s.price).toFixed(2)} {t('common.currency')} • {s.duration} {t('common.minute')}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
-                        <Edit size={16} className="ml-2" />
-                        {t('common.edit')}
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={()=>remove(s.id)}>{t('common.delete')}</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('common.edit')}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={updateService} className="space-y-4">
-                <div>
-                  <Label>{t('common.name')}</Label>
-                  <Input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} />
+        <div className="grid gap-3">
+          {filtered.map(service => (
+            <div key={service.id} className="apple-card p-4 flex items-center justify-between group hover:shadow-md transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
+                  {service.name[0]}
                 </div>
                 <div>
-                  <Label>{t('common.category')}</Label>
-                  <Input value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})} />
+                  <h3 className="font-bold text-gray-900">{service.name}</h3>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                    <span className="flex items-center gap-1"><Tag size={12} /> {service.category}</span>
+                    <span className="flex items-center gap-1"><Clock size={12} /> {service.duration} دقيقة</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <span className="font-bold text-gray-900 text-lg">{Number(service.price).toFixed(2)} <span className="text-xs font-normal text-gray-500">ر.س</span></span>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => openModal(service)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><Edit size={16} /></button>
+                  <button onClick={() => handleDelete(service.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={16} /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900">{editingService ? 'تعديل خدمة' : 'إضافة خدمة جديدة'}</h2>
+              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">اسم الخدمة</label>
+                  <input required className="apple-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">الفئة</label>
+                  <input required className="apple-input" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>{t('common.price')}</Label>
-                    <Input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">السعر (ر.س)</label>
+                    <input type="number" className="apple-input" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
                   </div>
-                  <div>
-                    <Label>{t('services.duration')}</Label>
-                    <Input type="number" value={editForm.duration} onChange={e => setEditForm({...editForm, duration: e.target.value})} />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">المدة (دقيقة)</label>
+                    <input type="number" className="apple-input" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>{t('common.cancel')}</Button>
-                  <Button type="submit">{t('common.save')}</Button>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 apple-button-secondary">إلغاء</button>
+                  <button type="submit" className="flex-1 apple-button">حفظ</button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

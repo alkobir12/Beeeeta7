@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { 
-  Search, BookOpen, FileText, Upload, Eye, Star, Clock, 
-  Zap, Database, Filter, GitCompare, History
-} from 'lucide-react';
+import { Search, BookOpen, FileText, Upload, History, Zap, Database, Filter, GitCompare, X } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 
@@ -17,328 +9,257 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api'
 const KnowledgeBase = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [documents, setDocuments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [dtcCards, setDtcCards] = useState([]);
-  const [selectedDoc, setSelectedDoc] = useState(null);
-  const [showReader, setShowReader] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(false);
   const [searchMode, setSearchMode] = useState('smart'); // smart, dtc
-  const [file1, setFile1] = useState(null);
-  const [file2, setFile2] = useState(null);
-  const [comparisonResult, setComparisonResult] = useState(null);
-
-  // Search history panel
+  const [activeTab, setActiveTab] = useState('search');
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState([]);
-  const [historyProvider, setHistoryProvider] = useState(''); // '', local, brave, you, perplexity, smart
 
   useEffect(() => {
-    loadDocuments();
+    // Initial load if needed
   }, []);
 
-  const loadDocuments = async () => {
+  const fetchHistory = async () => {
     try {
-      const res = await axios.get(`${API_URL}/ai/kb/docs`);
-      setDocuments(res.data?.docs || []);
-    } catch (e) {
-      console.error('Error loading docs:', e);
-    }
-  };
-
-  const fetchHistory = async (provider = '') => {
-    try{
-      const r = await axios.get(`${API_URL}/search/history`, { params: provider? { provider } : {} });
+      const r = await axios.get(`${API_URL}/search/history`);
       setHistoryItems(r.data?.items || []);
-    }catch(e){ setHistoryItems([]); }
+    } catch (e) { setHistoryItems([]); }
   };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      toast({ title: 'أدخل كلمة البحث', variant: 'destructive' });
+      toast({ title: 'تنبيه', description: 'الرجاء إدخال كلمة للبحث', variant: 'default' });
       return;
     }
 
-    let ok = true; let count = 0;
     try {
       setLoading(true);
       const dtcPattern = /^[PCUB][0-9A-F]{4}$/i;
       const isDTCSearch = dtcPattern.test(searchQuery.trim());
+      
       if (isDTCSearch || searchMode === 'dtc') {
         const res = await axios.post(`${API_URL}/ai/kb/extract-dtc-cards`, { query: searchQuery.trim() });
         setDtcCards(res.data?.cards || []);
         setSearchResults([]);
-        count = (res.data?.cards || []).length;
-        toast({ title: '🔧 وجدنا بطاقات أعطال', description: `${res.data?.count || 0} بطاقة عطل` });
+        toast({ title: 'تم البحث', description: `تم العثور على ${res.data?.cards?.length || 0} بطاقة عطل` });
       } else {
         const res = await axios.post(`${API_URL}/ai/kb/smart-search`, { query: searchQuery, limit: 20 });
         setSearchResults(res.data?.results || []);
         setDtcCards([]);
-        count = (res.data?.results || []).length;
-        toast({ title: '✅ اكتمل البحث', description: `وجدنا ${res.data?.count || 0} نتيجة` });
+        toast({ title: 'تم البحث', description: `تم العثور على ${res.data?.results?.length || 0} نتيجة` });
       }
     } catch (e) {
-      ok = false;
       console.error('Search error:', e);
-      toast({ title: 'خطأ في البحث', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'حدث خطأ أثناء البحث', variant: 'destructive' });
     } finally {
       setLoading(false);
-      // log history under 'smart'
-      try { await axios.post(`${API_URL}/search/log`, { provider: 'smart', query: searchQuery, ok, mode: 'ui', count }); } catch(err) {}
     }
   };
 
-  const handleLocalSearch = async () => {
-    if (!searchQuery.trim()) return;
-    try{
-      setLoading(true);
-      const r = await axios.get(`${API_URL}/ai/kb/local-search`, { params: { query: searchQuery, k: 8 } });
-      const results = r.data?.results || [];
-      setSearchResults(results.map(x=>({ title: x.metadata?.title || 'مرجع', excerpt: x.text, relevance: x.score })));
-      setDtcCards([]);
-      toast({ title: '✅ بحث محلي', description: `نتائج: ${results.length}` });
-    }catch(e){ toast({ title: 'فشل البحث المحلي', variant: 'destructive' }); }
-    finally{ setLoading(false); }
-  };
-
-  const openReader = (doc) => {
-    setSelectedDoc(doc);
-    setShowReader(true);
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') handleSearch();
   };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50" dir="rtl">
-        <div className="container mx-auto p-6 max-w-7xl">
-          {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Database className="text-godaddy-green" size={40} />
-                <h1 className="text-4xl font-bold text-godaddy-black">قاعدة المعرفة التعليمية</h1>
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4 py-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+            <Database size={32} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">قاعدة المعرفة الذكية</h1>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            ابحث في آلاف المستندات، أكواد الأعطال، والمخططات الفنية باستخدام الذكاء الاصطناعي
+          </p>
+        </div>
+
+        {/* Search Box */}
+        <div className="max-w-3xl mx-auto">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            <div className="relative bg-white rounded-2xl shadow-xl p-2 flex items-center gap-2 border border-gray-100">
+              <div className="pl-3 pr-4 text-gray-400">
+                <Search size={24} />
               </div>
-              <p className="text-godaddy-gray text-lg">مرجعك الشامل للكهرباء والمحركات والتشخيص</p>
-            </div>
-            <div>
-              <Button variant="outline" onClick={async ()=>{ setShowHistory(true); await fetchHistory(historyProvider); }}>
-                <History className="ml-2" size={18} /> سجل البحث
-              </Button>
+              <input 
+                className="flex-1 h-12 text-lg outline-none bg-transparent placeholder:text-gray-400"
+                placeholder="ابحث عن كود عطل (P0300)، مشكلة ميكانيكية، أو استفسار فني..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                autoFocus
+              />
+              <button 
+                onClick={handleSearch}
+                disabled={loading}
+                className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-6 h-10 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
+              >
+                {loading ? 'جاري البحث...' : 'بحث'}
+              </button>
             </div>
           </div>
 
-          <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-6">
-              <TabsTrigger value="search"><Search className="ml-2" size={18} />البحث</TabsTrigger>
-              <TabsTrigger value="browse"><BookOpen className="ml-2" size={18} />تصفح</TabsTrigger>
-              <TabsTrigger value="compare"><GitCompare className="ml-2" size={18} />مقارنة</TabsTrigger>
-              <TabsTrigger value="upload"><Upload className="ml-2" size={18} />رفع ملف</TabsTrigger>
-            </TabsList>
+          {/* Search Options */}
+          <div className="flex justify-center gap-4 mt-4">
+            <label className={`cursor-pointer px-4 py-2 rounded-full text-sm font-medium transition-all ${searchMode === 'smart' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              <input type="radio" className="hidden" checked={searchMode === 'smart'} onChange={() => setSearchMode('smart')} />
+              بحث ذكي
+            </label>
+            <label className={`cursor-pointer px-4 py-2 rounded-full text-sm font-medium transition-all ${searchMode === 'dtc' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              <input type="radio" className="hidden" checked={searchMode === 'dtc'} onChange={() => setSearchMode('dtc')} />
+              بحث أكواد (DTC)
+            </label>
+            <button 
+              onClick={() => { setShowHistory(true); fetchHistory(); }}
+              className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center gap-2"
+            >
+              <History size={14} />
+              سجل البحث
+            </button>
+          </div>
+        </div>
 
-            {/* Search Tab */}
-            <TabsContent value="search">
-              <Card className="card-godaddy mb-6">
-                <CardHeader className="bg-gradient-to-l from-green-50">
-                  <CardTitle className="flex items-center gap-2"><Zap className="text-godaddy-green" />البحث الذكي</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex gap-3 mb-4">
-                    <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSearch()} placeholder="ابحث: كهرباء، P0087، محرك، SCV، فرامل..." className="input-godaddy flex-1 text-lg" />
-                    <Button onClick={handleSearch} disabled={loading} className="btn-godaddy-primary px-8">{loading ? '⏳ جاري البحث...' : 'بحث'}</Button>
-                    <Button onClick={handleLocalSearch} variant="outline">بحث محلي</Button>
-                  </div>
-
-                  {/* Search Mode Selector */}
-                  <div className="flex gap-3 mb-6 p-3 bg-gray-100 rounded-lg">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="searchMode" value="smart" checked={searchMode === 'smart'} onChange={(e) => setSearchMode(e.target.value)} className="w-4 h-4" />
-                      <span className="text-sm font-medium">🔍 بحث ذكي (كلمات)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="searchMode" value="dtc" checked={searchMode === 'dtc'} onChange={(e) => setSearchMode(e.target.value)} className="w-4 h-4" />
-                      <span className="text-sm font-medium">🔧 بحث أكواد (P0087)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="searchMode" value="letter" checked={searchMode === 'letter'} onChange={(e) => setSearchMode(e.target.value)} className="w-4 h-4" />
-                      <span className="text-sm font-medium">🔤 بحث بالحرف</span>
-                    </label>
-                  </div>
-
-                  {/* Results and DTC Cards handled below (unchanged) */}
-
-                  {/* DTC Cards Results */}
-                  {dtcCards.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <span className="text-2xl">🔧</span>
-                        <span className="font-semibold text-amber-900">وجدنا {dtcCards.length} بطاقة عطل</span>
-                      </div>
-                      {dtcCards.map((card, idx) => (
-                        <Card key={idx} className="border-2 border-amber-200 hover:border-amber-400 hover:shadow-xl transition-all">
-                          <CardContent className="p-6 space-y-4">
-                            {/* Code */}
-                            <div className="flex items-center justify-between border-b pb-3">
-                              <div className="text-2xl font-bold text-amber-900">{card.code || 'DTC'}</div>
-                              <div className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full">كود العطل</div>
-                            </div>
-                            
-                            {/* Description */}
-                            {card.description && (
-                              <div>
-                                <div className="text-xs font-semibold text-slate-600 mb-1">الوصف:</div>
-                                <div className="text-sm text-slate-700">{card.description}</div>
-                              </div>
-                            )}
-                            
-                            {/* Symptoms */}
-                            {card.symptoms && (
-                              <div>
-                                <div className="text-xs font-semibold text-slate-600 mb-1">الأعراض:</div>
-                                <div className="text-sm text-slate-700">{card.symptoms}</div>
-                              </div>
-                            )}
-                            
-                            {/* Causes */}
-                            {card.causes && (
-                              <div>
-                                <div className="text-xs font-semibold text-red-600 mb-1">الأسباب المحتملة:</div>
-                                <div className="text-sm text-slate-700 bg-red-50 p-2 rounded">{card.causes}</div>
-                              </div>
-                            )}
-                            
-                            {/* Fixes */}
-                            {card.fixes && (
-                              <div>
-                                <div className="text-xs font-semibold text-green-600 mb-1">الحلول:</div>
-                                <div className="text-sm text-slate-700 bg-green-50 p-2 rounded">{card.fixes}</div>
-                              </div>
-                            )}
-                            
-                            {/* Electrical Values - ALWAYS SHOW */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                                ⚡ القيم الكهربائية الطبيعية
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div className="bg-white p-2 rounded">
-                                  <div className="text-slate-600">البطارية:</div>
-                                  <div className="font-bold text-blue-700">12.6V</div>
-                                </div>
-                                <div className="bg-white p-2 rounded">
-                                  <div className="text-slate-600">الدينمو:</div>
-                                  <div className="font-bold text-blue-700">13.8-14.4V</div>
-                                </div>
-                                <div className="bg-white p-2 rounded">
-                                  <div className="text-slate-600">حساس الأكسجين:</div>
-                                  <div className="font-bold text-blue-700">0.1-0.9V</div>
-                                </div>
-                                <div className="bg-white p-2 rounded">
-                                  <div className="text-slate-600">MAF Sensor:</div>
-                                  <div className="font-bold text-blue-700">0-5V</div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Related Components - ALWAYS SHOW */}
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                              <div className="text-xs font-semibold text-purple-800 mb-2 flex items-center gap-2">
-                                🔌 المكونات المرتبطة
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Fuses (الفيوزات)</span>
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Relays (الريليهات)</span>
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Grounds (الأرضي)</span>
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">ECU</span>
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Sensors (الحساسات)</span>
-                                <span className="text-xs bg-white px-2 py-1 rounded border border-purple-200">Wiring (الأسلاك)</span>
-                              </div>
-                            </div>
-                            
-                            {/* Test Steps */}
-                            {card.test_steps && (
-                              <div>
-                                <div className="text-xs font-semibold text-slate-600 mb-1">خطوات الفحص:</div>
-                                <div className="text-sm text-slate-700 bg-slate-50 p-2 rounded">{card.test_steps}</div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Normal Search Results */}
-                  {searchResults.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-sm text-godaddy-gray mb-4"><Filter size={16} /><span>وجدنا {searchResults.length} نتيجة</span></div>
-                      {searchResults.map((result, idx) => (
-                        <Card key={idx} className="card-godaddy">
-                          <CardContent className="p-5">
-                            <div className="font-bold">{result.title || 'نتيجة'}</div>
-                            <div className="text-sm text-slate-600 whitespace-pre-wrap">{result.excerpt || result.summary || ''}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Browse Tab - unchanged content omitted for brevity */}
-            <TabsContent value="browse">
-              <div className="text-sm text-slate-500">تصفح المستندات (كما هو)</div>
-            </TabsContent>
-
-            {/* Compare Tab - unchanged */}
-            <TabsContent value="compare">
-              <div className="text-sm text-slate-500">مقارنة ملفات (كما هو)</div>
-            </TabsContent>
-
-            {/* Upload Tab - unchanged */}
-            <TabsContent value="upload">
-              <div className="text-sm text-slate-500">رفع ملف (كما هو)</div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Search History Drawer */}
-          {showHistory && (
-            <div className="fixed inset-0 bg-black/40 z-[60]" onClick={()=>setShowHistory(false)} style={{pointerEvents: 'auto'}}>
-              <div className="absolute top-0 left-0 w-full md:w-[520px] h-full bg-white shadow-2xl p-4 overflow-auto" onClick={(e)=>e.stopPropagation()} dir="rtl">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-bold text-lg">سجل البحث</div>
-                  <Button variant="ghost" onClick={()=>setShowHistory(false)}>إغلاق</Button>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Label>المزوّد</Label>
-                  <select className="border rounded px-2 py-1" value={historyProvider} onChange={async (e)=>{ setHistoryProvider(e.target.value); await fetchHistory(e.target.value); }}>
-                    <option value="">الكل</option>
-                    <option value="smart">smart</option>
-                    <option value="local">local</option>
-                    <option value="brave">brave</option>
-                    <option value="you">you</option>
-                    <option value="perplexity">perplexity</option>
-                  </select>
-                  <Button size="sm" onClick={async ()=>{ await fetchHistory(historyProvider); }}>تحديث</Button>
-                </div>
-                <div className="space-y-2 overflow-auto max-h-[70vh] pr-2">
-                  {historyItems.map((it, idx)=> (
-                    <div key={idx} className="p-2 border rounded bg-white">
-                      <div className="text-xs text-slate-500">{it.provider} • {new Date(it.createdAt).toLocaleString('ar-SA')}</div>
-                      <div className="font-semibold">{it.query}</div>
-                      <div className="text-xs">النتائج: {it.count} • الحالة: {it.ok? 'ناجح':'فشل'}</div>
-                    </div>
-                  ))}
-                  {historyItems.length===0 && <div className="text-sm text-slate-500">لا يوجد سجلات حالياً.</div>}
-                </div>
+        {/* Results Area */}
+        <div className="space-y-6">
+          {/* DTC Cards */}
+          {dtcCards.length > 0 && (
+            <div className="grid gap-6">
+              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-lg w-fit mx-auto">
+                <Zap size={18} />
+                <span className="font-medium">تم العثور على {dtcCards.length} بطاقة تشخيص</span>
               </div>
+              
+              {dtcCards.map((card, idx) => (
+                <div key={idx} className="apple-card overflow-hidden border-l-4 border-l-amber-500">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h2 className="text-3xl font-bold text-gray-900">{card.code}</h2>
+                          <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">DTC</span>
+                        </div>
+                        <p className="text-gray-600 text-lg">{card.description}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="bg-red-50 rounded-xl p-4">
+                          <h3 className="font-bold text-red-700 mb-2 text-sm">الأسباب المحتملة</h3>
+                          <p className="text-gray-700 text-sm leading-relaxed">{card.causes}</p>
+                        </div>
+                        <div className="bg-orange-50 rounded-xl p-4">
+                          <h3 className="font-bold text-orange-700 mb-2 text-sm">الأعراض</h3>
+                          <p className="text-gray-700 text-sm leading-relaxed">{card.symptoms}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="bg-green-50 rounded-xl p-4">
+                          <h3 className="font-bold text-green-700 mb-2 text-sm">الحلول المقترحة</h3>
+                          <p className="text-gray-700 text-sm leading-relaxed">{card.fixes}</p>
+                        </div>
+                        
+                        {/* Electrical Values */}
+                        <div className="bg-blue-50 rounded-xl p-4">
+                          <h3 className="font-bold text-blue-700 mb-3 text-sm flex items-center gap-2">
+                            <Zap size={14} /> القيم الكهربائية
+                          </h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-white/60 p-2 rounded-lg">
+                              <span className="text-xs text-gray-500 block">البطارية</span>
+                              <span className="font-mono font-bold text-blue-600">12.6V</span>
+                            </div>
+                            <div className="bg-white/60 p-2 rounded-lg">
+                              <span className="text-xs text-gray-500 block">الدينمو</span>
+                              <span className="font-mono font-bold text-blue-600">13.8-14.4V</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
+          {/* Smart Search Results */}
+          {searchResults.length > 0 && (
+            <div className="grid gap-4">
+              <div className="flex items-center gap-2 text-gray-500 px-4">
+                <Filter size={16} />
+                <span className="text-sm">نتائج البحث ({searchResults.length})</span>
+              </div>
+              
+              {searchResults.map((result, idx) => (
+                <div key={idx} className="apple-card p-5 hover:shadow-md transition-all cursor-pointer group">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        {result.title || 'مستند فني'}
+                      </h3>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                        {result.excerpt || result.summary || result.text || ''}
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        {result.score && (
+                          <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-600">
+                            تطابق: {Math.round(result.score * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* History Modal */}
+        {showHistory && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex justify-end">
+            <div className="w-full max-w-md bg-white h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">سجل البحث</h2>
+                <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {historyItems.map((item, idx) => (
+                  <div key={idx} className="p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => { setSearchQuery(item.query); setShowHistory(false); handleSearch(); }}>
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-medium text-gray-900">{item.query}</span>
+                      <span className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleDateString('ar-SA')}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span className={`w-2 h-2 rounded-full ${item.ok ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>{item.count} نتيجة</span>
+                    </div>
+                  </div>
+                ))}
+                {historyItems.length === 0 && (
+                  <div className="text-center py-10 text-gray-500">
+                    <History size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>لا يوجد سجل بحث</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
-}
+};
 
 export default KnowledgeBase;

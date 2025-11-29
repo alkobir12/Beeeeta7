@@ -1,46 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!name.trim()) {
-      toast({ title: t('common.error'), description: i18n.language==='ar'?'الاسم مطلوب':'Name is required', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'الرجاء إدخال الاسم', variant: 'destructive' });
       return;
     }
 
     try {
       setLoading(true);
-
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      
+      // Fetch users to simulate login (as per existing logic)
       const response = await fetch(`${API_URL}/users`);
-      if (!response.ok) {
-        // نقرأ الـ body مرة واحدة فقط لتفادي خطأ Response body is already used
-        const msg = await response.text().catch(() => '');
-        throw new Error(msg || `Server error ${response.status}`);
-      }
+      if (!response.ok) throw new Error('Server error');
+      
       const users = await response.json();
-
       const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
 
       if (!user) {
-        toast({ title: t('common.error'), description: i18n.language==='ar'?'مستخدم غير موجود':'User not found', variant: 'destructive' });
+        toast({ title: 'خطأ', description: 'المستخدم غير موجود', variant: 'destructive' });
         return;
       }
 
       if (user.isActive === false) {
-        toast({ title: t('common.error'), description: i18n.language==='ar'?'هذا الحساب معطل':'This account is disabled', variant: 'destructive' });
+        toast({ title: 'خطأ', description: 'هذا الحساب معطل', variant: 'destructive' });
         return;
       }
 
@@ -54,17 +45,10 @@ const Login = () => {
         loginTime: new Date().toISOString()
       };
 
-      // تخزين الجلسة في localStorage (توافقية مع الكود القديم)
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
 
-      // تخزين الجلسة أيضًا في كوكي بسيط (7 أيام)
-      try {
-        document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; max-age=${60 * 60 * 24 * 7}; path=/`;
-      } catch (e) {
-        console.warn('Failed to set session cookie', e);
-      }
-
+      // Update last login
       try {
         await fetch(`${API_URL}/users/${user.id}`, {
           method: 'PUT',
@@ -74,54 +58,81 @@ const Login = () => {
       } catch (_) {}
 
       toast({ 
-        title: t('common.welcome'),
-        description: `${user.name}`
+        title: 'مرحباً بك',
+        description: `أهلاً بعودتك، ${user.name}`
       });
       navigate('/');
     } catch (e) {
       console.error('Login error:', e);
-      toast({ title: t('common.error'), description: i18n.language==='ar'?'فشل في تسجيل الدخول':'Login failed', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    if (e.key === 'Enter') handleLogin();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">{i18n.language==='ar'?'تسجيل الدخول':'Sign In'}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <div>
-            <Label className="text-lg">{i18n.language==='ar'?'الاسم':'Name'}</Label>
-            <Input 
-              placeholder={i18n.language==='ar'?'أدخل اسمك':'Enter your name'} 
-              value={name} 
-              onChange={e=>setName(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-lg py-6"
-              autoFocus
-            />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements for 'Fluid' feel */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-200/30 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="w-full max-w-[400px] z-10 animate-fade-in">
+        <div className="apple-card p-10 flex flex-col items-center text-center">
+          
+          {/* Logo / Icon Placeholder */}
+          <div className="w-16 h-16 bg-gradient-to-br from-[#0071E3] to-[#00C7BE] rounded-2xl mb-8 shadow-lg flex items-center justify-center text-white text-2xl font-bold">
+            W
           </div>
-          <Button 
-            onClick={handleLogin} 
-            disabled={loading} 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
-          >
-            {i18n.language==='ar'?'دخول':'Sign In'}
-          </Button>
-          <p className="text-sm text-slate-500 text-center mt-4">
-            {i18n.language==='ar'?'نظام إدارة الورش - دخول مباشر':'Workshop Management System - Direct Login'}
+
+          <h1 className="text-3xl font-bold text-[#1D1D1F] mb-2 tracking-tight">
+            تسجيل الدخول
+          </h1>
+          <p className="text-[#86868B] text-base mb-10">
+            نظام إدارة الورش الذكي
           </p>
-        </CardContent>
-      </Card>
+
+          <div className="w-full space-y-6">
+            <div className="space-y-2 text-right">
+              <label className="text-sm font-medium text-[#1D1D1F] mr-1">
+                اسم المستخدم
+              </label>
+              <input 
+                type="text"
+                placeholder="أدخل اسمك هنا" 
+                value={name} 
+                onChange={e => setName(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="apple-input"
+                autoFocus
+              />
+            </div>
+
+            <button 
+              onClick={handleLogin} 
+              disabled={loading} 
+              className="apple-button flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                'دخول'
+              )}
+            </button>
+          </div>
+
+          <div className="mt-8 text-sm text-[#86868B]">
+            نسخة تجريبية v2.0
+          </div>
+        </div>
+        
+        <div className="mt-8 text-center text-[#86868B] text-sm">
+          جميع الحقوق محفوظة © 2025
+        </div>
+      </div>
     </div>
   );
 };

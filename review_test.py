@@ -13,7 +13,7 @@ import json
 import sys
 from datetime import datetime
 
-BASE_URL = "https://garage-tracker-9.preview.emergentagent.com/api"
+BASE_URL = "https://mechanic-dash-8.preview.emergentagent.com/api"
 
 def test_review_requirements():
     print("🧪 REVIEW REQUEST TEST: Invoice Template Import and Generation")

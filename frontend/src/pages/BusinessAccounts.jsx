@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Building2, Plus } from 'lucide-react';
 import axios from 'axios';
 
@@ -29,7 +28,7 @@ const BusinessAccounts = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -75,7 +74,7 @@ const BusinessAccounts = () => {
           ))}
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

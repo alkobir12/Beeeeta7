@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { Building2, Phone, MapPin, FileText, Save } from 'lucide-react';
-import Layout from '../components/Layout';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -35,7 +34,7 @@ const WorkshopProfile = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center py-8">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-blue-500/30 mb-4">
@@ -100,7 +99,7 @@ const WorkshopProfile = () => {
           </button>
         </form>
       </div>
-    </Layout>
+    
   );
 };
 

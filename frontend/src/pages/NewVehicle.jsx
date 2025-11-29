@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Wrench, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
-import Layout from '../components/Layout';
 
 const NewVehicle = () => {
   const navigate = useNavigate();
@@ -70,7 +69,7 @@ const NewVehicle = () => {
   });
 
   return (
-    <Layout>
+    
       <div className="max-w-4xl mx-auto pb-20">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8 pt-4">
@@ -283,7 +282,7 @@ const NewVehicle = () => {
           </div>
         </form>
       </div>
-    </Layout>
+    
   );
 };
 

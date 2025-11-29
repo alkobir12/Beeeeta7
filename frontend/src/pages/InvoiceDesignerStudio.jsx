@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Layout from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -96,7 +95,7 @@ const InvoiceDesignerStudio = () => {
   const selectedEl = elements.find(e => e.id === selectedElement);
 
   return (
-    <Layout>
+    
       <div className="min-h-screen bg-gray-50" dir="rtl">
         <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
           <h1 className="text-xl font-bold text-gray-900">مصمم الفواتير</h1>
@@ -188,7 +187,7 @@ const InvoiceDesignerStudio = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

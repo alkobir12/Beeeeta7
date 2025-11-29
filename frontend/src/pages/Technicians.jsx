@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Wrench, Search, Phone, Star, CheckCircle, Users } from 'lucide-react';
 import { technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
-import Layout from '../components/Layout';
 
 const Technicians = () => {
   const navigate = useNavigate();
@@ -40,16 +39,16 @@ const Technicians = () => {
 
   if (loading) {
     return (
-      <Layout>
+      
         <div className="flex items-center justify-center h-[50vh]">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </Layout>
+      
     );
   }
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -172,7 +171,7 @@ const Technicians = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

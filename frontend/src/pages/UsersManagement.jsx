@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Users, Shield, Trash2, Edit, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
@@ -98,7 +97,7 @@ const UsersManagement = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -218,7 +217,7 @@ const UsersManagement = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

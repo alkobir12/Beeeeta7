@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Plus, Target, TreePine, Layers, Sparkles, BarChart3 } from 'lucide-react';
 import axios from 'axios';
 
@@ -55,7 +54,7 @@ const CEO = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -155,7 +154,7 @@ const CEO = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

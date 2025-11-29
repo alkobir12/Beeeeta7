@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Search, Phone, Mail, MapPin, Trash2, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import Layout from '../components/Layout';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -49,7 +48,7 @@ const Suppliers = () => {
   );
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -171,7 +170,7 @@ const Suppliers = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

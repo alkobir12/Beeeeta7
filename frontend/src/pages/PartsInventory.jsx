@@ -4,7 +4,6 @@ import { Input } from '../components/ui/input';
 import { partAPI, fileAPI } from '../services/api';
 import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import Layout from '../components/Layout';
 
 const PartsInventory = () => {
   const { toast } = useToast();
@@ -109,7 +108,7 @@ const PartsInventory = () => {
   const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -317,7 +316,7 @@ const PartsInventory = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

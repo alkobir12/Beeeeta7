@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Plus, Filter } from 'lucide-react';
 import axios from 'axios';
 
@@ -37,7 +36,7 @@ const CustomerReceipts = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -93,7 +92,7 @@ const CustomerReceipts = () => {
           ))}
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

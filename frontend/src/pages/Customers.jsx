@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
-import Layout from '../components/Layout';
 
 const Customers = () => {
   const navigate = useNavigate();
@@ -80,7 +79,7 @@ const Customers = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -213,7 +212,7 @@ const Customers = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

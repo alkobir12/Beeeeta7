@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Wallet, Car, Calendar, ArrowRight, BarChart3 } from 'lucide-react';
 import { statsAPI, transactionAPI, vehicleAPI } from '../services/api';
-import Layout from '../components/Layout';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Analytics = () => {
@@ -34,11 +33,11 @@ const Analytics = () => {
 
   if (loading || !stats) {
     return (
-      <Layout>
+      
         <div className="flex justify-center py-20">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </Layout>
+      
     );
   }
 
@@ -62,7 +61,7 @@ const Analytics = () => {
   }));
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -177,7 +176,7 @@ const Analytics = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

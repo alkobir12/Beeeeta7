@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import Layout from '../components/Layout';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
@@ -58,7 +57,7 @@ const Templates = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -118,7 +117,7 @@ const Templates = () => {
           ))}
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

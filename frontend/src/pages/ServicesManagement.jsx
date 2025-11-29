@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Search, Plus, Edit, Trash2, Tag, Clock } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../hooks/use-toast';
@@ -71,7 +70,7 @@ const ServicesManagement = () => {
   const filtered = services.filter(s => (category === 'all' || s.category === category) && s.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <Layout>
+    
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -165,7 +164,7 @@ const ServicesManagement = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

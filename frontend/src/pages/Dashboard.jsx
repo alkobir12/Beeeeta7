@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock } from 'lucide-react';
-import Layout from '../components/Layout';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
@@ -69,16 +68,16 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <Layout>
+      
         <div className="flex items-center justify-center h-[50vh]">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </Layout>
+      
     );
   }
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -250,7 +249,7 @@ const Dashboard = () => {
           />
         )}
       </div>
-    </Layout>
+    
   );
 };
 

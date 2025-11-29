@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { useTheme } from '../contexts/ThemeContext';
@@ -77,7 +76,7 @@ const Settings = () => {
   );
 
   return (
-    <Layout>
+    
       <div className="max-w-3xl mx-auto pb-20">
         <div className="flex items-center justify-between mb-8 pt-4">
           <h1 className="text-3xl font-bold text-gray-900">الإعدادات</h1>
@@ -196,7 +195,7 @@ const Settings = () => {
           </Row>
         </Section>
       </div>
-    </Layout>
+    
   );
 };
 

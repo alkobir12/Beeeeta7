@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI } from '../services/api';
-import Layout from '../components/Layout';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 
 const VehicleDetails = () => {
@@ -55,13 +54,13 @@ const VehicleDetails = () => {
     }
   };
 
-  if (loading) return <Layout><div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div></Layout>;
-  if (!vehicle) return <Layout><div className="text-center py-20">المركبة غير موجودة</div></Layout>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
   const currentStepIndex = statusSteps.findIndex(s => s.key === status);
 
   return (
-    <Layout>
+    
       <div className="max-w-6xl mx-auto pb-20 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 pt-4">
@@ -270,7 +269,7 @@ const VehicleDetails = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Car, Search, Calendar, User, Phone, FileText, MoreVertical, Wrench, Trash2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
 import { vehicleAPI } from '../services/api';
 import { getStatusLabel, getStatusColor } from '../mock/data';
 
@@ -42,7 +41,7 @@ const VehicleArchive = () => {
   });
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -110,7 +109,7 @@ const VehicleArchive = () => {
           ))}
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

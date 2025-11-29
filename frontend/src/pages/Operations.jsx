@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2 } from 'lucide-react';
@@ -69,7 +68,7 @@ const Operations = () => {
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || 0), 0);
 
   return (
-    <Layout>
+    
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -342,7 +341,7 @@ const Operations = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
 import { Search, BookOpen, FileText, Upload, History, Zap, Database, Filter, GitCompare, X } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
@@ -63,7 +62,7 @@ const KnowledgeBase = () => {
   };
 
   return (
-    <Layout>
+    
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4 py-8">
@@ -258,7 +257,7 @@ const KnowledgeBase = () => {
           </div>
         )}
       </div>
-    </Layout>
+    
   );
 };
 

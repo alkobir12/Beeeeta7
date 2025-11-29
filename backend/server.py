@@ -126,6 +126,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Create the main app
 app = FastAPI(title="Workshop Management API")
+app.include_router(import_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

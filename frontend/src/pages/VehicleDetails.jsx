@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList } from 'lucide-react';
+import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import Layout from '../components/Layout';
+import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 
 const VehicleDetails = () => {
   const { id } = useParams();
@@ -23,45 +17,9 @@ const VehicleDetails = () => {
   const [notes, setNotes] = useState('');
   const [assignedTech, setAssignedTech] = useState('');
   const [vehicleFiles, setVehicleFiles] = useState([]);
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const [statusImages, setStatusImages] = useState([]);
   const [approvals, setApprovals] = useState([]);
 
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [approvalForm, setApprovalForm] = useState({ title: 'طلب اعتماد إصلاح', amount: '', notes: '' });
-
-
-  useEffect(() => {
-    fetchData();
-
-    // Poll approvals status for live update after customer responds
-    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-    const es = new EventSource(`${API_URL}/approvals/stream`);
-    es.onmessage = (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data?.type === 'approval_updated' && data?.vehicleId === id) {
-          fetchData();
-        }
-      } catch {}
-    };
-
-    const interval = setInterval(async () => {
-      try {
-        // If vehicle has approval(s), refresh vehicle data to reflect any derived changes
-        const res = await fetch(`${API_URL}/approvals?vehicle_id=${id}`);
-        if (res.ok) {
-          const list = await res.json();
-          // If any approval responded in the last 10s, refresh details
-          const recent = list.find(a => a.respondedAt && (Date.now() - new Date(a.respondedAt).getTime()) < 10000);
-          if (recent) {
-            fetchData();
-          }
-        }
-      } catch (e) {}
-    }, 5000);
-    return () => { try { es.close(); } catch {} clearInterval(interval); };
-  }, [id]);
+  useEffect(() => { fetchData(); }, [id]);
 
   const fetchData = async () => {
     try {
@@ -81,12 +39,7 @@ const VehicleDetails = () => {
       setNotes(vehicleRes.data.notes || '');
       setAssignedTech(vehicleRes.data.technicianId || '');
     } catch (error) {
-      console.error('Error fetching vehicle:', error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحميل بيانات المركبة",
-        variant: "destructive"
-      });
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -94,591 +47,228 @@ const VehicleDetails = () => {
 
   const handleStatusUpdate = async () => {
     try {
-      // Upload images first if any
-      if (statusImages.length > 0) {
-        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-        for (const img of statusImages) {
-          const formData = new FormData();
-          formData.append('file', img);
-          formData.append('file_type', 'status_update');
-          
-          await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=status_update`, {
-            method: 'POST',
-            body: formData
-          });
-        }
-      }
-      
-      await vehicleAPI.update(id, {
-        status,
-        notes,
-        technicianId: assignedTech
-      });
-      
-      toast({
-        title: 'تم التحديث',
-        description: `تم تحديث الحالة${statusImages.length > 0 ? ' وإرفاق ' + statusImages.length + ' صورة' : ''}. سيتم إرسال إشعار للعميل.`,
-      });
-      
-      setStatusImages([]);
+      await vehicleAPI.update(id, { status, notes, technicianId: assignedTech });
+      toast({ title: 'تم التحديث', description: 'تم تحديث حالة المركبة بنجاح' });
       fetchData();
     } catch (error) {
-      console.error('Error updating vehicle:', error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحديث المركبة",
-        variant: "destructive"
-      });
+      toast({ title: "خطأ", description: "فشل التحديث", variant: "destructive" });
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">جاري التحميل...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!vehicle) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center" dir="rtl">
-          <Card className="shadow-lg">
-            <CardContent className="p-12 text-center">
-              <Car className="mx-auto text-slate-300 mb-4" size={64} />
-              <p className="text-slate-500 text-lg">المركبة غير موجودة</p>
-              <Button onClick={() => navigate('/')} className="mt-4">العودة للرئيسية</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-
-  const handleNotify = () => {
-    toast({
-      title: 'تم الإرسال',
-      description: 'تم إرسال رابط التتبع ورسالة واتساب للعميل.',
-    });
-  };
+  if (loading) return <Layout><div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div></Layout>;
+  if (!vehicle) return <Layout><div className="text-center py-20">المركبة غير موجودة</div></Layout>;
 
   const currentStepIndex = statusSteps.findIndex(s => s.key === status);
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="max-w-6xl mx-auto pb-20 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="hover:bg-slate-100 transition-colors"
-          >
-            <ArrowRight size={20} />
-          </Button>
+        <div className="flex items-center gap-4 pt-4">
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowRight size={24} className="text-gray-600" />
+          </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-800">{vehicle.plateNumber}</h1>
-            <p className="text-slate-600">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
-          </div>
-          <Badge className={`${getStatusColor(status)} text-white px-4 py-2 text-base`}>
-            {getStatusLabel(status)}
-          </Badge>
-        </div>
-
-        {/* Status Progress */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader>
-            <CardTitle>مراحل العمل</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between relative">
-              {statusSteps.map((step, index) => (
-                <React.Fragment key={step.key}>
-                  <div className="flex flex-col items-center z-10">
-                    <div 
-                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        index <= currentStepIndex 
-                          ? step.color + ' text-white shadow-lg' 
-                          : 'bg-slate-200 text-slate-400'
-                      }`}
-                    >
-                      {index < currentStepIndex ? (
-                        <CheckCircle size={24} />
-                      ) : (
-                        <span className="font-bold">{index + 1}</span>
-                      )}
-                    </div>
-                    <span className={`mt-2 text-sm font-medium ${
-                      index <= currentStepIndex ? 'text-slate-800' : 'text-slate-400'
-                    }`}>
-                      {step.label}
-                    </span>
-                  </div>
-                  {index < statusSteps.length - 1 && (
-                    <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
-                      index < currentStepIndex ? 'bg-green-500' : 'bg-slate-200'
-                    }`} />
-                  )}
-                </React.Fragment>
-              ))}
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-gray-900">{vehicle.plateNumber}</h1>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)} text-white`}>
+                {getStatusLabel(status)}
+              </span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Approval Modal */}
-        {showApprovalModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md shadow-2xl">
-              <CardHeader>
-                <CardTitle>إنشاء طلب اعتماد جديد</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>عنوان الطلب</Label>
-                  <input 
-                    className="w-full p-2 border rounded" 
-                    value={approvalForm.title} 
-                    onChange={e => setApprovalForm({...approvalForm, title: e.target.value})} 
-                  />
-                </div>
-                <div>
-                  <Label>المبلغ المقدر (ر.س)</Label>
-                  <input 
-                    type="number" 
-                    className="w-full p-2 border rounded" 
-                    value={approvalForm.amount} 
-                    onChange={e => setApprovalForm({...approvalForm, amount: e.target.value})} 
-                  />
-                </div>
-                <div>
-                  <Label>تفاصيل إضافية</Label>
-                  <Textarea 
-                    value={approvalForm.notes} 
-                    onChange={e => setApprovalForm({...approvalForm, notes: e.target.value})} 
-                  />
-                </div>
-                <div className="flex gap-2 justify-end pt-2">
-                  <Button variant="outline" onClick={() => setShowApprovalModal(false)}>إلغاء</Button>
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={async () => {
-                      try {
-                        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-                        await fetch(`${API_URL}/approvals`, {
-                          method: 'POST',
-                          headers: {'Content-Type': 'application/json'},
-                          body: JSON.stringify({
-                            vehicleId: id,
-                            customerId: vehicle.customerId,
-                            title: approvalForm.title,
-                            amount: Number(approvalForm.amount) || 0,
-                            serviceItemsText: approvalForm.notes
-                          })
-                        });
-                        toast({ title: 'تم', description: 'تم إنشاء طلب الاعتماد' });
-                        setShowApprovalModal(false);
-                        fetchData();
-                      } catch (e) {
-                        toast({ title: 'خطأ', description: 'فشل إنشاء الطلب', variant: 'destructive' });
-                      }
-                    }}
-                  >
-                    إرسال الطلب
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <p className="text-gray-500 mt-1">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
           </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Vehicle & Customer Info */}
-          <div className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-l from-blue-50 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-blue-900">
-                  <Car size={24} />
-                  معلومات المركبة
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-3">
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">رقم اللوحة</span>
-                  <span className="font-semibold text-slate-800">{vehicle.plateNumber}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">الماركة</span>
-                  <span className="font-semibold text-slate-800">{vehicle.brand}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">الموديل</span>
-                  <span className="font-semibold text-slate-800">{vehicle.model}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">السنة</span>
-                  <span className="font-semibold text-slate-800">{vehicle.year}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-slate-600">اللون</span>
-                  <span className="font-semibold text-slate-800">{vehicle.color}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-l from-green-50 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-green-900">
-                  <User size={24} />
-                  معلومات العميل
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-3">
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">الاسم</span>
-                  <span className="font-semibold text-slate-800">{vehicle.customerName}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-600">رقم الجوال</span>
-                  <span className="font-semibold text-slate-800">{vehicle.customerPhone}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-slate-600">رابط التتبع</span>
-                  <span className="font-mono text-blue-600">{vehicle.trackingLink}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Management Panel */}
-          <div className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-l from-orange-50 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-orange-900">
-                  <Wrench size={24} />
-                  إدارة العمل
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">تحديث الحالة</label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusSteps.map(step => (
-                        <SelectItem key={step.key} value={step.key}>
-                          {step.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">الفني المسؤول</label>
-                  <Select value={assignedTech} onValueChange={setAssignedTech}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الفني" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {technicians.map(tech => (
-                        <SelectItem key={tech.id} value={tech.id}>
-                          {tech.name} - {tech.specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">الخدمات</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {vehicle.services.map((service, idx) => (
-                      <Badge key={idx} className="bg-blue-100 text-blue-700 border-blue-200">
-                        {service}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleStatusUpdate}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  حفظ التحديثات
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-l from-purple-50 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-purple-900">
-                  <MessageSquare size={24} />
-                  ملاحظات
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="أضف ملاحظات حول حالة المركبة..."
-                  className="min-h-32"
-                />
-                
-                {/* Upload Images for Status Update */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-                  <Label htmlFor="status-images" className="cursor-pointer block text-center">
-                    <Upload className="mx-auto text-godaddy-green mb-2" size={32} />
-                    <p className="text-sm font-semibold">إرفاق صور للإصلاح (اختياري)</p>
-                    <p className="text-xs text-gray-600">صور قبل وبعد الإصلاح</p>
-                  </Label>
-                  <input
-                    id="status-images"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files);
-                      setStatusImages(files);
-                      toast({
-                        title: '✅ تم اختيار الصور',
-                        description: `${files.length} صورة`
-                      });
-                    }}
-                  />
-                  {statusImages.length > 0 && (
-                    <div className="mt-2 text-sm text-green-700">
-                      ✓ {statusImages.length} صورة جاهزة للإرفاق
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <Button 
-                    onClick={handleNotify}
-                    variant="outline"
-                    className="w-full border-green-600 text-green-700 hover:bg-green-50 transition-colors"
-                  >
-                    <Phone className="ml-2" size={18} />
-                    إرسال تحديث للعميل (واتساب)
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full border-purple-600 text-purple-700 hover:bg-purple-50 transition-colors"
-                    onClick={() => setShowApprovalModal(true)}
-                  >
-                    إنشاء طلب اعتماد للعميل
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex gap-2">
+            <button onClick={() => navigate(`/print?type=invoice&vehicleId=${id}`)} className="apple-button flex items-center gap-2">
+              <Printer size={18} />
+              <span>طباعة</span>
+            </button>
           </div>
         </div>
 
-        {/* التواريخ */}
-        <Card className="mt-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar size={24} />
-              التواريخ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700 mb-1">تاريخ الاستقبال</p>
-                <p className="font-semibold text-blue-900">{vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleString('ar-SA') : '-'}</p>
+        {/* Progress Bar */}
+        <div className="apple-card p-6 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-[600px]">
+            {statusSteps.map((step, index) => (
+              <div key={step.key} className="flex flex-col items-center relative z-10 group">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  index <= currentStepIndex ? step.color + ' text-white shadow-md scale-110' : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {index < currentStepIndex ? <CheckCircle size={20} /> : <span className="font-bold text-sm">{index + 1}</span>}
+                </div>
+                <span className={`mt-3 text-xs font-medium ${index <= currentStepIndex ? 'text-gray-900' : 'text-gray-400'}`}>
+                  {step.label}
+                </span>
+                {index < statusSteps.length - 1 && (
+                  <div className={`absolute top-5 right-1/2 w-[calc(100%+200%)] h-[2px] -z-10 ${
+                    index < currentStepIndex ? 'bg-green-500' : 'bg-gray-100'
+                  }`} style={{ width: 'calc(100% + 100px)', marginRight: '-50px' }} />
+                )}
               </div>
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <p className="text-sm text-orange-700 mb-1">التسليم المتوقع</p>
-                <p className="font-semibold text-orange-900">{vehicle.estimatedCompletion ? new Date(vehicle.estimatedCompletion).toLocaleString('ar-SA') : '-'}</p>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Info */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Vehicle & Customer Cards */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="apple-card p-6">
+                <div className="flex items-center gap-3 mb-4 text-blue-600">
+                  <Car size={20} />
+                  <h3 className="font-bold text-gray-900">بيانات المركبة</h3>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">رقم اللوحة</span>
+                    <span className="font-medium">{vehicle.plateNumber}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">الماركة والموديل</span>
+                    <span className="font-medium">{vehicle.brand} {vehicle.model}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">رقم الهيكل</span>
+                    <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">اللون</span>
+                    <span className="font-medium">{vehicle.color || '-'}</span>
+                  </div>
+                </div>
               </div>
-              {vehicle.completionDate && (
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700 mb-1">تاريخ الإنجاز</p>
-                  <p className="font-semibold text-green-900">{new Date(vehicle.completionDate).toLocaleString('ar-SA')}</p>
+
+              <div className="apple-card p-6">
+                <div className="flex items-center gap-3 mb-4 text-green-600">
+                  <User size={20} />
+                  <h3 className="font-bold text-gray-900">بيانات العميل</h3>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">الاسم</span>
+                    <span className="font-medium">{vehicle.customerName}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">رقم الجوال</span>
+                    <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">البريد الإلكتروني</span>
+                    <span className="font-medium">{vehicle.customerEmail || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Files */}
+            <div className="apple-card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 text-purple-600">
+                  <FileText size={20} />
+                  <h3 className="font-bold text-gray-900">الملفات والمرفقات</h3>
+                </div>
+                <label className="cursor-pointer bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                  <Upload size={14} />
+                  <span>رفع ملف</span>
+                  <input type="file" className="hidden" onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      formData.append('file_type', 'diagnostic');
+                      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                      await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=diagnostic`, { method: 'POST', body: formData });
+                      toast({ title: 'تم الرفع', description: file.name });
+                      fetchData();
+                    } catch (e) { toast({ title: 'خطأ', variant: 'destructive' }); }
+                  }} />
+                </label>
+              </div>
+              
+              {vehicleFiles.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  لا توجد ملفات مرفقة
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {vehicleFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-gray-400 border border-gray-100">
+                          <FileText size={16} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{file.filename}</p>
+                          <p className="text-xs text-gray-500">{new Date(file.uploadedAt).toLocaleDateString('ar-SA')}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* موافقات المركبة */}
-        <Card className="mt-6 shadow-lg">
-          <CardHeader>
-            <CardTitle>موافقات المركبة</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            {(!approvals || approvals.length === 0) ? (
-              <p className="text-center text-slate-500 py-6">لا توجد طلبات اعتماد لهذه المركبة</p>
-            ) : (
-              <div className="space-y-3">
-                {approvals.map((appr) => (
-                  <div key={appr.id || appr.token} className="flex items-center justify-between p-3 rounded border hover:bg-slate-50">
-                    <div>
-                      <div className="font-bold">{appr.title || 'طلب اعتماد'} • {(() => { const n = Number(appr.amount); return isNaN(n) ? (appr.amount || '-') : n.toFixed(2); })()} ر.س</div>
-                      <div className="text-xs text-slate-500">
-                        الحالة: {appr.status === 'approved' ? 'تمت الموافقة' : appr.status === 'rejected' ? 'مرفوض' : appr.status === 'deferred' ? 'مؤجل' : appr.status === 'requote' ? 'إعادة تسعير' : 'بانتظار الموافقة'}
-                        {appr.respondedAt && ` — ${new Date(appr.respondedAt).toLocaleString('ar-SA')}`}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded ${appr.status==='approved'?'bg-green-100 text-green-700': appr.status==='rejected'?'bg-red-100 text-red-700': 'bg-yellow-100 text-yellow-700'}`}>
-                        {appr.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+          {/* Right Column: Actions */}
+          <div className="space-y-6">
+            <div className="apple-card p-6">
+              <div className="flex items-center gap-3 mb-6 text-orange-600">
+                <Wrench size={20} />
+                <h3 className="font-bold text-gray-900">إدارة العمل</h3>
               </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        {/* Vehicle Files Section */}
-        <Card className="card-godaddy mt-6">
-          <CardHeader className="bg-gradient-to-l from-purple-50">
-            <CardTitle className="flex items-center gap-2">
-              <FileText size={20} />
-              ملفات وفيديوهات المركبة
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="mb-4">
-              <Label htmlFor="vehicle-file-upload" className="cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                  <Upload className="mx-auto text-godaddy-green mb-2" size={32} />
-                  <p className="font-semibold mb-1">رفع ملف تشخيص أو فيديو</p>
-                  <p className="text-sm text-gray-600">PDF, DOCX, Video, Images</p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">تحديث الحالة</label>
+                  <select className="apple-input" value={status} onChange={e => setStatus(e.target.value)}>
+                    {statusSteps.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                  </select>
                 </div>
-              </Label>
-              <input
-                id="vehicle-file-upload"
-                type="file"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  
-                  try {
-                    setUploadingFile(true);
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('file_type', 'diagnostic');
-                    
-                    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-                    await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=diagnostic`, {
-                      method: 'POST',
-                      body: formData
-                    });
-                    
-                    toast({ title: '✅ تم الرفع', description: file.name });
-                    fetchData();
-                  } catch (err) {
-                    toast({ title: 'خطأ', description: 'فشل رفع الملف', variant: 'destructive' });
-                  } finally {
-                    setUploadingFile(false);
-                    e.target.value = '';
-                  }
-                }}
-              />
-            </div>
-            
-            {vehicleFiles.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold mb-2">الملفات المرفوعة ({vehicleFiles.length})</h4>
-                {vehicleFiles.map((file, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <FileText className="text-godaddy-green" size={20} />
-                      <div>
-                        <p className="font-medium text-sm">{file.filename}</p>
-                        <p className="text-xs text-gray-600">
-                          {new Date(file.uploadedAt).toLocaleDateString('ar-SA')}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                      {file.fileType}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* بطاقة حالة المركبة للطباعة */}
-        <Card className="mt-6 shadow-lg">
-          <CardHeader>
-            <CardTitle>طباعة المستندات</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-slate-600">العميل</div>
-                <div className="font-semibold">{vehicle?.customerName || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-slate-600">رقم الجوال</div>
-                <div className="font-semibold">{vehicle?.customerPhone || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-slate-600">السيارة</div>
-                <div className="font-semibold">{[vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' ')} — {vehicle?.plateNumber || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-slate-600">الحالة الحالية</div>
-                <div className="font-semibold">{getStatusLabel(status)}</div>
-              </div>
-              <div className="md:col-span-2">
-                <div className="text-sm text-slate-600">ملاحظات</div>
-                <div className="font-semibold whitespace-pre-wrap">{notes || '-'}</div>
-              </div>
-              <div className="md:col-span-2">
-                <div className="text-sm text-slate-600">الخدمات</div>
-                <div className="font-semibold">{(vehicle?.services || []).join('، ') || '-'}</div>
-              </div>
-            </div>
-            <div className="pt-4 flex flex-wrap gap-2">
-              <Button 
-                onClick={() => navigate(`/print?type=diagnosis&vehicleId=${id}`)} 
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                <ClipboardList size={18} className="ml-2" />
-                طباعة تشخيص
-              </Button>
-              <Button 
-                onClick={() => navigate(`/print?type=invoice&vehicleId=${id}`)} 
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Receipt size={18} className="ml-2" />
-                طباعة فاتورة
-              </Button>
-              <Button 
-                onClick={() => navigate(`/print?type=quote&vehicleId=${id}`)} 
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <FileText size={18} className="ml-2" />
-                طباعة عرض سعر
-              </Button>
-              <Button onClick={() => window.print()} variant="outline">
-                <Printer size={18} className="ml-2" />
-                طباعة سريعة
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">الفني المسؤول</label>
+                  <select className="apple-input" value={assignedTech} onChange={e => setAssignedTech(e.target.value)}>
+                    <option value="">اختر الفني...</option>
+                    {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
 
-      </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">ملاحظات</label>
+                  <textarea 
+                    className="apple-input h-32 py-3 resize-none" 
+                    placeholder="ملاحظات الفني..."
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                  />
+                </div>
+
+                <button onClick={handleStatusUpdate} className="apple-button w-full mt-2">
+                  حفظ التحديثات
+                </button>
+              </div>
+            </div>
+
+            <div className="apple-card p-6">
+              <div className="flex items-center gap-3 mb-4 text-gray-900">
+                <Clock size={20} />
+                <h3 className="font-bold">التواريخ</h3>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">تاريخ الدخول</span>
+                  <span className="font-medium">{new Date(vehicle.entryDate).toLocaleDateString('ar-SA')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">آخر تحديث</span>
+                  <span className="font-medium">{new Date(vehicle.updatedAt).toLocaleDateString('ar-SA')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );

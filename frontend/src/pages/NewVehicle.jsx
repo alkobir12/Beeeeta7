@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Save, User, Car, Phone, Wrench } from 'lucide-react';
+import { ArrowRight, Save, User, Car, Wrench, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { Checkbox } from '../components/ui/checkbox';
 import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
 import Layout from '../components/Layout';
 
@@ -19,30 +12,17 @@ const NewVehicle = () => {
   const [services, setServices] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [formData, setFormData] = useState({
-    plateNumber: '',
-    brand: '',
-    model: '',
-    year: new Date().getFullYear(),
-    color: '',
-    vin: '',
-    fileNumber: '',
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-    services: [],
-    servicePrices: {}, // Store custom prices for each service
-    technicianId: '',
-    notes: ''
+    plateNumber: '', brand: '', model: '', year: new Date().getFullYear(), color: '', vin: '', fileNumber: '',
+    customerName: '', customerPhone: '', customerEmail: '',
+    services: [], servicePrices: {}, technicianId: '', notes: ''
   });
   
   const [serviceSearch, setServiceSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [manualServiceName, setManualServiceName] = useState('');
-  const [manualServicePrice, setManualServicePrice] = useState('0');
+  const [manualServicePrice, setManualServicePrice] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -52,43 +32,23 @@ const NewVehicle = () => {
       ]);
       setServices(servicesRes.data);
       setTechnicians(techniciansRes.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.plateNumber || !formData.customerName || !formData.customerPhone || !formData.brand || !formData.model) {
-      toast({
-        title: 'خطأ',
-        description: 'الرجاء تعبئة جميع الحقول المطلوبة',
-        variant: 'destructive'
-      });
+    if (!formData.plateNumber || !formData.customerName || !formData.customerPhone || !formData.brand) {
+      toast({ title: 'تنبيه', description: 'الرجاء تعبئة الحقول المطلوبة', variant: 'destructive' });
       return;
     }
 
     try {
       setLoading(true);
       await vehicleAPI.create(formData);
-      
-      toast({
-        title: 'تم بنجاح',
-        description: 'تم استقبال المركبة بنجاح. سيتم إرسال رابط التتبع للعميل.',
-      });
-
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
+      toast({ title: 'تم بنجاح', description: 'تم استقبال المركبة بنجاح' });
+      setTimeout(() => navigate('/'), 1500);
     } catch (error) {
-      console.error('Error creating vehicle:', error);
-      toast({
-        title: 'خطأ',
-        description: 'فشل في إضافة المركبة. حاول مرة أخرى.',
-        variant: 'destructive'
-      });
+      toast({ title: 'خطأ', description: 'فشل في إضافة المركبة', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -104,368 +64,224 @@ const NewVehicle = () => {
   };
   
   const categories = ['all', ...new Set(services.map(s => s.category))];
-  
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.name.toLowerCase().includes(serviceSearch.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filteredServices = services.filter(s => {
+    return s.name.toLowerCase().includes(serviceSearch.toLowerCase()) && 
+           (selectedCategory === 'all' || s.category === selectedCategory);
   });
 
   return (
     <Layout>
-      <div className="min-h-screen" dir="rtl">
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div className="max-w-4xl mx-auto pb-20">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-8 pt-4">
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowRight size={24} className="text-gray-600" />
+          </button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">استقبال مركبة جديدة</h1>
-            <p className="text-slate-600">تعبئة بيانات المركبة والعميل</p>
+            <h1 className="text-3xl font-bold text-gray-900">استقبال مركبة جديدة</h1>
+            <p className="text-gray-500 mt-1">تسجيل بيانات المركبة والعميل</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Vehicle Information */}
-          <Card className="mb-6 shadow-lg">
-            <CardHeader className="bg-gradient-to-l from-blue-50 to-transparent">
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <Car size={24} />
-                بيانات المركبة
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="plateNumber" className="text-slate-700 mb-2 block">رقم اللوحة *</Label>
-                  <Input
-                    id="plateNumber"
-                    placeholder="أ ب ج 1234"
-                    value={formData.plateNumber}
-                    onChange={(e) => setFormData({...formData, plateNumber: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="brand" className="text-slate-700 mb-2 block">الماركة *</Label>
-                  <Input
-                    id="brand"
-                    placeholder="تويوتا، هوندا، نيسان..."
-                    value={formData.brand}
-                    onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="model" className="text-slate-700 mb-2 block">الموديل *</Label>
-                  <Input
-                    id="model"
-                    placeholder="كامري، أكورد، التيما..."
-                    value={formData.model}
-                    onChange={(e) => setFormData({...formData, model: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="year" className="text-slate-700 mb-2 block">السنة *</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    placeholder="2020"
-                    value={formData.year}
-                    onChange={(e) => setFormData({...formData, year: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="color" className="text-slate-700 mb-2 block">اللون</Label>
-                  <Input
-                    id="color"
-                    placeholder="أبيض، أسود، فضي..."
-                    value={formData.color}
-                    onChange={(e) => setFormData({...formData, color: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="vin" className="text-slate-700 mb-2 block">رقم الهيكل (VIN)</Label>
-                  <Input
-                    id="vin"
-                    placeholder="رقم الهيكل (اختياري)"
-                    value={formData.vin}
-                    onChange={(e) => setFormData({...formData, vin: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fileNumber" className="text-slate-700 mb-2 block">رقم الملف</Label>
-                  <Input
-                    id="fileNumber"
-                    placeholder="رقم الملف (اختياري)"
-                    value={formData.fileNumber}
-                    onChange={(e) => setFormData({...formData, fileNumber: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                  />
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Vehicle Info */}
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <Car size={20} />
               </div>
-            </CardContent>
-          </Card>
+              <h2 className="text-lg font-semibold text-gray-900">بيانات المركبة</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">رقم اللوحة *</label>
+                <input required className="apple-input" placeholder="أ ب ج 1234" value={formData.plateNumber} onChange={e => setFormData({...formData, plateNumber: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الماركة *</label>
+                <input required className="apple-input" placeholder="تويوتا" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الموديل *</label>
+                <input required className="apple-input" placeholder="كامري" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">السنة *</label>
+                <input required type="number" className="apple-input" placeholder="2024" value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">اللون</label>
+                <input className="apple-input" placeholder="أبيض" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">رقم الهيكل (VIN)</label>
+                <input className="apple-input" placeholder="اختياري" value={formData.vin} onChange={e => setFormData({...formData, vin: e.target.value})} />
+              </div>
+            </div>
+          </div>
 
-          {/* Customer Information */}
-          <Card className="mb-6 shadow-lg">
-            <CardHeader className="bg-gradient-to-l from-green-50 to-transparent">
-              <CardTitle className="flex items-center gap-2 text-green-900">
-                <User size={24} />
-                بيانات العميل
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="customerName" className="text-slate-700 mb-2 block">الاسم *</Label>
-                  <Input
-                    id="customerName"
-                    placeholder="محمد أحمد"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({...formData, customerName: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerPhone" className="text-slate-700 mb-2 block">رقم الجوال *</Label>
-                  <Input
-                    id="customerPhone"
-                    placeholder="0501234567"
-                    value={formData.customerPhone}
-                    onChange={(e) => setFormData({...formData, customerPhone: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="customerEmail" className="text-slate-700 mb-2 block">البريد الإلكتروني</Label>
-                  <Input
-                    id="customerEmail"
-                    type="email"
-                    placeholder="example@email.com"
-                    value={formData.customerEmail}
-                    onChange={(e) => setFormData({...formData, customerEmail: e.target.value})}
-                    className="border-slate-300 focus:border-blue-500 transition-colors"
-                  />
-                </div>
+          {/* Customer Info */}
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                <User size={20} />
               </div>
-            </CardContent>
-          </Card>
+              <h2 className="text-lg font-semibold text-gray-900">بيانات العميل</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الاسم *</label>
+                <input required className="apple-input" placeholder="اسم العميل" value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">رقم الجوال *</label>
+                <input required className="apple-input" placeholder="05xxxxxxxx" value={formData.customerPhone} onChange={e => setFormData({...formData, customerPhone: e.target.value})} />
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-sm font-medium text-gray-700">البريد الإلكتروني</label>
+                <input type="email" className="apple-input" placeholder="example@mail.com" value={formData.customerEmail} onChange={e => setFormData({...formData, customerEmail: e.target.value})} />
+              </div>
+            </div>
+          </div>
 
           {/* Services */}
-          <Card className="mb-6 shadow-lg">
-            <CardHeader className="bg-gradient-to-l from-orange-50 to-transparent">
-              <CardTitle className="flex items-center gap-2 text-orange-900">
-                <Wrench size={24} />
-                الخدمات المطلوبة ({formData.services.length} محددة)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              {/* Search and Category Filter */}
-              <div className="flex gap-4 mb-4">
-                <Input
-                  placeholder="بحث عن خدمة..."
-                  value={serviceSearch}
-                  onChange={(e) => setServiceSearch(e.target.value)}
-                  className="flex-1"
-                />
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="الفئة" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">جميع الفئات</SelectItem>
-                    {categories.filter(c => c !== 'all').map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                <Wrench size={20} />
               </div>
-              
-              {/* Manual service add */}
-              <div className="mt-4 p-4 border rounded-lg bg-blue-50">
-                <div className="font-semibold mb-2">إضافة خدمة يدوية</div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input 
-                    placeholder="اسم الخدمة" 
-                    value={manualServiceName}
-                    onChange={(e) => setManualServiceName(e.target.value)}
-                  />
-                  <Input 
-                    placeholder="السعر (اختياري)" 
-                    type="number" 
-                    value={manualServicePrice}
-                    onChange={(e) => setManualServicePrice(e.target.value)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      const name = manualServiceName?.trim();
-                      if (!name) {
-                        toast({
-                          title: "تنبيه",
-                          description: "الرجاء إدخال اسم الخدمة",
-                          variant: "destructive"
-                        });
-                        return;
-                      }
-                      
-                      // Add service to selected services
-                      setFormData(prev => ({
-                        ...prev, 
-                        services: [...prev.services, name]
-                      }));
-                      
-                      // Clear inputs
-                      setManualServiceName('');
-                      setManualServicePrice('');
-                      
-                      toast({
-                        title: "تم الإضافة",
-                        description: `تمت إضافة: ${name}`
-                      });
-                    }} 
-                    className="justify-center"
+              <h2 className="text-lg font-semibold text-gray-900">الخدمات المطلوبة</h2>
+            </div>
+
+            <div className="flex gap-4 mb-6">
+              <input 
+                className="apple-input flex-1" 
+                placeholder="بحث عن خدمة..." 
+                value={serviceSearch} 
+                onChange={e => setServiceSearch(e.target.value)} 
+              />
+              <select 
+                className="apple-input w-40" 
+                value={selectedCategory} 
+                onChange={e => setSelectedCategory(e.target.value)}
+              >
+                <option value="all">الكل</option>
+                {categories.filter(c => c !== 'all').map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto mb-6 pr-2">
+              {filteredServices.map(service => {
+                const isSelected = formData.services.includes(service.name);
+                return (
+                  <div 
+                    key={service.id} 
+                    onClick={() => handleServiceToggle(service.name)}
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                      isSelected ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:border-blue-300'
+                    }`}
                   >
-                    إضافة
-                  </Button>
-                </div>
-                <div className="text-xs text-slate-600 mt-2">
-                  اكتب اسم الخدمة واضغط "إضافة" لإضافتها للقائمة المحددة
-                </div>
-              </div>
-              
-              {/* Services List Section */}
-              
-              {/* Services Grid */}
-              <div className="space-y-2">
-                {filteredServices.map(service => {
-                  const isSelected = formData.services.includes(service.name);
-                  const customPrice = formData.servicePrices[service.name] ?? 0;
-                  
-                  return (
-                    <div key={service.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-200">
-                      <Checkbox
-                        id={`service-${service.id}`}
-                        checked={isSelected}
-                        onCheckedChange={() => handleServiceToggle(service.name)}
-                      />
-                      <label
-                        htmlFor={`service-${service.id}`}
-                        className="flex-1 cursor-pointer"
-                      >
-                        <div className="font-semibold text-slate-800 text-sm">{service.name}</div>
-                        <div className="text-xs text-slate-500">{service.category}</div>
-                      </label>
-                      
-                      {/* Editable price field */}
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          value={customPrice}
-                          onChange={(e) => {
-                            const newPrice = e.target.value;
-                            setFormData(prev => ({
-                              ...prev,
-                              servicePrices: {
-                                ...prev.servicePrices,
-                                [service.name]: newPrice
-                              }
-                            }));
-                          }}
-                          placeholder="0"
-                          className="w-24 text-center"
-                          min="0"
-                          step="0.01"
-                        />
-                        <span className="text-xs text-slate-600">ر.س</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                        {isSelected && <Check size={12} className="text-white" />}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{service.name}</div>
+                        <div className="text-xs text-gray-500">{service.category}</div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              
-              {filteredServices.length === 0 && (
-                <div className="text-center py-8 text-slate-500">
-                  لا توجد خدمات مطابقة للبحث
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {isSelected && (
+                      <input 
+                        type="number" 
+                        className="w-20 h-8 rounded-lg border border-blue-200 px-2 text-center text-sm focus:outline-none focus:border-blue-500"
+                        placeholder="السعر"
+                        onClick={e => e.stopPropagation()}
+                        value={formData.servicePrices[service.name] || ''}
+                        onChange={e => setFormData({
+                          ...formData, 
+                          servicePrices: {...formData.servicePrices, [service.name]: e.target.value}
+                        })}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-          {/* Assignment and Notes */}
-          <Card className="mb-6 shadow-lg">
-            <CardHeader className="bg-gradient-to-l from-purple-50 to-transparent">
-              <CardTitle className="text-purple-900">تعيين وملاحظات</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <Label htmlFor="technician" className="text-slate-700 mb-2 block">تعيين الفني</Label>
-                <Select value={formData.technicianId} onValueChange={(value) => setFormData({...formData, technicianId: value})}>
-                  <SelectTrigger className="border-slate-300 focus:border-blue-500">
-                    <SelectValue placeholder="اختر الفني المسؤول" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {technicians.map(tech => (
-                      <SelectItem key={tech.id} value={tech.id}>
-                        {tech.name} - {tech.specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Manual Service */}
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">إضافة خدمة يدوية</h3>
+              <div className="flex gap-3">
+                <input 
+                  className="apple-input flex-1 h-10 text-sm" 
+                  placeholder="اسم الخدمة" 
+                  value={manualServiceName} 
+                  onChange={e => setManualServiceName(e.target.value)} 
+                />
+                <input 
+                  className="apple-input w-24 h-10 text-sm" 
+                  placeholder="السعر" 
+                  type="number"
+                  value={manualServicePrice} 
+                  onChange={e => setManualServicePrice(e.target.value)} 
+                />
+                <button 
+                  type="button"
+                  onClick={() => {
+                    if (!manualServiceName.trim()) return;
+                    setFormData(prev => ({ ...prev, services: [...prev.services, manualServiceName] }));
+                    if (manualServicePrice) {
+                      setFormData(prev => ({ ...prev, servicePrices: {...prev.servicePrices, [manualServiceName]: manualServicePrice} }));
+                    }
+                    setManualServiceName('');
+                    setManualServicePrice('');
+                  }}
+                  className="h-10 w-10 rounded-lg bg-gray-900 text-white flex items-center justify-center hover:bg-black transition-colors"
+                >
+                  <Plus size={18} />
+                </button>
               </div>
-              <div>
-                <Label htmlFor="notes" className="text-slate-700 mb-2 block">ملاحظات</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="أي ملاحظات أو مشاكل مذكورة من العميل..."
-                  value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  className="border-slate-300 focus:border-blue-500 transition-colors min-h-32"
+            </div>
+          </div>
+
+          {/* Assignment */}
+          <div className="apple-card p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">تعيين الفني</label>
+                <select 
+                  className="apple-input" 
+                  value={formData.technicianId} 
+                  onChange={e => setFormData({...formData, technicianId: e.target.value})}
+                >
+                  <option value="">اختر الفني المسؤول...</option>
+                  {technicians.map(t => <option key={t.id} value={t.id}>{t.name} - {t.specialty}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">ملاحظات</label>
+                <textarea 
+                  className="apple-input h-32 py-3 resize-none" 
+                  placeholder="ملاحظات إضافية..." 
+                  value={formData.notes} 
+                  onChange={e => setFormData({...formData, notes: e.target.value})} 
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Submit Button */}
-          <div className="flex gap-4">
-            <Button 
-              type="submit"
+          <div className="flex gap-4 pt-4">
+            <button 
+              type="submit" 
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              className="flex-1 apple-button h-14 text-lg font-semibold shadow-lg shadow-blue-500/20"
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  جاري الحفظ...
-                </span>
-              ) : (
-                <>
-                  <Save className="ml-2" size={20} />
-                  حفظ واستقبال المركبة
-                </>
-              )}
-            </Button>
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/')}
-              className="px-8 py-6 hover:bg-slate-100 transition-colors"
-            >
-              إلغاء
-            </Button>
+              {loading ? 'جاري الحفظ...' : 'حفظ واستقبال المركبة'}
+            </button>
           </div>
         </form>
-      </div>
       </div>
     </Layout>
   );

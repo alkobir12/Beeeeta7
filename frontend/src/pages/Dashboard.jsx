@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, AlertCircle } from 'lucide-react';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock } from 'lucide-react';
 import Layout from '../components/Layout';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 
-// حالات المركبة
 const STATUS_CONFIG = {
-  diagnosis: { label: 'تشخيص', color: 'bg-orange-500', bgLight: 'bg-orange-50 text-orange-700' },
-  waiting_approval: { label: 'بانتظار الموافقة', color: 'bg-yellow-500', bgLight: 'bg-yellow-50 text-yellow-700' },
-  in_progress: { label: 'قيد العمل', color: 'bg-blue-500', bgLight: 'bg-blue-50 text-blue-700' },
-  quality_check: { label: 'فحص الجودة', color: 'bg-purple-500', bgLight: 'bg-purple-50 text-purple-700' },
-  ready: { label: 'جاهز للتسليم', color: 'bg-green-500', bgLight: 'bg-green-50 text-green-700' },
-  delivered: { label: 'تم التسليم', color: 'bg-gray-500', bgLight: 'bg-gray-50 text-gray-700' }
+  diagnosis: { label: 'تشخيص', color: 'text-orange-600 bg-orange-50', iconColor: 'text-orange-500' },
+  waiting_approval: { label: 'بانتظار الموافقة', color: 'text-yellow-600 bg-yellow-50', iconColor: 'text-yellow-500' },
+  in_progress: { label: 'قيد العمل', color: 'text-blue-600 bg-blue-50', iconColor: 'text-blue-500' },
+  quality_check: { label: 'فحص الجودة', color: 'text-purple-600 bg-purple-50', iconColor: 'text-purple-500' },
+  ready: { label: 'جاهز للتسليم', color: 'text-green-600 bg-green-50', iconColor: 'text-green-500' },
+  delivered: { label: 'تم التسليم', color: 'text-gray-600 bg-gray-50', iconColor: 'text-gray-500' }
 };
 
 const Dashboard = () => {
@@ -46,17 +41,12 @@ const Dashboard = () => {
       setTechnicians(techniciansRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({
-        title: 'خطأ',
-        description: 'فشل في تحميل البيانات',
-        variant: 'destructive'
-      });
+      toast({ title: 'خطأ', description: 'فشل في تحميل البيانات', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
-  // إحصائيات
   const stats = {
     totalVehicles: vehicles.length,
     inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check'].includes(v.status)).length,
@@ -64,7 +54,6 @@ const Dashboard = () => {
     technicians: technicians.length
   };
 
-  // تصفية المركبات
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = 
       vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,7 +62,6 @@ const Dashboard = () => {
       vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || vehicle.status === filterStatus;
-    
     return matchesSearch && matchesStatus;
   });
 
@@ -82,8 +70,8 @@ const Dashboard = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="spinner" />
+        <div className="flex items-center justify-center h-[50vh]">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
       </Layout>
     );
@@ -91,192 +79,166 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="container-main">
-        {/* العنوان */}
-        <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="page-title">لوحة التحكم</h1>
-            <p className="page-subtitle">مرحباً بك في نظام إدارة الورشة</p>
+            <h1 className="text-2xl font-bold text-gray-900">لوحة التحكم</h1>
+            <p className="text-gray-500 mt-1">نظرة عامة على حالة الورشة اليوم</p>
           </div>
-          <Button 
+          <button 
             onClick={() => navigate('/new-vehicle')}
-            className="btn-primary"
+            className="apple-button flex items-center gap-2"
           >
-            <Plus size={20} />
-            <span>استقبال مركبة جديدة</span>
-          </Button>
+            <Plus size={18} />
+            <span>استقبال مركبة</span>
+          </button>
         </div>
 
-        {/* بطاقات الإحصائيات */}
+        {/* Stats Grid */}
         <div className="grid-stats mb-8">
-          <div 
-            onClick={() => setFilterStatus('all')} 
-            className="stat-card stat-card-blue cursor-pointer"
-          >
-            <div>
-              <p className="stat-label">إجمالي المركبات</p>
-              <p className="stat-value text-blue-600">{stats.totalVehicles}</p>
-            </div>
-            <div className="stat-icon bg-blue-500 text-white">
-              <Car size={24} />
-            </div>
-          </div>
-
-          <div 
-            onClick={() => setFilterStatus('in_progress')} 
-            className="stat-card stat-card-orange cursor-pointer"
-          >
-            <div>
-              <p className="stat-label">قيد العمل</p>
-              <p className="stat-value text-orange-600">{stats.inProgress}</p>
-            </div>
-            <div className="stat-icon bg-orange-500 text-white">
-              <Wrench size={24} />
+          <div onClick={() => setFilterStatus('all')} className="stat-card group">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">إجمالي المركبات</p>
+                <h3 className="text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
+              </div>
+              <div className="p-3 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                <Car size={24} />
+              </div>
             </div>
           </div>
 
-          <div 
-            onClick={() => setFilterStatus('ready')} 
-            className="stat-card stat-card-green cursor-pointer"
-          >
-            <div>
-              <p className="stat-label">جاهز للتسليم</p>
-              <p className="stat-value text-green-600">{stats.ready}</p>
-            </div>
-            <div className="stat-icon bg-green-500 text-white">
-              <CheckCircle size={24} />
+          <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">قيد العمل</p>
+                <h3 className="text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
+              </div>
+              <div className="p-3 rounded-full bg-orange-50 text-orange-600 group-hover:bg-orange-100 transition-colors">
+                <Wrench size={24} />
+              </div>
             </div>
           </div>
 
-          <div 
-            onClick={() => navigate('/technicians')} 
-            className="stat-card stat-card-purple cursor-pointer"
-          >
-            <div>
-              <p className="stat-label">الفنيين</p>
-              <p className="stat-value text-purple-600">{stats.technicians}</p>
+          <div onClick={() => setFilterStatus('ready')} className="stat-card group">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">جاهز للتسليم</p>
+                <h3 className="text-3xl font-bold text-gray-900">{stats.ready}</h3>
+              </div>
+              <div className="p-3 rounded-full bg-green-50 text-green-600 group-hover:bg-green-100 transition-colors">
+                <CheckCircle size={24} />
+              </div>
             </div>
-            <div className="stat-icon bg-purple-500 text-white">
-              <Users size={24} />
+          </div>
+
+          <div onClick={() => navigate('/technicians')} className="stat-card group">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">الفنيين المتاحين</p>
+                <h3 className="text-3xl font-bold text-gray-900">{stats.technicians}</h3>
+              </div>
+              <div className="p-3 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
+                <Users size={24} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* البحث والتصفية */}
-        <Card className="card-modern mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-                <Input
-                  type="text"
-                  placeholder="بحث باسم العميل أو رقم اللوحة أو الماركة..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input-modern pr-10"
-                />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {['all', 'diagnosis', 'in_progress', 'ready'].map((status) => (
-                  <Button
-                    key={status}
-                    variant={filterStatus === status ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterStatus(status)}
-                    className={filterStatus === status ? 'bg-primary' : ''}
-                  >
-                    {status === 'all' ? 'الكل' : getStatusConfig(status).label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Search & Filter */}
+        <div className="apple-card p-4 mb-6 flex flex-col sm:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="بحث باسم العميل، رقم اللوحة، أو نوع السيارة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="apple-input pr-10"
+            />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+            {['all', 'diagnosis', 'in_progress', 'ready'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  filterStatus === status 
+                    ? 'bg-gray-900 text-white shadow-md' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {status === 'all' ? 'الكل' : getStatusConfig(status).label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {/* قائمة المركبات */}
-        <div className="grid-fluid">
+        {/* Vehicles Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVehicles.length === 0 ? (
-            <Card className="card-modern col-span-full">
-              <CardContent className="p-8 text-center">
-                <Car className="mx-auto mb-4 text-muted-foreground" size={48} />
-                <p className="text-muted-foreground">لا توجد مركبات</p>
-                <Button 
-                  onClick={() => navigate('/new-vehicle')}
-                  className="btn-primary mt-4"
-                >
-                  <Plus size={18} />
-                  <span>إضافة مركبة جديدة</span>
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="col-span-full py-12 text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Car className="text-gray-400" size={40} />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">لا توجد مركبات</h3>
+              <p className="text-gray-500 mt-1">لم يتم العثور على مركبات تطابق بحثك</p>
+            </div>
           ) : (
             filteredVehicles.map((vehicle) => {
               const statusConfig = getStatusConfig(vehicle.status);
               return (
-                <Card 
+                <div 
                   key={vehicle.id} 
-                  className="card-modern cursor-pointer"
+                  className="apple-card p-5 cursor-pointer hover:shadow-md transition-shadow group relative overflow-hidden"
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}
                 >
-                  <CardContent className="p-4">
-                    {/* رأس البطاقة */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg ${statusConfig.color} flex items-center justify-center text-white`}>
-                          <Car size={20} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-base">
-                            {vehicle.brand} {vehicle.model}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">{vehicle.plateNumber}</p>
-                        </div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 font-bold text-lg">
+                        {vehicle.brand?.[0]}
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedVehicle(vehicle);
-                          setShowQuickActions(true);
-                        }}
-                        className="btn-icon"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
-
-                    {/* معلومات العميل */}
-                    <div className="space-y-2 mb-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users size={14} className="text-muted-foreground" />
-                        <span>{vehicle.customerName}</span>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{vehicle.brand} {vehicle.model}</h3>
+                        <p className="text-sm text-gray-500 font-mono">{vehicle.plateNumber}</p>
                       </div>
-                      {vehicle.customerPhone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span dir="ltr">{vehicle.customerPhone}</span>
-                        </div>
-                      )}
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedVehicle(vehicle);
+                        setShowQuickActions(true);
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+                  </div>
 
-                    {/* الحالة والتاريخ */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border">
-                      <Badge className={statusConfig.bgLight}>
-                        {statusConfig.label}
-                      </Badge>
-                      {vehicle.createdAt && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock size={12} />
-                          {new Date(vehicle.createdAt).toLocaleDateString('ar-SA')}
-                        </span>
-                      )}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users size={16} className="text-gray-400" />
+                      <span>{vehicle.customerName}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock size={16} className="text-gray-400" />
+                      <span>{new Date(vehicle.createdAt).toLocaleDateString('ar-SA')}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                      {statusConfig.label}
+                    </span>
+                  </div>
+                </div>
               );
             })
           )}
         </div>
 
-        {/* نافذة الإجراءات السريعة */}
+        {/* Quick Actions Modal */}
         {showQuickActions && selectedVehicle && (
           <VehicleQuickActions
             vehicle={selectedVehicle}

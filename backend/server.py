@@ -32,6 +32,9 @@ from unified_document_service import UnifiedDocumentGenerator, create_unified_do
 from routes_extended import router as extended_router, set_db as set_db_extended
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
+# Import Import Routes
+from routes_import import router as import_router, set_db as set_db_import
+
 from supabase_service import SupabaseService
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')

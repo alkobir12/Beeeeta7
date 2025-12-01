@@ -38,6 +38,7 @@ const getSessionFromCookie = () => {
   try {
     const cookieStr = document.cookie || '';
     const parts = cookieStr.split(';').map(p => p.trim());
+import InjectorDiagnostics from "./pages/InjectorDiagnostics";
     const sessionPart = parts.find(p => p.startsWith('session='));
     if (!sessionPart) return null;
     const value = decodeURIComponent(sessionPart.split('=')[1] || '');

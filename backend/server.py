@@ -129,6 +129,7 @@ UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Create the main app
+app.include_router(injectors_router)
 app = FastAPI(title="Workshop Management API")
 app.include_router(import_router)
 

@@ -6,7 +6,6 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const GENSPARK_DIRECT_LINK = "https://www.genspark.ai/agent/fe62398f-faa9-4a8f-bae9-4d0b5dc25680";
 
 const PublicAgent = () => {
   const { i18n } = useTranslation();

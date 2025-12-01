@@ -112,6 +112,7 @@ db = client[db_name] if (client is not None and db_name) else None
 
 # Set database for extended and advanced routes
 set_db_import(db)
+set_db_injectors(db)
 set_db_extended(db)
 set_db_advanced(db)
 

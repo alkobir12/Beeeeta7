@@ -1,42 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Car, CheckCircle, Calendar, Wrench, Phone, Mail, Hash } from 'lucide-react';
+import { Car, CheckCircle, Wrench, AlertCircle, Phone, Mail, ArrowRight } from 'lucide-react';
 import { vehicleAPI } from '../services/api';
 import CustomerChatbot from '../components/CustomerChatbot';
 
 const getStatusLabel = (key) => {
-  const map = {
-    diagnosis: 'تشخيص',
-    quotation: 'تسعير',
-    approved: 'معتمد',
-    repair: 'تحت الإصلاح',
-    ready: 'جاهز للتسليم',
-    delivered: 'تم التسليم',
-  };
-  return map[key] || key || 'غير محدد';
-};
-
-const getStatusColor = (key) => {
-  const map = {
-    diagnosis: 'bg-yellow-500',
-    quotation: 'bg-blue-500',
-    approved: 'bg-green-500',
-    repair: 'bg-orange-500',
-    ready: 'bg-green-600',
-    delivered: 'bg-gray-500',
-  };
-  return map[key] || 'bg-slate-400';
+  const map = { diagnosis: 'تشخيص', quotation: 'تسعير', approved: 'معتمد', repair: 'إصلاح', ready: 'جاهز', delivered: 'تم التسليم' };
+  return map[key] || key;
 };
 
 const steps = [
-  { key: 'diagnosis', label: 'تشخيص', color: 'bg-yellow-500' },
-  { key: 'quotation', label: 'تسعير', color: 'bg-blue-500' },
-  { key: 'approved', label: 'معتمد', color: 'bg-green-500' },
-  { key: 'repair', label: 'تحت الإصلاح', color: 'bg-orange-500' },
-  { key: 'ready', label: 'جاهز للتسليم', color: 'bg-green-600' },
-  { key: 'delivered', label: 'تم التسليم', color: 'bg-gray-500' },
+  { key: 'diagnosis', label: 'تشخيص' }, { key: 'quotation', label: 'تسعير' },
+  { key: 'repair', label: 'إصلاح' }, { key: 'ready', label: 'جاهز' }, { key: 'delivered', label: 'تم التسليم' }
 ];
 
 const CustomerTracking = () => {
@@ -50,219 +25,101 @@ const CustomerTracking = () => {
       try {
         const res = await vehicleAPI.track(trackingId);
         setVehicle(res.data);
-        setError('');
-      } catch (e) {
-        setError('رابط غير صحيح - الرجاء التحقق من رابط التتبع');
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { setError('رابط غير صحيح'); } finally { setLoading(false); }
     };
     load();
   }, [trackingId]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center" dir="rtl">
-        <div className="text-slate-700">جاري التحميل...</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7] text-gray-500">جاري التحميل...</div>;
+  if (error || !vehicle) return <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]"><div className="apple-card p-8 text-center"><AlertCircle className="mx-auto text-red-500 mb-4" size={48}/><h2 className="text-xl font-bold text-gray-900">{error}</h2></div></div>;
 
-  if (error || !vehicle) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center" dir="rtl">
-        <Card className="shadow-xl max-w-md">
-          <CardContent className="p-12 text-center">
-            <Car className="mx-auto text-slate-300 mb-4" size={64} />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">رابط غير صحيح</h2>
-            <p className="text-slate-600">{error || 'الرجاء التحقق من رابط التتبع'}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const currentStepIndex = steps.findIndex(s => s.key === vehicle.status);
+  const currentIdx = steps.findIndex(s => s.key === vehicle.status);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50" dir="rtl">
-      <div className="container mx-auto p-6 max-w-4xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="bg-white rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+    <div className="min-h-screen bg-[#F5F5F7] font-sans" dir="rtl">
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="text-center mb-10 pt-8">
+          <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-xl shadow-blue-500/10">
             <Car className="text-blue-600" size={40} />
           </div>
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">تتبع مركبتك</h1>
-          <p className="text-slate-600 text-lg">{vehicle.plateNumber}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">تتبع حالة المركبة</h1>
+          <p className="text-gray-500 text-lg">{vehicle.plateNumber} • {vehicle.brand} {vehicle.model}</p>
         </div>
 
-        {/* Status Badge */}
-        <div className="text-center mb-8">
-          <Badge className={`${getStatusColor(vehicle.status)} text-white px-6 py-3 text-lg shadow-lg`}>
-            الحالة الحالية: {getStatusLabel(vehicle.status)}
-          </Badge>
-        </div>
+        <div className="apple-card p-8 mb-8 border-0 shadow-xl">
+          <h2 className="text-xl font-bold text-gray-900 mb-8 text-center">مراحل العمل</h2>
+          <div className="relative flex justify-between">
+            {/* Progress Line */}
+            <div className="absolute top-5 left-0 right-0 h-1 bg-gray-100 -z-10 rounded-full">
+              <div 
+                className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" 
+                style={{ width: `${(currentIdx / (steps.length - 1)) * 100}%` }}
+              />
+            </div>
 
-        {/* Progress Steps */}
-        <Card className="mb-8 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">مراحل العمل</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8">
-            <div className="space-y-6">
-              {steps.map((step, index) => {
-                const isCompleted = index < currentStepIndex;
-                const isCurrent = index === currentStepIndex;
-                const isPending = index > currentStepIndex;
-
-                return (
-                  <div key={step.key} className="flex items-center gap-4">
-                    <div 
-                      className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${
-                        isCompleted 
-                          ? 'bg-green-500 text-white shadow-lg scale-110' 
-                          : isCurrent
-                          ? step.color + ' text-white shadow-xl scale-110 animate-pulse'
-                          : 'bg-slate-200 text-slate-400'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle size={32} />
-                      ) : (
-                        <span className="text-2xl font-bold">{index + 1}</span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className={`text-xl font-bold ${
-                        isCompleted || isCurrent ? 'text-slate-800' : 'text-slate-400'
-                      }`}>
-                        {step.label}
-                      </h3>
-                      <p className="text-sm text-slate-500 mt-1">
-                        {isCompleted && 'تم الإنجاز'}
-                        {isCurrent && 'جاري العمل عليها'}
-                        {isPending && 'في الانتظار'}
-                      </p>
-                    </div>
-                    {(isCompleted || isCurrent) && (
-                      <CheckCircle className="text-green-500" size={24} />
-                    )}
+            {steps.map((step, idx) => {
+              const isCompleted = idx <= currentIdx;
+              const isCurrent = idx === currentIdx;
+              
+              return (
+                <div key={step.key} className="flex flex-col items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                    isCompleted ? 'bg-blue-600 text-white scale-110 shadow-lg shadow-blue-500/30' : 'bg-white border-2 border-gray-200 text-gray-300'
+                  }`}>
+                    {isCompleted ? <CheckCircle size={20} /> : <span className="text-sm font-bold">{idx + 1}</span>}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  <span className={`text-xs font-medium transition-colors ${isCurrent ? 'text-blue-600 font-bold' : 'text-gray-400'}`}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-10 p-4 bg-blue-50 rounded-xl text-center">
+            <p className="text-blue-800 font-medium">
+              الحالة الحالية: <span className="font-bold text-lg mr-1">{getStatusLabel(vehicle.status)}</span>
+            </p>
+            {vehicle.estimatedCompletion && (
+              <p className="text-blue-600/80 text-sm mt-1">
+                الموعد المتوقع: {new Date(vehicle.estimatedCompletion).toLocaleDateString('ar-SA')}
+              </p>
+            )}
+          </div>
+        </div>
 
-        {/* Vehicle Info */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader className="bg-gradient-to-l from-blue-50 to-transparent">
-            <CardTitle className="flex items-center gap-2 text-blue-900">
-              <Car size={24} />
-              معلومات المركبة
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">رقم اللوحة</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.plateNumber}</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">المركبة</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.brand} {vehicle.model}</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">السنة</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.year}</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">اللون</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.color}</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">رقم الملف</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.file_number || '-'}</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-600 mb-1">VIN</p>
-                <p className="font-bold text-slate-800 text-lg">{vehicle.vin || '-'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Services */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader className="bg-gradient-to-l from-orange-50 to-transparent">
-            <CardTitle className="flex items-center gap-2 text-orange-900">
-              <Wrench size={24} />
-              الخدمات
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex gap-2 flex-wrap">
-              {(vehicle.services || []).map((service, idx) => (
-                <Badge key={idx} className="bg-orange-100 text-orange-700 border-orange-200 px-4 py-2">
-                  {service}
-                </Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="apple-card p-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Wrench size={20} className="text-gray-400" />
+              الخدمات المطلوبة
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {(vehicle.services || []).map((s, i) => (
+                <span key={i} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
+                  {s}
+                </span>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Dates */}
-        <Card className="mb-6 shadow-lg">
-          <CardHeader className="bg-gradient-to-l from-green-50 to-transparent">
-            <CardTitle className="flex items-center gap-2 text-green-900">
-              <Calendar size={24} />
-              التواريخ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700 mb-2 flex items-center gap-2">
-                  <Calendar size={16} />
-                  تاريخ الاستقبال
-                </p>
-                <p className="font-semibold text-blue-900">{vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleString('ar-SA') : '-'}</p>
-              </div>
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <p className="text-sm text-orange-700 mb-2 flex items-center gap-2">
-                  <Calendar size={16} />
-                  التسليم المتوقع
-                </p>
-                <p className="font-semibold text-orange-900">{vehicle.estimatedCompletion ? new Date(vehicle.estimatedCompletion).toLocaleString('ar-SA') : '-'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contact */}
-        <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-white">
-          <CardContent className="p-8 text-center">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">هل لديك استفسار؟</h3>
-            <p className="text-slate-600 mb-6">لا تتردد في التواصل معنا</p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <a href={`tel:${vehicle.customerPhone || ''}`} className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors shadow-md">
-                <Phone size={20} />
-                اتصل بنا
-              </a>
-              <a href={`mailto:${vehicle.customerEmail || 'support@workshop.com'}`} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
-                <Mail size={20} />
-                راسلنا
+          <div className="apple-card p-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Phone size={20} className="text-gray-400" />
+              تواصل معنا
+            </h3>
+            <div className="space-y-3">
+              <a href={`tel:${vehicle.customerPhone}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Phone size={20} />
+                </div>
+                <span className="font-medium text-gray-700">اتصال هاتفي</span>
               </a>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-      
-      {/* AI Chatbot for customer support */}
-      <CustomerChatbot 
-        vehicleId={vehicle?.id} 
-        vehicleInfo={`${vehicle?.brand} ${vehicle?.model} ${vehicle?.year} - ${vehicle?.plateNumber}`}
-      />
+      <CustomerChatbot vehicleId={vehicle?.id} vehicleInfo={`${vehicle?.brand} ${vehicle?.model}`} />
     </div>
   );
 };

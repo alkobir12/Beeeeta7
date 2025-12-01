@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse, Response
 from datetime import datetime, timedelta, timezone
@@ -9,9 +8,6 @@ import uuid
 import os
 import io
 import csv
-
-# Emergent Integrations
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 # Optional deps used in some endpoints
 try:
@@ -95,7 +91,6 @@ async def get_settings():
                     {"path": "/business-accounts", "label": "الفروع", "enabled": True},
                     {"path": "/invoice-templates", "label": "مصمم الفواتير", "enabled": True},
                     {"path": "/analytics", "label": "التحليلات", "enabled": True},
-                    {"path": "/knowledge", "label": "المراجع/المعرفة", "enabled": True},
                     {"path": "/settings", "label": "الإعدادات", "enabled": True}
                 ]}
             }
@@ -136,27 +131,6 @@ async def get_settings():
         return doc
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# ----------- Manuals & YoshiParts helpers -----------
-@router.get('/manuals/yoshi/summary')
-async def get_yoshi_manual_summary(url: str):
-    """ملخص سريع لصفحة YoshiParts: عدّ الصور + قائمة المخططات.
-
-    الاستخدام: /api/manuals/yoshi/summary?url=...
-    """
-    try:
-        from ai_knowledge_base import count_images_in_page, extract_yoshi_diagrams
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unable to import helpers: {e}")
-
-    counts = count_images_in_page(url)
-    diagrams = extract_yoshi_diagrams(url)
-    return {
-        'url': url,
-        'counts': counts,
-        'diagrams': diagrams,
-    }
-
 
 @router.post('/settings')
 async def save_settings(payload: Dict[str, Any] = Body(...)):

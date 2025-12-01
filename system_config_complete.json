@@ -1,0 +1,622 @@
+{
+  "system_info": {
+    "name_ar": "نظام التشخيص الشامل للسيارات",
+    "name_en": "Universal Automotive Diagnostic System",
+    "version": "4.0.0",
+    "build_date": "2024-12-01",
+    "author": "نظام التشخيص الشامل",
+    "description_ar": "نظام متكامل للتشخيص وقطع الغيار يدعم جميع أنواع السيارات والمحركات",
+    "description_en": "Integrated system for diagnostics and spare parts supporting all vehicle types and engines"
+  },
+  "api_keys": {
+    "google_api_key": "AIzaSyDqTL_NAa3gC_ER54ZHcyuIE6cPUD108gM",
+    "nhtsa_vpic_api": "https://vpic.nhtsa.dot.gov/api/vehicles",
+    "parts_catalog_api": "https://api.parts-catalog.com/v1",
+    "automotive_wiring_api": "https://api.automotive-wiring.com/v1",
+    "vin_decoder_api": "https://en.17vin.com/api.html",
+    "oem_parts_api": "https://7zap.com/en/api",
+    "toyota_epc_api": "https://toyota.epc-data.com/api",
+    "backup_apis": {
+      "carsxe_api": "https://api.carsxe.com/specs",
+      "marketcheck_api": "https://api.marketcheck.com/v2",
+      "autozone_api": "https://www.autozone.com/diy/api"
+    }
+  },
+  "installation_commands": {
+    "windows": {
+      "python_check": "python --version",
+      "pip_upgrade": "python -m pip install --upgrade pip",
+      "requirements_install": [
+        "python -m pip install flask==2.3.3",
+        "python -m pip install flask-socketio==5.3.6",
+        "python -m pip install flask-cors==4.0.0",
+        "python -m pip install requests==2.31.0",
+        "python -m pip install matplotlib==3.7.2",
+        "python -m pip install pillow==10.0.1",
+        "python -m pip install qrcode==7.4.2",
+        "python -m pip install python-obd==0.7.1",
+        "python -m pip install cantools==39.4.0",
+        "python -m pip install pyserial==3.5",
+        "python -m pip install websockets==11.0.3",
+        "python -m pip install aiofiles==23.2.1",
+        "python -m pip install jinja2==3.1.2",
+        "python -m pip install markupsafe==2.1.3",
+        "python -m pip install werkzeug==2.3.7",
+        "python -m pip install python-engineio==4.7.1",
+        "python -m pip install python-socketio==5.8.0",
+        "python -m pip install eventlet==0.33.3",
+        "python -m pip install greenlet==2.0.2"
+      ],
+      "run_system": "python universal_automotive_diagnostic_complete_system.py",
+      "install_system": "python universal_automotive_diagnostic_complete_system.py --install",
+      "web_interface": "python universal_automotive_diagnostic_complete_system.py --web"
+    },
+    "macos": {
+      "python_check": "python3 --version",
+      "pip_upgrade": "python3 -m pip install --upgrade pip",
+      "requirements_install": [
+        "python3 -m pip install flask==2.3.3",
+        "python3 -m pip install flask-socketio==5.3.6",
+        "python3 -m pip install flask-cors==4.0.0",
+        "python3 -m pip install requests==2.31.0",
+        "python3 -m pip install matplotlib==3.7.2",
+        "python3 -m pip install pillow==10.0.1",
+        "python3 -m pip install qrcode==7.4.2",
+        "python3 -m pip install python-obd==0.7.1",
+        "python3 -m pip install cantools==39.4.0",
+        "python3 -m pip install pyserial==3.5",
+        "python3 -m pip install websockets==11.0.3",
+        "python3 -m pip install aiofiles==23.2.1",
+        "python3 -m pip install jinja2==3.1.2",
+        "python3 -m pip install markupsafe==2.1.3",
+        "python3 -m pip install werkzeug==2.3.7",
+        "python3 -m pip install python-engineio==4.7.1",
+        "python3 -m pip install python-socketio==5.8.0",
+        "python3 -m pip install eventlet==0.33.3",
+        "python3 -m pip install greenlet==2.0.2"
+      ],
+      "run_system": "python3 universal_automotive_diagnostic_complete_system.py",
+      "install_system": "python3 universal_automotive_diagnostic_complete_system.py --install",
+      "web_interface": "python3 universal_automotive_diagnostic_complete_system.py --web",
+      "homebrew_install": "brew install python3"
+    },
+    "linux": {
+      "python_check": "python3 --version",
+      "system_update": "sudo apt update && sudo apt upgrade -y",
+      "python_install": "sudo apt install python3 python3-pip python3-dev -y",
+      "pip_upgrade": "python3 -m pip install --upgrade pip",
+      "requirements_install": [
+        "python3 -m pip install flask==2.3.3",
+        "python3 -m pip install flask-socketio==5.3.6",
+        "python3 -m pip install flask-cors==4.0.0",
+        "python3 -m pip install requests==2.31.0",
+        "python3 -m pip install matplotlib==3.7.2",
+        "python3 -m pip install pillow==10.0.1",
+        "python3 -m pip install qrcode==7.4.2",
+        "python3 -m pip install python-obd==0.7.1",
+        "python3 -m pip install cantools==39.4.0",
+        "python3 -m pip install pyserial==3.5",
+        "python3 -m pip install websockets==11.0.3",
+        "python3 -m pip install aiofiles==23.2.1",
+        "python3 -m pip install jinja2==3.1.2",
+        "python3 -m pip install markupsafe==2.1.3",
+        "python3 -m pip install werkzeug==2.3.7",
+        "python3 -m pip install python-engineio==4.7.1",
+        "python3 -m pip install python-socketio==5.8.0",
+        "python3 -m pip install eventlet==0.33.3",
+        "python3 -m pip install greenlet==2.0.2"
+      ],
+      "run_system": "python3 universal_automotive_diagnostic_complete_system.py",
+      "install_system": "python3 universal_automotive_diagnostic_complete_system.py --install",
+      "web_interface": "python3 universal_automotive_diagnostic_complete_system.py --web",
+      "permissions": "chmod +x universal_automotive_diagnostic_complete_system.py"
+    },
+    "ipad_ios": {
+      "required_apps": [
+        "Pythonista 3",
+        "Pyto - Python 3"
+      ],
+      "installation_steps": [
+        "1. تحميل تطبيق Pythonista 3 أو Pyto من App Store",
+        "2. نسخ ملف universal_automotive_diagnostic_complete_system.py إلى التطبيق",
+        "3. تشغيل الملف مباشرة بدون تثبيت إضافي",
+        "4. استخدام الواجهة المحسنة للـ iPad"
+      ],
+      "pythonista_commands": [
+        "import clipboard",
+        "import console",
+        "import webbrowser",
+        "console.clear()",
+        "exec(open('universal_automotive_diagnostic_complete_system.py').read())"
+      ],
+      "built_in_packages": [
+        "json",
+        "sqlite3",
+        "urllib",
+        "base64",
+        "datetime",
+        "os",
+        "sys",
+        "platform"
+      ]
+    }
+  },
+  "docker_installation": {
+    "dockerfile_content": [
+      "FROM python:3.9-slim",
+      "WORKDIR /app",
+      "COPY requirements.txt .",
+      "RUN pip install -r requirements.txt",
+      "COPY . .",
+      "EXPOSE 5000",
+      "CMD [\"python\", \"universal_automotive_diagnostic_complete_system.py\", \"--web\"]"
+    ],
+    "docker_compose": {
+      "version": "3.8",
+      "services": {
+        "automotive-system": {
+          "build": ".",
+          "ports": [
+            "5000:5000"
+          ],
+          "volumes": [
+            "./data:/app/data"
+          ],
+          "environment": {
+            "FLASK_ENV": "production",
+            "API_KEY": "AIzaSyDqTL_NAa3gC_ER54ZHcyuIE6cPUD108gM"
+          }
+        }
+      }
+    },
+    "commands": [
+      "docker build -t automotive-system .",
+      "docker run -p 5000:5000 automotive-system",
+      "docker-compose up -d"
+    ]
+  },
+  "supported_engines": {
+    "toyota": {
+      "1VD-FTV": {
+        "displacement": "4.5L",
+        "type": "V8 Diesel Turbo",
+        "power": "270 HP",
+        "torque": "650 Nm",
+        "vehicles": [
+          "Land Cruiser 200",
+          "Sequoia",
+          "Tundra"
+        ],
+        "ecu_pins": 120,
+        "diagnostic_connector": "OBD2 + Toyota Techstream",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_10",
+          "01_11",
+          "01_21",
+          "01_2F",
+          "01_33",
+          "01_42"
+        ]
+      },
+      "2KD-FTV": {
+        "displacement": "2.5L",
+        "type": "I4 Diesel Turbo",
+        "power": "144 HP",
+        "torque": "343 Nm",
+        "vehicles": [
+          "Hilux",
+          "Fortuner",
+          "Innova"
+        ],
+        "ecu_pins": 81,
+        "diagnostic_connector": "OBD2 + Toyota Techstream",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_11",
+          "01_33"
+        ]
+      },
+      "F33A-FTV": {
+        "displacement": "3.3L",
+        "type": "V6 Diesel Turbo",
+        "power": "309 HP",
+        "torque": "700 Nm",
+        "vehicles": [
+          "Land Cruiser 300",
+          "Lexus LX600"
+        ],
+        "ecu_pins": 104,
+        "diagnostic_connector": "OBD2 + GTS",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_10",
+          "01_11",
+          "01_21",
+          "01_2F",
+          "01_33",
+          "01_42",
+          "01_43"
+        ]
+      }
+    },
+    "isuzu": {
+      "4JJ1-TC": {
+        "displacement": "3.0L",
+        "type": "I4 Diesel Turbo",
+        "power": "177 HP",
+        "torque": "430 Nm",
+        "vehicles": [
+          "D-Max",
+          "MU-X",
+          "NPR",
+          "FRR"
+        ],
+        "ecu_pins": 81,
+        "diagnostic_connector": "OBD2 + IDSS",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_11",
+          "01_21",
+          "01_33",
+          "01_42"
+        ]
+      }
+    },
+    "mitsubishi": {
+      "4D56": {
+        "displacement": "2.5L",
+        "type": "I4 Diesel Turbo",
+        "power": "140 HP",
+        "torque": "314 Nm",
+        "vehicles": [
+          "Pajero",
+          "L200",
+          "Delica"
+        ],
+        "ecu_pins": 104,
+        "diagnostic_connector": "OBD2 + MUT-III",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_11",
+          "01_33"
+        ]
+      },
+      "4M41": {
+        "displacement": "3.2L",
+        "type": "I4 Diesel Turbo",
+        "power": "175 HP",
+        "torque": "392 Nm",
+        "vehicles": [
+          "Pajero",
+          "Shogun",
+          "Montero"
+        ],
+        "ecu_pins": 104,
+        "diagnostic_connector": "OBD2 + MUT-III",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_10",
+          "01_11",
+          "01_21",
+          "01_33",
+          "01_42"
+        ]
+      },
+      "4N15": {
+        "displacement": "2.4L",
+        "type": "I4 Diesel Turbo",
+        "power": "181 HP",
+        "torque": "430 Nm",
+        "vehicles": [
+          "L200",
+          "Pajero Sport",
+          "Triton"
+        ],
+        "ecu_pins": 120,
+        "diagnostic_connector": "OBD2 + MUT-III",
+        "supported_pids": [
+          "01_0C",
+          "01_0D",
+          "01_05",
+          "01_0F",
+          "01_10",
+          "01_11",
+          "01_21",
+          "01_2F",
+          "01_33",
+          "01_42"
+        ]
+      }
+    }
+  },
+  "diagnostic_protocols": {
+    "OBD2": {
+      "description_ar": "بروتوكول التشخيص القياسي للسيارات",
+      "description_en": "Standard automotive diagnostic protocol",
+      "connector_type": "16-pin DLC",
+      "voltage": "12V",
+      "supported_services": [
+        "Service 01 - Current Data",
+        "Service 02 - Freeze Frame Data",
+        "Service 03 - Stored DTCs",
+        "Service 04 - Clear DTCs",
+        "Service 05 - O2 Sensor Tests",
+        "Service 06 - On-Board Tests",
+        "Service 07 - Pending DTCs",
+        "Service 08 - Control Operation",
+        "Service 09 - Vehicle Information"
+      ]
+    },
+    "UDS": {
+      "description_ar": "خدمات التشخيص الموحدة",
+      "description_en": "Unified Diagnostic Services",
+      "iso_standard": "ISO 14229",
+      "transport_protocols": [
+        "ISO-TP",
+        "DoIP"
+      ],
+      "services": [
+        "0x10 - Diagnostic Session Control",
+        "0x11 - ECU Reset",
+        "0x14 - Clear DTC",
+        "0x18 - Read DTC Information",
+        "0x19 - Read DTC Information",
+        "0x22 - Read Data By Identifier",
+        "0x23 - Read Memory By Address",
+        "0x27 - Security Access",
+        "0x2E - Write Data By Identifier",
+        "0x31 - Routine Control",
+        "0x34 - Request Download",
+        "0x35 - Request Upload",
+        "0x36 - Transfer Data",
+        "0x37 - Request Transfer Exit"
+      ]
+    },
+    "KWP2000": {
+      "description_ar": "بروتوكول الكلمات المفتاحية 2000",
+      "description_en": "Keyword Protocol 2000",
+      "iso_standard": "ISO 14230",
+      "baud_rates": [
+        10400,
+        9600,
+        4800
+      ],
+      "init_methods": [
+        "5-baud init",
+        "fast init"
+      ],
+      "services": [
+        "0x10 - Start Diagnostic Session",
+        "0x18 - Read DTC By Status",
+        "0x14 - Clear DTC",
+        "0x21 - Read Data By Local ID",
+        "0x3B - Write Data By Local ID"
+      ]
+    },
+    "J1939": {
+      "description_ar": "بروتوكول شبكة المركبات التجارية",
+      "description_en": "Commercial Vehicle Network Protocol",
+      "can_id_format": "29-bit Extended",
+      "baud_rate": 250000,
+      "voltage_levels": "CAN High/Low Differential",
+      "applications": [
+        "Heavy Duty Trucks",
+        "Agricultural Equipment",
+        "Construction Equipment",
+        "Marine Applications"
+      ]
+    },
+    "CAN": {
+      "description_ar": "شبكة منطقة التحكم",
+      "description_en": "Controller Area Network",
+      "iso_standards": [
+        "ISO 11898-1",
+        "ISO 11898-2"
+      ],
+      "frame_types": [
+        "Data Frame",
+        "Remote Frame",
+        "Error Frame",
+        "Overload Frame"
+      ],
+      "bit_rates": [
+        125000,
+        250000,
+        500000,
+        1000000
+      ],
+      "topology": "Multi-master bus"
+    }
+  },
+  "hardware_interfaces": {
+    "ELM327": {
+      "description_ar": "واجهة OBD إلى RS232",
+      "description_en": "OBD to RS232 Interface",
+      "protocols_supported": [
+        "SAE J1850 PWM",
+        "SAE J1850 VPW",
+        "ISO 9141-2",
+        "ISO 14230-4 KWP2000",
+        "ISO 15765-4 CAN"
+      ],
+      "connection_types": [
+        "USB",
+        "Bluetooth",
+        "WiFi"
+      ],
+      "voltage": "12V",
+      "current": "60mA max"
+    },
+    "J2534": {
+      "description_ar": "واجهة برمجة تطبيقات المرور",
+      "description_en": "PassThru API Interface",
+      "standard": "SAE J2534",
+      "supported_protocols": [
+        "J1850PWM",
+        "J1850VPW",
+        "ISO9141",
+        "ISO14230",
+        "ISO15765",
+        "J2610",
+        "SW-CAN",
+        "GM_UART"
+      ],
+      "functions": [
+        "PassThruOpen",
+        "PassThruClose",
+        "PassThruConnect",
+        "PassThruDisconnect",
+        "PassThruReadMsgs",
+        "PassThruWriteMsgs",
+        "PassThruStartPeriodicMsg",
+        "PassThruStopPeriodicMsg",
+        "PassThruStartMsgFilter",
+        "PassThruStopMsgFilter",
+        "PassThruSetProgrammingVoltage",
+        "PassThruReadVersion",
+        "PassThruGetLastError",
+        "PassThruIoctl"
+      ]
+    }
+  },
+  "network_configuration": {
+    "web_server": {
+      "host": "0.0.0.0",
+      "port": 5000,
+      "debug": false,
+      "threaded": true,
+      "ssl_context": null
+    },
+    "websocket": {
+      "cors_allowed_origins": "*",
+      "ping_timeout": 60,
+      "ping_interval": 25,
+      "max_http_buffer_size": 1000000
+    },
+    "database": {
+      "type": "SQLite3",
+      "filename": "automotive_system.db",
+      "connection_pool_size": 10,
+      "timeout": 30
+    }
+  },
+  "file_structure": {
+    "main_system": "universal_automotive_diagnostic_complete_system.py",
+    "config_file": "system_config_complete.json",
+    "database": "automotive_system.db",
+    "directories": {
+      "data": "قاعدة البيانات والملفات المؤقتة",
+      "logs": "ملفات السجلات",
+      "exports": "الملفات المُصدرة والتقارير",
+      "static": "الملفات الثابتة للواجهة الويب",
+      "templates": "قوالب HTML"
+    }
+  },
+  "troubleshooting": {
+    "common_issues": {
+      "permission_denied": {
+        "problem_ar": "خطأ في الصلاحيات",
+        "problem_en": "Permission denied error",
+        "solutions": [
+          "chmod +x universal_automotive_diagnostic_complete_system.py",
+          "sudo python3 universal_automotive_diagnostic_complete_system.py",
+          "Run as Administrator (Windows)"
+        ]
+      },
+      "module_not_found": {
+        "problem_ar": "مكتبة غير موجودة",
+        "problem_en": "Module not found",
+        "solutions": [
+          "pip install -r requirements.txt",
+          "python -m pip install --upgrade pip",
+          "Check Python version compatibility"
+        ]
+      },
+      "port_already_used": {
+        "problem_ar": "المنفذ مُستخدم مسبقاً",
+        "problem_en": "Port already in use",
+        "solutions": [
+          "Change port in config: --port 5001",
+          "Kill existing process: lsof -ti:5000 | xargs kill",
+          "Use different port number"
+        ]
+      },
+      "obd_connection_failed": {
+        "problem_ar": "فشل الاتصال بـ OBD",
+        "problem_en": "OBD connection failed",
+        "solutions": [
+          "Check ELM327 device connection",
+          "Verify COM port settings",
+          "Test with different baud rate",
+          "Check vehicle ignition ON"
+        ]
+      }
+    }
+  },
+  "update_mechanism": {
+    "version_check_url": "https://api.automotive-system.com/version",
+    "update_download_url": "https://download.automotive-system.com/latest",
+    "auto_update": false,
+    "backup_before_update": true,
+    "rollback_available": true
+  },
+  "security": {
+    "api_key_encryption": true,
+    "https_only": false,
+    "session_timeout": 3600,
+    "max_login_attempts": 5,
+    "password_complexity": {
+      "min_length": 8,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_special_chars": false
+    }
+  },
+  "localization": {
+    "supported_languages": [
+      "ar",
+      "en"
+    ],
+    "default_language": "ar",
+    "rtl_support": true,
+    "font_families": {
+      "arabic": "Tahoma, Arial, sans-serif",
+      "english": "Segoe UI, Arial, sans-serif"
+    },
+    "date_formats": {
+      "ar": "DD/MM/YYYY",
+      "en": "MM/DD/YYYY"
+    }
+  },
+  "performance": {
+    "cache_enabled": true,
+    "cache_duration": 300,
+    "compression_enabled": true,
+    "minify_css_js": false,
+    "database_optimization": {
+      "enable_wal_mode": true,
+      "synchronous": "NORMAL",
+      "journal_mode": "WAL"
+    }
+  }
+}

@@ -114,6 +114,7 @@ function App() {
       </div>
     </ThemeProvider>
   );
+                    <Route path="/injectors" element={<InjectorDiagnostics />} />
 }
 
 export default App;

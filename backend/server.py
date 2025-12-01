@@ -34,6 +34,9 @@ from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 # Import Import Routes
 from routes_import import router as import_router, set_db as set_db_import
+# Import Injector Routes
+from routes_injectors import router as injectors_router, set_db as set_db_injectors
+
 
 from supabase_service import SupabaseService
 ROOT_DIR = Path(__file__).parent

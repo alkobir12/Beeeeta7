@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   Car,
   Printer,
-  Brain,
   X
 } from 'lucide-react';
 import axios from 'axios';
@@ -33,16 +32,6 @@ const DEFAULT_MENU = [
     children: [
       { path: '/print', label: 'طباعة', enabled: true },
       { path: '/quotations', label: 'عروض الأسعار', enabled: true },
-    ]
-  },
-  { 
-    group: true, 
-    label: 'الذكاء الاصطناعي', 
-    icon: Brain,
-    enabled: true, 
-    children: [
-      { path: '/ai-assistant', label: 'المساعد الذكي', enabled: true },
-      { path: '/knowledge', label: 'قاعدة المعرفة', enabled: true },
     ]
   },
   { path: '/settings', label: 'الإعدادات', icon: Settings, enabled: true },

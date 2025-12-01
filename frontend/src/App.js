@@ -13,7 +13,6 @@ import ServicesManagement from "./pages/ServicesManagement";
 import Templates from "./pages/Templates";
 import InvoiceDesignerStudio from "./pages/InvoiceDesignerStudio";
 import Settings from "./pages/Settings";
-import AIAssistant from "./pages/AIAssistant";
 import Analytics from "./pages/Analytics";
 import WorkshopProfile from "./pages/WorkshopProfile";
 import VehicleArchive from "./pages/VehicleArchive";
@@ -27,13 +26,9 @@ import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
 import CustomerTracking from "./pages/CustomerTracking";
-import Knowledge from "./pages/Knowledge";
-import KnowledgeAdvanced from "./pages/KnowledgeAdvanced";
-import KnowledgeBase from "./pages/KnowledgeBase";
 import References from "./pages/References";
 import Login from "./pages/Login";
 import Users from "./pages/UsersManagement";
-import PublicAgent from "./pages/PublicAgent";
 import QuotationGenerator from "./pages/QuotationGenerator";
 import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
@@ -96,7 +91,6 @@ function App() {
                     <Route path="/templates" element={<Templates />} />
                     <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/ai-assistant" element={<AIAssistant />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/profile" element={<WorkshopProfile />} />
                     <Route path="/archive" element={<VehicleArchive />} />
@@ -105,11 +99,9 @@ function App() {
                     <Route path="/business-accounts" element={<BusinessAccounts />} />
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customer-receipts" element={<CustomerReceipts />} />
-                    <Route path="/knowledge" element={<KnowledgeBase />} />
                     <Route path="/references" element={<References />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/users" element={<Users />} />
-                    <Route path="/public-agent" element={<PublicAgent />} />
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
                   </Routes>

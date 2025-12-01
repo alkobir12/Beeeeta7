@@ -6,7 +6,6 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CEO = () => {
   const [loading, setLoading] = useState(false);
-  const [answer, setAnswer] = useState('');
   const [metrics, setMetrics] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [selectedAcc, setSelectedAcc] = useState('');
@@ -44,22 +43,12 @@ const CEO = () => {
     await loadBudgets(selectedAcc);
   };
 
-  const askAI = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.post(`${API_URL}/ceo/ai-analysis`, null, { params: { question: 'كيف يبدو أداء الورشة هذا الشهر؟', account_id: selectedAcc || undefined }});
-      setAnswer(res.data.response);
-      setMetrics(res.data.metrics);
-    } catch (e) { setAnswer('تعذر جلب التحليل الآن.'); } finally { setLoading(false); }
-  };
-
   return (
-    
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">لوحة المدير التنفيذي</h1>
-            <p className="text-gray-500 mt-1">إدارة الفروع والميزانيات والتحليلات الذكية</p>
+            <p className="text-gray-500 mt-1">إدارة الفروع والميزانيات والتحليلات</p>
           </div>
         </div>
 
@@ -115,46 +104,7 @@ const CEO = () => {
             </div>
           </div>
         </div>
-
-        {/* AI Analysis */}
-        <div className="apple-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2 text-purple-600">
-              <Sparkles size={20} />
-              <h3 className="font-bold text-gray-900">التحليل الذكي</h3>
-            </div>
-            <button onClick={askAI} disabled={loading} className="apple-button-secondary text-sm">
-              {loading ? 'جاري التحليل...' : 'تحديث التحليل'}
-            </button>
-          </div>
-          
-          {metrics && (
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="p-4 bg-green-50 rounded-xl text-center">
-                <p className="text-xs text-green-600 mb-1">الإيرادات</p>
-                <p className="font-bold text-green-700">{metrics.revenue.toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-red-50 rounded-xl text-center">
-                <p className="text-xs text-red-600 mb-1">المصروفات</p>
-                <p className="font-bold text-red-700">{metrics.expenses.toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-blue-50 rounded-xl text-center">
-                <p className="text-xs text-blue-600 mb-1">الربح</p>
-                <p className="font-bold text-blue-700">{metrics.profit.toLocaleString()}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-gray-50 rounded-xl p-6 min-h-[100px]">
-            {answer ? (
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{answer}</p>
-            ) : (
-              <p className="text-gray-400 text-center">اضغط على تحديث التحليل للحصول على تقرير ذكي</p>
-            )}
-          </div>
-        </div>
       </div>
-    
   );
 };
 

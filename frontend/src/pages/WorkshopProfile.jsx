@@ -34,8 +34,7 @@ const WorkshopProfile = () => {
   };
 
   return (
-    
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center py-8">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-blue-500/30 mb-4">
             <Building2 size={40} />
@@ -99,7 +98,6 @@ const WorkshopProfile = () => {
           </button>
         </form>
       </div>
-    
   );
 };
 

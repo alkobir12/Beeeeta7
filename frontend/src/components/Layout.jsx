@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
-import ChatWidget from './ChatWidget';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -33,9 +32,6 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </main>
-      
-      {/* Chat Widget */}
-      <ChatWidget />
     </div>
   );
 };

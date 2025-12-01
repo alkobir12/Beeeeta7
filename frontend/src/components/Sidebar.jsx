@@ -24,6 +24,7 @@ const DEFAULT_MENU = [
   { path: '/customers', label: 'العملاء', icon: Users, enabled: true },
   { path: '/parts', label: 'المخزون', icon: Package, enabled: true },
   { path: '/catalog', label: 'كتالوج القطع', icon: Package, enabled: true },
+  { path: '/injectors', label: 'فحص الحاقنات', icon: Activity, enabled: true },
   { 
     group: true, 
     label: 'المستندات', 

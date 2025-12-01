@@ -46,13 +46,6 @@ const PublicAgent = () => {
             <h1 className="text-2xl font-bold text-gray-900">الوكيل الذكي</h1>
             <p className="text-gray-500 mt-1">مساعدك الشخصي للإجابة على الاستفسارات</p>
           </div>
-          <button 
-            onClick={() => window.open(GENSPARK_DIRECT_LINK, '_blank')}
-            className="apple-button flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20"
-          >
-            <Sparkles size={18} />
-            <span>فتح الوكيل الكامل</span>
-          </button>
         </div>
 
         <div className="apple-card flex-1 flex flex-col overflow-hidden border-0 shadow-xl">

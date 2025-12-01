@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { Send, Bot, User, ExternalLink, Sparkles } from 'lucide-react';
+import { Send, Bot, User } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 

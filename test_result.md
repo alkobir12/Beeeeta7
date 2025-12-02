@@ -427,6 +427,19 @@ frontend:
           agent: "testing"
           comment: "✅ WORKING: Settings page 'الإعدادات العامة' accessible with Arabic language settings visible. Workshop information fields present with Arabic labels. Language selection functionality available."
 
+  - task: "Arabic Login & Sidebar Comprehensive Verification"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Login.jsx, /app/frontend/src/components/Sidebar.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE TEST PASSED (100% - 8/8 tests): Login with 'مدير' successful, all 16 main menu items verified (لوحة التحكم, العمليات, العملاء, الفنيين, الموردين, المخزون, الخدمات, فحص الحاقنات, المستندات, الإدارة, الأرشيف, المراجع, استيراد البيانات, المستخدمين, ملف الورشة, الإعدادات), all submenu items visible in screenshots (المخزون: إدارة المخزون + كتالوج القطع, المستندات: طباعة + عروض الأسعار + القوالب + قوالب الفواتير, الإدارة: التحليلات + الإدارة العليا + الرواتب + الحسابات التجارية + إيصالات العملاء), navigation to كتالوج القطع working perfectly, no duplication detected, sidebar remains visible after navigation, no console errors, proper Arabic RTL layout. Production-ready."
+
+
   - task: "Sidebar i18n menu labels"
     implemented: false
     working: false

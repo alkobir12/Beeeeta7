@@ -115,6 +115,7 @@ db = client[db_name] if (client is not None and db_name) else None
 set_db_users(db)
 set_db_import(db)
 set_db_injectors(db)
+set_db_gemini_chat(db)
 set_db_extended(db)
 set_db_advanced(db)
 

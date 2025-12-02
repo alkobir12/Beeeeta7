@@ -16,9 +16,13 @@ router = APIRouter(prefix="/api/gemini-chat", tags=["Gemini Chat"])
 # إعداد Gemini
 GEMINI_API_KEY = os.getenv('GOOGLE_API_KEY')
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        print(f"✅ Gemini API configured successfully")
+    except Exception as e:
+        print(f"⚠️ Failed to configure Gemini API: {e}")
 else:
-    print("⚠️ GOOGLE_API_KEY غير موجود في ملف .env")
+    print("⚠️ GOOGLE_API_KEY not found in environment variables")
 
 # تخزين المحادثات (في الذاكرة)
 conversations = {}

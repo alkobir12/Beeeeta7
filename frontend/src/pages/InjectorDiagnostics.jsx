@@ -112,18 +112,24 @@ const InjectorDiagnostics = () => {
   };
 
   const handleSaveReport = async () => {
-    if (!selectedEngine) return;
+    if (!selectedEngine) {
+      toast({ title: 'خطأ', description: 'الرجاء اختيار المحرك', variant: 'destructive' });
+      return;
+    }
     try {
       const payload = {
-        engine_type: selectedEngine,
-        ...testData,
-        vl_status: validationResult?.valid ? 'ناجح' : 'فاشل',
-        recommendations: validationResult?.valid ? 'الحاقن يعمل بشكل جيد.' : 'يرجى مراجعة الأجزاء المعيبة أو استبدال الحاقن.'
+        engine_id: selectedEngine,
+        resistance_ohm: testData.resistance_ohm ? parseFloat(testData.resistance_ohm) : undefined,
+        pressure_bar: testData.pressure_bar ? parseFloat(testData.pressure_bar) : undefined,
+        duration_us: testData.duration_us ? parseFloat(testData.duration_us) : undefined,
+        return_qty_ml_min: testData.return_qty_ml_min ? parseFloat(testData.return_qty_ml_min) : undefined,
+        technician: testData.technician,
+        notes: testData.notes
       };
       
       const res = await axios.post(`${API_URL}/injectors/report`, payload);
       setReport(res.data);
-      toast({ title: 'تم الحفظ', description: 'تم حفظ تقرير الفحص بنجاح' });
+      toast({ title: 'تم الحفظ ✅', description: 'تم حفظ تقرير الفحص بنجاح' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل حفظ التقرير', variant: 'destructive' });
     }

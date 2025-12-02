@@ -13,21 +13,21 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const InjectorDiagnostics = () => {
   const { toast } = useToast();
-  const [engines, setEngines] = useState({});
+  const [engines, setEngines] = useState([]);
   const [selectedEngine, setSelectedEngine] = useState('');
+  const [engineSpecs, setEngineSpecs] = useState(null);
+  const [systemVersion, setSystemVersion] = useState('');
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState(null);
+  const [resistanceResult, setResistanceResult] = useState(null);
+  const [vlResult, setVlResult] = useState(null);
   const [report, setReport] = useState(null);
   
   const [testData, setTestData] = useState({
-    visual_inspection: 'pass',
-    resistance: '',
-    leak_test: 'pass',
-    opening_pressure: '',
-    vl_pressure: '',
-    vl_duration: '',
-    vl_return: '',
+    resistance_ohm: '',
+    pressure_bar: '',
+    duration_us: '',
+    return_qty_ml_min: '',
     technician: '',
     notes: ''
   });
@@ -36,15 +36,31 @@ const InjectorDiagnostics = () => {
     fetchEngines();
   }, []);
 
+  useEffect(() => {
+    if (selectedEngine) {
+      fetchEngineSpecs();
+    }
+  }, [selectedEngine]);
+
   const fetchEngines = async () => {
     try {
       const res = await axios.get(`${API_URL}/injectors/engines`);
-      setEngines(res.data || {});
+      setEngines(res.data.engines || []);
+      setSystemVersion(res.data.system_version || '');
     } catch (e) {
       console.error(e);
       toast({ title: 'خطأ', description: 'فشل تحميل بيانات المحركات', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEngineSpecs = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/injectors/specs/${selectedEngine}`);
+      setEngineSpecs(res.data);
+    } catch (e) {
+      console.error(e);
     }
   };
 

@@ -222,6 +222,21 @@ backend:
           agent: "testing"
           comment: "✅ PASSED: Groq endpoint quick test complete (4/4 tests passed). Fixed syntax errors in server.py (missing closing brace line 892, extra closing brace line 962). POST /api/ai/groq-chat returns 500 with correct error message 'GROQ_API_KEY is not configured on the server' when API key missing. No conflict with existing /api/ai/chat endpoint. Server stable, httpx integration doesn't break application. All Arabic review requirements satisfied."
 
+  - task: "Gemini Chat Bot API"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_gemini_chat.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL ISSUE: API endpoint /api/gemini-chat/chat returning 500 Internal Server Error. Root cause identified: Model 'gemini-1.5-flash' has been deprecated by Google. Error message: '404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent'."
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE TEST PASSED (100% SUCCESS - 9/9 tests): Successfully fixed deprecated model issue and executed comprehensive Arabic testing of Gemini Chat Bot functionality. **CRITICAL FIX APPLIED:** Updated model from deprecated 'gemini-1.5-flash' to 'gemini-2.5-flash' in routes_gemini_chat.py line 33. Backend restarted successfully. **ALL REQUIREMENTS MET:** (1) ✅ Login with 'مدير' successful, (2) ✅ Navigation to /gemini-chat page successful, (3) ✅ Welcome message 'مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟ 🤖' displayed correctly, (4) ✅ First message 'مرحبا، ما اسمك؟' sent successfully, (5) ✅ Bot responded within 3-5 seconds with proper Arabic response: 'مرحباً بك! أنا مساعد ذكي في نظام إدارة الورش. ليس لدي اسم شخصي...', (6) ✅ Second message 'ما هي خدماتك؟' sent successfully, (7) ✅ Bot responded with detailed services description in Arabic, (8) ✅ 'مسح المحادثة' (Clear conversation) button working correctly - conversation cleared and new conversation started with fresh welcome message, (9) ✅ All UI elements verified: header, input field, send button, clear button, info cards. **API VALIDATION:** GET /api/gemini-chat/health returns status with model='gemini-2.5-flash', POST /api/gemini-chat/start creates conversation successfully, POST /api/gemini-chat/chat returns proper responses with conversation_id and timestamp. **CONCLUSION:** Gemini Chat Bot is fully functional and production-ready with Google Gemini 2.5 Flash model. All requested features from Arabic review working correctly."
+
   - task: "Services CRUD API"
     implemented: true
     working: false

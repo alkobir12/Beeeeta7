@@ -33,6 +33,9 @@ from routes_extended import router as extended_router, set_db as set_db_extended
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 # Import Import Routes
+# Import User Routes
+from routes_users import router as users_router, set_db as set_db_users
+
 from routes_import import router as import_router, set_db as set_db_import
 # Import Injector Routes
 from routes_injectors import router as injectors_router, set_db as set_db_injectors

@@ -153,3 +153,7 @@ backend/uploads/toyota_lc200_7z.001
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*

@@ -34,6 +34,7 @@ import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
 import { ThemeProvider } from './contexts/ThemeContext';
 import InjectorDiagnostics from "./pages/InjectorDiagnosticsV7";
+import GeminiChatBot from "./pages/GeminiChatBot";
 
 const getSessionFromCookie = () => {
   try {

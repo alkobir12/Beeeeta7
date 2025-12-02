@@ -3,12 +3,12 @@ from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List
 import uuid
 from datetime import datetime
-from denso_system import DensoInjectorDiagnostics
+from denso_system_v7 import DensoSystemV7
 
 router = APIRouter(prefix="/api/injectors", tags=["Injectors"])
 
-# Initialize the diagnostic system
-denso_system = DensoInjectorDiagnostics()
+# Initialize the diagnostic system - Version 7.0 Final
+denso_system = DensoSystemV7()
 
 # Database reference (set via set_db)
 db = None

@@ -110,6 +110,7 @@ client = AsyncIOMotorClient(mongo_url) if mongo_url else None
 
 # Important: DB name must be provided explicitly via environment in deployment
 # to avoid accidentally pointing to a wrong or non-existent database.
+set_db_users(db)
 db_name = os.environ.get('DB_NAME') if client is not None else None
 db = client[db_name] if (client is not None and db_name) else None
 

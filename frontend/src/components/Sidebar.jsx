@@ -13,7 +13,16 @@ import {
   Car,
   Printer,
   X,
-  Activity
+  Activity,
+  BarChart3,
+  UserCircle,
+  Archive,
+  Building2,
+  DollarSign,
+  Receipt,
+  Upload,
+  BookOpen,
+  Truck
 } from 'lucide-react';
 import axios from 'axios';
 

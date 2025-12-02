@@ -32,8 +32,19 @@ const DEFAULT_MENU = [
   { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, enabled: true },
   { path: '/operations', label: 'العمليات', icon: Wrench, enabled: true },
   { path: '/customers', label: 'العملاء', icon: Users, enabled: true },
-  { path: '/parts', label: 'المخزون', icon: Package, enabled: true },
-  { path: '/catalog', label: 'كتالوج القطع', icon: Package, enabled: true },
+  { path: '/technicians', label: 'الفنيين', icon: Users, enabled: true },
+  { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true },
+  { 
+    group: true, 
+    label: 'المخزون', 
+    icon: Package,
+    enabled: true, 
+    children: [
+      { path: '/parts', label: 'إدارة المخزون', enabled: true },
+      { path: '/catalog', label: 'كتالوج القطع', enabled: true },
+    ]
+  },
+  { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
   { path: '/injectors', label: 'فحص الحاقنات', icon: Activity, enabled: true },
   { 
     group: true, 
@@ -43,8 +54,28 @@ const DEFAULT_MENU = [
     children: [
       { path: '/print', label: 'طباعة', enabled: true },
       { path: '/quotations', label: 'عروض الأسعار', enabled: true },
+      { path: '/templates', label: 'القوالب', enabled: true },
+      { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
     ]
   },
+  { 
+    group: true, 
+    label: 'الإدارة', 
+    icon: Building2,
+    enabled: true, 
+    children: [
+      { path: '/analytics', label: 'التحليلات', enabled: true },
+      { path: '/ceo', label: 'الإدارة العليا', enabled: true },
+      { path: '/payroll', label: 'الرواتب', enabled: true },
+      { path: '/business-accounts', label: 'الحسابات التجارية', enabled: true },
+      { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
+    ]
+  },
+  { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true },
+  { path: '/references', label: 'المراجع', icon: BookOpen, enabled: true },
+  { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true },
+  { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true },
+  { path: '/profile', label: 'ملف الورشة', icon: Building2, enabled: true },
   { path: '/settings', label: 'الإعدادات', icon: Settings, enabled: true },
 ];
 

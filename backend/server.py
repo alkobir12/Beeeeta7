@@ -137,6 +137,7 @@ app = FastAPI(title="Workshop Management API")
 app.include_router(users_router)
 app.include_router(injectors_router)
 app.include_router(import_router)
+app.include_router(gemini_chat_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 

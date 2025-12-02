@@ -22,7 +22,8 @@ import {
   Receipt,
   Upload,
   BookOpen,
-  Truck
+  Truck,
+  Bot
 } from 'lucide-react';
 import axios from 'axios';
 

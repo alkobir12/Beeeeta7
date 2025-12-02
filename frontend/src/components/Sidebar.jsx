@@ -47,6 +47,7 @@ const DEFAULT_MENU = [
   },
   { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
   { path: '/injectors', label: 'فحص الحاقنات', icon: Activity, enabled: true },
+  { path: '/gemini-chat', label: '🤖 مساعد ذكي AI', icon: Bot, enabled: true },
   { 
     group: true, 
     label: 'المستندات', 

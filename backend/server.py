@@ -131,6 +131,7 @@ except Exception as e:
 # Create upload directory
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+app.include_router(users_router)
 
 # Create the main app
 app.include_router(injectors_router)

@@ -20,25 +20,53 @@ def set_db(database):
 @router.get("/engines")
 async def get_supported_engines():
     """Get list of supported engines and their specs."""
-    return denso_system.engine_database
+    engines = denso_system.get_engines_list()
+    return {
+        "engines": engines,
+        "system_version": denso_system.system_info['version'],
+        "last_updated": denso_system.system_info['last_updated']
+    }
 
-@router.get("/specs/{engine_type}")
-async def get_engine_specs(engine_type: str):
+@router.get("/specs/{engine_id}")
+async def get_engine_specs(engine_id: str):
     """Get detailed specs for a specific engine."""
-    specs = denso_system.get_injector_specifications(engine_type)
+    specs = denso_system.get_engine_details(engine_id)
     if not specs:
-        raise HTTPException(status_code=404, detail="Engine not found")
+        raise HTTPException(status_code=404, detail="المحرك غير موجود / Engine not found")
     return specs
 
-@router.post("/validate")
-async def validate_test(payload: Dict[str, Any] = Body(...)):
-    """Validate VL mode readings."""
-    engine = payload.get('engine_type')
-    pressure = float(payload.get('pressure', 0))
-    duration = float(payload.get('duration', 0))
-    return_qty = float(payload.get('return_quantity', 0))
+@router.get("/generation/{generation}")
+async def get_generation_info(generation: str):
+    """Get information about a specific Denso generation (G2, G3, G4, etc.)."""
+    info = denso_system.get_generation_info(generation)
+    if not info:
+        raise HTTPException(status_code=404, detail="الجيل غير موجود / Generation not found")
+    return info
+
+@router.post("/validate/resistance")
+async def validate_resistance(payload: Dict[str, Any] = Body(...)):
+    """Validate electrical resistance reading."""
+    engine_id = payload.get('engine_id')
+    resistance = float(payload.get('resistance_ohm', 0))
     
-    result = denso_system.validate_vl_mode_reading(engine, pressure, duration, return_qty)
+    if not engine_id:
+        raise HTTPException(status_code=400, detail="engine_id is required")
+    
+    result = denso_system.validate_resistance(engine_id, resistance)
+    return result
+
+@router.post("/validate/vl-mode")
+async def validate_vl_mode(payload: Dict[str, Any] = Body(...)):
+    """Validate VL mode (Full Load) readings per BOSCH EPS815 standard."""
+    engine_id = payload.get('engine_id')
+    pressure = float(payload.get('pressure_bar', 0))
+    duration = float(payload.get('duration_us', 0))
+    return_qty = float(payload.get('return_qty_ml_min', 0))
+    
+    if not engine_id:
+        raise HTTPException(status_code=400, detail="engine_id is required")
+    
+    result = denso_system.validate_vl_mode(engine_id, pressure, duration, return_qty)
     return result
 
 @router.post("/report")

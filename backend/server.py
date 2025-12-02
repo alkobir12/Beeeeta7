@@ -39,6 +39,8 @@ from routes_import import router as import_router, set_db as set_db_import
 from routes_injectors import router as injectors_router, set_db as set_db_injectors
 # Import User Routes
 from routes_users import router as users_router, set_db as set_db_users
+# Import Gemini Chat Routes
+from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_gemini_chat
 
 from supabase_service import SupabaseService
 ROOT_DIR = Path(__file__).parent

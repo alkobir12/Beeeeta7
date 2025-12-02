@@ -107,6 +107,7 @@ function App() {
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
                     <Route path="/injectors" element={<InjectorDiagnostics />} />
+                    <Route path="/gemini-chat" element={<GeminiChatBot />} />
                   </Routes>
                 </Layout>
               </Protected>

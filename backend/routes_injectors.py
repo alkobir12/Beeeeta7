@@ -71,19 +71,34 @@ async def validate_vl_mode(payload: Dict[str, Any] = Body(...)):
 
 @router.post("/report")
 async def save_report(payload: Dict[str, Any] = Body(...)):
-    """Generate and save a diagnostic report."""
+    """Generate and save a comprehensive diagnostic report."""
     if not db:
         raise HTTPException(status_code=500, detail="Database not initialized")
-        
-    # Generate text report
-    report_text = denso_system.generate_diagnostic_report(payload)
     
+    engine_id = payload.get('engine_id')
+    if not engine_id:
+        raise HTTPException(status_code=400, detail="engine_id is required")
+    
+    # Generate comprehensive report
+    test_data = {
+        'resistance_ohm': payload.get('resistance_ohm'),
+        'pressure_bar': payload.get('pressure_bar'),
+        'duration_us': payload.get('duration_us'),
+        'return_qty_ml_min': payload.get('return_qty_ml_min')
+    }
+    
+    # Remove None values
+    test_data = {k: v for k, v in test_data.items() if v is not None}
+    
+    report = denso_system.generate_full_report(engine_id, test_data)
+    
+    # Save to database
     doc = {
         "id": str(uuid.uuid4()),
         "type": "injector_report",
-        "engineType": payload.get('engine_type'),
+        "engineId": engine_id,
         "testData": payload,
-        "reportText": report_text,
+        "report": report,
         "createdAt": datetime.utcnow(),
         "technician": payload.get('technician', 'Unknown')
     }
@@ -93,6 +108,11 @@ async def save_report(payload: Dict[str, Any] = Body(...)):
     doc['createdAt'] = doc['createdAt'].isoformat()
     
     return doc
+
+@router.get("/test-sequence")
+async def get_test_sequence():
+    """Get the complete 7-step Denso test sequence."""
+    return denso_system.get_test_sequence()
 
 @router.get("/reports")
 async def list_reports():

@@ -97,11 +97,16 @@ async def chat(payload: Dict[str, Any] = Body(...)):
     }
     """
     try:
-        if not GEMINI_API_KEY:
+        # تحقق من وجود المفتاح
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
             raise HTTPException(
                 status_code=500, 
                 detail="Gemini API Key غير مهيأ. يرجى إضافة GOOGLE_API_KEY في ملف .env"
             )
+        
+        # إعادة تكوين Gemini بالمفتاح (للتأكد)
+        genai.configure(api_key=api_key)
         
         # الحصول على البيانات
         user_message = payload.get('message', '').strip()

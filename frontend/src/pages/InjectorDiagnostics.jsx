@@ -64,24 +64,48 @@ const InjectorDiagnostics = () => {
     }
   };
 
-  const handleValidate = async () => {
-    if (!selectedEngine) return;
+  const handleValidateResistance = async () => {
+    if (!selectedEngine || !testData.resistance_ohm) return;
     setValidating(true);
     try {
-      const res = await axios.post(`${API_URL}/injectors/validate`, {
-        engine_type: selectedEngine,
-        pressure: testData.vl_pressure,
-        duration: testData.vl_duration,
-        return_quantity: testData.vl_return
+      const res = await axios.post(`${API_URL}/injectors/validate/resistance`, {
+        engine_id: selectedEngine,
+        resistance_ohm: parseFloat(testData.resistance_ohm)
       });
-      setValidationResult(res.data);
+      setResistanceResult(res.data);
       if (res.data.valid) {
-        toast({ title: 'اختبار ناجح', description: 'القراءات ضمن المواصفات القياسية', className: 'bg-green-50 border-green-200' });
+        toast({ title: 'اختبار المقاومة ناجح ✅', description: res.data.message, className: 'bg-green-50 border-green-200' });
       } else {
-        toast({ title: 'تحذير', description: 'بعض القراءات خارج المدى المسموح', variant: 'destructive' });
+        toast({ title: 'تحذير ⚠️', description: res.data.message, variant: 'destructive' });
       }
     } catch (e) {
-      toast({ title: 'خطأ', description: 'فشل التحقق من البيانات', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'فشل التحقق من المقاومة', variant: 'destructive' });
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleValidateVL = async () => {
+    if (!selectedEngine || !testData.pressure_bar || !testData.duration_us || !testData.return_qty_ml_min) {
+      toast({ title: 'خطأ', description: 'الرجاء إدخال جميع قراءات VL Mode', variant: 'destructive' });
+      return;
+    }
+    setValidating(true);
+    try {
+      const res = await axios.post(`${API_URL}/injectors/validate/vl-mode`, {
+        engine_id: selectedEngine,
+        pressure_bar: parseFloat(testData.pressure_bar),
+        duration_us: parseFloat(testData.duration_us),
+        return_qty_ml_min: parseFloat(testData.return_qty_ml_min)
+      });
+      setVlResult(res.data);
+      if (res.data.valid) {
+        toast({ title: 'اختبار VL Mode ناجح ✅', description: res.data.message, className: 'bg-green-50 border-green-200' });
+      } else {
+        toast({ title: 'تحذير VL Mode ⚠️', description: res.data.message, variant: 'destructive' });
+      }
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل التحقق من VL Mode', variant: 'destructive' });
     } finally {
       setValidating(false);
     }

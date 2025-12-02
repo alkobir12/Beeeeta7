@@ -145,3 +145,7 @@ frontend/node_modules/.cache/default-development/17.pack
 *.env.*
 backend/uploads/toyota_lc200.rar
 backend/uploads/toyota_lc200_7z.001
+-e 
+# Environment files
+*.env
+*.env.*

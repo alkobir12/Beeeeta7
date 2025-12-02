@@ -290,6 +290,36 @@ async def create_service(service: Service):
     await db.services.insert_one(service.dict())
     return service
 
+@api_router.get("/technicians", response_model=List[Technician])
+async def get_technicians():
+    if DB_PROVIDER == 'memory':
+        return [Technician(**r) for r in _mem_read('technicians')]
+    technicians = await db.technicians.find().to_list(1000)
+    return [Technician(**t) for t in technicians]
+
+@api_router.get("/parts", response_model=List[Part])
+async def get_parts(search: str = '', low_stock: bool = False):
+    if DB_PROVIDER == 'memory':
+        parts = _mem_read('parts')
+        result = []
+        for p in parts:
+            if search and search.lower() not in str(p).lower():
+                continue
+            if low_stock and p.get('quantity', 0) >= p.get('minQuantity', 0):
+                continue
+            result.append(Part(**p))
+        return result
+    query = {}
+    if search:
+        query['$or'] = [
+            {'name': {'$regex': search, '$options': 'i'}},
+            {'partNumber': {'$regex': search, '$options': 'i'}}
+        ]
+    if low_stock:
+        query['$expr'] = {'$lt': ['$quantity', '$minQuantity']}
+    parts = await db.parts.find(query, {"_id": 0}).to_list(1000)
+    return [Part(**p) for p in parts]
+
 # Include the api_router
 app.include_router(api_router)
 

@@ -17,7 +17,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://mechanic-dash-8.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://workshop-manager-36.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 print(f"🔍 Testing Backend API at: {API_BASE}")

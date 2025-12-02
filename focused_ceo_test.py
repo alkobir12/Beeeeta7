@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://mechanic-dash-8.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://workshop-manager-36.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 print("=" * 80)

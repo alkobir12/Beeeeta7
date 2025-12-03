@@ -32,7 +32,6 @@ import QuotationGenerator from "./pages/QuotationGenerator";
 import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
 import { ThemeProvider } from './contexts/ThemeContext';
-import InjectorDiagnostics from "./pages/InjectorDiagnosticsV7";
 
 const getSessionFromCookie = () => {
   try {
@@ -103,7 +102,6 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
-                    <Route path="/injectors" element={<InjectorDiagnostics />} />
                   </Routes>
                 </Layout>
               </Protected>

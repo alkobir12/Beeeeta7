@@ -35,23 +35,22 @@ const DEFAULT_MENU = [
   { path: '/customers', label: 'العملاء', icon: Users, enabled: true },
   { path: '/technicians', label: 'الفنيين', icon: Users, enabled: true },
   { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true },
-  { 
-    group: true, 
-    label: 'المخزون', 
+  {
+    group: true,
+    label: 'المخزون',
     icon: Package,
-    enabled: true, 
+    enabled: true,
     children: [
       { path: '/parts', label: 'إدارة المخزون', enabled: true },
-      { path: '/catalog', label: 'كتالوج القطع', enabled: true },
+      { path: '/catalog', label: 'كتالوج شامل (قطع + دنسو + Gemini)', enabled: true },
     ]
   },
   { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
-  { path: '/injectors', label: 'فحص الحاقنات', icon: Activity, enabled: true },
-  { 
-    group: true, 
-    label: 'المستندات', 
+  {
+    group: true,
+    label: 'المستندات',
     icon: FileText,
-    enabled: true, 
+    enabled: true,
     children: [
       { path: '/print', label: 'طباعة', enabled: true },
       { path: '/quotations', label: 'عروض الأسعار', enabled: true },
@@ -59,11 +58,11 @@ const DEFAULT_MENU = [
       { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
     ]
   },
-  { 
-    group: true, 
-    label: 'الإدارة', 
+  {
+    group: true,
+    label: 'الإدارة',
     icon: Building2,
-    enabled: true, 
+    enabled: true,
     children: [
       { path: '/analytics', label: 'التحليلات', enabled: true },
       { path: '/ceo', label: 'الإدارة العليا', enabled: true },
@@ -86,10 +85,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [workshopName, setWorkshopName] = useState('ورشتي');
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
   const loadSettings = async () => {
     try {
       const { data } = await axios.get(`${API_URL}/settings`);
@@ -98,6 +93,10 @@ const Sidebar = ({ isOpen, onClose }) => {
       console.error('Error loading settings:', e);
     }
   };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const toggleGroup = (label) => {
     setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }));
@@ -120,7 +119,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       const isCollapsed = collapsedGroups[item.label];
       const hasActiveChild = item.children.some(child => location.pathname === child.path);
       const Icon = item.icon || FileText;
-      
+
       return (
         <div key={index} className="mb-1">
           <button
@@ -133,7 +132,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             </span>
             {isCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
           </button>
-          
+
           {!isCollapsed && (
             <div className="mr-9 space-y-1 mt-1">
               {item.children.map((child, childIndex) => {
@@ -157,7 +156,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const Icon = item.icon || FileText;
     const isActive = location.pathname === item.path;
-    
+
     return (
       <button
         key={index}
@@ -173,11 +172,11 @@ const Sidebar = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Mobile Overlay */}
-      <div 
+      <div
         className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      
+
       <aside className={`sidebar-modern ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">

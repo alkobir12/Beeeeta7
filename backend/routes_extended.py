@@ -148,6 +148,78 @@ async def save_settings(payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --------------------- Workshop Profile ---------------------
+@router.get('/profile')
+async def get_workshop_profile():
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'memory' or db is None:
+            # تخزين مبسط في ملف JSON داخل uploads/workshop_profile.json
+            rows = _mem_read('workshop_profile')
+            if rows:
+                return rows[0]
+            # قيمة افتراضية
+            profile = {
+                "id": "workshop_profile",
+                "name": "ورشتي",
+                "nameEnglish": "My Workshop",
+                "phone": "",
+                "whatsapp": "",
+                "email": "",
+                "address": "",
+                "city": "",
+                "postalCode": "",
+                "taxNumber": "",
+                "commercialRegister": "",
+                "workingHours": "",
+                "invoiceFooter": "",
+                "termsAndConditions": "",
+            }
+            _mem_write('workshop_profile', [profile])
+            return profile
+
+        doc = await db.workshop_profile.find_one({"id": "workshop_profile"}, {"_id": 0})
+        if not doc:
+            doc = {
+                "id": "workshop_profile",
+                "name": "ورشتي",
+                "nameEnglish": "My Workshop",
+                "phone": "",
+                "whatsapp": "",
+                "email": "",
+                "address": "",
+                "city": "",
+                "postalCode": "",
+                "taxNumber": "",
+                "commercialRegister": "",
+                "workingHours": "",
+                "invoiceFooter": "",
+                "termsAndConditions": "",
+            }
+            await db.workshop_profile.insert_one(doc)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put('/profile')
+async def update_workshop_profile(payload: Dict[str, Any] = Body(...)):
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'memory' or db is None:
+            rows = _mem_read('workshop_profile')
+            profile = {**(rows[0] if rows else {}), **payload, "id": "workshop_profile"}
+            _mem_write('workshop_profile', [profile])
+            return profile
+
+        payload = {**payload, "id": "workshop_profile", "updatedAt": datetime.utcnow()}
+        await db.workshop_profile.update_one({"id": "workshop_profile"}, {"$set": payload}, upsert=True)
+        doc = await db.workshop_profile.find_one({"id": "workshop_profile"}, {"_id": 0})
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # --------------------- Auth (WhatsApp OTP) ---------------------
 @router.post('/auth/request-otp')

@@ -17,7 +17,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       const [statsRes, transRes, vehiclesRes] = await Promise.all([
-        statsAPI.get(),
+        statsAPI.getStats(),
         transactionAPI.getAll(),
         vehicleAPI.getAll()
       ]);

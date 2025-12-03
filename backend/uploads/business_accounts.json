@@ -5,5 +5,12 @@
     "code": "CARD",
     "currency": "SAR",
     "createdAt": "2025-12-03T11:39:50.646463"
+  },
+  {
+    "id": "91f1d750-dac5-42cf-8187-11d17fc91bdd",
+    "name": "اا",
+    "code": "98",
+    "currency": "SAR",
+    "createdAt": "2025-12-03T19:23:18.317251"
   }
 ]

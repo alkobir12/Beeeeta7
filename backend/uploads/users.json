@@ -20,5 +20,27 @@
     "isActive": true,
     "createdAt": "2025-11-15T15:31:38.451018",
     "lastLogin": null
+  },
+  {
+    "name": "سس",
+    "email": "",
+    "phone": "333",
+    "role": "employee",
+    "permissions": {
+      "canViewDashboard": true,
+      "canManageVehicles": true,
+      "canManageCustomers": true,
+      "canManageParts": false,
+      "canManageServices": false,
+      "canViewReports": true,
+      "canManageFinance": false,
+      "canManageUsers": false,
+      "canAccessCEO": false,
+      "canManageSettings": false
+    },
+    "id": "522230c4-d47c-438e-8bb2-1d6d2b484ea1",
+    "createdAt": "2025-12-03T19:25:16.176554",
+    "lastLogin": null,
+    "isActive": true
   }
 ]

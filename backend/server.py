@@ -146,6 +146,9 @@ app.include_router(advanced_router)
 api_router = APIRouter(prefix="/api")
 
 # Unified document generation routes (documents/generate, documents/generate-html, documents/types)
+# Arabic quotation (quotations/generate, quotations/themes)
+create_quotation_routes(api_router)
+
 create_unified_document_routes(api_router)
 
 # ============ Invoice Studio Integration ============

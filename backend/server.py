@@ -243,7 +243,8 @@ async def get_vehicles():
         rows = _mem_read('vehicles')
         return [Vehicle(**r) for r in rows]
     
-    vehicles = await db.vehicles.find().sort("entryDate", -1).to_list(1000)
+    # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
+    vehicles = await db.vehicles.find({}, {"_id": 0}).sort("entryDate", -1).limit(200).to_list(200)
     return [Vehicle(**v) for v in vehicles]
 
 @api_router.get("/vehicles/{vehicle_id}", response_model=Vehicle)

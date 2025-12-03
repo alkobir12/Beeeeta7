@@ -89,24 +89,31 @@ const DocumentPrint = () => {
 
   const loadWorkshopSettings = async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/settings`);
-      if (data) {
-        setWorkshopSettings(data);
-        setFormData(prev => ({
-          ...prev,
-          workshop: {
-            name: data.workshopName || '',
-            name_en: data.workshopNameEn || '',
-            address: data.address || '',
-            phone: data.phone || '',
-            email: data.email || '',
-            website: data.website || '',
-            tax_number: data.taxNumber || ''
-          }
-        }));
-      }
+      // نجلب إعدادات النظام + ملف الورشة، ونعطي أولوية لبيانات "ملف الورشة"
+      const [settingsRes, profileRes] = await Promise.all([
+        axios.get(`${API_URL}/settings`),
+        axios.get(`${API_URL}/profile`).catch(() => ({ data: null })),
+      ]);
+
+      const data = settingsRes.data || {};
+      const profile = profileRes.data || {};
+
+      setWorkshopSettings(data);
+      setFormData(prev => ({
+        ...prev,
+        workshop: {
+          // الاسم من ملف الورشة، وإن لم يوجد من الإعدادات القديمة
+          name: profile.name || data.workshopName || '',
+          name_en: profile.nameEnglish || data.workshopNameEn || '',
+          address: profile.address || data.address || '',
+          phone: profile.phone || data.phone || '',
+          email: profile.email || data.email || '',
+          website: data.website || '',
+          tax_number: profile.taxNumber || data.taxNumber || ''
+        }
+      }));
     } catch (e) {
-      console.error('Error loading settings:', e);
+      console.error('Error loading settings/profile:', e);
     }
   };
 

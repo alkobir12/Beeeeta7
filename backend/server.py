@@ -134,6 +134,15 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 # Create the main app
 app = FastAPI(title="Workshop Management API")
 
+# Enable CORS for frontend access (Emergent ingress will handle exact origins)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include Routers
 app.include_router(users_router)
 app.include_router(injectors_router)

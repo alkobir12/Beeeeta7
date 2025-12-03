@@ -71,11 +71,7 @@ jq==1.10.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 litellm==1.78.0
-llama-index-core==0.14.7
-llama-index-embeddings-openai==0.5.1
-llama-index-instrumentation==0.4.2
-llama-index-readers-file==0.5.4
-llama-index-workflows==2.11.1
+# llama-index-* dependencies أُزيلت لتخفيف استهلاك الموارد في الإنتاج.
 lxml==6.0.2
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3

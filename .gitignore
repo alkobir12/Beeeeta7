@@ -82,14 +82,12 @@ frontend/node_modules/.cache/default-development/8.pack
 frontend/node_modules/.cache/default-development/1.pack
 frontend/node_modules/.cache/default-development/3.pack
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 frontend/node_modules/.cache/default-development/4.pack
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 frontend/node_modules/.cache/default-development/5.pack
 frontend/node_modules/.cache/default-development/0.pack
 frontend/node_modules/.cache/default-development/2.pack
@@ -103,57 +101,44 @@ frontend/node_modules/.cache/default-development/15.pack
 frontend/node_modules/.cache/default-development/7.pack
 frontend/node_modules/.cache/default-development/16.pack
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 frontend/node_modules/.cache/default-development/17.pack
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 backend/uploads/toyota_lc200.rar
 backend/uploads/toyota_lc200_7z.001
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
 -e 
-# Environment files
-*.env
-*.env.*
+# Environment files (handled via platform secrets)
+# NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح

@@ -26,7 +26,6 @@ import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
 import CustomerTracking from "./pages/CustomerTracking";
-import References from "./pages/References";
 import Login from "./pages/Login";
 import Users from "./pages/UsersManagement";
 import QuotationGenerator from "./pages/QuotationGenerator";
@@ -34,7 +33,6 @@ import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
 import { ThemeProvider } from './contexts/ThemeContext';
 import InjectorDiagnostics from "./pages/InjectorDiagnosticsV7";
-import GeminiChatBot from "./pages/GeminiChatBot";
 
 const getSessionFromCookie = () => {
   try {
@@ -101,13 +99,11 @@ function App() {
                     <Route path="/business-accounts" element={<BusinessAccounts />} />
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customer-receipts" element={<CustomerReceipts />} />
-                    <Route path="/references" element={<References />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/users" element={<Users />} />
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
                     <Route path="/injectors" element={<InjectorDiagnostics />} />
-                    <Route path="/gemini-chat" element={<GeminiChatBot />} />
                   </Routes>
                 </Layout>
               </Protected>

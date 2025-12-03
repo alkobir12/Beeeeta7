@@ -47,7 +47,6 @@ const DEFAULT_MENU = [
   },
   { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
   { path: '/injectors', label: 'فحص الحاقنات', icon: Activity, enabled: true },
-  { path: '/gemini-chat', label: '🤖 مساعد ذكي AI', icon: Bot, enabled: true },
   { 
     group: true, 
     label: 'المستندات', 
@@ -74,7 +73,6 @@ const DEFAULT_MENU = [
     ]
   },
   { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true },
-  { path: '/references', label: 'المراجع', icon: BookOpen, enabled: true },
   { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true },
   { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true },
   { path: '/profile', label: 'ملف الورشة', icon: Building2, enabled: true },

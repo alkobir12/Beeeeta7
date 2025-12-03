@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Activity, CheckCircle, AlertTriangle, Save, FileText } from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle, Save, FileText, ListChecks, Gauge } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 
@@ -15,6 +15,10 @@ const InjectorDiagnostics = () => {
   const [engines, setEngines] = useState([]);
   const [selectedEngine, setSelectedEngine] = useState('');
   const [engineSpecs, setEngineSpecs] = useState(null);
+  const [generationInfo, setGenerationInfo] = useState(null);
+  const [testSequence, setTestSequence] = useState(null);
+  const [recentReports, setRecentReports] = useState([]);
+  const [overallStatus, setOverallStatus] = useState(null);
   const [systemVersion, setSystemVersion] = useState('');
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(false);
@@ -32,6 +36,8 @@ const InjectorDiagnostics = () => {
 
   useEffect(() => {
     fetchEngines();
+    fetchTestSequence();
+    fetchReports();
   }, []);
 
   useEffect(() => {
@@ -39,8 +45,22 @@ const InjectorDiagnostics = () => {
       fetchEngineSpecs();
       setResistanceResult(null);
       setVlResult(null);
+      setOverallStatus(null);
     }
   }, [selectedEngine]);
+
+  useEffect(() => {
+    // عند تغيّر نتائج الاختبار، حاول توليد ملخص عام اعتماداً على الرسائل
+    if (resistanceResult || vlResult) {
+      const allOk = (resistanceResult?.valid ?? true) && (vlResult?.valid ?? true);
+      setOverallStatus({
+        pass: allOk,
+        message_ar: allOk
+          ? '✅ جميع القراءات الحالية ضمن النطاق المسموح تقريباً'
+          : '❌ توجد ملاحظات في نتائج الاختبارات الحالية، راجع الكروت التفصيلية أدناه.'
+      });
+    }
+  }, [resistanceResult, vlResult]);
 
   const fetchEngines = async () => {
     try {
@@ -59,8 +79,36 @@ const InjectorDiagnostics = () => {
     try {
       const res = await axios.get(`${API_URL}/injectors/specs/${selectedEngine}`);
       setEngineSpecs(res.data);
+      if (res.data?.denso_generation) {
+        try {
+          const genRes = await axios.get(`${API_URL}/injectors/generation/${res.data.denso_generation}`);
+          setGenerationInfo(genRes.data);
+        } catch (err) {
+          console.error('generation info error', err);
+        }
+      } else {
+        setGenerationInfo(null);
+      }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const fetchTestSequence = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/injectors/test-sequence`);
+      setTestSequence(res.data || null);
+    } catch (e) {
+      console.error('test sequence error', e);
+    }
+  };
+
+  const fetchReports = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/injectors/reports`);
+      setRecentReports(res.data || []);
+    } catch (e) {
+      console.error('reports error', e);
     }
   };
 
@@ -105,7 +153,7 @@ const InjectorDiagnostics = () => {
       if (res.data.valid) {
         toast({ title: 'اختبار VL Mode ✅', description: 'جميع القراءات ضمن النطاق المقبول', className: 'bg-green-50 border-green-200' });
       } else {
-        toast({ title: 'تحذير VL Mode ⚠️', description: 'بعض القراءات خارج النطاق', variant: 'destructive' });
+        toast({ title: 'تحذير VL Mode ⚠️', description: 'بعض القراءات خارج النطاق، راجع التفاصيل في الكرت', variant: 'destructive' });
       }
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل التحقق من VL Mode', variant: 'destructive' });
@@ -130,8 +178,13 @@ const InjectorDiagnostics = () => {
         notes: testData.notes
       };
       
-      await axios.post(`${API_URL}/injectors/report`, payload);
+      const res = await axios.post(`${API_URL}/injectors/report`, payload);
+      const saved = res.data;
       toast({ title: 'تم الحفظ ✅', description: 'تم حفظ تقرير الفحص بنجاح' });
+      if (saved?.report?.overall_status) {
+        setOverallStatus(saved.report.overall_status);
+      }
+      fetchReports();
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل حفظ التقرير', variant: 'destructive' });
     }
@@ -144,6 +197,8 @@ const InjectorDiagnostics = () => {
       </div>
     );
   }
+
+  const sequenceEntries = testSequence ? Object.values(testSequence) : [];
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -226,7 +281,7 @@ const InjectorDiagnostics = () => {
               </div>
 
               {resistanceResult && (
-                <div className={`p-4 rounded-lg ${resistanceResult.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className={`p-4 rounded-lg ${resistanceResult.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border-red-200'}`}>
                   <div className="flex items-start gap-2">
                     {resistanceResult.valid ? (
                       <CheckCircle className="text-green-600 mt-0.5" size={20} />
@@ -300,7 +355,7 @@ const InjectorDiagnostics = () => {
               </Button>
 
               {vlResult && (
-                <div className={`p-4 rounded-lg ${vlResult.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className={`p-4 rounded-lg ${vlResult.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border-red-200'}`}>
                   <div className="flex items-start gap-2">
                     {vlResult.valid ? (
                       <CheckCircle className="text-green-600 mt-0.5" size={20} />
@@ -353,11 +408,25 @@ const InjectorDiagnostics = () => {
             className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg"
           >
             <Save className="mr-2" size={20} />
-            حفظ التقرير
+            حفظ التقرير وتحديث السجل
           </Button>
+
+          {overallStatus && (
+            <Card className="mt-4 border-dashed border-2 border-blue-300 bg-blue-50/60">
+              <CardHeader className="flex flex-row items-center gap-2">
+                <Gauge className="text-blue-600" size={20} />
+                <CardTitle className="text-base">الملخص العام للحالة الحالية</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className={`text-sm ${overallStatus.pass ? 'text-green-800' : 'text-red-800'}`}>
+                  {overallStatus.message_ar}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Right Panel - Specs & Info */}
+        {/* Right Panel - Specs, Generations, Sequences, History */}
         <div className="space-y-6">
           {engineSpecs && (
             <>
@@ -388,6 +457,39 @@ const InjectorDiagnostics = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {generationInfo && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">معلومات جيل Denso ({engineSpecs.denso_generation})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <p className="text-gray-700">{generationInfo.description}</p>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <div className="text-xs text-gray-500">نطاق الضغط (bar)</div>
+                        <div className="font-mono text-blue-700">
+                          {generationInfo.pressure_range.min_bar} - {generationInfo.pressure_range.max_bar}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">نوع الحاقن</div>
+                        <div className="text-gray-700">{generationInfo.injection_type}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">المقاومة النموذجية (Ω)</div>
+                        <div className="font-mono text-blue-700">
+                          {generationInfo.electrical_resistance.typical_ohm} (±{generationInfo.electrical_resistance.tolerance_percent}%)
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">زمن الاستجابة (ms)</div>
+                        <div className="font-mono text-gray-700">{generationInfo.response_time_ms}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader>
@@ -436,11 +538,57 @@ const InjectorDiagnostics = () => {
             </>
           )}
 
-          {!selectedEngine && (
+          {sequenceEntries.length > 0 && (
             <Card>
-              <CardContent className="py-12 text-center">
-                <FileText className="mx-auto text-gray-300 mb-4" size={48} />
-                <p className="text-gray-500">اختر محركاً لعرض المواصفات</p>
+              <CardHeader className="flex items-center gap-2">
+                <ListChecks className="text-blue-600" size={18} />
+                <CardTitle className="text-lg">تسلسل الفحوصات المقترح (7 خطوات)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {sequenceEntries.map((step, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                    <div className="font-semibold text-gray-800 mb-1">{idx + 1}. {step.name_ar}</div>
+                    <p className="text-gray-700 text-xs mb-1">{step.description_ar}</p>
+                    <p className="text-gray-600 text-[11px]">الأدوات: {(step.tools_required_ar || []).join('، ')}</p>
+                    <p className="text-gray-600 text-[11px] mt-1">معيار النجاح: {step.pass_criteria_ar}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {recentReports.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">سجل الفحوصات الأخيرة</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm max-h-72 overflow-y-auto">
+                {recentReports.map((r) => (
+                  <div key={r.id} className="border rounded-lg p-3 bg-white">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-gray-800">{r.report?.engine_info?.model}</span>
+                      <span className="text-[11px] text-gray-500">{r.createdAt?.slice(0,16)?.replace('T',' ')}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-600 mb-1">الفني: {r.technician || 'غير محدد'}</div>
+                    <div className={`text-xs ${r.report?.overall_status?.pass ? 'text-green-700' : 'text-red-700'}`}>
+                      {r.report?.overall_status?.message_ar}
+                    </div>
+                    {r.testData?.resistance_ohm && (
+                      <div className="text-[11px] text-gray-500 mt-1">المقاومة: {r.testData.resistance_ohm} Ω</div>
+                    )}
+                    {r.testData?.pressure_bar && (
+                      <div className="text-[11px] text-gray-500">VL: {r.testData.pressure_bar} bar / {r.testData.duration_us} μs / {r.testData.return_qty_ml_min} ml/min</div>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {recentReports.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-gray-500">
+                لا يوجد سجل فحوصات بعد. بعد حفظ أول تقرير ستظهر هنا آخر الفحوصات مع إمكانية التوريد/الاستيراد من النظام الخارجي عبر الـ API.
               </CardContent>
             </Card>
           )}

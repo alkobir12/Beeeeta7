@@ -1,11 +1,11 @@
 [
   {
     "id": "workshop_profile",
-    "name": "ورشتي",
-    "nameEnglish": "My Workshop",
-    "phone": "",
-    "whatsapp": "",
-    "email": "",
+    "name": "ورشة الاختبار",
+    "nameEnglish": "Test Workshop",
+    "phone": "0500000000",
+    "whatsapp": "0500000000",
+    "email": "test@example.com",
     "address": "",
     "city": "",
     "postalCode": "",

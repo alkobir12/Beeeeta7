@@ -143,10 +143,10 @@ app.include_router(extended_router)
 app.include_router(advanced_router)
 
 # Create a router with the /api prefix
+api_router = APIRouter(prefix="/api")
+
 # Unified document generation routes (documents/generate, documents/generate-html, documents/types)
 create_unified_document_routes(api_router)
-
-api_router = APIRouter(prefix="/api")
 
 # ============ Invoice Studio Integration ============
 try:

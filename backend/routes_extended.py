@@ -277,15 +277,19 @@ async def list_biz_accounts():
             # وضع معاينة بدون قاعدة بيانات حقيقية – الحفظ في ملف JSON داخل uploads
             return _mem_read('business_accounts')
 
-        docs = await db.business_accounts.find({}).sort('createdAt', -1).to_list(length=2000)
+        # استخدام Projection وحد لعدد النتائج لتحسين الأداء
+        docs = await db.business_accounts.find(
+            {}, {"_id": 0, "id": 1, "name": 1, "code": 1, "currency": 1, "createdAt": 1}
+        ).sort('createdAt', -1).limit(500).to_list(500)
         out = []
         for d in docs:
+            created_at = d.get('createdAt')
             out.append({
                 'id': d.get('id'),
                 'name': d.get('name'),
                 'code': d.get('code'),
                 'currency': d.get('currency') or 'SAR',
-                'createdAt': d.get('createdAt').isoformat() if d.get('createdAt') and hasattr(d.get('createdAt'), 'isoformat') else d.get('createdAt')
+                'createdAt': created_at.isoformat() if hasattr(created_at, 'isoformat') else created_at
             })
         return out
     except Exception as e:

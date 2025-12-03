@@ -202,8 +202,8 @@ async def list_biz_accounts():
             supa = SupabaseService()
             return supa.accounts_list()
         if provider == 'memory' or db is None:
-            # وضع معاينة بدون قاعدة بيانات حقيقية
-            return []
+            # وضع معاينة بدون قاعدة بيانات حقيقية – الحفظ في ملف JSON داخل uploads
+            return _mem_read('business_accounts')
 
         docs = await db.business_accounts.find({}).sort('createdAt', -1).to_list(length=2000)
         out = []
@@ -233,14 +233,18 @@ async def create_biz_account(payload: Dict[str, Any] = Body(...)):
             supa = SupabaseService()
             return supa.accounts_create(name=name, code=code, currency=currency)
         if provider == 'memory' or db is None:
-            # وضع معاينة: نرجع كائن وهمي بدون تخزين حقيقي
-            return {
+            # وضع معاينة: حفظ في ملف JSON داخل uploads/business_accounts.json
+            doc = {
                 'id': str(uuid.uuid4()),
                 'name': name,
                 'code': code,
                 'currency': currency,
                 'createdAt': datetime.utcnow().isoformat()
             }
+            items = _mem_read('business_accounts')
+            items.append(doc)
+            _mem_write('business_accounts', items)
+            return doc
 
         # ensure unique code if exists (Mongo)
         exist = await db.business_accounts.find_one({'code': code})

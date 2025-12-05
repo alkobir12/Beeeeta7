@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Activity, CheckCircle, AlertTriangle, Save, FileText, ListChecks, Gauge } from 'lucide-react';
+import DraggableGrid from '../components/DraggableGrid';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 

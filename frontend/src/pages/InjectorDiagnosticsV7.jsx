@@ -201,9 +201,9 @@ const InjectorDiagnostics = () => {
   const sequenceEntries = testSequence ? Object.values(testSequence) : [];
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">فحص حاقنات Denso</h1>
           <p className="text-gray-500 mt-1">نظام التشخيص المتكامل - الإصدار {systemVersion}</p>

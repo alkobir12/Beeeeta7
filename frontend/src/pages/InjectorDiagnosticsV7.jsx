@@ -307,7 +307,7 @@ const InjectorDiagnostics = () => {
           {/* VL Mode Test */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">3. اختبار وضع VL (معيار BOSCH EPS815)</CardTitle>
+              <CardTitle className="text-lg">3. اختبار وضع VL (معايير Denso الأصلية)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

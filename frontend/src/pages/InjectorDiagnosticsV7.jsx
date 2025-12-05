@@ -197,6 +197,26 @@ const InjectorDiagnostics = () => {
       </div>
     );
   }
+  const sequenceEntries = testSequence ? Object.values(testSequence) : [];
+
+  const selectedEngineData = engines.find((e) => e.id === selectedEngine);
+  const stats = {
+    engineLabel: selectedEngineData
+      ? `${selectedEngineData.label} (${selectedEngineData.cylinders} سلندر)`
+      : 'لم يتم اختيار محرك بعد',
+    resistanceStatus: resistanceResult
+      ? resistanceResult.valid
+        ? 'سليم ضمن النطاق'
+        : 'به ملاحظة في المقاومة'
+      : 'لم يتم فحص المقاومة بعد',
+    vlStatus: vlResult
+      ? vlResult.valid
+        ? 'سليم ضمن النطاق'
+        : 'به ملاحظة في VL'
+      : 'لم يتم فحص VL بعد',
+    totalTests: recentReports.length,
+  };
+
 
   const sequenceEntries = testSequence ? Object.values(testSequence) : [];
 

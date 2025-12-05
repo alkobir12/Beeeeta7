@@ -634,6 +634,17 @@ class DensoSystemV7:
                 "specifications": vl_params
             }
         else:
+            # استخدم كود تشخيصي VL001 عندما تتجاوز كمية الرجوع الحد الأقصى
+            diagnostic_code = None
+            diagnostic_action_ar = None
+            diagnostic_action_en = None
+            if not return_qty_ok:
+                diagnostic = self.diagnostic_codes.get("VL001")
+                if diagnostic:
+                    diagnostic_code = diagnostic["code"]
+                    diagnostic_action_ar = diagnostic["action_ar"]
+                    diagnostic_action_en = diagnostic["action"]
+
             return {
                 "valid": False,
                 "message": "\n".join(messages),
@@ -648,7 +659,10 @@ class DensoSystemV7:
                     "pressure_ok": pressure_ok,
                     "duration_ok": duration_ok,
                     "return_qty_ok": return_qty_ok
-                }
+                },
+                "diagnostic_code": diagnostic_code,
+                "action": diagnostic_action_ar,
+                "action_en": diagnostic_action_en
             }
     
     def get_test_sequence(self) -> Dict:

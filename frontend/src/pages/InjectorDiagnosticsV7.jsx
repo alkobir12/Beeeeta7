@@ -398,90 +398,12 @@ const InjectorDiagnostics = () => {
           <span className="font-semibold">Denso System V7</span>
         </div>
       </div>
-      {/* Denso quick stats, styled like dashboard cards */}
-      <div className="grid-stats mb-6 mt-4">
-        {/* Engine card */}
-        <div className="stat-card group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">المحرك المحدد</p>
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate max-w-[220px]">
-                {stats.engineLabel}
-              </h3>
-            </div>
-            <div className="p-3 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
-              <Activity size={20} />
-            </div>
-          </div>
-        </div>
-
-        {/* Resistance status card */}
-        <div className="stat-card group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">حالة المقاومة</p>
-              <h3 className={`text-base sm:text-lg font-bold ${
-                resistanceResult
-                  ? resistanceResult.valid
-                    ? 'text-green-700'
-                    : 'text-red-700'
-                  : 'text-gray-900'
-              }`}>
-                {stats.resistanceStatus}
-              </h3>
-            </div>
-            <div className={`p-3 rounded-full transition-colors ${
-              resistanceResult
-                ? resistanceResult.valid
-                  ? 'bg-green-50 text-green-600 group-hover:bg-green-100'
-                  : 'bg-red-50 text-red-600 group-hover:bg-red-100'
-                : 'bg-gray-50 text-gray-500 group-hover:bg-gray-100'
-            }`}>
-              <CheckCircle size={20} />
-            </div>
-          </div>
-        </div>
-
-        {/* VL Mode status card */}
-        <div className="stat-card group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">حالة VL Mode</p>
-              <h3 className={`text-base sm:text-lg font-bold ${
-                vlResult
-                  ? vlResult.valid
-                    ? 'text-green-700'
-                    : 'text-red-700'
-                  : 'text-gray-900'
-              }`}>
-                {stats.vlStatus}
-              </h3>
-            </div>
-            <div className={`p-3 rounded-full transition-colors ${
-              vlResult
-                ? vlResult.valid
-                  ? 'bg-green-50 text-green-600 group-hover:bg-green-100'
-                  : 'bg-red-50 text-red-600 group-hover:bg-red-100'
-                : 'bg-gray-50 text-gray-500 group-hover:bg-gray-100'
-            }`}>
-              <Gauge size={20} />
-            </div>
-          </div>
-        </div>
-
-        {/* Reports count card */}
-        <div className="stat-card group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">عدد تقارير الفحص المسجلة</p>
-              <h3 className="text-3xl font-bold text-gray-900">{stats.totalTests}</h3>
-            </div>
-            <div className="p-3 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
-              <FileText size={20} />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Denso quick stats, styled like dashboard cards, now draggable */}
+      <DraggableGrid
+        items={metricCards}
+        storageKey="denso_injector_dashboard_cards"
+        columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+      />
 
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] xl:gap-8">

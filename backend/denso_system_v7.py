@@ -338,22 +338,22 @@ class DensoSystemV7:
             }
         }
         
-        # BOSCH VL Mode Standard
+        # Denso VL Mode Reference (بديل عن توصيف BOSCH النصي، مع الحفاظ على معايير التردد والضغط)
         self.bosch_vl_mode_standard = {
-            "definition": "Vollast Mode (Full Load Test)",
-            "description": "BOSCH EPS815 Standard for maximum injector performance testing",
+            "definition": "Denso VL Mode Reference",
+            "description": "Denso full-load reference for VL Mode using maximum rail pressure and 2 Hz frequency",
             "test_parameters": {
                 "duration_definition": "Long actuation time for maximum flow measurement",
                 "duration_minimum_microseconds": 1400,
-                "pressure_definition": "Maximum fuel rail pressure for engine type",
+                "pressure_definition": "Use engine-specific maximum operating pressure from Denso specs",
                 "frequency_hz": 2,
                 "measurement_type": "Return quantity only",
                 "acceptable_range_percent": 10
             },
             "validation_criteria": {
-                "pressure_validation": "Must match engine maximum operating pressure",
+                "pressure_validation": "Must match engine maximum operating pressure from Denso data",
                 "duration_validation": "Must be >= 1400 microseconds",
-                "return_quantity_validation": "Must not exceed engine-specific maximum",
+                "return_quantity_validation": "Must not exceed engine-specific maximum return quantity",
                 "frequency_validation": "Must be exactly 2 Hz"
             }
         }

@@ -213,6 +213,51 @@ const InjectorDiagnostics = () => {
       ? vlResult.valid
         ? 'سليم ضمن النطاق'
         : 'به ملاحظة في VL'
+      {/* Denso quick stats, similar to dashboard cards */}
+      <div className="grid-stats mb-6 mt-4">
+        <div className="stat-card">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">المحرك المحدد</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate max-w-[220px]">
+                {stats.engineLabel}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">حالة المقاومة</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                {stats.resistanceStatus}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">حالة VL Mode</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                {stats.vlStatus}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">عدد تقارير الفحص المسجلة</p>
+              <h3 className="text-3xl font-bold text-gray-900">{stats.totalTests}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
       : 'لم يتم فحص VL بعد',
     totalTests: recentReports.length,
   };

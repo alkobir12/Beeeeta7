@@ -373,6 +373,85 @@ const InjectorDiagnostics = () => {
             </CardContent>
           </Card>
 
+          {/* DataStream comparison card */}
+          {(resistanceResult || vlResult) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">5. تيار البيانات ومقارنة القراءات</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                {resistanceResult && resistanceResult.range && (
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-gray-800">المقاومة الكهربائية</span>
+                      <span className={`text-xs font-medium ${resistanceResult.valid ? 'text-green-700' : 'text-red-700'}`}>
+                        {resistanceResult.valid ? 'ضمن النطاق الطبيعي' : 'خارج النطاق الطبيعي'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-xs text-gray-700">
+                      <div>
+                        <div className="text-gray-500">القراءة الحالية</div>
+                        <div className="font-mono text-sm">{resistanceResult.measured} Ω</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">القيمة الإسمية</div>
+                        <div className="font-mono text-sm">{resistanceResult.nominal} Ω</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">النطاق الطبيعي</div>
+                        <div className="font-mono text-sm">
+                          {resistanceResult.range.min.toFixed(2)} – {resistanceResult.range.max.toFixed(2)} Ω
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {vlResult && vlResult.specifications && (
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-gray-800">وضع VL (ضغط / زمن / كمية رجوع)</span>
+                      <span className={`text-xs font-medium ${vlResult.valid ? 'text-green-700' : 'text-red-700'}`}>
+                        {vlResult.valid ? 'ضمن النطاق الطبيعي' : 'توجد ملاحظات على القراءات'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 text-xs text-gray-700">
+                      <div>
+                        <div className="text-gray-500">الضغط (bar)</div>
+                        <div className="font-mono text-sm">الحالي: {vlResult.readings.pressure_bar}</div>
+                        <div className="font-mono text-[11px] text-gray-500">
+                          الطبيعي: {vlResult.specifications.test_pressure_bar[0]} – {vlResult.specifications.test_pressure_bar[vlResult.specifications.test_pressure_bar.length - 1]} bar
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-gray-500">مدة النبضة (μs)</div>
+                        <div className="font-mono text-sm">الحالية: {vlResult.readings.duration_us}</div>
+                        <div className="font-mono text-[11px] text-gray-500">
+                          الحد الأدنى: {vlResult.specifications.duration_min_microseconds} μs
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-gray-500">كمية الرجوع (ml/min)</div>
+                        <div className="font-mono text-sm">الحالية: {vlResult.readings.return_qty_ml_min}</div>
+                        <div className="font-mono text-[11px] text-gray-500">
+                          الحد الأقصى: {vlResult.specifications.return_quantity_max_ml_min} ml/min
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-gray-500 border-t border-gray-200 pt-2 flex flex-wrap gap-4">
+                      <span>التردد المرجعي: {vlResult.specifications.test_frequency_hz} Hz (حسب دنسو)</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+
           {/* Additional Info */}
           <Card>
             <CardHeader>

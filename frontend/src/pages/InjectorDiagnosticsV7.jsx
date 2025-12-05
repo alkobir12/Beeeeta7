@@ -214,7 +214,7 @@ const InjectorDiagnostics = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] xl:gap-8">
         {/* Left Panel - Input Form */}
         <div className="lg:col-span-2 space-y-6">
           {/* Engine Selection */}

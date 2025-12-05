@@ -401,14 +401,14 @@ class DensoSystemV7:
                 "pass_criteria_ar": "ضغط الفتح ضمن نطاق المواصفات"
             },
             "step_5": {
-                "name": "VL Mode Test (BOSCH Standard)",
-                "name_ar": "اختبار وضع VL (معيار بوش)",
-                "description": "Full load test per BOSCH EPS815",
-                "description_ar": "اختبار الحمل الكامل حسب معيار بوش EPS815",
-                "tools_required": ["BOSCH EPS815 or equivalent", "Return quantity measurement"],
-                "tools_required_ar": ["بوش EPS815 أو مكافئ", "قياس كمية الرجوع"],
-                "pass_criteria": "Return quantity within acceptable limits",
-                "pass_criteria_ar": "كمية الرجوع ضمن الحدود المقبولة"
+                "name": "VL Mode Test (Denso Reference)",
+                "name_ar": "اختبار وضع VL (مرجع دنسو)",
+                "description": "Full load VL test using Denso injector operating specs (pressure, duration, frequency)",
+                "description_ar": "اختبار وضع VL بالحمل الكامل باستخدام مواصفات دنسو لضغط السكة والزمن والتردد",
+                "tools_required": ["VL test bench", "Return quantity measurement"],
+                "tools_required_ar": ["منصة اختبار VL", "قياس كمية الرجوع"],
+                "pass_criteria": "Return quantity within Denso acceptable limits",
+                "pass_criteria_ar": "كمية الرجوع ضمن الحدود المقبولة حسب مرجع دنسو"
             },
             "step_6": {
                 "name": "Flow Rate Test",

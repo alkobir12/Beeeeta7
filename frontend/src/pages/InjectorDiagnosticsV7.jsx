@@ -217,6 +217,172 @@ const InjectorDiagnostics = () => {
         : 'به ملاحظة في VL'
       : 'لم يتم فحص VL بعد',
     totalTests: recentReports.length,
+  const [testMetrics, setTestMetrics] = useState({
+    pulse_count: '',
+  });
+
+  const metricCards = [
+    {
+      id: 'engine',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">المحرك المحدد</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate max-w-[220px]">
+                {stats.engineLabel}
+              </h3>
+            </div>
+            <div className="p-3 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+              <Activity size={20} />
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'resistance',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">حالة المقاومة</p>
+              <h3
+                className={`text-base sm:text-lg font-bold ${
+                  resistanceResult
+                    ? resistanceResult.valid
+                      ? 'text-green-700'
+                      : 'text-red-700'
+                    : 'text-gray-900'
+                }`}
+              >
+                {stats.resistanceStatus}
+              </h3>
+            </div>
+            <div
+              className={`p-3 rounded-full transition-colors ${
+                resistanceResult
+                  ? resistanceResult.valid
+                    ? 'bg-green-50 text-green-600 group-hover:bg-green-100'
+                    : 'bg-red-50 text-red-600 group-hover:bg-red-100'
+                  : 'bg-gray-50 text-gray-500 group-hover:bg-gray-100'
+              }`}
+            >
+              <CheckCircle size={20} />
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'vl',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">حالة VL Mode</p>
+              <h3
+                className={`text-base sm:text-lg font-bold ${
+                  vlResult
+                    ? vlResult.valid
+                      ? 'text-green-700'
+                      : 'text-red-700'
+                    : 'text-gray-900'
+                }`}
+              >
+                {stats.vlStatus}
+              </h3>
+            </div>
+            <div
+              className={`p-3 rounded-full transition-colors ${
+                vlResult
+                  ? vlResult.valid
+                    ? 'bg-green-50 text-green-600 group-hover:bg-green-100'
+                    : 'bg-red-50 text-red-600 group-hover:bg-red-100'
+                  : 'bg-gray-50 text-gray-500 group-hover:bg-gray-100'
+              }`}
+            >
+              <Gauge size={20} />
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'reports',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">عدد تقارير الفحص المسجلة</p>
+              <h3 className="text-3xl font-bold text-gray-900">{stats.totalTests}</h3>
+            </div>
+            <div className="p-3 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
+              <FileText size={20} />
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'freq',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">التردد المرجعي (Freq)</p>
+              <h3 className="text-xl font-bold text-gray-900">
+                {engineSpecs?.vl_mode_parameters?.test_frequency_hz ?? 2} Hz
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">حسب بيانات Denso لوضع VL</p>
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'width',
+      render: () => (
+        <Card className="stat-card group">
+          <CardContent className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">مدة النبضة (Width)</p>
+              <h3 className="text-xl font-bold text-gray-900">
+                {testData.duration_us || '—'} μs
+              </h3>
+              {engineSpecs?.vl_mode_parameters && (
+                <p className="text-xs text-gray-500 mt-1">
+                  الحد الأدنى الطبيعي: {engineSpecs.vl_mode_parameters.duration_min_microseconds} μs
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'count',
+      render: () => {
+        const freq = engineSpecs?.vl_mode_parameters?.test_frequency_hz || 2;
+        const count = parseInt(testData.pulse_count || '0', 10) || 0;
+        const totalTime = count && freq ? (count / freq).toFixed(1) : null;
+        return (
+          <Card className="stat-card group">
+            <CardContent className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">عدد النبضات (Count)</p>
+                <h3 className="text-xl font-bold text-gray-900">{count || '—'}</h3>
+                {totalTime && (
+                  <p className="text-xs text-gray-500 mt-1">زمن الاختبار التقريبي: {totalTime} ثانية عند {freq} Hz</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      },
+    },
+  ];
+
   };
 
   return (

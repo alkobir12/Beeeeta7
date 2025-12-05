@@ -358,6 +358,18 @@ const InjectorDiagnostics = () => {
             </div>
           </CardContent>
         </Card>
+                <div>
+                  <Label>عدد النبضات (Count)</Label>
+                  <Input
+                    type="number"
+                    step="1"
+                    placeholder="مثال: 20"
+                    value={testData.pulse_count || ''}
+                    onChange={(e) => setTestData({ ...testData, pulse_count: e.target.value })}
+                    className="mt-2"
+                  />
+                </div>
+
       ),
     },
     {

@@ -217,9 +217,7 @@ const InjectorDiagnostics = () => {
         : 'به ملاحظة في VL'
       : 'لم يتم فحص VL بعد',
     totalTests: recentReports.length,
-  const [testMetrics, setTestMetrics] = useState({
-    pulse_count: '',
-  });
+  };
 
   const metricCards = [
     {

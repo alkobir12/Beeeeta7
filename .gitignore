@@ -142,3 +142,7 @@ backend/uploads/toyota_lc200_7z.001
 -e 
 # Environment files (handled via platform secrets)
 # NOTE: لا تتجاهل ملفات .env هنا حتى تعمل أدوات النشر بشكل صحيح
+-e 
+# Environment files
+*.env
+*.env.*

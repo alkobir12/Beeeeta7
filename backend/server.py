@@ -41,6 +41,7 @@ from routes_injectors import router as injectors_router, set_db as set_db_inject
 from routes_users import router as users_router, set_db as set_db_users
 # Import Gemini Chat Routes
 from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_gemini_chat
+from routes_payroll import router as payroll_router, set_db as set_db_payroll
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -119,6 +120,7 @@ set_db_users(db)
 set_db_import(db)
 set_db_injectors(db)
 set_db_gemini_chat(db)
+set_db_payroll(db)
 set_db_extended(db)
 set_db_advanced(db)
 
@@ -151,6 +153,7 @@ app.include_router(users_router)
 app.include_router(injectors_router)
 app.include_router(import_router)
 app.include_router(gemini_chat_router)
+app.include_router(payroll_router)
 app.include_router(language_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)

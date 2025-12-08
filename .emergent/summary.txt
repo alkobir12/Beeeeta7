@@ -13,228 +13,65 @@ The user's most recent requests have been to fix a wide range of broken pages an
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application is a full-stack React/FastAPI workshop management system. The UI is in Arabic with an Apple-style theme. The Denso diagnostics page has been heavily modified with a dashboard-like set of draggable summary cards, but this has led to recurrent frontend build errors.
+The application is a full-stack React/FastAPI workshop management system. The frontend build, which was previously broken, has been fixed. The backend has been configured to use Supabase as its primary data source () instead of in-memory files. An initial implementation of a language toggle feature is present, including a UI button, backend API (), and frontend hooks.
 
-The entire backend is running in a temporary  mode, meaning all data is lost on restart. The user has provided credentials for Supabase, but the integration is not yet active. Several critical API endpoints for documents, quotations, and user profiles have been fixed, but many pages remain broken due to other missing APIs or frontend errors.
+However, the application is critically broken. The backend is throwing a persistent  on most data-related API calls (e.g., , ). This is caused by a Supabase schema cache error (), rendering the application unusable.
 
 **Last working item**:
-- **Last item agent was working**: The agent was attempting to fix a series of frontend build errors in . The latest error is a , which was introduced while implementing drag-and-drop dashboard cards.
+- **Last item agent was working**: Resolving a persistent  on API endpoints that interact with Supabase, such as . The user confirmed the issue with same problem after a supposed fix.
 - **Status**: BLOCKED
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: Manual testing by the agent is required. First, run yarn run v1.22.22
-$ craco build
-Creating an optimized production build...
-Failed to compile.
-
-Error: Cannot find module '/app/frontend/node_modules/@jridgewell/gen-mapping/  dist/gen-mapping.umd.js'
-  - loader:1244 createEsmNotFoundErr
-    node:internal/modules/cjs/loader:1244:15
-  
-  - loader:1232 finalizeEsmResolution
-    node:internal/modules/cjs/loader:1232:15
-  
-  - loader:638 resolveExports
-    node:internal/modules/cjs/loader:638:14
-  
-  - loader:711 Module._findPath
-    node:internal/modules/cjs/loader:711:31
-  
-  - loader:1193 Module._resolveFilename
-    node:internal/modules/cjs/loader:1193:27
-  
-  - loader:1038 Module._load
-    node:internal/modules/cjs/loader:1038:27
-  
-  - loader:1289 Module.require
-    node:internal/modules/cjs/loader:1289:19
-  
-  - helpers:182 require
-    node:internal/modules/helpers:182:18
-  
-  - source-map.umd.js:3 
-    [frontend]/[@jridgewell]/source-map/dist/source-map.umd.js:3:21
-  
-  - source-map.umd.js:17 Object.<anonymous>
-    [frontend]/[@jridgewell]/source-map/dist/source-map.umd.js:17:3
-  
-  - loader:1521 Module._compile
-    node:internal/modules/cjs/loader:1521:14
-  
-  - loader:1623 Module._extensions..js
-    node:internal/modules/cjs/loader:1623:10
-  
-  - loader:1266 Module.load
-    node:internal/modules/cjs/loader:1266:32
-  
-  - loader:1091 Module._load
-    node:internal/modules/cjs/loader:1091:12
-  
-  - loader:1289 Module.require
-    node:internal/modules/cjs/loader:1289:19
-  
-  - helpers:182 require
-    node:internal/modules/helpers:182:18
-  
-  - bundle.min.js:2 
-    [frontend]/[terser]/dist/bundle.min.js:2:81
-  
-  - bundle.min.js:5 Object.<anonymous>
-    [frontend]/[terser]/dist/bundle.min.js:5:3
-  
-  - loader:1521 Module._compile
-    node:internal/modules/cjs/loader:1521:14
-  
-  - loader:1623 Module._extensions..js
-    node:internal/modules/cjs/loader:1623:10
-  
-  - loader:1266 Module.load
-    node:internal/modules/cjs/loader:1266:32
-  
-  - loader:1091 Module._load
-    node:internal/modules/cjs/loader:1091:12
-  
-  - loader:1289 Module.require
-    node:internal/modules/cjs/loader:1289:19
-  
-  - helpers:182 require
-    node:internal/modules/helpers:182:18
-  
-  - htmlminifier.js:9 Object.<anonymous>
-    [frontend]/[html-minifier-terser]/src/htmlminifier.js:9:14
-  
-  - loader:1521 Module._compile
-    node:internal/modules/cjs/loader:1521:14
-  
-  - loader:1623 Module._extensions..js
-    node:internal/modules/cjs/loader:1623:10
-  
-  - loader:1266 Module.load
-    node:internal/modules/cjs/loader:1266:32
-  
-  - loader:1091 Module._load
-    node:internal/modules/cjs/loader:1091:12
-  
-  - loader:1289 Module.require
-    node:internal/modules/cjs/loader:1289:19
-  
-  - helpers:182 require
-    node:internal/modules/helpers:182:18
-  
-  - index.js:961 HtmlWebpackPlugin.postProcessHtml
-    [frontend]/[html-webpack-plugin]/index.js:961:14
-  
-  - index.js:1485 
-    [frontend]/[html-webpack-plugin]/index.js:1485:21
-  
-  - task_queues:95 process.processTicksAndRejections
-    node:internal/process/task_queues:95:5
-
-
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. to confirm the syntax error is resolved. Then use the screenshot tool to verify the UI.
-- **User Testing Done**: N
+- **Agent Testing Done**: Y (Agent confirmed the  error with )
+- **Which testing method agent to use?**: Backend testing agent to diagnose the root cause of the database connection and schema issue. Alternatively, call the  immediately.
+- **User Testing Done**: Y (User reported the error persists)
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0) Frontend Build is Broken**
-- **Issue 2: (P1) General Application Instability & Multiple Broken Pages**
-- **Issue 3: (P2) Data Not Saving (e.g., Business Accounts)**
-- **Issue 4: (P3) Finalize Supabase Integration**
-- **Issue 5: (P4) Deployment Readiness Failure (.gitignore issue)**
+-   **Issue 1: (P0)  on all Supabase API Calls**
+-   **Issue 2: (P1) General Application Instability & Broken Pages**
+-   **Issue 3: (P2) Incomplete Language Integration**
 
 **Issues Detail:**
-- **Issue 1: Frontend Build is Broken**
-    - **Attempted fixes**: The agent fixed a previous  error but then introduced a new .
+- **Issue 1:  on all Supabase API Calls**
+    - **Attempted fixes**: The agent correctly identified the error log  (Unable to load the database schema cache). It then tried to run a schema refresh script () but was blocked by a DNS error (). The agent attempted a workaround by hardcoding the Supabase IP address into the script, but the  error still persists, indicating the schema refresh was unsuccessful or insufficient.
     - **Next debug checklist**:
-        1.  View .
-        2.  Locate the  statement around line 386 which is outside the main component function's scope. This is likely due to a misplaced closing curly brace .
-        3.  Correct the code structure to ensure the  is properly nested within the  component function.
-        4.  Run yarn run v1.22.22
-$ craco build
-Creating an optimized production build...
-Compiled with warnings.
-
-Failed to parse source map from '/app/frontend/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js.map' file: Error: ENOENT: no such file or directory, open '/app/frontend/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js.map'
-
-Search for the keywords to learn more about each warning.
-To ignore, add // eslint-disable-next-line to the line before.
-
-File sizes after gzip:
-
-  306.81 kB  build/static/js/main.6ad351b6.js
-  16.64 kB   build/static/css/main.1ad9810a.css
-
-The project was built assuming it is hosted at /.
-You can control this with the homepage field in your package.json.
-
-The build folder is ready to be deployed.
-You may serve it with a static server:
-
-  yarn global add serve
-  serve -s build
-
-Find out more about deployment here:
-
-  https://cra.link/deployment
-
-Done in 16.37s. to confirm the fix.
-    - **Why fix this issue and what will be achieved with the fix?** The entire frontend is unusable and development is blocked until this is fixed.
+        1.  Do not attempt further manual fixes. The issue is complex and recurring.
+        2.  **IMMEDIATELY call the **. This is a critical infrastructure problem (database schema/permissions/networking) that the agent has failed to resolve after multiple attempts. Provide the  with the error  and the history of the failed DNS resolution.
+        3.  Follow the 's plan precisely to resolve the database connection.
+    - **Why fix this issue and what will be achieved with the fix?** The entire backend is non-functional. Fixing this will restore all data operations and unblock the entire application.
     - **Status**: IN PROGRESS
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Frontend
+    - **Should Test frontend/backend/both after fix?** Backend
+    - **Blocked on other issue**: This is the root blocker for all other tasks.
 
-- **Issue 2: General Application Instability & Multiple Broken Pages**
-    - **Attempted fixes**: The agent fixed  and  (partially), but pages like , , and  are still broken.
-    - **Next debug checklist**:
-        1.  After fixing the build (Issue 1), tackle pages in the user's priority: , then .
-        2.  For each page, check the browser console for  errors to identify missing API endpoints (e.g., ).
-        3.  Search the backend code for the corresponding route. If it doesn't exist or isn't registered in , add it.
-    - **Why fix this issue and what will be achieved with the fix?** Core application functionality is broken and unusable by the user.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Both
-
-- **Issue 3: Data Not Saving (e.g., Business Accounts)**
-    - **Attempted fixes**: A temporary patch was implemented to write data to a JSON file for business accounts. This is not a real solution.
-    - **Next debug checklist**: This issue will be resolved by fixing Issue 4.
-    - **Why fix this issue and what will be achieved with the fix?** To make the application stateful and usable.
+- **Issue 2: General Application Instability & Broken Pages**
+    - **Attempted fixes**: The agent created API routes for the  page.
+    - **Next debug checklist**: This issue is a direct symptom of Issue #1. It will be resolved once the database connection is fixed. After that, each page (, , ) must be tested to ensure it loads data correctly.
+    - **Why fix this issue and what will be achieved with the fix?** To restore core application functionality.
     - **Status**: BLOCKED
     - **Is recurring issue?** Y
     - **Should Test frontend/backend/both after fix?** Both
-    - **Blocked on other issue**: Issue 4: Finalize Supabase Integration
+    - **Blocked on other issue**: Issue 1:  on all Supabase API Calls
 
-- **Issue 4: Finalize Supabase Integration**
-    - **Attempted fixes**: Agent has placed credentials in , but a test script showed they weren't being loaded, causing  to stay in .
-    - **Next debug checklist**:
-        1.  Ensure the main backend process loads  variables correctly at startup. Add print statements in  to confirm  is working.
-        2.  Once  is , change  in .
-        3.  Restart the backend and test pages that should use Supabase (, ) to verify data persistence.
-    - **Why fix this issue and what will be achieved with the fix?** This is a core user requirement and will solve all data persistence problems.
-    - **Status**: NOT STARTED
-    - **Should Test frontend/backend/both after fix?** Both
-
-- **Issue 5: Deployment Readiness Failure (.gitignore issue)**
-    - **Attempted fixes**: Agent has identified the problem but not yet executed the fix.
-    - **Next debug checklist**:
-        1.  Edit .
-        2.  Remove or comment out the lines  and .
-        3.  Run the  health check again.
-    - **Why fix this issue and what will be achieved with the fix?** The application cannot be deployed until this is resolved.
-    - **Status**: NOT STARTED
-    - **Should Test frontend/backend/both after fix?**: NA
+- **Issue 3: Incomplete Language Integration**
+    - **Attempted fixes**: N/A
+    - **Next debug checklist**: This is a valid task but is blocked by the backend being down.
+    - **Why fix this issue and what will be achieved with the fix?** Fulfills a primary user requirement for internationalization.
+    - **Status**: BLOCKED
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Frontend
+    - **Blocked on other issue**: Issue 1:  on all Supabase API Calls
 
 **In progress Task List**:
 - **Task 1: (P1) Implement Full-Site Language Toggle (Arabic/English)**
-    - **Description**: User wants a button to switch the entire application's language between Arabic and English, using their provided Python dictionary script.
-    - **Where to resume**:
-        1.  **Backend**: Create  to parse the user's script and expose translations via a  endpoint.
-        2.  **Frontend**: Create a  and  hook. Add a toggle button in . Replace hardcoded strings with the  function.
-    - **What will be achieved with this?** Full internationalization (i18n) of the application as requested by the user.
-    - **Status**: NOT STARTED
+    - **Where to resume**: The core infrastructure (backend API, frontend hook ,  button) is complete. Once the backend is stable (Issue #1 is fixed), proceed to replace hardcoded text in all major components (, , , etc.) with the  translation function.
+    - **What will be achieved with this?** A fully bilingual user interface as requested by the user.
+    - **Status**: BLOCKED
     - **Should Test frontend/backend/both after fix?** Frontend
+    - **Blocked on something**: Issue 1:  on all Supabase API Calls
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
   - **(P2) Code Cleanup**: Delete obsolete Denso files (, etc.).
-  - **(P2) Refactor **: Break the monolith into smaller, more manageable router files.
+  - **(P2) Refactor **: Break the monolith into smaller, more manageable router files (partially done, but can be improved).
   - **(P3) Test Parts Catalog**: The Excel import functionality is untested and the parts list is empty.
 - **Future Tasks**:
   - **(P1)** Process User-Provided Offline Manual (Blocked)
@@ -242,89 +79,75 @@ Done in 16.37s. to confirm the fix.
   - **(P3)** Implement  endpoint.
 
 **Completed work in this session**
-- Merged Denso & Gemini features into a tabbed Catalog page and then removed Gemini from the UI.
-- Implemented a DataStream view in the Denso UI to compare measured vs. natural values.
-- Added a dashboard-like set of summary cards to the top of the Denso page.
-- Implemented drag-and-drop for the Denso summary cards using .
-- Added a  input to the Denso UI.
-- Fixed  errors for document, quotation, and profile generation APIs.
-- Fixed the  crash on the Analytics page.
-- Ran deployment health check and identified the  blocker.
+- **System Stability:**
+  - Fixed the critical frontend build error in , making the UI renderable.
+  - Switched the backend from an unstable in-memory database to use .
+  - Resolved the  issue to make the application deployable.
+- **Feature Implementation (Partial):**
+  - Created the backend API () and frontend infrastructure (hooks, components) for a full-site language toggle.
+  - Added backend API routes for the  page.
+  - Refactored multiple endpoints in  to use .
 
 **Earlier issues found/mentioned but not fixed**
-- **Broken Pages**: , , and  pages are still broken, causing the app to crash or show errors. The agent prioritized other fixes.
-- **Data Persistence**: The core issue of data not being saved across the app remains. The temporary patch for Business Accounts is a stopgap; the full Supabase migration is the real solution and is still pending.
+- The core data persistence and application instability issues have evolved into the current P0 blocker: the ** from Supabase**.
 
 **Known issue recurrence from previous fork**
-- **General Application Instability**: The user frequently reports nothing works or that pages are broken. This is a recurring symptom of the fragile state of the app due to many un-implemented API endpoints and the lack of a proper database. **Status: IN PROGRESS**.
+  - **General Application Instability**: This issue persists and has been pinpointed to the Supabase  schema cache error. **Status: IN PROGRESS**.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - **Backend:** FastAPI
-- **Frontend:** React, TailwindCSS,  for drag-and-drop.
-- **Database:**
-  - **Intended:** Supabase (PostgreSQL)
-  - **Current:** In-memory JSON files ()
+- **Frontend:** React, TailwindCSS, , **, **
+- **Database:** Supabase (PostgreSQL)
 
 **key DB schema**
-- **Supabase (Intended)**: , , . Other schemas need to be defined.
-- **In-Memory**: , , , .
+  - , , , , , , etc. as defined in .
 
 **changes in tech stack**
-- Added  and  to the frontend.
+- **Added:** ,  for frontend translation.
 
 **All files of reference**
-- **Heavily Modified:**
-  - : Multiple features added (dashboard, datastream, dnd). **Has a recurring build error.**
-  - : Added multiple routers.
-  - : Added the  implementation.
-- **Key Files for Next Steps:**
-  - : Needs to be fixed to allow deployment.
-  - : Needs to be debugged to connect to Supabase.
-  - User-provided script for the language dictionary.
+- **Critical for Next Step**:
+  - : Script to fix the database schema.
+  - : Backend error logs are essential for debugging the  error.
+- **Created/Modified**:
+  - , , 
+  - , , 
+  -  (heavily modified, has syntax errors)
+  - 
 
 **Critical Info for New Agent**
-- **IMMEDIATE BLOCKER**: The frontend build is failing with a  in . You MUST fix this first. After fixing, run yarn run v1.22.22
-$ craco build
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. to confirm.
-- **USER'S TOP PRIORITIES**: After fixing the build, the user wants two major things: 1) Make **Supabase the primary database for everything**. 2) Implement a **full-site language toggle (Arabic/English)**.
-- **SYSTEM FRAGILITY**: The application is unstable. Many pages are broken. Fix issues one by one, and confirm with the user. Do not assume any page works unless you test it. The instability is largely due to the  database and missing API endpoints.
+- **IMMEDIATE BLOCKER**: The backend is non-functional due to a persistent  on all database APIs. The error code is , which points to a Supabase schema cache problem.
+- **DO NOT ATTEMPT MANUAL FIXES**: The previous agent failed multiple times to fix this, encountering syntax errors and infrastructure issues (DNS). Your first action **must** be to call the . Provide it with the error code  and the context that a schema refresh script () failed due to DNS issues.
+- **USER PRIORITIES**: Once the backend is stable, the user's top priority is to finish the full-site language toggle (Arabic/English). The groundwork is laid; you just need to apply the translations throughout the UI.
 
 **Last 10 User Messages and any pending user messages**
-1.   (Continue) - User wants agent to continue fixing the build error. **Status: IN PROGRESS.**
-2.  User sends console error: . **Status: COMPLETED (but led to another error).**
-3.  User sends console error: . **Status: COMPLETED (but led to another error).**
-4.   (Do it step-by-step and don't ask me, complete everything. Also, what about the language terms?) - **Status: ACKNOWLEDGED.**
-5.   (What about English language?) - **Status: ADDRESSED (Plan for toggle shared).**
-6.   (Complete the rest of the steps and also activate the script to convert between Arabic and English) - **Status: PLANNED (Major new task).**
-7.  User sends console error: . **Status: IN PROGRESS.**
-8.   (Continue) - User wants agent to fix the latest build error. **Status: IN PROGRESS.**
-9.  User sends console error: . **Status: PENDING FIX.**
-10.  (Okay, do it all. Also for the language, put a button on the top left of the page...) - **Status: ACKNOWLEDGED (Language toggle is a priority task).**
+- User reported a  after the agent claimed the fixes were complete.
+- Agent attempted several fixes for the  error.
+- User responded same problem, confirming the fixes were unsuccessful.
+- Agent asked the user to test again.
+- No response from the user since the last test request, but the issue is confirmed to still exist on the agent's side.
 
 **Project Health Check:**
-- **Broken**: The frontend build is failing, making the entire UI inaccessible. Multiple pages and API endpoints are non-functional.
-- **Mocked**: Supabase integration is in mock mode. The entire database is running on in-memory JSON files.
-- **Blocked**: Any frontend work is blocked by the build failure. True data persistence is blocked by the incomplete Supabase integration.
+- **Broken**: The backend is critically broken. All features requiring database interaction are down due to a persistent .
+- **Mocked**: No services are mocked. The application is failing against the live Supabase instance.
+- **Blocked**: All development is blocked until the backend database connection is restored.
 
 **3rd Party Integrations**
-- **Google Gemini**: Integrated but UI features have been removed from the sidebar. Requires a .
-- **Supabase**: Intended as the primary database. Requires  and . Connection is not yet active.
+- **Google Gemini**: Integrated but UI features have been removed. Requires a .
+- **Supabase**: Actively used as the primary database, but the connection is failing with a schema error. Requires  and .
 
 **Testing status**
-- **Testing agent used after significant changes**: NO
-- **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: None.
-- **Known regressions**: The entire frontend is non-functional due to a build error introduced during feature development.
+  - **Testing agent used after significant changes**: NO
+  - **Troubleshoot agent used after agent stuck in loop**: NO (but should have been)
+  - **Test files created**: None.
+  - **Known regressions**: The entire backend data layer is non-functional, a major regression from the previous in-memory state.
 
 **Credentials to test flow:**
 - **Username**:  or 
 - **Password**: 
-- (The login page may only require a username).
 
 **What agent forgot to execute**
-- The agent failed to produce a clean, working build for  after multiple attempts, leaving the frontend broken.
-- The agent did not systematically verify the Supabase connection after receiving credentials, leaving it in mock mode.
-- The cleanup of obsolete Denso files (, etc.) is still pending.</analysis>
+- The agent failed to call the  after getting stuck in a loop trying to fix a complex, recurring infrastructure issue ( error). This led to wasted time and introducing further syntax errors in .</analysis>

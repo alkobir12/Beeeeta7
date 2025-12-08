@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://mechanic-dashboard-12.preview.emergentagent.com/api"
+BACKEND_URL = "https://supaworkshop.preview.emergentagent.com/api"
 
 def test_endpoint(method, endpoint, data=None, expected_status=200):
     """Test an API endpoint and return result"""

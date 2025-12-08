@@ -257,6 +257,10 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 
 @api_router.get("/vehicles", response_model=List[Vehicle])
 async def get_vehicles():
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.vehicles_list()
+        return [Vehicle(**r) for r in rows]
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('vehicles')
         return [Vehicle(**r) for r in rows]

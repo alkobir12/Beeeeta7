@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
+import LanguageToggle from './LanguageToggle';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,6 +16,11 @@ const Layout = ({ children }) => {
       
       {/* Main Content */}
       <main className="content-area">
+        {/* Top Left Language Toggle (Desktop/Tablet) */}
+        <div className="hidden lg:flex justify-end px-4 py-2">
+           <LanguageToggle />
+        </div>
+
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between mb-4 p-2 bg-card rounded-lg shadow-sm">
           <button

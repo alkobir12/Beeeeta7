@@ -185,6 +185,15 @@ def generate_invoice_number():
     return f"{prefix}-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
 async def get_or_create_customer(name: str, phone: str, email: Optional[str] = None):
+    if DB_PROVIDER == 'supabase':
+        c = supabase_service.customers_find_by_phone(phone)
+        if c: return c['id']
+        new_c = supabase_service.customers_create({
+            'name': name, 'phone': phone, 'email': email,
+            'totalVisits': 1, 'lastVisit': datetime.utcnow().isoformat()
+        })
+        return new_c['id']
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('customers')
         for r in rows:

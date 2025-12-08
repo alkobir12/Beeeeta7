@@ -449,15 +449,7 @@ async def delete_part(part_id: str):
     await db.parts.delete_one({"id": part_id})
     return {"status": "success"}
 
-                continue
-            result.append(Part(**p))
-        return result
-    query = {}
-    if search:
-        query['$or'] = [
-            {'name': {'$regex': search, '$options': 'i'}},
-            {'partNumber': {'$regex': search, '$options': 'i'}}
-        ]
+# Removed duplicate code
     if low_stock:
         query['$expr'] = {'$lt': ['$quantity', '$minQuantity']}
     parts = await db.parts.find(query, {"_id": 0}).to_list(1000)

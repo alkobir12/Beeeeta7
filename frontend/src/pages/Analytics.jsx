@@ -22,8 +22,17 @@ const Analytics = () => {
         vehicleAPI.getAll()
       ]);
       setStats(statsRes.data);
-      setTransactions(transRes.data);
-      setVehicles(vehiclesRes.data);
+      // Handle transactions - API returns array directly
+      const transData = Array.isArray(transRes.data) ? transRes.data : [];
+      setTransactions({ 
+        transactions: transData, 
+        summary: { 
+          income: transData.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+          expenses: transData.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0),
+          profit: 0
+        } 
+      });
+      setVehicles(vehiclesRes.data || []);
     } catch (error) {
       console.error(error);
     } finally {

@@ -235,6 +235,11 @@ async def create_vehicle(vehicle_data: VehicleCreate):
             'entryDate': datetime.utcnow()
         }
 
+        if DB_PROVIDER == 'supabase':
+            # supabase_service expects camelCase dict
+            v_res = supabase_service.vehicles_create(vehicle_dict)
+            return Vehicle(**v_res)
+
         if DB_PROVIDER == 'memory':
             rows = _mem_read('vehicles')
             # ISO format for json

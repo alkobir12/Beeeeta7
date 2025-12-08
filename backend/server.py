@@ -367,17 +367,22 @@ async def get_technicians():
 @api_router.get("/parts", response_model=List[Part])
 async def get_parts(search: str = '', low_stock: bool = False):
     if DB_PROVIDER == 'supabase':
-        rows = supabase_service.parts_list()
-        result = []
-        for r in rows:
-            # filter in python since list is small/med
-            p = Part(**r)
-            if search and search.lower() not in str(p.dict()).lower():
-                continue
-            if low_stock and p.quantity >= p.minQuantity:
-                continue
-            result.append(p)
-        return result
+        try:
+            rows = supabase_service.parts_list()
+            result = []
+            for r in rows:
+                # filter in python since list is small/med
+                p = Part(**r)
+                if search and search.lower() not in str(p.dict()).lower():
+                    continue
+                if low_stock and p.quantity >= p.minQuantity:
+                    continue
+                result.append(p)
+            return result
+        except Exception as e:
+            print(f"Supabase parts error: {e}")
+            # Fallback to empty list if table missing or error
+            return []
 
     if DB_PROVIDER == 'memory':
         parts = _mem_read('parts')

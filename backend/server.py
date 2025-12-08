@@ -327,6 +327,10 @@ async def get_customers():
 
 @api_router.get("/services", response_model=List[Service])
 async def get_services():
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.services_list()
+        return [Service(**r) for r in rows]
+
     if DB_PROVIDER == 'memory':
         return [Service(**r) for r in _mem_read('services')]
     services = await db.services.find().to_list(1000)
@@ -334,6 +338,10 @@ async def get_services():
 
 @api_router.post("/services", response_model=Service)
 async def create_service(service: Service):
+    if DB_PROVIDER == 'supabase':
+        s = supabase_service.services_create(service.dict())
+        return Service(**s)
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('services')
         rows.append(service.dict())
@@ -344,6 +352,10 @@ async def create_service(service: Service):
 
 @api_router.get("/technicians", response_model=List[Technician])
 async def get_technicians():
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.technicians_list()
+        return [Technician(**r) for r in rows]
+
     if DB_PROVIDER == 'memory':
         return [Technician(**r) for r in _mem_read('technicians')]
     technicians = await db.technicians.find().to_list(1000)

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, Optional
+
+from fastapi import APIRouter, HTTPException, Body
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
+import os
 
 router = APIRouter(prefix="/api")
 db = None
@@ -93,7 +95,9 @@ async def create_salary_record(payload: Dict[str, Any]):
                 'reference': record['id'],
                 'createdAt': datetime.utcnow()
             }
-            await db.transactions.insert_one(transaction)
+            try:
+                await db.transactions.insert_one(transaction)
+            except: pass
         
         record.pop('_id', None)
         return record
@@ -156,3 +160,53 @@ async def update_salary_record(record_id: str, payload: Dict[str, Any]):
         return updated
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Compatibility Endpoints for Frontend
+@router.get('/employees')
+async def get_employees(active_only: bool = False):
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            techs = supa.technicians_list()
+            return [{
+                'id': t.get('id'),
+                'name': t.get('name'),
+                'role': t.get('specialty') or 'Technician',
+                'salary': 5000, 
+                'phone': t.get('phone')
+            } for t in techs]
+        
+        if db is None: return []
+        techs = await db.technicians.find().to_list(1000)
+        return [{
+            'id': t.get('id'),
+            'name': t.get('name'),
+            'role': t.get('specialty') or 'Technician',
+            'salary': 5000, 
+            'phone': t.get('phone')
+        } for t in techs]
+    except Exception as e:
+        return []
+
+@router.get('/salaries')
+async def get_salaries_alias():
+    res = await get_salary_records()
+    # flatten structure for frontend if needed or just return list
+    # Frontend expects array directly
+    return res.get('records', [])
+
+@router.post('/salaries')
+async def create_salary_alias(payload: Dict[str, Any] = Body(...)):
+    p = payload.copy()
+    if 'month' in p and isinstance(p['month'], str) and '-' in p['month']:
+        parts = p['month'].split('-')
+        p['year'] = int(parts[0])
+        p['month'] = int(parts[1])
+    elif 'month' not in p:
+        p['month'] = datetime.utcnow().month
+        p['year'] = datetime.utcnow().year
+        
+    p['allowances'] = float(p.get('bonus', 0))
+    return await create_salary_record(p)

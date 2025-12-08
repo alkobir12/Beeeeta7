@@ -664,3 +664,14 @@ class SupabaseService:
             return True
         self.client.table('parts').delete().eq('id', pid).execute()
         return True
+
+    # -------------------- Aliases for business_accounts --------------------
+    def business_accounts_list(self) -> List[Dict[str, Any]]:
+        return self.accounts_list()
+    
+    def business_accounts_create(self, account: Dict[str, Any]) -> Dict[str, Any]:
+        name = account.get('name', '')
+        code = account.get('code')
+        currency = account.get('currency', 'SAR')
+        return self.accounts_create(name, code, currency)
+

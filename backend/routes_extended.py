@@ -340,6 +340,11 @@ async def create_biz_account(payload: Dict[str, Any] = Body(...)):
 @router.get('/budgets')
 async def list_budgets(account_id: Optional[str] = None, period: Optional[str] = None):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.budgets_list(account_id, period)
+
         q = {}
         if account_id:
             q['accountId'] = account_id
@@ -358,6 +363,12 @@ async def create_budget(payload: Dict[str, Any] = Body(...)):
         account_id = payload.get('accountId')
         if not account_id:
             raise HTTPException(status_code=400, detail='accountId required')
+            
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            return supa.budgets_create(payload)
+
         doc = {
             'id': str(uuid.uuid4()),
             'accountId': account_id,

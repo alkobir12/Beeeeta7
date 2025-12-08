@@ -6,6 +6,13 @@ Handles Supabase database interactions
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables at module level
+_env_file = Path(__file__).parent / '.env'
+if _env_file.exists():
+    load_dotenv(_env_file)
 
 try:
     from supabase import create_client, Client

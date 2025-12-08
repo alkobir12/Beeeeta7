@@ -43,12 +43,15 @@ from routes_users import router as users_router, set_db as set_db_users
 from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_gemini_chat
 
 from supabase_service import SupabaseService
+from routes_language import router as language_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 
 # Provider mode
 DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
+supabase_service = SupabaseService()
 
 # Simple file-based storage for memory mode
 MEM_DIR = ROOT_DIR / 'uploads'
@@ -148,6 +151,7 @@ app.include_router(users_router)
 app.include_router(injectors_router)
 app.include_router(import_router)
 app.include_router(gemini_chat_router)
+app.include_router(language_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 

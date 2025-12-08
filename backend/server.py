@@ -51,10 +51,6 @@ from routes_payroll import router as payroll_router, set_db as set_db_payroll
 from supabase_service import SupabaseService
 from routes_language import router as language_router
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-
 # Provider mode
 DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
 supabase_service = SupabaseService()

@@ -386,6 +386,20 @@ async def get_parts(search: str = '', low_stock: bool = False):
             if search and search.lower() not in str(p).lower():
                 continue
             if low_stock and p.get('quantity', 0) >= p.get('minQuantity', 0):
+                continue
+            result.append(Part(**p))
+        return result
+    
+    query = {}
+    if search:
+        query['$or'] = [
+            {'name': {'$regex': search, '$options': 'i'}},
+            {'partNumber': {'$regex': search, '$options': 'i'}}
+        ]
+    if low_stock:
+        query['$expr'] = {'$lt': ['$quantity', '$minQuantity']}
+    parts = await db.parts.find(query, {"_id": 0}).to_list(1000)
+    return [Part(**p) for p in parts]
 
 @api_router.post("/parts", response_model=Part)
 async def create_part(part: PartCreate):

@@ -330,6 +330,24 @@ async def get_customers():
     customers = await db.customers.find().to_list(1000)
     return [Customer(**c) for c in customers]
 
+@api_router.post("/customers", response_model=Customer)
+async def create_customer(customer: CustomerBase):
+    if DB_PROVIDER == 'supabase':
+        c = supabase_service.customers_create(customer.dict())
+        return Customer(**c)
+    
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('customers')
+        new_c = {**customer.dict(), 'id': str(uuid.uuid4())}
+        rows.append(new_c)
+        _mem_write('customers', rows)
+        return Customer(**new_c)
+    
+    customer_dict = customer.dict()
+    customer_dict['id'] = str(uuid.uuid4())
+    await db.customers.insert_one(customer_dict)
+    return Customer(**customer_dict)
+
 @api_router.get("/services", response_model=List[Service])
 async def get_services():
     if DB_PROVIDER == 'supabase':

@@ -565,3 +565,102 @@ class SupabaseService:
             'reference': r.get('reference'),
             'createdAt': r.get('created_at')
         }
+
+
+    # -------------------- Parts --------------------
+    def parts_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table('parts').select('*').order('created_at', desc=True).execute()
+        rows = res.data or []
+        out = []
+        for r in rows:
+            out.append({
+                'id': r.get('id'),
+                'partNumber': r.get('part_number'),
+                'name': r.get('name'),
+                'category': r.get('category'),
+                'purchasePrice': float(r.get('purchase_price') or 0),
+                'sellingPrice': float(r.get('selling_price') or 0),
+                'quantity': int(r.get('quantity') or 0),
+                'minQuantity': int(r.get('min_quantity') or 5),
+                'supplier': r.get('supplier'),
+                'image': r.get('image'),
+                'createdAt': r.get('created_at'),
+                'updatedAt': r.get('updated_at')
+            })
+        return out
+
+    def parts_create(self, doc: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return doc
+        row = {
+            'part_number': doc.get('partNumber'),
+            'name': doc.get('name'),
+            'category': doc.get('category'),
+            'purchase_price': doc.get('purchasePrice', 0),
+            'selling_price': doc.get('sellingPrice', 0),
+            'quantity': doc.get('quantity', 0),
+            'min_quantity': doc.get('minQuantity', 5),
+            'supplier': doc.get('supplier'),
+            'image': doc.get('image'),
+            'created_at': datetime.utcnow().isoformat()
+        }
+        if doc.get('id'):
+            row['id'] = doc.get('id')
+            
+        res = self.client.table('parts').insert(row).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'partNumber': r.get('part_number'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'purchasePrice': float(r.get('purchase_price') or 0),
+            'sellingPrice': float(r.get('selling_price') or 0),
+            'quantity': int(r.get('quantity') or 0),
+            'minQuantity': int(r.get('min_quantity') or 5),
+            'supplier': r.get('supplier'),
+            'image': r.get('image'),
+            'createdAt': r.get('created_at'),
+            'updatedAt': r.get('updated_at')
+        }
+
+    def parts_update(self, pid: str, upd: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return upd
+        row = {}
+        if 'partNumber' in upd: row['part_number'] = upd['partNumber']
+        if 'name' in upd: row['name'] = upd['name']
+        if 'category' in upd: row['category'] = upd['category']
+        if 'purchasePrice' in upd: row['purchase_price'] = upd['purchasePrice']
+        if 'sellingPrice' in upd: row['selling_price'] = upd['sellingPrice']
+        if 'quantity' in upd: row['quantity'] = upd['quantity']
+        if 'minQuantity' in upd: row['min_quantity'] = upd['minQuantity']
+        if 'supplier' in upd: row['supplier'] = upd['supplier']
+        if 'image' in upd: row['image'] = upd['image']
+        
+        row['updated_at'] = datetime.utcnow().isoformat()
+        
+        res = self.client.table('parts').update(row).eq('id', pid).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'partNumber': r.get('part_number'),
+            'name': r.get('name'),
+            'category': r.get('category'),
+            'purchasePrice': float(r.get('purchase_price') or 0),
+            'sellingPrice': float(r.get('selling_price') or 0),
+            'quantity': int(r.get('quantity') or 0),
+            'minQuantity': int(r.get('min_quantity') or 5),
+            'supplier': r.get('supplier'),
+            'image': r.get('image'),
+            'createdAt': r.get('created_at'),
+            'updatedAt': r.get('updated_at')
+        }
+
+    def parts_delete(self, pid: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table('parts').delete().eq('id', pid).execute()
+        return True

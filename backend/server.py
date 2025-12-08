@@ -236,8 +236,8 @@ async def create_vehicle(vehicle_data: VehicleCreate):
             'id': str(uuid.uuid4()),
             'customerId': customer_id,
             'trackingLink': generate_tracking_link(),
-            'estimatedCompletion': datetime.utcnow() + timedelta(days=2),
-            'entryDate': datetime.utcnow()
+            'estimatedCompletion': (datetime.utcnow() + timedelta(days=2)).isoformat(),
+            'entryDate': datetime.utcnow().isoformat()
         }
 
         if DB_PROVIDER == 'supabase':
@@ -247,11 +247,7 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 
         if DB_PROVIDER == 'memory':
             rows = _mem_read('vehicles')
-            # ISO format for json
-            v_json = vehicle_dict.copy()
-            v_json['estimatedCompletion'] = v_json['estimatedCompletion'].isoformat()
-            v_json['entryDate'] = v_json['entryDate'].isoformat()
-            rows.append(v_json)
+            rows.append(vehicle_dict)
             _mem_write('vehicles', rows)
             return Vehicle(**vehicle_dict)
 

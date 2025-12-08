@@ -109,7 +109,7 @@ def _mem_write(name: str, items: list):
         json.dump(serializable_items, f, ensure_ascii=False, indent=2)
 
 # MongoDB connection (used when DB_PROVIDER is 'mongo')
-mongo_url = os.environ.get('MONGO_URL')
+mongo_url = os.environ.get('MONGO_URL') if DB_PROVIDER == 'mongo' else None
 client = AsyncIOMotorClient(mongo_url) if mongo_url else None
 
 # Important: DB name must be provided explicitly via environment in deployment

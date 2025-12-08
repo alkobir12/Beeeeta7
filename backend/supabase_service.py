@@ -342,8 +342,7 @@ class SupabaseService:
             'phone': payload.get('phone'),
             'email': payload.get('email'),
             'total_visits': payload.get('totalVisits', 0),
-            'last_visit': payload.get('lastVisit'),
-            'vehicles': payload.get('vehicles') or []
+            'last_visit': payload.get('lastVisit')
         }
         if payload.get('id'):
             row['id'] = payload.get('id')

@@ -366,6 +366,19 @@ async def get_technicians():
 
 @api_router.get("/parts", response_model=List[Part])
 async def get_parts(search: str = '', low_stock: bool = False):
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.parts_list()
+        result = []
+        for r in rows:
+            # filter in python since list is small/med
+            p = Part(**r)
+            if search and search.lower() not in str(p.dict()).lower():
+                continue
+            if low_stock and p.quantity >= p.minQuantity:
+                continue
+            result.append(p)
+        return result
+
     if DB_PROVIDER == 'memory':
         parts = _mem_read('parts')
         result = []
@@ -373,6 +386,55 @@ async def get_parts(search: str = '', low_stock: bool = False):
             if search and search.lower() not in str(p).lower():
                 continue
             if low_stock and p.get('quantity', 0) >= p.get('minQuantity', 0):
+
+@api_router.post("/parts", response_model=Part)
+async def create_part(part: PartCreate):
+    if DB_PROVIDER == 'supabase':
+        p = supabase_service.parts_create(part.dict())
+        return Part(**p)
+    if DB_PROVIDER == 'memory':
+        parts = _mem_read('parts')
+        new_p = {**part.dict(), 'id': str(uuid.uuid4())}
+        parts.append(new_p)
+        _mem_write('parts', parts)
+        return Part(**new_p)
+    part_dict = part.dict()
+    part_dict['id'] = str(uuid.uuid4())
+    await db.parts.insert_one(part_dict)
+    return Part(**part_dict)
+
+@api_router.put("/parts/{part_id}", response_model=Part)
+async def update_part(part_id: str, part: PartUpdate):
+    upd = {k: v for k, v in part.dict().items() if v is not None}
+    if DB_PROVIDER == 'supabase':
+        p = supabase_service.parts_update(part_id, upd)
+        return Part(**p)
+    if DB_PROVIDER == 'memory':
+        parts = _mem_read('parts')
+        for i, p in enumerate(parts):
+            if p.get('id') == part_id:
+                parts[i].update(upd)
+                _mem_write('parts', parts)
+                return Part(**parts[i])
+        raise HTTPException(status_code=404, detail="Part not found")
+    await db.parts.update_one({"id": part_id}, {"$set": upd})
+    p = await db.parts.find_one({"id": part_id})
+    if not p: raise HTTPException(status_code=404, detail="Part not found")
+    return Part(**p)
+
+@api_router.delete("/parts/{part_id}")
+async def delete_part(part_id: str):
+    if DB_PROVIDER == 'supabase':
+        supabase_service.parts_delete(part_id)
+        return {"status": "success"}
+    if DB_PROVIDER == 'memory':
+        parts = _mem_read('parts')
+        parts = [p for p in parts if p.get('id') != part_id]
+        _mem_write('parts', parts)
+        return {"status": "success"}
+    await db.parts.delete_one({"id": part_id})
+    return {"status": "success"}
+
                 continue
             result.append(Part(**p))
         return result

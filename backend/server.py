@@ -586,15 +586,19 @@ async def create_business_account(account: dict):
 @api_router.get("/salaries")
 async def get_salaries():
     """Get all salaries"""
+    if DB_PROVIDER == 'supabase':
+        # Return empty list for now - payroll feature needs completion
+        try:
+            res = supabase_service.client.table('salaries').select('*').execute()
+            return res.data or []
+        except:
+            return []
+    
+    if DB_PROVIDER == 'memory':
+        return []
+    
+    # MongoDB
     try:
-        if DB_PROVIDER == 'supabase':
-            # Return empty list for now - payroll feature needs completion
-            return []
-        
-        if DB_PROVIDER == 'memory':
-            return []
-        
-        # MongoDB
         salaries = await db.salaries.find({}, {"_id": 0}).to_list(1000)
         return salaries
     except Exception as e:

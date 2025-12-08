@@ -455,6 +455,109 @@ async def delete_part(part_id: str):
     await db.parts.delete_one({"id": part_id})
     return {"status": "success"}
 
+@api_router.get("/stats")
+async def get_stats():
+    """Get dashboard statistics"""
+    try:
+        # Get current month data
+        now = datetime.utcnow()
+        first_day = datetime(now.year, now.month, 1)
+        
+        if DB_PROVIDER == 'supabase':
+            # Get transactions for current month
+            transactions = supabase_service.transactions_list()
+            
+            # Calculate monthly stats
+            monthly_income = sum(t.get('amount', 0) for t in transactions 
+                               if t.get('type') == 'income' and t.get('date', '').startswith(f"{now.year}-{now.month:02d}"))
+            monthly_expenses = sum(t.get('amount', 0) for t in transactions 
+                                 if t.get('type') == 'expense' and t.get('date', '').startswith(f"{now.year}-{now.month:02d}"))
+            
+            # Get vehicle stats
+            vehicles = supabase_service.vehicles_list()
+            active_vehicles = len([v for v in vehicles if v.get('status') not in ['delivered', 'cancelled']])
+            
+            # Get customer count
+            customers = supabase_service.customers_list()
+            
+            return {
+                "totalCustomers": len(customers),
+                "activeVehicles": active_vehicles,
+                "thisMonth": {
+                    "income": monthly_income,
+                    "expenses": monthly_expenses,
+                    "profit": monthly_income - monthly_expenses
+                },
+                "lastMonth": {
+                    "income": 0,
+                    "expenses": 0,
+                    "profit": 0
+                }
+            }
+        
+        if DB_PROVIDER == 'memory':
+            vehicles = _mem_read('vehicles')
+            customers = _mem_read('customers')
+            
+            return {
+                "totalCustomers": len(customers),
+                "activeVehicles": len([v for v in vehicles if v.get('status') not in ['delivered', 'cancelled']]),
+                "thisMonth": {
+                    "income": 0,
+                    "expenses": 0,
+                    "profit": 0
+                },
+                "lastMonth": {
+                    "income": 0,
+                    "expenses": 0,
+                    "profit": 0
+                }
+            }
+        
+        # MongoDB implementation
+        vehicles = await db.vehicles.count_documents({"status": {"$nin": ["delivered", "cancelled"]}})
+        customers = await db.customers.count_documents({})
+        
+        # Get transactions for this month
+        transactions = await db.transactions.find({
+            "date": {"$gte": first_day}
+        }).to_list(10000)
+        
+        monthly_income = sum(t.get('amount', 0) for t in transactions if t.get('type') == 'income')
+        monthly_expenses = sum(t.get('amount', 0) for t in transactions if t.get('type') == 'expense')
+        
+        return {
+            "totalCustomers": customers,
+            "activeVehicles": vehicles,
+            "thisMonth": {
+                "income": monthly_income,
+                "expenses": monthly_expenses,
+                "profit": monthly_income - monthly_expenses
+            },
+            "lastMonth": {
+                "income": 0,
+                "expenses": 0,
+                "profit": 0
+            }
+        }
+    except Exception as e:
+        print(f"Stats error: {e}")
+        # Return default stats on error
+        return {
+            "totalCustomers": 0,
+            "activeVehicles": 0,
+            "thisMonth": {
+                "income": 0,
+                "expenses": 0,
+                "profit": 0
+            },
+            "lastMonth": {
+                "income": 0,
+                "expenses": 0,
+                "profit": 0
+            }
+        }
+
 @api_router.get("/business-accounts")
 async def get_business_accounts():
     if DB_PROVIDER == 'supabase':

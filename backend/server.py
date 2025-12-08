@@ -290,6 +290,11 @@ async def get_vehicle(vehicle_id: str):
 async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     upd = {k: v for k, v in update_data.dict().items() if v is not None}
     
+    if DB_PROVIDER == 'supabase':
+        v = supabase_service.vehicles_update(vehicle_id, upd)
+        if not v: raise HTTPException(status_code=404, detail="Vehicle not found")
+        return Vehicle(**v)
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('vehicles')
         for i, r in enumerate(rows):

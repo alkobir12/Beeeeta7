@@ -9,7 +9,7 @@ from language_dictionary import (
     CHART_OF_ACCOUNTS_TERMS
 )
 
-router = APIRouter(prefix="/translations", tags=["translations"])
+router = APIRouter(prefix="/api/translations", tags=["translations"])
 
 @router.get("/")
 async def get_all_translations():

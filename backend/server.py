@@ -454,11 +454,30 @@ async def delete_part(part_id: str):
     await db.parts.delete_one({"id": part_id})
     return {"status": "success"}
 
-# Removed duplicate code
-    if low_stock:
-        query['$expr'] = {'$lt': ['$quantity', '$minQuantity']}
-    parts = await db.parts.find(query, {"_id": 0}).to_list(1000)
-    return [Part(**p) for p in parts]
+@api_router.get("/business-accounts")
+async def get_business_accounts():
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.business_accounts_list()
+        return rows
+    if DB_PROVIDER == 'memory':
+        return _mem_read('business_accounts')
+    accounts = await db.business_accounts.find({}, {"_id": 0}).to_list(1000)
+    return accounts
+
+@api_router.post("/business-accounts")
+async def create_business_account(account: dict):
+    if DB_PROVIDER == 'supabase':
+        acc = supabase_service.business_accounts_create(account)
+        return acc
+    if DB_PROVIDER == 'memory':
+        accounts = _mem_read('business_accounts')
+        new_acc = {**account, 'id': str(uuid.uuid4())}
+        accounts.append(new_acc)
+        _mem_write('business_accounts', accounts)
+        return new_acc
+    account['id'] = str(uuid.uuid4())
+    await db.business_accounts.insert_one(account)
+    return account
 
 # Include the api_router
 app.include_router(api_router)

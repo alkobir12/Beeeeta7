@@ -316,19 +316,23 @@ class SupabaseService:
     def customers_find_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
         if self.mock_mode:
             return None
-        res = self.client.table('customers').select('*').eq('phone', phone).single().execute()
-        r = res.data
-        if not r: return None
-        return {
-            'id': r.get('id'),
-            'name': r.get('name'),
-            'phone': r.get('phone'),
-            'email': r.get('email'),
-            'totalVisits': r.get('total_visits', 0),
-            'lastVisit': r.get('last_visit'),
-            'vehicles': r.get('vehicles') or [],
-            'createdAt': r.get('created_at')
-        }
+        try:
+            res = self.client.table('customers').select('*').eq('phone', phone).maybe_single().execute()
+            r = res.data
+            if not r: return None
+            return {
+                'id': r.get('id'),
+                'name': r.get('name'),
+                'phone': r.get('phone'),
+                'email': r.get('email'),
+                'totalVisits': r.get('total_visits', 0),
+                'lastVisit': r.get('last_visit'),
+                'vehicles': r.get('vehicles') or [],
+                'createdAt': r.get('created_at')
+            }
+        except Exception as e:
+            print(f"Error finding customer by phone: {e}")
+            return None
 
     def customers_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:

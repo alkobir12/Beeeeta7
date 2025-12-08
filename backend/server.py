@@ -583,6 +583,24 @@ async def create_business_account(account: dict):
     await db.business_accounts.insert_one(account)
     return account
 
+@api_router.get("/salaries")
+async def get_salaries():
+    """Get all salaries"""
+    try:
+        if DB_PROVIDER == 'supabase':
+            # Return empty list for now - payroll feature needs completion
+            return []
+        
+        if DB_PROVIDER == 'memory':
+            return []
+        
+        # MongoDB
+        salaries = await db.salaries.find({}, {"_id": 0}).to_list(1000)
+        return salaries
+    except Exception as e:
+        print(f"Salaries error: {e}")
+        return []
+
 # Include the api_router
 app.include_router(api_router)
 

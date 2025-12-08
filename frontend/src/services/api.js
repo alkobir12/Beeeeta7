@@ -78,8 +78,7 @@ const fileAPI = {
 };
 
 const statsAPI = {
-  // إحصائيات عامة للورشة - حالياً نستخدم إحصائيات Gemini كبديل حتى يتم بناء /api/stats حقيقي
-  getStats: () => axios.get(`${API_BASE}/gemini-chat/stats`),
+  getStats: () => axios.get(`${API_BASE}/stats`),
 };
 
 const transactionAPI = {

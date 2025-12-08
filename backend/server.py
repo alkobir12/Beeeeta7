@@ -271,6 +271,11 @@ async def get_vehicles():
 
 @api_router.get("/vehicles/{vehicle_id}", response_model=Vehicle)
 async def get_vehicle(vehicle_id: str):
+    if DB_PROVIDER == 'supabase':
+        v = supabase_service.vehicles_get(vehicle_id)
+        if not v: raise HTTPException(status_code=404, detail="Vehicle not found")
+        return Vehicle(**v)
+
     if DB_PROVIDER == 'memory':
         rows = _mem_read('vehicles')
         for r in rows:

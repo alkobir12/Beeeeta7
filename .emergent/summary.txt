@@ -1,160 +1,330 @@
-<analysis>**original_problem_statement:** The user wants to continue developing their Workshop Management System. The initial high-level goals were to integrate an AI agent, complete an Arabic-only UI refactor with a new fluid design, and replace an old invoicing system.
+<analysis>**original_problem_statement:** The user wants to continue developing their Workshop Management System. The initial high-level goals were a complete UI overhaul to an Apple-style theme, removing old AI features, and integrating a new Denso Injector Diagnostic System.
 
-During the project's lifecycle, the user's priorities shifted significantly. They requested a complete UI overhaul to an Apple-style theme, the removal of all previous AI features, and the integration of a deterministic Denso Injector Diagnostic System based on user-provided Python scripts. Most recently, after the agent completed all tasks, the user reported a general failure stating nothing works, prompting a full system diagnostic and bug-fixing cycle. The user then requested the addition of a new Gemini AI Chat Bot.
+The user's most recent requests have been to fix a wide range of broken pages and features, make the UI more interactive (e.g., a drag-and-drop dashboard on the Denso page), make **Supabase the primary database for all data**, and implement a **full-site language toggle (Arabic/English)** using a provided dictionary script.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Apple-Style UI & Arabic-Only:** The entire application should have a consistent, modern Apple-style theme and be exclusively in Arabic. (Completed)
-2.  **Denso Injector Diagnostics:** Integrate and maintain a user-provided Python system for diagnosing Denso fuel injectors. The system was recently updated to a new v7 based on JSON data from the user. (Completed)
-3.  **Parts Management:** The parts/inventory page should allow adding, editing, and importing parts from an Excel file. (Completed)
-4.  **Gemini AI Chat Bot:** Add a new feature for an intelligent assistant powered by Google Gemini. (Completed)
-5.  **Full System Functionality:** Ensure all buttons, links, and core features of the application are working correctly after recent major changes. (In Progress)
-6.  **Offline Manual Integration:** A previously requested feature to process and display offline repair manuals. (Blocked)
-7.  **Fix Core Bugs:** Address any critical issues preventing the use of the application. (In Progress)
+1.  **Fix Broken Application**: The application is in a highly unstable state with multiple broken pages (, , , , etc.) and data persistence issues. This is the highest priority.
+2.  **Supabase as Primary DB**: All application data (accounts, vehicles, customers, reports, etc.) must be stored in and retrieved from the user's Supabase project, not in-memory JSON files.
+3.  **Full Language Toggle (AR/EN)**: Implement a button to switch the entire UI language between Arabic and English, using the provided dictionary script as the source of truth for translations.
+4.  **Interactive Denso UI**: The Denso diagnostics page should have a dashboard-like feel with customizable, draggable summary cards for metrics like frequency, pulse width, and count.
+5.  **Refactor & Cleanup**: Remove obsolete files and refactor monolithic code like .
+6.  **Deployable Application**: The application must pass all health checks to be ready for production deployment.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application is a full-stack workshop management system (React/FastAPI) using **in-memory JSON files for storage** (). The UI has an Apple-style theme and is entirely in Arabic.
+The application is a full-stack React/FastAPI workshop management system. The UI is in Arabic with an Apple-style theme. The Denso diagnostics page has been heavily modified with a dashboard-like set of draggable summary cards, but this has led to recurrent frontend build errors.
 
-The session focused on several major updates:
-1.  **Sidebar/Menu Fix**: The agent fixed an issue where many pages were missing from the sidebar, adding links to all existing pages.
-2.  **Denso System v7 Upgrade**: The agent completely replaced the old Denso diagnostics logic with a new, more comprehensive v7 provided by the user in JSON format. This involved creating a new backend module () and a new frontend page ().
-3.  **New Gemini AI Chat Bot**: As per the user's request, a new AI chatbot powered by Google Gemini was integrated. This includes a backend route (), a frontend page (), and a link in the sidebar. The agent debugged API key issues and switched to the  model to resolve quota problems.
-4.  **General Bug Fixes**: In response to the user's report that nothing works, the agent ran a full diagnostic, identified several non-functional API endpoints (, ), and fixed them by adding the missing routers in .
-
-The testing agent confirmed that the login, sidebar navigation, updated Denso page, and new Gemini chat page are all functioning correctly after the latest fixes.
+The entire backend is running in a temporary  mode, meaning all data is lost on restart. The user has provided credentials for Supabase, but the integration is not yet active. Several critical API endpoints for documents, quotations, and user profiles have been fixed, but many pages remain broken due to other missing APIs or frontend errors.
 
 **Last working item**:
-- **Last item agent was working**: The user reported that nothing works, check all buttons (). The agent investigated using the testing agent, found that several API endpoints (, , etc.) were returning 404 errors, and fixed the issue by correctly registering their routers in .
-- **Status**: USER VERIFICATION PENDING
-- **Agent Testing Done**: Y
-- **Which testing method agent to use?**: The agent should ask the user to perform manual testing of the entire application to confirm that all their concerns are resolved. If the user reports further specific issues, the  agent can be used to replicate them.
+- **Last item agent was working**: The agent was attempting to fix a series of frontend build errors in . The latest error is a , which was introduced while implementing drag-and-drop dashboard cards.
+- **Status**: BLOCKED
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: Manual testing by the agent is required. First, run yarn run v1.22.22
+$ craco build
+Creating an optimized production build...
+Failed to compile.
+
+Error: Cannot find module '/app/frontend/node_modules/@jridgewell/gen-mapping/  dist/gen-mapping.umd.js'
+  - loader:1244 createEsmNotFoundErr
+    node:internal/modules/cjs/loader:1244:15
+  
+  - loader:1232 finalizeEsmResolution
+    node:internal/modules/cjs/loader:1232:15
+  
+  - loader:638 resolveExports
+    node:internal/modules/cjs/loader:638:14
+  
+  - loader:711 Module._findPath
+    node:internal/modules/cjs/loader:711:31
+  
+  - loader:1193 Module._resolveFilename
+    node:internal/modules/cjs/loader:1193:27
+  
+  - loader:1038 Module._load
+    node:internal/modules/cjs/loader:1038:27
+  
+  - loader:1289 Module.require
+    node:internal/modules/cjs/loader:1289:19
+  
+  - helpers:182 require
+    node:internal/modules/helpers:182:18
+  
+  - source-map.umd.js:3 
+    [frontend]/[@jridgewell]/source-map/dist/source-map.umd.js:3:21
+  
+  - source-map.umd.js:17 Object.<anonymous>
+    [frontend]/[@jridgewell]/source-map/dist/source-map.umd.js:17:3
+  
+  - loader:1521 Module._compile
+    node:internal/modules/cjs/loader:1521:14
+  
+  - loader:1623 Module._extensions..js
+    node:internal/modules/cjs/loader:1623:10
+  
+  - loader:1266 Module.load
+    node:internal/modules/cjs/loader:1266:32
+  
+  - loader:1091 Module._load
+    node:internal/modules/cjs/loader:1091:12
+  
+  - loader:1289 Module.require
+    node:internal/modules/cjs/loader:1289:19
+  
+  - helpers:182 require
+    node:internal/modules/helpers:182:18
+  
+  - bundle.min.js:2 
+    [frontend]/[terser]/dist/bundle.min.js:2:81
+  
+  - bundle.min.js:5 Object.<anonymous>
+    [frontend]/[terser]/dist/bundle.min.js:5:3
+  
+  - loader:1521 Module._compile
+    node:internal/modules/cjs/loader:1521:14
+  
+  - loader:1623 Module._extensions..js
+    node:internal/modules/cjs/loader:1623:10
+  
+  - loader:1266 Module.load
+    node:internal/modules/cjs/loader:1266:32
+  
+  - loader:1091 Module._load
+    node:internal/modules/cjs/loader:1091:12
+  
+  - loader:1289 Module.require
+    node:internal/modules/cjs/loader:1289:19
+  
+  - helpers:182 require
+    node:internal/modules/helpers:182:18
+  
+  - htmlminifier.js:9 Object.<anonymous>
+    [frontend]/[html-minifier-terser]/src/htmlminifier.js:9:14
+  
+  - loader:1521 Module._compile
+    node:internal/modules/cjs/loader:1521:14
+  
+  - loader:1623 Module._extensions..js
+    node:internal/modules/cjs/loader:1623:10
+  
+  - loader:1266 Module.load
+    node:internal/modules/cjs/loader:1266:32
+  
+  - loader:1091 Module._load
+    node:internal/modules/cjs/loader:1091:12
+  
+  - loader:1289 Module.require
+    node:internal/modules/cjs/loader:1289:19
+  
+  - helpers:182 require
+    node:internal/modules/helpers:182:18
+  
+  - index.js:961 HtmlWebpackPlugin.postProcessHtml
+    [frontend]/[html-webpack-plugin]/index.js:961:14
+  
+  - index.js:1485 
+    [frontend]/[html-webpack-plugin]/index.js:1485:21
+  
+  - task_queues:95 process.processTicksAndRejections
+    node:internal/process/task_queues:95:5
+
+
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. to confirm the syntax error is resolved. Then use the screenshot tool to verify the UI.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0) General Application Stability and User Confirmation**
-  - **Description:** The user issued a broad complaint that nothing works. The agent found and fixed specific broken API endpoints. However, it's crucial to confirm with the user that these fixes have resolved all the problems they were experiencing.
-  - **Next debug checklist:**
-    1.  Present the completed work to the user (Denso v7 update, Gemini Bot, and endpoint fixes).
-    2.  Explicitly ask the user to test the application again, especially the pages they felt were broken.
-    3.  If issues persist, ask for specific examples or pages that are failing.
-  - **Why fix this issue and what will be achieved with the fix?** This is the highest priority. The application cannot be considered complete until the user confirms it is functional and meets their expectations.
-  - **Status**: USER VERIFICATION PENDING
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?**: Both (User manual testing is primary).
-  - **Blocked on other issue:** None.
+- **Issue 1: (P0) Frontend Build is Broken**
+- **Issue 2: (P1) General Application Instability & Multiple Broken Pages**
+- **Issue 3: (P2) Data Not Saving (e.g., Business Accounts)**
+- **Issue 4: (P3) Finalize Supabase Integration**
+- **Issue 5: (P4) Deployment Readiness Failure (.gitignore issue)**
+
+**Issues Detail:**
+- **Issue 1: Frontend Build is Broken**
+    - **Attempted fixes**: The agent fixed a previous  error but then introduced a new .
+    - **Next debug checklist**:
+        1.  View .
+        2.  Locate the  statement around line 386 which is outside the main component function's scope. This is likely due to a misplaced closing curly brace .
+        3.  Correct the code structure to ensure the  is properly nested within the  component function.
+        4.  Run yarn run v1.22.22
+$ craco build
+Creating an optimized production build...
+Compiled with warnings.
+
+Failed to parse source map from '/app/frontend/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js.map' file: Error: ENOENT: no such file or directory, open '/app/frontend/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js.map'
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  306.81 kB  build/static/js/main.6ad351b6.js
+  16.64 kB   build/static/css/main.1ad9810a.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  yarn global add serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+Done in 16.37s. to confirm the fix.
+    - **Why fix this issue and what will be achieved with the fix?** The entire frontend is unusable and development is blocked until this is fixed.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Frontend
+
+- **Issue 2: General Application Instability & Multiple Broken Pages**
+    - **Attempted fixes**: The agent fixed  and  (partially), but pages like , , and  are still broken.
+    - **Next debug checklist**:
+        1.  After fixing the build (Issue 1), tackle pages in the user's priority: , then .
+        2.  For each page, check the browser console for  errors to identify missing API endpoints (e.g., ).
+        3.  Search the backend code for the corresponding route. If it doesn't exist or isn't registered in , add it.
+    - **Why fix this issue and what will be achieved with the fix?** Core application functionality is broken and unusable by the user.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Both
+
+- **Issue 3: Data Not Saving (e.g., Business Accounts)**
+    - **Attempted fixes**: A temporary patch was implemented to write data to a JSON file for business accounts. This is not a real solution.
+    - **Next debug checklist**: This issue will be resolved by fixing Issue 4.
+    - **Why fix this issue and what will be achieved with the fix?** To make the application stateful and usable.
+    - **Status**: BLOCKED
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Both
+    - **Blocked on other issue**: Issue 4: Finalize Supabase Integration
+
+- **Issue 4: Finalize Supabase Integration**
+    - **Attempted fixes**: Agent has placed credentials in , but a test script showed they weren't being loaded, causing  to stay in .
+    - **Next debug checklist**:
+        1.  Ensure the main backend process loads  variables correctly at startup. Add print statements in  to confirm  is working.
+        2.  Once  is , change  in .
+        3.  Restart the backend and test pages that should use Supabase (, ) to verify data persistence.
+    - **Why fix this issue and what will be achieved with the fix?** This is a core user requirement and will solve all data persistence problems.
+    - **Status**: NOT STARTED
+    - **Should Test frontend/backend/both after fix?** Both
+
+- **Issue 5: Deployment Readiness Failure (.gitignore issue)**
+    - **Attempted fixes**: Agent has identified the problem but not yet executed the fix.
+    - **Next debug checklist**:
+        1.  Edit .
+        2.  Remove or comment out the lines  and .
+        3.  Run the  health check again.
+    - **Why fix this issue and what will be achieved with the fix?** The application cannot be deployed until this is resolved.
+    - **Status**: NOT STARTED
+    - **Should Test frontend/backend/both after fix?**: NA
 
 **In progress Task List**:
-None.
+- **Task 1: (P1) Implement Full-Site Language Toggle (Arabic/English)**
+    - **Description**: User wants a button to switch the entire application's language between Arabic and English, using their provided Python dictionary script.
+    - **Where to resume**:
+        1.  **Backend**: Create  to parse the user's script and expose translations via a  endpoint.
+        2.  **Frontend**: Create a  and  hook. Add a toggle button in . Replace hardcoded strings with the  function.
+    - **What will be achieved with this?** Full internationalization (i18n) of the application as requested by the user.
+    - **Status**: NOT STARTED
+    - **Should Test frontend/backend/both after fix?** Frontend
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-  - **(P1) Code Cleanup and Refactoring**:
-    - Delete obsolete Denso files: , , and .
-    - Refactor the monolith  into smaller, domain-specific router files.
-  - **(P2) Rebuild Parts Catalog Data:** The  file is nearly empty. The agent should prompt the user to test the Excel import functionality to populate the catalog.
-  - **(P3) Switch to Persistent Storage:** The app uses in-memory JSON files (), causing data loss on every restart. Propose migrating to the persistent MongoDB database.
-
-- **Future Tasks:**
-  - **(P1) Process User-Provided Offline Manual:** Blocked, awaiting a  archive from the user.
-  - **(P2) Implement Google Drive Integration:** Blocked, awaiting the Google Service Account JSON file from the user.
-  - **(P3) Implement  endpoint:** A pending task from a previous session.
+- **Upcoming Tasks**:
+  - **(P2) Code Cleanup**: Delete obsolete Denso files (, etc.).
+  - **(P2) Refactor **: Break the monolith into smaller, more manageable router files.
+  - **(P3) Test Parts Catalog**: The Excel import functionality is untested and the parts list is empty.
+- **Future Tasks**:
+  - **(P1)** Process User-Provided Offline Manual (Blocked)
+  - **(P2)** Implement Google Drive Integration (Blocked)
+  - **(P3)** Implement  endpoint.
 
 **Completed work in this session**
-- **Sidebar Menu Restored**: Fixed the sidebar to show all available pages, resolving the hidden menus issue.
-- **Denso System Upgraded to V7**: Replaced the old injector diagnostic system with the user's new, complete V7 data model.
-- **New Feature - Gemini AI Chat Bot**: Successfully integrated a new AI chatbot using Google Gemini, including backend API, frontend UI, and debugging API key/model issues.
-- **Critical Bug Fix - Broken Endpoints**: Repaired several key API endpoints that were returning 404 errors, making pages like Settings and Technicians functional again.
-- **Full System Test**: Verified login, sidebar navigation, Denso diagnostics, and Gemini Chat features are all working via the testing agent.
-- **Login Flow Verified**: The login process was successfully tested and confirmed to be working.
+- Merged Denso & Gemini features into a tabbed Catalog page and then removed Gemini from the UI.
+- Implemented a DataStream view in the Denso UI to compare measured vs. natural values.
+- Added a dashboard-like set of summary cards to the top of the Denso page.
+- Implemented drag-and-drop for the Denso summary cards using .
+- Added a  input to the Denso UI.
+- Fixed  errors for document, quotation, and profile generation APIs.
+- Fixed the  crash on the Analytics page.
+- Ran deployment health check and identified the  blocker.
 
 **Earlier issues found/mentioned but not fixed**
-- The handoff mentioned a Duplicate Sidebar issue. While the agent fixed the *content* of the sidebar, it did not explicitly verify if the visual duplication bug was resolved by the previous agent's script. However, extensive testing by the current agent showed no signs of a duplicate sidebar, so this issue is likely resolved.
+- **Broken Pages**: , , and  pages are still broken, causing the app to crash or show errors. The agent prioritized other fixes.
+- **Data Persistence**: The core issue of data not being saved across the app remains. The temporary patch for Business Accounts is a stopgap; the full Supabase migration is the real solution and is still pending.
 
 **Known issue recurrence from previous fork**
-- **Process User-Provided Offline Manual**: This issue persists and remains blocked on user action (providing a  file). **Status: BLOCKED**.
+- **General Application Instability**: The user frequently reports nothing works or that pages are broken. This is a recurring symptom of the fragile state of the app due to many un-implemented API endpoints and the lack of a proper database. **Status: IN PROGRESS**.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - **Backend:** FastAPI
-- **Frontend:** React, TailwindCSS
-- **Database:** **In-memory JSON files** ().
-- **AI Integration:** Google Gemini via  library.
-- **Core Logic:** Deterministic, rule-based diagnostic system (Denso injectors v7).
+- **Frontend:** React, TailwindCSS,  for drag-and-drop.
+- **Database:**
+  - **Intended:** Supabase (PostgreSQL)
+  - **Current:** In-memory JSON files ()
 
 **key DB schema**
-- : 
-- :  (currently almost empty)
+- **Supabase (Intended)**: , , . Other schemas need to be defined.
+- **In-Memory**: , , , .
 
 **changes in tech stack**
-- **Added:**  Python library for Gemini integration.
+- Added  and  to the frontend.
 
 **All files of reference**
-- **Created:**
-  - : New module for the user's updated Denso v7 logic.
-  - : New FastAPI router for the Gemini chatbot.
-  - : New React page for the updated Denso system.
-  - : New React page for the Gemini chatbot.
 - **Heavily Modified:**
-  - : Added new routers for Gemini and fixed registration for existing ones.
-  - : Added links for all missing application pages.
-  - : Added routes for the new Denso and Gemini pages.
-  - : Updated to use the new .
-  - : Updated with the new .
-
-**Areas that need refactoring**:
-- ****: This file is a growing monolith and urgently needs to be broken down.
-- **Obsolete Files**: , , and  are no longer used and should be deleted to avoid confusion.
-
-**key api endpoints**
-- **POST **: User login.
-- **POST **: Now uses the Denso v7 logic.
-- **POST **: (New) Sends a message to the Gemini chatbot.
-- **GET **: (New) Checks the health of the chat service.
-- **GET **: (Restored) Fetches system settings.
-- **GET **: (Restored) Fetches the list of technicians.
+  - : Multiple features added (dashboard, datastream, dnd). **Has a recurring build error.**
+  - : Added multiple routers.
+  - : Added the  implementation.
+- **Key Files for Next Steps:**
+  - : Needs to be fixed to allow deployment.
+  - : Needs to be debugged to connect to Supabase.
+  - User-provided script for the language dictionary.
 
 **Critical Info for New Agent**
-- **Top Priority: User Verification.** The user's last message was a broad complaint that nothing works. Your first action must be to confirm with the user if the recent fixes (restoring API endpoints) have resolved their issues. Do not start new work until this is confirmed.
-- **New Gemini Feature**: A Gemini chatbot has been added. It relies on the  in the  file. The backend logic for this is in . The agent had to switch the model to  due to quota issues with .
-- **Denso System is V7**: The injector diagnostics feature has been completely overhauled to use a new v7 data model. The old files are still in the codebase and should be cleaned up.
-- **Database is In-Memory**: The application continues to use temporary JSON files for storage. All data is lost on restart. Proposing a switch to MongoDB should be a priority after the user confirms the system is stable.
-- **Respond in Arabic**: The user's primary language is Arabic. All communication must be in Arabic.
-
-**documents created in this job**
-None.
+- **IMMEDIATE BLOCKER**: The frontend build is failing with a  in . You MUST fix this first. After fixing, run yarn run v1.22.22
+$ craco build
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. to confirm.
+- **USER'S TOP PRIORITIES**: After fixing the build, the user wants two major things: 1) Make **Supabase the primary database for everything**. 2) Implement a **full-site language toggle (Arabic/English)**.
+- **SYSTEM FRAGILITY**: The application is unstable. Many pages are broken. Fix issues one by one, and confirm with the user. Do not assume any page works unless you test it. The instability is largely due to the  database and missing API endpoints.
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:**  (What about the catalog, the previous commands?) - Asking about the Parts Catalog. **Status: ADDRESSED (Agent found the page and added it to the sidebar).**
-2.  **User:**  (Some menus are hidden) - Reporting that the sidebar is incomplete. **Status: COMPLETED (Agent added all missing pages to the sidebar).**
-3.  **User:** Provides a large JSON object for the Denso system update (v7). **Status: COMPLETED (Agent integrated this new system).**
-4.  **User:**  (Add this to the side menu... Gemini AI Chat Bot) - Requesting a new Gemini Chatbot feature. **Status: COMPLETED.**
-5.  **User:** Provides a new Google API key. **Status: COMPLETED (Agent updated the .env file).**
-6.  **User:**  (Nothing works, check all the buttons). **Status: IN PROGRESS (Agent found and fixed several broken endpoints, but user verification is pending).**
+1.   (Continue) - User wants agent to continue fixing the build error. **Status: IN PROGRESS.**
+2.  User sends console error: . **Status: COMPLETED (but led to another error).**
+3.  User sends console error: . **Status: COMPLETED (but led to another error).**
+4.   (Do it step-by-step and don't ask me, complete everything. Also, what about the language terms?) - **Status: ACKNOWLEDGED.**
+5.   (What about English language?) - **Status: ADDRESSED (Plan for toggle shared).**
+6.   (Complete the rest of the steps and also activate the script to convert between Arabic and English) - **Status: PLANNED (Major new task).**
+7.  User sends console error: . **Status: IN PROGRESS.**
+8.   (Continue) - User wants agent to fix the latest build error. **Status: IN PROGRESS.**
+9.  User sends console error: . **Status: PENDING FIX.**
+10.  (Okay, do it all. Also for the language, put a button on the top left of the page...) - **Status: ACKNOWLEDGED (Language toggle is a priority task).**
 
 **Project Health Check:**
--   **Broken**: User has reported general application failure. While specific fixes were made, the overall stability is unconfirmed by the user.
--   **Mocked**: The entire database is in-memory (), meaning no data is persistent.
--   **Blocked**:
-    -   Processing of offline manuals is blocked pending a  file from the user.
-    -   Google Drive integration is blocked pending a service account file from the user.
+- **Broken**: The frontend build is failing, making the entire UI inaccessible. Multiple pages and API endpoints are non-functional.
+- **Mocked**: Supabase integration is in mock mode. The entire database is running on in-memory JSON files.
+- **Blocked**: Any frontend work is blocked by the build failure. True data persistence is blocked by the incomplete Supabase integration.
 
 **3rd Party Integrations**
--   **Google Gemini**: Used for the new AI Chat Bot. Integrated via the  Python library. Requires a  in the  file.
+- **Google Gemini**: Integrated but UI features have been removed from the sidebar. Requires a .
+- **Supabase**: Intended as the primary database. Requires  and . Connection is not yet active.
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. The agent used the testing agent to verify the sidebar, the new Denso v7 page, the new Gemini chat page, and to diagnose the nothing works issue.
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None.
--   **Known regressions**: The user reported a major regression where nothing works. The agent identified and fixed broken API endpoints as a likely cause, but the full extent of the regression is unconfirmed.
+- **Testing agent used after significant changes**: NO
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: None.
+- **Known regressions**: The entire frontend is non-functional due to a build error introduced during feature development.
 
 **Credentials to test flow:**
--   **Username**: 
--   **Password**: 
--   (Found in )
+- **Username**:  or 
+- **Password**: 
+- (The login page may only require a username).
 
 **What agent forgot to execute**
-- The agent did not perform cleanup of old, obsolete files after upgrading the Denso system. The following files should be removed: , , and .
-- The task to refactor the  monolith has not been addressed and is becoming more critical as more features are added.</analysis>
+- The agent failed to produce a clean, working build for  after multiple attempts, leaving the frontend broken.
+- The agent did not systematically verify the Supabase connection after receiving credentials, leaving it in mock mode.
+- The cleanup of obsolete Denso files (, etc.) is still pending.</analysis>

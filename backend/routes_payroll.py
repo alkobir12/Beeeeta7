@@ -5,8 +5,12 @@ from datetime import datetime
 import uuid
 import os
 
+from supabase_service import SupabaseService
+
 router = APIRouter(prefix="/api")
 db = None
+supabase_service = SupabaseService()
+DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
 
 def set_db(database):
     global db

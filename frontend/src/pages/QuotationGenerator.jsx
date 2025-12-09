@@ -19,17 +19,19 @@ const QuotationGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [services, setServices] = useState([]);
+  const [showServiceModal, setShowServiceModal] = useState(false);
   
   const [formData, setFormData] = useState({
     // بيانات الشركة
     company: {
-      name: 'شركة الإبداع التقني',
-      name_en: 'Creative Tech Solutions',
+      name: 'ورشة السيارات',
+      name_en: 'Auto Workshop',
       address: 'الرياض - المملكة العربية السعودية',
-      phone: '+966 11 123 4567',
-      email: 'info@company.sa',
-      website: 'www.company.sa',
-      tax_number: '300012345600003'
+      phone: '',
+      email: '',
+      website: '',
+      tax_number: ''
     },
     // بيانات العميل
     client: {
@@ -42,7 +44,7 @@ const QuotationGenerator = () => {
     // وصف المشروع
     project_description: '',
     // البنود
-    items: [{ description: '', quantity: 1, unit_price: 0, discount: 0 }],
+    items: [],
     // الشروط
     terms: [
       'هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار',
@@ -54,6 +56,38 @@ const QuotationGenerator = () => {
     style: 'حديث',
     tax_rate: 15
   });
+
+  // Load settings and services on mount
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load workshop settings
+        const settingsRes = await axios.get(`${API_URL}/settings`);
+        if (settingsRes.data) {
+          setFormData(prev => ({
+            ...prev,
+            company: {
+              name: settingsRes.data.workshopName || 'ورشة السيارات',
+              name_en: settingsRes.data.workshopNameEn || 'Auto Workshop',
+              address: settingsRes.data.workshopAddress || 'الرياض - المملكة العربية السعودية',
+              phone: settingsRes.data.workshopPhone || '',
+              email: settingsRes.data.workshopEmail || '',
+              website: settingsRes.data.workshopWebsite || '',
+              tax_number: settingsRes.data.workshopTaxNumber || ''
+            },
+            tax_rate: settingsRes.data.taxRate || 15
+          }));
+        }
+        
+        // Load services
+        const servicesRes = await axios.get(`${API_URL}/services`);
+        setServices(servicesRes.data || []);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    loadData();
+  }, []);
 
   const themes = ['أزرق', 'أخضر', 'بنفسجي', 'برتقالي', 'أحمر', 'تركوازي', 'ذهبي', 'رمادي'];
   const styles = ['حديث', 'كلاسيكي', 'فاخر'];

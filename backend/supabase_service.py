@@ -24,6 +24,10 @@ except ImportError:
 # -------- Mapping helpers --------
 
 def to_snake_vehicle(api: Dict[str, Any]) -> Dict[str, Any]:
+    # Helper to convert empty strings to None for UUID fields
+    def clean_uuid(value):
+        return value if value and value.strip() else None
+    
     return {
         'id': api.get('id'),
         'plate_number': api.get('plateNumber'),
@@ -31,9 +35,9 @@ def to_snake_vehicle(api: Dict[str, Any]) -> Dict[str, Any]:
         'model': api.get('model'),
         'year': api.get('year'),
         'color': api.get('color'),
-        'vin': api.get('vin'),
+        'vin': clean_uuid(api.get('vin')),
         'file_number': api.get('fileNumber'),
-        'customer_id': api.get('customerId'),
+        'customer_id': clean_uuid(api.get('customerId')),
         'customer_name': api.get('customerName'),
         'customer_phone': api.get('customerPhone'),
         'customer_email': api.get('customerEmail'),
@@ -45,7 +49,7 @@ def to_snake_vehicle(api: Dict[str, Any]) -> Dict[str, Any]:
         'images': api.get('images') or [],
         'services': api.get('services') or [],
         'parts': api.get('parts') or [],
-        'technician_id': api.get('technicianId'),
+        'technician_id': clean_uuid(api.get('technicianId')),
         'technician_name': api.get('technicianName'),
         'notes': api.get('notes')
     }

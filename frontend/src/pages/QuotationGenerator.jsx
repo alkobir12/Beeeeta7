@@ -587,6 +587,57 @@ const QuotationGenerator = () => {
             </div>
           </div>
         )}
+        
+        {/* Services Modal */}
+        {showServiceModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold">{isArabic ? 'اختر الخدمات' : 'Select Services'}</h2>
+                <button 
+                  onClick={() => setShowServiceModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-auto p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {services.map(service => (
+                    <div 
+                      key={service.id}
+                      onClick={() => addServiceAsItem(service)}
+                      className="p-4 border rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
+                    >
+                      <h3 className="font-bold text-lg mb-2">{service.name}</h3>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">{service.category}</span>
+                        <span className="font-bold text-blue-600">{service.price} ر.س</span>
+                      </div>
+                      {service.duration && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {service.duration} دقيقة
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {services.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <p>{isArabic ? 'لا توجد خدمات متاحة' : 'No services available'}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 border-t bg-gray-50">
+                <p className="text-sm text-gray-600">
+                  {isArabic ? `عدد الخدمات المتاحة: ${services.length}` : `Available services: ${services.length}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

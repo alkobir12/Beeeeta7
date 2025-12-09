@@ -133,11 +133,33 @@ async def get_settings():
 @router.post('/settings')
 async def save_settings(payload: Dict[str, Any] = Body(...)):
     try:
-        # In memory mode, don't touch MongoDB (avoids SSL / connection errors in preview)
-        if os.environ.get('DB_PROVIDER', 'mongo').lower() == 'memory':
+        DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        # Supabase provider
+        if DB_PROVIDER == 'supabase':
+            from supabase_service import SupabaseService
+            from datetime import datetime as _dt
+            supabase = SupabaseService()
+            payload['id'] = 'app_settings'
+            payload['updatedAt'] = _dt.utcnow().isoformat()
+            try:
+                # Try update first
+                res = supabase.client.table('workshop_settings').update(payload).eq('id', 'app_settings').execute()
+                if res.data:
+                    return res.data[0]
+                else:
+                    # Insert if doesn't exist
+                    res = supabase.client.table('workshop_settings').insert(payload).execute()
+                    return res.data[0]
+            except:
+                return payload
+        
+        # In memory mode, don't touch MongoDB
+        if DB_PROVIDER == 'memory':
             from datetime import datetime as _dt
             return {**payload, "id": "app_settings", "updatedAt": _dt.utcnow().isoformat()}
 
+        # MongoDB
         payload = {**payload, "id": "app_settings", "updatedAt": datetime.utcnow()}
         await db.settings.update_one({"id": "app_settings"}, {"$set": payload}, upsert=True)
         doc = await db.settings.find_one({"id": "app_settings"})

@@ -228,12 +228,33 @@ const NewVehicle = () => {
                 />
                 <button 
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (!manualServiceName.trim()) return;
+                    
+                    // Add to current vehicle
                     setFormData(prev => ({ ...prev, services: [...prev.services, manualServiceName] }));
                     if (manualServicePrice) {
                       setFormData(prev => ({ ...prev, servicePrices: {...prev.servicePrices, [manualServiceName]: manualServicePrice} }));
                     }
+                    
+                    // Save to services database for future use
+                    try {
+                      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name: manualServiceName.trim(),
+                          category: 'يدوي',
+                          price: parseFloat(manualServicePrice) || 0,
+                          duration: 30,
+                          active: true
+                        })
+                      });
+                      console.log('✅ Service saved for future use');
+                    } catch (err) {
+                      console.log('⚠️ Could not save service to database:', err);
+                    }
+                    
                     setManualServiceName('');
                     setManualServicePrice('');
                   }}

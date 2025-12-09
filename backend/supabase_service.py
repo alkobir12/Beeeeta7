@@ -64,7 +64,7 @@ def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
         'customerName': dbrow.get('customer_name') or '',
         'customerPhone': dbrow.get('customer_phone') or '',
         'customerEmail': dbrow.get('customer_email') or '',
-        'status': dbrow.get('status', 'diagnosis'),
+        'status': dbrow.get('status') or 'diagnosis',
         'entryDate': dbrow.get('entry_date'),
         'estimatedCompletion': dbrow.get('estimated_completion'),
         'completionDate': dbrow.get('completion_date'),

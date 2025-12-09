@@ -260,14 +260,26 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == 'supabase':
         rows = supabase_service.vehicles_list()
+        # Ensure status has a default value if None
+        for r in rows:
+            if r.get('status') is None:
+                r['status'] = 'diagnosis'
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == 'memory':
         rows = _mem_read('vehicles')
+        # Ensure status has a default value if None
+        for r in rows:
+            if r.get('status') is None:
+                r['status'] = 'diagnosis'
         return [Vehicle(**r) for r in rows]
     
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
     vehicles = await db.vehicles.find({}, {"_id": 0}).sort("entryDate", -1).limit(200).to_list(200)
+    # Ensure status has a default value if None
+    for v in vehicles:
+        if v.get('status') is None:
+            v['status'] = 'diagnosis'
     return [Vehicle(**v) for v in vehicles]
 
 @api_router.get("/vehicles/{vehicle_id}", response_model=Vehicle)

@@ -119,6 +119,19 @@ const QuotationGenerator = () => {
     }));
   };
 
+  const addServiceAsItem = (service) => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { 
+        description: service.name, 
+        quantity: 1, 
+        unit_price: service.price || 0, 
+        discount: 0 
+      }]
+    }));
+    setShowServiceModal(false);
+  };
+
   const removeItem = (index) => {
     if (formData.items.length > 1) {
       setFormData(prev => ({

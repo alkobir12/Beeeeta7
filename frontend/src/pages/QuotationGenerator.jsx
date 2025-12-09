@@ -384,13 +384,24 @@ const QuotationGenerator = () => {
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{isArabic ? 'البنود' : 'Items'}</CardTitle>
-              <Button variant="outline" size="sm" onClick={addItem}>
-                <Plus size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
-                {isArabic ? 'إضافة بند' : 'Add Item'}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowServiceModal(true)}>
+                  <Plus size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
+                  {isArabic ? 'إضافة من الخدمات' : 'Add from Services'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={addItem}>
+                  <Plus size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
+                  {isArabic ? 'إضافة بند يدوي' : 'Add Manual Item'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {formData.items.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>{isArabic ? 'لا توجد بنود. اضغط "إضافة من الخدمات" لإضافة خدمات من القائمة' : 'No items. Click "Add from Services" to add services from list'}</p>
+                  </div>
+                )}
                 {formData.items.map((item, index) => (
                   <div key={index} className="flex flex-wrap gap-2 items-end p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex-1 min-w-[200px]">

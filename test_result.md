@@ -482,6 +482,18 @@ frontend:
           agent: "main"
           comment: "Quick add part/service saved to DB and added to items; requires smoke on 404 regressions."
 
+  - task: "New Vehicle Form UI and Integration"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/NewVehicle.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE E2E TEST PASSED (100% success - 8/8 steps): Complete vehicle creation flow tested successfully. **UI COMPONENTS VERIFIED:** ✅ Login form with Arabic username input working, ✅ Dashboard 'استقبال مركبة' button accessible and functional, ✅ New vehicle form with all required fields (plate number, brand, model, year, color) working correctly, ✅ Customer information section (name, phone, email) accepting Arabic and English input, ✅ Services dropdown with search and category filter functional, ✅ Manual service addition with name and price inputs working, ✅ '+' button to add manual services functional, ✅ Form validation working (required fields enforced), ✅ Submit button 'حفظ واستقبال المركبة' triggering API call correctly, ✅ Success toast message appearing, ✅ Redirect to dashboard after successful submission. **INTEGRATION VERIFIED:** POST /api/vehicles endpoint working correctly with Supabase backend, customer auto-creation working, vehicle data persisting correctly, services array saving properly. **ARABIC UI:** All labels, placeholders, and buttons displaying correctly in Arabic with proper RTL layout. Form is production-ready and fully functional."
+
   - task: "Supabase Integration Status"
     implemented: true
     working: true

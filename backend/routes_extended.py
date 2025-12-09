@@ -71,62 +71,60 @@ def set_db(database):
 @router.get('/settings')
 async def get_settings():
     try:
+        DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        # Default settings
+        default_settings = {
+            "id": "app_settings",
+            "currency": "SAR",
+            "taxRate": 0.0,
+            "language": "ar",
+            "timezone": "Asia/Riyadh",
+            "invoicePrefix": "INV",
+            "workshopName": "ورشة السيارات",
+            "workshopPhone": "",
+            "workshopAddress": "",
+            "workshopEmail": "",
+            "menuConfig": {"simple": False, "items": [
+                {"path": "/", "label": "الرئيسية", "enabled": True},
+                {"path": "/operations", "label": "العمليات", "enabled": True},
+                {"path": "/services", "label": "الخدمات", "enabled": True},
+                {"path": "/parts", "label": "قطع الغيار", "enabled": True},
+                {"path": "/catalog", "label": "كتالوج القطع", "enabled": True},
+                {"path": "/customers", "label": "العملاء", "enabled": True},
+                {"path": "/technicians", "label": "الفنيون", "enabled": True},
+                {"path": "/business-accounts", "label": "الفروع", "enabled": True},
+                {"path": "/invoice-templates", "label": "مصمم الفواتير", "enabled": True},
+                {"path": "/analytics", "label": "التحليلات", "enabled": True},
+                {"path": "/settings", "label": "الإعدادات", "enabled": True}
+            ]}
+        }
+        
+        # Supabase provider
+        if DB_PROVIDER == 'supabase':
+            from supabase_service import SupabaseService
+            supabase = SupabaseService()
+            try:
+                res = supabase.client.table('workshop_settings').select('*').eq('id', 'app_settings').maybe_single().execute()
+                if res.data:
+                    return res.data
+                else:
+                    # Create default settings
+                    supabase.client.table('workshop_settings').insert(default_settings).execute()
+                    return default_settings
+            except:
+                return default_settings
+        
         # Memory provider fallback
-        if os.environ.get('DB_PROVIDER', 'mongo').lower() == 'memory':
-            return {
-                "id": "app_settings",
-                "currency": "SAR",
-                "taxRate": 0.0,
-                "language": "ar",
-                "timezone": "Asia/Riyadh",
-                "invoicePrefix": "INV",
-                "menuConfig": {"simple": False, "items": [
-                    {"path": "/", "label": "الرئيسية", "enabled": True},
-                    {"path": "/operations", "label": "العمليات", "enabled": True},
-                    {"path": "/services", "label": "الخدمات", "enabled": True},
-                    {"path": "/parts", "label": "قطع الغيار", "enabled": True},
-                    {"path": "/catalog", "label": "كتالوج القطع", "enabled": True},
-                    {"path": "/customers", "label": "العملاء", "enabled": True},
-                    {"path": "/technicians", "label": "الفنيون", "enabled": True},
-                    {"path": "/business-accounts", "label": "الفروع", "enabled": True},
-                    {"path": "/invoice-templates", "label": "مصمم الفواتير", "enabled": True},
-                    {"path": "/analytics", "label": "التحليلات", "enabled": True},
-                    {"path": "/settings", "label": "الإعدادات", "enabled": True}
-                ]}
-            }
+        if DB_PROVIDER == 'memory':
+            return default_settings
+            
+        # MongoDB
         doc = await db.settings.find_one({"id": "app_settings"})
         if not doc:
-            doc = {
-                "id": "app_settings",
-                "currency": "SAR",
-                "taxRate": 0.0,
-                "language": "ar",
-                "timezone": "Asia/Riyadh",
-                "invoicePrefix": "INV",
-                "menuConfig": {"simple": False, "items": [
-                    {"path": "/", "label": "الرئيسية", "enabled": True},
-                    {"path": "/operations", "label": "العمليات", "enabled": True},
-                    {"path": "/invoice-templates", "label": "استوديو قوالب الفواتير", "enabled": True},
-                    {"path": "/settings", "label": "الإعدادات", "enabled": True}
-                ]}
-            }
+            doc = default_settings
             await db.settings.insert_one(doc)
-        # Ensure needed menu entries present
-        items = doc.get('menuConfig', {}).get('items', [])
-        def ensure(path, label, group=False, children=None):
-            for it in items:
-                if it.get('path') == path:
-                    return
-            entry = {"path": path, "label": label, "enabled": True}
-            if group:
-                entry['group'] = True
-                entry['children'] = children or []
-            items.append(entry)
-        ensure('/invoice-templates', 'استوديو قوالب الفواتير')
-        ensure('/operations', 'العمليات')
-        ensure('/services', 'إدارة الخدمات')
-        doc['menuConfig']['items'] = items
-        await db.settings.update_one({"id": "app_settings"}, {"$set": {"menuConfig": doc['menuConfig']}}, upsert=True)
+        
         doc.pop('_id', None)
         return doc
     except Exception as e:

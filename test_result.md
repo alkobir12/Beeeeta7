@@ -572,6 +572,18 @@ frontend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE TEST PASSED (8/8 steps - 100% success rate): Successfully tested complete vehicle creation flow as requested. **FIXES APPLIED:** (1) Fixed GET /api/vehicles by adding default status='diagnosis' for NULL values in server.py lines 260-283, (2) Fixed POST /api/vehicles by adding clean_uuid() helper in supabase_service.py to convert empty strings to None for UUID fields (technician_id, customer_id, vin). **TEST RESULTS:** ✅ Login with 'مدير' successful, ✅ Navigation to new vehicle page via 'استقبال مركبة' button working, ✅ Vehicle information filled correctly (Plate='د هـ و 5678', Brand='نيسان', Model='التيما', Year=2023, Color='أسود'), ✅ Customer information filled correctly (Name='خالد أحمد', Phone='0567891234', Email='khaled@test.com'), ✅ Service selection from dropdown working, ✅ Manual service addition working (Name='تنظيف فلتر الهواء', Price=100), ✅ Form submission successful with 'حفظ واستقبال المركبة' button, ✅ Success redirect to dashboard confirmed, ✅ Vehicle visible in dashboard with correct data. **VALIDATION:** Dashboard shows 4 total vehicles, new vehicle with plate 'د هـ و 5678' and customer 'خالد أحمد' visible in vehicle list. All requested features from review request working correctly. System is production-ready for vehicle creation workflow."
 
+  - task: "Auto-Save Manual Service Feature in Vehicle Creation"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/NewVehicle.jsx, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE AUTO-SAVE MANUAL SERVICE TEST PASSED (100% SUCCESS - 9/9 TESTS): Successfully executed comprehensive testing of auto-save manual service feature as requested in review. **TEST SCENARIO COMPLETED:** (1) ✅ Login with 'مدير' successful, (2) ✅ Clicked 'استقبال مركبة' button, (3) ✅ Filled vehicle info (Plate='ي ي ي 9999', Brand='فورد', Model='اكسبلورر', Color='رمادي'), (4) ✅ Filled customer info (Name='سعود محمد', Phone='0551112233'), (5) ✅ Scrolled to services section, (6) ✅ Added manual service (Name='خدمة تجريبية اختبار حفظ', Price=777) and clicked '+' button, (7) ✅ Console log verification PASSED - '✅ Service saved for future use' message found in browser console, (8) ✅ Network request verification PASSED - POST /api/services request detected with 200 response, (9) ✅ Database verification PASSED - Manual service found in database with correct details (Name='خدمة تجريبية اختبار حفظ', Category='يدوي', Price=777, Duration=30). **FUTURE FORM VERIFICATION:** ✅ Manual service appears in services list in future vehicle creation forms, ✅ Service is searchable and selectable, ✅ Category 'يدوي' displayed correctly. **IMPLEMENTATION DETAILS:** Frontend (NewVehicle.jsx lines 231-264) makes POST request to /api/services when '+' button clicked, Backend (server.py line 370) POST /api/services endpoint working correctly, Service saved with category='يدوي' as expected. **CONCLUSION:** Auto-save manual service feature is fully functional and production-ready. All requested features from review request working correctly."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"

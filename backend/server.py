@@ -381,6 +381,52 @@ async def create_service(service: Service):
     await db.services.insert_one(service.dict())
     return service
 
+@api_router.put("/services/{service_id}", response_model=Service)
+async def update_service(service_id: str, service: Service):
+    if DB_PROVIDER == 'supabase':
+        s = supabase_service.services_update(service_id, service.dict())
+        if not s:
+            raise HTTPException(status_code=404, detail="Service not found")
+        return Service(**s)
+    
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        for i, s in enumerate(rows):
+            if s.get('id') == service_id:
+                rows[i] = {**service.dict(), 'id': service_id}
+                _mem_write('services', rows)
+                return Service(**rows[i])
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    result = await db.services.update_one(
+        {"id": service_id},
+        {"$set": service.dict()}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return service
+
+@api_router.delete("/services/{service_id}")
+async def delete_service(service_id: str):
+    if DB_PROVIDER == 'supabase':
+        success = supabase_service.services_delete(service_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Service not found")
+        return {"status": "success", "message": "Service deleted"}
+    
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('services')
+        filtered = [s for s in rows if s.get('id') != service_id]
+        if len(filtered) == len(rows):
+            raise HTTPException(status_code=404, detail="Service not found")
+        _mem_write('services', filtered)
+        return {"status": "success", "message": "Service deleted"}
+    
+    result = await db.services.delete_one({"id": service_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {"status": "success", "message": "Service deleted"}
+
 @api_router.get("/technicians", response_model=List[Technician])
 async def get_technicians():
     if DB_PROVIDER == 'supabase':

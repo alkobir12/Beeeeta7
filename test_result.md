@@ -691,6 +691,18 @@ frontend:
           agent: "testing"
           comment: "✅ FULL FUNCTIONALITY TEST PASSED (100% SUCCESS - 9/9 tests): Successfully executed comprehensive end-to-end testing of Gemini Chat Bot as requested in Arabic review. **CRITICAL FIX:** Backend model updated from deprecated 'gemini-1.5-flash' to 'gemini-2.5-flash'. **ALL REQUIREMENTS MET:** (1) ✅ Login with 'مدير' successful, (2) ✅ Navigation to '🤖 مساعد ذكي AI' in sidebar successful, (3) ✅ Welcome message from bot appeared: 'مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟ 🤖', (4) ✅ First message 'مرحبا، ما اسمك؟' sent successfully, (5) ✅ Bot responded within 3-5 seconds with proper Arabic response about being an AI assistant in workshop management system, (6) ✅ User message and bot response both visible in chat (3 total messages: welcome + user1 + bot1), (7) ✅ Second message 'ما هي خدماتك؟' sent successfully, (8) ✅ Bot responded with detailed services description (5 total messages: welcome + user1 + bot1 + user2 + bot2), (9) ✅ 'مسح المحادثة' button working correctly - conversation cleared and new conversation started with only welcome message visible. **VALIDATION:** All UI elements working (header, input field, send button, clear button, info cards), no network errors for gemini-chat endpoints, proper Arabic RTL layout, conversation flow working correctly. **CONCLUSION:** Gemini Chat Bot is fully functional and production-ready. All requested features from Arabic review working correctly. Bot responds normally, conversations work correctly, clear button works as expected."
 
+  - task: "Toyota Manual Integration in Catalog Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/PartsCatalog.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE TEST PASSED (100% SUCCESS - 10/10 tests): Successfully executed comprehensive testing of Toyota Manual integration in Catalog page. All 4 tabs present and functional (كتالوج القطع, دليل تويوتا, فحص Denso, مساعد Gemini). Toyota tab displays correctly with title '📚 دليل إصلاح تويوتا الرسمي', description about 15,000+ pages for LC200, two buttons (blue 'فتح دليل الإصلاح الكامل' and green 'فتح المخططات الكهربائية'), and grid showing all 9 main sections (المحرك والهايبرد, نظام الدفع, التعليق, الفرامل, التوجيه, الكهرباء, الداخلية, الخارجية, الصوتيات). Both manuals open correctly in new windows: Full repair manual opens at /api/manuals/lc200/index2.html with 6 frames and title 'LC200 Manual', Electrical manual opens at /api/manuals/toyota-ewd/ewd/index.html with 3 frames and title 'GSIC - Global Service Information Center'. All Arabic UI elements properly displayed with modern design. System is production-ready."
+
   - task: "Arabic Login & Sidebar Verification"
     implemented: true
     working: true

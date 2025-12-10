@@ -72,83 +72,59 @@ const PartsCatalog = () => {
         {/* Toyota Manual Tab */}
         <TabsContent value="toyota">
           <div className="space-y-4">
-            <div className="apple-card p-6">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">📚 دليل إصلاح تويوتا الرسمي</h2>
-              <p className="text-gray-600 mb-6">
-                دليل شامل لإصلاح وصيانة تويوتا لاندكروزر 200 (LC200) - أكثر من 15,000 صفحة تقنية
+            {/* Manual Type Selector */}
+            <div className="apple-card p-4">
+              <div className="flex gap-4 items-center">
+                <h2 className="text-lg font-bold text-gray-900">📚 دليل تويوتا الرسمي</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setManualType('repair')}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      manualType === 'repair' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    🔧 دليل الإصلاح
+                  </button>
+                  <button
+                    onClick={() => setManualType('electrical')}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      manualType === 'electrical' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ⚡ المخططات الكهربائية
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                {manualType === 'repair' 
+                  ? 'دليل شامل لإصلاح وصيانة لاندكروزر 200 - 15,644 صفحة تقنية + 11,278 صورة'
+                  : 'مخططات كهربائية كاملة للنظام الكهربائي والشبكات'
+                }
               </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h3 className="font-bold text-blue-900 mb-2">🔧 دليل الإصلاح الشامل</h3>
-                  <p className="text-sm text-blue-700 mb-3">15,644 صفحة HTML + 11,278 صورة توضيحية</p>
-                  <button
-                    onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`, '_blank')}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    فتح دليل الإصلاح الكامل
-                  </button>
-                </div>
-                
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h3 className="font-bold text-green-900 mb-2">⚡ المخططات الكهربائية</h3>
-                  <p className="text-sm text-green-700 mb-3">مخططات توصيل كاملة للنظام الكهربائي</p>
-                  <button
-                    onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/toyota-ewd/ewd/index.html`, '_blank')}
-                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    فتح المخططات الكهربائية
-                  </button>
-                </div>
-              </div>
+            </div>
 
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-xl">
-                <h3 className="text-xl font-bold mb-3">📖 الأقسام الرئيسية:</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🔩 المحرك والهايبرد</div>
-                    <div className="text-sm opacity-90">Engine / Hybrid System</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🚗 نظام الدفع</div>
-                    <div className="text-sm opacity-90">Drivetrain</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🏗️ التعليق</div>
-                    <div className="text-sm opacity-90">Suspension</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🛑 الفرامل</div>
-                    <div className="text-sm opacity-90">Brake System</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🎛️ التوجيه</div>
-                    <div className="text-sm opacity-90">Steering</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🔌 الكهرباء</div>
-                    <div className="text-sm opacity-90">Power Source / Network</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🪟 الداخلية</div>
-                    <div className="text-sm opacity-90">Vehicle Interior</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🚘 الخارجية</div>
-                    <div className="text-sm opacity-90">Vehicle Exterior</div>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <div className="font-bold">🎵 الصوتيات</div>
-                    <div className="text-sm opacity-90">Audio/Visual</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  💡 <strong>ملاحظة:</strong> هذا دليل تويوتا الرسمي الكامل. يحتوي على تعليمات مفصلة خطوة بخطوة مع صور توضيحية لجميع عمليات الإصلاح والصيانة.
-                </p>
-              </div>
+            {/* Manual Viewer */}
+            <div className="apple-card p-0 overflow-hidden" style={{ height: '800px' }}>
+              <iframe
+                src={manualType === 'repair' 
+                  ? `${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`
+                  : `${process.env.REACT_APP_BACKEND_URL}/api/manuals/toyota-ewd/ewd/index.html`
+                }
+                className="w-full h-full border-0"
+                title={manualType === 'repair' ? 'دليل الإصلاح' : 'المخططات الكهربائية'}
+                allow="fullscreen"
+              />
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                💡 <strong>تلميح:</strong> استخدم القائمة الجانبية في الدليل للتنقل بين الأقسام المختلفة. يمكنك البحث عن أي جزء أو نظام في السيارة.
+              </p>
             </div>
           </div>
         </TabsContent>

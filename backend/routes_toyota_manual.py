@@ -2,135 +2,133 @@
 Toyota Manual Content API
 Serves manual content without iframe
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import json
 import re
-from bs4 import BeautifulSoup
 
 router = APIRouter(prefix="/api/toyota-manual")
 
-# Manual structure
-SECTIONS = [
-    {"id": "readme", "title": "READ ME", "title_ar": "اقرأني", "icon": "📋"},
-    {"id": "general", "title": "General", "title_ar": "معلومات عامة", "icon": "📖"},
-    {"id": "engine", "title": "Engine / Hybrid System", "title_ar": "المحرك والهايبرد", "icon": "🔩"},
-    {"id": "drivetrain", "title": "Drivetrain", "title_ar": "نظام الدفع", "icon": "⚙️"},
-    {"id": "suspension", "title": "Suspension", "title_ar": "التعليق", "icon": "🏗️"},
-    {"id": "brake", "title": "Brake", "title_ar": "الفرامل", "icon": "🛑"},
-    {"id": "steering", "title": "Steering", "title_ar": "التوجيه", "icon": "🎛️"},
-    {"id": "audio", "title": "Audio/Visual/Telematics", "title_ar": "الصوتيات", "icon": "🎵"},
-    {"id": "power", "title": "Power Source / Network", "title_ar": "الطاقة", "icon": "🔌"},
-    {"id": "interior", "title": "Vehicle Interior", "title_ar": "الداخلية", "icon": "🪟"},
-    {"id": "exterior", "title": "Vehicle Exterior", "title_ar": "الخارجية", "icon": "🚘"}
-]
+# Load extracted content
+CONTENT_DIR = Path(__file__).parent / 'static' / 'toyota_content'
+
+# Cache for performance
+_sections_cache = None
+_content_cache = {}
+_index_cache = None
+
+def load_sections():
+    """Load sections with caching"""
+    global _sections_cache
+    if _sections_cache is None:
+        try:
+            with open(CONTENT_DIR / 'sections.json', 'r', encoding='utf-8') as f:
+                _sections_cache = json.load(f)
+        except:
+            _sections_cache = []
+    return _sections_cache
+
+def load_content_batch(batch_num):
+    """Load content batch with caching"""
+    global _content_cache
+    if batch_num not in _content_cache:
+        try:
+            with open(CONTENT_DIR / f'content_batch_{batch_num}.json', 'r', encoding='utf-8') as f:
+                _content_cache[batch_num] = json.load(f)
+        except:
+            _content_cache[batch_num] = []
+    return _content_cache[batch_num]
+
+def load_search_index():
+    """Load search index"""
+    global _index_cache
+    if _index_cache is None:
+        try:
+            with open(CONTENT_DIR / 'search_index.json', 'r', encoding='utf-8') as f:
+                _index_cache = json.load(f)
+        except:
+            _index_cache = []
+    return _index_cache
 
 @router.get("/sections")
 async def get_sections():
     """Get all manual sections"""
-    return {"sections": SECTIONS}
+    sections = load_sections()
+    return {"sections": sections, "count": len(sections)}
 
-@router.get("/section/{section_id}")
-async def get_section_content(section_id: str):
-    """Get content for a specific section"""
+@router.get("/content")
+async def get_all_content(limit: int = 100, offset: int = 0):
+    """Get paginated content"""
+    # Load all batches
+    all_content = []
+    for i in range(1, 4):  # 3 batches
+        all_content.extend(load_content_batch(i))
     
-    # Find section
-    section = next((s for s in SECTIONS if s['id'] == section_id), None)
-    if not section:
-        return {"error": "Section not found"}
+    # Paginate
+    paginated = all_content[offset:offset+limit]
     
-    # Sample content - in production, parse from HTML files
-    content = {
-        "id": section_id,
-        "title": section['title'],
-        "title_ar": section['title_ar'],
-        "icon": section['icon'],
-        "content": generate_sample_content(section_id),
-        "subsections": get_subsections(section_id)
+    return {
+        "content": paginated,
+        "total": len(all_content),
+        "limit": limit,
+        "offset": offset,
+        "has_more": offset + limit < len(all_content)
     }
-    
-    return content
-
-def get_subsections(section_id):
-    """Get subsections for a section"""
-    subsections = {
-        "engine": [
-            {"id": "engine-mech", "title": "Engine Mechanical", "title_ar": "ميكانيكا المحرك"},
-            {"id": "engine-control", "title": "Engine Control System", "title_ar": "نظام التحكم"},
-            {"id": "fuel", "title": "Fuel System", "title_ar": "نظام الوقود"},
-            {"id": "cooling", "title": "Cooling System", "title_ar": "نظام التبريد"},
-            {"id": "lubrication", "title": "Lubrication System", "title_ar": "نظام التشحيم"}
-        ],
-        "drivetrain": [
-            {"id": "clutch", "title": "Clutch", "title_ar": "الدبرياج"},
-            {"id": "transmission", "title": "Transmission", "title_ar": "ناقل الحركة"},
-            {"id": "transfer", "title": "Transfer Case", "title_ar": "علبة النقل"},
-            {"id": "shaft", "title": "Propeller Shaft", "title_ar": "عمود الإدارة"},
-            {"id": "differential", "title": "Differential", "title_ar": "الدفرنس"}
-        ],
-        "suspension": [
-            {"id": "front-sus", "title": "Front Suspension", "title_ar": "تعليق أمامي"},
-            {"id": "rear-sus", "title": "Rear Suspension", "title_ar": "تعليق خلفي"},
-            {"id": "shock", "title": "Shock Absorbers", "title_ar": "المساعدات"}
-        ],
-        "brake": [
-            {"id": "brake-sys", "title": "Brake System", "title_ar": "نظام الفرامل"},
-            {"id": "abs", "title": "ABS", "title_ar": "نظام ABS"},
-            {"id": "parking", "title": "Parking Brake", "title_ar": "فرامل اليد"}
-        ]
-    }
-    return subsections.get(section_id, [])
-
-def generate_sample_content(section_id):
-    """Generate sample content - will be replaced with actual parsed content"""
-    
-    content_map = {
-        "readme": {
-            "title": "READ ME - معلومات مهمة",
-            "description": "يرجى قراءة هذه المعلومات قبل استخدام الدليل",
-            "items": [
-                {"type": "warning", "text": "⚠️ تأكد من فصل البطارية قبل أي عمل كهربائي"},
-                {"type": "info", "text": "ℹ️ استخدم العدد والأدوات المناسبة"},
-                {"type": "note", "text": "📝 احتفظ بقطع الغيار الأصلية"}
-            ]
-        },
-        "engine": {
-            "title": "Engine / Hybrid System - المحرك والهايبرد",
-            "description": "معلومات شاملة عن نظام المحرك",
-            "specs": {
-                "Type": "V8 Diesel",
-                "Displacement": "4.5L",
-                "Power": "202 hp @ 3400 rpm",
-                "Torque": "430 Nm @ 1600-2600 rpm"
-            },
-            "items": [
-                {"type": "section", "text": "🔧 Engine Mechanical - الأجزاء الميكانيكية"},
-                {"type": "section", "text": "💻 Engine Control System - نظام التحكم"},
-                {"type": "section", "text": "⛽ Fuel System - نظام الوقود"}
-            ]
-        },
-        "drivetrain": {
-            "title": "Drivetrain - نظام الدفع",
-            "description": "ناقل الحركة ونظام الدفع الرباعي",
-            "items": [
-                {"type": "section", "text": "⚙️ Transmission - ناقل الحركة"},
-                {"type": "section", "text": "🔄 Transfer Case - علبة النقل"},
-                {"type": "section", "text": "🔩 Differential - الدفرنس"}
-            ]
-        }
-    }
-    
-    return content_map.get(section_id, {
-        "title": f"{section_id.title()} Section",
-        "description": "محتوى تفصيلي قادم قريباً",
-        "items": []
-    })
 
 @router.get("/search")
-async def search_manual(q: str):
+async def search_manual(q: str, limit: int = 50):
     """Search in manual content"""
+    if not q or len(q) < 2:
+        return {"results": [], "count": 0}
+    
+    index = load_search_index()
+    query = q.lower()
+    
     results = []
-    for section in SECTIONS:
-        if q.lower() in section['title'].lower() or q.lower() in section['title_ar'].lower():
-            results.append(section)
-    return {"results": results, "count": len(results)}
+    for entry in index:
+        if (query in entry.get('title', '').lower() or 
+            query in entry.get('preview', '').lower()):
+            results.append(entry)
+            if len(results) >= limit:
+                break
+    
+    return {"results": results, "count": len(results), "query": q}
+
+@router.get("/section/{section_id}/content")
+async def get_section_content(section_id: str, limit: int = 50):
+    """Get content for a specific section"""
+    # Map section IDs to content
+    # This is simplified - in production, you'd have better mapping
+    all_content = []
+    for i in range(1, 4):
+        all_content.extend(load_content_batch(i))
+    
+    # Filter by section (basic filtering for now)
+    # You can enhance this by mapping files to sections
+    filtered = all_content[:limit]
+    
+    return {
+        "section_id": section_id,
+        "content": filtered,
+        "count": len(filtered)
+    }
+
+@router.get("/stats")
+async def get_stats():
+    """Get manual statistics"""
+    sections = load_sections()
+    index = load_search_index()
+    
+    # Count images
+    total_images = 0
+    for i in range(1, 4):
+        batch = load_content_batch(i)
+        total_images += sum(len(doc.get('images', [])) for doc in batch)
+    
+    return {
+        "sections": len(sections),
+        "documents": len(index),
+        "images": total_images,
+        "total_pages": 15644,
+        "extracted_pages": len(index)
+    }

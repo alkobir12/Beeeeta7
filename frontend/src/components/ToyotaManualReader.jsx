@@ -64,12 +64,19 @@ const ToyotaManualReader = () => {
             <div>
               <h2 className="text-2xl font-bold tracking-tight">قارئ دليل تويوتا المتقدم</h2>
               <p className="text-sm opacity-90 mt-1">
-                لاندكروزر 200 - دليل الإصلاح الشامل (15,644 صفحة تقنية)
+                لاندكروزر 200 - دليل الإصلاح الشامل (15,644 صفحة تقنية + 11,278 صورة)
               </p>
             </div>
           </div>
           
           <div className="flex gap-2">
+            <button
+              onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`, '_blank')}
+              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm rounded-lg transition-all shadow-md flex items-center gap-2"
+            >
+              <ExternalLink size={18} />
+              <span className="text-sm">فتح في نافذة جديدة</span>
+            </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm rounded-lg transition-all shadow-md"

@@ -37,12 +37,12 @@ const DEFAULT_MENU = [
   { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true },
   {
     group: true,
-    label: 'المخزون',
-    icon: Package,
+    label: 'الكتالوج والمراجع',
+    icon: BookOpen,
     enabled: true,
     children: [
+      { path: '/catalog', label: 'الكتالوج الشامل', enabled: true },
       { path: '/parts', label: 'إدارة المخزون', enabled: true },
-      { path: '/catalog', label: 'كتالوج شامل (قطع + دنسو + Gemini)', enabled: true },
     ]
   },
   { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },

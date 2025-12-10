@@ -1,0 +1,58 @@
+
+
+
+BODY, INPUT, TABLE, TH, TD, A { 
+	font-size:			10pt;
+	font-family:		"Verdana" sans-serif;
+}
+
+a {
+	text-decoration: none;
+}
+
+
+
+
+
+td.loads-title {
+	font-size:		14pt;
+	font-weight:	bold;
+	color:			#000000;
+}
+
+td.loads-order {
+	font-size:		12pt;
+	color:			#000000;
+}
+
+td.loads-block {
+	color:				#FFFFFF;
+	background-color:	#717171;
+}
+
+td.loads-caption {
+	color:				#000000;
+	background-color:	#C9C9C9;
+}
+
+td.loads-value {
+	color:				#000000;
+	background-color:	#DDE3E6;
+}
+
+td.loads-system-value {
+	background-color:	#EEEEEE;
+}
+
+
+
+
+
+
+div.blockname{
+	border:		1px solid #000000;
+	background-color:	#EEEEEE;
+	color:			#000000;
+	font-size:		9pt;
+	font-weight:	bold;
+}

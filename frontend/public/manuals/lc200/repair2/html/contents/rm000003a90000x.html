@@ -1,0 +1,59 @@
+<html>
+  <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>GSIC - Global Service Information Center</title>
+  <link href ="../../css/contents.css" rel="stylesheet" type="text/css"></link>
+  <link href ="../../css/contents_p.css" rel="stylesheet" type="text/css" media="print"></link>
+  <script src="../../js/jaspa.js"></script>
+  </head>
+		<body onload="seePageAnchor()"><a name="RM000003A90000X"></a><table width="100%" cellspacing="0"><tr><td width="93%"><h1>CAN COMMUNICATION SYSTEM (for LHD) &gt; SYSTEM DESCRIPTION</h1></td><td style="display:none; vertical-align:top;" id="print_button" align="right"><a onClick="window.print();" href="#" class="printIcon"><img border="0" src="../../../../image/print.png"></a></td></tr></table><p><h2>for Preparation <a href="#" onclick="openSeePage('ppr','RM000003A90000X');return false;"> Click here</a></h2></p><br clear="all" class="beforePng"><a name="RM000003A90000X_z0"></a><br clear="all"><a name="RM0810E___00004JZ0000011step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">BRIEF DESCRIPTION</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">The CAN (Controller Area Network) is a serial data communication system for real time application. It is a vehicle multiplex communication system which has a high communication speed (500 kbps, 250 kbps) and the ability to detect malfunctions.</font><br></p></li>
+<li><p><font class="ptxt">By pairing the CANH and CANL bus lines, the CAN performs communication based on differential voltages.</font><br></p></li>
+<li><p><font class="ptxt">Many ECUs (sensors) installed on the vehicle operate by sharing information and communicating with each other.</font><br></p></li>
+<li><p><font class="ptxt">The CAN has 2 resistors of 120 Ω which are necessary to communicate with the main wire.</font><br></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000012step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">DEFINITION OF TERMS</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">Main wire</font><br><br>
+<ol class="s3">
+<li><p><font class="ptxt">The main wire is a wire harness between the 2 termination circuits on the bus (communication line). This is the main bus in the CAN communication system.</font><br></p></li></ol></p></li>
+<li><p><font class="ptxt">Branch wire</font><br><br>
+<ol class="s3">
+<li><p><font class="ptxt">The branch wire is a wire harness which diverges from the main wire to an ECU or sensor.</font><br></p></li></ol></p></li>
+<li><p><font class="ptxt">Termination circuits</font><br><br>
+<ol class="s3">
+<li><p><font class="ptxt">The termination circuit is a circuit which converts the communication current of the CAN communication into the bus voltage. It consists of a resistor and condenser. 2 termination circuits are necessary on a bus.</font><br></p></li></ol></p></li>
+<li><p><font class="ptxt">CAN junction connector</font><br><br>
+<ol class="s3">
+<li><p><font class="ptxt">The CAN junction connector is designed so that it can be used with CAN communication which has a termination circuit and CAN communication which does not have a termination circuit.</font><br></p></li></ol></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000013step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">CIRCUIT DESCRIPTION</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">The V bus, movement control bus and MS bus each have termination circuits with resistance of 120 Ω x 2. High speed communication at 500 kbps and 250 kbps is possible.</font><br></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000014step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">ECU OR SENSOR WHICH COMMUNICATE VIA CAN COMMUNICATION SYSTEM</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">Master cylinder solenoid (skid control ECU)</font><br></p></li>
+<li><p><font class="ptxt">Air conditioning amplifier</font><br></p></li>
+<li><p><font class="ptxt">ECM</font><br></p></li>
+<li><p><font class="ptxt">Main body ECU (cowl side junction block LH)</font><br></p></li>
+<li><p><font class="ptxt">Combination meter</font><br></p></li>
+<li><p><font class="ptxt">Center airbag sensor</font><br></p></li>
+<li><p><font class="ptxt">Multi-display*1</font><br></p></li>
+<li><p><font class="ptxt">Steering angle sensor</font><br></p></li>
+<li><p><font class="ptxt">Yaw rate sensor</font><br></p></li>
+<li><p><font class="ptxt">Steering control ECU*2</font><br></p></li>
+<li><p><font class="ptxt">Seat belt control ECU*3</font><br></p></li>
+<li><p><font class="ptxt">Clearance warning ECU*4</font><br></p></li>
+<li><p><font class="ptxt">Outer mirror control ECU*5</font><br></p></li>
+<li><p><font class="ptxt">Multiplex tilt and telescopic ECU*6</font><br></p></li>
+<li><p><font class="ptxt">Certification ECU (smart key ECU)</font><br></p></li>
+<li><p><font class="ptxt">Position control ECU and switch*5</font><br></p></li>
+<li><p><font class="ptxt">Network gateway ECU</font><br></p></li>
+<li><p><font class="ptxt">4WD control ECU</font><br></p></li>
+<li><p><font class="ptxt">Parking assist ECU*7</font><br></p></li>
+<li><p><font class="ptxt">Suspension control ECU*8</font><br></p></li>
+<li><p><font class="ptxt">Windshield wiper ECU*9</font><br><p><dl class="reference"><dt class="referenceTitle">HINT:</dt><dt class="referenceTitle"></dt></dl><dl class="reference"><dd class="reference">*1: w/ Navigation System</dd></dl><dl class="reference"><dd class="reference">*2: w/ Variable Gear Ratio Steering System</dd></dl><dl class="reference"><dd class="reference">*3: w/ Pre-Crash Safety System</dd></dl><dl class="reference"><dd class="reference">*4: w/ TOYOTA Parking Assist-sensor System</dd></dl><dl class="reference"><dd class="reference">*5: w/ Seat Memory</dd></dl><dl class="reference"><dd class="reference">*6: w/ Power Tilt and Power Telescopic Steering Column System</dd></dl><dl class="reference"><dd class="reference">*7: w/ Parking Assist Monitor System</dd></dl><dl class="reference"><dd class="reference">*8: w/ Active Height Control Suspension</dd></dl><dl class="reference"><dd class="reference">*9: w/ Rain Sensor</dd></dl></p></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000015step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">DIAGNOSTIC CODES FOR CAN COMMUNICATION SYSTEM</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">DTCs for the CAN communication system are as follows: U0073, U0100, U0101, U0114/38, U0122, U0123, U0124, U0126, U0129, U0130, U0132, U0140, U0151, U0155, U0199, U0208, U0327, U1002 (CAN MS BUS), U1002 (CAN No. 2 BUS), U1100, U1110, U1111, U1115, U1126, B1499, B2621, B2624 and C1AEF.</font><br></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000016step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">NOTES REGARDING TROUBLESHOOTING</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">Trouble in the CAN bus (communication line) can be checked through the DLC3 (except when there is a wire break in the branch wire of the DLC3).</font><br></p></li>
+<li><p><font class="ptxt">DTCs regarding the CAN communication system can be checked using the intelligent tester.</font><br></p></li>
+<li><p><font class="ptxt">The CAN communication system cannot detect trouble in the branch line of the DLC3 even though the DLC3 is also connected to the CAN communication system.</font><br></p></li></ol><br clear="all"><a name="RM0810E___00004JZ0000017step"></a><table cellspacing="0" border="1" width="100%"><tr><td class="s1">HOW TO DISTINGUISH CAN JUNCTION CONNECTOR CONNECTOR</td></tr></table><font class="ptxt"></font>
+<ol class="s2">
+<li><p><font class="ptxt">In the CAN communication system, the shape of all connectors connected to the CAN junction connector is the same.</font><br><font class="ptxt">The connectors connected to the CAN junction connector can be distinguished by the colors of the bus line and the connecting side of the connector.</font><br><p><dl class="reference"><dt class="referenceTitle">HINT:</dt><dt class="referenceTitle"></dt></dl><dl class="reference"><dd class="reference">See "Terminals of ECU" (<a href="#" onclick="javascript:openSeePage('seepage', 'RM000003A8Y000X');return false;">Click here</a>) for bus line color or the type of connecting surface.</dd></dl></p></p></li></ol><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></body></html>

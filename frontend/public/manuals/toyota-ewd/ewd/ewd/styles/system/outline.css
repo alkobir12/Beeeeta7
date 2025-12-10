@@ -1,0 +1,8 @@
+BODY, INPUT, TABLE, TH, TR, TD, OL, LI, DIV, SPAN, A, P {
+	font-family:      Verdana, sans-serif;
+}
+
+BODY{
+	background-color: white;
+	font-size: 10pt;
+}

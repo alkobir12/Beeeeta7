@@ -2,56 +2,78 @@
   {
     "id": "sec_0",
     "title": "READ ME",
+    "title_ar": "اقرأني",
+    "icon": "📋",
     "class": "first"
   },
   {
     "id": "V1",
     "title": "General",
+    "title_ar": "معلومات عامة",
+    "icon": "📖",
     "class": "sousetsu"
   },
   {
     "id": "51",
     "title": "Engine / Hybrid System",
+    "title_ar": "المحرك والهايبرد",
+    "icon": "🔩",
     "class": "menu"
   },
   {
     "id": "52",
     "title": "Drivetrain",
+    "title_ar": "نظام الدفع",
+    "icon": "⚙️",
     "class": "menu"
   },
   {
     "id": "53",
     "title": "Suspension",
+    "title_ar": "التعليق",
+    "icon": "🏗️",
     "class": "menu"
   },
   {
     "id": "54",
     "title": "Brake",
+    "title_ar": "الفرامل",
+    "icon": "🛑",
     "class": "menu"
   },
   {
     "id": "55",
     "title": "Steering",
+    "title_ar": "التوجيه",
+    "icon": "🎛️",
     "class": "menu"
   },
   {
     "id": "56",
     "title": "Audio/Visual/Telematics",
+    "title_ar": "الصوتيات والاتصالات",
+    "icon": "🎵",
     "class": "menu"
   },
   {
     "id": "57",
     "title": "Power Source / Network",
+    "title_ar": "الطاقة والشبكات",
+    "icon": "🔌",
     "class": "menu"
   },
   {
     "id": "58",
     "title": "Vehicle Interior",
+    "title_ar": "الداخلية",
+    "icon": "🪟",
     "class": "menu"
   },
   {
     "id": "59",
     "title": "Vehicle Exterior",
+    "title_ar": "الخارجية",
+    "icon": "🚘",
     "class": "menu"
   }
 ]

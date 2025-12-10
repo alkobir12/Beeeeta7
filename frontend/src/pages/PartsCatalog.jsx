@@ -69,9 +69,9 @@ const PartsCatalog = () => {
           <TabsTrigger value="gemini">مساعد Gemini</TabsTrigger>
         </TabsList>
 
-        {/* Toyota Manual Tab - Enhanced Modern Reader */}
+        {/* Toyota Manual Tab - Apple Design */}
         <TabsContent value="toyota">
-          <ToyotaManualReader />
+          <AppleToyotaReader />
         </TabsContent>
 
         <TabsContent value="parts">

@@ -82,7 +82,7 @@ const PartsCatalog = () => {
                   <h3 className="font-bold text-blue-900 mb-2">🔧 دليل الإصلاح الشامل</h3>
                   <p className="text-sm text-blue-700 mb-3">15,644 صفحة HTML + 11,278 صورة توضيحية</p>
                   <button
-                    onClick={() => window.open('/manuals/lc200/index2.html', '_blank')}
+                    onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/manuals/lc200/index2.html`, '_blank')}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     فتح دليل الإصلاح الكامل
@@ -93,7 +93,7 @@ const PartsCatalog = () => {
                   <h3 className="font-bold text-green-900 mb-2">⚡ المخططات الكهربائية</h3>
                   <p className="text-sm text-green-700 mb-3">مخططات توصيل كاملة للنظام الكهربائي</p>
                   <button
-                    onClick={() => window.open('/manuals/toyota-ewd/ewd/index.html', '_blank')}
+                    onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/manuals/toyota-ewd/ewd/index.html`, '_blank')}
                     className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     فتح المخططات الكهربائية

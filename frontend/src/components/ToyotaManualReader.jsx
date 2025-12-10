@@ -88,7 +88,7 @@ const ToyotaManualReader = () => {
       </div>
 
       {/* Main Content */}
-      <div className={`flex ${isFullscreen ? 'h-screen' : 'h-[700px]'} bg-gray-50`}>
+      <div className={`flex ${isFullscreen ? 'h-screen' : 'h-[750px]'} bg-gray-50`}>
         {/* Modern Sidebar Navigation */}
         <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto shadow-sm">
           {/* Search Bar */}
@@ -129,6 +129,27 @@ const ToyotaManualReader = () => {
                 <ChevronLeft size={16} className={selectedSection === section.id ? 'opacity-100' : 'opacity-30'} />
               </button>
             ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">إجراءات سريعة</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`, '_blank')}
+                className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <Book size={16} />
+                <span>دليل الإصلاح الكامل</span>
+              </button>
+              <button
+                onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/toyota-ewd/ewd/index.html`, '_blank')}
+                className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <FileText size={16} />
+                <span>المخططات الكهربائية</span>
+              </button>
+            </div>
           </div>
         </div>
 

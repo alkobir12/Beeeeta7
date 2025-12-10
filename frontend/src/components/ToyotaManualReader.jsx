@@ -153,106 +153,22 @@ const ToyotaManualReader = () => {
           </div>
         </div>
 
-        {/* Content Viewer - Modern Design */}
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-full">
+        {/* Content Viewer with Full Manual */}
+        <div className="flex-1 bg-white overflow-hidden relative">
+          {loading && (
+            <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-10">
               <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-              <p className="text-gray-600 font-medium">جاري التحميل...</p>
-            </div>
-          ) : sectionContent ? (
-            <div className="p-8 max-w-4xl mx-auto">
-              {/* Section Header */}
-              <div className="mb-8">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg">
-                    {sectionContent.icon}
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">{sectionContent.title}</h1>
-                    <p className="text-lg text-gray-600 mt-1">{sectionContent.title_ar}</p>
-                  </div>
-                </div>
-                {sectionContent.content?.description && (
-                  <p className="text-gray-700 text-lg leading-relaxed bg-blue-50 p-4 rounded-xl border border-blue-200">
-                    {sectionContent.content.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Content Items */}
-              <div className="space-y-6">
-                {/* Specs if available */}
-                {sectionContent.content?.specs && (
-                  <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
-                    <h3 className="text-xl font-bold mb-4 text-gray-900">📊 المواصفات التقنية</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {Object.entries(sectionContent.content.specs).map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium text-gray-700">{key}</span>
-                          <span className="text-blue-600 font-bold">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Content Items */}
-                {sectionContent.content?.items?.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-xl border ${
-                      item.type === 'warning' ? 'bg-red-50 border-red-200' :
-                      item.type === 'info' ? 'bg-blue-50 border-blue-200' :
-                      item.type === 'note' ? 'bg-yellow-50 border-yellow-200' :
-                      'bg-white border-gray-200 shadow-sm'
-                    }`}
-                  >
-                    <p className={`text-sm ${
-                      item.type === 'warning' ? 'text-red-800' :
-                      item.type === 'info' ? 'text-blue-800' :
-                      item.type === 'note' ? 'text-yellow-800' :
-                      'text-gray-800'
-                    }`}>
-                      {item.text}
-                    </p>
-                  </div>
-                ))}
-
-                {/* Subsections */}
-                {sectionContent.subsections && sectionContent.subsections.length > 0 && (
-                  <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
-                    <h3 className="text-xl font-bold mb-4 text-gray-900">📑 الأقسام الفرعية</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {sectionContent.subsections.map(sub => (
-                        <div
-                          key={sub.id}
-                          className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                {sub.title}
-                              </div>
-                              <div className="text-sm text-gray-600 mt-1">{sub.title_ar}</div>
-                            </div>
-                            <ChevronLeft size={18} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              <div className="text-center">
-                <FileText size={48} className="mx-auto mb-4 text-gray-300" />
-                <p>اختر قسماً من القائمة الجانبية</p>
-              </div>
+              <p className="text-gray-600 font-medium">جاري تحميل الدليل...</p>
+              <p className="text-sm text-gray-500 mt-2">15,644 صفحة تقنية</p>
             </div>
           )}
+          
+          <iframe
+            src={contentUrl}
+            className="w-full h-full border-0"
+            title="Toyota Manual"
+            onLoad={() => setLoading(false)}
+          />
         </div>
       </div>
 

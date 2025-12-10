@@ -160,8 +160,11 @@ app.include_router(language_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 
-# Mount static files for Toyota manuals
-app.mount("/manuals", StaticFiles(directory=str(ROOT_DIR / "static" / "manuals")), name="manuals")
+# Mount static files for Toyota manuals (MUST be before api_router)
+from fastapi.staticfiles import StaticFiles as FS
+manuals_path = ROOT_DIR / "static" / "manuals"
+if manuals_path.exists():
+    app.mount("/api/manuals", FS(directory=str(manuals_path)), name="manuals")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

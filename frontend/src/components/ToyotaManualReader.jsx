@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, ChevronLeft, ChevronDown, Maximize2, Minimize2, Book, Zap, AlertTriangle, Info, FileText } from 'lucide-react';
+import { Search, ChevronRight, ChevronLeft, ChevronDown, Maximize2, Minimize2, Book, ExternalLink, FileText, Download } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ToyotaManualReader = () => {
-  const [manualType, setManualType] = useState('repair');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sections, setSections] = useState([]);
-  const [selectedSection, setSelectedSection] = useState(null);
-  const [sectionContent, setSectionContent] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('readme');
   const [expandedSections, setExpandedSections] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [contentUrl, setContentUrl] = useState('');
 
   // Load sections on mount
   useEffect(() => {
@@ -24,10 +23,8 @@ const ToyotaManualReader = () => {
       setLoading(true);
       const { data } = await axios.get(`${API_URL}/toyota-manual/sections`);
       setSections(data.sections || []);
-      // Auto select first section
-      if (data.sections && data.sections.length > 0) {
-        selectSection(data.sections[0].id);
-      }
+      // Set initial content URL
+      setContentUrl(`${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`);
     } catch (error) {
       console.error('Error loading sections:', error);
     } finally {
@@ -35,18 +32,10 @@ const ToyotaManualReader = () => {
     }
   };
 
-  const selectSection = async (sectionId) => {
-    try {
-      setSelectedSection(sectionId);
-      setLoading(true);
-      const { data } = await axios.get(`${API_URL}/toyota-manual/section/${sectionId}`);
-      setSectionContent(data);
-    } catch (error) {
-      console.error('Error loading content:', error);
-      setSectionContent(null);
-    } finally {
-      setLoading(false);
-    }
+  const selectSection = (sectionId) => {
+    setSelectedSection(sectionId);
+    // You can map section IDs to specific HTML files if needed
+    // For now, keeping main manual open
   };
 
   const toggleSection = (sectionId) => {

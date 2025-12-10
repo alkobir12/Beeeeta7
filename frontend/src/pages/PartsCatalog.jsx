@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import InjectorDiagnostics from './InjectorDiagnosticsV7';
 import GeminiChatBot from './GeminiChatBot';
-import ToyotaManualReader from '../components/ToyotaManualReader';
+import AppleToyotaReader from '../components/AppleToyotaReader';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 

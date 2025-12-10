@@ -587,12 +587,12 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 23
+  test_sequence: 24
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Auto-save manual service feature tested and verified working"
+    - "Toyota Manual integration tested and verified working"
   stuck_tasks: []
   test_all: true
   test_priority: "all_tests_passed"

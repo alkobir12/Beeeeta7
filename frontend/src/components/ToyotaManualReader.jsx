@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, ChevronDown, Maximize2, Minimize2, Book, Zap, AlertTriangle, Info, FileText } from 'lucide-react';
+import { Search, ChevronRight, ChevronLeft, ChevronDown, Maximize2, Minimize2, Book, Zap, AlertTriangle, Info, FileText } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;

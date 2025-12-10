@@ -14,6 +14,7 @@ const PartsCatalog = () => {
   const [categoryFilter, setCategoryFilter] = useState('الكل');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('parts');
+  const [manualType, setManualType] = useState('repair'); // 'repair' or 'electrical'
 
   useEffect(() => {
     loadParts();

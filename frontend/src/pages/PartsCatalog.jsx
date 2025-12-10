@@ -71,63 +71,134 @@ const PartsCatalog = () => {
           <TabsTrigger value="gemini">مساعد Gemini</TabsTrigger>
         </TabsList>
 
-        {/* Toyota Manual Tab */}
+        {/* Toyota Manual Tab - Enhanced Reader */}
         <TabsContent value="toyota">
           <div className="space-y-4">
-            {/* Manual Type Selector */}
+            {/* Modern Control Bar */}
             <div className="apple-card p-4">
-              <div className="flex gap-4 items-center">
-                <h2 className="text-lg font-bold text-gray-900">📚 دليل تويوتا الرسمي</h2>
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">📚 قارئ دليل تويوتا المتقدم</h2>
+                  <p className="text-sm text-gray-600">
+                    {manualType === 'repair' 
+                      ? 'دليل إصلاح لاندكروزر 200 - 15,644 صفحة + 11,278 صورة'
+                      : 'مخططات كهربائية كاملة - نظام الكهرباء والشبكات'
+                    }
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 items-center">
+                  {/* Manual Type Toggle */}
+                  <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                    <button
+                      onClick={() => {
+                        setManualType('repair');
+                        setManualLoading(true);
+                      }}
+                      className={`px-4 py-2 rounded-md transition-all text-sm font-medium ${
+                        manualType === 'repair' 
+                          ? 'bg-blue-600 text-white shadow-sm' 
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      🔧 دليل الإصلاح
+                    </button>
+                    <button
+                      onClick={() => {
+                        setManualType('electrical');
+                        setManualLoading(true);
+                      }}
+                      className={`px-4 py-2 rounded-md transition-all text-sm font-medium ${
+                        manualType === 'electrical' 
+                          ? 'bg-green-600 text-white shadow-sm' 
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      ⚡ كهرباء
+                    </button>
+                  </div>
+                  
+                  {/* Fullscreen Toggle */}
                   <button
-                    onClick={() => setManualType('repair')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      manualType === 'repair' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    onClick={() => setIsManualFullscreen(!isManualFullscreen)}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-sm font-medium"
+                    title={isManualFullscreen ? 'خروج من ملء الشاشة' : 'ملء الشاشة'}
                   >
-                    🔧 دليل الإصلاح
-                  </button>
-                  <button
-                    onClick={() => setManualType('electrical')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      manualType === 'electrical' 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    ⚡ المخططات الكهربائية
+                    {isManualFullscreen ? '📥 عادي' : '📺 ملء الشاشة'}
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-2">
-                {manualType === 'repair' 
-                  ? 'دليل شامل لإصلاح وصيانة لاندكروزر 200 - 15,644 صفحة تقنية + 11,278 صورة'
-                  : 'مخططات كهربائية كاملة للنظام الكهربائي والشبكات'
-                }
-              </p>
             </div>
 
-            {/* Manual Viewer */}
-            <div className="apple-card p-0 overflow-hidden" style={{ height: '800px' }}>
-              <iframe
-                src={manualType === 'repair' 
-                  ? `${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`
-                  : `${process.env.REACT_APP_BACKEND_URL}/api/manuals/toyota-ewd/ewd/index.html`
-                }
-                className="w-full h-full border-0"
-                title={manualType === 'repair' ? 'دليل الإصلاح' : 'المخططات الكهربائية'}
-                allow="fullscreen"
-              />
+            {/* Enhanced Manual Viewer */}
+            <div className={`relative ${isManualFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+              {isManualFullscreen && (
+                <div className="absolute top-4 right-4 z-10">
+                  <button
+                    onClick={() => setIsManualFullscreen(false)}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors shadow-lg"
+                  >
+                    ✕ إغلاق ملء الشاشة
+                  </button>
+                </div>
+              )}
+              
+              <div className={`${isManualFullscreen ? 'h-screen p-4' : ''}`}>
+                <div className={`apple-card overflow-hidden ${isManualFullscreen ? 'h-full' : 'h-[800px]'} relative`}>
+                  {/* Loading Overlay */}
+                  {manualLoading && (
+                    <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-10">
+                      <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                      <p className="text-gray-600 font-medium">جاري تحميل الدليل...</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {manualType === 'repair' ? '15,644 صفحة' : 'مخططات كهربائية'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Iframe Viewer */}
+                  <iframe
+                    src={manualType === 'repair' 
+                      ? `${process.env.REACT_APP_BACKEND_URL}/api/manuals/lc200/index2.html`
+                      : `${process.env.REACT_APP_BACKEND_URL}/api/manuals/toyota-ewd/ewd/index.html`
+                    }
+                    className="w-full h-full border-0"
+                    title={manualType === 'repair' ? 'دليل الإصلاح' : 'المخططات الكهربائية'}
+                    allow="fullscreen"
+                    onLoad={() => setManualLoading(false)}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Info Box */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 <strong>تلميح:</strong> استخدم القائمة الجانبية في الدليل للتنقل بين الأقسام المختلفة. يمكنك البحث عن أي جزء أو نظام في السيارة.
-              </p>
-            </div>
+            {/* Quick Access Info */}
+            {!isManualFullscreen && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl">
+                  <div className="text-2xl mb-2">🔍</div>
+                  <h3 className="font-bold text-blue-900 mb-1">بحث متقدم</h3>
+                  <p className="text-sm text-blue-700">
+                    استخدم القائمة الجانبية في الدليل للبحث عن أي جزء أو نظام
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl">
+                  <div className="text-2xl mb-2">📖</div>
+                  <h3 className="font-bold text-green-900 mb-1">محتوى شامل</h3>
+                  <p className="text-sm text-green-700">
+                    تعليمات مفصلة خطوة بخطوة مع صور توضيحية عالية الجودة
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl">
+                  <div className="text-2xl mb-2">⚡</div>
+                  <h3 className="font-bold text-purple-900 mb-1">وصول سريع</h3>
+                  <p className="text-sm text-purple-700">
+                    قم بالتبديل بين دليل الإصلاح والمخططات الكهربائية بسهولة
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 

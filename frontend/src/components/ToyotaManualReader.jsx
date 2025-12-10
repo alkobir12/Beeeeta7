@@ -187,11 +187,11 @@ const ToyotaManualReader = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span>تويوتا لاندكروزر 200</span>
+                <span>تويوتا لاندكروزر 200 - LC200</span>
               </div>
             </div>
             <div className="opacity-80">
-              💡 نظام قراءة حديث بدون نوافذ خارجية
+              💡 استخدم القائمة الجانبية للتنقل - يمكن فتح في نافذة منفصلة للتكبير
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronLeft, Maximize2, Minimize2, Book, Image, List, X } from 'lucide-react';
+import { Search, Home, ChevronRight, BookOpen, Image as ImageIcon, FileText, Maximize2, Minimize2, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -8,287 +8,344 @@ const AppleToyotaReader = () => {
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState(null);
   const [content, setContent] = useState([]);
+  const [breadcrumb, setBreadcrumb] = useState(['الرئيسية']);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [stats, setStats] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   useEffect(() => {
-    loadInitialData();
+    loadSections();
+    loadStats();
   }, []);
 
-  const loadInitialData = async () => {
+  const loadSections = async () => {
     try {
-      setLoading(true);
-      const [sectionsRes, statsRes] = await Promise.all([
-        axios.get(`${API_URL}/toyota-manual/sections`),
-        axios.get(`${API_URL}/toyota-manual/stats`)
-      ]);
-      
-      setSections(sectionsRes.data.sections || []);
-      setStats(statsRes.data);
-      
-      // Auto-select first section
-      if (sectionsRes.data.sections && sectionsRes.data.sections.length > 0) {
-        selectSection(sectionsRes.data.sections[0].id);
-      }
+      const { data } = await axios.get(`${API_URL}/toyota-manual/sections`);
+      setSections(data.sections || []);
     } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error:', error);
     }
   };
 
-  const selectSection = async (sectionId) => {
+  const loadStats = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/toyota-manual/stats`);
+      setStats(data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const loadSectionContent = async (sectionId, sectionTitle) => {
     try {
       setLoading(true);
       setSelectedSection(sectionId);
-      const { data } = await axios.get(`${API_URL}/toyota-manual/content?limit=20&offset=${currentPage * 20}`);
+      setBreadcrumb(['الرئيسية', sectionTitle]);
+      
+      const { data } = await axios.get(`${API_URL}/toyota-manual/content?limit=30`);
       setContent(data.content || []);
     } catch (error) {
-      console.error('Error loading section:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const goHome = () => {
+    setSelectedSection(null);
+    setContent([]);
+    setBreadcrumb(['الرئيسية']);
+    setSearchResults([]);
+    setSearchQuery('');
+  };
+
   const handleSearch = async () => {
-    if (!searchQuery || searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
+    if (!searchQuery || searchQuery.length < 2) return;
     
     try {
-      const { data } = await axios.get(`${API_URL}/toyota-manual/search?q=${encodeURIComponent(searchQuery)}`);
+      const { data } = await axios.get(`${API_URL}/toyota-manual/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
       setSearchResults(data.results || []);
+      setBreadcrumb(['الرئيسية', `نتائج البحث: "${searchQuery}"`]);
+      setSelectedSection('search');
     } catch (error) {
       console.error('Search error:', error);
     }
   };
 
   return (
-    <div className={`${isFullscreen ? 'fixed inset-0 z-50' : ''} bg-[#F5F5F7]`}>
-      {/* Apple-style Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#007AFF] to-[#5856D6] rounded-2xl flex items-center justify-center shadow-lg">
-                <Book size={24} className="text-white" />
+    <div className={`${isFullscreen ? 'fixed inset-0 z-50' : ''} bg-white`}>
+      {/* Clean Apple Header */}
+      <div className="bg-white border-b border-[#D2D2D7]">
+        <div className="px-6 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-[#007AFF] rounded-[11px] flex items-center justify-center shadow-sm">
+                <BookOpen size={22} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">
-                  دليل تويوتا التقني
+                <h1 className="text-[28px] font-semibold text-[#1D1D1F] tracking-tight leading-none">
+                  دليل تويوتا
                 </h1>
-                <p className="text-sm text-[#86868B] mt-0.5">
-                  Land Cruiser 200 - {stats?.extracted_pages || 0} صفحة محسّنة
+                <p className="text-[13px] text-[#86868B] mt-1">
+                  Land Cruiser 200
                 </p>
               </div>
             </div>
             
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full transition-all text-[#1D1D1F] text-sm font-medium"
-            >
-              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Layout */}
-      <div className={`flex ${isFullscreen ? 'h-screen' : 'h-[calc(100vh-180px)]'}`}>
-        {/* Apple-style Sidebar */}
-        <div className="w-[280px] bg-white border-r border-gray-200 flex flex-col">
-          {/* Search */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868B]" size={16} />
-              <input
-                type="text"
-                placeholder="بحث..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (e.target.value.length >= 2) {
-                    handleSearch();
-                  } else {
-                    setSearchResults([]);
-                  }
-                }}
-                className="w-full pr-9 pl-3 py-2 bg-[#F5F5F7] border-0 rounded-lg text-sm text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-all"
-              />
-            </div>
-            
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="mt-2 max-h-60 overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-100">
-                {searchResults.map((result, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 hover:bg-[#F5F5F7] cursor-pointer border-b border-gray-50 last:border-0"
-                  >
-                    <div className="text-sm font-medium text-[#1D1D1F]">{result.title}</div>
-                    <div className="text-xs text-[#86868B] mt-1 line-clamp-2">{result.preview}</div>
-                  </div>
-                ))}
+            {stats && (
+              <div className="flex items-center gap-6 text-[13px]">
+                <div className="text-center">
+                  <div className="text-[#1D1D1F] font-semibold">{stats.documents}</div>
+                  <div className="text-[#86868B]">صفحة</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[#1D1D1F] font-semibold">{stats.images}</div>
+                  <div className="text-[#86868B]">صورة</div>
+                </div>
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="px-4 py-2 bg-[#007AFF] hover:bg-[#0051D5] text-white rounded-[10px] transition-colors text-[13px] font-medium"
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
               </div>
             )}
           </div>
 
-          {/* Sections List */}
-          <div className="flex-1 overflow-y-auto p-2">
-            {sections.map(section => (
-              <button
-                key={section.id}
-                onClick={() => selectSection(section.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mb-1 ${
-                  selectedSection === section.id
-                    ? 'bg-[#007AFF] text-white shadow-sm'
-                    : 'text-[#1D1D1F] hover:bg-[#F5F5F7]'
-                }`}
-              >
-                <span className="text-xl">{section.icon}</span>
-                <div className="flex-1 text-right">
-                  <div className="text-sm font-medium">{section.title}</div>
-                  <div className={`text-xs mt-0.5 ${
-                    selectedSection === section.id ? 'text-white opacity-80' : 'text-[#86868B]'
-                  }`}>
-                    {section.title_ar}
-                  </div>
-                </div>
-                {selectedSection === section.id && (
-                  <ChevronLeft size={16} className="opacity-60" />
-                )}
-              </button>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-[13px] mb-4">
+            {breadcrumb.map((crumb, idx) => (
+              <React.Fragment key={idx}>
+                {idx > 0 && <ChevronRight size={14} className="text-[#86868B]" />}
+                <button
+                  onClick={() => idx === 0 && goHome()}
+                  className={`${
+                    idx === breadcrumb.length - 1
+                      ? 'text-[#1D1D1F] font-medium'
+                      : 'text-[#007AFF] hover:underline'
+                  }`}
+                >
+                  {crumb}
+                </button>
+              </React.Fragment>
             ))}
           </div>
 
-          {/* Stats Footer */}
-          {stats && (
-            <div className="p-4 border-t border-gray-100 bg-[#F5F5F7]">
-              <div className="space-y-2 text-xs text-[#86868B]">
-                <div className="flex justify-between">
-                  <span>المستندات</span>
-                  <span className="font-medium text-[#1D1D1F]">{stats.documents}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>الصور</span>
-                  <span className="font-medium text-[#1D1D1F]">{stats.images}</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[#86868B]" size={18} />
+            <input
+              type="text"
+              placeholder="ابحث في الدليل..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full pr-12 pl-4 py-3 bg-[#F5F5F7] border-0 rounded-[12px] text-[15px] text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  if (selectedSection === 'search') goHome();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868B] hover:text-[#1D1D1F]"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* Content Area - Apple Design */}
-        <div className="flex-1 overflow-y-auto bg-[#F5F5F7]">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-12 h-12 border-3 border-[#E8E8ED] border-t-[#007AFF] rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-sm text-[#86868B]">جاري التحميل...</p>
-              </div>
+      {/* Main Content */}
+      <div className={`${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[700px]'} overflow-y-auto px-6 py-6`}>
+        {!selectedSection ? (
+          /* Home View - Sections Grid */
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-[22px] font-semibold text-[#1D1D1F] mb-6">الأقسام</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sections.map(section => (
+                <button
+                  key={section.id}
+                  onClick={() => loadSectionContent(section.id, section.title)}
+                  className="bg-white hover:bg-[#FAFAFA] rounded-[16px] p-6 text-right transition-all border border-[#D2D2D7] hover:border-[#007AFF] hover:shadow-sm group"
+                >
+                  <div className="text-4xl mb-3">{section.icon}</div>
+                  <h3 className="text-[17px] font-semibold text-[#1D1D1F] mb-1 group-hover:text-[#007AFF] transition-colors">
+                    {section.title}
+                  </h3>
+                  <p className="text-[13px] text-[#86868B]">{section.title_ar}</p>
+                  <div className="mt-4 flex items-center justify-end text-[#007AFF] text-[13px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>عرض المحتوى</span>
+                    <ChevronRight size={16} className="mr-1" />
+                  </div>
+                </button>
+              ))}
             </div>
-          ) : (
-            <div className="max-w-4xl mx-auto p-8">
-              {content.map((doc, idx) => (
-                <div key={idx} className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  {/* Document Header */}
-                  {doc.title && (
-                    <div className="px-6 py-4 border-b border-gray-100 bg-[#FAFAFA]">
-                      <h2 className="text-lg font-semibold text-[#1D1D1F]">{doc.title}</h2>
+          </div>
+        ) : selectedSection === 'search' ? (
+          /* Search Results */
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[22px] font-semibold text-[#1D1D1F]">
+                نتائج البحث ({searchResults.length})
+              </h2>
+              <button
+                onClick={goHome}
+                className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[13px] font-medium text-[#1D1D1F] flex items-center gap-2"
+              >
+                <ArrowLeft size={16} />
+                <span>رجوع</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {searchResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-[16px] p-5 border border-[#D2D2D7] hover:border-[#007AFF] hover:shadow-sm transition-all cursor-pointer"
+                >
+                  <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-2">{result.title}</h3>
+                  <p className="text-[13px] text-[#86868B] line-clamp-2">{result.preview}</p>
+                  {result.images_count > 0 && (
+                    <div className="mt-2 flex items-center gap-1 text-[#007AFF] text-[12px]">
+                      <ImageIcon size={14} />
+                      <span>{result.images_count} صورة</span>
                     </div>
                   )}
-
-                  {/* Content */}
-                  <div className="p-6">
-                    {/* Headings */}
-                    {doc.content?.filter(c => c.type === 'heading').map((heading, i) => (
-                      <h3 key={i} className="text-base font-semibold text-[#1D1D1F] mb-3 mt-4">
-                        {heading.text}
-                      </h3>
-                    ))}
-
-                    {/* Paragraphs */}
-                    {doc.content?.filter(c => c.type === 'paragraph').slice(0, 3).map((para, i) => (
-                      <p key={i} className="text-sm text-[#1D1D1F] leading-relaxed mb-3">
-                        {para.text}
-                      </p>
-                    ))}
-
-                    {/* Procedures */}
-                    {doc.procedures?.map((proc, i) => (
-                      <div key={i} className="mt-4 bg-[#F5F5F7] rounded-xl p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <List size={18} className="text-[#007AFF]" />
-                          <span className="text-sm font-medium text-[#1D1D1F]">إجراء</span>
-                        </div>
-                        <ol className="space-y-2">
-                          {proc.steps?.slice(0, 5).map((step, si) => (
-                            <li key={si} className="text-sm text-[#1D1D1F] leading-relaxed pr-5">
-                              {step}
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
-
-                    {/* Images Grid */}
-                    {doc.images && doc.images.length > 0 && (
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Image size={18} className="text-[#007AFF]" />
-                          <span className="text-sm font-medium text-[#1D1D1F]">
-                            الصور التوضيحية ({doc.images.length})
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {doc.images.slice(0, 4).map((img, imgIdx) => (
-                            <div key={imgIdx} className="bg-[#F5F5F7] rounded-xl overflow-hidden aspect-video flex items-center justify-center">
-                              <img
-                                src={img.src}
-                                alt={img.alt || 'Technical diagram'}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               ))}
-
-              {/* Load More */}
-              {content.length > 0 && (
-                <button
-                  onClick={() => {
-                    setCurrentPage(prev => prev + 1);
-                    selectSection(selectedSection);
-                  }}
-                  className="w-full px-6 py-3 bg-white hover:bg-[#F5F5F7] rounded-2xl transition-all text-[#007AFF] font-medium text-sm shadow-sm border border-gray-100"
-                >
-                  تحميل المزيد
-                </button>
-              )}
-
-              {content.length === 0 && !loading && (
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-[#F5F5F7] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Book size={32} className="text-[#86868B]" />
-                  </div>
-                  <p className="text-[#86868B]">اختر قسماً من القائمة</p>
-                </div>
-              )}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          /* Content View */
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[22px] font-semibold text-[#1D1D1F]">
+                المحتوى ({content.length})
+              </h2>
+              <button
+                onClick={goHome}
+                className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[13px] font-medium text-[#1D1D1F] flex items-center gap-2"
+              >
+                <ArrowLeft size={16} />
+                <span>رجوع للأقسام</span>
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-20">
+                <div className="w-10 h-10 border-3 border-[#E8E8ED] border-t-[#007AFF] rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {content.map((doc, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-[20px] overflow-hidden border border-[#D2D2D7] shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {/* Document Title */}
+                    {doc.title && (
+                      <div className="px-6 py-4 bg-[#FAFAFA] border-b border-[#D2D2D7]">
+                        <h3 className="text-[17px] font-semibold text-[#1D1D1F]">{doc.title}</h3>
+                      </div>
+                    )}
+
+                    <div className="p-6">
+                      {/* Headings */}
+                      {doc.content?.filter(c => c.type === 'heading').slice(0, 3).map((heading, i) => (
+                        <div key={i} className="mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-5 bg-[#007AFF] rounded-full"></div>
+                            <h4 className="text-[15px] font-semibold text-[#1D1D1F]">
+                              {heading.text}
+                            </h4>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Paragraphs */}
+                      {doc.content?.filter(c => c.type === 'paragraph').slice(0, 2).map((para, i) => (
+                        <p key={i} className="text-[15px] text-[#1D1D1F] leading-[1.6] mb-4">
+                          {para.text}
+                        </p>
+                      ))}
+
+                      {/* Procedures */}
+                      {doc.procedures?.slice(0, 1).map((proc, i) => (
+                        <div key={i} className="bg-[#F5F5F7] rounded-[16px] p-5 mb-4">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FileText size={18} className="text-[#007AFF]" />
+                            <span className="text-[15px] font-semibold text-[#1D1D1F]">خطوات العمل</span>
+                          </div>
+                          <ol className="space-y-3 pr-6">
+                            {proc.steps?.slice(0, 8).map((step, si) => (
+                              <li key={si} className="text-[14px] text-[#1D1D1F] leading-[1.5] list-decimal">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                          {proc.steps?.length > 8 && (
+                            <div className="mt-3 text-[13px] text-[#007AFF]">
+                              +{proc.steps.length - 8} خطوات إضافية
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Images */}
+                      {doc.images && doc.images.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <ImageIcon size={18} className="text-[#007AFF]" />
+                            <span className="text-[15px] font-semibold text-[#1D1D1F]">
+                              الصور ({doc.images.length})
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {doc.images.slice(0, 6).map((img, imgIdx) => (
+                              <div
+                                key={imgIdx}
+                                className="bg-[#F5F5F7] rounded-[12px] overflow-hidden aspect-[4/3] border border-[#E8E8ED]"
+                              >
+                                <img
+                                  src={img.src}
+                                  alt={img.alt || 'رسم توضيحي'}
+                                  className="w-full h-full object-contain p-2"
+                                  onError={(e) => {
+                                    e.target.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-[#86868B] text-xs">صورة غير متوفرة</div>';
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          {doc.images.length > 6 && (
+                            <div className="mt-3 text-center text-[13px] text-[#007AFF]">
+                              +{doc.images.length - 6} صور إضافية
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {content.length === 0 && !loading && selectedSection && (
+                  <div className="text-center py-20">
+                    <div className="w-16 h-16 bg-[#F5F5F7] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText size={28} className="text-[#86868B]" />
+                    </div>
+                    <p className="text-[#86868B] text-[15px]">لا يوجد محتوى متاح</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );

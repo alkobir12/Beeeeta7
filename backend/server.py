@@ -51,6 +51,7 @@ from routes_payroll import router as payroll_router, set_db as set_db_payroll
 from supabase_service import SupabaseService
 from routes_language import router as language_router
 from routes_toyota_manual import router as toyota_manual_router
+from routes_workshop_bot import router as workshop_bot_router
 
 # Provider mode
 DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()

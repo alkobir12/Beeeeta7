@@ -160,6 +160,7 @@ app.include_router(gemini_chat_router)
 # app.include_router(payroll_router)
 app.include_router(language_router)
 app.include_router(toyota_manual_router)
+app.include_router(workshop_bot_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 

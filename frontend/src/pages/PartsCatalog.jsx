@@ -3,9 +3,8 @@ import { Package, Filter, Search } from 'lucide-react';
 import axios from 'axios';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import InjectorDiagnostics from './InjectorDiagnosticsV7';
-import GeminiChatBot from './GeminiChatBot';
 import AppleToyotaReader from '../components/AppleToyotaReader';
-import WorkshopAIBot from '../components/WorkshopAIBot';
+import FloatingAIAssistant from '../components/FloatingAIAssistant';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 

@@ -1,0 +1,267 @@
+import React, { useState, useEffect } from 'react';
+import { Send, Wrench, User, Shield, Zap, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import axios from 'axios';
+
+const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const WorkshopAIBot = () => {
+  const [mode, setMode] = useState('client'); // client, tech, admin
+  const [message, setMessage] = useState('');
+  const [engine, setEngine] = useState('');
+  const [engines, setEngines] = useState([]);
+  const [conversation, setConversation] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadEngines();
+    addSystemMessage('مرحباً! أنا مساعدك الذكي للورشة. وش المشكلة في السيارة؟ 🚗');
+  }, []);
+
+  const loadEngines = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/workshop-bot/engines`);
+      setEngines(data.engines || []);
+    } catch (error) {
+      console.error('Error loading engines:', error);
+    }
+  };
+
+  const addSystemMessage = (text) => {
+    setConversation(prev => [...prev, {
+      type: 'bot',
+      text,
+      timestamp: new Date()
+    }]);
+  };
+
+  const addUserMessage = (text) => {
+    setConversation(prev => [...prev, {
+      type: 'user',
+      text,
+      timestamp: new Date()
+    }]);
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    const userMessage = message;
+    addUserMessage(userMessage);
+    setMessage('');
+    setLoading(true);
+
+    try {
+      const { data } = await axios.post(`${API_URL}/workshop-bot/respond`, {
+        mode,
+        message: userMessage,
+        engine: engine || undefined
+      });
+
+      // Add bot response
+      setConversation(prev => [...prev, {
+        type: 'bot',
+        text: data.reply,
+        probable: data.probable,
+        nextQuestion: data.next_question,
+        confidence: data.confidence,
+        status: data.status,
+        timestamp: new Date()
+      }]);
+
+    } catch (error) {
+      console.error('Error:', error);
+      addSystemMessage('عذراً، حدث خطأ. حاول مرة أخرى.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-[#F5F5F7]">
+      {/* Header */}
+      <div className="bg-white border-b border-[#D2D2D7] px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-[#007AFF] to-[#5856D6] rounded-[11px] flex items-center justify-center shadow-sm">
+              <Wrench size={22} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-[22px] font-semibold text-[#1D1D1F]">مساعد الورشة الذكي</h1>
+              <p className="text-[13px] text-[#86868B]">تشخيص سريع باللهجة السعودية</p>
+            </div>
+          </div>
+
+          {/* Mode Selector */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setMode('client')}
+              className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all ${
+                mode === 'client'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
+              }`}
+            >
+              <User size={16} className="inline mr-1" />
+              عميل
+            </button>
+            <button
+              onClick={() => setMode('tech')}
+              className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all ${
+                mode === 'tech'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
+              }`}
+            >
+              <Wrench size={16} className="inline mr-1" />
+              فني
+            </button>
+            <button
+              onClick={() => setMode('admin')}
+              className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all ${
+                mode === 'admin'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
+              }`}
+            >
+              <Shield size={16} className="inline mr-1" />
+              إداري
+            </button>
+          </div>
+        </div>
+
+        {/* Engine Selector */}
+        <div className="mt-4">
+          <select
+            value={engine}
+            onChange={(e) => setEngine(e.target.value)}
+            className="w-full md:w-auto px-4 py-2 bg-[#F5F5F7] border-0 rounded-[10px] text-[14px] text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-all"
+          >
+            <option value="">اختر نوع المحرك (اختياري)</option>
+            {engines.map(eng => (
+              <option key={eng.id} value={eng.id}>
+                {eng.name} - {eng.name_ar}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="max-w-3xl mx-auto space-y-4">
+          {conversation.map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-start' : 'justify-end'}`}>
+              <div className={`max-w-[80%] ${msg.type === 'user' ? 'order-2' : ''}`}>
+                {/* Message Bubble */}
+                <div className={`rounded-[18px] px-5 py-3 ${
+                  msg.type === 'user'
+                    ? 'bg-[#007AFF] text-white'
+                    : 'bg-white border border-[#D2D2D7] text-[#1D1D1F]'
+                }`}>
+                  <p className="text-[15px] leading-[1.5] whitespace-pre-line">{msg.text}</p>
+                  
+                  {/* Confidence Badge */}
+                  {msg.confidence && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-[#E8E8ED] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#34C759] rounded-full transition-all"
+                          style={{ width: `${msg.confidence}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-[12px] opacity-70">{msg.confidence}% دقة</span>
+                    </div>
+                  )}
+
+                  {/* Probable Causes */}
+                  {msg.probable && msg.probable.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-[#E8E8ED]">
+                      <div className="text-[13px] font-semibold mb-2">الأسباب المحتملة:</div>
+                      <div className="space-y-2">
+                        {msg.probable.map((cause, i) => (
+                          <div key={i} className="flex items-center justify-between text-[13px]">
+                            <span>{cause.cause}</span>
+                            <span className="px-2 py-1 bg-[#007AFF] bg-opacity-10 text-[#007AFF] rounded-md font-medium">
+                              {cause.probability}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Next Question */}
+                  {msg.nextQuestion && (
+                    <div className="mt-3 pt-3 border-t border-[#E8E8ED] text-[13px] opacity-80">
+                      <HelpCircle size={14} className="inline ml-1" />
+                      {msg.nextQuestion}
+                    </div>
+                  )}
+                </div>
+
+                {/* Timestamp */}
+                <div className={`text-[11px] text-[#86868B] mt-1 px-2 ${
+                  msg.type === 'user' ? 'text-left' : 'text-right'
+                }`}>
+                  {new Date(msg.timestamp).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="bg-white border-t border-[#D2D2D7] px-6 py-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="اكتب المشكلة... (مثال: السيارة تنتع وما تشد)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
+              disabled={loading}
+              className="flex-1 px-4 py-3 bg-[#F5F5F7] border-0 rounded-[12px] text-[15px] text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-all disabled:opacity-50"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={loading || !message.trim()}
+              className="px-6 py-3 bg-[#007AFF] hover:bg-[#0051D5] text-white rounded-[12px] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Send size={20} />
+              )}
+            </button>
+          </div>
+          
+          {/* Quick Examples */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => setMessage('السيارة تنتع وما تشد')}
+              className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+            >
+              السيارة تنتع وما تشد
+            </button>
+            <button
+              onClick={() => setMessage('فيه صفير من المحرك')}
+              className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+            >
+              فيه صفير من المحرك
+            </button>
+            <button
+              onClick={() => setMessage('المحرك يحمو')}
+              className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+            >
+              المحرك يحمو
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WorkshopAIBot;

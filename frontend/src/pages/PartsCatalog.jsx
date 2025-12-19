@@ -164,12 +164,6 @@ const PartsCatalog = () => {
             <InjectorDiagnostics />
           </div>
         </TabsContent>
-
-        <TabsContent value="gemini">
-          <div className="mt-4">
-            <GeminiChatBot />
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

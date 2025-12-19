@@ -63,16 +63,22 @@ const PartsCatalog = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-4 max-w-3xl">
+        <TabsList className="grid grid-cols-5 max-w-4xl">
           <TabsTrigger value="parts">كتالوج القطع</TabsTrigger>
           <TabsTrigger value="toyota">دليل تويوتا</TabsTrigger>
+          <TabsTrigger value="ai">مساعد AI</TabsTrigger>
           <TabsTrigger value="denso">فحص Denso</TabsTrigger>
-          <TabsTrigger value="gemini">مساعد Gemini</TabsTrigger>
+          <TabsTrigger value="gemini">Gemini</TabsTrigger>
         </TabsList>
 
         {/* Toyota Manual Tab - Apple Design */}
         <TabsContent value="toyota">
           <AppleToyotaReader />
+        </TabsContent>
+
+        {/* Workshop AI Bot Tab */}
+        <TabsContent value="ai" className="h-[800px]">
+          <WorkshopAIBot />
         </TabsContent>
 
         <TabsContent value="parts">

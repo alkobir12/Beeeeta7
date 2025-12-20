@@ -84,6 +84,19 @@ const AppleToyotaReader = () => {
   // Render Home View (Sections Grid)
   const renderHome = () => (
     <div className="max-w-6xl mx-auto">
+      {/* Info Banner */}
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-[16px] p-6 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="text-5xl">🚗</div>
+          <div>
+            <h2 className="text-[20px] font-semibold mb-1">دليل تويوتا الفني</h2>
+            <p className="text-[14px] opacity-90">
+              دليل شامل لـ Land Cruiser 200 و Hilux - 2,870 صفحة تقنية + 9,477 صورة توضيحية
+            </p>
+          </div>
+        </div>
+      </div>
+
       <h2 className="text-[22px] font-semibold text-[#1D1D1F] mb-6">الأقسام الرئيسية</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sections.map(section => (

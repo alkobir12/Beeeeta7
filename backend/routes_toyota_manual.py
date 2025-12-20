@@ -77,22 +77,29 @@ async def get_all_content(limit: int = 100, offset: int = 0):
 
 @router.get("/search")
 async def search_manual(q: str, limit: int = 50):
-    """Search in manual content"""
-    if not q or len(q) < 2:
-        return {"results": [], "count": 0}
-    
-    index = load_search_index()
-    query = q.lower()
-    
-    results = []
-    for entry in index:
-        if (query in entry.get('title', '').lower() or 
-            query in entry.get('preview', '').lower()):
-            results.append(entry)
-            if len(results) >= limit:
-                break
-    
-    return {"results": results, "count": len(results), "query": q}
+    """Search in manual content with better error handling"""
+    try:
+        if not q or len(q.strip()) < 2:
+            return {"results": [], "count": 0, "query": q}
+        
+        index = load_search_index()
+        query = q.strip().lower()
+        
+        results = []
+        for entry in index:
+            # Safe search in title and preview
+            title = (entry.get('title') or '').lower()
+            preview = (entry.get('preview') or '').lower()
+            
+            if query in title or query in preview:
+                results.append(entry)
+                if len(results) >= limit:
+                    break
+        
+        return {"results": results, "count": len(results), "query": q}
+    except Exception as e:
+        print(f"Search error: {e}")
+        return {"results": [], "count": 0, "query": q, "error": str(e)}
 
 @router.get("/section/{section_id}/content")
 async def get_section_content(section_id: str, limit: int = 50):

@@ -62,15 +62,22 @@ const AppleToyotaReader = () => {
   };
 
   const handleSearch = async () => {
-    if (!searchQuery || searchQuery.length < 2) return;
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
     
     try {
-      const { data } = await axios.get(`${API_URL}/toyota-manual/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
+      setLoading(true);
+      const { data } = await axios.get(`${API_URL}/toyota-manual/search?q=${encodeURIComponent(searchQuery.trim())}&limit=50`);
       setSearchResults(data.results || []);
       setBreadcrumb(['الرئيسية', `نتائج البحث: "${searchQuery}"`]);
       setSelectedSection('search');
     } catch (error) {
       console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
     }
   };
 

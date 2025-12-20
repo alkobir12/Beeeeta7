@@ -23,7 +23,20 @@ const AppleToyotaReader = () => {
   const loadSections = async () => {
     try {
       const { data } = await axios.get(`${API_URL}/toyota-manual/sections`);
-      setSections(data.sections || []);
+      
+      // Filter: Show only LC200 and Hilux relevant sections
+      const allowedSections = [
+        'sec_0', 'V1', '51', '52', '53', '54', '55', '57' // README, General, Engine, Drivetrain, Suspension, Brake, Steering, Power
+      ];
+      
+      const filtered = (data.sections || []).filter(s => 
+        allowedSections.includes(s.id) || 
+        s.title.includes('Engine') || 
+        s.title.includes('Brake') ||
+        s.title.includes('Suspension')
+      );
+      
+      setSections(filtered);
     } catch (error) {
       console.error('Error:', error);
     }

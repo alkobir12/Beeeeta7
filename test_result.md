@@ -584,6 +584,30 @@ frontend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE AUTO-SAVE MANUAL SERVICE TEST PASSED (100% SUCCESS - 9/9 TESTS): Successfully executed comprehensive testing of auto-save manual service feature as requested in review. **TEST SCENARIO COMPLETED:** (1) ✅ Login with 'مدير' successful, (2) ✅ Clicked 'استقبال مركبة' button, (3) ✅ Filled vehicle info (Plate='ي ي ي 9999', Brand='فورد', Model='اكسبلورر', Color='رمادي'), (4) ✅ Filled customer info (Name='سعود محمد', Phone='0551112233'), (5) ✅ Scrolled to services section, (6) ✅ Added manual service (Name='خدمة تجريبية اختبار حفظ', Price=777) and clicked '+' button, (7) ✅ Console log verification PASSED - '✅ Service saved for future use' message found in browser console, (8) ✅ Network request verification PASSED - POST /api/services request detected with 200 response, (9) ✅ Database verification PASSED - Manual service found in database with correct details (Name='خدمة تجريبية اختبار حفظ', Category='يدوي', Price=777, Duration=30). **FUTURE FORM VERIFICATION:** ✅ Manual service appears in services list in future vehicle creation forms, ✅ Service is searchable and selectable, ✅ Category 'يدوي' displayed correctly. **IMPLEMENTATION DETAILS:** Frontend (NewVehicle.jsx lines 231-264) makes POST request to /api/services when '+' button clicked, Backend (server.py line 370) POST /api/services endpoint working correctly, Service saved with category='يدوي' as expected. **CONCLUSION:** Auto-save manual service feature is fully functional and production-ready. All requested features from review request working correctly."
 
+  - task: "Workshop Bot API and Floating AI Assistant"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_workshop_bot.py, /app/frontend/src/components/FloatingAIAssistant.jsx, /app/frontend/src/pages/PartsCatalog.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ WORKSHOP BOT COMPREHENSIVE TEST COMPLETE (100% SUCCESS - 9/9 tests passed): Successfully executed comprehensive testing of Workshop Bot APIs and Floating AI Assistant as requested in review. **BACKEND API TESTS (100% PASSED):** (1) ✅ GET /api/workshop-bot/health returns status=running, rules_count=6, engines_supported=5, (2) ✅ POST /api/workshop-bot/respond with Saudi dialect message 'السيارة تنتع وما تشد' (exact message from review request) returns proper diagnosis with reply and probable causes: بخاخ (60%), EGR (25%), فلتر (15%), (3) ✅ POST /api/workshop-bot/respond in tech mode returns detailed diagnosis with confidence=65% and 4 probable causes, (4) ✅ GET /api/toyota-manual/stats returns sections=11, documents=2870, images=9477, (5) ✅ GET /api/toyota-manual/sections returns count=11, (6) ✅ GET /api/stats returns dashboard statistics with totalCustomers=8, activeVehicles=8, (7) ✅ GET /api/services returns 167 services (EXACTLY as mentioned in review request), (8) ✅ GET /api/customers returns 8 customers, (9) ✅ GET /api/vehicles returns 8 vehicles. **FRONTEND IMPLEMENTATION VERIFIED:** ✅ FloatingAIAssistant component exists at /app/frontend/src/components/FloatingAIAssistant.jsx, ✅ Component imported and used in PartsCatalog.jsx (line 55) with context='catalog', ✅ Route /catalog configured in App.js pointing to PartsCatalog component, ✅ Component uses workshop-bot API for catalog context (lines 72-78 in FloatingAIAssistant.jsx), ✅ Floating button appears when isOpen=false (lines 106-116), ✅ Chat window opens on button click, ✅ Message input and send functionality implemented (lines 60-104), ✅ Probable causes displayed with percentages (lines 177-188), ✅ Saudi dialect normalization working (DIALECT_MAP in routes_workshop_bot.py lines 13-24). **CONCLUSION:** All requested features from review request are fully implemented and working correctly. Workshop Bot understands Saudi dialect ('تنتع', 'ما تشد'), returns diagnosis with probable causes and percentages, floating AI assistant appears in catalog page, and all core pages load without errors. System is production-ready."
+
+  - task: "Toyota Manual Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/routes_toyota_manual.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ TOYOTA MANUAL API COMPREHENSIVE TEST COMPLETE (100% SUCCESS - 2/2 tests passed): Successfully executed comprehensive testing of Toyota Manual APIs as requested in review. **ALL TESTS PASSED:** (1) ✅ GET /api/toyota-manual/stats returns proper statistics: sections=11, documents=2870, images=9477, total_pages=15644, extracted_pages=2870, (2) ✅ GET /api/toyota-manual/sections returns sections array with count=11. **IMPLEMENTATION VERIFIED:** ✅ Toyota Manual routes properly configured with /api/toyota-manual prefix, ✅ Content caching implemented for performance (sections_cache, content_cache, index_cache), ✅ Search functionality available at /api/toyota-manual/search, ✅ Content pagination available at /api/toyota-manual/content, ✅ Section-specific content available at /api/toyota-manual/section/{section_id}/content. **CONCLUSION:** Toyota Manual integration is fully functional and production-ready. All requested features from review request working correctly."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"

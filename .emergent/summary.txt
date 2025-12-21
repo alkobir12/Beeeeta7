@@ -1,153 +1,178 @@
-<analysis>**original_problem_statement:** The user wants to continue developing their Workshop Management System. The initial high-level goals were a complete UI overhaul to an Apple-style theme, removing old AI features, and integrating a new Denso Injector Diagnostic System.
+<analysis>**original_problem_statement:** The user's primary goal is to build a comprehensive and modern Workshop Management System with an Apple-style UI.
 
-The user's most recent requests have been to fix a wide range of broken pages and features, make the UI more interactive (e.g., a drag-and-drop dashboard on the Denso page), make **Supabase the primary database for all data**, and implement a **full-site language toggle (Arabic/English)** using a provided dictionary script.
-
-**PRODUCT REQUIREMENTS:**
-1.  **Fix Broken Application**: The application is in a highly unstable state with multiple broken pages (, , , , etc.) and data persistence issues. This is the highest priority.
-2.  **Supabase as Primary DB**: All application data (accounts, vehicles, customers, reports, etc.) must be stored in and retrieved from the user's Supabase project, not in-memory JSON files.
-3.  **Full Language Toggle (AR/EN)**: Implement a button to switch the entire UI language between Arabic and English, using the provided dictionary script as the source of truth for translations.
-4.  **Interactive Denso UI**: The Denso diagnostics page should have a dashboard-like feel with customizable, draggable summary cards for metrics like frequency, pulse width, and count.
-5.  **Refactor & Cleanup**: Remove obsolete files and refactor monolithic code like .
-6.  **Deployable Application**: The application must pass all health checks to be ready for production deployment.
+Initially, the application was critically broken, with the backend unable to connect to the Supabase database. After fixing the core stability, the user requested a series of significant feature developments and enhancements:
+1.  **Fix all broken pages** and stabilize the application on the Supabase backend.
+2.  **Implement a comprehensive Toyota Repair Manual reader**, integrated directly into the application with a modern, native theme, replacing the old file-based system. The user provided the raw HTML manual files.
+3.  **Integrate a Workshop AI Bot** for diagnosing vehicle issues based on colloquial Saudi Arabic descriptions. The user provided the core Python script for this bot.
+4.  Make the AI Bot a **floating assistant**, contextually available on relevant pages, rather than being confined to a single tab.
+5.  **Add a bulk list of ~200 services** for engine repair and allow for their management (edit/delete).
+6.  Ensure that **manually added services** during vehicle intake are automatically saved to the main services list.
+7.  **Fix the Documents (Quotation Generator)** page to pull company data from settings and allow adding services from the main list.
+8.  **Refine the UI/UX** of all new and existing features to be clean, intuitive, and follow a modern design aesthetic.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application is a full-stack React/FastAPI workshop management system. The frontend build, which was previously broken, has been fixed. The backend has been configured to use Supabase as its primary data source () instead of in-memory files. An initial implementation of a language toggle feature is present, including a UI button, backend API (), and frontend hooks.
+The application is a full-stack React/FastAPI system running on a Supabase backend. It is now in a stable and highly functional state.
 
-However, the application is critically broken. The backend is throwing a persistent  on most data-related API calls (e.g., , ). This is caused by a Supabase schema cache error (), rendering the application unusable.
+-   **Backend**: The critical Supabase connection issue () has been resolved. All core APIs for customers, vehicles, services, and business accounts are functional. A new  serves the content for the Toyota manual, and  powers the AI assistant.
+-   **Frontend**: Major broken pages (, , ) have been fixed. A sophisticated, Apple-style **Toyota Manual Reader** () has been built, which renders parsed HTML content natively without iframes. A **Floating AI Assistant** () is present on key pages, providing contextual help. The sidebar navigation has been reorganized to group catalog-related items.
 
 **Last working item**:
-- **Last item agent was working**: Resolving a persistent  on API endpoints that interact with Supabase, such as . The user confirmed the issue with same problem after a supposed fix.
-- **Status**: BLOCKED
-- **Agent Testing Done**: Y (Agent confirmed the  error with )
-- **Which testing method agent to use?**: Backend testing agent to diagnose the root cause of the database connection and schema issue. Alternatively, call the  immediately.
-- **User Testing Done**: Y (User reported the error persists)
+-   **Last item agent was working**: Refining the Toyota Manual Reader. The agent implemented two key user requests:
+    1.  Fixed the search functionality to work correctly, even with single characters.
+    2.  Filtered the content to only show manuals for Land Cruiser 200 and Hilux models, as requested.
+-   **Status**: USER VERIFICATION PENDING
+-   **Agent Testing Done**: Y (Agent verified with  for the backend and  for the frontend, showing the fixes working as expected.)
+-   **Which testing method agent to use?**: manual testing by curl/ python -c
+-   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0)  on all Supabase API Calls**
--   **Issue 2: (P1) General Application Instability & Broken Pages**
--   **Issue 3: (P2) Incomplete Language Integration**
+-   **Issue 1: (P1) Unused Backend Routes Cause Latent Errors**
+-   **Issue 2: (P2) Incomplete Language Integration**
 
 **Issues Detail:**
-- **Issue 1:  on all Supabase API Calls**
-    - **Attempted fixes**: The agent correctly identified the error log  (Unable to load the database schema cache). It then tried to run a schema refresh script () but was blocked by a DNS error (). The agent attempted a workaround by hardcoding the Supabase IP address into the script, but the  error still persists, indicating the schema refresh was unsuccessful or insufficient.
-    - **Next debug checklist**:
-        1.  Do not attempt further manual fixes. The issue is complex and recurring.
-        2.  **IMMEDIATELY call the **. This is a critical infrastructure problem (database schema/permissions/networking) that the agent has failed to resolve after multiple attempts. Provide the  with the error  and the history of the failed DNS resolution.
-        3.  Follow the 's plan precisely to resolve the database connection.
-    - **Why fix this issue and what will be achieved with the fix?** The entire backend is non-functional. Fixing this will restore all data operations and unblock the entire application.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue**: This is the root blocker for all other tasks.
+-   **Issue 1: Unused Backend Routes Cause Latent Errors**
+    -   **Attempted fixes**: The agent identified that old routes in  and  still contain hardcoded MongoDB logic. When the app starts, these routes can throw  because the MongoDB  object is . The agent stabilized the app by commenting out the inclusion of  in .
+    -   **Next debug checklist**:
+        1.  Review  and .
+        2.  Either refactor these routes to be fully Supabase-compatible or remove them completely if they are obsolete.
+        3.  Ensure  no longer attempts to initialize any MongoDB connections if  is 'supabase'.
+    -   **Why fix this issue and what will be achieved with the fix?** This will clean up the backend logs, remove potential sources of instability, and make the codebase cleaner and more maintainable.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Blocked on other issue**: None
 
-- **Issue 2: General Application Instability & Broken Pages**
-    - **Attempted fixes**: The agent created API routes for the  page.
-    - **Next debug checklist**: This issue is a direct symptom of Issue #1. It will be resolved once the database connection is fixed. After that, each page (, , ) must be tested to ensure it loads data correctly.
-    - **Why fix this issue and what will be achieved with the fix?** To restore core application functionality.
-    - **Status**: BLOCKED
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Both
-    - **Blocked on other issue**: Issue 1:  on all Supabase API Calls
-
-- **Issue 3: Incomplete Language Integration**
-    - **Attempted fixes**: N/A
-    - **Next debug checklist**: This is a valid task but is blocked by the backend being down.
-    - **Why fix this issue and what will be achieved with the fix?** Fulfills a primary user requirement for internationalization.
-    - **Status**: BLOCKED
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue**: Issue 1:  on all Supabase API Calls
+-   **Issue 2: Incomplete Language Integration**
+    -   **Attempted fixes**: The core infrastructure for the language toggle (backend API, frontend hook) was implemented in a previous session.
+    -   **Next debug checklist**: The task was deprioritized to fix critical stability issues and implement major features. The next step is to go through all major UI components (, , etc.) and replace hardcoded English/Arabic text with the  function provided by the  framework.
+    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a primary user requirement for a fully bilingual (AR/EN) application.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue**: None
 
 **In progress Task List**:
-- **Task 1: (P1) Implement Full-Site Language Toggle (Arabic/English)**
-    - **Where to resume**: The core infrastructure (backend API, frontend hook ,  button) is complete. Once the backend is stable (Issue #1 is fixed), proceed to replace hardcoded text in all major components (, , , etc.) with the  translation function.
-    - **What will be achieved with this?** A fully bilingual user interface as requested by the user.
-    - **Status**: BLOCKED
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on something**: Issue 1:  on all Supabase API Calls
+- None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-  - **(P2) Code Cleanup**: Delete obsolete Denso files (, etc.).
-  - **(P2) Refactor **: Break the monolith into smaller, more manageable router files (partially done, but can be improved).
-  - **(P3) Test Parts Catalog**: The Excel import functionality is untested and the parts list is empty.
+  - **(P0)** Apply translations to all UI components to complete the Language Toggle feature.
+  - **(P1)** Refactor/remove the old MongoDB-dependent routes (, ).
+  - **(P2)** Implement an interactive, drag-and-drop dashboard for the Denso Injector Diagnostics page (as per the original request).
+
 - **Future Tasks**:
-  - **(P1)** Process User-Provided Offline Manual (Blocked)
-  - **(P2)** Implement Google Drive Integration (Blocked)
-  - **(P3)** Implement  endpoint.
+  - Process the user-provided offline manual.
+  - Implement Google Drive Integration.
+  - Implement  endpoint.
 
 **Completed work in this session**
-- **System Stability:**
-  - Fixed the critical frontend build error in , making the UI renderable.
-  - Switched the backend from an unstable in-memory database to use .
-  - Resolved the  issue to make the application deployable.
-- **Feature Implementation (Partial):**
-  - Created the backend API () and frontend infrastructure (hooks, components) for a full-site language toggle.
-  - Added backend API routes for the  page.
-  - Refactored multiple endpoints in  to use .
-
-**Earlier issues found/mentioned but not fixed**
-- The core data persistence and application instability issues have evolved into the current P0 blocker: the ** from Supabase**.
-
-**Known issue recurrence from previous fork**
-  - **General Application Instability**: This issue persists and has been pinpointed to the Supabase  schema cache error. **Status: IN PROGRESS**.
+- **Critical Stability Fixes:**
+  - **Resolved Supabase  Blocker**: Successfully applied the database schema using  via the pooler connection, making the entire backend functional.
+  - **Fixed Auth MOCK Mode**: Corrected the  loading order in  and  to ensure Supabase connects correctly on startup.
+- **Page & Feature Restoration:**
+  - **Fixed Analytics Page**: Created the missing  endpoint and fixed frontend code to correctly display data.
+  - **Fixed Vehicle Reception Page**: Added test services, fixed the save vehicle functionality by adding missing columns (, ) to the  table and correcting data models.
+  - **Fixed Quotation Generator**: Implemented fetching of company data from  and added a service selection modal to dynamically add items to quotes.
+- **Major Feature Implementations:**
+  - **Toyota Repair Manual Reader**:
+    - Integrated a 15,000+ page Toyota Repair Manual.
+    - Solved a  limit crash by serving the files from the backend static directory.
+    - Built a backend API () to parse and serve HTML content natively.
+    - Created a highly polished, Apple-style React component () to display the manual content without iframes, featuring a grid-based home, breadcrumbs, and robust search.
+    - Added filtering to show only LC200 and Hilux content.
+  - **Workshop AI Bot Integration**:
+    - Integrated a user-provided Python script for an AI diagnostic bot into a new backend route ().
+    - Created a sleek, Apple-style chat interface ().
+    - **Upgraded to a Floating Assistant**: Created  and integrated it into the main layout to make the bot accessible from multiple pages.
+- **Data & Content Management:**
+  - **Bulk Service Import**: Added ~160 new services to the database via a script.
+  - **Manual Service Persistence**: Implemented functionality to automatically save manually-entered services from the vehicle intake form.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI
-- **Frontend:** React, TailwindCSS, , **, **
-- **Database:** Supabase (PostgreSQL)
+- **Backend:** FastAPI, serving static files, on-the-fly HTML parsing with BeautifulSoup.
+- **Frontend:** React, TailwindCSS, custom hooks, conditional rendering, state management for complex UIs.
+- **Database:** Supabase (PostgreSQL).
+- **Architecture:** Decoupled frontend/backend, static content served via backend to avoid frontend dev server limitations.
 
 **key DB schema**
-  - , , , , , , etc. as defined in .
+- ****: added  (varchar),  (varchar).
+- ****: NEW table for app-wide settings like company info.
+- **, **: NEW tables for the (currently disabled) payroll feature.
 
 **changes in tech stack**
-- **Added:** ,  for frontend translation.
+- ****: Added to the backend for parsing the Toyota manual HTML files.
 
 **All files of reference**
-- **Critical for Next Step**:
-  - : Script to fix the database schema.
-  - : Backend error logs are essential for debugging the  error.
-- **Created/Modified**:
-  - , , 
-  - , , 
-  -  (heavily modified, has syntax errors)
-  - 
+- **New/Critical Backend**:
+  - : Powers the entire native manual reader experience.
+  - : Powers the AI assistant.
+  - : Heavily modified to include new routers and disable old ones.
+  - : Contains the raw HTML files for the Toyota manual.
+- **New/Critical Frontend**:
+  - : The final, polished Apple-style manual reader.
+  - : The reusable floating bot component.
+  - : Acts as the host for the catalog's main features.
+- **Problematic Files (for next steps)**:
+  - , : Contain legacy MongoDB code causing startup errors.
+
+**Areas that need refactoring**:
+- The  and  files need to be either fully migrated to Supabase or removed to eliminate log noise and potential instability.
+
+**key api endpoints**
+- ****: New endpoint for the Workshop AI Bot.
+- ****: New endpoint to get metadata about the Toyota manual.
+- ****: New endpoint to get the main sections of the manual.
+- ****: New endpoint for searching the manual content.
+- ****: New endpoint to get the parsed content of a specific manual page.
+- ****: Used by the frontend to get application settings.
 
 **Critical Info for New Agent**
-- **IMMEDIATE BLOCKER**: The backend is non-functional due to a persistent  on all database APIs. The error code is , which points to a Supabase schema cache problem.
-- **DO NOT ATTEMPT MANUAL FIXES**: The previous agent failed multiple times to fix this, encountering syntax errors and infrastructure issues (DNS). Your first action **must** be to call the . Provide it with the error code  and the context that a schema refresh script () failed due to DNS issues.
-- **USER PRIORITIES**: Once the backend is stable, the user's top priority is to finish the full-site language toggle (Arabic/English). The groundwork is laid; you just need to apply the translations throughout the UI.
+- The application is now stable and the most critical blockers have been resolved. The user's focus has shifted from bug fixing to major feature development and UI/UX polishing.
+- The Toyota Manual is a complex feature. The content is parsed from raw HTML files stored in  by the API in . The frontend () renders this parsed JSON, it does not use iframes.
+- The AI bot is a floating component () that should be easy to add to other pages if needed.
+- The immediate next steps should be to address the user's last request (verifying the manual fixes) and then tackle the cleanup of old MongoDB routes to fully stabilize the backend. After that, implementing the full language toggle is a high-priority user request.
 
-**Last 10 User Messages and any pending user messages**
-- User reported a  after the agent claimed the fixes were complete.
-- Agent attempted several fixes for the  error.
-- User responded same problem, confirming the fixes were unsuccessful.
-- Agent asked the user to test again.
-- No response from the user since the last test request, but the issue is confirmed to still exist on the agent's side.
+**documents and test_reports created in this job**
+- /app/SUPABASE_SETUP_GUIDE.md
+- /app/backend/create_payroll_tables.sql
+- /app/backend/import_services.py
+- /app/backend/extract_toyota_content.py
+- /app/backend/parse_toyota_enhanced.py
+
+**Last 10 User Messages and any pending HUMAN messages**
+- User:  (The Toyota manual doesn't work well. Make it so only Land Cruiser 200 and Hilux engines appear, and the rest don't. There's also a problem when searching for a word or a letter.)
+- Agent:  (Understood! Let me fix the problems.)
+- Agent: *Fixes search*
+- User:  (Continue)
+- Agent: *Filters the engines and adds other improvements*
+- Agent: *Shows final working screenshots of the fixed manual*
+- User: (No response after the last fix was demonstrated).
 
 **Project Health Check:**
-- **Broken**: The backend is critically broken. All features requiring database interaction are down due to a persistent .
-- **Mocked**: No services are mocked. The application is failing against the live Supabase instance.
-- **Blocked**: All development is blocked until the backend database connection is restored.
+- **Broken**:  and  are partially broken as they still reference MongoDB. However, they are not actively used by the main application flow and  is disabled.
+- **Mocked**: No mocked services.
+- **Healthy**: The vast majority of the application is healthy, stable, and functional.
 
 **3rd Party Integrations**
-- **Google Gemini**: Integrated but UI features have been removed. Requires a .
-- **Supabase**: Actively used as the primary database, but the connection is failing with a schema error. Requires  and .
+- **Supabase**: Primary database for all application data.
+- **Google Gemini**: The UI for this was merged into the new consolidated  but is not the primary focus.
+- **Emergent LLM Key**: Potentially used by the Gemini integration.
 
 **Testing status**
-  - **Testing agent used after significant changes**: NO
-  - **Troubleshoot agent used after agent stuck in loop**: NO (but should have been)
-  - **Test files created**: None.
-  - **Known regressions**: The entire backend data layer is non-functional, a major regression from the previous in-memory state.
+- **Testing agent used after significant changes**: YES (Used multiple times to verify backend APIs, frontend component states, and full features like manual service saving.)
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: None.
+- **Known regressions**: None. The agent successfully fixed all major regressions from the start of the session.
 
 **Credentials to test flow:**
 - **Username**:  or 
 - **Password**: 
 
 **What agent forgot to execute**
-- The agent failed to call the  after getting stuck in a loop trying to fix a complex, recurring infrastructure issue ( error). This led to wasted time and introducing further syntax errors in .</analysis>
+- The agent did not complete the full-site language toggle by applying translations to all components. This was a stated user requirement that was deprioritized in favor of more critical fixes and feature builds.
+- The agent disabled the  as a workaround for its instability but did not fully refactor or remove the underlying problematic code in .</analysis>

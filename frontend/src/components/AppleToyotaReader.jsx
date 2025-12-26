@@ -83,23 +83,7 @@ const AppleToyotaReader = () => {
       console.error('Search error:', error);
       setSearchResults([]);
     } finally {
-
-  // فلتر مخصص لكل ما يخص محرك 1VD-FTV
-  const applyEngineFilter1VD = () => {
-    const engineCode = '1VD-FTV';
-    setActiveEngineFilter(engineCode);
-    setSearchQuery(engineCode);
-    handleSearch(engineCode);
-  };
-
       setLoading(false);
-
-  // زر سريع لفلترة كل ما يخص 1VD-FTV
-  const quickFilter1VD = () => {
-    setSearchQuery('1VD-FTV');
-    handleSearch('1VD-FTV');
-  };
-
     }
   };
 

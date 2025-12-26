@@ -10,6 +10,7 @@ const AppleToyotaReader = () => {
   const [content, setContent] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [breadcrumb, setBreadcrumb] = useState(['الرئيسية']);
+  const [activeEngineFilter, setActiveEngineFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);

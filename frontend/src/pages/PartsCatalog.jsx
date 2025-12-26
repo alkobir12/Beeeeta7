@@ -64,16 +64,10 @@ const PartsCatalog = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-3 max-w-2xl">
+        <TabsList className="grid grid-cols-2 max-w-2xl">
           <TabsTrigger value="parts">كتالوج القطع</TabsTrigger>
-          <TabsTrigger value="toyota">دليل تويوتا</TabsTrigger>
           <TabsTrigger value="denso">فحص Denso</TabsTrigger>
         </TabsList>
-
-        {/* Toyota Manual Tab - Apple Design */}
-        <TabsContent value="toyota">
-          <AppleToyotaReader />
-        </TabsContent>
 
         <TabsContent value="parts">
           {/* Search & Filter Bar */}

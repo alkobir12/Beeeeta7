@@ -329,8 +329,63 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     return Vehicle(**vehicle)
 
+@api_router.delete("/vehicles/{vehicle_id}")
+async def delete_vehicle(vehicle_id: str):
+    """Delete a vehicle and its related invoices (if any)."""
+    # Supabase mode
+    if DB_PROVIDER == 'supabase':
+        try:
+            # Delete invoices linked to this vehicle (if invoices table exists)
+            if hasattr(supabase_service, 'client') and supabase_service.client and not supabase_service.mock_mode:
+                supabase_service.client.table('invoices').delete().eq('vehicle_id', vehicle_id).execute()
+            supabase_service.vehicles_delete(vehicle_id)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # In-memory mode
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('vehicles')
+        rows = [r for r in rows if r.get('id') != vehicle_id]
+        _mem_write('vehicles', rows)
+        return {"success": True}
+
+    # MongoDB mode (legacy)
+    await db.invoices.delete_many({"vehicleId": vehicle_id})
+    await db.vehicles.delete_one({"id": vehicle_id})
+    return {"success": True}
+
+
 @api_router.get("/customers", response_model=List[Customer])
 async def get_customers():
+
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    """Delete a customer and cascade delete related vehicles/invoices when possible."""
+    # Supabase mode
+    if DB_PROVIDER == 'supabase':
+        try:
+            if hasattr(supabase_service, 'client') and supabase_service.client and not supabase_service.mock_mode:
+                # Delete invoices and vehicles linked to this customer
+                supabase_service.client.table('invoices').delete().eq('customer_id', customer_id).execute()
+                supabase_service.client.table('vehicles').delete().eq('customer_id', customer_id).execute()
+            supabase_service.customers_delete(customer_id)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # In-memory mode
+    if DB_PROVIDER == 'memory':
+        _mem_write('customers', [c for c in _mem_read('customers') if c.get('id') != customer_id])
+        _mem_write('vehicles', [v for v in _mem_read('vehicles') if v.get('customerId') != customer_id])
+        return {"success": True}
+
+    # MongoDB mode (legacy)
+    await db.invoices.delete_many({"customerId": customer_id})
+    await db.vehicles.delete_many({"customerId": customer_id})
+    await db.customers.delete_one({"id": customer_id})
+    return {"success": True}
+
     if DB_PROVIDER == 'supabase':
         rows = supabase_service.customers_list()
         return [Customer(**r) for r in rows]

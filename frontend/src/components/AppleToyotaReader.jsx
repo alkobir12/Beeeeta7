@@ -453,6 +453,19 @@ const AppleToyotaReader = () => {
                 <p className="text-[13px] text-[#86868B] mt-1">
                   Land Cruiser 200
                 </p>
+                <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={applyEngineFilter1VD}
+                    className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${
+                      activeEngineFilter === '1VD-FTV'
+                        ? 'bg-[#007AFF] text-white border-[#007AFF]'
+                        : 'bg-[#F5F5F7] text-[#007AFF] border-[#D2D2D7] hover:bg-[#E8E8ED]'
+                    }`}
+                  >
+                    كل ما يخص مكينة 1VD-FTV
+                  </button>
+                </div>
               </div>
             </div>
             

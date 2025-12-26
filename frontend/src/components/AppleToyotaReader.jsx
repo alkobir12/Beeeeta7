@@ -306,6 +306,8 @@ const AppleToyotaReader = () => {
         <div className="flex justify-center py-20">
           <div className="w-12 h-12 border-4 border-[#E8E8ED] border-t-[#007AFF] rounded-full animate-spin"></div>
         </div>
+      ) : selectedDoc ? (
+        renderSelectedDoc()
       ) : (
         <div className="space-y-5">
           {content.map((doc, idx) => (

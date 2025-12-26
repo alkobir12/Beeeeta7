@@ -160,6 +160,9 @@ const AppleToyotaReader = () => {
           <ArrowLeft size={16} />
           <span>رجوع</span>
         </button>
+  );
+
+
       </div>
 
   const renderSelectedDoc = () => {

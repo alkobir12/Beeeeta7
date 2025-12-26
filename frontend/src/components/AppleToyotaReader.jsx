@@ -284,36 +284,6 @@ const AppleToyotaReader = () => {
     );
   };
 
-          onClick={goHome}
-          className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[14px] font-medium text-[#1D1D1F] flex items-center gap-2"
-        >
-          <ArrowLeft size={16} />
-          <span>رجوع</span>
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {searchResults.map((result, idx) => (
-          <button
-            type="button"
-            key={idx}
-            onClick={() => openDocument(result)}
-            className="w-full text-right bg-white rounded-[16px] p-5 border border-[#D2D2D7] hover:border-[#007AFF] hover:shadow-sm transition-all"
-          >
-            <h3 className="text-[16px] font-semibold text-[#1D1D1F] mb-2">{result.title}</h3>
-            <p className="text-[14px] text-[#86868B] line-clamp-2">{result.preview}</p>
-            {result.images_count > 0 && (
-              <div className="mt-3 flex items-center gap-2 text-[#007AFF] text-[13px]">
-                <ImageIcon size={14} />
-                <span>{result.images_count} صورة توضيحية</span>
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
   // Render Content View
   const renderContent = () => (
     <div className="max-w-5xl mx-auto">

@@ -309,9 +309,11 @@ const AppleToyotaReader = () => {
       ) : (
         <div className="space-y-5">
           {content.map((doc, idx) => (
-            <div
+            <button
+              type="button"
               key={idx}
-              className="bg-white rounded-[20px] overflow-hidden border border-[#D2D2D7] shadow-sm"
+              onClick={() => openDocument(doc)}
+              className="w-full text-right bg-white rounded-[20px] overflow-hidden border border-[#D2D2D7] shadow-sm hover:border-[#007AFF] transition-all"
             >
               {doc.title && (
                 <div className="px-6 py-4 bg-gradient-to-r from-[#F5F5F7] to-white border-b border-[#E8E8ED]">
@@ -399,7 +401,7 @@ const AppleToyotaReader = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           ))}
 
           {content.length === 0 && !loading && (

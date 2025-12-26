@@ -80,6 +80,9 @@ const AppleToyotaReader = () => {
       console.error('Search error:', error);
       setSearchResults([]);
     } finally {
+      setLoading(false);
+    }
+  };
 
   const openDocument = async (doc) => {
     try {
@@ -99,10 +102,6 @@ const AppleToyotaReader = () => {
       console.error('Open doc error:', error);
       setSelectedDoc(doc);
     } finally {
-      setLoading(false);
-    }
-  };
-
       setLoading(false);
     }
   };

@@ -154,6 +154,13 @@ const AppleToyotaReader = () => {
           نتائج البحث ({searchResults.length})
         </h2>
         <button
+          onClick={goHome}
+          className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[14px] font-medium text-[#1D1D1F] flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          <span>رجوع</span>
+        </button>
+      </div>
 
   const renderSelectedDoc = () => {
     if (!selectedDoc) return null;

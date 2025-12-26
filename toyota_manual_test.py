@@ -186,7 +186,8 @@ def main():
                     stats_fields = ["sections", "documents", "images"]
                     found_stats = [f for f in stats_fields if f in result["data"]]
                     if found_stats:
-                        status += f" ({', '.join(f'{f}={result["data"][f]}' for f in found_stats)})"
+                        stats_str = ', '.join(f'{f}={result["data"][f]}' for f in found_stats)
+                        status += f" ({stats_str})"
                 elif endpoint == "/toyota-manual/sections":
                     if "count" in result["data"]:
                         status += f" ({result['data']['count']} sections)"

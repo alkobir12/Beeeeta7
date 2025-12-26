@@ -154,6 +154,108 @@ const AppleToyotaReader = () => {
           نتائج البحث ({searchResults.length})
         </h2>
         <button
+
+  const renderSelectedDoc = () => {
+    if (!selectedDoc) return null;
+
+    const doc = selectedDoc;
+    const headings = doc.content?.filter(c => c.type === 'heading') || [];
+    const paragraphs = doc.content?.filter(c => c.type === 'paragraph') || [];
+    const procedures = doc.procedures || [];
+
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[22px] font-semibold text-[#1D1D1F]">
+            {doc.title || 'تفاصيل المستند'}
+          </h2>
+          <button
+            onClick={() => setSelectedDoc(null)}
+            className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[14px] font-medium text-[#1D1D1F] flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            <span>رجوع</span>
+          </button>
+        </div>
+
+        <div className="bg-white rounded-[20px] p-6 border border-[#D2D2D7] shadow-sm space-y-6">
+          {headings.length > 0 && (
+            <div className="space-y-2">
+              {headings.map((h, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="w-1.5 h-6 bg-[#007AFF] rounded-full mt-0.5"></div>
+                  <h3 className="text-[16px] font-semibold text-[#1D1D1F] flex-1">
+                    {h.text}
+                  </h3>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {paragraphs.length > 0 && (
+            <div className="space-y-3">
+              {paragraphs.map((p, idx) => (
+                <p key={idx} className="text-[15px] text-[#1D1D1F] leading-[1.7] pr-1">
+                  {p.text}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {procedures.length > 0 && (
+            <div className="bg-[#F5F5F7] rounded-[16px] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-[#007AFF] rounded-lg flex items-center justify-center">
+                  <FileText size={16} className="text-white" />
+                </div>
+                <span className="text-[16px] font-semibold text-[#1D1D1F]">خطوات العمل</span>
+              </div>
+              {procedures.map((proc, idx) => (
+                <ol key={idx} className="space-y-3 pr-6 list-decimal mb-4">
+                  {proc.steps?.map((step, si) => (
+                    <li key={si} className="text-[14px] text-[#1D1D1F] leading-[1.6] marker:text-[#007AFF] marker:font-semibold">
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              ))}
+            </div>
+          )}
+
+          {doc.images && doc.images.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-[#34C759] rounded-lg flex items-center justify-center">
+                  <ImageIcon size={16} className="text-white" />
+                </div>
+                <span className="text-[16px] font-semibold text-[#1D1D1F]">
+                  الصور التوضيحية ({doc.images.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {doc.images.map((img, imgIdx) => (
+                  <div
+                    key={imgIdx}
+                    className="bg-[#F5F5F7] rounded-[14px] overflow-hidden aspect-[4/3] border border-[#E8E8ED] hover:border-[#007AFF] transition-all"
+                  >
+                    <img
+                      src={img.src}
+                      alt={img.alt || 'رسم توضيحي'}
+                      className="w-full h-full object-contain p-3"
+                      onError={(e) => {
+                        e.target.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-[#86868B] text-xs">صورة غير متوفرة</div>';
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
           onClick={goHome}
           className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-[10px] transition-colors text-[14px] font-medium text-[#1D1D1F] flex items-center gap-2"
         >

@@ -57,6 +57,7 @@ const AppleToyotaReader = () => {
 
   const goHome = () => {
     setSelectedSection(null);
+    setSelectedDoc(null);
     setContent([]);
     setBreadcrumb(['الرئيسية']);
     setSearchResults([]);

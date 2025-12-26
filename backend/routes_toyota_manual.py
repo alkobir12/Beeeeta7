@@ -75,11 +75,24 @@ async def get_all_content(limit: int = 100, offset: int = 0):
         "has_more": offset + limit < len(all_content)
     }
 
+
+@router.get("/content/by-file")
+async def get_content_by_file(file: str):
+    """Get a single document by its file path"""
+    # Load all batches and search for the document
+    for i in range(1, 4):
+        batch = load_content_batch(i)
+        for doc in batch:
+            if doc.get("file") == file:
+                return {"doc": doc}
+    raise HTTPException(status_code=404, detail="Document not found")
+
+
 @router.get("/search")
 async def search_manual(q: str, limit: int = 50):
     """Search in manual content with better error handling"""
     try:
-        if not q or len(q.strip()) < 2:
+        if not q or len(q.strip()) < 1:
             return {"results": [], "count": 0, "query": q}
         
         index = load_search_index()

@@ -83,6 +83,13 @@ const AppleToyotaReader = () => {
       setSearchResults([]);
     } finally {
       setLoading(false);
+
+  // زر سريع لفلترة كل ما يخص 1VD-FTV
+  const quickFilter1VD = () => {
+    setSearchQuery('1VD-FTV');
+    handleSearch('1VD-FTV');
+  };
+
     }
   };
 

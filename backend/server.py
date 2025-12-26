@@ -337,7 +337,11 @@ async def delete_vehicle(vehicle_id: str):
         try:
             # Delete invoices linked to this vehicle (if invoices table exists)
             if hasattr(supabase_service, 'client') and supabase_service.client and not supabase_service.mock_mode:
-                supabase_service.client.table('invoices').delete().eq('vehicle_id', vehicle_id).execute()
+                try:
+                    supabase_service.client.table('invoices').delete().eq('vehicle_id', vehicle_id).execute()
+                except Exception as invoice_error:
+                    # Invoices table might not exist - this is acceptable
+                    print(f"⚠️ Could not delete invoices for vehicle {vehicle_id}: {invoice_error}")
             supabase_service.vehicles_delete(vehicle_id)
             return {"success": True}
         except Exception as e:

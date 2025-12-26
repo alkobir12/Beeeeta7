@@ -50,7 +50,6 @@ from routes_payroll import router as payroll_router, set_db as set_db_payroll
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
-from routes_toyota_manual import router as toyota_manual_router
 from routes_workshop_bot import router as workshop_bot_router
 
 # Provider mode
@@ -159,16 +158,9 @@ app.include_router(gemini_chat_router)
 # Temporarily disable payroll router - needs Supabase implementation
 # app.include_router(payroll_router)
 app.include_router(language_router)
-app.include_router(toyota_manual_router)
 app.include_router(workshop_bot_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
-
-# Mount static files for Toyota manuals (MUST be before api_router)
-from fastapi.staticfiles import StaticFiles as FS
-manuals_path = ROOT_DIR / "static" / "manuals"
-if manuals_path.exists():
-    app.mount("/api/manuals", FS(directory=str(manuals_path)), name="manuals")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

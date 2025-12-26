@@ -59,7 +59,7 @@ const PartsCatalog = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">مركز الكتالوج والتشخيص المتقدم</h1>
           <p className="text-gray-500 mt-1">
-            كتالوج القطع + دليل تويوتا الرسمي + تشخيص دنسو + مساعد Gemini
+            كتالوج القطع + تشخيص Denso + مساعد Gemini
           </p>
         </div>
       </div>

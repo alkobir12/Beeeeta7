@@ -80,6 +80,29 @@ const AppleToyotaReader = () => {
       console.error('Search error:', error);
       setSearchResults([]);
     } finally {
+
+  const openDocument = async (doc) => {
+    try {
+      setLoading(true);
+      setSelectedDoc(null);
+      const file = doc.file;
+      if (!file) {
+        setSelectedDoc(doc);
+        return;
+      }
+      const { data } = await axios.get(`${API_URL}/toyota-manual/content/by-file`, {
+        params: { file },
+      });
+      setSelectedDoc(data.doc || doc);
+      setBreadcrumb(['الرئيسية', doc.title || 'مستند']);
+    } catch (error) {
+      console.error('Open doc error:', error);
+      setSelectedDoc(doc);
+    } finally {
+      setLoading(false);
+    }
+  };
+
       setLoading(false);
     }
   };

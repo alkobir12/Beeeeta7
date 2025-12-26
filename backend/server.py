@@ -358,6 +358,15 @@ async def delete_vehicle(vehicle_id: str):
 
 @api_router.get("/customers", response_model=List[Customer])
 async def get_customers():
+    if DB_PROVIDER == 'supabase':
+        rows = supabase_service.customers_list()
+        return [Customer(**r) for r in rows]
+
+    if DB_PROVIDER == 'memory':
+        return [Customer(**r) for r in _mem_read('customers')]
+    customers = await db.customers.find().to_list(1000)
+    return [Customer(**c) for c in customers]
+
 
 @api_router.delete("/customers/{customer_id}")
 async def delete_customer(customer_id: str):

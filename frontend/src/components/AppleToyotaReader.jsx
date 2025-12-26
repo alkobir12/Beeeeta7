@@ -43,6 +43,7 @@ const AppleToyotaReader = () => {
     try {
       setLoading(true);
       setSelectedSection(sectionId);
+      setSelectedDoc(null);
       setBreadcrumb(['الرئيسية', sectionTitle]);
       
       const { data } = await axios.get(`${API_URL}/toyota-manual/content?limit=30`);

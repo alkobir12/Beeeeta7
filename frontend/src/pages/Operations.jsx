@@ -29,16 +29,10 @@ const Operations = () => {
     price: 0 
   });
 
-  useEffect(() => { load(); }, []);
-
-  const load = async () => {
-
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
-
-  useEffect(() => { load(); }, []);
 
   const load = async () => {
     try {

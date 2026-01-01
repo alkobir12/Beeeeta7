@@ -1052,6 +1052,41 @@ async def get_vehicle_approval_logs(vehicle_id: str):
 @router.post('/approvals')
 async def create_approval(payload: Dict[str, Any] = Body(...)):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+
+        # Supabase implementation
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            row = {
+                'token': token,
+                'vehicle_id': payload.get('vehicleId'),
+                'customer_id': payload.get('customerId'),
+                'title': payload.get('title') or 'طلب اعتماد',
+                'amount': float(payload.get('amount') or 0),
+                'service_items': payload.get('serviceItems') or [],
+                'service_items_text': payload.get('serviceItemsText'),
+                'status': 'pending',
+                'expires_at': (datetime.utcnow() + timedelta(days=7)).isoformat()
+            }
+            res = supa.client.table('approval_requests').insert(row).execute()
+            r = (res.data or [{}])[0]
+            return {
+                'id': r.get('id'),
+                'token': r.get('token') or token,
+                'vehicleId': r.get('vehicle_id'),
+                'customerId': r.get('customer_id'),
+                'title': r.get('title'),
+                'amount': r.get('amount'),
+                'serviceItems': r.get('service_items') or [],
+                'serviceItemsText': r.get('service_items_text'),
+                'status': r.get('status'),
+                'createdAt': r.get('created_at'),
+                'expiresAt': r.get('expires_at'),
+            }
+
+        # MongoDB implementation (legacy)
         token = f"APR-{str(uuid.uuid4())[:8].upper()}"
         doc = {
             'id': str(uuid.uuid4()),
@@ -1075,6 +1110,36 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
 @router.get('/approvals')
 async def list_approvals(vehicle_id: Optional[str] = None):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+
+        # Supabase implementation
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            q = supa.client.table('approval_requests').select('*')
+            if vehicle_id:
+                q = q.eq('vehicle_id', vehicle_id)
+            res = q.order('created_at', desc=True).execute()
+            rows = res.data or []
+            out = []
+            for r in rows:
+                out.append({
+                    'id': r.get('id'),
+                    'token': r.get('token'),
+                    'vehicleId': r.get('vehicle_id'),
+                    'customerId': r.get('customer_id'),
+                    'title': r.get('title'),
+                    'amount': r.get('amount'),
+                    'serviceItems': r.get('service_items') or [],
+                    'serviceItemsText': r.get('service_items_text'),
+                    'status': r.get('status'),
+                    'createdAt': r.get('created_at'),
+                    'expiresAt': r.get('expires_at'),
+                    'respondedAt': r.get('responded_at')
+                })
+            return out
+
+        # MongoDB implementation (legacy)
         q = {}
         if vehicle_id:
             q['vehicleId'] = vehicle_id

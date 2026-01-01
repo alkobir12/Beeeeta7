@@ -74,7 +74,7 @@ const Operations = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_URL}/operations`, { ...form });
-      setForm({ accountId: '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '' });
+      setForm({ accountId: '', vehicleId: vehicleIdFromUrl || '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '' });
       await load();
     } catch (e) {
       console.error(e);

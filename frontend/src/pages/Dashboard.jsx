@@ -240,12 +240,28 @@ const Dashboard = () => {
         {/* Quick Actions Modal */}
         {showQuickActions && selectedVehicle && (
           <VehicleQuickActions
+            isOpen={showQuickActions}
             vehicle={selectedVehicle}
             onClose={() => {
               setShowQuickActions(false);
               setSelectedVehicle(null);
             }}
-            onRefresh={fetchData}
+            onStatusUpdate={async (newStatus) => {
+              try {
+                await vehicleAPI.update(selectedVehicle.id, { status: newStatus });
+                await fetchData();
+              } catch (error) {
+                console.error('Failed to update vehicle status', error);
+              }
+            }}
+            onDelete={async () => {
+              try {
+                await vehicleAPI.delete(selectedVehicle.id);
+                await fetchData();
+              } catch (error) {
+                console.error('Failed to delete vehicle', error);
+              }
+            }}
           />
         )}
       </div>

@@ -764,7 +764,23 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
         if provider == 'supabase':
             supa = SupabaseService()
-            return supa.operations_create(payload)
+            op = supa.operations_create(payload)
+            # Create linked financial transaction so analytics and transactions are updated
+            try:
+                tx_payload = {
+                    'accountId': op.get('accountId'),
+                    'vehicleId': op.get('vehicleId'),
+                    'type': 'income' if op.get('type') == 'sale' else 'expense',
+                    'category': f"operation_{op.get('type')}",
+                    'amount': op.get('total'),
+                    'description': f"{op.get('type')} - {op.get('partnerName') or ''}",
+                    'reference': op.get('id')
+                }
+                supa.transactions_create(tx_payload)
+            except Exception:
+                # لا نكسر العملية إذا فشل حفظ الحركة المالية
+                pass
+            return op
 
         if provider == 'memory' or db is None:
             rows = _mem_read('operations')

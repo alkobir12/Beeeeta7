@@ -33,7 +33,7 @@ const Operations = () => {
   const load = async () => {
     try {
       const [accRes, partsRes, servicesRes, opsRes] = await Promise.all([
-        axios.get(`${API_URL}/biz-accounts`),
+        axios.get(`${API_URL}/business-accounts`),
         axios.get(`${API_URL}/parts`),
         axios.get(`${API_URL}/services`),
         axios.get(`${API_URL}/operations`)

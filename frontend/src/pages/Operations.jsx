@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2 } from 'lucide-react';
 
@@ -13,6 +13,7 @@ const Operations = () => {
   const [ops, setOps] = useState([]);
   const [form, setForm] = useState({ 
     accountId: '', 
+    vehicleId: '',
     type: 'purchase', 
     partnerType: 'supplier', 
     partnerName: '', 
@@ -27,6 +28,11 @@ const Operations = () => {
     quantity: 1, 
     price: 0 
   });
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const vehicleIdFromUrl = searchParams.get('vehicleId');
+  const vehiclePlateFromUrl = searchParams.get('plate');
 
   useEffect(() => { load(); }, []);
 

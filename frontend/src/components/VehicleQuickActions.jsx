@@ -225,7 +225,12 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               </Button>
 
               {/* Operations/Services */}
-              <Button onClick={() => navigate('/operations')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-orange-50">
+              <Button
+                onClick={() => navigate(`/operations?vehicleId=${vehicle.id}&plate=${encodeURIComponent(vehicle.plateNumber || '')}`)}
+                disabled={loading}
+                variant="outline"
+                className="w-full justify-start hover:bg-orange-50"
+              >
                 <Wrench size={18} className="ml-2" />إدخال العمليات
               </Button>
 

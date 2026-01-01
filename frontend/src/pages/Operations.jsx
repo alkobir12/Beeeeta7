@@ -38,6 +38,9 @@ const Operations = () => {
     try {
       const operationsUrl = vehicleIdFromUrl 
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
+  useEffect(() => { load(); }, []);
+
+
         : `${API_URL}/operations`;
 
       const [accRes, partsRes, servicesRes, opsRes] = await Promise.all([

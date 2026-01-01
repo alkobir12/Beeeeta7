@@ -54,6 +54,18 @@ const Technicians = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">الفنيين</h1>
           <p className="text-gray-500 mt-1">إدارة فريق العمل ومتابعة الأداء</p>
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-gray-500 text-sm">
+            يمكنك إضافة فنيين جدد وإدارتهم من هنا.
+          </p>
+          <button
+            onClick={() => {/* سيتم استبداله لاحقاً بـ Dialog إضافة فني */}}
+            className="apple-button px-4 py-2 text-sm"
+          >
+            + إضافة فني جديد
+          </button>
+        </div>
+
         </div>
 
         {/* Stats */}

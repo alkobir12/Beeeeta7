@@ -134,6 +134,28 @@ const VehicleDetails = () => {
                     <span className="text-gray-500">اللون</span>
                     <span className="font-medium">{vehicle.color || '-'}</span>
                   </div>
+                {/* Registered Services for this vehicle */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Wrench size={16} className="text-orange-500" />
+                    الخدمات المسجّلة لهذه المركبة
+                  </h4>
+                  {(!vehicle.services || vehicle.services.length === 0) ? (
+                    <p className="text-xs text-gray-400">لا توجد خدمات مسجّلة.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {vehicle.services.map((service, i) => (
+                        <span
+                          key={i}
+                          className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
+                        >
+                          {service}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 </div>
               </div>
 

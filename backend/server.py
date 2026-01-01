@@ -517,6 +517,33 @@ async def get_technicians():
     technicians = await db.technicians.find().to_list(1000)
     return [Technician(**t) for t in technicians]
 
+
+@api_router.post("/technicians", response_model=Technician)
+async def create_technician(technician: Technician):
+    """Add a new technician"""
+    if DB_PROVIDER == 'supabase':
+        if not supabase_service.client or supabase_service.mock_mode:
+            raise HTTPException(status_code=500, detail="Supabase client not configured")
+        data = technician.dict()
+        # Let Supabase generate UUID if not provided
+        if not data.get('id'):
+            data.pop('id', None)
+        res = supabase_service.client.table('technicians').insert(data).execute()
+        row = (res.data or [{}])[0]
+        return Technician(**row)
+
+    if DB_PROVIDER == 'memory':
+        rows = _mem_read('technicians')
+        new_t = {**technician.dict(), 'id': str(uuid.uuid4())}
+        rows.append(new_t)
+        _mem_write('technicians', rows)
+        return Technician(**new_t)
+
+    tech_dict = technician.dict()
+    tech_dict['id'] = str(uuid.uuid4())
+    await db.technicians.insert_one(tech_dict)
+    return Technician(**tech_dict)
+
 @api_router.get("/parts", response_model=List[Part])
 async def get_parts(search: str = '', low_stock: bool = False):
     if DB_PROVIDER == 'supabase':

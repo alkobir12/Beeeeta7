@@ -33,9 +33,6 @@ const Operations = () => {
   const searchParams = new URLSearchParams(location.search);
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
-  useEffect(() => { load(); }, []);
-
-
 
   const load = async () => {
     try {

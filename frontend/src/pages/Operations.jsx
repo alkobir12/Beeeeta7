@@ -39,6 +39,9 @@ const Operations = () => {
       const operationsUrl = vehicleIdFromUrl 
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
         : `${API_URL}/operations`;
+  useEffect(() => { load(); }, []);
+
+
 
       const [accRes, partsRes, servicesRes, opsRes] = await Promise.all([
         axios.get(`${API_URL}/business-accounts`),

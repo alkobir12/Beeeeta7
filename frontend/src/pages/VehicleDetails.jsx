@@ -144,6 +144,34 @@ const VehicleDetails = () => {
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <Wrench size={16} className="text-orange-500" />
+                  {/* إمكانية إضافة خدمة جديدة لهذه المركبة */}
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      className="apple-input text-xs flex-1"
+                      placeholder="إضافة خدمة يدوية (مثلاً: توضيب مكينة 1VD)"
+                      value={newService}
+                      onChange={e => setNewService(e.target.value)}
+                    />
+                    <button
+                      className="px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700"
+                      onClick={async () => {
+                        const name = newService.trim();
+                        if (!name) return;
+                        try {
+                          const updatedServices = Array.from(new Set([...(vehicle.services || []), name]));
+                          await vehicleAPI.update(id, { services: updatedServices });
+                          setVehicle({ ...vehicle, services: updatedServices });
+                          setNewService('');
+                        } catch (e) {
+                          console.error(e);
+                          toast({ title: 'خطأ', description: 'فشل في حفظ الخدمة', variant: 'destructive' });
+                        }
+                      }}
+                    >
+                      حفظ الخدمة
+                    </button>
+                  </div>
+
                     الخدمات المسجّلة لهذه المركبة
                   </h4>
                   {(!vehicle.services || vehicle.services.length === 0) ? (

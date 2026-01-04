@@ -231,7 +231,7 @@ const VehicleDetails = () => {
                     try {
                       const formData = new FormData();
                       formData.append('file', file);
-                      formData.append('file_type', 'diagnostic');
+                      formData.append('file_type', fileType);
                       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
                       await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=diagnostic`, { method: 'POST', body: formData });
                       toast({ title: 'تم الرفع', description: file.name });

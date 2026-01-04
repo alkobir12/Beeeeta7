@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -16,6 +17,7 @@ const VehicleDetails = () => {
   const [notes, setNotes] = useState('');
   const [assignedTech, setAssignedTech] = useState('');
   const [vehicleFiles, setVehicleFiles] = useState([]);
+  const [vehicleOperations, setVehicleOperations] = useState([]);
   const [approvals, setApprovals] = useState([]);
 
   useEffect(() => { fetchData(); }, [id]);

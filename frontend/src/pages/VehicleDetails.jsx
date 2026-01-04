@@ -26,11 +26,12 @@ const VehicleDetails = () => {
     try {
       setLoading(true);
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-      const [vehicleRes, techniciansRes, filesRes, approvalsRes] = await Promise.all([
+      const [vehicleRes, techniciansRes, filesRes, approvalsRes, opsRes] = await Promise.all([
         vehicleAPI.getById(id),
         technicianAPI.getAll(),
         fetch(`${API_URL}/vehicles/${id}/files`).then(r => r.json()).catch(() => ({files: []})),
-        fetch(`${API_URL}/approvals?vehicle_id=${id}`).then(r => r.json()).catch(() => [])
+        fetch(`${API_URL}/approvals?vehicle_id=${id}`).then(r => r.json()).catch(() => []),
+        axios.get(`${API_URL}/operations?vehicle_id=${id}`)
       ]);
       setVehicle(vehicleRes.data);
       setTechnicians(techniciansRes.data);

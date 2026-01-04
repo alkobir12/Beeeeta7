@@ -37,6 +37,7 @@ const VehicleDetails = () => {
       setTechnicians(techniciansRes.data);
       setVehicleFiles(filesRes.files || []);
       setApprovals(approvalsRes || []);
+      setVehicleOperations(opsRes.data || []);
       setStatus(vehicleRes.data.status || 'diagnosis');
       setNotes(vehicleRes.data.notes || '');
       setAssignedTech(vehicleRes.data.technicianId || '');

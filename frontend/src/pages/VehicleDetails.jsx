@@ -230,6 +230,11 @@ const VehicleDetails = () => {
                       </div>
                       <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Vehicle Operations Summary */}
             <div className="apple-card p-6">
               <div className="flex items-center justify-between mb-4">
@@ -287,11 +292,6 @@ const VehicleDetails = () => {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-
-                  ))}
                 </div>
               )}
             </div>

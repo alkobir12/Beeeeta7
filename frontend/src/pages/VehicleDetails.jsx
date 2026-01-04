@@ -184,6 +184,21 @@ const VehicleDetails = () => {
                           className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
                         >
                           {service}
+              <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+                <span>نوع المرفق:</span>
+                <select
+                  className="apple-input h-8 text-xs w-40"
+                  value={fileType}
+                  onChange={e => setFileType(e.target.value)}
+                >
+                  <option value="diagnostic">تشخيص</option>
+                  <option value="invoice">فاتورة</option>
+                  <option value="photo">صورة</option>
+                  <option value="video">فيديو</option>
+                  <option value="other">أخرى</option>
+                </select>
+              </div>
+
                         </span>
                       ))}
                     </div>

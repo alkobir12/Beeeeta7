@@ -230,6 +230,67 @@ const VehicleDetails = () => {
                       </div>
                       <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>
                     </div>
+            {/* Vehicle Operations Summary */}
+            <div className="apple-card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 text-blue-600">
+                  <FileText size={20} />
+                  <h3 className="font-bold text-gray-900">سجل الصيانة والعمليات</h3>
+                </div>
+                <span className="text-xs text-gray-500">
+                  عدد الزيارات: {vehicleOperations.length}
+                </span>
+              </div>
+
+              {vehicleOperations.length === 0 ? (
+                <p className="text-sm text-gray-400">لا توجد عمليات مسجّلة لهذه المركبة بعد.</p>
+              ) : (
+                <div className="space-y-3">
+                  {/* آخر عملية (أحدث سجل) */}
+                  <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-blue-700">آخر عملية صيانة</p>
+                      <p className="text-sm font-semibold text-blue-900">
+                        {new Date(vehicleOperations[0].date || vehicleOperations[0].createdAt).toLocaleDateString('ar-SA')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/operations?vehicleId=${id}`)}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      عرض جميع العمليات
+                    </button>
+                  </div>
+
+                  {/* قائمة مختصرة لآخر 3 عمليات */}
+                  <div className="space-y-2">
+                    {vehicleOperations.slice(0, 3).map((op, idx) => (
+                      <div
+                        key={op.id || idx}
+                        className="p-3 rounded-lg border border-gray-100 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                        onClick={() => navigate(`/operations?vehicleId=${id}`)}
+                      >
+                        <div className="text-xs text-gray-600">
+                          <p className="font-medium text-gray-900">
+                            {op.type === 'sale' ? 'عملية بيع / فاتورة' : op.type === 'purchase' ? 'عملية شراء / مصروف' : 'عملية'}
+                          </p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            {op.partnerName || 'غير محدد'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">{Number(op.total || 0).toLocaleString('ar-SA')} ر.س</p>
+                          <p className="text-[11px] text-gray-400">
+                            {op.date ? new Date(op.date).toLocaleDateString('ar-SA') : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
                   ))}
                 </div>
               )}

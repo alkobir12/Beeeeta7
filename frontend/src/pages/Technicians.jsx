@@ -260,6 +260,14 @@ const Technicians = () => {
           </div>
         )}
 
+      </div>
+    
+  );
+};
+
+export default Technicians;
+
+
                 <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-sm font-medium">
                   <CheckCircle size={16} />
                   <span>متاح للعمل</span>

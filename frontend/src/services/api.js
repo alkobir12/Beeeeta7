@@ -86,6 +86,11 @@ const transactionAPI = {
   create: (data) => axios.post(`${API_BASE}/transactions`, data)
 };
 
+const operationsAPI = {
+  list: (params) => axios.get(`${API_BASE}/operations`, { params }),
+  create: (data) => axios.post(`${API_BASE}/operations`, data),
+};
+
 export { 
   authAPI, 
   userAPI, 
@@ -97,7 +102,8 @@ export {
   partAPI, 
   fileAPI, 
   statsAPI, 
-  transactionAPI 
+  transactionAPI,
+  operationsAPI,
 };
 
 export default { 

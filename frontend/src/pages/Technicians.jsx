@@ -10,6 +10,9 @@ const Technicians = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddTech, setShowAddTech] = useState(false);
+  const [newTech, setNewTech] = useState({ name: '', phone: '', specialty: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchTechnicians();
@@ -59,7 +62,7 @@ const Technicians = () => {
             يمكنك إضافة فنيين جدد وإدارتهم من هنا.
           </p>
           <button
-            onClick={() => {/* سيتم استبداله لاحقاً بـ Dialog إضافة فني */}}
+            onClick={() => setShowAddTech(true)}
             className="apple-button px-4 py-2 text-sm"
           >
             + إضافة فني جديد
@@ -167,6 +170,80 @@ const Technicians = () => {
               </div>
 
               {tech.activeJobs === 0 && (
+        {showAddTech && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+              <h2 className="text-lg font-bold text-gray-900 mb-2">إضافة فني جديد</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-gray-700">الاسم</label>
+                  <input
+                    className="apple-input mt-1"
+                    value={newTech.name}
+                    onChange={e => setNewTech({ ...newTech, name: e.target.value })}
+                    placeholder="اسم الفني"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-700">رقم الجوال</label>
+                  <input
+                    className="apple-input mt-1"
+                    value={newTech.phone}
+                    onChange={e => setNewTech({ ...newTech, phone: e.target.value })}
+                    placeholder="05xxxxxxxx"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-700">التخصص</label>
+                  <input
+                    className="apple-input mt-1"
+                    value={newTech.specialty}
+                    onChange={e => setNewTech({ ...newTech, specialty: e.target.value })}
+                    placeholder="ميكانيكا / كهرباء / ..."
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setShowAddTech(false);
+                    setNewTech({ name: '', phone: '', specialty: '' });
+                  }}
+                  disabled={saving}
+                >
+                  إلغاء
+                </button>
+                <button
+                  className="apple-button px-4 py-2 text-sm"
+                  onClick={async () => {
+                    if (!newTech.name.trim()) {
+                      toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
+                      return;
+                    }
+                    try {
+                      setSaving(true);
+                      await technicianAPI.create(newTech);
+                      await fetchTechnicians();
+                      toast({ title: 'تم الحفظ', description: 'تم إضافة الفني بنجاح' });
+                      setShowAddTech(false);
+                      setNewTech({ name: '', phone: '', specialty: '' });
+                    } catch (error) {
+                      console.error('Error creating technician', error);
+                      toast({ title: 'خطأ', description: 'فشل في إضافة الفني', variant: 'destructive' });
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving}
+                >
+                  حفظ
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
                 <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-sm font-medium">
                   <CheckCircle size={16} />
                   <span>متاح للعمل</span>

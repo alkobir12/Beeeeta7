@@ -266,26 +266,3 @@ const Technicians = () => {
 };
 
 export default Technicians;
-
-
-                <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-sm font-medium">
-                  <CheckCircle size={16} />
-                  <span>متاح للعمل</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {filteredTechnicians.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <Wrench className="mx-auto text-gray-300 mb-4" size={48} />
-            <p>لا توجد نتائج</p>
-          </div>
-        )}
-      </div>
-    
-  );
-};
-
-export default Technicians;

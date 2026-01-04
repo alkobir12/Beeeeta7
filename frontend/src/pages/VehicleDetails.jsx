@@ -255,7 +255,7 @@ const VehicleDetails = () => {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">{file.filename}</p>
-                          <p className="text-xs text-gray-500">{new Date(file.uploadedAt).toLocaleDateString('ar-SA')}</p>
+                          <p className="text-xs text-gray-500">{new Date(file.uploadedAt).toLocaleDateString('en-GB')}</p>
                         </div>
                       </div>
                       <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>

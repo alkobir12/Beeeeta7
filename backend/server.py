@@ -458,6 +458,77 @@ async def create_service(service: Service):
         _mem_write('services', rows)
         return service
     await db.services.insert_one(service.dict())
+
+
+@api_router.post("/vehicles/{vehicle_id}/upload-file")
+async def upload_vehicle_file(vehicle_id: str, file: UploadFile = File(...), file_type: str = "diagnostic"):
+    """رفع ملف أو صورة أو فاتورة لمركبة (يُخزَّن في نظام الملفات مع سجل ميتاداتا)."""
+    try:
+        # تحقّق من وجود المركبة في وضع Supabase
+        if DB_PROVIDER == 'supabase':
+            v = supabase_service.vehicles_get(vehicle_id)
+            if not v:
+                raise HTTPException(status_code=404, detail="المركبة غير موجودة")
+
+        # مجلد رفع الملفات العام موجود مسبقًا كـ UPLOAD_DIR
+        vehicle_dir = UPLOAD_DIR / "vehicles" / vehicle_id
+        vehicle_dir.mkdir(parents=True, exist_ok=True)
+
+        # حفظ الملف فعليًا على القرص
+        file_path = vehicle_dir / file.filename
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+
+        # حفظ سجل الملف في تخزين JSON (ذاكرة)
+        rows = _mem_read('vehicle_files')
+        record = {
+            "id": str(uuid.uuid4()),
+            "vehicleId": vehicle_id,
+            "filename": file.filename,
+            "fileType": file_type,
+            "filePath": str(file_path),
+            "uploadedAt": datetime.now(timezone.utc).isoformat(),
+            "uploadedBy": "system",
+        }
+        rows.append(record)
+        _mem_write('vehicle_files', rows)
+        return record
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/vehicles/{vehicle_id}/files")
+async def get_vehicle_files(vehicle_id: str):
+    """إرجاع قائمة ملفات المركبة من تخزين JSON."""
+    try:
+        rows = _mem_read('vehicle_files')
+        files = [r for r in rows if r.get("vehicleId") == vehicle_id]
+        # أحدث الملفات أولاً
+        files.sort(key=lambda x: x.get("uploadedAt") or "", reverse=True)
+        return {"files": files, "count": len(files)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/vehicles/{vehicle_id}/files/{file_id}")
+async def download_vehicle_file(vehicle_id: str, file_id: str):
+    """تنزيل/عرض ملف معيّن لمركبة."""
+    try:
+        rows = _mem_read('vehicle_files')
+        for r in rows:
+            if r.get("id") == file_id and r.get("vehicleId") == vehicle_id:
+                path = Path(r.get("filePath", ""))
+                if not path.exists():
+                    raise HTTPException(status_code=404, detail="الملف غير موجود")
+                return FileResponse(str(path), filename=r.get("filename") or path.name)
+        raise HTTPException(status_code=404, detail="الملف غير موجود")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     return service
 
 @api_router.put("/services/{service_id}", response_model=Service)

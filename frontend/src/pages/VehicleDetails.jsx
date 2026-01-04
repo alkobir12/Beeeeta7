@@ -19,6 +19,8 @@ const VehicleDetails = () => {
   const [vehicleFiles, setVehicleFiles] = useState([]);
   const [vehicleOperations, setVehicleOperations] = useState([]);
   const [approvals, setApprovals] = useState([]);
+  const [newService, setNewService] = useState('');
+  const [fileType, setFileType] = useState('diagnostic');
 
   useEffect(() => { fetchData(); }, [id]);
 

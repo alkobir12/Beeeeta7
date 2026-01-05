@@ -14,7 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import logging
 import httpx
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 import shutil
 import json

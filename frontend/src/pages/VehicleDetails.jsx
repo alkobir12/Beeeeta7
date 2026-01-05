@@ -414,7 +414,7 @@ const VehicleDetails = () => {
                     <div>
                       <p className="text-xs text-blue-700">آخر عملية صيانة</p>
                       <p className="text-sm font-semibold text-blue-900">
-                        {new Date(vehicleOperations[0].date || vehicleOperations[0].createdAt).toLocaleDateString('ar-SA')}
+                        {new Date(vehicleOperations[0].date || vehicleOperations[0].createdAt).toLocaleDateString('en-GB')}
                       </p>
                     </div>
                     <button

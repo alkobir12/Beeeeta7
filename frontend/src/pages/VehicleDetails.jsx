@@ -444,7 +444,7 @@ const VehicleDetails = () => {
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-900">{Number(op.total || 0).toLocaleString('ar-SA')} ر.س</p>
                           <p className="text-[11px] text-gray-400">
-                            {op.date ? new Date(op.date).toLocaleDateString('ar-SA') : ''}
+                            {op.date ? new Date(op.date).toLocaleDateString('en-GB') : ''}
                           </p>
                         </div>
                       </div>

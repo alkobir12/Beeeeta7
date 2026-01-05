@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock } from 'lucide-react';
+import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock, Trash2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
@@ -21,6 +21,7 @@ const VehicleDetails = () => {
   const [approvals, setApprovals] = useState([]);
   const [newService, setNewService] = useState('');
   const [fileType, setFileType] = useState('diagnostic');
+  const [newItem, setNewItem] = useState({ itemType: 'service', name: '', quantity: 1 });
 
   useEffect(() => { fetchData(); }, [id]);
 

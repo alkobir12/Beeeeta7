@@ -171,6 +171,118 @@ const VehicleDetails = () => {
                     >
                       حفظ الخدمة
                     </button>
+                  {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
+                  <div className="mt-4 space-y-3">
+                    <div className="grid grid-cols-12 gap-2 items-end">
+                      <div className="col-span-3">
+                        <label className="text-[11px] text-gray-500 mb-1 block">النوع</label>
+                        <select
+                          className="apple-input h-8 text-xs"
+                          value={newItem.itemType}
+                          onChange={e => setNewItem({ ...newItem, itemType: e.target.value })}
+                        >
+                          <option value="service">خدمة</option>
+                          <option value="part">قطعة غيار</option>
+                        </select>
+                      </div>
+                      <div className="col-span-5">
+                        <label className="text-[11px] text-gray-500 mb-1 block">الاسم</label>
+                        <input
+                          className="apple-input h-8 text-xs"
+                          placeholder="وصف البند (خدمة/قطعة)"
+                          value={newItem.name}
+                          onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-[11px] text-gray-500 mb-1 block">الكمية</label>
+                        <input
+                          type="number"
+                          className="apple-input h-8 text-xs"
+                          value={newItem.quantity}
+                          onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) || 1 })}
+                        />
+                      </div>
+                      <div className="col-span-2 flex justify-end">
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white hover:bg-black"
+                          onClick={async () => {
+                            const name = (newItem.name || '').trim();
+                            if (!name) return;
+                            try {
+                              const existing = vehicle.parts || [];
+                              const item = {
+                                id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                                itemType: newItem.itemType,
+                                name,
+                                quantity: newItem.quantity || 1,
+                                price: 0,
+                              };
+                              const updatedParts = [...existing, item];
+                              await vehicleAPI.update(id, { parts: updatedParts });
+                              setVehicle({ ...vehicle, parts: updatedParts });
+                              setNewItem({ itemType: 'service', name: '', quantity: 1 });
+                            } catch (e) {
+                              console.error(e);
+                              toast({ title: 'خطأ', description: 'فشل في حفظ البند', variant: 'destructive' });
+                            }
+                          }}
+                        >
+                          إضافة بند
+                        </button>
+                      </div>
+                    </div>
+
+                    {vehicle.parts && vehicle.parts.length > 0 && (
+                      <div className="mt-2 border border-gray-100 rounded-lg overflow-hidden">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-50 text-gray-600">
+                            <tr>
+                              <th className="p-2 text-right font-medium">النوع</th>
+                              <th className="p-2 text-right font-medium">الاسم</th>
+                              <th className="p-2 text-right font-medium">الكمية</th>
+                              <th className="p-2 text-right font-medium">السعر (ثابت 0)</th>
+                              <th className="p-2 text-right font-medium">الإجمالي</th>
+                              <th className="p-2"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 bg-white">
+                            {vehicle.parts.map((it, idx) => (
+                              <tr key={it.id || idx}>
+                                <td className="p-2 text-gray-600">
+                                  {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
+                                </td>
+                                <td className="p-2 text-gray-900 font-medium">{it.name}</td>
+                                <td className="p-2 text-gray-600">{it.quantity || 1}</td>
+                                <td className="p-2 text-gray-600">0 ر.س</td>
+                                <td className="p-2 text-gray-900 font-semibold">0 ر.س</td>
+                                <td className="p-2 text-right">
+                                  <button
+                                    type="button"
+                                    className="p-1 rounded-full hover:bg-red-50 text-red-500"
+                                    onClick={async () => {
+                                      try {
+                                        const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
+                                        await vehicleAPI.update(id, { parts: updated });
+                                        setVehicle({ ...vehicle, parts: updated });
+                                      } catch (e) {
+                                        console.error(e);
+                                        toast({ title: 'خطأ', description: 'فشل في حذف البند', variant: 'destructive' });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
                   </div>
 
                     الخدمات المسجّلة لهذه المركبة

@@ -335,23 +335,39 @@ const VehicleDetails = () => {
                   <FileText size={20} />
                   <h3 className="font-bold text-gray-900">الملفات والمرفقات</h3>
                 </div>
-                <label className="cursor-pointer bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                  <Upload size={14} />
-                  <span>رفع ملف</span>
-                  <input type="file" className="hidden" onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    try {
-                      const formData = new FormData();
-                      formData.append('file', file);
-                      formData.append('file_type', fileType);
-                      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-                      await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=${fileType}`, { method: 'POST', body: formData });
-                      toast({ title: 'تم الرفع', description: file.name });
-                      fetchData();
-                    } catch (e) { toast({ title: 'خطأ', variant: 'destructive' }); }
-                  }} />
-                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>نوع المرفق:</span>
+                    <select
+                      className="apple-input h-8 text-xs w-40"
+                      value={fileType}
+                      onChange={e => setFileType(e.target.value)}
+                    >
+                      <option value="diagnostic">تشخيص</option>
+                      <option value="invoice">فاتورة</option>
+                      <option value="photo">صورة</option>
+                      <option value="video">فيديو</option>
+                      <option value="other">أخرى</option>
+                    </select>
+                  </div>
+                  <label className="cursor-pointer bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <Upload size={14} />
+                    <span>رفع ملف</span>
+                    <input type="file" className="hidden" onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('file_type', fileType);
+                        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                        await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=${fileType}`, { method: 'POST', body: formData });
+                        toast({ title: 'تم الرفع', description: file.name });
+                        fetchData();
+                      } catch (e) { toast({ title: 'خطأ', variant: 'destructive' }); }
+                    }} />
+                  </label>
+                </div>
               </div>
               
               {vehicleFiles.length === 0 ? (

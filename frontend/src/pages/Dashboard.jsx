@@ -78,11 +78,11 @@ const Dashboard = () => {
 
   return (
     
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">لوحة التحكم</h1>
+            <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
             <p className="text-gray-500 mt-1">نظرة عامة على حالة الورشة اليوم</p>
           </div>
           <button 

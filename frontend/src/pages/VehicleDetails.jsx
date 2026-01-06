@@ -287,9 +287,6 @@ const VehicleDetails = () => {
                   </div>
 
                   </div>
-
-                    الخدمات المسجّلة لهذه المركبة
-                  </h4>
                   {(!vehicle.services || vehicle.services.length === 0) ? (
                     <p className="text-xs text-gray-400">لا توجد خدمات مسجّلة.</p>
                   ) : (

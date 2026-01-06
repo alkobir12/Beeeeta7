@@ -260,7 +260,7 @@ const VehicleDetails = () => {
                               <th className="p-2 text-right font-medium">النوع</th>
                               <th className="p-2 text-right font-medium">الاسم</th>
                               <th className="p-2 text-right font-medium">الكمية</th>
-                              <th className="p-2 text-right font-medium">السعر (ثابت 0)</th>
+                              <th className="p-2 text-right font-medium">السعر</th>
                               <th className="p-2 text-right font-medium">الإجمالي</th>
                               <th className="p-2"></th>
                             </tr>
@@ -273,8 +273,29 @@ const VehicleDetails = () => {
                                 </td>
                                 <td className="p-2 text-gray-900 font-medium">{it.name}</td>
                                 <td className="p-2 text-gray-600">{it.quantity || 1}</td>
-                                <td className="p-2 text-gray-600">0 ر.س</td>
-                                <td className="p-2 text-gray-900 font-semibold">0 ر.س</td>
+                                <td className="p-2">
+                                  <input
+                                    type="number"
+                                    className="w-20 px-2 py-1 text-xs border border-gray-200 rounded"
+                                    value={it.price || 0}
+                                    onChange={async (e) => {
+                                      const newPrice = Number(e.target.value) || 0;
+                                      const updatedParts = [...(vehicle.parts || [])];
+                                      updatedParts[idx] = { ...updatedParts[idx], price: newPrice };
+                                      try {
+                                        await vehicleAPI.update(id, { parts: updatedParts });
+                                        setVehicle({ ...vehicle, parts: updatedParts });
+                                      } catch (err) {
+                                        console.error(err);
+                                        toast({ title: 'خطأ', description: 'فشل في تحديث السعر', variant: 'destructive' });
+                                      }
+                                    }}
+                                  />
+                                  <span className="text-xs text-gray-500 mr-1">ر.س</span>
+                                </td>
+                                <td className="p-2 text-gray-900 font-semibold">
+                                  {((it.quantity || 1) * (it.price || 0)).toLocaleString('ar-SA')} ر.س
+                                </td>
                                 <td className="p-2 text-right">
                                   <button
                                     type="button"
@@ -283,7 +304,8 @@ const VehicleDetails = () => {
                                       try {
                                         const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
                                         await vehicleAPI.update(id, { parts: updated });
-                                        setVehicle({ ...vehicle, parts: updated });
+                                        await fetchData(); // Refresh all data
+                                        toast({ title: 'تم الحذف', description: 'تم حذف البند بنجاح' });
                                       } catch (e) {
                                         console.error(e);
                                         toast({ title: 'خطأ', description: 'فشل في حذف البند', variant: 'destructive' });

@@ -163,10 +163,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            <div className="bg-slate-50 p-4 rounded-lg">
-              <h3 className="font-bold text-lg text-slate-800 mb-2">{vehicle.plateNumber}</h3>
-              <p className="text-slate-600 text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
-              <p className="text-slate-600 text-sm">{vehicle.customerName}</p>
+            <div className="bg-muted/50 p-4 rounded-lg border border-border">
+              <h3 className="font-bold text-lg text-foreground mb-2">{vehicle.plateNumber}</h3>
+              <p className="text-muted-foreground text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
+              <p className="text-muted-foreground text-sm">{vehicle.customerName}</p>
             </div>
 
             <div className="space-y-3">
@@ -184,7 +184,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                 <CheckCircle size={18} className="ml-2" />تحديث الحالة
               </Button>
             </div>
@@ -193,34 +193,34 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               <Label className="text-base font-semibold">إجراءات سريعة</Label>
 
               {/* Approval Request */}
-              <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-50">
+              <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-500/10 hover:text-green-400">
                 <BadgeCheck size={18} className="ml-2" />طلب اعتماد من العميل
               </Button>
 
               {/* Document Creation */}
-              <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-50">
+              <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-500/10 hover:text-blue-400">
                 <FileText size={18} className="ml-2" />تقرير الإصلاح
               </Button>
 
-              <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-amber-50">
+              <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-amber-500/10 hover:text-amber-400">
                 <FileText size={18} className="ml-2" />تسعير القطع
               </Button>
 
-              <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-purple-50">
+              <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-purple-500/10 hover:text-purple-400">
                 <Printer size={18} className="ml-2" />طباعة كرت استلام (فاتورة)
               </Button>
 
-              <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-emerald-50">
+              <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-emerald-500/10 hover:text-emerald-400">
                 <FileText size={18} className="ml-2" />سند قبض
               </Button>
 
               {/* Operations */}
-              <Button onClick={() => navigate(`/vehicle-details/${vehicle.id}`)} disabled={loading} variant="outline" className="w-full justify-start hover:bg-slate-50">
+              <Button onClick={() => navigate(`/vehicle-details/${vehicle.id}`)} disabled={loading} variant="outline" className="w-full justify-start hover:bg-slate-700/50">
                 <FileText size={18} className="ml-2" />التفاصيل
               </Button>
 
               {/* Parts Management */}
-              <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-50">
+              <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-500/10 hover:text-blue-400">
                 <Package size={18} className="ml-2" />قطع الغيار
               </Button>
 
@@ -229,17 +229,17 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                 onClick={() => navigate(`/operations?vehicleId=${vehicle.id}&plate=${encodeURIComponent(vehicle.plateNumber || '')}`)}
                 disabled={loading}
                 variant="outline"
-                className="w-full justify-start hover:bg-orange-50"
+                className="w-full justify-start hover:bg-orange-500/10 hover:text-orange-400"
               >
                 <Wrench size={18} className="ml-2" />إدخال العمليات
               </Button>
 
               {/* Archive Actions */}
-              <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-50">
+              <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-500/10 hover:text-green-400">
                 <CheckCircle size={18} className="ml-2" />خروج من الأرشيف (تسليم)
               </Button>
 
-              <Button onClick={() => handleStatusUpdate('cancelled')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-gray-50">
+              <Button onClick={() => handleStatusUpdate('cancelled')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-gray-700/50">
                 <X size={18} className="ml-2" />خروج بدون إصلاح
               </Button>
 

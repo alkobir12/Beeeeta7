@@ -105,6 +105,7 @@ function App() {
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
                     <Route path="/diesel-expert" element={<DieselExpertChat />} />
+                    <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                     <Route path="/chat" element={<DieselExpertChat />} />
                   </Routes>
                 </Layout>

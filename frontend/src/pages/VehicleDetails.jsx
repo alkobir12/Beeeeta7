@@ -67,8 +67,7 @@ const VehicleDetails = () => {
   const currentStepIndex = statusSteps.findIndex(s => s.key === status);
 
   return (
-    
-      <div className="max-w-6xl mx-auto pb-20 space-y-6">
+    <div className="max-w-6xl mx-auto pb-20 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 pt-4">
           <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">

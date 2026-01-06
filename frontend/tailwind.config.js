@@ -13,53 +13,53 @@ module.exports = {
                         sm: 'calc(var(--radius) - 4px)'
                 },
                 colors: {
-                        // Emergent.sh Theme Colors - Softer Tones
-                        'emergent-green': '#10b981', // هادئ بدلاً من #00ff88
-                        'emergent-green-dark': '#059669',
-                        'emergent-green-light': '#34d399',
+                        // Emergent.sh Theme Colors - أكثر وضوحاً
+                        'emergent-green': '#22c55e', // أفتح وأوضح
+                        'emergent-green-dark': '#16a34a',
+                        'emergent-green-light': '#4ade80',
                         'emergent-black': '#0a0a0a',
                         'emergent-dark': '#1a1a1a',
-                        'emergent-gray': '#2a2a2a',
+                        'emergent-gray': '#3a3a3a', // أفتح
                         
                         background: '#0a0a0a',
-                        foreground: '#ededed',
+                        foreground: '#f5f5f5', // أبيض أكثر
                         card: {
                                 DEFAULT: '#1a1a1a',
-                                foreground: '#ededed'
+                                foreground: '#f5f5f5'
                         },
                         popover: {
                                 DEFAULT: '#1a1a1a',
-                                foreground: '#ededed'
+                                foreground: '#f5f5f5'
                         },
                         primary: {
-                                DEFAULT: '#10b981', // أخضر هادئ
+                                DEFAULT: '#22c55e', // أخضر أوضح
                                 foreground: '#ffffff'
                         },
                         secondary: {
-                                DEFAULT: '#1f1f1f',
-                                foreground: '#10b981'
+                                DEFAULT: '#2a2a2a', // أفتح
+                                foreground: '#22c55e'
                         },
                         muted: {
-                                DEFAULT: '#262626',
-                                foreground: '#a3a3a3'
+                                DEFAULT: '#3a3a3a', // أفتح
+                                foreground: '#d1d1d1' // أوضح
                         },
                         accent: {
-                                DEFAULT: '#10b981',
+                                DEFAULT: '#22c55e',
                                 foreground: '#ffffff'
                         },
                         destructive: {
                                 DEFAULT: '#ef4444',
-                                foreground: '#ededed'
+                                foreground: '#ffffff'
                         },
-                        border: '#2a2a2a',
-                        input: '#1f1f1f',
-                        ring: '#10b981',
+                        border: '#3a3a3a', // أفتح وأوضح
+                        input: '#2a2a2a', // أفتح
+                        ring: '#22c55e',
                         chart: {
-                                '1': '#10b981',
-                                '2': '#059669',
-                                '3': '#34d399',
-                                '4': '#6ee7b7',
-                                '5': '#a7f3d0'
+                                '1': '#22c55e',
+                                '2': '#16a34a',
+                                '3': '#4ade80',
+                                '4': '#86efac',
+                                '5': '#bbf7d0'
                         }
                 },
                 keyframes: {

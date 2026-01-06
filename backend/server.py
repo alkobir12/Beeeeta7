@@ -47,6 +47,8 @@ from routes_users import router as users_router, set_db as set_db_users
 # Import Gemini Chat Routes
 from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_gemini_chat
 from routes_payroll import router as payroll_router, set_db as set_db_payroll
+# Import Diesel Chat Routes
+from routes_diesel_chat import router as diesel_chat_router
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router

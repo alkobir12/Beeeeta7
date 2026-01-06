@@ -79,6 +79,7 @@ const AnimatedBackground = () => {
       codeCharacters.push(new CodeChar());
     }
 
+    let animationId;
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -112,7 +113,7 @@ const AnimatedBackground = () => {
         }
       }
 
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     }
 
     animate();
@@ -126,6 +127,7 @@ const AnimatedBackground = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
     };
   }, []);
 

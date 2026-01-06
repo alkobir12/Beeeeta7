@@ -57,6 +57,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     { path: '/services', label: t('services.listTitle'), icon: Wrench, enabled: true, permission: 'canManageServices' },
     { path: '/diesel-expert', label: '🔧 ' + t('ai.title'), icon: Bot, enabled: true, permission: 'canManageVehicles' },
+    { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {
       group: true,
       label: t('nav.analytics'),

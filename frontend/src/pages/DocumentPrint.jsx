@@ -269,9 +269,18 @@ const DocumentPrint = () => {
     }
   };
 
+  const printFrameRef = useRef(null);
+
   const printDocument = async () => {
     setLoading(true);
     try {
+      // Validate
+      if (!formData.workshop.name || !formData.customer.name) {
+        alert(isArabic ? 'بيانات الورشة والعميل مطلوبة' : 'Workshop and Customer details are required');
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.post(`${API_URL}/documents/generate`, {
         doc_type: docType,
         workshop: formData.workshop,
@@ -281,18 +290,35 @@ const DocumentPrint = () => {
         settings: formData.settings
       });
 
-      if (response.data.success) {
-        // فتح نافذة طباعة
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(response.data.html);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
+      if (response.data.success && response.data.html) {
+        // Use hidden iframe to print
+        const iframe = printFrameRef.current;
+        if (iframe) {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          doc.open();
+          doc.write(response.data.html);
+          doc.close();
+          // Wait for images/styles to load then print
+          iframe.onload = () => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          };
+          // Fallback if onload doesn't fire immediately (e.g. cached)
+          setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }, 500);
+        } else {
+           // Fallback to window.open if iframe ref is missing
+           const printWindow = window.open('', '_blank');
+           printWindow.document.write(response.data.html);
+           printWindow.document.close();
+           setTimeout(() => printWindow.print(), 500);
+        }
       }
     } catch (error) {
       console.error('Error printing:', error);
+      alert(isArabic ? 'فشل الطباعة' : 'Print failed');
     } finally {
       setLoading(false);
     }

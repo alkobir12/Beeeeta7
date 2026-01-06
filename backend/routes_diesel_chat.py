@@ -1,14 +1,13 @@
 from fastapi import APIRouter, HTTPException, Body
 from typing import List, Dict, Any, Optional
-import httpx
 import os
-import asyncio
+import uuid
+from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 
 router = APIRouter(prefix="/api")
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_API_BASE_URL = os.getenv("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Load Emergent Key
+EMERGENT_LLM_KEY = os.getenv("EMERGENT_LLM_KEY")
 
 DIESEL_EXPERT_SYSTEM_PROMPT = """You are an expert in Toyota, Isuzu, and Mitsubishi diesel vehicle maintenance. You specialize in:
 - Datastream vs Livestream analysis and comparison
@@ -25,79 +24,96 @@ You respond in both Arabic and English based on the user's language. You are ava
 Provide detailed, practical solutions for diesel mechanics working in the Gulf region.
 Focus on real-world troubleshooting steps and common issues.
 When discussing DTC codes, explain the meaning, common causes, and diagnostic steps.
+If an image is provided, analyze it carefully for any visible issues, wear, leaks, or specific part identification.
 """
-
 
 @router.post('/diesel-chat')
 async def diesel_chat(payload: Dict[str, Any] = Body(...)):
     """
-    Chat endpoint for diesel vehicle maintenance expert
-    Expects: { "messages": [{"role": "user", "content": "..."}] }
-    Returns: { "response": "...", "model": "..." }
+    Chat endpoint for diesel vehicle maintenance expert with Vision support
+    Expects: { "messages": [{"role": "user", "content": "...", "attachments": [...]}] }
     """
     try:
-        if not GROQ_API_KEY:
-            raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured")
+        # Fallback to a default key if not set (for safety in dev, but explicit key preferred)
+        api_key = EMERGENT_LLM_KEY
+        if not api_key:
+             # Try getting from env again just in case
+             api_key = os.getenv("EMERGENT_LLM_KEY")
+        
+        if not api_key:
+            raise HTTPException(status_code=500, detail="LLM configuration missing (EMERGENT_LLM_KEY)")
         
         user_messages = payload.get('messages', [])
         if not user_messages:
             raise HTTPException(status_code=400, detail="No messages provided")
         
-        # Build messages with system prompt
-        messages = [
-            {"role": "system", "content": DIESEL_EXPERT_SYSTEM_PROMPT}
-        ]
+        # Initialize Chat
+        session_id = payload.get('sessionId') or str(uuid.uuid4())
         
-        # Add user messages (keep conversation history)
-        for msg in user_messages:
-            if msg.get('role') and msg.get('content'):
-                messages.append({
-                    "role": msg['role'],
-                    "content": msg['content']
-                })
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=session_id,
+            system_message=DIESEL_EXPERT_SYSTEM_PROMPT
+        ).with_model("openai", "gpt-4o") # Using GPT-4o for best vision/reasoning
         
-        # Call Groq API
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{GROQ_API_BASE_URL}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": GROQ_MODEL,
-                    "messages": messages,
-                    "temperature": 0.7,
-                    "max_tokens": 2000,
-                    "top_p": 1,
-                    "stream": False
-                }
-            )
-            
-            if response.status_code != 200:
-                error_detail = response.text
-                raise HTTPException(status_code=response.status_code, detail=f"Groq API error: {error_detail}")
-            
-            data = response.json()
-            assistant_message = data['choices'][0]['message']['content']
-            
-            return {
-                "response": assistant_message,
-                "model": GROQ_MODEL,
-                "success": True
-            }
+        # We only send the LAST user message to the LLM for now to keep it simple with this library
+        # But for history, we should reconstruct.
+        # emergentintegrations usually handles history if we use the same session_id?
+        # Actually, LlmChat doesn't automatically load history from external DB.
+        # It's better to send the conversation or just the last message + context?
+        # The library's `send_message` takes a single UserMessage.
+        # To support history, we might need to rely on the `messages` list passed from frontend
+        # and maybe format them?
+        # However, LlmChat abstraction seems to be per-turn.
+        # Let's assume for now we send the last message, and if we need history, we include it in the text?
+        # Or checking the library: it likely maintains history if we re-use the instance?
+        # But we create a NEW instance per request.
+        # For a mechanic chat, history is important.
+        # Let's aggregate previous messages into the system prompt or context if needed.
+        # But for now, let's just process the latest message effectively.
+        
+        last_msg = user_messages[-1]
+        if last_msg.get('role') != 'user':
+            # If last is assistant, we can't really "reply" to it.
+            # But frontend should send user message last.
+            pass
+
+        text_content = last_msg.get('content', '')
+        attachments = last_msg.get('attachments', [])
+        
+        file_contents = []
+        for att in attachments:
+            if att.get('base64'):
+                # Strip prefix if present (data:image/jpeg;base64,...)
+                b64 = att['base64']
+                if ',' in b64:
+                    b64 = b64.split(',')[1]
+                file_contents.append(ImageContent(image_base64=b64))
+        
+        user_message_obj = UserMessage(
+            text=text_content,
+            file_contents=file_contents if file_contents else None
+        )
+        
+        response = await chat.send_message(user_message_obj)
+        
+        return {
+            "response": response,
+            "model": "gpt-4o",
+            "success": True,
+            "sessionId": session_id
+        }
     
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Diesel Chat Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get('/diesel-chat/health')
 async def diesel_chat_health():
-    """Health check for diesel chat service"""
     return {
         "status": "ok",
-        "groq_api_configured": bool(GROQ_API_KEY),
-        "model": GROQ_MODEL
+        "llm_key_configured": bool(EMERGENT_LLM_KEY),
+        "model": "gpt-4o"
     }

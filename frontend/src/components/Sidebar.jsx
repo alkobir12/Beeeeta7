@@ -157,11 +157,11 @@ const Sidebar = ({ isOpen, onClose }) => {
               <Icon size={18} className={hasActiveChild ? 'text-[#0071E3]' : 'text-gray-500'} />
               <span>{item.label}</span>
             </span>
-            {isCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
+            {isCollapsed ? <ChevronLeft size={14} className={isRTL ? "rotate-180" : ""} /> : <ChevronDown size={14} />}
           </button>
 
           {!isCollapsed && (
-            <div className="mr-9 space-y-1 mt-1">
+            <div className={`mr-9 ${isRTL ? 'mr-9' : 'ml-9'} space-y-1 mt-1`}>
               {item.children.map((child, childIndex) => {
                 if (!child.enabled) return null;
                 const isActive = location.pathname === child.path;
@@ -204,7 +204,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      <aside className={`sidebar-modern ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
+      <aside className={`sidebar-modern ${isOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0071E3] to-[#00C7BE] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -212,7 +212,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="font-bold text-gray-900 text-lg leading-tight">{workshopName}</h2>
-              <p className="text-xs text-gray-500">نظام الورشة</p>
+              <p className="text-xs text-gray-500">{t('common.appName')}</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-gray-500">
@@ -222,7 +222,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <nav className="px-4 pb-4 overflow-y-auto h-[calc(100vh-140px)]">
           <div className="space-y-1">
-            {menuItems.map((item, index) => renderMenuItem(item, index))}
+            {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>
         </nav>
 
@@ -232,7 +232,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-600"
           >
             <LogOut size={18} />
-            <span>تسجيل خروج</span>
+            <span>{t('common.back')} / {t('settings.language')}</span>
           </button>
         </div>
       </aside>

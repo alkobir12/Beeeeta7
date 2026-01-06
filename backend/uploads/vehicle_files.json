@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "0d03b490-ac17-4f6b-b5df-50301d4ff955",
+    "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+    "filename": "image.jpg",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/image.jpg",
+    "uploadedAt": "2026-01-06T09:30:35.587920+00:00",
+    "uploadedBy": "system"
+  },
+  {
+    "id": "cdb9ff32-aa93-4e55-8ca6-244f2c5aff4c",
+    "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+    "filename": "IMG_1089.png",
+    "fileType": "invoice",
+    "filePath": "/app/backend/uploads/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/IMG_1089.png",
+    "uploadedAt": "2026-01-06T09:31:02.303809+00:00",
+    "uploadedBy": "system"
+  }
+]

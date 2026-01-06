@@ -103,6 +103,8 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/quotations" element={<QuotationGenerator />} />
                     <Route path="/print" element={<DocumentPrint />} />
+                    <Route path="/diesel-expert" element={<DieselExpertChat />} />
+                    <Route path="/chat" element={<DieselExpertChat />} />
                   </Routes>
                 </Layout>
               </Protected>

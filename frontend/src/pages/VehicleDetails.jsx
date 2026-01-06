@@ -292,7 +292,7 @@ const VehicleDetails = () => {
                   {(!vehicle.services || vehicle.services.length === 0) ? (
                     <p className="text-xs text-gray-400">لا توجد خدمات مسجّلة.</p>
                   ) : (
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {vehicle.services.map((service, i) => (
                         <span
                           key={i}

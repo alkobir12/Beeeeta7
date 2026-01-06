@@ -105,7 +105,7 @@ const DieselExpertChat = () => {
       <div className="fixed bottom-6 left-6 z-50">
         <button
           onClick={() => setIsMinimized(false)}
-          className="bg-gradient-to-r from-blue-600 via-green-600 to-yellow-700 text-white rounded-full p-3 shadow-2xl hover:scale-105 transition-transform"
+          className="bg-gradient-to-r from-emergent-green via-emergent-green to-emergent-green-dark text-emergent-black rounded-full p-3 shadow-glow-lg hover:scale-105 transition-transform animate-glow-pulse"
         >
           <div className="flex items-center gap-2">
             <img 
@@ -121,10 +121,10 @@ const DieselExpertChat = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden">
-        {/* Header - Very Compact */}
-        <div className="bg-gradient-to-r from-blue-600 via-green-600 to-yellow-700 px-3 py-2 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="bg-gradient-to-br from-emergent-black via-emergent-dark to-emergent-black rounded-2xl shadow-2xl border border-border w-full max-w-2xl h-[600px] flex flex-col overflow-hidden">
+        {/* Header - Emergent Style */}
+        <div className="bg-gradient-to-r from-emergent-green/90 via-emergent-green to-emergent-green/90 px-3 py-2 flex items-center justify-between shadow-glow">
           <div className="flex items-center gap-2">
             <div className="relative">
               <img 
@@ -132,13 +132,13 @@ const DieselExpertChat = () => {
                 alt="Diesel Expert"
                 className="w-8 h-8 rounded-full border-2 border-white"
               />
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-white animate-pulse"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-white rounded-full border border-emergen t-green animate-glow-pulse"></div>
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white leading-tight">
+              <h2 className="text-sm font-bold text-emergent-black leading-tight">
                 {isArabic ? 'خبير الديزل 24/7' : 'Diesel Expert 24/7'}
               </h2>
-              <p className="text-xs text-white/70 leading-tight">
+              <p className="text-xs text-emergent-black/70 leading-tight">
                 {isArabic ? 'تويوتا • إيسوزو • ميتسوبيشي' : 'Toyota • Isuzu • Mitsubishi'}
               </p>
             </div>
@@ -146,14 +146,14 @@ const DieselExpertChat = () => {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsMinimized(true)}
-              className="text-white/80 hover:text-white p-1 rounded transition-colors"
+              className="text-emergent-black/80 hover:text-emergent-black p-1 rounded transition-colors"
               title={isArabic ? 'تصغير' : 'Minimize'}
             >
               <Minimize2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(-1)}
-              className="text-white/80 hover:text-white p-1 rounded transition-colors"
+              className="text-emergent-black/80 hover:text-emergent-black p-1 rounded transition-colors"
               title={isArabic ? 'إغلاق' : 'Close'}
             >
               <X className="w-5 h-5" />
@@ -162,7 +162,7 @@ const DieselExpertChat = () => {
         </div>
 
         {/* Messages - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 bg-gray-900/50">
+        <div className="flex-1 overflow-y-auto px-3 py-3 bg-emergent-black">
           <div className="space-y-2">
             {messages.map((msg, idx) => (
               <div
@@ -173,14 +173,14 @@ const DieselExpertChat = () => {
                   <img 
                     src="https://www.genspark.ai/api/files/s/owCUM0vz" 
                     alt="Expert"
-                    className="w-6 h-6 rounded-full border border-blue-300 flex-shrink-0"
+                    className="w-6 h-6 rounded-full border border-emergent-green flex-shrink-0 shadow-glow-sm"
                   />
                 )}
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
-                      : 'bg-gray-800 text-gray-100 border border-gray-700'
+                      ? 'bg-gradient-to-br from-emergent-green to-emergent-green-dark text-emergent-black shadow-glow'
+                      : 'bg-emergent-dark text-foreground border border-border'
                   }`}
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
@@ -193,11 +193,11 @@ const DieselExpertChat = () => {
                 <img 
                   src="https://www.genspark.ai/api/files/s/owCUM0vz" 
                   alt="Expert"
-                  className="w-6 h-6 rounded-full border border-blue-300"
+                  className="w-6 h-6 rounded-full border border-emergent-green shadow-glow-sm"
                 />
-                <div className="bg-gray-800 rounded-lg px-3 py-2 border border-gray-700">
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="bg-emergent-dark rounded-lg px-3 py-2 border border-border">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin text-emergent-green" />
                     <span className="text-sm">{isArabic ? 'جاري التحليل...' : 'Analyzing...'}</span>
                   </div>
                 </div>
@@ -210,19 +210,19 @@ const DieselExpertChat = () => {
 
         {/* Attachments Preview - Very Compact */}
         {attachments.length > 0 && (
-          <div className="border-t border-gray-700 bg-gray-900/80 px-3 py-1.5">
+          <div className="border-t border-border bg-emergent-dark px-3 py-1.5">
             <div className="flex gap-1.5 flex-wrap">
               {attachments.map((att, idx) => (
-                <div key={idx} className="relative bg-gray-800 rounded p-1.5 border border-gray-700 flex items-center gap-1.5">
+                <div key={idx} className="relative bg-emergent-gray rounded p-1.5 border border-border flex items-center gap-1.5 hover:border-primary transition-colors">
                   {att.type.startsWith('image/') ? (
                     <img src={att.url} alt={att.name} className="w-8 h-8 object-cover rounded" />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-700 rounded flex items-center justify-center">
-                      <Paperclip className="w-4 h-4 text-gray-400" />
+                    <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+                      <Paperclip className="w-4 h-4 text-muted-foreground" />
                     </div>
                   )}
-                  <span className="text-xs text-gray-300 max-w-[80px] truncate">{att.name}</span>
-                  <button onClick={() => removeAttachment(idx)} className="text-red-400 hover:text-red-300">
+                  <span className="text-xs text-foreground max-w-[80px] truncate">{att.name}</span>
+                  <button onClick={() => removeAttachment(idx)} className="text-destructive hover:text-destructive/80">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -232,12 +232,12 @@ const DieselExpertChat = () => {
         )}
 
         {/* Input - Very Compact */}
-        <div className="border-t border-gray-700 bg-gray-900/80 px-3 py-2">
+        <div className="border-t border-border bg-emergent-dark px-3 py-2">
           <div className="flex gap-2 items-center">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800/50 text-gray-300 rounded-lg p-1.5 transition-colors"
+              className="bg-emergent-gray hover:bg-muted disabled:bg-emergent-gray/50 text-foreground rounded-lg p-1.5 transition-colors hover:shadow-glow-sm"
               title={isArabic ? 'إرفاق ملف' : 'Attach file'}
             >
               <Paperclip className="w-4 h-4" />
@@ -256,13 +256,13 @@ const DieselExpertChat = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={isArabic ? 'اكتب سؤالك... (P0087، ضغط وقود)' : 'Ask... (P0087, fuel pressure)'}
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 bg-input border border-border rounded-lg px-3 py-1.5 text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
               disabled={loading}
             />
             <button
               onClick={handleSend}
               disabled={(!input.trim() && attachments.length === 0) || loading}
-              className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-700 disabled:to-gray-800 text-white rounded-lg px-3 py-1.5 transition-all disabled:cursor-not-allowed"
+              className="bg-gradient-to-br from-emergent-green to-emergent-green-dark hover:shadow-glow disabled:from-muted disabled:to-muted text-emergent-black rounded-lg px-3 py-1.5 transition-all disabled:cursor-not-allowed font-medium"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>

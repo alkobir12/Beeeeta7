@@ -116,18 +116,20 @@ const Sidebar = ({ isOpen, onClose }) => {
     navigate('/login');
   };
 
-  const getSession = () => {
+  const [session, setSession] = useState({});
+
+  useEffect(() => {
     try {
-      return JSON.parse(localStorage.getItem('session') || '{}');
+      const s = JSON.parse(localStorage.getItem('session') || '{}');
+      setSession(s);
     } catch (e) {
-      return {};
+      setSession({});
     }
-  };
+  }, []); // Run once on mount
 
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;
 
-    const session = getSession();
     const role = session.role;
     const permissions = session.permissions || {};
 

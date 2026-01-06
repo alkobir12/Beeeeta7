@@ -174,6 +174,8 @@ const VehicleDetails = () => {
                     >
                       حفظ الخدمة
                     </button>
+                  </div>
+
                   {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
                   <div className="mt-4 space-y-3">
                     <div className="grid grid-cols-12 gap-2 items-end">

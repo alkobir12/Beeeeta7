@@ -46,6 +46,7 @@ const DEFAULT_MENU = [
     ]
   },
   { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
+  { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true },
   {
     group: true,
     label: 'المستندات',

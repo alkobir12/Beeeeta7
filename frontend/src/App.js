@@ -32,6 +32,7 @@ import QuotationGenerator from "./pages/QuotationGenerator";
 import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
 import DieselExpertChat from "./pages/DieselExpertChat";
+import DensoDiagnostics from "./pages/DensoDiagnostics";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {

@@ -6,85 +6,95 @@ module.exports = {
     "./public/index.html"
   ],
   theme: {
-  	extend: {
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
-  		colors: {
-  			// GoDaddy Theme Colors
-  			'godaddy-green': '#1bdbac',
-  			'godaddy-green-dark': '#00a87a',
-  			'godaddy-green-light': '#4de8c5',
-  			'godaddy-black': '#111827',
-  			'godaddy-dark': '#1f2937',
-  			'godaddy-gray': '#6b7280',
-  			
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
-  		},
-  		keyframes: {
-  			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
-  			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
-  			}
-  		},
-  		animation: {
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
-  		}
-  	}
+        extend: {
+                borderRadius: {
+                        lg: 'var(--radius)',
+                        md: 'calc(var(--radius) - 2px)',
+                        sm: 'calc(var(--radius) - 4px)'
+                },
+                colors: {
+                        // Emergent.sh Theme Colors
+                        'emergent-green': '#00ff88',
+                        'emergent-green-dark': '#00cc6e',
+                        'emergent-green-light': '#1affa3',
+                        'emergent-black': '#0a0a0a',
+                        'emergent-dark': '#1a1a1a',
+                        'emergent-gray': '#2a2a2a',
+                        
+                        background: '#0a0a0a',
+                        foreground: '#ededed',
+                        card: {
+                                DEFAULT: '#1a1a1a',
+                                foreground: '#ededed'
+                        },
+                        popover: {
+                                DEFAULT: '#1a1a1a',
+                                foreground: '#ededed'
+                        },
+                        primary: {
+                                DEFAULT: '#00ff88',
+                                foreground: '#0a0a0a'
+                        },
+                        secondary: {
+                                DEFAULT: '#1f1f1f',
+                                foreground: '#00ff88'
+                        },
+                        muted: {
+                                DEFAULT: '#262626',
+                                foreground: '#a3a3a3'
+                        },
+                        accent: {
+                                DEFAULT: '#00ff88',
+                                foreground: '#0a0a0a'
+                        },
+                        destructive: {
+                                DEFAULT: '#ff3366',
+                                foreground: '#ededed'
+                        },
+                        border: '#2a2a2a',
+                        input: '#1f1f1f',
+                        ring: '#00ff88',
+                        chart: {
+                                '1': '#00ff88',
+                                '2': '#00cc6e',
+                                '3': '#1affa3',
+                                '4': '#80ffcc',
+                                '5': '#4dffb8'
+                        }
+                },
+                keyframes: {
+                        'accordion-down': {
+                                from: {
+                                        height: '0'
+                                },
+                                to: {
+                                        height: 'var(--radix-accordion-content-height)'
+                                }
+                        },
+                        'accordion-up': {
+                                from: {
+                                        height: 'var(--radix-accordion-content-height)'
+                                },
+                                to: {
+                                        height: '0'
+                                }
+                        },
+                        'glow-pulse': {
+                                '0%, 100%': { boxShadow: '0 0 20px rgba(0, 255, 136, 0.3)' },
+                                '50%': { boxShadow: '0 0 40px rgba(0, 255, 136, 0.6)' },
+                        }
+                },
+                animation: {
+                        'accordion-down': 'accordion-down 0.2s ease-out',
+                        'accordion-up': 'accordion-up 0.2s ease-out',
+                        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+                },
+                boxShadow: {
+                        'glow': '0 0 20px rgba(0, 255, 136, 0.3)',
+                        'glow-lg': '0 0 40px rgba(0, 255, 136, 0.4)',
+                        'glow-sm': '0 0 10px rgba(0, 255, 136, 0.2)',
+                }
+        }
   },
   plugins: [require("tailwindcss-animate")],
 };

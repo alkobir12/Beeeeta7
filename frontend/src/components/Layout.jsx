@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import LanguageToggle from './LanguageToggle';
+import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +39,9 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </main>
+      
+      {/* Diesel Expert Floating Button */}
+      <DieselExpertFloatingButton />
     </div>
   );
 };

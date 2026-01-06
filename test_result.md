@@ -649,10 +649,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Toyota Manual integration tested and verified working"
+    - "VehicleDetails Page Arabic UI Testing"
   stuck_tasks: []
-  test_all: true
-  test_priority: "all_tests_passed"
+  test_all: false
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"

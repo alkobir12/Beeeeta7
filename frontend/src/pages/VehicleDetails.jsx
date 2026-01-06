@@ -21,7 +21,7 @@ const VehicleDetails = () => {
   const [approvals, setApprovals] = useState([]);
   const [newService, setNewService] = useState('');
   const [fileType, setFileType] = useState('diagnostic');
-  const [newItem, setNewItem] = useState({ itemType: 'service', name: '', quantity: 1 });
+  const [newItem, setNewItem] = useState({ itemType: 'service', name: '', quantity: 1, price: 0 });
 
   useEffect(() => { fetchData(); }, [id]);
 

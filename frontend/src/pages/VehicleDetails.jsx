@@ -289,8 +289,9 @@ const VehicleDetails = () => {
                   </div>
 
                   </div>
+                  
                   {(!vehicle.services || vehicle.services.length === 0) ? (
-                    <p className="text-xs text-gray-400">لا توجد خدمات مسجّلة.</p>
+                    <p className="text-xs text-gray-400 mt-2">لا توجد خدمات مسجّلة.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {vehicle.services.map((service, i) => (
@@ -303,8 +304,6 @@ const VehicleDetails = () => {
                       ))}
                     </div>
                   )}
-                </div>
-
                 </div>
               </div>
 

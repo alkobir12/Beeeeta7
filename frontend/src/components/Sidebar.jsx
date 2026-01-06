@@ -116,8 +116,27 @@ const Sidebar = ({ isOpen, onClose }) => {
     navigate('/login');
   };
 
+  const getSession = () => {
+    try {
+      return JSON.parse(localStorage.getItem('session') || '{}');
+    } catch (e) {
+      return {};
+    }
+  };
+
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;
+
+    const session = getSession();
+    const role = session.role;
+    const permissions = session.permissions || {};
+
+    // Admin sees everything
+    if (role !== 'admin') {
+      if (item.permission && !permissions[item.permission]) {
+        return null;
+      }
+    }
 
     if (item.group && item.children) {
       const isCollapsed = collapsedGroups[item.label];

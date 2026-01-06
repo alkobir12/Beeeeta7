@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Users,
@@ -29,65 +30,66 @@ import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
-const DEFAULT_MENU = [
-  { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
-  { path: '/operations', label: 'العمليات', icon: Wrench, enabled: true, permission: 'canManageVehicles' },
-  { path: '/customers', label: 'العملاء', icon: Users, enabled: true, permission: 'canManageCustomers' },
-  { path: '/technicians', label: 'الفنيين', icon: Users, enabled: true, permission: 'canManageUsers' },
-  { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true, permission: 'canManageParts' },
-  {
-    group: true,
-    label: 'الكتالوج والمراجع',
-    icon: BookOpen,
-    enabled: true,
-    permission: 'canManageParts',
-    children: [
-      { path: '/catalog', label: 'الكتالوج الشامل', enabled: true },
-      { path: '/parts', label: 'إدارة المخزون', enabled: true },
-    ]
-  },
-  { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true, permission: 'canManageServices' },
-  { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true, permission: 'canManageVehicles' },
-  {
-    group: true,
-    label: 'المستندات',
-    icon: FileText,
-    enabled: true,
-    permission: 'canManageVehicles',
-    children: [
-      { path: '/print', label: 'طباعة', enabled: true },
-      { path: '/quotations', label: 'عروض الأسعار', enabled: true },
-      { path: '/templates', label: 'القوالب', enabled: true },
-      { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
-    ]
-  },
-  {
-    group: true,
-    label: 'الإدارة',
-    icon: Building2,
-    enabled: true,
-    permission: 'canManageFinance',
-    children: [
-      { path: '/analytics', label: 'التحليلات', enabled: true },
-      { path: '/ceo', label: 'الإدارة العليا', enabled: true },
-      { path: '/payroll', label: 'الرواتب', enabled: true },
-      { path: '/business-accounts', label: 'الحسابات التجارية', enabled: true },
-      { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
-    ]
-  },
-  { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true, permission: 'canManageVehicles' },
-  { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true, permission: 'canManageSettings' },
-  { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true, permission: 'canManageUsers' },
-  { path: '/profile', label: 'ملف الورشة', icon: Building2, enabled: true, permission: 'canManageSettings' },
-  { path: '/settings', label: 'الإعدادات', icon: Settings, enabled: true, permission: 'canManageSettings' },
-];
-
 const Sidebar = ({ isOpen, onClose }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuItems, setMenuItems] = useState(DEFAULT_MENU);
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [workshopName, setWorkshopName] = useState('ورشتي');
+  const [workshopName, setWorkshopName] = useState(t('settings.workshopName'));
+
+  const MENU_ITEMS = [
+    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
+    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: 'canManageVehicles' },
+    { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: 'canManageCustomers' },
+    { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: 'canManageUsers' },
+    { path: '/suppliers', label: t('parts.supplier'), icon: Truck, enabled: true, permission: 'canManageParts' },
+    {
+      group: true,
+      label: t('nav.inventory'),
+      icon: BookOpen,
+      enabled: true,
+      permission: 'canManageParts',
+      children: [
+        { path: '/catalog', label: t('parts.totalParts'), enabled: true },
+        { path: '/parts', label: t('parts.title'), enabled: true },
+      ]
+    },
+    { path: '/services', label: t('services.listTitle'), icon: Wrench, enabled: true, permission: 'canManageServices' },
+    { path: '/diesel-expert', label: '🔧 ' + t('ai.title'), icon: Bot, enabled: true, permission: 'canManageVehicles' },
+    {
+      group: true,
+      label: t('nav.analytics'),
+      icon: FileText,
+      enabled: true,
+      permission: 'canManageVehicles',
+      children: [
+        { path: '/print', label: t('common.print'), enabled: true },
+        { path: '/quotations', label: t('invoice.type.quotation'), enabled: true },
+        { path: '/templates', label: 'القوالب', enabled: true }, // Add translation key if needed
+        { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
+      ]
+    },
+    {
+      group: true,
+      label: t('settings.profile'),
+      icon: Building2,
+      enabled: true,
+      permission: 'canManageFinance',
+      children: [
+        { path: '/analytics', label: t('nav.analytics'), enabled: true },
+        { path: '/ceo', label: t('operations.ceoPanelTitle'), enabled: true },
+        { path: '/payroll', label: 'الرواتب', enabled: true },
+        { path: '/business-accounts', label: 'الحسابات التجارية', enabled: true },
+        { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
+      ]
+    },
+    { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true, permission: 'canManageVehicles' },
+    { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true, permission: 'canManageSettings' },
+    { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true, permission: 'canManageUsers' },
+    { path: '/profile', label: t('settings.profile'), icon: Building2, enabled: true, permission: 'canManageSettings' },
+    { path: '/settings', label: t('nav.settings'), icon: Settings, enabled: true, permission: 'canManageSettings' },
+  ];
 
   const loadSettings = async () => {
     try {

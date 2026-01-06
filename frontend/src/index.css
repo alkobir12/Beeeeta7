@@ -84,13 +84,17 @@
     @apply h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none placeholder:text-muted-foreground;
   }
 
+  .apple-input::placeholder {
+    color: #a3a3a3;
+  }
+
   /* Emergent-style Button */
   .apple-button {
     @apply h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-all duration-200 hover:shadow-glow active:scale-[0.98] disabled:opacity-50;
   }
   
   .apple-button-secondary {
-    @apply h-10 px-4 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium transition-all duration-200 hover:bg-muted active:scale-[0.98];
+    @apply h-10 px-4 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium transition-all duration-200 hover:bg-muted active:scale-[0.98] border border-border;
   }
 
   /* Emergent-style Card */
@@ -100,6 +104,16 @@
   
   .apple-card:hover {
     @apply border-primary/30 shadow-glow-sm;
+  }
+  
+  .apple-card * {
+    color: #ededed !important;
+  }
+  
+  .apple-card h1, .apple-card h2, .apple-card h3, 
+  .apple-card h4, .apple-card h5, .apple-card h6,
+  .apple-card p, .apple-card span, .apple-card div {
+    color: #ededed !important;
   }
   
   /* Sidebar Styles - Emergent Theme */
@@ -148,7 +162,67 @@
   }
 }
 
-/* Custom Scrollbar - Emergent Style */
+/* Override any white/light backgrounds globally */
+input:not([type="checkbox"]):not([type="radio"]) {
+  background-color: #1f1f1f !important;
+  color: #ededed !important;
+  border-color: #2a2a2a !important;
+}
+
+textarea {
+  background-color: #1f1f1f !important;
+  color: #ededed !important;
+  border-color: #2a2a2a !important;
+}
+
+select {
+  background-color: #1f1f1f !important;
+  color: #ededed !important;
+  border-color: #2a2a2a !important;
+}
+
+button:not(.bg-primary):not(.bg-emergent-green) {
+  background-color: #1f1f1f !important;
+  color: #ededed !important;
+  border-color: #2a2a2a !important;
+}
+
+/* Force card backgrounds */
+.bg-white {
+  background-color: #1a1a1a !important;
+}
+
+.text-gray-900 {
+  color: #ededed !important;
+}
+
+.text-gray-800 {
+  color: #ededed !important;
+}
+
+.text-gray-700 {
+  color: #d4d4d4 !important;
+}
+
+.bg-gray-50 {
+  background-color: #1a1a1a !important;
+}
+
+.bg-gray-100 {
+  background-color: #1f1f1f !important;
+}
+
+.bg-gray-200 {
+  background-color: #2a2a2a !important;
+}
+
+.border-gray-200 {
+  border-color: #2a2a2a !important;
+}
+
+.border-gray-300 {
+  border-color: #2a2a2a !important;
+}
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

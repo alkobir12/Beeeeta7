@@ -35,14 +35,25 @@ const DieselExpertChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
-    const newAttachments = files.map(file => ({
-      file,
-      name: file.name,
-      type: file.type,
-      url: URL.createObjectURL(file)
+    
+    const newAttachments = await Promise.all(files.map(async (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({
+            file,
+            name: file.name,
+            type: file.type,
+            url: URL.createObjectURL(file),
+            base64: reader.result
+          });
+        };
+        reader.readAsDataURL(file);
+      });
     }));
+    
     setAttachments([...attachments, ...newAttachments]);
   };
 
@@ -54,22 +65,36 @@ const DieselExpertChat = () => {
   const handleSend = async () => {
     if ((!input.trim() && attachments.length === 0) || loading) return;
 
-    const userMessage = input.trim() || (attachments.length > 0 ? `[${attachments.length} ملف مرفق]` : '');
-    setInput('');
-    
-    let messageContent = userMessage;
+    const textContent = input.trim();
+    // For display in UI, we might want to append attachment info
+    let displayContent = textContent;
     if (attachments.length > 0) {
-      messageContent += `\n\n[المرفقات: ${attachments.map(a => a.name).join(', ')}]`;
+      displayContent += (displayContent ? '\n\n' : '') + `[${isArabic ? 'المرفقات' : 'Attachments'}: ${attachments.map(a => a.name).join(', ')}]`;
     }
-    
-    const newMessages = [...messages, { role: 'user', content: messageContent }];
-    setMessages(newMessages);
+
+    const currentAttachments = [...attachments];
+    setInput('');
     setAttachments([]);
     setLoading(true);
 
+    // Add to local state for display
+    const newMessages = [...messages, { role: 'user', content: displayContent }];
+    setMessages(newMessages);
+
     try {
+      // Prepare payload with explicit attachments
+      const payloadMessages = [...messages, { 
+        role: 'user', 
+        content: textContent || (isArabic ? 'تحليل المرفقات' : 'Analyze attachments'),
+        attachments: currentAttachments.map(a => ({
+          name: a.name,
+          type: a.type,
+          base64: a.base64
+        }))
+      }];
+
       const response = await axios.post(`${API_URL}/diesel-chat`, {
-        messages: newMessages.slice(1)
+        messages: payloadMessages
       });
 
       if (response.data.success) {

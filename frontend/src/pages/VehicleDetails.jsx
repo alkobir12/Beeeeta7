@@ -141,9 +141,9 @@ const VehicleDetails = () => {
                     <span className="font-medium">{vehicle.color || '-'}</span>
                   </div>
                 {/* Registered Services for this vehicle */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Wrench size={16} className="text-orange-500" />
+                <div className="mt-4 pt-4 border-t border-gray-800">
+                  <h4 className="text-sm font-semibold text-gray-100 mb-2 flex items-center gap-2">
+                    <Wrench size={16} className="text-orange-400" />
                     <span>الخدمات المسجّلة لهذه المركبة</span>
                   </h4>
 
@@ -183,7 +183,7 @@ const VehicleDetails = () => {
                   <div className="mt-4 space-y-3">
                     <div className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-2">
-                        <label className="text-[11px] text-gray-500 mb-1 block">النوع</label>
+                        <label className="text-[11px] text-gray-400 mb-1 block">النوع</label>
                         <select
                           className="apple-input h-8 text-xs"
                           value={newItem.itemType}
@@ -194,7 +194,7 @@ const VehicleDetails = () => {
                         </select>
                       </div>
                       <div className="col-span-4">
-                        <label className="text-[11px] text-gray-500 mb-1 block">الاسم</label>
+                        <label className="text-[11px] text-gray-400 mb-1 block">الاسم</label>
                         <input
                           className="apple-input h-8 text-xs"
                           placeholder="وصف البند (خدمة/قطعة)"
@@ -203,7 +203,7 @@ const VehicleDetails = () => {
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="text-[11px] text-gray-500 mb-1 block">الكمية</label>
+                        <label className="text-[11px] text-gray-400 mb-1 block">الكمية</label>
                         <input
                           type="number"
                           className="apple-input h-8 text-xs"
@@ -212,7 +212,7 @@ const VehicleDetails = () => {
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="text-[11px] text-gray-500 mb-1 block">السعر</label>
+                        <label className="text-[11px] text-gray-400 mb-1 block">السعر</label>
                         <input
                           type="number"
                           className="apple-input h-8 text-xs"
@@ -224,7 +224,7 @@ const VehicleDetails = () => {
                       <div className="col-span-2 flex justify-end">
                         <button
                           type="button"
-                          className="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white hover:bg-black"
+                          className="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-white hover:bg-gray-600"
                           onClick={async () => {
                             const name = (newItem.name || '').trim();
                             if (!name) {
@@ -257,9 +257,9 @@ const VehicleDetails = () => {
                     </div>
 
                     {vehicle.parts && vehicle.parts.length > 0 && (
-                      <div className="mt-2 border border-gray-100 rounded-lg overflow-hidden">
+                      <div className="mt-2 border border-gray-800 rounded-lg overflow-hidden">
                         <table className="w-full text-xs">
-                          <thead className="bg-gray-50 text-gray-600">
+                          <thead className="bg-gray-800 text-gray-300">
                             <tr>
                               <th className="p-2 text-right font-medium">النوع</th>
                               <th className="p-2 text-right font-medium">الاسم</th>
@@ -269,18 +269,18 @@ const VehicleDetails = () => {
                               <th className="p-2"></th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100 bg-white">
+                          <tbody className="divide-y divide-gray-800 bg-gray-900/50">
                             {vehicle.parts.map((it, idx) => (
                               <tr key={it.id || idx}>
-                                <td className="p-2 text-gray-600">
+                                <td className="p-2 text-gray-400">
                                   {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
                                 </td>
-                                <td className="p-2 text-gray-900 font-medium">{it.name}</td>
-                                <td className="p-2 text-gray-600">{it.quantity || 1}</td>
+                                <td className="p-2 text-gray-200 font-medium">{it.name}</td>
+                                <td className="p-2 text-gray-400">{it.quantity || 1}</td>
                                 <td className="p-2">
                                   <input
                                     type="number"
-                                    className="w-20 px-2 py-1 text-xs border border-gray-200 rounded"
+                                    className="w-20 px-2 py-1 text-xs border border-gray-700 bg-gray-800 rounded text-white"
                                     value={it.price || 0}
                                     onChange={async (e) => {
                                       const newPrice = Number(e.target.value) || 0;
@@ -297,13 +297,13 @@ const VehicleDetails = () => {
                                   />
                                   <span className="text-xs text-gray-500 mr-1">ر.س</span>
                                 </td>
-                                <td className="p-2 text-gray-900 font-semibold">
+                                <td className="p-2 text-gray-200 font-semibold">
                                   {((it.quantity || 1) * (it.price || 0)).toLocaleString('ar-SA')} ر.س
                                 </td>
                                 <td className="p-2 text-right">
                                   <button
                                     type="button"
-                                    className="p-1 rounded-full hover:bg-red-50 text-red-500"
+                                    className="p-1 rounded-full hover:bg-red-900/20 text-red-500"
                                     onClick={async () => {
                                       try {
                                         const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
@@ -330,13 +330,13 @@ const VehicleDetails = () => {
                   </div>
                   
                   {(!vehicle.services || vehicle.services.length === 0) ? (
-                    <p className="text-xs text-gray-400 mt-2">لا توجد خدمات مسجّلة.</p>
+                    <p className="text-xs text-gray-500 mt-2">لا توجد خدمات مسجّلة.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {vehicle.services.map((service, i) => (
                         <span
                           key={i}
-                          className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
+                          className="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20"
                         >
                           {service}
                         </span>

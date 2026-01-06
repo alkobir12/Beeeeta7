@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://autofix-system-8.preview.emergentagent.com/api"
+BACKEND_URL = "https://autofix-dashboard.preview.emergentagent.com/api"
 
 def log_test(test_name, status, details=""):
     """Log test results"""

@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Use the production backend URL from frontend .env
-BASE_URL = "https://autofix-system-8.preview.emergentagent.com/api"
+BASE_URL = "https://autofix-dashboard.preview.emergentagent.com/api"
 
 def log_test(test_name, status, details=""):
     """Log test results with timestamp"""

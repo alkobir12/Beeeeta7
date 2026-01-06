@@ -13,7 +13,7 @@ from io import StringIO
 import uuid
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://autofix-system-8.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://autofix-dashboard.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 class BackendTester:

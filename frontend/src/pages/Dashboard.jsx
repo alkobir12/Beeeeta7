@@ -6,12 +6,12 @@ import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 
 const STATUS_CONFIG = {
-  diagnosis: { label: 'تشخيص', color: 'text-orange-600 bg-orange-50', iconColor: 'text-orange-500' },
-  waiting_approval: { label: 'بانتظار الموافقة', color: 'text-yellow-600 bg-yellow-50', iconColor: 'text-yellow-500' },
-  in_progress: { label: 'قيد العمل', color: 'text-blue-600 bg-blue-50', iconColor: 'text-blue-500' },
-  quality_check: { label: 'فحص الجودة', color: 'text-purple-600 bg-purple-50', iconColor: 'text-purple-500' },
-  ready: { label: 'جاهز للتسليم', color: 'text-green-600 bg-green-50', iconColor: 'text-green-500' },
-  delivered: { label: 'تم التسليم', color: 'text-gray-600 bg-gray-50', iconColor: 'text-gray-500' }
+  diagnosis: { label: 'تشخيص', color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
+  waiting_approval: { label: 'بانتظار الموافقة', color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
+  in_progress: { label: 'قيد العمل', color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
+  quality_check: { label: 'فحص الجودة', color: 'text-purple-400 bg-purple-500/10 border border-purple-500/20', iconColor: 'text-purple-400' },
+  ready: { label: 'جاهز للتسليم', color: 'text-green-400 bg-green-500/10 border border-green-500/20', iconColor: 'text-green-400' },
+  delivered: { label: 'تم التسليم', color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' }
 };
 
 const Dashboard = () => {

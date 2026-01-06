@@ -646,6 +646,13 @@ const DocumentPrint = () => {
             </div>
           </div>
         )}
+        
+        {/* Hidden Print Frame */}
+        <iframe 
+          ref={printFrameRef} 
+          style={{ position: 'absolute', width: 0, height: 0, border: 0 }} 
+          title="print-frame"
+        />
       </div>
     </Layout>
   );

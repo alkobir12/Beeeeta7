@@ -145,7 +145,10 @@ const VehicleDetails = () => {
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <Wrench size={16} className="text-orange-500" />
-                  {/* إمكانية إضافة خدمة جديدة لهذه المركبة */}
+                    <span>الخدمات المسجّلة لهذه المركبة</span>
+                  </h4>
+
+                  {/* إضافة خدمة نصية بسيطة */}
                   <div className="mt-3 flex items-center gap-2">
                     <input
                       className="apple-input text-xs flex-1"

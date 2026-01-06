@@ -275,8 +275,6 @@ const DieselExpertChat = () => {
 
 export default DieselExpertChat;
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
 const DieselExpertChat = () => {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';

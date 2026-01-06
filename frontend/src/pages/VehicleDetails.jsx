@@ -178,7 +178,7 @@ const VehicleDetails = () => {
                   {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
                   <div className="mt-4 space-y-3">
                     <div className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-3">
+                      <div className="col-span-2">
                         <label className="text-[11px] text-gray-500 mb-1 block">النوع</label>
                         <select
                           className="apple-input h-8 text-xs"
@@ -189,7 +189,7 @@ const VehicleDetails = () => {
                           <option value="part">قطعة غيار</option>
                         </select>
                       </div>
-                      <div className="col-span-5">
+                      <div className="col-span-4">
                         <label className="text-[11px] text-gray-500 mb-1 block">الاسم</label>
                         <input
                           className="apple-input h-8 text-xs"
@@ -207,13 +207,26 @@ const VehicleDetails = () => {
                           onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) || 1 })}
                         />
                       </div>
+                      <div className="col-span-2">
+                        <label className="text-[11px] text-gray-500 mb-1 block">السعر</label>
+                        <input
+                          type="number"
+                          className="apple-input h-8 text-xs"
+                          value={newItem.price}
+                          onChange={e => setNewItem({ ...newItem, price: Number(e.target.value) || 0 })}
+                          placeholder="0"
+                        />
+                      </div>
                       <div className="col-span-2 flex justify-end">
                         <button
                           type="button"
                           className="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white hover:bg-black"
                           onClick={async () => {
                             const name = (newItem.name || '').trim();
-                            if (!name) return;
+                            if (!name) {
+                              toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
+                              return;
+                            }
                             try {
                               const existing = vehicle.parts || [];
                               const item = {
@@ -221,12 +234,13 @@ const VehicleDetails = () => {
                                 itemType: newItem.itemType,
                                 name,
                                 quantity: newItem.quantity || 1,
-                                price: 0,
+                                price: newItem.price || 0,
                               };
                               const updatedParts = [...existing, item];
                               await vehicleAPI.update(id, { parts: updatedParts });
-                              setVehicle({ ...vehicle, parts: updatedParts });
-                              setNewItem({ itemType: 'service', name: '', quantity: 1 });
+                              await fetchData(); // Refresh all data
+                              setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
+                              toast({ title: 'تم الحفظ', description: 'تم إضافة البند بنجاح' });
                             } catch (e) {
                               console.error(e);
                               toast({ title: 'خطأ', description: 'فشل في حفظ البند', variant: 'destructive' });

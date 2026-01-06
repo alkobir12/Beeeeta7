@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_API_BASE_URL = os.getenv("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 DIESEL_EXPERT_SYSTEM_PROMPT = """You are an expert in Toyota, Isuzu, and Mitsubishi diesel vehicle maintenance. You specialize in:
 - Datastream vs Livestream analysis and comparison

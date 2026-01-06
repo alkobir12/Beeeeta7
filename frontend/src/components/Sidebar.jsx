@@ -30,28 +30,30 @@ import axios from 'axios';
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const DEFAULT_MENU = [
-  { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, enabled: true },
-  { path: '/operations', label: 'العمليات', icon: Wrench, enabled: true },
-  { path: '/customers', label: 'العملاء', icon: Users, enabled: true },
-  { path: '/technicians', label: 'الفنيين', icon: Users, enabled: true },
-  { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true },
+  { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
+  { path: '/operations', label: 'العمليات', icon: Wrench, enabled: true, permission: 'canManageVehicles' },
+  { path: '/customers', label: 'العملاء', icon: Users, enabled: true, permission: 'canManageCustomers' },
+  { path: '/technicians', label: 'الفنيين', icon: Users, enabled: true, permission: 'canManageUsers' },
+  { path: '/suppliers', label: 'الموردين', icon: Truck, enabled: true, permission: 'canManageParts' },
   {
     group: true,
     label: 'الكتالوج والمراجع',
     icon: BookOpen,
     enabled: true,
+    permission: 'canManageParts',
     children: [
       { path: '/catalog', label: 'الكتالوج الشامل', enabled: true },
       { path: '/parts', label: 'إدارة المخزون', enabled: true },
     ]
   },
-  { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true },
-  { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true },
+  { path: '/services', label: 'الخدمات', icon: Wrench, enabled: true, permission: 'canManageServices' },
+  { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true, permission: 'canManageVehicles' },
   {
     group: true,
     label: 'المستندات',
     icon: FileText,
     enabled: true,
+    permission: 'canManageVehicles',
     children: [
       { path: '/print', label: 'طباعة', enabled: true },
       { path: '/quotations', label: 'عروض الأسعار', enabled: true },
@@ -64,6 +66,7 @@ const DEFAULT_MENU = [
     label: 'الإدارة',
     icon: Building2,
     enabled: true,
+    permission: 'canManageFinance',
     children: [
       { path: '/analytics', label: 'التحليلات', enabled: true },
       { path: '/ceo', label: 'الإدارة العليا', enabled: true },
@@ -72,11 +75,11 @@ const DEFAULT_MENU = [
       { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
     ]
   },
-  { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true },
-  { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true },
-  { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true },
-  { path: '/profile', label: 'ملف الورشة', icon: Building2, enabled: true },
-  { path: '/settings', label: 'الإعدادات', icon: Settings, enabled: true },
+  { path: '/archive', label: 'الأرشيف', icon: Archive, enabled: true, permission: 'canManageVehicles' },
+  { path: '/import', label: 'استيراد البيانات', icon: Upload, enabled: true, permission: 'canManageSettings' },
+  { path: '/users', label: 'المستخدمين', icon: UserCircle, enabled: true, permission: 'canManageUsers' },
+  { path: '/profile', label: 'ملف الورشة', icon: Building2, enabled: true, permission: 'canManageSettings' },
+  { path: '/settings', label: 'الإعدادات', icon: Settings, enabled: true, permission: 'canManageSettings' },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {

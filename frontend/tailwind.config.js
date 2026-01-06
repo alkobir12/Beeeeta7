@@ -13,39 +13,40 @@ module.exports = {
                         sm: 'calc(var(--radius) - 4px)'
                 },
                 colors: {
-                        // Emergent.sh Theme Colors - مستخرجة من الموقع الأصلي
-                        'emergent-green': '#00C846',
-                        'emergent-green-dark': '#00A038',
-                        'emergent-green-light': '#00E050',
-                        'emergent-black': '#1E1E1E',
-                        'emergent-dark': '#2D2D2D',
-                        'emergent-darker': '#282828',
+                        // Emergent.sh الألوان الدقيقة المستخرجة من الموقع الأصلي
+                        'emergent-cyan': '#3CC3B6', // التركواز الأساسي
+                        'emergent-cyan-dark': '#2FA89D',
+                        'emergent-cyan-light': '#5FD4C9',
+                        'emergent-black': '#121314', // الخلفية الرئيسية
+                        'emergent-dark': '#2D2D2D', // Cards
+                        'emergent-darker': '#1E1E1E',
                         'emergent-gray': '#323232',
+                        'emergent-text': '#919597', // النص الثانوي
                         
-                        background: '#1E1E1E',
-                        foreground: '#F0F0F0',
+                        background: '#121314',
+                        foreground: '#F5F5F5',
                         card: {
                                 DEFAULT: '#2D2D2D',
-                                foreground: '#F0F0F0'
+                                foreground: '#F5F5F5'
                         },
                         popover: {
                                 DEFAULT: '#2D2D2D',
-                                foreground: '#F0F0F0'
+                                foreground: '#F5F5F5'
                         },
                         primary: {
-                                DEFAULT: '#00C846',
+                                DEFAULT: '#3CC3B6',
                                 foreground: '#ffffff'
                         },
                         secondary: {
-                                DEFAULT: '#282828',
-                                foreground: '#C8C8C8'
+                                DEFAULT: '#1E1E1E',
+                                foreground: '#919597'
                         },
                         muted: {
                                 DEFAULT: '#323232',
-                                foreground: '#B4B4B4'
+                                foreground: '#919597'
                         },
                         accent: {
-                                DEFAULT: '#00C846',
+                                DEFAULT: '#3CC3B6',
                                 foreground: '#ffffff'
                         },
                         destructive: {
@@ -53,14 +54,14 @@ module.exports = {
                                 foreground: '#ffffff'
                         },
                         border: '#323232',
-                        input: '#282828',
-                        ring: '#00C846',
+                        input: '#1E1E1E',
+                        ring: '#3CC3B6',
                         chart: {
-                                '1': '#00C846',
-                                '2': '#00A038',
-                                '3': '#00E050',
-                                '4': '#66E687',
-                                '5': '#99F0AB'
+                                '1': '#3CC3B6',
+                                '2': '#2FA89D',
+                                '3': '#5FD4C9',
+                                '4': '#8BE0D8',
+                                '5': '#B7ECE7'
                         }
                 },
                 keyframes: {
@@ -73,8 +74,8 @@ module.exports = {
                                 to: { height: '0' }
                         },
                         'glow-pulse': {
-                                '0%, 100%': { boxShadow: '0 0 15px rgba(0, 200, 70, 0.2)' },
-                                '50%': { boxShadow: '0 0 25px rgba(0, 200, 70, 0.4)' },
+                                '0%, 100%': { boxShadow: '0 0 15px rgba(60, 195, 182, 0.3)' },
+                                '50%': { boxShadow: '0 0 25px rgba(60, 195, 182, 0.5)' },
                         }
                 },
                 animation: {
@@ -83,9 +84,9 @@ module.exports = {
                         'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
                 },
                 boxShadow: {
-                        'glow': '0 0 15px rgba(0, 200, 70, 0.2)',
-                        'glow-lg': '0 0 25px rgba(0, 200, 70, 0.3)',
-                        'glow-sm': '0 0 10px rgba(0, 200, 70, 0.15)',
+                        'glow': '0 0 15px rgba(60, 195, 182, 0.3)',
+                        'glow-lg': '0 0 25px rgba(60, 195, 182, 0.4)',
+                        'glow-sm': '0 0 10px rgba(60, 195, 182, 0.2)',
                 }
         }
   },

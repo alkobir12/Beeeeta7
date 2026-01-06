@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="layout-main" style={{ backgroundColor: '#1E1E1E', minHeight: '100vh', position: 'relative' }}>
+    <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
       {/* Animated Background */}
       <AnimatedBackground />
       

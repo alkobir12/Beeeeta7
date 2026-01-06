@@ -1,8 +1,8 @@
 /* Emergent.sh Global App Styles */
 .App {
   min-height: 100vh;
-  background-color: #1E1E1E !important;
-  color: #F0F0F0 !important;
+  background-color: #121314 !important;
+  color: #F5F5F5 !important;
 }
 
 /* Global Layout */
@@ -10,19 +10,19 @@ body, html, #root {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #1E1E1E !important;
-  color: #F0F0F0 !important;
+  background-color: #121314 !important;
+  color: #F5F5F5 !important;
 }
 
 /* Override any white backgrounds */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #323232 #282828;
+  scrollbar-color: #323232 #1E1E1E;
 }
 
 /* Emergent Theme - Dark Mode Always */
 .layout-main {
-  background-color: #1E1E1E !important;
+  background-color: #121314 !important;
   min-height: 100vh;
 }
 
@@ -34,13 +34,13 @@ body, html, #root {
 .apple-card {
   background-color: #2D2D2D !important;
   border-color: #323232 !important;
-  color: #C8C8C8 !important;
+  color: #919597 !important;
 }
 
 /* Ensure all pages have dark background */
 .page-container,
 .dashboard-container,
 .vehicle-container {
-  background-color: #1E1E1E !important;
+  background-color: #121314 !important;
   min-height: 100vh;
 }

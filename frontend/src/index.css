@@ -71,19 +71,19 @@
 
   body {
     @apply bg-background text-foreground;
-    background-color: #1E1E1E;
-    font-size: 1rem; /* 18px */
+    background-color: #121314;
+    font-size: 1rem;
     line-height: 1.6;
   }
   
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
-    font-weight: 600; /* medium-bold */
-    color: #F0F0F0 !important;
+    font-weight: 600;
+    color: #F5F5F5 !important;
   }
   
   p, span, div, label, a {
-    color: #C8C8C8 !important; /* Body text */
+    color: #919597 !important;
   }
 }
 
@@ -180,8 +180,8 @@
 
 /* Override any white/light backgrounds globally */
 input:not([type="checkbox"]):not([type="radio"]) {
-  background-color: #282828 !important;
-  color: #F0F0F0 !important;
+  background-color: #1E1E1E !important;
+  color: #F5F5F5 !important;
   border-color: #323232 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
@@ -260,26 +260,26 @@ button:not(.bg-primary):not(.bg-emergent-green) {
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
-/* Emergent Green Accents - Softer */
+/* Emergent Cyan Accents - Softer */
 .text-emergent {
-  color: #10b981;
+  color: #3CC3B6;
 }
 
 .bg-emergent {
-  background-color: #10b981;
+  background-color: #3CC3B6;
 }
 
 .border-emergent {
-  border-color: #10b981;
+  border-color: #3CC3B6;
 }
 
-/* Custom Glow Text - Softer */
+/* Custom Glow Text - Cyan */
 .glow-text {
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  text-shadow: 0 0 10px rgba(60, 195, 182, 0.5);
 }
 
-/* Custom Glow Border - Softer */
+/* Custom Glow Border - Cyan */
 .glow-border {
-  border-color: #10b981;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  border-color: #3CC3B6;
+  box-shadow: 0 0 15px rgba(60, 195, 182, 0.3);
 }

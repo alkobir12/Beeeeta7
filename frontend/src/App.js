@@ -66,7 +66,7 @@ const Protected = ({ children }) => {
 function App() {
   return (
     <ThemeProvider>
-      <div className="App" style={{ backgroundColor: '#1E1E1E', minHeight: '100vh' }}>
+      <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />

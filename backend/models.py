@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime
 import uuid
 
@@ -32,7 +32,7 @@ class Vehicle(VehicleBase):
     completionDate: Optional[datetime] = None
     trackingLink: str
     images: List[str] = []  # URLs للصور
-    parts: List[str] = []  # IDs للقطع المستخدمة
+    parts: List[Any] = []  # بنود مرتبطة (خدمات/قطع) أو IDs
     
     class Config:
         json_encoders = {
@@ -46,7 +46,8 @@ class VehicleUpdate(BaseModel):
     estimatedCompletion: Optional[datetime] = None
     completionDate: Optional[datetime] = None
     images: Optional[List[str]] = None
-    parts: Optional[List[str]] = None
+    services: Optional[List[str]] = None
+    parts: Optional[List[Any]] = None
 
 # ============ Customer Models ============
 class CustomerBase(BaseModel):

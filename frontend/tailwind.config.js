@@ -13,47 +13,48 @@ module.exports = {
                         sm: 'calc(var(--radius) - 4px)'
                 },
                 colors: {
-                        // Emergent.sh Theme Colors - أكثر وضوحاً
-                        'emergent-green': '#22c55e', // أفتح وأوضح
-                        'emergent-green-dark': '#16a34a',
-                        'emergent-green-light': '#4ade80',
-                        'emergent-black': '#0a0a0a',
-                        'emergent-dark': '#1a1a1a',
-                        'emergent-gray': '#3a3a3a', // أفتح
+                        // Emergent.sh Theme Colors - مستخرجة من الموقع الأصلي
+                        'emergent-green': '#00C846',
+                        'emergent-green-dark': '#00A038',
+                        'emergent-green-light': '#00E050',
+                        'emergent-black': '#1E1E1E',
+                        'emergent-dark': '#2D2D2D',
+                        'emergent-darker': '#282828',
+                        'emergent-gray': '#323232',
                         
-                        background: '#0a0a0a',
-                        foreground: '#f5f5f5', // أبيض أكثر
+                        background: '#1E1E1E',
+                        foreground: '#F0F0F0',
                         card: {
-                                DEFAULT: '#1a1a1a',
-                                foreground: '#f5f5f5'
+                                DEFAULT: '#2D2D2D',
+                                foreground: '#F0F0F0'
                         },
                         popover: {
-                                DEFAULT: '#1a1a1a',
-                                foreground: '#f5f5f5'
+                                DEFAULT: '#2D2D2D',
+                                foreground: '#F0F0F0'
                         },
                         primary: {
-                                DEFAULT: '#22c55e', // أخضر أوضح
+                                DEFAULT: '#00C846',
                                 foreground: '#ffffff'
                         },
                         secondary: {
-                                DEFAULT: '#2a2a2a', // أفتح
-                                foreground: '#22c55e'
+                                DEFAULT: '#282828',
+                                foreground: '#C8C8C8'
                         },
                         muted: {
-                                DEFAULT: '#3a3a3a', // أفتح
-                                foreground: '#d1d1d1' // أوضح
+                                DEFAULT: '#323232',
+                                foreground: '#B4B4B4'
                         },
                         accent: {
-                                DEFAULT: '#22c55e',
+                                DEFAULT: '#00C846',
                                 foreground: '#ffffff'
                         },
                         destructive: {
                                 DEFAULT: '#ef4444',
                                 foreground: '#ffffff'
                         },
-                        border: '#3a3a3a', // أفتح وأوضح
-                        input: '#2a2a2a', // أفتح
-                        ring: '#22c55e',
+                        border: '#323232',
+                        input: '#282828',
+                        ring: '#00C846',
                         chart: {
                                 '1': '#00C846',
                                 '2': '#00A038',
@@ -64,24 +65,16 @@ module.exports = {
                 },
                 keyframes: {
                         'accordion-down': {
-                                from: {
-                                        height: '0'
-                                },
-                                to: {
-                                        height: 'var(--radix-accordion-content-height)'
-                                }
+                                from: { height: '0' },
+                                to: { height: 'var(--radix-accordion-content-height)' }
                         },
                         'accordion-up': {
-                                from: {
-                                        height: 'var(--radix-accordion-content-height)'
-                                },
-                                to: {
-                                        height: '0'
-                                }
+                                from: { height: 'var(--radix-accordion-content-height)' },
+                                to: { height: '0' }
                         },
                         'glow-pulse': {
-                                '0%, 100%': { boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' },
-                                '50%': { boxShadow: '0 0 25px rgba(16, 185, 129, 0.4)' },
+                                '0%, 100%': { boxShadow: '0 0 15px rgba(0, 200, 70, 0.2)' },
+                                '50%': { boxShadow: '0 0 25px rgba(0, 200, 70, 0.4)' },
                         }
                 },
                 animation: {
@@ -90,9 +83,9 @@ module.exports = {
                         'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
                 },
                 boxShadow: {
-                        'glow': '0 0 15px rgba(16, 185, 129, 0.2)',
-                        'glow-lg': '0 0 25px rgba(16, 185, 129, 0.3)',
-                        'glow-sm': '0 0 10px rgba(16, 185, 129, 0.15)',
+                        'glow': '0 0 15px rgba(0, 200, 70, 0.2)',
+                        'glow-lg': '0 0 25px rgba(0, 200, 70, 0.3)',
+                        'glow-sm': '0 0 10px rgba(0, 200, 70, 0.15)',
                 }
         }
   },

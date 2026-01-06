@@ -120,7 +120,7 @@ const Customers = () => {
               <div key={customer.id} className="apple-card p-5 hover:shadow-md transition-all group">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-lg group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
                       {customer.name[0]}
                     </div>
                     <div>

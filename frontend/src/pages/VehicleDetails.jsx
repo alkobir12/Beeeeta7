@@ -159,12 +159,16 @@ const VehicleDetails = () => {
                       className="px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700"
                       onClick={async () => {
                         const name = newService.trim();
-                        if (!name) return;
+                        if (!name) {
+                          toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
+                          return;
+                        }
                         try {
                           const updatedServices = Array.from(new Set([...(vehicle.services || []), name]));
                           await vehicleAPI.update(id, { services: updatedServices });
-                          setVehicle({ ...vehicle, services: updatedServices });
+                          await fetchData(); // Refresh all data
                           setNewService('');
+                          toast({ title: 'تم الحفظ', description: 'تم إضافة الخدمة بنجاح' });
                         } catch (e) {
                           console.error(e);
                           toast({ title: 'خطأ', description: 'فشل في حفظ الخدمة', variant: 'destructive' });

@@ -29,7 +29,7 @@
     "permissions": {
       "canViewDashboard": true,
       "canManageVehicles": true,
-      "canManageCustomers": false,
+      "canManageCustomers": true,
       "canManageParts": false,
       "canManageServices": true,
       "canViewReports": false,

@@ -14,14 +14,13 @@ const DieselExpertFloatingButton = () => {
   return (
     <button
       onClick={() => navigate('/diesel-expert')}
-      className="fixed bottom-6 left-6 z-50 group"
+      className="fixed bottom-6 left-6 z-50 group bg-gradient-to-r from-emergent-green via-emergent-green-light to-emergent-green shadow-glow-lg hover:shadow-glow-lg hover:scale-105 transition-all duration-300 rounded-full"
+      title="خبير الديزل 24/7"
       style={{ 
-        background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 50%, #92400e 100%)',
         animation: 'float 3s ease-in-out infinite'
       }}
-      title="خبير الديزل 24/7"
     >
-      <div className="flex items-center gap-3 px-4 py-3 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
+      <div className="flex items-center gap-3 px-4 py-3 rounded-full">
         {/* Avatar with online indicator */}
         <div className="relative">
           <img 
@@ -29,13 +28,13 @@ const DieselExpertFloatingButton = () => {
             alt="Diesel Expert"
             className="w-10 h-10 rounded-full border-2 border-white shadow-lg"
           />
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-md">
-            <div className="w-full h-full bg-green-400 rounded-full animate-ping opacity-75"></div>
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-emergent-green shadow-md">
+            <div className="w-full h-full bg-white rounded-full animate-ping opacity-75"></div>
           </div>
         </div>
         
         {/* Text */}
-        <div className="flex items-center gap-2 text-white font-bold">
+        <div className="flex items-center gap-2 text-emergent-black font-bold">
           <Wrench className="w-5 h-5" />
           <span className="hidden sm:inline">خبير الديزل 24/7</span>
         </div>

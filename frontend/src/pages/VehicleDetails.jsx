@@ -514,6 +514,7 @@ const VehicleDetails = () => {
             </div>
           </div>
         </div>
+      </div>
   );
 };
 

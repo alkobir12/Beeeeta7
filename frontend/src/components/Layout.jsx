@@ -3,12 +3,16 @@ import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import LanguageToggle from './LanguageToggle';
 import DieselExpertFloatingButton from './DieselExpertFloatingButton';
+import AnimatedBackground from './AnimatedBackground';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="layout-main" style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
+    <div className="layout-main" style={{ backgroundColor: '#0a0a0a', minHeight: '100vh', position: 'relative' }}>
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
@@ -16,7 +20,7 @@ const Layout = ({ children }) => {
       />
       
       {/* Main Content */}
-      <main className="content-area" style={{ backgroundColor: '#0a0a0a' }}>
+      <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 1 }}>
         {/* Top Left Language Toggle (Desktop/Tablet) */}
         <div className="hidden lg:flex justify-end px-4 py-2">
            <LanguageToggle />

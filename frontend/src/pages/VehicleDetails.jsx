@@ -399,12 +399,22 @@ const VehicleDetails = () => {
                       try {
                         const formData = new FormData();
                         formData.append('file', file);
-                        formData.append('file_type', fileType);
                         const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-                        await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=${fileType}`, { method: 'POST', body: formData });
-                        toast({ title: 'تم الرفع', description: file.name });
-                        fetchData();
-                      } catch (e) { toast({ title: 'خطأ', variant: 'destructive' }); }
+                        const response = await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=${fileType}`, { 
+                          method: 'POST', 
+                          body: formData 
+                        });
+                        if (response.ok) {
+                          toast({ title: 'تم الرفع', description: `تم رفع ${file.name} بنجاح` });
+                          await fetchData();
+                        } else {
+                          throw new Error('فشل رفع الملف');
+                        }
+                      } catch (err) { 
+                        console.error('Upload error:', err);
+                        toast({ title: 'خطأ', description: 'فشل في رفع الملف', variant: 'destructive' }); 
+                      }
+                      e.target.value = ''; // Reset input
                     }} />
                   </label>
                 </div>

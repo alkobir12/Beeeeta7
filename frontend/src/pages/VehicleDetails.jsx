@@ -428,15 +428,20 @@ const VehicleDetails = () => {
                 <div className="space-y-2">
                   {vehicleFiles.map((file, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="flex items-center gap-3">
+                      <a 
+                        href={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1"
+                      >
                         <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-gray-400 border border-gray-100">
                           <FileText size={16} />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{file.filename}</p>
+                          <p className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">{file.filename}</p>
                           <p className="text-xs text-gray-500">{new Date(file.uploadedAt).toLocaleDateString('en-GB')}</p>
                         </div>
-                      </div>
+                      </a>
                       <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>
                     </div>
                   ))}

@@ -36,7 +36,7 @@ const AnimatedBackground = () => {
       }
 
       draw() {
-        ctx.fillStyle = `rgba(34, 197, 94, ${this.opacity})`; // أخضر أوضح
+        ctx.fillStyle = `rgba(0, 200, 70, ${this.opacity})`; // الأخضر الدقيق من emergent.sh
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();

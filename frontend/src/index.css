@@ -71,19 +71,19 @@
 
   body {
     @apply bg-background text-foreground;
-    background-color: #0a0a0a;
+    background-color: #1E1E1E;
     font-size: 1rem; /* 18px */
-    line-height: 1.6; /* زيادة المسافة بين السطور */
+    line-height: 1.6;
   }
   
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
-    font-weight: 700; /* أكثر سمكاً */
-    color: #ffffff !important; /* أبيض نقي */
+    font-weight: 600; /* medium-bold */
+    color: #F0F0F0 !important;
   }
   
   p, span, div, label, a {
-    color: #e5e5e5 !important; /* أفتح */
+    color: #C8C8C8 !important; /* Body text */
   }
 }
 
@@ -116,21 +116,20 @@
   }
   
   .apple-card * {
-    color: #f5f5f5 !important;
+    color: #C8C8C8 !important; /* Body text color */
     font-size: 16px;
     font-weight: 500;
   }
   
   .apple-card h1, .apple-card h2, .apple-card h3, 
-  .apple-card h4, .apple-card h5, .apple-card h6,
-  .apple-card p, .apple-card span, .apple-card div {
-    color: #f5f5f5 !important;
+  .apple-card h4, .apple-card h5, .apple-card h6 {
+    color: #F0F0F0 !important; /* Title color */
   }
   
-  .apple-card h1 { font-size: 32px !important; font-weight: 700 !important; }
-  .apple-card h2 { font-size: 28px !important; font-weight: 700 !important; }
-  .apple-card h3 { font-size: 24px !important; font-weight: 600 !important; }
-  .apple-card h4 { font-size: 20px !important; font-weight: 600 !important; }
+  .apple-card h1 { font-size: 28px !important; font-weight: 600 !important; }
+  .apple-card h2 { font-size: 24px !important; font-weight: 600 !important; }
+  .apple-card h3 { font-size: 20px !important; font-weight: 600 !important; }
+  .apple-card h4 { font-size: 18px !important; font-weight: 600 !important; }
   .apple-card p { font-size: 16px !important; font-weight: 500 !important; }
   
   /* Sidebar Styles - Emergent Theme */
@@ -181,62 +180,66 @@
 
 /* Override any white/light backgrounds globally */
 input:not([type="checkbox"]):not([type="radio"]) {
-  background-color: #2a2a2a !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
+  background-color: #282828 !important;
+  color: #F0F0F0 !important;
+  border-color: #323232 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
 }
 
 textarea {
-  background-color: #2a2a2a !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
+  background-color: #282828 !important;
+  color: #F0F0F0 !important;
+  border-color: #323232 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
 }
 
 select {
-  background-color: #2a2a2a !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
+  background-color: #282828 !important;
+  color: #F0F0F0 !important;
+  border-color: #323232 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
 }
 
 button:not(.bg-primary):not(.bg-emergent-green) {
-  background-color: #2a2a2a !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
+  background-color: #282828 !important;
+  color: #C8C8C8 !important;
+  border-color: #323232 !important;
   font-size: 16px !important;
   font-weight: 600 !important;
 }
 
 /* Force card backgrounds */
 .bg-white {
-  background-color: #1a1a1a !important;
+  background-color: #2D2D2D !important;
 }
 
 .text-gray-900, .text-gray-800, .text-gray-700 {
-  color: #f5f5f5 !important;
+  color: #F0F0F0 !important;
   font-weight: 600 !important;
 }
 
 .text-gray-600, .text-gray-500 {
-  color: #d1d1d1 !important;
+  color: #C8C8C8 !important;
   font-weight: 500 !important;
 }
 
+.text-gray-400 {
+  color: #B4B4B4 !important;
+}
+
 .bg-gray-50, .bg-gray-100 {
-  background-color: #2a2a2a !important;
+  background-color: #282828 !important;
 }
 
 .bg-gray-200 {
-  background-color: #3a3a3a !important;
+  background-color: #323232 !important;
 }
 
 .border-gray-200, .border-gray-300 {
-  border-color: #3a3a3a !important;
+  border-color: #323232 !important;
 }
 ::-webkit-scrollbar {
   width: 8px;

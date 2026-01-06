@@ -242,15 +242,26 @@ button:not(.bg-primary):not(.bg-emergent-green) {
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
-/* Emergent Green Accents */
+/* Emergent Green Accents - Softer */
 .text-emergent {
-  color: #00ff88;
+  color: #10b981;
 }
 
 .bg-emergent {
-  background-color: #00ff88;
+  background-color: #10b981;
 }
 
 .border-emergent {
-  border-color: #00ff88;
+  border-color: #10b981;
+}
+
+/* Custom Glow Text - Softer */
+.glow-text {
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Custom Glow Border - Softer */
+.glow-border {
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
 }

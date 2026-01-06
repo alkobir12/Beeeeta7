@@ -148,11 +148,18 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     } finally { setLoading(false); }
   };
 
+  const handleDialogOpenChange = (v) => {
+    if (!v) {
+      if (documentDialogOpen) setDocumentDialogOpen(false);
+      onClose?.();
+    }
+  };
+
   if (!vehicle) return null;
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(v)=>{ if(!v && documentDialogOpen){ setDocumentDialogOpen(false); setTimeout(()=> onClose?.(v), 0); } else { onClose?.(v); } }}>
+      <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-[520px]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">

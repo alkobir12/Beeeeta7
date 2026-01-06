@@ -16,5 +16,14 @@
     "filePath": "/app/backend/uploads/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/IMG_1089.png",
     "uploadedAt": "2026-01-06T09:31:02.303809+00:00",
     "uploadedBy": "system"
+  },
+  {
+    "id": "dd31aa11-31b7-4c70-855a-bc6b3822eb39",
+    "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+    "filename": "78938947585__A3FB0998-02AF-4347-9074-75A0C7564C81.MOV",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/78938947585__A3FB0998-02AF-4347-9074-75A0C7564C81.MOV",
+    "uploadedAt": "2026-01-06T10:51:24.438703+00:00",
+    "uploadedBy": "system"
   }
 ]

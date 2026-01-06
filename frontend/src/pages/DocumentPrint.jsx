@@ -215,6 +215,23 @@ const DocumentPrint = () => {
   const generateDocument = async (preview = false) => {
     setLoading(true);
     try {
+      // Validate required fields
+      if (!formData.workshop.name) {
+        alert(isArabic ? 'الرجاء إدخال اسم الورشة' : 'Please enter workshop name');
+        setLoading(false);
+        return;
+      }
+      if (!formData.customer.name) {
+        alert(isArabic ? 'الرجاء إدخال اسم العميل' : 'Please enter customer name');
+        setLoading(false);
+        return;
+      }
+      if (formData.items.filter(item => item.description).length === 0) {
+        alert(isArabic ? 'الرجاء إضافة بند واحد على الأقل' : 'Please add at least one item');
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.post(`${API_URL}/documents/generate`, {
         doc_type: docType,
         workshop: formData.workshop,
@@ -240,10 +257,13 @@ const DocumentPrint = () => {
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
         }
+      } else {
+        throw new Error(response.data.message || 'فشل في إنشاء المستند');
       }
     } catch (error) {
       console.error('Error generating document:', error);
-      alert(isArabic ? 'حدث خطأ أثناء إنشاء المستند' : 'Error generating document');
+      const errorMsg = error.response?.data?.detail || error.message || (isArabic ? 'حدث خطأ أثناء إنشاء المستند' : 'Error generating document');
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }

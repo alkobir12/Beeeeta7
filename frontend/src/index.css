@@ -14,56 +14,63 @@
 
 @layer base {
   :root {
-    /* Apple-inspired Palette - Light Mode Default */
-    --background: 0 0% 96%; /* #F5F5F7 */
-    --foreground: 240 4% 11%; /* #1D1D1F */
+    /* Emergent.sh Theme - Dark Mode */
+    --background: 0 0% 4%; /* #0a0a0a */
+    --foreground: 0 0% 93%; /* #ededed */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 4% 11%;
+    --card: 0 0% 10%; /* #1a1a1a */
+    --card-foreground: 0 0% 93%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 4% 11%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 211 100% 45%; /* #0071E3 Apple Blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 154 100% 50%; /* #00ff88 Emergent Green */
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 4% 11%;
+    --secondary: 0 0% 12%; /* #1f1f1f */
+    --secondary-foreground: 154 100% 50%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%; /* #86868B */
+    --muted: 0 0% 15%; /* #262626 */
+    --muted-foreground: 0 0% 64%; /* #a3a3a3 */
 
-    --accent: 211 100% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 154 100% 50%;
+    --accent-foreground: 0 0% 4%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 350 100% 60%; /* #ff3366 */
+    --destructive-foreground: 0 0% 93%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 211 100% 45%;
+    --border: 0 0% 16%; /* #2a2a2a */
+    --input: 0 0% 12%;
+    --ring: 154 100% 50%;
 
-    --radius: 1rem; /* 16px */
+    --radius: 0.75rem;
     
     /* Sidebar Specifics */
     --sidebar-width: 280px;
-    --sidebar-bg: 255 255 255; /* White */
-    --sidebar-text: 29 29 31;
-    --sidebar-active-bg: 0 113 227;
-    --sidebar-active-text: 255 255 255;
-    --sidebar-hover: 245 245 247;
+    --sidebar-bg: 0 0% 10%;
+    --sidebar-text: 0 0% 93%;
+    --sidebar-active-bg: 154 100% 50%;
+    --sidebar-active-text: 0 0% 4%;
+    --sidebar-hover: 0 0% 12%;
+
+    /* Chart Colors */
+    --chart-1: 154 100% 50%;
+    --chart-2: 154 100% 43%;
+    --chart-3: 154 100% 57%;
+    --chart-4: 154 100% 70%;
+    --chart-5: 154 100% 63%;
   }
 
   html {
     direction: rtl;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-background text-foreground;
-    background-color: #F5F5F7;
+    background-color: #0a0a0a;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -72,57 +79,104 @@
 }
 
 @layer components {
-  /* Apple-style Input */
+  /* Emergent-style Input */
   .apple-input {
-    @apply h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-base transition-all duration-200 focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20 focus:outline-none;
+    @apply h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none placeholder:text-muted-foreground;
   }
 
-  /* Apple-style Button */
+  /* Emergent-style Button */
   .apple-button {
-    @apply h-10 px-4 rounded-lg bg-[#0071E3] text-white text-sm font-medium transition-all duration-200 hover:bg-[#0077ED] active:scale-[0.98] disabled:opacity-50 shadow-sm;
+    @apply h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-all duration-200 hover:shadow-glow active:scale-[0.98] disabled:opacity-50;
   }
   
   .apple-button-secondary {
-    @apply h-10 px-4 rounded-lg bg-gray-100 text-gray-900 text-sm font-medium transition-all duration-200 hover:bg-gray-200 active:scale-[0.98];
+    @apply h-10 px-4 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium transition-all duration-200 hover:bg-muted active:scale-[0.98];
   }
 
-  /* Apple-style Card */
+  /* Emergent-style Card */
   .apple-card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100/50;
+    @apply bg-card rounded-2xl shadow-sm border border-border text-card-foreground;
   }
   
-  /* Sidebar Styles */
+  .apple-card:hover {
+    @apply border-primary/30 shadow-glow-sm;
+  }
+  
+  /* Sidebar Styles - Emergent Theme */
   .sidebar-modern {
-    @apply fixed top-0 right-0 bottom-0 w-[280px] bg-white/80 backdrop-blur-xl border-l border-gray-200 z-50 transition-transform duration-300 ease-in-out;
+    @apply fixed top-0 right-0 bottom-0 w-[280px] bg-card/95 backdrop-blur-xl border-l border-border z-50 transition-transform duration-300 ease-in-out;
   }
   
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 transition-colors duration-200 hover:bg-gray-100/80 mb-1;
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground mb-1;
   }
   
-  .sidebar-item.active {
-    @apply bg-[#0071E3] text-white shadow-sm;
+  .sidebar-item-active {
+    @apply bg-primary text-primary-foreground shadow-glow-sm;
   }
   
-  .sidebar-item.active .icon {
-    @apply text-white;
-  }
-
-  /* Layout */
+  /* Layout Styles */
   .layout-main {
-    @apply min-h-screen flex bg-[#F5F5F7];
+    @apply flex min-h-screen bg-background;
   }
   
   .content-area {
-    @apply flex-1 mr-0 lg:mr-[280px] p-6 transition-all duration-300;
+    @apply flex-1 p-6 ml-0 lg:mr-[280px] transition-all duration-300;
   }
   
-  /* Stats Grid */
-  .grid-stats {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
   }
   
-  .stat-card {
-    @apply apple-card p-5 flex flex-col justify-between h-full transition-all duration-200 hover:shadow-md cursor-pointer;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
+}
+
+@layer utilities {
+  /* Custom Glow Text */
+  .glow-text {
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  }
+
+  /* Custom Glow Border */
+  .glow-border {
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  }
+}
+
+/* Custom Scrollbar - Emergent Style */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+/* Emergent Green Accents */
+.text-emergent {
+  color: #00ff88;
+}
+
+.bg-emergent {
+  background-color: #00ff88;
+}
+
+.border-emergent {
+  border-color: #00ff88;
 }

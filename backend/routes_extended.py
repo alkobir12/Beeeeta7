@@ -1417,8 +1417,23 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
 async def print_resolve_template(payload: Dict[str, Any] = Body(...)):
     try:
         override_type = (payload or {}).get('override_type') or (payload or {}).get('type') or 'invoice'
-        # Try DB first
-        tpl = await db.print_templates.find_one({'type': override_type, 'isActive': True})
+        # Try Supabase DB first (if available)
+        tpl = None
+        if db:
+            tpl = await db.print_templates.find_one({'type': override_type, 'isActive': True})
+        else:
+            # Use Supabase to fetch template
+            supa = SupabaseService()
+            templates = await supa.execute_query(
+                'print_templates',
+                method='select',
+                filters={'type': override_type, 'is_active': True},
+                order=('created_at', 'desc'),
+                limit=1
+            )
+            if templates:
+                tpl = templates[0]
+        
         if tpl:
             tpl.pop('_id', None)
             return {'type': override_type, 'template': tpl}

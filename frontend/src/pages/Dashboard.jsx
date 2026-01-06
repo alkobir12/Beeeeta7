@@ -102,7 +102,7 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-500 mb-1">إجمالي المركبات</p>
                 <h3 className="text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
               </div>
-              <div className="p-3 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+              <div className="p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
                 <Car size={24} />
               </div>
             </div>
@@ -114,7 +114,7 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-500 mb-1">قيد العمل</p>
                 <h3 className="text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
               </div>
-              <div className="p-3 rounded-full bg-orange-50 text-orange-600 group-hover:bg-orange-100 transition-colors">
+              <div className="p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
                 <Wrench size={24} />
               </div>
             </div>
@@ -126,7 +126,7 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-500 mb-1">جاهز للتسليم</p>
                 <h3 className="text-3xl font-bold text-gray-900">{stats.ready}</h3>
               </div>
-              <div className="p-3 rounded-full bg-green-50 text-green-600 group-hover:bg-green-100 transition-colors">
+              <div className="p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
                 <CheckCircle size={24} />
               </div>
             </div>
@@ -138,7 +138,7 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-500 mb-1">الفنيين المتاحين</p>
                 <h3 className="text-3xl font-bold text-gray-900">{stats.technicians}</h3>
               </div>
-              <div className="p-3 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
+              <div className="p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
                 <Users size={24} />
               </div>
             </div>

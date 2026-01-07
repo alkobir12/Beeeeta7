@@ -304,8 +304,8 @@ const VehicleDetails = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-800 bg-gray-900/50">
-                            {vehicle.parts.map((it, idx) => (
-                              <tr key={it.id || idx}>
+                            {(vehicle.parts || []).filter(Boolean).map((it, idx) => (
+                              <tr key={`part-${it.id || idx}-${idx}`}>
                                 <td className="p-2 text-gray-400">
                                   {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
                                 </td>

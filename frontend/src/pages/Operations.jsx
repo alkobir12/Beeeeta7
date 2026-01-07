@@ -121,6 +121,25 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">المركبة (اختياري)</label>
+                <div className="relative">
+                  <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select 
+                    className="apple-input pr-10"
+                    value={form.vehicleId} 
+                    onChange={e => setForm({ ...form, vehicleId: e.target.value })}
+                  >
+                    <option value="">اختر مركبة...</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.plateNumber} - {v.brand} {v.model}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">نوع العملية</label>
                 <div className="relative">
                   <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />

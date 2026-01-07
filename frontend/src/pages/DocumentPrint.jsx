@@ -269,13 +269,24 @@ const DocumentPrint = () => {
     }
   };
 
-  const printFrameRef = useRef(null);
-
   const printDocument = async () => {
+    // Open window immediately to avoid popup blockers
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      alert(isArabic ? 'تم حظر النافذة المنبثقة. الرجاء السماح بالنوافذ المنبثقة لهذا الموقع.' : 'Popup blocked. Please allow popups for this site.');
+      setLoading(false);
+      return;
+    }
+
+    // Write initial loading state
+    printWindow.document.write(isArabic ? '<h3 style="text-align:center; font-family: sans-serif; margin-top: 50px;">جاري إعداد المستند للطباعة...</h3>' : '<h3 style="text-align:center; font-family: sans-serif; margin-top: 50px;">Preparing document for printing...</h3>');
+
     setLoading(true);
     try {
       // Validate
       if (!formData.workshop.name || !formData.customer.name) {
+        printWindow.close();
         alert(isArabic ? 'بيانات الورشة والعميل مطلوبة' : 'Workshop and Customer details are required');
         setLoading(false);
         return;
@@ -291,32 +302,23 @@ const DocumentPrint = () => {
       });
 
       if (response.data.success && response.data.html) {
-        // Use hidden iframe to print
-        const iframe = printFrameRef.current;
-        if (iframe) {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          doc.open();
-          doc.write(response.data.html);
-          doc.close();
-          // Wait for images/styles to load then print
-          iframe.onload = () => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-          };
-          // Fallback if onload doesn't fire immediately (e.g. cached)
-          setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-          }, 500);
-        } else {
-           // Fallback to window.open if iframe ref is missing
-           const printWindow = window.open('', '_blank');
-           printWindow.document.write(response.data.html);
-           printWindow.document.close();
-           setTimeout(() => printWindow.print(), 500);
-        }
+        printWindow.document.open();
+        printWindow.document.write(response.data.html);
+        printWindow.document.close();
+        
+        // Wait for content to load then print
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          // Optional: Close after print (commented out to let user decide)
+          // printWindow.close();
+        }, 1000);
+      } else {
+        printWindow.close();
+        throw new Error(response.data.message || 'Failed');
       }
     } catch (error) {
+      printWindow.close();
       console.error('Error printing:', error);
       alert(isArabic ? 'فشل الطباعة' : 'Print failed');
     } finally {

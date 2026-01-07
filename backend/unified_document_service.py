@@ -197,52 +197,52 @@ def create_unified_document_routes(router):
     from typing import List, Optional, Dict, Any
     
     class DocumentItem(BaseModel):
-        description: str = ''
-        name: str = ''
-        quantity: float = 1
-        qty: float = 1
-        unit_price: float = 0
-        price: float = 0
-        discount: float = 0
+        description: Optional[str] = ''
+        name: Optional[str] = ''
+        quantity: Optional[float] = 1
+        qty: Optional[float] = 1
+        unit_price: Optional[float] = 0
+        price: Optional[float] = 0
+        discount: Optional[float] = 0
     
     class DocumentCustomer(BaseModel):
-        name: str = ''
-        customerName: str = ''
-        company: str = ''
-        address: str = ''
-        phone: str = ''
-        customerPhone: str = ''
-        email: str = ''
+        name: Optional[str] = ''
+        customerName: Optional[str] = ''
+        company: Optional[str] = ''
+        address: Optional[str] = ''
+        phone: Optional[str] = ''
+        customerPhone: Optional[str] = ''
+        email: Optional[str] = ''
     
     class DocumentWorkshop(BaseModel):
-        name: str = ''
-        name_en: str = ''
-        address: str = ''
-        phone: str = ''
-        email: str = ''
-        website: str = ''
-        tax_number: str = ''
-        taxNumber: str = ''
+        name: Optional[str] = ''
+        name_en: Optional[str] = ''
+        address: Optional[str] = ''
+        phone: Optional[str] = ''
+        email: Optional[str] = ''
+        website: Optional[str] = ''
+        tax_number: Optional[str] = ''
+        taxNumber: Optional[str] = ''
     
     class DocumentVehicle(BaseModel):
-        brand: str = ''
-        model: str = ''
-        year: str = ''
-        plateNumber: str = ''
-        plate: str = ''
-        vin: str = ''
-        color: str = ''
-        mileage: str = ''
-        notes: str = ''
+        brand: Optional[str] = ''
+        model: Optional[str] = ''
+        year: Optional[str] = ''
+        plateNumber: Optional[str] = ''
+        plate: Optional[str] = ''
+        vin: Optional[str] = ''
+        color: Optional[str] = ''
+        mileage: Optional[str] = ''
+        notes: Optional[str] = ''
     
     class DocumentSettings(BaseModel):
-        theme: str = 'أزرق'
-        style: str = 'حديث'
-        tax_rate: float = 15
+        theme: Optional[str] = 'أزرق'
+        style: Optional[str] = 'حديث'
+        tax_rate: Optional[float] = 15
         document_number: Optional[str] = None
-        validity_days: int = 30
-        description: str = ''
-        notes: str = ''
+        validity_days: Optional[int] = 30
+        description: Optional[str] = ''
+        notes: Optional[str] = ''
         terms: Optional[List[str]] = None
     
     class GenerateDocumentRequest(BaseModel):

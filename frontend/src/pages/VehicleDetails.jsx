@@ -213,41 +213,24 @@ const VehicleDetails = () => {
                         <button
                           type="button"
                           className="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-white hover:bg-gray-600"
-                          onClick={async () => {
+                          onClick={() => {
                             const name = (newItem.name || '').trim();
                             if (!name) {
                               toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
                               return;
                             }
-                            try {
-                              const existing = vehicle.parts || [];
-                              const item = {
-                                id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                                itemType: newItem.itemType,
-                                name,
-                                quantity: newItem.quantity || 1,
-                                price: newItem.price || 0,
-                              };
-                              // Ensure we are sending a completely new array reference
-                              const updatedParts = [...existing, item];
-                              
-                              // Optimistic update
-                              setVehicle(prev => ({ ...prev, parts: updatedParts }));
-                              
-                              await vehicleAPI.update(id, { parts: updatedParts });
-                              
-                              // Clear form
-                              setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
-                              toast({ title: 'تم الحفظ', description: 'تم إضافة البند بنجاح' });
-                              
-                              // Reload to confirm
-                              await fetchData();
-                            } catch (e) {
-                              console.error(e);
-                              toast({ title: 'خطأ', description: 'فشل في حفظ البند', variant: 'destructive' });
-                              // Revert on error if needed, or just let fetchData handle it
-                              fetchData();
-                            }
+                            const existing = vehicle.parts || [];
+                            const item = {
+                              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                              itemType: newItem.itemType,
+                              name,
+                              quantity: newItem.quantity || 1,
+                              price: newItem.price || 0,
+                            };
+                            const updatedParts = [...existing, item];
+                            updatePartsLocally(updatedParts);
+                            setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
+                            toast({ title: 'تمت الإضافة', description: 'اضغط حفظ التحديثات للتثبيت' });
                           }}
                         >
                           إضافة بند

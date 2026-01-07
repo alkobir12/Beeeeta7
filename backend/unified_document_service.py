@@ -204,6 +204,9 @@ def create_unified_document_routes(router):
         unit_price: Optional[float] = 0
         price: Optional[float] = 0
         discount: Optional[float] = 0
+        
+        class Config:
+            extra = 'allow'
     
     class DocumentCustomer(BaseModel):
         name: Optional[str] = ''
@@ -213,6 +216,9 @@ def create_unified_document_routes(router):
         phone: Optional[str] = ''
         customerPhone: Optional[str] = ''
         email: Optional[str] = ''
+        
+        class Config:
+            extra = 'allow'
     
     class DocumentWorkshop(BaseModel):
         name: Optional[str] = ''
@@ -223,17 +229,23 @@ def create_unified_document_routes(router):
         website: Optional[str] = ''
         tax_number: Optional[str] = ''
         taxNumber: Optional[str] = ''
+        
+        class Config:
+            extra = 'allow'
     
     class DocumentVehicle(BaseModel):
         brand: Optional[str] = ''
         model: Optional[str] = ''
-        year: Optional[str] = ''
+        year: Optional[Any] = ''
         plateNumber: Optional[str] = ''
         plate: Optional[str] = ''
         vin: Optional[str] = ''
         color: Optional[str] = ''
-        mileage: Optional[str] = ''
+        mileage: Optional[Any] = ''
         notes: Optional[str] = ''
+        
+        class Config:
+            extra = 'allow'
     
     class DocumentSettings(BaseModel):
         theme: Optional[str] = 'أزرق'
@@ -244,6 +256,9 @@ def create_unified_document_routes(router):
         description: Optional[str] = ''
         notes: Optional[str] = ''
         terms: Optional[List[str]] = None
+        
+        class Config:
+            extra = 'allow'
     
     class GenerateDocumentRequest(BaseModel):
         doc_type: str = 'invoice'  # invoice, diagnosis, quote, receipt

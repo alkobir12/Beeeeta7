@@ -121,6 +121,25 @@ const DocumentPrint = () => {
     try {
       const { data } = await axios.get(`${API_URL}/vehicles/${id}`);
       if (data) {
+        // تحويل البنود (parts) إلى تنسيق المستند
+        const vehicleParts = data.parts || [];
+        const itemsFromParts = vehicleParts.map(part => ({
+          description: part.name || part.description || '',
+          quantity: part.quantity || 1,
+          unit_price: part.price || 0,
+          discount: 0
+        }));
+
+        // إذا لم توجد بنود، استخدم الخدمات
+        const finalItems = itemsFromParts.length > 0 
+          ? itemsFromParts 
+          : (data.services || []).map(s => ({
+              description: s,
+              quantity: 1,
+              unit_price: 0,
+              discount: 0
+            }));
+
         setFormData(prev => ({
           ...prev,
           customer: {
@@ -138,12 +157,7 @@ const DocumentPrint = () => {
             mileage: data.mileage || '',
             notes: data.notes || ''
           },
-          items: (data.services || []).map(s => ({
-            description: s,
-            quantity: 1,
-            unit_price: 0,
-            discount: 0
-          }))
+          items: finalItems.length > 0 ? finalItems : [{ description: '', quantity: 1, unit_price: 0, discount: 0 }]
         }));
       }
     } catch (e) {

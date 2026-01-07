@@ -297,16 +297,10 @@ const VehicleDetails = () => {
                                   <button
                                     type="button"
                                     className="p-1 rounded-full hover:bg-red-900/20 text-red-500"
-                                    onClick={async () => {
-                                      try {
-                                        const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
-                                        await vehicleAPI.update(id, { parts: updated });
-                                        await fetchData(); // Refresh all data
-                                        toast({ title: 'تم الحذف', description: 'تم حذف البند بنجاح' });
-                                      } catch (e) {
-                                        console.error(e);
-                                        toast({ title: 'خطأ', description: 'فشل في حذف البند', variant: 'destructive' });
-                                      }
+                                    onClick={() => {
+                                      const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
+                                      updatePartsLocally(updated);
+                                      toast({ title: 'تم الحذف مؤقتاً', description: 'اضغط حفظ التحديثات للتثبيت' });
                                     }}
                                   >
                                     <Trash2 size={14} />

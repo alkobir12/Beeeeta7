@@ -78,32 +78,32 @@ const Dashboard = () => {
 
   return (
     
-      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen">
+      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
-            <p className="text-gray-500 mt-1">نظرة عامة على حالة الورشة اليوم</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">لوحة التحكم</h1>
+            <p className="text-gray-500 text-sm sm:text-base mt-1">نظرة عامة على حالة الورشة</p>
           </div>
           <button 
             onClick={() => navigate('/new-vehicle')}
-            className="apple-button flex items-center gap-2"
+            className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <Plus size={18} />
             <span>استقبال مركبة</span>
           </button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid-stats mb-8">
+        {/* Stats Grid - Responsive 2x2 on mobile, 4 on desktop */}
+        <div className="grid-stats mb-4 sm:mb-8">
           <div onClick={() => setFilterStatus('all')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">إجمالي المركبات</p>
-                <h3 className="text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">إجمالي المركبات</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
               </div>
-              <div className="p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                <Car size={24} />
+              <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                <Car size={20} className="sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
@@ -111,11 +111,11 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">قيد العمل</p>
-                <h3 className="text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">قيد العمل</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
               </div>
-              <div className="p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
-                <Wrench size={24} />
+              <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
+                <Wrench size={20} className="sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
@@ -123,11 +123,11 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('ready')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">جاهز للتسليم</p>
-                <h3 className="text-3xl font-bold text-gray-900">{stats.ready}</h3>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">جاهز للتسليم</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.ready}</h3>
               </div>
-              <div className="p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
-                <CheckCircle size={24} />
+              <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
+                <CheckCircle size={20} className="sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
@@ -135,34 +135,34 @@ const Dashboard = () => {
           <div onClick={() => navigate('/technicians')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">الفنيين المتاحين</p>
-                <h3 className="text-3xl font-bold text-gray-900">{stats.technicians}</h3>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">الفنيين المتاحين</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.technicians}</h3>
               </div>
-              <div className="p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-                <Users size={24} />
+              <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                <Users size={20} className="sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Search & Filter */}
-        <div className="apple-card p-4 mb-6 flex flex-col sm:flex-row gap-4 items-center">
+        {/* Search & Filter - Stack on mobile */}
+        <div className="apple-card p-3 sm:p-4 mb-4 sm:mb-6 space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4 sm:items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="بحث باسم العميل، رقم اللوحة، أو نوع السيارة..."
+              placeholder="بحث باسم العميل أو رقم اللوحة..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="apple-input pr-10"
+              className="apple-input pr-10 text-sm sm:text-base"
             />
           </div>
-          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
             {['all', 'diagnosis', 'in_progress', 'ready'].map((status) => (
               <button
-                key={status}
+                key={`filter-${status}`}
                 onClick={() => setFilterStatus(status)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                   filterStatus === status 
                     ? 'bg-gray-900 text-white shadow-md' 
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -174,8 +174,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Vehicles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Vehicles Grid - 1 column mobile, 2 tablet, 3 desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {filteredVehicles.length === 0 ? (
             <div className="col-span-full py-12 text-center">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

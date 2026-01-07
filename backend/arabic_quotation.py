@@ -145,6 +145,24 @@ class ArabicQuotationBuilder:
             </tr>
             """
         
+        # إنشاء تذييل الجدول (الإجماليات)
+        table_footer = f"""
+        <tfoot>
+            <tr>
+                <td colspan="5" class="text-left font-bold">المجموع الفرعي</td>
+                <td class="font-bold">{self.quotation['subtotal']:,.2f}</td>
+            </tr>
+            <tr>
+                <td colspan="5" class="text-left font-bold">الضريبة ({self.quotation['tax_rate']}%)</td>
+                <td class="font-bold">{self.quotation['tax_amount']:,.2f}</td>
+            </tr>
+            <tr class="total-row-table">
+                <td colspan="5" class="text-left font-bold">المجموع الكلي</td>
+                <td class="font-bold">{self.quotation['total']:,.2f}</td>
+            </tr>
+        </tfoot>
+        """
+
         # إنشاء قائمة الشروط
         terms_html = ""
         for term in self.quotation['terms']:

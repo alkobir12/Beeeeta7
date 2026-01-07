@@ -46,7 +46,7 @@ const DensoDiagnostics = () => {
   const loadEngineDetails = async (engineId) => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API_URL}/injectors/engines/${engineId}`);
+      const { data } = await axios.get(`${API_URL}/injectors/specs/${engineId}`);
       setEngineDetails(data);
       setResistanceResult(null);
       setVlResult(null);

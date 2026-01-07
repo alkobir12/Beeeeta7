@@ -457,8 +457,8 @@ const VehicleDetails = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {vehicleFiles.map((file, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  {(vehicleFiles || []).filter(Boolean).map((file, idx) => (
+                    <div key={`file-${file.id || idx}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                       <a 
                         href={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
                         target="_blank" 

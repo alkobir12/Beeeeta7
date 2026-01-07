@@ -281,17 +281,11 @@ const VehicleDetails = () => {
                                     type="number"
                                     className="w-20 px-2 py-1 text-xs border border-gray-700 bg-gray-800 rounded text-white"
                                     value={it.price || 0}
-                                    onChange={async (e) => {
+                                    onChange={(e) => {
                                       const newPrice = Number(e.target.value) || 0;
                                       const updatedParts = [...(vehicle.parts || [])];
                                       updatedParts[idx] = { ...updatedParts[idx], price: newPrice };
-                                      try {
-                                        await vehicleAPI.update(id, { parts: updatedParts });
-                                        setVehicle({ ...vehicle, parts: updatedParts });
-                                      } catch (err) {
-                                        console.error(err);
-                                        toast({ title: 'خطأ', description: 'فشل في تحديث السعر', variant: 'destructive' });
-                                      }
+                                      updatePartsLocally(updatedParts);
                                     }}
                                   />
                                   <span className="text-xs text-gray-500 mr-1">ر.س</span>

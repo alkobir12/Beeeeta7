@@ -26,16 +26,17 @@ const Layout = ({ children }) => {
            <LanguageToggle />
         </div>
 
-        {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between mb-4 p-2 bg-card rounded-lg shadow-sm">
+        {/* Mobile Header - Fixed at top */}
+        <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-3 bg-card/95 backdrop-blur-lg rounded-xl shadow-lg border border-border mb-4">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2.5 hover:bg-muted rounded-xl transition-colors"
+            aria-label="فتح القائمة"
           >
-            <Menu size={24} />
+            <Menu size={22} className="text-foreground" />
           </button>
-          <h1 className="text-lg font-semibold">نظام إدارة الورش</h1>
-          <div className="w-10" /> {/* Spacer */}
+          <h1 className="text-base font-bold text-foreground">نظام إدارة الورش</h1>
+          <LanguageToggle />
         </div>
         
         {/* Page Content */}

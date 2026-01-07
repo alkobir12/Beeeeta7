@@ -41,16 +41,18 @@ const Operations = () => {
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
         : `${API_URL}/operations`;
 
-      const [accRes, partsRes, servicesRes, opsRes] = await Promise.all([
+      const [accRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
         axios.get(`${API_URL}/business-accounts`),
         axios.get(`${API_URL}/parts`),
         axios.get(`${API_URL}/services`),
-        axios.get(operationsUrl)
+        axios.get(operationsUrl),
+        axios.get(`${API_URL}/vehicles`)
       ]);
       setAccounts(accRes.data || []);
       setParts(partsRes.data || []);
       setServices(servicesRes.data || []);
       setOps(opsRes.data || []);
+      setVehicles(vehRes.data || []);
 
       // إذا تم استدعاء الصفحة لمركبة محددة، نربط الفورم بهذه المركبة تلقائياً
       if (vehicleIdFromUrl) {

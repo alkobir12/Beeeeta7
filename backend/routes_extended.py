@@ -733,8 +733,8 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
     try:
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
         if provider == 'supabase':
-            # Mock update for now as SupabaseService doesn't have update yet
-            return payload
+            supa = SupabaseService()
+            return supa.operations_update(op_id, payload)
 
         if provider == 'memory' or db is None:
             ops = _mem_read('operations')

@@ -53,12 +53,32 @@ const VehicleDetails = () => {
 
   const handleStatusUpdate = async () => {
     try {
-      await vehicleAPI.update(id, { status, notes, technicianId: assignedTech });
-      toast({ title: 'تم التحديث', description: 'تم تحديث حالة المركبة بنجاح' });
-      fetchData();
+      setLoading(true);
+      await vehicleAPI.update(id, { 
+        status, 
+        notes, 
+        technicianId: assignedTech,
+        parts: vehicle.parts,
+        services: vehicle.services
+      });
+      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات بنجاح' });
+      // Only fetch after successful save to sync with server
+      await fetchData();
     } catch (error) {
-      toast({ title: "خطأ", description: "فشل التحديث", variant: "destructive" });
+      toast({ title: "خطأ", description: "فشل الحفظ", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Helper to update parts locally
+  const updatePartsLocally = (newParts) => {
+    setVehicle(prev => ({ ...prev, parts: newParts }));
+  };
+
+  // Helper to update services locally
+  const updateServicesLocally = (newServices) => {
+    setVehicle(prev => ({ ...prev, services: newServices }));
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div>;

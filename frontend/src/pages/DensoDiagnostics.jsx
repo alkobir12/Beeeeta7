@@ -132,8 +132,8 @@ const DensoDiagnostics = () => {
                     <SelectValue placeholder="اختر المحرك..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {engines.map(engine => (
-                      <SelectItem key={engine.id} value={engine.id}>
+                    {(engines || []).map(engine => (
+                      <SelectItem key={`engine-${engine.id}`} value={engine.id}>
                         {engine.label} ({engine.displacement}L - {engine.cylinders} سلندر)
                       </SelectItem>
                     ))}

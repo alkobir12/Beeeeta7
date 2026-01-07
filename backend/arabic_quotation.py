@@ -612,6 +612,19 @@ class ArabicQuotationBuilder:
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }}
+
+        .items-table tfoot td {{
+            padding: 1rem;
+            border-top: 2px solid #e2e8f0;
+            background: #f8fafc;
+        }}
+
+        .items-table .total-row-table td {{
+            background: {colors['accent']};
+            color: {colors['primary']};
+            font-size: 1.1rem;
+            border-top: 2px solid {colors['primary']};
+        }}
         
         .text-right {{
             text-align: right !important;

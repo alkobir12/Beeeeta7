@@ -257,6 +257,12 @@ def create_unified_document_routes(router):
     async def generate_document(request: GenerateDocumentRequest):
         """توليد مستند (فاتورة/تشخيص/عرض سعر)"""
         try:
+            import logging
+            logging.info(f"Document generation request received: doc_type={request.doc_type}")
+            logging.info(f"Workshop: {request.workshop}")
+            logging.info(f"Customer: {request.customer}")
+            logging.info(f"Items count: {len(request.items)}")
+            
             generator = UnifiedDocumentGenerator()
             
             # تحويل البيانات

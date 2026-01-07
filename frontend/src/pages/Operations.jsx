@@ -10,6 +10,7 @@ const Operations = () => {
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
   const [services, setServices] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [ops, setOps] = useState([]);
   const [form, setForm] = useState({ 
     accountId: '', 

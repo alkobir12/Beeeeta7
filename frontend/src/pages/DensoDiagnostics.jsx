@@ -142,11 +142,14 @@ const DensoDiagnostics = () => {
               </div>
               {engineDetails && (
                 <div className="flex items-center gap-4 text-sm">
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
-                    الجيل: {engineDetails.generation}
+                  <span className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-3 py-1 rounded-full">
+                    الجيل: {engineDetails.denso_generation}
                   </span>
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                  <span className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full">
                     {engineDetails.manufacturer}
+                  </span>
+                  <span className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 px-3 py-1 rounded-full">
+                    {engineDetails.cylinder_count} سلندر - {engineDetails.displacement_liters}L
                   </span>
                 </div>
               )}

@@ -72,7 +72,7 @@ const DensoDiagnostics = () => {
     try {
       const { data } = await axios.post(`${API_URL}/injectors/validate/resistance`, {
         engine_id: selectedEngine,
-        resistance: parseFloat(resistance)
+        resistance_ohm: parseFloat(resistance)
       });
       setResistanceResult(data);
     } catch (error) {

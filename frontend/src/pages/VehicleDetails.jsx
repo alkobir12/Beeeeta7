@@ -514,9 +514,9 @@ const VehicleDetails = () => {
 
                   {/* قائمة مختصرة لآخر 3 عمليات */}
                   <div className="space-y-2">
-                    {vehicleOperations.slice(0, 3).map((op, idx) => (
+                    {(vehicleOperations || []).slice(0, 3).filter(Boolean).map((op, idx) => (
                       <div
-                        key={op.id || idx}
+                        key={`op-${op.id || idx}`}
                         className="p-3 rounded-lg border border-gray-100 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
                         onClick={() => navigate(`/operations?vehicleId=${id}`)}
                       >

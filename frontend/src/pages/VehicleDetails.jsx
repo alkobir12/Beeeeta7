@@ -298,6 +298,15 @@ const VehicleDetails = () => {
                               </tr>
                             ))}
                           </tbody>
+                          <tfoot className="bg-gray-100 border-t-2 border-gray-200">
+                            <tr>
+                              <td colSpan="4" className="p-3 text-left font-bold text-gray-700">المجموع الكلي:</td>
+                              <td className="p-3 font-bold text-blue-700 text-sm">
+                                {totalParts.toLocaleString('ar-SA')} ر.س
+                              </td>
+                              <td></td>
+                            </tr>
+                          </tfoot>
                         </table>
                       </div>
                     )}

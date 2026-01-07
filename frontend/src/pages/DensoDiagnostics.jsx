@@ -241,8 +241,8 @@ const DensoDiagnostics = () => {
                   <div className="mt-6">
                     <p className="text-sm text-muted-foreground mb-2">أرقام القطع الأصلية:</p>
                     <div className="flex flex-wrap gap-2">
-                      {engineDetails.original_part_numbers.map((pn, i) => (
-                        <span key={i} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-mono">
+                      {(engineDetails.original_part_numbers || []).map((pn, i) => (
+                        <span key={`pn-${pn}-${i}`} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-mono">
                           {pn}
                         </span>
                       ))}

@@ -533,8 +533,8 @@ const DocumentPrint = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {formData.items.map((item, index) => (
-                    <div key={index} className="flex flex-wrap gap-2 items-end p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  {(formData.items || []).map((item, index) => (
+                    <div key={`item-${index}`} className="flex flex-wrap gap-2 items-end p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <div className="flex-1 min-w-[200px]">
                         <Label>{isArabic ? 'الوصف' : 'Description'}</Label>
                         <Input

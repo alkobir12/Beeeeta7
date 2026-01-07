@@ -189,18 +189,18 @@ const Dashboard = () => {
               const statusConfig = getStatusConfig(vehicle.status);
               return (
                 <div 
-                  key={vehicle.id} 
-                  className="apple-card p-5 cursor-pointer hover:shadow-md transition-shadow group relative overflow-hidden"
+                  key={`vehicle-${vehicle.id}`} 
+                  className="apple-card p-3 sm:p-4 md:p-5 cursor-pointer hover:shadow-md transition-shadow group relative overflow-hidden"
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 font-bold text-lg">
+                  <div className="flex justify-between items-start mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 font-bold text-base sm:text-lg flex-shrink-0">
                         {vehicle.brand?.[0]}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900">{vehicle.brand} {vehicle.model}</h3>
-                        <p className="text-sm text-gray-500 font-mono">{vehicle.plateNumber}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">{vehicle.brand} {vehicle.model}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 font-mono">{vehicle.plateNumber}</p>
                       </div>
                     </div>
                     <button
@@ -209,25 +209,26 @@ const Dashboard = () => {
                         setSelectedVehicle(vehicle);
                         setShowQuickActions(true);
                       }}
-                      className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                      aria-label="خيارات سريعة"
                     >
-                      <MoreVertical size={18} />
+                      <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
                   </div>
 
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users size={16} className="text-gray-400" />
-                      <span>{vehicle.customerName}</span>
+                  <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                      <Users size={14} className="text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{vehicle.customerName}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock size={16} className="text-gray-400" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                      <Clock size={14} className="text-gray-400 flex-shrink-0" />
                       <span>{new Date(vehicle.createdAt).toLocaleDateString('ar-SA')}</span>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                  <div className="pt-3 sm:pt-4 border-t border-gray-100 flex justify-between items-center">
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.color}`}>
                       {statusConfig.label}
                     </span>
                   </div>

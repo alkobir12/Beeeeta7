@@ -1,0 +1,556 @@
+[
+  {
+    "test": "Get Vehicle Operations",
+    "success": true,
+    "message": "Retrieved 1 operations for vehicle 641b1f96-6a55-46db-80e7-a76e3d1f394d",
+    "details": {
+      "operations_count": 1,
+      "operations": [
+        {
+          "id": "df3b6d9e-a403-4ec6-80c8-429c5e3bbc21",
+          "type": "sale",
+          "accountId": null,
+          "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+          "partnerType": "customer",
+          "partnerName": "صالح",
+          "items": [
+            {
+              "name": "ا",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767813265988-210d05b9c5c738",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "N",
+              "price": 99,
+              "total": 99,
+              "itemId": "1767818422937-f2d6d3e287cfc",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "فحص شامل",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767820682445-45e4fc340c8dd8",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "فلتر هواء",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821054163-76106bfd2a256",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "غسيل سيارة",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821161143-b0277b4b3337a",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "تبديل بطارية",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821313971-9d09d8b180276",
+              "itemType": "service",
+              "quantity": 1
+            }
+          ],
+          "subtotal": 99.0,
+          "total": 99.0,
+          "paymentMethod": "cash",
+          "notes": "عملية من ملف المركبة: ب ر ع",
+          "date": "2026-01-07T21:18:04.513208+00:00",
+          "createdAt": "2026-01-07T21:18:04.746892+00:00"
+        }
+      ]
+    },
+    "timestamp": "2026-01-07T21:33:50.681222"
+  },
+  {
+    "test": "Get Vehicle Details",
+    "success": true,
+    "message": "Vehicle has 6 parts",
+    "details": {
+      "vehicle": {
+        "plateNumber": "ب ر ع",
+        "brand": "تويوتا",
+        "model": "كورولا",
+        "year": 2010,
+        "color": "فضي",
+        "vin": null,
+        "fileNumber": "",
+        "customerName": "صالح",
+        "customerPhone": "0506295223",
+        "customerEmail": "",
+        "services": [],
+        "technicianId": null,
+        "technicianName": null,
+        "notes": "",
+        "id": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+        "customerId": "00fd5458-7373-4697-9a22-8c59cac44888",
+        "status": "approved",
+        "entryDate": "2026-01-01T20:55:17.586290+00:00",
+        "estimatedCompletion": "2026-01-03T20:55:17.586266+00:00",
+        "completionDate": null,
+        "trackingLink": "TRK-7D9D4308",
+        "images": [],
+        "parts": [
+          {
+            "id": "1767813265988-210d05b9c5c738",
+            "name": "ا",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767818422937-f2d6d3e287cfc",
+            "name": "N",
+            "price": 99,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767820682445-45e4fc340c8dd8",
+            "name": "فحص شامل",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821054163-76106bfd2a256",
+            "name": "فلتر هواء",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821161143-b0277b4b3337a",
+            "name": "غسيل سيارة",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821313971-9d09d8b180276",
+            "name": "تبديل بطارية",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          }
+        ]
+      },
+      "parts": [
+        {
+          "id": "1767813265988-210d05b9c5c738",
+          "name": "ا",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767818422937-f2d6d3e287cfc",
+          "name": "N",
+          "price": 99,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767820682445-45e4fc340c8dd8",
+          "name": "فحص شامل",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821054163-76106bfd2a256",
+          "name": "فلتر هواء",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821161143-b0277b4b3337a",
+          "name": "غسيل سيارة",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821313971-9d09d8b180276",
+          "name": "تبديل بطارية",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        }
+      ]
+    },
+    "timestamp": "2026-01-07T21:33:51.067770"
+  },
+  {
+    "test": "Get Vehicle Details",
+    "success": true,
+    "message": "Vehicle has 6 parts",
+    "details": {
+      "vehicle": {
+        "plateNumber": "ب ر ع",
+        "brand": "تويوتا",
+        "model": "كورولا",
+        "year": 2010,
+        "color": "فضي",
+        "vin": null,
+        "fileNumber": "",
+        "customerName": "صالح",
+        "customerPhone": "0506295223",
+        "customerEmail": "",
+        "services": [],
+        "technicianId": null,
+        "technicianName": null,
+        "notes": "",
+        "id": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+        "customerId": "00fd5458-7373-4697-9a22-8c59cac44888",
+        "status": "approved",
+        "entryDate": "2026-01-01T20:55:17.586290+00:00",
+        "estimatedCompletion": "2026-01-03T20:55:17.586266+00:00",
+        "completionDate": null,
+        "trackingLink": "TRK-7D9D4308",
+        "images": [],
+        "parts": [
+          {
+            "id": "1767813265988-210d05b9c5c738",
+            "name": "ا",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767818422937-f2d6d3e287cfc",
+            "name": "N",
+            "price": 99,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767820682445-45e4fc340c8dd8",
+            "name": "فحص شامل",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821054163-76106bfd2a256",
+            "name": "فلتر هواء",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821161143-b0277b4b3337a",
+            "name": "غسيل سيارة",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821313971-9d09d8b180276",
+            "name": "تبديل بطارية",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          }
+        ]
+      },
+      "parts": [
+        {
+          "id": "1767813265988-210d05b9c5c738",
+          "name": "ا",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767818422937-f2d6d3e287cfc",
+          "name": "N",
+          "price": 99,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767820682445-45e4fc340c8dd8",
+          "name": "فحص شامل",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821054163-76106bfd2a256",
+          "name": "فلتر هواء",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821161143-b0277b4b3337a",
+          "name": "غسيل سيارة",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        },
+        {
+          "id": "1767821313971-9d09d8b180276",
+          "name": "تبديل بطارية",
+          "price": 0,
+          "itemType": "service",
+          "quantity": 1
+        }
+      ]
+    },
+    "timestamp": "2026-01-07T21:33:51.359164"
+  },
+  {
+    "test": "Update Vehicle Parts",
+    "success": true,
+    "message": "Vehicle updated with 7 parts",
+    "details": {
+      "updated_vehicle": {
+        "plateNumber": "ب ر ع",
+        "brand": "تويوتا",
+        "model": "كورولا",
+        "year": 2010,
+        "color": "فضي",
+        "vin": null,
+        "fileNumber": "",
+        "customerName": "صالح",
+        "customerPhone": "0506295223",
+        "customerEmail": "",
+        "services": [],
+        "technicianId": null,
+        "technicianName": null,
+        "notes": "",
+        "id": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+        "customerId": "00fd5458-7373-4697-9a22-8c59cac44888",
+        "status": "approved",
+        "entryDate": "2026-01-01T20:55:17.586290+00:00",
+        "estimatedCompletion": "2026-01-03T20:55:17.586266+00:00",
+        "completionDate": null,
+        "trackingLink": "TRK-7D9D4308",
+        "images": [],
+        "parts": [
+          {
+            "id": "1767813265988-210d05b9c5c738",
+            "name": "ا",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767818422937-f2d6d3e287cfc",
+            "name": "N",
+            "price": 99,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767820682445-45e4fc340c8dd8",
+            "name": "فحص شامل",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821054163-76106bfd2a256",
+            "name": "فلتر هواء",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821161143-b0277b4b3337a",
+            "name": "غسيل سيارة",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "id": "1767821313971-9d09d8b180276",
+            "name": "تبديل بطارية",
+            "price": 0,
+            "itemType": "service",
+            "quantity": 1
+          },
+          {
+            "name": "اختبار ربط البنود",
+            "price": 75.0,
+            "total": 75.0,
+            "addedAt": "2026-01-07T21:33:51.359192",
+            "itemType": "service",
+            "quantity": 1
+          }
+        ]
+      },
+      "new_part": {
+        "itemType": "service",
+        "name": "اختبار ربط البنود",
+        "quantity": 1,
+        "price": 75.0,
+        "total": 75.0,
+        "addedAt": "2026-01-07T21:33:51.359192"
+      }
+    },
+    "timestamp": "2026-01-07T21:33:51.660292"
+  },
+  {
+    "test": "Get Vehicle Operations",
+    "success": true,
+    "message": "Retrieved 1 operations for vehicle 641b1f96-6a55-46db-80e7-a76e3d1f394d",
+    "details": {
+      "operations_count": 1,
+      "operations": [
+        {
+          "id": "df3b6d9e-a403-4ec6-80c8-429c5e3bbc21",
+          "type": "sale",
+          "accountId": null,
+          "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+          "partnerType": "customer",
+          "partnerName": "صالح",
+          "items": [
+            {
+              "name": "ا",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767813265988-210d05b9c5c738",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "N",
+              "price": 99,
+              "total": 99,
+              "itemId": "1767818422937-f2d6d3e287cfc",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "فحص شامل",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767820682445-45e4fc340c8dd8",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "فلتر هواء",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821054163-76106bfd2a256",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "غسيل سيارة",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821161143-b0277b4b3337a",
+              "itemType": "service",
+              "quantity": 1
+            },
+            {
+              "name": "تبديل بطارية",
+              "price": 0,
+              "total": 0,
+              "itemId": "1767821313971-9d09d8b180276",
+              "itemType": "service",
+              "quantity": 1
+            }
+          ],
+          "subtotal": 99.0,
+          "total": 99.0,
+          "paymentMethod": "cash",
+          "notes": "عملية من ملف المركبة: ب ر ع",
+          "date": "2026-01-07T21:18:04.513208+00:00",
+          "createdAt": "2026-01-07T21:18:04.746892+00:00"
+        }
+      ]
+    },
+    "timestamp": "2026-01-07T21:33:52.021808"
+  },
+  {
+    "test": "Auto-Sync: No Recent Update",
+    "success": false,
+    "message": "No recent operation update detected",
+    "details": {
+      "latest_operation_date": "2026-01-07T21:18:04.513208+00:00"
+    },
+    "timestamp": "2026-01-07T21:33:52.021846"
+  },
+  {
+    "test": "Create Operation",
+    "success": true,
+    "message": "Operation created with ID: 5a8f2477-85f0-473a-b4eb-1defd71703f1",
+    "details": {
+      "operation": {
+        "id": "5a8f2477-85f0-473a-b4eb-1defd71703f1",
+        "type": "sale",
+        "accountId": null,
+        "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+        "partnerType": "customer",
+        "partnerName": "عميل اختبار",
+        "items": [
+          {
+            "name": "خدمة اختبار",
+            "price": 100,
+            "total": 100,
+            "itemType": "service",
+            "quantity": 1
+          }
+        ],
+        "subtotal": 100.0,
+        "total": 100.0,
+        "paymentMethod": "cash",
+        "notes": "اختبار إنشاء عملية",
+        "date": "2026-01-07T21:33:52.045884+00:00",
+        "createdAt": "2026-01-07T21:33:52.271144+00:00"
+      }
+    },
+    "timestamp": "2026-01-07T21:33:52.769066"
+  },
+  {
+    "test": "Update Operation",
+    "success": true,
+    "message": "Operation 5a8f2477-85f0-473a-b4eb-1defd71703f1 updated successfully",
+    "details": {
+      "operation": {
+        "id": "5a8f2477-85f0-473a-b4eb-1defd71703f1",
+        "type": "sale",
+        "accountId": null,
+        "vehicleId": "641b1f96-6a55-46db-80e7-a76e3d1f394d",
+        "partnerType": "customer",
+        "partnerName": "صالح",
+        "items": [
+          {
+            "name": "اختبار تحديث",
+            "price": 50,
+            "total": 50,
+            "itemType": "service",
+            "quantity": 1
+          }
+        ],
+        "subtotal": 50.0,
+        "total": 50.0,
+        "paymentMethod": "cash",
+        "notes": "اختبار تحديث العملية",
+        "date": "2026-01-07T21:33:52.045884+00:00",
+        "createdAt": "2026-01-07T21:33:52.271144+00:00",
+        "updatedAt": "2026-01-07T21:33:52.793446+00:00"
+      }
+    },
+    "timestamp": "2026-01-07T21:33:53.141251"
+  }
+]

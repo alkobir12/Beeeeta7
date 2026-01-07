@@ -65,7 +65,7 @@ const VehicleDetails = () => {
         services: vehicle.services
       });
       
-      // إنشاء عملية تلقائية إذا كان هناك بنود
+      // إنشاء أو تحديث عملية تلقائية إذا كان هناك بنود
       if (vehicle.parts && vehicle.parts.length > 0) {
         const operationItems = vehicle.parts.map(item => ({
           itemType: item.itemType || 'service',
@@ -76,10 +76,14 @@ const VehicleDetails = () => {
           total: (item.quantity || 1) * (item.price || 0)
         }));
         
-        const totalAmount = operationItems.reduce((sum, it) => sum + (it.total || 0), 0);
+        // البحث عن عملية موجودة لنفس المركبة في نفس اليوم
+        const today = new Date().toISOString().split('T')[0];
+        const existingOps = vehicleOperations.filter(op => {
+          const opDate = new Date(op.date || op.createdAt).toISOString().split('T')[0];
+          return opDate === today && op.type === 'sale';
+        });
         
-        // إنشاء عملية بيع مرتبطة بالمركبة
-        await axios.post(`${API_URL}/operations`, {
+        const operationData = {
           vehicleId: id,
           type: 'sale',
           partnerType: 'customer',
@@ -87,10 +91,18 @@ const VehicleDetails = () => {
           items: operationItems,
           paymentMethod: 'cash',
           notes: `عملية من ملف المركبة: ${vehicle.plateNumber}`
-        });
+        };
+        
+        if (existingOps.length > 0) {
+          // تحديث العملية الموجودة
+          await axios.put(`${API_URL}/operations/${existingOps[0].id}`, operationData);
+        } else {
+          // إنشاء عملية جديدة
+          await axios.post(`${API_URL}/operations`, operationData);
+        }
       }
       
-      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات وإنشاء العملية بنجاح' });
+      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات بنجاح' });
       // Only fetch after successful save to sync with server
       await fetchData();
     } catch (error) {

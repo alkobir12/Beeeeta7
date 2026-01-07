@@ -160,100 +160,112 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-[520px]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>إدارة المركبة</span>
-              <Button variant="ghost" size="icon" onClick={onClose}><X size={20} /></Button>
+        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader className="sticky top-0 bg-card z-10 pb-2">
+            <DialogTitle className="flex items-center justify-between text-base sm:text-lg">
+              <span>خيارات المركبة</span>
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10"><X size={18} /></Button>
             </DialogTitle>
-            <DialogDescription>خيارات سريعة للمركبة</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            <div className="bg-muted/50 p-4 rounded-lg border border-border">
-              <h3 className="font-bold text-lg text-foreground mb-2">{vehicle.plateNumber}</h3>
-              <p className="text-muted-foreground text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
-              <p className="text-muted-foreground text-sm">{vehicle.customerName}</p>
+          <div className="space-y-4 sm:space-y-6 pb-4">
+            {/* Vehicle Info Card */}
+            <div className="bg-muted/50 p-3 sm:p-4 rounded-lg border border-border">
+              <h3 className="font-bold text-base sm:text-lg text-foreground mb-1">{vehicle.plateNumber}</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
+              <p className="text-muted-foreground text-xs sm:text-sm">{vehicle.customerName}</p>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">تحديث الحالة</Label>
+            {/* Status Update */}
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-sm sm:text-base font-semibold">تحديث الحالة</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full h-10 sm:h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {statusOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={`status-${option.value}`} value={option.value}>
                       <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${option.color}`}></div>
-                        {option.label}
+                        <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${option.color}`}></div>
+                        <span className="text-sm">{option.label}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                <CheckCircle size={18} className="ml-2" />تحديث الحالة
+              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full h-10 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                <CheckCircle size={16} className="ml-2" />تحديث الحالة
               </Button>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">إجراءات سريعة</Label>
+            {/* Quick Actions Grid - 2 columns on mobile */}
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-sm sm:text-base font-semibold">إجراءات سريعة</Label>
 
-              {/* Approval Request */}
-              <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-500/10 hover:text-green-400">
-                <BadgeCheck size={18} className="ml-2" />طلب اعتماد من العميل
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Approval Request */}
+                <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-green-500/10 hover:text-green-400">
+                  <BadgeCheck size={18} />
+                  <span>طلب اعتماد</span>
+                </Button>
 
-              {/* Document Creation */}
-              <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-500/10 hover:text-blue-400">
-                <FileText size={18} className="ml-2" />تقرير الإصلاح
-              </Button>
+                {/* Diagnosis Report */}
+                <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
+                  <FileText size={18} />
+                  <span>تقرير تشخيص</span>
+                </Button>
 
-              <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-amber-500/10 hover:text-amber-400">
-                <FileText size={18} className="ml-2" />تسعير القطع
-              </Button>
+                {/* Quote */}
+                <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
+                  <FileText size={18} />
+                  <span>عرض سعر</span>
+                </Button>
 
-              <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-purple-500/10 hover:text-purple-400">
-                <Printer size={18} className="ml-2" />طباعة كرت استلام (فاتورة)
-              </Button>
+                {/* Invoice */}
+                <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
+                  <Printer size={18} />
+                  <span>فاتورة</span>
+                </Button>
 
-              <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-emerald-500/10 hover:text-emerald-400">
-                <FileText size={18} className="ml-2" />سند قبض
-              </Button>
+                {/* Receipt */}
+                <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
+                  <FileText size={18} />
+                  <span>سند قبض</span>
+                </Button>
 
-              {/* Operations */}
-              <Button onClick={() => navigate(`/vehicle-details/${vehicle.id}`)} disabled={loading} variant="outline" className="w-full justify-start hover:bg-slate-700/50">
-                <FileText size={18} className="ml-2" />التفاصيل
-              </Button>
+                {/* Details */}
+                <Button onClick={() => navigate(`/vehicle/${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-slate-700/50">
+                  <FileText size={18} />
+                  <span>التفاصيل</span>
+                </Button>
 
-              {/* Parts Management */}
-              <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-blue-500/10 hover:text-blue-400">
-                <Package size={18} className="ml-2" />قطع الغيار
-              </Button>
+                {/* Parts */}
+                <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
+                  <Package size={18} />
+                  <span>قطع الغيار</span>
+                </Button>
 
-              {/* Operations/Services */}
-              <Button
-                onClick={() => navigate(`/operations?vehicleId=${vehicle.id}&plate=${encodeURIComponent(vehicle.plateNumber || '')}`)}
-                disabled={loading}
-                variant="outline"
-                className="w-full justify-start hover:bg-orange-500/10 hover:text-orange-400"
-              >
-                <Wrench size={18} className="ml-2" />إدخال العمليات
-              </Button>
+                {/* Operations */}
+                <Button
+                  onClick={() => navigate(`/operations?vehicleId=${vehicle.id}&plate=${encodeURIComponent(vehicle.plateNumber || '')}`)}
+                  disabled={loading}
+                  variant="outline"
+                  className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-orange-500/10 hover:text-orange-400"
+                >
+                  <Wrench size={18} />
+                  <span>العمليات</span>
+                </Button>
+              </div>
 
-              {/* Archive Actions */}
-              <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-green-500/10 hover:text-green-400">
-                <CheckCircle size={18} className="ml-2" />خروج من الأرشيف (تسليم)
-              </Button>
+              {/* Full Width Actions */}
+              <div className="space-y-2 pt-2">
+                <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full h-10 justify-start text-sm hover:bg-green-500/10 hover:text-green-400">
+                  <CheckCircle size={16} className="ml-2" />تسليم المركبة
+                </Button>
 
-              <Button onClick={() => handleStatusUpdate('cancelled')} disabled={loading} variant="outline" className="w-full justify-start hover:bg-gray-700/50">
-                <X size={18} className="ml-2" />خروج بدون إصلاح
-              </Button>
-
-              {/* Delete */}
-              <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full justify-start hover:bg-red-600">
-                <Trash2 size={18} className="ml-2" />حذف المركبة
-              </Button>
+                <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full h-10 justify-start text-sm hover:bg-red-600">
+                  <Trash2 size={16} className="ml-2" />حذف المركبة
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

@@ -398,8 +398,8 @@ const DensoDiagnostics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {engineDetails.diagnostic_steps.map((step, index) => (
-                      <div key={index} className="flex gap-4 items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    {(engineDetails.diagnostic_steps || []).map((step, index) => (
+                      <div key={`step-${index}`} className="flex gap-4 items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <div className="w-8 h-8 bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 rounded-full flex items-center justify-center font-bold flex-shrink-0">
                           {index + 1}
                         </div>

@@ -76,9 +76,13 @@ const VehicleDetails = () => {
           total: (item.quantity || 1) * (item.price || 0)
         }));
         
+        // جلب العمليات الحالية للمركبة من الخادم
+        const opsRes = await axios.get(`${API_URL}/operations?vehicle_id=${id}`);
+        const currentOps = opsRes.data || [];
+        
         // البحث عن عملية موجودة لنفس المركبة في نفس اليوم
         const today = new Date().toISOString().split('T')[0];
-        const existingOps = vehicleOperations.filter(op => {
+        const existingOps = currentOps.filter(op => {
           const opDate = new Date(op.date || op.createdAt).toISOString().split('T')[0];
           return opDate === today && op.type === 'sale';
         });

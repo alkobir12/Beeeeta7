@@ -289,6 +289,7 @@ class ArabicQuotationBuilder:
                         <tbody>
                             {items_html}
                         </tbody>
+                        {table_footer}
                     </table>
                 </div>
             </div>

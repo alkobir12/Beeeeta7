@@ -134,7 +134,9 @@
   
   /* Sidebar Styles - Emergent Theme */
   .sidebar-modern {
-    @apply fixed top-0 right-0 bottom-0 w-[280px] bg-card/95 backdrop-blur-xl border-l border-border z-50 transition-transform duration-300 ease-in-out;
+    @apply fixed top-0 bottom-0 w-[280px] bg-card/95 backdrop-blur-xl border-l border-border z-50 transition-transform duration-300 ease-in-out;
+    /* Directional positioning */
+    @apply rtl:right-0 ltr:left-0 rtl:border-l ltr:border-r;
   }
   
   .sidebar-item {
@@ -151,7 +153,9 @@
   }
   
   .content-area {
-    @apply flex-1 p-6 ml-0 lg:mr-[280px] transition-all duration-300;
+    @apply flex-1 p-6 transition-all duration-300;
+    /* Directional margin for desktop */
+    @apply rtl:lg:mr-[280px] ltr:lg:ml-[280px] rtl:ml-0 ltr:mr-0;
   }
   
   /* Animations */

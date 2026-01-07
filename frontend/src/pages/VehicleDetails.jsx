@@ -54,6 +54,9 @@ const VehicleDetails = () => {
   const handleStatusUpdate = async () => {
     try {
       setLoading(true);
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      
+      // حفظ بيانات المركبة
       await vehicleAPI.update(id, { 
         status, 
         notes, 
@@ -61,10 +64,37 @@ const VehicleDetails = () => {
         parts: vehicle.parts,
         services: vehicle.services
       });
-      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات بنجاح' });
+      
+      // إنشاء عملية تلقائية إذا كان هناك بنود
+      if (vehicle.parts && vehicle.parts.length > 0) {
+        const operationItems = vehicle.parts.map(item => ({
+          itemType: item.itemType || 'service',
+          itemId: item.id,
+          name: item.name,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          total: (item.quantity || 1) * (item.price || 0)
+        }));
+        
+        const totalAmount = operationItems.reduce((sum, it) => sum + (it.total || 0), 0);
+        
+        // إنشاء عملية بيع مرتبطة بالمركبة
+        await axios.post(`${API_URL}/operations`, {
+          vehicleId: id,
+          type: 'sale',
+          partnerType: 'customer',
+          partnerName: vehicle.customerName || '',
+          items: operationItems,
+          paymentMethod: 'cash',
+          notes: `عملية من ملف المركبة: ${vehicle.plateNumber}`
+        });
+      }
+      
+      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات وإنشاء العملية بنجاح' });
       // Only fetch after successful save to sync with server
       await fetchData();
     } catch (error) {
+      console.error('Save error:', error);
       toast({ title: "خطأ", description: "فشل الحفظ", variant: "destructive" });
     } finally {
       setLoading(false);

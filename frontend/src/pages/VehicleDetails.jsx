@@ -147,38 +147,6 @@ const VehicleDetails = () => {
                     <span>الخدمات المسجّلة لهذه المركبة</span>
                   </h4>
 
-                  {/* إضافة خدمة نصية بسيطة */}
-                  <div className="mt-3 flex items-center gap-2">
-                    <input
-                      className="apple-input text-xs flex-1"
-                      placeholder="إضافة خدمة يدوية (مثلاً: توضيب مكينة 1VD)"
-                      value={newService}
-                      onChange={e => setNewService(e.target.value)}
-                    />
-                    <button
-                      className="px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700"
-                      onClick={async () => {
-                        const name = newService.trim();
-                        if (!name) {
-                          toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
-                          return;
-                        }
-                        try {
-                          const updatedServices = Array.from(new Set([...(vehicle.services || []), name]));
-                          await vehicleAPI.update(id, { services: updatedServices });
-                          await fetchData(); // Refresh all data
-                          setNewService('');
-                          toast({ title: 'تم الحفظ', description: 'تم إضافة الخدمة بنجاح' });
-                        } catch (e) {
-                          console.error(e);
-                          toast({ title: 'خطأ', description: 'فشل في حفظ الخدمة', variant: 'destructive' });
-                        }
-                      }}
-                    >
-                      حفظ الخدمة
-                    </button>
-                  </div>
-
                   {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
                   <div className="mt-4 space-y-3">
                     <div className="grid grid-cols-12 gap-2 items-end">

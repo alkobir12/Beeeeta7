@@ -223,7 +223,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                       <Clock size={14} className="text-gray-400 flex-shrink-0" />
-                      <span>{new Date(vehicle.createdAt).toLocaleDateString('ar-SA')}</span>
+                      <span>{vehicle.createdAt ? new Date(vehicle.createdAt).toLocaleDateString('ar-SA') : '-'}</span>
                     </div>
                   </div>
 

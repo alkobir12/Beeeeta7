@@ -532,6 +532,45 @@ class SupabaseService:
             'createdAt': r.get('created_at')
         }
 
+    def operations_update(self, op_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        items = payload.get('items') or []
+        subtotal = sum((float(it.get('price',0))*float(it.get('quantity',1))) for it in items)
+        row = {
+            'type': payload.get('type'),
+            'account_id': payload.get('accountId'),
+            'vehicle_id': payload.get('vehicleId'),
+            'partner_type': payload.get('partnerType'),
+            'partner_name': payload.get('partnerName'),
+            'items': items,
+            'subtotal': subtotal,
+            'total': subtotal,
+            'payment_method': payload.get('paymentMethod'),
+            'notes': payload.get('notes'),
+            'updated_at': datetime.utcnow().isoformat()
+        }
+        # إزالة القيم الفارغة
+        row = {k: v for k, v in row.items() if v is not None}
+        res = self.client.table('operations').update(row).eq('id', op_id).execute()
+        r = (res.data or [{}])[0]
+        return {
+            'id': r.get('id'),
+            'type': r.get('type'),
+            'accountId': r.get('account_id'),
+            'vehicleId': r.get('vehicle_id'),
+            'partnerType': r.get('partner_type'),
+            'partnerName': r.get('partner_name'),
+            'items': r.get('items'),
+            'subtotal': r.get('subtotal'),
+            'total': r.get('total'),
+            'paymentMethod': r.get('payment_method'),
+            'notes': r.get('notes'),
+            'date': r.get('op_date'),
+            'createdAt': r.get('created_at'),
+            'updatedAt': r.get('updated_at')
+        }
+
     # -------------------- Transactions --------------------
     def transactions_list(self, type: Optional[str] = None, account_id: Optional[str] = None) -> List[Dict[str, Any]]:
         if self.mock_mode:

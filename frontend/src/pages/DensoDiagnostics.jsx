@@ -180,7 +180,10 @@ const DensoDiagnostics = () => {
                       <span className="font-semibold">المقاومة (Resistance)</span>
                     </div>
                     <p className="text-2xl font-mono font-bold text-center">
-                      {engineDetails.injector_specifications?.resistance_min} - {engineDetails.injector_specifications?.resistance_max} Ω
+                      {engineDetails.injector_specifications?.electrical_resistance_ohm} Ω
+                    </p>
+                    <p className="text-xs text-center text-muted-foreground mt-1">
+                      ± {engineDetails.injector_specifications?.resistance_tolerance_percent}%
                     </p>
                   </div>
 
@@ -191,7 +194,10 @@ const DensoDiagnostics = () => {
                       <span className="font-semibold">ضغط العمل (Pressure)</span>
                     </div>
                     <p className="text-2xl font-mono font-bold text-center">
-                      {engineDetails.injector_specifications?.pressure_min} - {engineDetails.injector_specifications?.pressure_max} MPa
+                      {engineDetails.injector_specifications?.operating_pressure_bar} bar
+                    </p>
+                    <p className="text-xs text-center text-muted-foreground mt-1">
+                      ({engineDetails.injector_specifications?.operating_pressure_mpa} MPa)
                     </p>
                   </div>
 
@@ -199,13 +205,47 @@ const DensoDiagnostics = () => {
                   <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                     <div className="flex items-center gap-2 mb-3">
                       <Droplets size={18} className="text-blue-500" />
-                      <span className="font-semibold">تدفق الإرجاع (Return)</span>
+                      <span className="font-semibold">تدفق الإرجاع (VL Max)</span>
                     </div>
                     <p className="text-2xl font-mono font-bold text-center">
-                      ≤ {engineDetails.injector_specifications?.return_flow_max} ml/min
+                      ≤ {engineDetails.vl_mode_parameters?.return_quantity_max_ml_min} ml/min
                     </p>
                   </div>
                 </div>
+
+                {/* Additional Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-xs text-muted-foreground">نوع الحقن</p>
+                    <p className="font-semibold text-sm">{engineDetails.injector_specifications?.injection_type}</p>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-xs text-muted-foreground">عدد فتحات الرشاش</p>
+                    <p className="font-semibold text-sm">{engineDetails.injector_specifications?.nozzle_holes}</p>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-xs text-muted-foreground">معدل التدفق</p>
+                    <p className="font-semibold text-sm">{engineDetails.injector_specifications?.flow_rate_cc_min} cc/min</p>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-xs text-muted-foreground">زاوية الرش</p>
+                    <p className="font-semibold text-sm">{engineDetails.injector_specifications?.spray_angle_degrees}°</p>
+                  </div>
+                </div>
+
+                {/* Part Numbers */}
+                {engineDetails.original_part_numbers && (
+                  <div className="mt-6">
+                    <p className="text-sm text-muted-foreground mb-2">أرقام القطع الأصلية:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {engineDetails.original_part_numbers.map((pn, i) => (
+                        <span key={i} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-mono">
+                          {pn}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

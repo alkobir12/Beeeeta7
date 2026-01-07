@@ -422,8 +422,8 @@ const DensoDiagnostics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {engineDetails.common_faults.map((fault, index) => (
-                      <div key={index} className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    {(engineDetails.common_faults || []).map((fault, index) => (
+                      <div key={`fault-${index}`} className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                         <AlertTriangle size={16} className="text-orange-500 mt-1 flex-shrink-0" />
                         <span className="text-sm">{fault}</span>
                       </div>

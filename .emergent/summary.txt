@@ -1,365 +1,371 @@
-<analysis>**original_problem_statement:** The user's initial goal was to build a Workshop Management System. This evolved through several phases:
-1.  **Core Feature Fixes**: Stabilizing the vehicle and customer management pages.
-2.  **New Feature (AI Chat)**: A request to build a complete AI chat system for a diesel maintenance expert, integrated with the Groq API.
-3.  **UI/UX Overhaul**: A major request to change the entire application's theme to match the look and feel of , including a dark theme, specific accent colors, and an animated particle background.
-4.  **Permissions System**: A request to implement a role-based access control (RBAC) system, so that non-admin users (technicians) only see the sidebar menu items they are explicitly granted access to.
+<analysis>**original_problem_statement:**
+The user's initial goal was to build a Workshop Management System. This evolved through several phases:
+1.  **Core Feature Fixes**: Stabilizing vehicle/customer management.
+2.  **New Feature (AI Chat)**: An AI diesel maintenance expert using the Groq API.
+3.  **UI/UX Overhaul**: A complete redesign to match the  dark theme.
+4.  **Permissions System (RBAC)**: Role-based access control for sidebar navigation.
+5.  **Ongoing Bug Fixes**: The user has reported numerous issues throughout the session, including UI glitches, app crashes, data not saving, and broken core features like document printing. The most recent user requests focus on fixing unreliable data saving and a non-functional document print/preview feature.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application has undergone a significant transformation.
--   **Frontend**: The UI has been completely restyled to a dark, -inspired theme, featuring a turquoise accent color () and a live animated particle background. A new, full-featured AI Diesel Expert chat has been implemented as a modal window accessible via a floating button. Core functionalities like the  page have been fixed and enhanced with editable fields. An attempt to implement a permission-based sidebar in  has been made but is currently **broken**, resulting in an empty sidebar for all users.
--   **Backend**: A new API endpoint () has been created to handle requests to the Groq API for the AI chat feature. The user management system has been extended to support permissions: the  model now has a  field, and the login/update user endpoints have been modified to handle this data.
+The application is a full-stack Workshop Management system (React/FastAPI/Supabase).
+-   **Frontend**: The UI has been completely restyled to a dark, -inspired theme. Core features include a dashboard, vehicle management, customer management, and a new Operations page. An AI Chat feature is available via a floating button. An RBAC system is in place to control sidebar visibility for different user roles. Internationalization () has been set up for Arabic and English, with a language toggle.
+-   **Backend**: Includes standard CRUD APIs for managing workshop data. It has a dedicated endpoint () for the Groq integration and another () for creating printable HTML invoices from vehicle data. The user model includes a  field to support the RBAC functionality.
 
 **Last working item**:
--   **Last item agent was working**: Implementing Role-Based Access Control (RBAC) to filter the  menu based on user permissions. The goal was to restrict which pages a technician can see and access.
--   **Status**: BLOCKED
--   **Agent Testing Done**: Y (The agent used the screenshot tool and correctly identified that the sidebar was empty after the changes, indicating a critical failure in the implementation.)
--   **Which testing method agent to use?**: Frontend testing agent. The test should involve:
-    1.  Logging in as an  and verifying all sidebar menu items are visible.
-    2.  Creating a new  user with specific limited permissions (e.g., only access to Dashboard and Vehicles).
-    3.  Logging in as that  and verifying that *only* the permitted menu items are visible.
+-   **Last item agent was working**: Fixing the document printing functionality. The user reported that clicking the Print button navigates to the correct page, but the document preview is not visible, and printing does not work. The agent modified  and the backend Python script  to fix the data flow and rendering.
+-   **Status**: USER VERIFICATION PENDING
+-   **Agent Testing Done**: Y (Used the screenshot tool, which captured the print preview page rendering some content, but did not confirm full functionality.)
+-   **Which testing method agent to use?**: both. A frontend agent should verify the preview page renders correctly with all data. A backend test should confirm the  endpoint generates the correct HTML without errors.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Sidebar is broken and empty due to faulty RBAC filtering.**
--   **Issue 2: (P1) Document Preview/Print functionality is non-functional.**
--   **Issue 3: (P2) Diesel Chat attachment feature is incomplete.**
+-   **Issue 1: (P0)** Document Preview/Print functionality is non-functional.
+-   **Issue 2: (P1)** Core data saving is unreliable and the site is unstable.
+-   **Issue 3: (P2)** Diesel Chat attachment feature is incomplete.
 
 **Issues Detail:**
--   **Issue 1: Sidebar is broken and empty due to faulty RBAC filtering.**
-    -   **Attempted fixes**: The agent modified  to filter menu items based on permissions stored in . This logic is flawed and is currently filtering out *all* menu items for *all* users, including the admin, breaking all navigation.
+-   **Issue 1: Document Preview/Print functionality is non-functional.**
+    -   **Attempted fixes**: The agent edited  to correctly fetch data and manage loading states. It also modified  to ensure proper HTML generation.
     -   **Next debug checklist**:
-        1.  Review the filtering logic in . The condition is likely failing for everyone.
-        2.  Ensure the admin role bypasses permission checks entirely and always sees the full menu.
-        3.  Inspect  to confirm that  are being correctly fetched and stored in  upon login.
-        4.  Verify that the menu items in the  constant within  have a  that can be matched against the stored permissions.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical P0 blocker. The application is unusable as no user can navigate away from the dashboard. Fixing this will restore navigation and complete the user's RBAC request.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue**: None. This is the primary blocker.
-
--   **Issue 2: Document Preview/Print functionality is non-functional.**
-    -   **Attempted fixes**: The agent identified that the frontend was calling a non-existent endpoint and pointed it to a new one (). However, the user provided a screenshot () showing a generic error message, indicating the fix was incomplete. The issue could be in the data payload sent from the frontend or error handling on the backend.
-    -   **Next debug checklist**:
-        1.  Trigger the print function from the UI.
-        2.  Check the backend logs (==> /var/log/supervisor/backend.err.log <==
-    raise exc
-  File "/root/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    await app(scope, receive, sender)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/routing.py", line 756, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/routing.py", line 776, in app
-    await route.handle(scope, receive, send)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/routing.py", line 297, in handle
-    await self.app(scope, receive, send)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/routing.py", line 77, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
-    raise exc
-  File "/root/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    await app(scope, receive, sender)
-  File "/root/.venv/lib/python3.11/site-packages/starlette/routing.py", line 72, in app
-    response = await func(request)
-               ^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 278, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
-    return await dependant.call(**values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/backend/server.py", line 602, in create_technician
-    res = supabase_service.client.table('technicians').insert(data).execute()
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 53, in execute
-    raise APIError(dict(json_obj))
-postgrest.exceptions.APIError: {'message': "Could not find the 'activeJobs' column of 'technicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+        1.  Ask the user to test the printing feature again from a vehicle's detail page.
+        2.  If it still fails, check the browser's developer console for errors on the print page.
+        3.  Inspect the backend logs (==> /var/log/supervisor/backend.err.log <==
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [85]
+INFO:     Stopping reloader process [49]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [1333] using WatchFiles
+INFO:     Started server process [1335]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routes_diesel_chat.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1335]
+INFO:     Started server process [1565]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Stopping reloader process [1333]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [1601] using WatchFiles
+INFO:     Started server process [1603]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
 INFO:     Will watch for changes in these directories: ['/app/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
 INFO:     Started reloader process [48] using WatchFiles
-INFO:     Started server process [78]
+INFO:     Started server process [79]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'routes_diesel_chat.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [78]
-INFO:     Started server process [386]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [386]
-INFO:     Started server process [715]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [715]
-INFO:     Started server process [958]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [958]
-INFO:     Stopping reloader process [48]
+[92m14:33:04 - LiteLLM:INFO[0m: utils.py:3386 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+INFO:LiteLLM:
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m14:33:35 - LiteLLM:INFO[0m: utils.py:1295 - Wrapper: Completed Call, calling success_handler
+INFO:LiteLLM:Wrapper: Completed Call, calling success_handler
 INFO:     Will watch for changes in these directories: ['/app/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [1175] using WatchFiles
-INFO:     Started server process [1177]
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [92]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'routes_diesel_chat.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [1177]
-INFO:     Started server process [3432]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Stopping reloader process [1175]
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [3440] using WatchFiles
-INFO:     Started server process [3442]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [3442]
-INFO:     Stopping reloader process [3440]
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [13613] using WatchFiles
-INFO:     Started server process [13615]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+[92m17:17:48 - LiteLLM:INFO[0m: utils.py:3386 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+INFO:LiteLLM:
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m17:18:01 - LiteLLM:INFO[0m: utils.py:1295 - Wrapper: Completed Call, calling success_handler
+INFO:LiteLLM:Wrapper: Completed Call, calling success_handler
 INFO:     Will watch for changes in these directories: ['/app/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
 INFO:     Started reloader process [49] using WatchFiles
+INFO:     Started server process [92]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [85]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[92m20:14:23 - LiteLLM:INFO[0m: utils.py:3386 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+INFO:LiteLLM:
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m20:14:37 - LiteLLM:INFO[0m: utils.py:1295 - Wrapper: Completed Call, calling success_handler
+INFO:LiteLLM:Wrapper: Completed Call, calling success_handler
+WARNING:  WatchFiles detected changes in 'arabic_quotation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [85]
+INFO:     Started server process [2085]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'arabic_quotation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2085]
+INFO:     Started server process [2291]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'arabic_quotation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2291]
+INFO:     Started server process [2915]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [86]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
 
 ==> /var/log/supervisor/backend.out.log <==
-INFO:     10.64.128.8:40458 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.133.15:43196 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.15:43196 - "OPTIONS /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.142.240:59310 - "PUT /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.142.240:59310 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.70:56846 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.93:46100 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.142.240:59310 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.70:56846 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.93:46100 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.6:41074 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.6:41074 - "OPTIONS /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.129.93:50338 - "PUT /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.142.240:46452 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.70:41492 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.142.241:57482 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.142.240:46452 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.129.70:41508 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.142.240:46464 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.70:57124 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.70:57128 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.129.93:57758 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.70:48278 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
-INFO:     10.64.129.93:34232 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.129.70:48282 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
-INFO:     10.64.142.240:59390 - "GET /api/approvals?vehicle_id=automaster-sys HTTP/1.1" 200 OK
-INFO:     10.64.129.93:34242 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
-INFO:     10.64.142.241:36636 - "GET /api/approvals?vehicle_id=automaster-sys HTTP/1.1" 200 OK
-INFO:     10.64.129.70:48296 - "GET /api/operations?vehicle_id=automaster-sys HTTP/1.1" 200 OK
-INFO:     10.64.129.93:57936 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.142.241:33262 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.133.22:34020 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.133.22:34032 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.6:32876 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.142.240:59952 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.142.241:48072 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.70:46266 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.142.241:35616 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.142.241:35616 - "OPTIONS /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.133.15:34886 - "PUT /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.133.15:34886 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.128.8:36192 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.8:36184 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.133.22:56460 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.128.6:37062 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.6:37064 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.6:44810 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.128.8:54584 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.133.22:38080 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.129.93:46754 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.142.240:55992 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.93:46770 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.129.93:40358 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.142.240:55558 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.133.22:38810 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.133.15:37532 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.133.22:38812 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.6:34934 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.6:34950 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.128.8:46636 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.6:52920 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.6:52920 - "PUT /api/users/522230c4-d47c-438e-8bb2-1d6d2b484ea1 HTTP/1.1" 200 OK
-INFO:     10.64.133.22:37564 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.133.15:35472 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.133.22:37572 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.133.15:35486 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.22:37584 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.8:43066 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.22:48392 - "PUT /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.128.6:43166 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.128.8:43066 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.6:43172 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.133.15:44282 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.22:48392 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.22:58052 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.133.22:58058 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.6:49428 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.15:55592 - "PUT /api/users/522230c4-d47c-438e-8bb2-1d6d2b484ea1 HTTP/1.1" 200 OK
-INFO:     10.64.128.8:48006 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.133.15:56694 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.6:38144 - "PUT /api/users/522230c4-d47c-438e-8bb2-1d6d2b484ea1 HTTP/1.1" 200 OK
-INFO:     10.64.133.15:56694 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.8:55704 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.8:55706 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.146.140:38918 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.146.140:38920 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.146.139:57900 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.136.100:50664 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.136.100:56120 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/0d03b490-ac17-4f6b-b5df-50301d4ff955 HTTP/1.1" 200 OK
+INFO:     10.64.146.139:46122 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/cdb9ff32-aa93-4e55-8ca6-244f2c5aff4c HTTP/1.1" 200 OK
+INFO:     10.64.146.140:41872 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/dd31aa11-31b7-4c70-855a-bc6b3822eb39 HTTP/1.1" 200 OK
+INFO:     10.64.146.139:51038 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/dd31aa11-31b7-4c70-855a-bc6b3822eb39 HTTP/1.1" 200 OK
+INFO:     10.64.136.99:57042 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/dd31aa11-31b7-4c70-855a-bc6b3822eb39 HTTP/1.1" 200 OK
+INFO:     10.64.136.99:57042 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files/dd31aa11-31b7-4c70-855a-bc6b3822eb39 HTTP/1.1" 200 OK
+INFO:     10.64.146.139:49070 - "POST /api/diesel-chat HTTP/1.1" 200 OK
+INFO:     10.64.136.99:57002 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.146.139:51310 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.146.140:50760 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.146.140:50764 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.136.99:57004 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.136.100:32900 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.146.139:51318 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.136.100:51418 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.136.99:38262 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.146.139:41708 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.146.139:53248 - "POST /api/documents/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:     10.64.146.139:47406 - "GET /api/business-accounts HTTP/1.1" 200 OK
+INFO:     10.64.146.140:40362 - "GET /api/operations HTTP/1.1" 200 OK
+INFO:     10.64.136.100:52630 - "GET /api/parts HTTP/1.1" 200 OK
+INFO:     10.64.136.100:52614 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     10.64.136.99:32826 - "GET /api/vehicles HTTP/1.1" 200 OK
+INFO:     10.64.146.140:37934 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.136.99:54300 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.143.210:57770 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.205:59386 - "GET /api/vehicles HTTP/1.1" 200 OK
+INFO:     10.64.142.219:45200 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.142.205:59386 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.219:45200 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.143.210:57770 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.143.202:47072 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.202:47074 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.202:47088 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.143.202:47104 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.142.219:52716 - "PUT /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48854 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48866 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.219:52716 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.142.205:46854 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.142.205:46864 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.142.219:52716 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.143.210:34032 - "GET /api/vehicles HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48874 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.219:52716 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.210:34032 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.143.210:34046 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.142.205:36530 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48876 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.143.210:34056 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52006 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52016 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52024 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52034 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52044 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52016 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.128.7:52050 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.146.203:35912 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.146.203:35928 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.146.203:35942 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.146.203:41382 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.146.203:41388 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.128.7:59880 - "GET /api/profile HTTP/1.1" 200 OK
 ✅ Gemini API configured successfully
 GridFS bucket init failed: First argument to <class 'motor.motor_asyncio.AsyncIOMotorGridFSBucket'> must be  MotorDatabase, not None
 ⚠️ Twilio credentials not found - using deeplink mode
 ✅ WhatsApp Service initialized
-INFO:     10.64.128.6:49380 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.131.78:57804 - "POST /api/users/login HTTP/1.1" 405 Method Not Allowed
-INFO:     10.64.133.22:48816 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     10.64.128.6:59676 - "OPTIONS /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.131.78:57804 - "PUT /api/users/88fe138a-0768-47d1-aa66-d67679b5f2ff HTTP/1.1" 200 OK
-INFO:     10.64.131.78:57804 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.131.82:32912 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.82:32906 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.131.78:57804 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.82:32906 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.131.82:32920 - "GET /api/settings HTTP/1.1" 200 OK
-INFO:     10.64.131.82:32906 - "GET /api/users HTTP/1.1" 200 OK) for errors from the document generation service.
-        3.  Review  to see what data is being sent to the backend.
-        4.  Ensure the backend HTML template can correctly render the data it receives.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a core business requirement for generating invoices and reports.
-    -   **Status**: NOT STARTED
+INFO:     10.64.142.219:35972 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.142.205:49594 - "GET /api/vehicles HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48418 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48418 - "GET /api/technicians HTTP/1.1" 200 OK
+INFO:     10.64.142.205:49594 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48420 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.210:49742 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.205:49608 - "GET /api/operations?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.202:48434 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/files HTTP/1.1" 200 OK
+INFO:     10.64.143.210:49748 - "GET /api/approvals?vehicle_id=workshop-manager-46 HTTP/1.1" 200 OK
+INFO:     10.64.143.202:59896 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.143.202:59906 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.219:60964 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.143.202:49462 - "POST /api/documents/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:     10.64.143.210:57314 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.205:51756 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.142.205:51758 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.143.210:58190 - "POST /api/documents/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:     10.64.142.219:45058 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.143.202:54556 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.205:56706 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.205:56704 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.205:56728 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.143.202:54558 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.143.210:52670 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.143.210:52676 - "GET /api/settings HTTP/1.1" 200 OK
+INFO:     10.64.142.219:45064 - "GET /api/profile HTTP/1.1" 200 OK
+INFO:     10.64.143.210:52688 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK
+INFO:     10.64.136.100:54808 - "GET /api/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d HTTP/1.1" 200 OK) for errors when the  endpoint is called.
+        4.  Verify the data payload passed from  to  is complete.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a core business requirement for generating invoices and reports. The user has explicitly asked for this fix multiple times.
+    -   **Status**: USER VERIFICATION PENDING
     -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue**: Blocked by the broken sidebar (Issue 1), as it's hard to navigate to the vehicle details page to test printing.
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue**: None.
+
+-   **Issue 2: Core data saving is unreliable and the site is unstable.**
+    -   **Attempted fixes**: The agent applied multiple patches to  to address the saving logic. However, the user has reported the same issue (items are not saved) after the fixes were applied.
+    -   **Next debug checklist**:
+        1.  Perform a full end-to-end test: Log in, go to a vehicle, add/edit an item, click Save Updates, reload the page, and confirm the data persisted.
+        2.  Use the browser's developer tools to inspect the  request to . Check the request payload and the server's response.
+        3.  Thoroughly review the  function in  and the corresponding backend update logic.
+        4.  Consider that the component's complexity might be the source of the issue (see Areas that need refactoring).
+    -   **Why fix this issue and what will be achieved with the fix?** The application's main purpose is to manage data. If saving is unreliable, the app is fundamentally broken and unusable.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue**: None.
 
 -   **Issue 3: Diesel Chat attachment feature is incomplete.**
-    -   **Attempted fixes**: The agent added a UI button (a paperclip icon) for attachments in  at the user's request.
+    -   **Attempted fixes**: A UI button (paperclip icon) was added, but no functionality is attached to it.
     -   **Next debug checklist**:
-        1.  Implement the  handler for the attachment button to open a file selection dialog.
-        2.  Implement the frontend logic to upload the selected file.
-        3.  **Crucially, ask the user for clarification**: What should happen with the uploaded file? Should it be analyzed for context (vision-enabled chat)? Or just stored?
-        4.  Based on user feedback, implement the backend logic to handle the file upload within the  endpoint.
+        1.  Ask the user for clarification: Should the attachment be analyzed by the AI (vision) or simply stored?
+        2.  Implement the frontend logic to open a file dialog and handle the upload.
+        3.  Implement the backend endpoint to receive and process the file based on the user's requirements.
     -   **Why fix this issue and what will be achieved with the fix?** Fulfills a direct user request to enhance the AI chat feature.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on other issue**: None.
 
 **In progress Task List**:
--   **Task 1: (P0) Finalize and Fix Role-Based Access Control (RBAC)**
-    -   **Where to resume**: Debugging  to fix the broken menu filtering logic.
-    -   **What will be achieved with this?** A functional permission system where admins see all pages and technicians see only the pages they are assigned, restoring site navigation.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on something**: This is the application's main blocker.
+-   None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P1)** Fix Document Preview/Print functionality.
-    - **(P2)** Implement the backend logic for Diesel Chat attachments (pending user clarification).
+    - **(P1)** Implement the interactive Denso Injector Diagnostics page (currently a placeholder at ).
+    - **(P2)** Implement Google Drive Integration.
 - **Future Tasks**:
-    - Complete the full-site language toggle (EN/AR) to ensure all components are translated.
-    - Implement the interactive Denso Injector Diagnostics page.
-    - Implement Google Drive Integration.
+    - Complete the full-site language toggle (EN/AR) to ensure all components and dynamic content are translated.
 
 **Completed work in this session**
--   **UI Overhaul**: The entire application theme was successfully changed to a dark, -style design, including a live animated background and a consistent color palette.
--   **AI Chat Feature**: A complete AI chat system connected to the Groq API was built and integrated. This includes a backend endpoint (), a frontend modal UI (), and a floating button for access ().
--   **Vehicle Details Fixes**: Fixed bugs where services/parts were not saving and made item prices editable directly in the UI.
--   **Bug Fixes**: Resolved multiple critical bugs, including the broken  page and an incorrect Groq API model name.
+- **RBAC Sidebar Fix**: Resolved a critical P0 blocker where the sidebar was empty. Navigation is now functional for all user roles.
+- **UI/Stability Fixes**:
+    - Corrected neon and low-contrast colors on UI widgets.
+    - Resolved a Maximum call stack size exceeded crash.
+    - Removed code that was causing the page to auto-reload every 30 seconds.
+- **Feature Enhancements**:
+    - Fixed the attachment preview modal on the  page.
+    - Removed the Add Manual Service button as requested.
+    - Created a new Operations page and linked it to vehicles.
+    - Added a Total amount row to the items table for invoicing.
+    - Set up the foundation for internationalization (i18n) with .
+    - Created a placeholder for the Denso Diagnostics page.
+
+**Earlier issues found/mentioned but not fixed**
+- The core instability and data saving issues (Pending Issue #2) have been mentioned multiple times by the user and attempted fixes have not been successful, indicating a persistent, unresolved problem.
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork**: Document Preview/Print functionality was non-functional.
+-   **Recurrence count**: 2+
+-   **Status**: USER VERIFICATION PENDING
 
 **Code Architecture**
-permissions: Optional[dict]
+
 
 **Key Technical Concepts**
--   **Frontend**: React, TailwindCSS for theming, Role-Based Access Control (RBAC) via , state management.
--   **Backend**: FastAPI, Pydantic, handling external API calls (Groq).
--   **Database**: Supabase (PostgreSQL). The  table schema is implicitly updated via the Pydantic  model to include permissions.
+-   **Frontend**: React, TailwindCSS, Role-Based Access Control (RBAC),  for internationalization.
+-   **Backend**: FastAPI, Pydantic.
+-   **Database**: Supabase (PostgreSQL).
+-   **Integrations**: Groq API for AI chat.
 
 **key DB schema**
--   **users**: A  column (likely ) has been logically added to store role permissions. Example: .
+-   **users**: A  column (likely ) stores role permissions as a JSON object (e.g., ).
 
 **changes in tech stack**
--   None.
+-   Added  and related libraries to the frontend for handling translations.
 
 **All files of reference**
--   **/app/frontend/src/components/Sidebar.jsx**: **Highest priority file.** It is broken and prevents all navigation.
--   **/app/frontend/src/pages/Login.jsx**: Key to the RBAC flow; where permissions are stored.
--   **/app/frontend/src/pages/UsersManagement.jsx**: UI for setting the permissions that the sidebar relies on.
--   **/app/frontend/tailwind.config.js**: Defines the new  theme.
--   **/app/frontend/src/pages/DieselExpertChat.jsx**: The new AI chat feature.
--   **/app/backend/routes_diesel_chat.py**: The new backend for the AI chat.
--   **/app/backend/models.py**: Contains the updated  model with the  field.
+-   **/app/frontend/src/pages/VehicleDetails.jsx**: This is the most critical and problematic file. It's responsible for the recurring data-saving bugs.
+-   **/app/frontend/src/pages/DocumentPrint.jsx**: The file related to the user's last direct bug report.
+-   **/app/backend/arabic_quotation.py**: The backend script that generates the content for the document print page.
+-   **/app/frontend/src/i18n.js**, : Files related to the new translation system.
 
 **Areas that need refactoring**:
--   The permission logic is scattered across , , and . It could be centralized into a React Context or a custom hook (e.g., ) for better state management and easier debugging.
+-   The  component is over 550 lines long and is extremely complex. It manages state for vehicle info, parts, services, modals, and API calls. This complexity is the likely cause of the recurring data-saving bugs and instability. It should be broken down into smaller, single-responsibility components (e.g., , , ).
+-   The authentication and permission logic is scattered. It could be centralized into a React Context or a custom hook (e.g., ) to improve maintainability.
 
 **key api endpoints**
--   : New endpoint that proxies requests to the Groq API.
--   : Modified to return user permissions in the response.
--   : Modified to accept and save a  object for a user.
+-   : The endpoint used to save all changes from the  page. Needs to be tested for reliability.
+-   : Endpoint for generating printable invoices. Needs verification.
+-   : New endpoint for the Operations page.
 
 **Critical Info for New Agent**
--   **Your immediate and only priority is to fix the sidebar in .** The application is fundamentally broken until this is resolved. The admin should see all menu items, and other users should see a filtered list based on their permissions.
--   The user is highly responsive to visual changes. After fixing the sidebar, proceed with the other visual and functional fixes requested (Printing, Chat attachments).
--   The theme is now based on . All new UI components must adhere to this dark theme with turquoise accents. The color palette is defined in .
--   Restarting the frontend (frontend: ERROR (not running)
-frontend: started) is necessary after making changes to  for them to apply.
+-   **Priority 1 is user verification**: Confirm if the Document Printing fix was successful.
+-   **Priority 2 is stability**: The most significant underlying problem is the unreliability of data saving in the  page. The user has reported this multiple times. Do not assume the previous patches worked. A deep dive and possibly a refactor are needed.
+-   **Always respond in Arabic.** The user communicates exclusively in Arabic.
+-   The application is in a fragile state. Use a testing agent after any significant change, especially to the  component, to prevent regressions.
 
 **documents and test reports created in this job**
--   None.
+- /app/image_testing.md
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**:  (When setting permissions for a technician in the user list, he should not see all side menus, only the specified ones.) - **This is the current, highest-priority task that is in a broken state.**
-2.  **User**:  (Clarify all the widgets and look at the new color) - User provides a new reference image for colors.
-3.  **User**:  (The widget is unreadable, go back to the previous site image, copy the colors, and analyze the image more.) - User is unhappy with the color contrast.
-4.  **User**:  (Until now nothing has changed, all the colors are not clear and the font is also unreadable.) - User is complaining about clarity.
-5.  **User**:  (The colors are garish and not similar.) - User is unhappy with the initial neon color choice.
-6.  **User**:  (Look at the picture, there is a live wallpaper.) - User requests the animated background.
-7.  **User**:  (The live background is remaining.) - Follow-up on the animated background.
-8.  **User**:  (Make the theme for the whole site and chat similar to emergent.sh.) - The start of the UI overhaul request.
-9.  **User**:  (The chat window is still very large and cannot be exited, there is no close button.) - User feedback on the chat UI.
-10. **User**:  (I mean add attachments in diesel chat.) - New feature request for the chat.
+1.  **Latest**:  (When I click print, it goes to the document printing page, but I can't preview or print) - **Status: In Progress (User Verification Pending)**.
+2.   (Add a total to the items table so it can be printed as an invoice) - **Status: Completed**.
+3.   - **Status: Completed**.
+4.   (The theme is breaking and the sidebar too. Did you link the operations...?) - **Status: Completed**.
+5.   (There's still a problem in the vehicle file, the items are not saved...) - **Status: In Progress (Recurring Issue)**.
+6.   (Delete add manual service...) - **Status: Completed**.
+7.   (Complete the rest) - User instruction.
+8.   (Still doesn't save items... and can't open attachments...) - **Status: Addressed, but saving is a recurring issue**.
+9.   (When staying on any page for more than 30 seconds, the page refreshes, why?) - **Status: Completed**.
+10.  - **Status: Completed**.
 
 **Project Health Check:**
--   **Broken**: Core navigation is broken due to a faulty sidebar implementation. All users see an empty sidebar.
+-   **Broken**: Data persistence in the  page is unreliable, which is a critical flaw. The user has repeatedly reported general site instability.
+-   **Mocked**: None.
 
 **3rd Party Integrations**
 -   **Supabase**: Primary database.
--   **Groq API**: Used for the AI Diesel Expert chat feature. The model used is  or a newer replacement. Requires a  in the backend environment.
+-   **Groq API**: Powers the AI Diesel Expert chat feature. Requires a .
+-   **emergentintegrations**: Library has been installed.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None.
--   **Known regressions**: The entire sidebar navigation has regressed to a non-functional state.
+-   **Test files created**: []
+-   **Known regressions**: The failure to save items in the  page is a critical, recurring issue that has persisted despite multiple attempted fixes.
 
 **Credentials to test flow:**
--   **Username**:  or 
+-   **Username**: 
 -   **Password**: 
 
 **What agent forgot to execute**
-The agent attempted to implement the complex RBAC feature in one go across multiple files (, , , , ) without incremental testing. This resulted in a critical failure that broke the entire application's navigation, leaving it in an unusable state. A step-by-step approach (e.g., first ensure admin sees everything, then test a technician) would have prevented this complete breakdown.</analysis>
+-   The agent did not use the testing agent to validate fixes for critical, recurring bugs like the data-saving issue. This led to a cycle of applying patches without confirming they resolved the root cause, resulting in user frustration.
+-   The agent did not address the underlying architectural problem of the oversized and complex  component, which is the likely source of the instability. A refactoring task should have been proposed to the user to solve these problems permanently.</analysis>

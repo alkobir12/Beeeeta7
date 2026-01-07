@@ -10,7 +10,7 @@ Unified Document Generation Service
 
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from arabic_quotation import ArabicQuotationBuilder
 
 

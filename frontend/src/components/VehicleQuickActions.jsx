@@ -329,6 +329,100 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         vehicle={vehicle}
         onSaved={handleDocumentSaved}
       />
+
+      {/* Approval Request Dialog */}
+      <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>طلب اعتماد من العميل</DialogTitle>
+            <DialogDescription>أضف تفاصيل طلب الاعتماد وصور الأعطال</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>عنوان الطلب</Label>
+              <Input 
+                value={approvalForm.title} 
+                onChange={(e) => setApprovalForm(prev => ({...prev, title: e.target.value}))}
+                placeholder="مثال: طلب اعتماد إصلاح المحرك"
+              />
+            </div>
+
+            <div>
+              <Label>المبلغ المتوقع (ريال)</Label>
+              <Input 
+                type="number"
+                value={approvalForm.amount} 
+                onChange={(e) => setApprovalForm(prev => ({...prev, amount: e.target.value}))}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label>صلاحية الرابط</Label>
+              <Select 
+                value={approvalForm.expiryDays} 
+                onValueChange={(val) => setApprovalForm(prev => ({...prev, expiryDays: val}))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3 أيام</SelectItem>
+                  <SelectItem value="7">7 أيام (افتراضي)</SelectItem>
+                  <SelectItem value="14">14 يوم</SelectItem>
+                  <SelectItem value="30">30 يوم</SelectItem>
+                  <SelectItem value="365">بدون انتهاء</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>صور الأعطال (اختياري - حتى 5 صور)</Label>
+              <div className="mt-2 space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleApprovalImageChange}
+                  className="hidden"
+                  id="approval-images"
+                />
+                <label htmlFor="approval-images">
+                  <Button type="button" variant="outline" className="w-full" asChild>
+                    <span><Upload className="ml-2" size={16} />اختر صور</span>
+                  </Button>
+                </label>
+                
+                {approvalForm.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {approvalForm.images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={img.data} alt={`صورة ${idx + 1}`} className="w-full h-20 object-cover rounded border" />
+                        <button
+                          onClick={() => removeApprovalImage(idx)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={submitApprovalRequest} disabled={loading} className="flex-1 bg-green-600 hover:bg-green-700">
+                إرسال طلب الاعتماد
+              </Button>
+              <Button onClick={() => setApprovalDialogOpen(false)} variant="outline">
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

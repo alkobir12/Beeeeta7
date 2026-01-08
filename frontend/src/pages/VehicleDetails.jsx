@@ -748,6 +748,70 @@ const VehicleDetails = () => {
             </div>
           </div>
         </div>
+
+        {/* Scanner Modal */}
+        {scannerOpen && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">مسح ضوئي للمستند</h3>
+                <button 
+                  onClick={closeScanner}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X size={24} className="text-gray-600" />
+                </button>
+              </div>
+
+              {!capturedImage ? (
+                <div className="space-y-4">
+                  <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button 
+                    onClick={captureImage}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Camera size={20} />
+                    <span>التقاط الصورة</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative bg-gray-100 rounded-xl overflow-hidden">
+                    <img 
+                      src={capturedImage} 
+                      alt="Captured" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setCapturedImage(null)}
+                      className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
+                    >
+                      إعادة المحاولة
+                    </button>
+                    <button 
+                      onClick={uploadScannedImage}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Upload size={20} />
+                      <span>حفظ الصورة</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+          </div>
+        )}
       </div>
   );
 };

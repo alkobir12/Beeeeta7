@@ -1339,6 +1339,109 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+# --------------------- Chart of Accounts APIs ---------------------
+@router.get('/accounts')
+async def list_accounts():
+    """Get all accounts in the chart of accounts"""
+    try:
+        docs = await db.accounts.find({}, {"_id": 0}).sort('code', 1).to_list(length=1000)
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/accounts')
+async def create_account(payload: Dict[str, Any] = Body(...)):
+    """Create a new account"""
+    try:
+        doc = {
+            'id': str(uuid.uuid4()),
+            'code': payload.get('code'),
+            'name': payload.get('name'),
+            'nameEn': payload.get('nameEn', ''),
+            'type': payload.get('type', 'expense'),  # expense or revenue
+            'parentId': payload.get('parentId'),
+            'isSystem': payload.get('isSystem', False),
+            'balance': 0.0,
+            'createdAt': datetime.now(timezone.utc)
+        }
+        await db.accounts.insert_one(doc)
+        doc.pop('_id', None)
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/accounts/{account_id}')
+async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
+    """Update an existing account"""
+    try:
+        upd = {k: v for k, v in payload.items() if k not in ['id', '_id', 'createdAt']}
+        await db.accounts.update_one({'id': account_id}, {'$set': upd})
+        doc = await db.accounts.find_one({'id': account_id}, {"_id": 0})
+        return doc or {}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete('/accounts/{account_id}')
+async def delete_account(account_id: str):
+    """Delete an account (only if not system and has no children)"""
+    try:
+        # Check if system account
+        acc = await db.accounts.find_one({'id': account_id}, {"_id": 0})
+        if not acc:
+            raise HTTPException(status_code=404, detail='الحساب غير موجود')
+        if acc.get('isSystem'):
+            raise HTTPException(status_code=400, detail='لا يمكن حذف حساب نظام')
+        
+        # Check if has children
+        children = await db.accounts.find_one({'parentId': account_id}, {"_id": 0})
+        if children:
+            raise HTTPException(status_code=400, detail='لا يمكن حذف حساب يحتوي على حسابات فرعية')
+        
+        await db.accounts.delete_one({'id': account_id})
+        return {'success': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/accounts/init-defaults')
+async def init_default_accounts():
+    """Initialize default chart of accounts if empty"""
+    try:
+        count = await db.accounts.count_documents({})
+        if count > 0:
+            return {'message': 'الحسابات موجودة بالفعل', 'count': count}
+        
+        default_accounts = [
+            # Revenue
+            { 'id': 'rev-main', 'code': '4000', 'name': 'الإيرادات', 'nameEn': 'Revenue', 'type': 'revenue', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'rev-services', 'code': '4100', 'name': 'إيرادات الخدمات', 'nameEn': 'Service Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'rev-parts', 'code': '4200', 'name': 'إيرادات قطع الغيار', 'nameEn': 'Parts Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'rev-other', 'code': '4900', 'name': 'إيرادات أخرى', 'nameEn': 'Other Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
+            
+            # Expenses
+            { 'id': 'exp-main', 'code': '5000', 'name': 'المصروفات', 'nameEn': 'Expenses', 'type': 'expense', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-operational', 'code': '5100', 'name': 'مصروفات تشغيلية', 'nameEn': 'Operational Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-salaries', 'code': '5200', 'name': 'الرواتب والأجور', 'nameEn': 'Salaries & Wages', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-rent', 'code': '5300', 'name': 'الإيجار', 'nameEn': 'Rent', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-utilities', 'code': '5400', 'name': 'المرافق (كهرباء/ماء)', 'nameEn': 'Utilities', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-maintenance', 'code': '5500', 'name': 'صيانة وإصلاحات', 'nameEn': 'Maintenance & Repairs', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-parts-cost', 'code': '5600', 'name': 'تكلفة قطع الغيار', 'nameEn': 'Parts Cost', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-personal', 'code': '5700', 'name': 'مصروفات شخصية', 'nameEn': 'Personal Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-marketing', 'code': '5800', 'name': 'تسويق وإعلان', 'nameEn': 'Marketing & Advertising', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'exp-other', 'code': '5900', 'name': 'مصروفات أخرى', 'nameEn': 'Other Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+        ]
+        
+        for acc in default_accounts:
+            acc['createdAt'] = datetime.now(timezone.utc)
+        
+        await db.accounts.insert_many(default_accounts)
+        return {'message': 'تم إنشاء شجرة الحسابات الافتراضية', 'count': len(default_accounts)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --------------------- Templates (Compatibility minimal) ---------------------
 @router.get('/templates')
 async def list_templates():

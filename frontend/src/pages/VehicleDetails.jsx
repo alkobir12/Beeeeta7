@@ -399,32 +399,29 @@ const VehicleDetails = () => {
               </div>
             </div>
 
-            {/* Files */}
-            <div className="apple-card p-6">
-              <div className="flex items-center justify-between mb-4">
+            {/* Files & Images Section */}
+            <div className="apple-card p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3 text-purple-600">
                   <FileText size={20} />
-                  <h3 className="font-bold text-gray-900">الملفات والمرفقات</h3>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">الملفات والمرفقات</h3>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span>نوع المرفق:</span>
-                    <select
-                      className="apple-input h-8 text-xs w-40"
-                      value={fileType}
-                      onChange={e => setFileType(e.target.value)}
-                    >
-                      <option value="diagnostic">تشخيص</option>
-                      <option value="invoice">فاتورة</option>
-                      <option value="photo">صورة</option>
-                      <option value="video">فيديو</option>
-                      <option value="other">أخرى</option>
-                    </select>
-                  </div>
-                  <label className="cursor-pointer bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <select
+                    className="apple-input h-8 text-xs sm:text-sm flex-1 sm:w-32"
+                    value={fileType}
+                    onChange={e => setFileType(e.target.value)}
+                  >
+                    <option value="photo">📷 صورة</option>
+                    <option value="diagnostic">🔧 تشخيص</option>
+                    <option value="invoice">📄 فاتورة</option>
+                    <option value="video">🎥 فيديو</option>
+                    <option value="other">📎 أخرى</option>
+                  </select>
+                  <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
                     <Upload size={14} />
-                    <span>رفع ملف</span>
-                    <input type="file" className="hidden" onChange={async (e) => {
+                    <span>رفع</span>
+                    <input type="file" accept="image/*,video/*,.pdf,.doc,.docx" className="hidden" onChange={async (e) => {
                       const file = e.target.files[0];
                       if (!file) return;
                       try {
@@ -445,7 +442,7 @@ const VehicleDetails = () => {
                         console.error('Upload error:', err);
                         toast({ title: 'خطأ', description: 'فشل في رفع الملف', variant: 'destructive' }); 
                       }
-                      e.target.value = ''; // Reset input
+                      e.target.value = '';
                     }} />
                   </label>
                 </div>
@@ -453,31 +450,94 @@ const VehicleDetails = () => {
               
               {vehicleFiles.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                  لا توجد ملفات مرفقة
+                  <Camera size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>لا توجد ملفات مرفقة</p>
+                  <p className="text-xs mt-1">اضغط "رفع" لإضافة صور أو ملفات</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {(vehicleFiles || []).filter(Boolean).map((file, idx) => (
-                    <div key={`file-${file.id || idx}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <a 
-                        href={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1"
-                      >
-                        <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-gray-400 border border-gray-100">
-                          <FileText size={16} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">{file.filename}</p>
-                          <p className="text-xs text-gray-500">{new Date(file.uploadedAt).toLocaleDateString('en-GB')}</p>
-                        </div>
-                      </a>
-                      <span className="text-xs bg-white px-2 py-1 rounded border border-gray-100 text-gray-500 uppercase">{file.fileType}</span>
+                <div className="space-y-3">
+                  {/* Images Grid */}
+                  {vehicleFiles.filter(f => f.fileType === 'photo' || f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2 font-medium">📷 الصور</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {vehicleFiles.filter(f => f.fileType === 'photo' || f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map((file, idx) => (
+                          <div key={`img-${file.id || idx}`} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                            <img
+                              src={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
+                              alt={file.filename}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                              onClick={() => setPreviewImage(`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`)}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm('هل تريد حذف هذه الصورة؟')) {
+                                  // TODO: Implement delete
+                                  toast({ title: 'حذف', description: 'ميزة الحذف قيد التطوير' });
+                                }
+                              }}
+                              className="absolute top-1 left-1 p-1 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Other Files List */}
+                  {vehicleFiles.filter(f => f.fileType !== 'photo' && !f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2 font-medium">📄 ملفات أخرى</p>
+                      <div className="space-y-2">
+                        {vehicleFiles.filter(f => f.fileType !== 'photo' && !f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map((file, idx) => (
+                          <div key={`file-${file.id || idx}`} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <a 
+                              href={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-1 min-w-0"
+                            >
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white flex items-center justify-center text-gray-400 border border-gray-100 flex-shrink-0">
+                                <FileText size={14} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors truncate">{file.filename}</p>
+                                <p className="text-[10px] sm:text-xs text-gray-500">{file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('ar-SA') : '-'}</p>
+                              </div>
+                            </a>
+                            <span className="text-[10px] sm:text-xs bg-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-gray-100 text-gray-500 uppercase flex-shrink-0">{file.fileType}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+              <div 
+                className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+                onClick={() => setPreviewImage(null)}
+              >
+                <button 
+                  className="absolute top-4 left-4 text-white p-2 bg-black/50 rounded-full hover:bg-black/70"
+                  onClick={() => setPreviewImage(null)}
+                >
+                  <X size={24} />
+                </button>
+                <img 
+                  src={previewImage} 
+                  alt="معاينة الصورة" 
+                  className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
             </div>
 
             {/* Vehicle Operations Summary */}

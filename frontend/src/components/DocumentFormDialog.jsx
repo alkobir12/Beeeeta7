@@ -22,6 +22,7 @@ const DocumentFormDialog = ({
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [workshopProfile, setWorkshopProfile] = useState(null);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -42,12 +43,22 @@ const DocumentFormDialog = ({
   useEffect(() => {
     if (isOpen) {
       loadTemplates();
+      loadWorkshopProfile();
       initializeForm();
     } else {
       // ensure child preview is closed to avoid portal removeChild errors
       if (previewOpen) setPreviewOpen(false);
     }
   }, [isOpen, documentType]);
+
+  const loadWorkshopProfile = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/profile`);
+      setWorkshopProfile(res.data);
+    } catch (e) {
+      console.error('Failed to load workshop profile:', e);
+    }
+  };
 
   useEffect(() => {
     // write to iframe when previewOpen and html available

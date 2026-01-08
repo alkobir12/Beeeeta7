@@ -58,14 +58,14 @@ const BusinessAccounts = () => {
 
   const loadAccounts = async () => {
     try {
-      const res = await axios.get(`${API_URL}/chart-accounts`);
+      const res = await axios.get(`${API_URL}/accounts`);
       if (res.data && res.data.length > 0) {
         setAccounts(res.data);
       } else {
-        // تحميل الحسابات الافتراضية
-        setAccounts(DEFAULT_ACCOUNTS);
-        // حفظ الحسابات الافتراضية في قاعدة البيانات
-        await axios.post(`${API_URL}/chart-accounts/init`, { accounts: DEFAULT_ACCOUNTS });
+        // Initialize default accounts
+        await axios.post(`${API_URL}/accounts/init-defaults`);
+        const res2 = await axios.get(`${API_URL}/accounts`);
+        setAccounts(res2.data || DEFAULT_ACCOUNTS);
       }
     } catch (e) { 
       console.error(e);
@@ -95,12 +95,11 @@ const BusinessAccounts = () => {
   const saveAccount = async () => {
     try {
       if (editingAccount) {
-        await axios.put(`${API_URL}/chart-accounts/${editingAccount.id}`, accountForm);
+        await axios.put(`${API_URL}/accounts/${editingAccount.id}`, accountForm);
         toast({ title: 'تم', description: 'تم تحديث الحساب بنجاح' });
       } else {
-        await axios.post(`${API_URL}/chart-accounts`, { 
+        await axios.post(`${API_URL}/accounts`, { 
           ...accountForm, 
-          id: `acc-${Date.now()}`,
           isSystem: false 
         });
         toast({ title: 'تم', description: 'تم إضافة الحساب بنجاح' });
@@ -121,11 +120,11 @@ const BusinessAccounts = () => {
     }
     if (window.confirm('هل تريد حذف هذا الحساب؟')) {
       try {
-        await axios.delete(`${API_URL}/chart-accounts/${account.id}`);
+        await axios.delete(`${API_URL}/accounts/${account.id}`);
         await loadAccounts();
         toast({ title: 'تم', description: 'تم حذف الحساب' });
       } catch (e) {
-        toast({ title: 'خطأ', description: 'فشل حذف الحساب', variant: 'destructive' });
+        toast({ title: 'خطأ', description: e.response?.data?.detail || 'فشل حذف الحساب', variant: 'destructive' });
       }
     }
   };

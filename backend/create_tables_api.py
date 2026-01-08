@@ -195,6 +195,7 @@ sql_commands = [
       amount numeric(14,2) default 0,
       service_items jsonb default '[]'::jsonb,
       service_items_text text,
+      images jsonb default '[]'::jsonb,
       status text default 'pending',
       created_at timestamptz default now(),
       expires_at timestamptz,
@@ -205,6 +206,21 @@ sql_commands = [
     );
     create index if not exists idx_approvals_token on approval_requests (token);
     create index if not exists idx_approvals_vehicle on approval_requests (vehicle_id);
+    
+    -- Chart of Accounts table
+    create table if not exists accounts (
+      id text primary key,
+      code text not null unique,
+      name text not null,
+      name_en text,
+      type text not null,
+      parent_id text references accounts(id) on delete restrict,
+      is_system boolean default false,
+      balance numeric(14,2) default 0,
+      created_at timestamptz default now()
+    );
+    create index if not exists idx_accounts_code on accounts(code);
+    create index if not exists idx_accounts_parent on accounts(parent_id);
     """,
     
     # i18n table

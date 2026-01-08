@@ -500,6 +500,13 @@ const VehicleDetails = () => {
                     <option value="video">🎥 فيديو</option>
                     <option value="other">📎 أخرى</option>
                   </select>
+                  <button 
+                    onClick={openScanner}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <Scan size={14} />
+                    <span>مسح ضوئي</span>
+                  </button>
                   <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
                     <Upload size={14} />
                     <span>رفع</span>

@@ -539,7 +539,6 @@ const VehicleDetails = () => {
                 />
               </div>
             )}
-            </div>
 
             {/* Vehicle Operations Summary */}
             <div className="apple-card p-6">

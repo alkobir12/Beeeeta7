@@ -208,26 +208,26 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   <span>طلب اعتماد</span>
                 </Button>
 
-                {/* Diagnosis Report */}
-                <Button onClick={() => openDocumentDialog('diagnosis')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
+                {/* Diagnosis Report - Navigate to print page */}
+                <Button onClick={() => navigate(`/print?type=diagnosis&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
                   <FileText size={18} />
                   <span>تقرير تشخيص</span>
                 </Button>
 
-                {/* Quote */}
-                <Button onClick={() => openDocumentDialog('quote')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
+                {/* Quote - Navigate to print page */}
+                <Button onClick={() => navigate(`/print?type=quote&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
                   <FileText size={18} />
                   <span>عرض سعر</span>
                 </Button>
 
-                {/* Invoice */}
-                <Button onClick={() => openDocumentDialog('invoice')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
+                {/* Invoice - Navigate to print page */}
+                <Button onClick={() => navigate(`/print?type=invoice&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
                   <Printer size={18} />
                   <span>فاتورة</span>
                 </Button>
 
-                {/* Receipt */}
-                <Button onClick={() => openDocumentDialog('receipt')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
+                {/* Receipt - Navigate to print page */}
+                <Button onClick={() => navigate(`/print?type=receipt&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
                   <FileText size={18} />
                   <span>سند قبض</span>
                 </Button>
@@ -238,8 +238,8 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   <span>التفاصيل</span>
                 </Button>
 
-                {/* Parts */}
-                <Button onClick={() => navigate('/parts')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
+                {/* Parts - Navigate to vehicle page with parts tab */}
+                <Button onClick={() => navigate(`/vehicle/${vehicle.id}?tab=parts`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
                   <Package size={18} />
                   <span>قطع الغيار</span>
                 </Button>

@@ -307,6 +307,7 @@ def test_approval_system():
         "brand": "تويوتا",
         "model": "كامري",
         "year": 2020,
+        "color": "أبيض",
         "customerName": "عميل اختبار الاعتماد",
         "customerPhone": "0501234567",
         "customerEmail": "test@example.com",

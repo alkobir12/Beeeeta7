@@ -71,6 +71,24 @@ const ApprovalPublic = () => {
               <div className="text-slate-600">المبلغ: {Number(data.amount).toFixed(2)} ر.س</div>
             </div>
 
+            {/* Display Images */}
+            {data.images && data.images.length > 0 && (
+              <div className="space-y-2">
+                <div className="font-semibold text-sm">صور الأعطال:</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {data.images.map((img, idx) => (
+                    <img 
+                      key={idx} 
+                      src={img.data} 
+                      alt={`صورة ${idx + 1}`} 
+                      className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(img.data, '_blank')}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-3">
               <Input placeholder="اسمك" value={name} onChange={e => setName(e.target.value)} />
               <Input placeholder="الجوال" value={phone} onChange={e => setPhone(e.target.value)} />

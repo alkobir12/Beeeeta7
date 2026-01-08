@@ -109,7 +109,12 @@ const DocumentPrint = () => {
           phone: profile.phone || data.phone || '',
           email: profile.email || data.email || '',
           website: data.website || '',
-          tax_number: profile.taxNumber || data.taxNumber || ''
+          tax_number: profile.taxNumber || data.taxNumber || '',
+          // الشعار والسلوقان الجديدين
+          logo: profile.logo || '',
+          slogan: profile.slogan || '',
+          slogan_en: profile.sloganEnglish || '',
+          commercial_register: profile.commercialRegister || ''
         }
       }));
     } catch (e) {

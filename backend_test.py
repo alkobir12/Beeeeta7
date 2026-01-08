@@ -1,409 +1,586 @@
 #!/usr/bin/env python3
 """
-Backend Test for Vehicle-Operations Integration
-Testing the auto-sync feature between vehicle parts and operations
+Backend API Testing Script for Workshop Management System
+Tests: Enhanced Approval System & Chart of Accounts
 """
 
 import requests
 import json
-import uuid
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime
+import base64
 
-# Backend URL from frontend .env
+# Get backend URL from environment
 BACKEND_URL = "https://mechanic-dashboard-15.preview.emergentagent.com/api"
 
-# Test data
-VEHICLE_ID = "641b1f96-6a55-46db-80e7-a76e3d1f394d"
-CUSTOMER_NAME = "صالح"
-PLATE_NUMBER = "ب ر ع"
+# Test results tracking
+test_results = {
+    "passed": [],
+    "failed": [],
+    "total": 0
+}
 
-class VehicleOperationsTest:
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        })
-        self.test_results = []
-        
-    def log_test(self, test_name, success, message, details=None):
-        """Log test results"""
-        result = {
-            'test': test_name,
-            'success': success,
-            'message': message,
-            'details': details,
-            'timestamp': datetime.now().isoformat()
-        }
-        self.test_results.append(result)
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name} - {message}")
-        if details and not success:
-            print(f"   Details: {details}")
+def log_test(name, passed, details=""):
+    """Log test result"""
+    test_results["total"] += 1
+    if passed:
+        test_results["passed"].append(name)
+        print(f"✅ {name}")
+        if details:
+            print(f"   {details}")
+    else:
+        test_results["failed"].append(name)
+        print(f"❌ {name}")
+        if details:
+            print(f"   {details}")
+
+def print_summary():
+    """Print test summary"""
+    print("\n" + "="*80)
+    print("TEST SUMMARY")
+    print("="*80)
+    print(f"Total Tests: {test_results['total']}")
+    print(f"Passed: {len(test_results['passed'])} ✅")
+    print(f"Failed: {len(test_results['failed'])} ❌")
     
-    def test_get_vehicle_operations(self):
-        """Test 1: Get operations for specific vehicle"""
-        try:
-            url = f"{BACKEND_URL}/operations?vehicle_id={VEHICLE_ID}"
-            response = self.session.get(url)
-            
-            if response.status_code == 200:
-                operations = response.json()
-                if isinstance(operations, list):
-                    self.log_test(
-                        "Get Vehicle Operations", 
-                        True, 
-                        f"Retrieved {len(operations)} operations for vehicle {VEHICLE_ID}",
-                        {"operations_count": len(operations), "operations": operations}
-                    )
-                    return operations
-                else:
-                    self.log_test(
-                        "Get Vehicle Operations", 
-                        False, 
-                        f"Expected list, got {type(operations)}",
-                        {"response": operations}
-                    )
-                    return []
-            else:
-                self.log_test(
-                    "Get Vehicle Operations", 
-                    False, 
-                    f"HTTP {response.status_code}: {response.text}",
-                    {"status_code": response.status_code, "response": response.text}
-                )
-                return []
-        except Exception as e:
-            self.log_test(
-                "Get Vehicle Operations", 
-                False, 
-                f"Exception: {str(e)}",
-                {"exception": str(e)}
-            )
-            return []
+    if test_results['failed']:
+        print("\nFailed Tests:")
+        for test in test_results['failed']:
+            print(f"  - {test}")
     
-    def test_get_vehicle_details(self):
-        """Test: Get vehicle details to check parts field"""
-        try:
-            url = f"{BACKEND_URL}/vehicles/{VEHICLE_ID}"
-            response = self.session.get(url)
-            
-            if response.status_code == 200:
-                vehicle = response.json()
-                parts = vehicle.get('parts', [])
-                self.log_test(
-                    "Get Vehicle Details", 
-                    True, 
-                    f"Vehicle has {len(parts)} parts",
-                    {"vehicle": vehicle, "parts": parts}
-                )
-                return vehicle
-            else:
-                self.log_test(
-                    "Get Vehicle Details", 
-                    False, 
-                    f"HTTP {response.status_code}: {response.text}",
-                    {"status_code": response.status_code, "response": response.text}
-                )
-                return None
-        except Exception as e:
-            self.log_test(
-                "Get Vehicle Details", 
-                False, 
-                f"Exception: {str(e)}",
-                {"exception": str(e)}
-            )
-            return None
+    print("="*80)
+
+# ============================================================================
+# CHART OF ACCOUNTS TESTS
+# ============================================================================
+
+def test_chart_of_accounts():
+    """Test Chart of Accounts APIs"""
+    print("\n" + "="*80)
+    print("TESTING CHART OF ACCOUNTS (شجرة الحسابات)")
+    print("="*80)
     
-    def test_update_vehicle_with_parts(self):
-        """Test: Update vehicle with new parts to trigger operation creation"""
-        try:
-            # First get current vehicle
-            vehicle = self.test_get_vehicle_details()
-            if not vehicle:
-                return None
-                
-            # Add a new part to the vehicle
-            new_part = {
-                "itemType": "service",
-                "name": "اختبار ربط البنود",
-                "quantity": 1,
-                "price": 75.0,
-                "total": 75.0,
-                "addedAt": datetime.now().isoformat()
-            }
-            
-            current_parts = vehicle.get('parts', [])
-            updated_parts = current_parts + [new_part]
-            
-            # Update vehicle with new parts
-            url = f"{BACKEND_URL}/vehicles/{VEHICLE_ID}"
-            update_data = {
-                "parts": updated_parts
-            }
-            
-            response = self.session.put(url, json=update_data)
-            
-            if response.status_code == 200:
-                updated_vehicle = response.json()
-                self.log_test(
-                    "Update Vehicle Parts", 
-                    True, 
-                    f"Vehicle updated with {len(updated_vehicle.get('parts', []))} parts",
-                    {"updated_vehicle": updated_vehicle, "new_part": new_part}
-                )
-                return updated_vehicle
-            else:
-                self.log_test(
-                    "Update Vehicle Parts", 
-                    False, 
-                    f"HTTP {response.status_code}: {response.text}",
-                    {"status_code": response.status_code, "response": response.text}
-                )
-                return None
-        except Exception as e:
-            self.log_test(
-                "Update Vehicle Parts", 
-                False, 
-                f"Exception: {str(e)}",
-                {"exception": str(e)}
-            )
-            return None
-    
-    def test_create_operation(self):
-        """Test 3: Create new operation"""
-        try:
-            operation_data = {
-                "vehicleId": VEHICLE_ID,
-                "type": "sale",
-                "partnerType": "customer",
-                "partnerName": "عميل اختبار",
-                "items": [
-                    {
-                        "itemType": "service",
-                        "name": "خدمة اختبار",
-                        "quantity": 1,
-                        "price": 100,
-                        "total": 100
-                    }
-                ],
-                "paymentMethod": "cash",
-                "notes": "اختبار إنشاء عملية"
-            }
-            
-            url = f"{BACKEND_URL}/operations"
-            response = self.session.post(url, json=operation_data)
-            
-            if response.status_code == 200:
-                operation = response.json()
-                self.log_test(
-                    "Create Operation", 
-                    True, 
-                    f"Operation created with ID: {operation.get('id')}",
-                    {"operation": operation}
-                )
-                return operation
-            else:
-                self.log_test(
-                    "Create Operation", 
-                    False, 
-                    f"HTTP {response.status_code}: {response.text}",
-                    {"status_code": response.status_code, "response": response.text}
-                )
-                return None
-        except Exception as e:
-            self.log_test(
-                "Create Operation", 
-                False, 
-                f"Exception: {str(e)}",
-                {"exception": str(e)}
-            )
-            return None
-    
-    def test_update_operation(self, operation_id):
-        """Test 2: Update existing operation"""
-        try:
-            update_data = {
-                "vehicleId": VEHICLE_ID,
-                "type": "sale",
-                "partnerType": "customer",
-                "partnerName": CUSTOMER_NAME,
-                "items": [
-                    {
-                        "itemType": "service",
-                        "name": "اختبار تحديث",
-                        "quantity": 1,
-                        "price": 50,
-                        "total": 50
-                    }
-                ],
-                "paymentMethod": "cash",
-                "notes": "اختبار تحديث العملية"
-            }
-            
-            url = f"{BACKEND_URL}/operations/{operation_id}"
-            response = self.session.put(url, json=update_data)
-            
-            if response.status_code == 200:
-                operation = response.json()
-                self.log_test(
-                    "Update Operation", 
-                    True, 
-                    f"Operation {operation_id} updated successfully",
-                    {"operation": operation}
-                )
-                return operation
-            else:
-                self.log_test(
-                    "Update Operation", 
-                    False, 
-                    f"HTTP {response.status_code}: {response.text}",
-                    {"status_code": response.status_code, "response": response.text}
-                )
-                return None
-        except Exception as e:
-            self.log_test(
-                "Update Operation", 
-                False, 
-                f"Exception: {str(e)}",
-                {"exception": str(e)}
-            )
-            return None
-    
-    def test_auto_sync_feature(self):
-        """Test the main feature: Auto-sync between vehicle parts and operations"""
-        print("\n=== Testing Vehicle-Operations Auto-Sync Feature ===")
-        
-        # Step 1: Get initial state
-        print("\n1. Getting initial state...")
-        initial_operations = self.test_get_vehicle_operations()
-        initial_vehicle = self.test_get_vehicle_details()
-        
-        # Step 2: Update vehicle with new parts (should trigger operation creation/update)
-        print("\n2. Testing vehicle parts update...")
-        updated_vehicle = self.test_update_vehicle_with_parts()
-        
-        # Step 3: Check if operation was created/updated
-        print("\n3. Checking for auto-created/updated operations...")
-        updated_operations = self.test_get_vehicle_operations()
-        
-        # Step 4: Analyze the auto-sync behavior
-        if len(updated_operations) > len(initial_operations):
-            self.log_test(
-                "Auto-Sync: Operation Creation", 
-                True, 
-                f"New operation created automatically ({len(updated_operations)} vs {len(initial_operations)})",
-                {"initial_count": len(initial_operations), "updated_count": len(updated_operations)}
-            )
-        elif len(updated_operations) == len(initial_operations) and len(updated_operations) > 0:
-            # Check if existing operation was updated
-            latest_op = updated_operations[0] if updated_operations else None
-            if latest_op and latest_op.get('date'):
-                try:
-                    op_date = datetime.fromisoformat(latest_op['date'].replace('Z', '+00:00'))
-                    if (datetime.now() - op_date.replace(tzinfo=None)).total_seconds() < 300:  # Updated in last 5 minutes
-                        self.log_test(
-                            "Auto-Sync: Operation Update", 
-                            True, 
-                            "Existing operation updated automatically",
-                            {"updated_operation": latest_op}
-                        )
-                    else:
-                        self.log_test(
-                            "Auto-Sync: No Recent Update", 
-                            False, 
-                            "No recent operation update detected",
-                            {"latest_operation_date": latest_op.get('date')}
-                        )
-                except:
-                    self.log_test(
-                        "Auto-Sync: Date Parse Error", 
-                        False, 
-                        "Could not parse operation date",
-                        {"latest_operation": latest_op}
-                    )
-            else:
-                self.log_test(
-                    "Auto-Sync: No Operation Found", 
-                    False, 
-                    "No operations found for vehicle",
-                    {"operations": updated_operations}
-                )
+    # Test 1: Initialize default accounts
+    print("\n[1] Testing POST /api/accounts/init-defaults")
+    try:
+        response = requests.post(f"{BACKEND_URL}/accounts/init-defaults", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            log_test("Initialize default accounts", True, 
+                    f"Message: {data.get('message', 'N/A')}, Count: {data.get('count', 0)}")
         else:
-            self.log_test(
-                "Auto-Sync: No Auto-Creation", 
-                False, 
-                "No automatic operation creation detected",
-                {"initial_count": len(initial_operations), "updated_count": len(updated_operations)}
-            )
+            log_test("Initialize default accounts", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Initialize default accounts", False, f"Error: {str(e)}")
     
-    def test_manual_operations(self):
-        """Test manual operation creation and update"""
-        print("\n=== Testing Manual Operations ===")
-        
-        # Test creating a new operation
-        print("\n1. Creating new operation...")
-        new_operation = self.test_create_operation()
-        
-        if new_operation and new_operation.get('id'):
-            # Test updating the operation
-            print("\n2. Updating operation...")
-            self.test_update_operation(new_operation['id'])
+    # Test 2: Get all accounts
+    print("\n[2] Testing GET /api/accounts")
+    try:
+        response = requests.get(f"{BACKEND_URL}/accounts", timeout=10)
+        if response.status_code == 200:
+            accounts = response.json()
+            log_test("Get all accounts", True, 
+                    f"Retrieved {len(accounts)} accounts")
+            
+            # Display sample accounts
+            if accounts:
+                print("\n   Sample accounts:")
+                for acc in accounts[:5]:
+                    print(f"   - {acc.get('code')}: {acc.get('name')} (Type: {acc.get('type')}, System: {acc.get('isSystem')})")
+        else:
+            log_test("Get all accounts", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Get all accounts", False, f"Error: {str(e)}")
     
-    def run_all_tests(self):
-        """Run all tests"""
-        print("🚀 Starting Vehicle-Operations Integration Tests")
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Vehicle ID: {VEHICLE_ID}")
-        print(f"Customer: {CUSTOMER_NAME}")
-        print(f"Plate: {PLATE_NUMBER}")
+    # Test 3: Create new account
+    print("\n[3] Testing POST /api/accounts (Create new account)")
+    new_account = {
+        "code": "6000",
+        "name": "حساب تجريبي",
+        "nameEn": "Test Account",
+        "type": "expense",
+        "parentId": "exp-main",
+        "isSystem": False
+    }
+    
+    created_account_id = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/accounts", 
+                                json=new_account, 
+                                timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            created_account_id = data.get('id')
+            log_test("Create new account", True, 
+                    f"Created account ID: {created_account_id}, Code: {data.get('code')}")
+        else:
+            log_test("Create new account", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create new account", False, f"Error: {str(e)}")
+    
+    # Test 4: Update account
+    if created_account_id:
+        print("\n[4] Testing PUT /api/accounts/{account_id} (Update account)")
+        update_data = {
+            "name": "حساب تجريبي محدث",
+            "nameEn": "Updated Test Account"
+        }
         
         try:
-            # Test the auto-sync feature (main requirement)
-            self.test_auto_sync_feature()
-            
-            # Test manual operations
-            self.test_manual_operations()
-            
+            response = requests.put(f"{BACKEND_URL}/accounts/{created_account_id}", 
+                                   json=update_data, 
+                                   timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                log_test("Update account", True, 
+                        f"Updated name: {data.get('name')}")
+            else:
+                log_test("Update account", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
         except Exception as e:
-            print(f"❌ Test suite failed with exception: {e}")
-            self.log_test("Test Suite", False, f"Exception: {str(e)}", {"exception": str(e)})
-        
-        # Print summary
-        self.print_summary()
+            log_test("Update account", False, f"Error: {str(e)}")
+    else:
+        log_test("Update account", False, "Skipped - no account created")
     
-    def print_summary(self):
-        """Print test summary"""
-        print("\n" + "="*60)
-        print("📊 TEST SUMMARY")
-        print("="*60)
+    # Test 5: Try to delete system account (should fail)
+    print("\n[5] Testing DELETE /api/accounts/{account_id} (System account - should fail)")
+    try:
+        # Try to delete a system account (e.g., exp-main)
+        response = requests.delete(f"{BACKEND_URL}/accounts/exp-main", timeout=10)
+        if response.status_code == 400:
+            log_test("Prevent deleting system account", True, 
+                    f"Correctly prevented: {response.json().get('detail', 'N/A')}")
+        elif response.status_code == 404:
+            log_test("Prevent deleting system account", False, 
+                    "System account not found - may need to run init-defaults first")
+        else:
+            log_test("Prevent deleting system account", False, 
+                    f"Unexpected status: {response.status_code}")
+    except Exception as e:
+        log_test("Prevent deleting system account", False, f"Error: {str(e)}")
+    
+    # Test 6: Create child account
+    print("\n[6] Testing POST /api/accounts (Create child account)")
+    parent_account_id = None
+    child_account_id = None
+    
+    parent_account = {
+        "code": "7000",
+        "name": "حساب رئيسي للاختبار",
+        "nameEn": "Parent Test Account",
+        "type": "expense",
+        "parentId": None,
+        "isSystem": False
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/accounts", 
+                                json=parent_account, 
+                                timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            parent_account_id = data.get('id')
+            log_test("Create parent account", True, 
+                    f"Created parent ID: {parent_account_id}")
+        else:
+            log_test("Create parent account", False, 
+                    f"Status: {response.status_code}")
+    except Exception as e:
+        log_test("Create parent account", False, f"Error: {str(e)}")
+    
+    if parent_account_id:
+        child_account = {
+            "code": "7100",
+            "name": "حساب فرعي للاختبار",
+            "nameEn": "Child Test Account",
+            "type": "expense",
+            "parentId": parent_account_id,
+            "isSystem": False
+        }
         
-        passed = sum(1 for r in self.test_results if r['success'])
-        failed = len(self.test_results) - passed
-        
-        print(f"Total Tests: {len(self.test_results)}")
-        print(f"✅ Passed: {passed}")
-        print(f"❌ Failed: {failed}")
-        print(f"Success Rate: {(passed/len(self.test_results)*100):.1f}%" if self.test_results else "0%")
-        
-        if failed > 0:
-            print("\n🔍 FAILED TESTS:")
-            for result in self.test_results:
-                if not result['success']:
-                    print(f"  • {result['test']}: {result['message']}")
-        
-        print("\n📝 DETAILED RESULTS:")
-        for result in self.test_results:
-            status = "✅" if result['success'] else "❌"
-            print(f"  {status} {result['test']}: {result['message']}")
-        
-        # Save results to file
-        with open('/app/test_results_vehicle_operations.json', 'w', encoding='utf-8') as f:
-            json.dump(self.test_results, f, ensure_ascii=False, indent=2)
-        
-        print(f"\n💾 Detailed results saved to: /app/test_results_vehicle_operations.json")
+        try:
+            response = requests.post(f"{BACKEND_URL}/accounts", 
+                                    json=child_account, 
+                                    timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                child_account_id = data.get('id')
+                log_test("Create child account", True, 
+                        f"Created child ID: {child_account_id}")
+            else:
+                log_test("Create child account", False, 
+                        f"Status: {response.status_code}")
+        except Exception as e:
+            log_test("Create child account", False, f"Error: {str(e)}")
+    
+    # Test 7: Try to delete parent account with children (should fail)
+    if parent_account_id and child_account_id:
+        print("\n[7] Testing DELETE /api/accounts/{account_id} (Parent with children - should fail)")
+        try:
+            response = requests.delete(f"{BACKEND_URL}/accounts/{parent_account_id}", timeout=10)
+            if response.status_code == 400:
+                log_test("Prevent deleting account with children", True, 
+                        f"Correctly prevented: {response.json().get('detail', 'N/A')}")
+            else:
+                log_test("Prevent deleting account with children", False, 
+                        f"Unexpected status: {response.status_code}")
+        except Exception as e:
+            log_test("Prevent deleting account with children", False, f"Error: {str(e)}")
+    else:
+        log_test("Prevent deleting account with children", False, "Skipped - no parent/child created")
+    
+    # Test 8: Delete child account (should succeed)
+    if child_account_id:
+        print("\n[8] Testing DELETE /api/accounts/{account_id} (Child account - should succeed)")
+        try:
+            response = requests.delete(f"{BACKEND_URL}/accounts/{child_account_id}", timeout=10)
+            if response.status_code == 200:
+                log_test("Delete child account", True, 
+                        f"Successfully deleted child account")
+            else:
+                log_test("Delete child account", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
+        except Exception as e:
+            log_test("Delete child account", False, f"Error: {str(e)}")
+    
+    # Test 9: Delete parent account (should succeed now)
+    if parent_account_id:
+        print("\n[9] Testing DELETE /api/accounts/{account_id} (Parent account - should succeed)")
+        try:
+            response = requests.delete(f"{BACKEND_URL}/accounts/{parent_account_id}", timeout=10)
+            if response.status_code == 200:
+                log_test("Delete parent account", True, 
+                        f"Successfully deleted parent account")
+            else:
+                log_test("Delete parent account", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
+        except Exception as e:
+            log_test("Delete parent account", False, f"Error: {str(e)}")
+    
+    # Cleanup: Delete test account if created
+    if created_account_id:
+        print("\n[Cleanup] Deleting test account")
+        try:
+            response = requests.delete(f"{BACKEND_URL}/accounts/{created_account_id}", timeout=10)
+            if response.status_code == 200:
+                print("   ✓ Test account cleaned up")
+        except Exception as e:
+            print(f"   ⚠ Cleanup failed: {str(e)}")
+
+# ============================================================================
+# APPROVAL SYSTEM TESTS
+# ============================================================================
+
+def test_approval_system():
+    """Test Enhanced Approval System APIs"""
+    print("\n" + "="*80)
+    print("TESTING ENHANCED APPROVAL SYSTEM (نظام الاعتماد المحسّن)")
+    print("="*80)
+    
+    # First, we need to create a vehicle and customer for testing
+    print("\n[Setup] Creating test customer and vehicle")
+    
+    # Create test customer
+    customer_data = {
+        "name": "عميل اختبار الاعتماد",
+        "phone": "0501234567",
+        "email": "test@example.com"
+    }
+    
+    customer_id = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/customers", json=customer_data, timeout=10)
+        if response.status_code == 200:
+            customer_id = response.json().get('id')
+            print(f"   ✓ Created test customer: {customer_id}")
+        else:
+            print(f"   ⚠ Failed to create customer: {response.status_code}")
+    except Exception as e:
+        print(f"   ⚠ Error creating customer: {str(e)}")
+    
+    # Create test vehicle
+    vehicle_data = {
+        "plateNumber": "ABC-1234",
+        "brand": "تويوتا",
+        "model": "كامري",
+        "year": 2020,
+        "customerName": "عميل اختبار الاعتماد",
+        "customerPhone": "0501234567",
+        "customerEmail": "test@example.com",
+        "status": "diagnosis"
+    }
+    
+    vehicle_id = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/vehicles", json=vehicle_data, timeout=10)
+        if response.status_code == 200:
+            vehicle_id = response.json().get('id')
+            print(f"   ✓ Created test vehicle: {vehicle_id}")
+        else:
+            print(f"   ⚠ Failed to create vehicle: {response.status_code}")
+    except Exception as e:
+        print(f"   ⚠ Error creating vehicle: {str(e)}")
+    
+    if not vehicle_id or not customer_id:
+        print("\n⚠ Skipping approval tests - failed to create test data")
+        return
+    
+    # Test 1: Create approval with default expiry (7 days)
+    print("\n[1] Testing POST /api/approvals (Default expiry: 7 days)")
+    approval_data = {
+        "vehicleId": vehicle_id,
+        "customerId": customer_id,
+        "title": "طلب اعتماد إصلاح",
+        "amount": 1500.0,
+        "serviceItems": [
+            {"name": "تغيير زيت", "price": 500},
+            {"name": "فحص كمبيوتر", "price": 1000}
+        ],
+        "serviceItemsText": "تغيير زيت - 500 ريال\nفحص كمبيوتر - 1000 ريال"
+    }
+    
+    approval_token_default = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            approval_token_default = data.get('token')
+            log_test("Create approval (default 7 days)", True, 
+                    f"Token: {approval_token_default}, Expires: {data.get('expiresAt', 'N/A')}")
+        else:
+            log_test("Create approval (default 7 days)", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval (default 7 days)", False, f"Error: {str(e)}")
+    
+    # Test 2: Create approval with custom expiry (3 days)
+    print("\n[2] Testing POST /api/approvals (Custom expiry: 3 days)")
+    approval_data_3days = {
+        **approval_data,
+        "expiryDays": 3,
+        "title": "طلب اعتماد سريع - 3 أيام"
+    }
+    
+    approval_token_3days = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data_3days, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            approval_token_3days = data.get('token')
+            log_test("Create approval (3 days)", True, 
+                    f"Token: {approval_token_3days}, Expires: {data.get('expiresAt', 'N/A')}")
+        else:
+            log_test("Create approval (3 days)", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval (3 days)", False, f"Error: {str(e)}")
+    
+    # Test 3: Create approval with custom expiry (14 days)
+    print("\n[3] Testing POST /api/approvals (Custom expiry: 14 days)")
+    approval_data_14days = {
+        **approval_data,
+        "expiryDays": 14,
+        "title": "طلب اعتماد ممتد - 14 يوم"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data_14days, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            log_test("Create approval (14 days)", True, 
+                    f"Token: {data.get('token')}, Expires: {data.get('expiresAt', 'N/A')}")
+        else:
+            log_test("Create approval (14 days)", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval (14 days)", False, f"Error: {str(e)}")
+    
+    # Test 4: Create approval with custom expiry (30 days)
+    print("\n[4] Testing POST /api/approvals (Custom expiry: 30 days)")
+    approval_data_30days = {
+        **approval_data,
+        "expiryDays": 30,
+        "title": "طلب اعتماد شهري - 30 يوم"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data_30days, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            log_test("Create approval (30 days)", True, 
+                    f"Token: {data.get('token')}, Expires: {data.get('expiresAt', 'N/A')}")
+        else:
+            log_test("Create approval (30 days)", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval (30 days)", False, f"Error: {str(e)}")
+    
+    # Test 5: Create approval with custom expiry (365 days)
+    print("\n[5] Testing POST /api/approvals (Custom expiry: 365 days)")
+    approval_data_365days = {
+        **approval_data,
+        "expiryDays": 365,
+        "title": "طلب اعتماد سنوي - 365 يوم"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data_365days, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            log_test("Create approval (365 days)", True, 
+                    f"Token: {data.get('token')}, Expires: {data.get('expiresAt', 'N/A')}")
+        else:
+            log_test("Create approval (365 days)", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval (365 days)", False, f"Error: {str(e)}")
+    
+    # Test 6: Create approval with images
+    print("\n[6] Testing POST /api/approvals (With images)")
+    
+    # Create a simple base64 test image (1x1 red pixel PNG)
+    test_image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="
+    
+    approval_data_with_images = {
+        **approval_data,
+        "title": "طلب اعتماد مع صور",
+        "images": [
+            f"data:image/png;base64,{test_image_base64}",
+            f"data:image/png;base64,{test_image_base64}"
+        ]
+    }
+    
+    approval_token_with_images = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/approvals", json=approval_data_with_images, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            approval_token_with_images = data.get('token')
+            images_count = len(data.get('images', []))
+            log_test("Create approval with images", True, 
+                    f"Token: {approval_token_with_images}, Images: {images_count}")
+        else:
+            log_test("Create approval with images", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Create approval with images", False, f"Error: {str(e)}")
+    
+    # Test 7: Get public approval (default token)
+    if approval_token_default:
+        print("\n[7] Testing GET /api/approvals/public/{token}")
+        try:
+            response = requests.get(f"{BACKEND_URL}/approvals/public/{approval_token_default}", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                log_test("Get public approval", True, 
+                        f"Title: {data.get('title')}, Amount: {data.get('amount')}, Status: {data.get('status')}")
+            else:
+                log_test("Get public approval", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
+        except Exception as e:
+            log_test("Get public approval", False, f"Error: {str(e)}")
+    else:
+        log_test("Get public approval", False, "Skipped - no approval token")
+    
+    # Test 8: Get public approval with images
+    if approval_token_with_images:
+        print("\n[8] Testing GET /api/approvals/public/{token} (With images)")
+        try:
+            response = requests.get(f"{BACKEND_URL}/approvals/public/{approval_token_with_images}", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                images = data.get('images', [])
+                log_test("Get public approval with images", True, 
+                        f"Images count: {len(images)}, First image length: {len(images[0]) if images else 0}")
+                
+                # Verify images are base64 encoded
+                if images:
+                    for i, img in enumerate(images):
+                        if img.startswith('data:image'):
+                            print(f"   ✓ Image {i+1} is properly formatted")
+                        else:
+                            print(f"   ⚠ Image {i+1} format issue")
+            else:
+                log_test("Get public approval with images", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
+        except Exception as e:
+            log_test("Get public approval with images", False, f"Error: {str(e)}")
+    else:
+        log_test("Get public approval with images", False, "Skipped - no approval with images")
+    
+    # Test 9: Get all approvals
+    print("\n[9] Testing GET /api/approvals")
+    try:
+        response = requests.get(f"{BACKEND_URL}/approvals", timeout=10)
+        if response.status_code == 200:
+            approvals = response.json()
+            log_test("Get all approvals", True, 
+                    f"Retrieved {len(approvals)} approvals")
+        else:
+            log_test("Get all approvals", False, 
+                    f"Status: {response.status_code}, Response: {response.text[:200]}")
+    except Exception as e:
+        log_test("Get all approvals", False, f"Error: {str(e)}")
+    
+    # Test 10: Get approvals filtered by vehicle
+    if vehicle_id:
+        print("\n[10] Testing GET /api/approvals?vehicle_id={vehicle_id}")
+        try:
+            response = requests.get(f"{BACKEND_URL}/approvals?vehicle_id={vehicle_id}", timeout=10)
+            if response.status_code == 200:
+                approvals = response.json()
+                log_test("Get approvals by vehicle", True, 
+                        f"Retrieved {len(approvals)} approvals for vehicle {vehicle_id}")
+            else:
+                log_test("Get approvals by vehicle", False, 
+                        f"Status: {response.status_code}, Response: {response.text[:200]}")
+        except Exception as e:
+            log_test("Get approvals by vehicle", False, f"Error: {str(e)}")
+    
+    # Cleanup
+    print("\n[Cleanup] Deleting test data")
+    if vehicle_id:
+        try:
+            requests.delete(f"{BACKEND_URL}/vehicles/{vehicle_id}", timeout=10)
+            print(f"   ✓ Deleted test vehicle")
+        except Exception as e:
+            print(f"   ⚠ Failed to delete vehicle: {str(e)}")
+    
+    if customer_id:
+        try:
+            requests.delete(f"{BACKEND_URL}/customers/{customer_id}", timeout=10)
+            print(f"   ✓ Deleted test customer")
+        except Exception as e:
+            print(f"   ⚠ Failed to delete customer: {str(e)}")
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+def main():
+    """Main test execution"""
+    print("\n" + "="*80)
+    print("WORKSHOP MANAGEMENT SYSTEM - BACKEND API TESTING")
+    print("="*80)
+    print(f"Backend URL: {BACKEND_URL}")
+    print(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*80)
+    
+    # Run tests
+    test_chart_of_accounts()
+    test_approval_system()
+    
+    # Print summary
+    print_summary()
+    
+    # Exit with appropriate code
+    if test_results['failed']:
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 if __name__ == "__main__":
-    tester = VehicleOperationsTest()
-    tester.run_all_tests()
+    main()

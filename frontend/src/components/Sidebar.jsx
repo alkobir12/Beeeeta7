@@ -24,7 +24,8 @@ import {
   Upload,
   BookOpen,
   Truck,
-  Bot
+  Bot,
+  Languages
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -37,6 +38,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [workshopName, setWorkshopName] = useState(t('settings.workshopName'));
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'ar' ? 'en' : 'ar';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = newLang;
+    window.location.reload(); // Reload to apply RTL/LTR changes
+  };
 
   const MENU_ITEMS = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },

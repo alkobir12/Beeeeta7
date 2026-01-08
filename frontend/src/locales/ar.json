@@ -38,7 +38,12 @@
     "aiAssistant": "المساعد الذكي",
     "newVehicle": "مركبة جديدة",
     "operations": "العمليات",
-    "settings": "الإعدادات"
+    "services": "الخدمات",
+    "parts": "قطع الغيار",
+    "branches": "الفروع والحسابات",
+    "settings": "الإعدادات",
+    "knowledge": "المراجع/المعرفة",
+    "invoiceDesigner": "مصمم الفواتير"
   },
   "dashboard": {
     "title": "لوحة التحكم الرئيسية",
@@ -47,7 +52,10 @@
     "ready": "جاهز للتسليم",
     "technicians": "الفنيين",
     "recentVehicles": "المركبات الأخيرة",
-    "searchPlaceholder": "بحث برقم اللوحة أو اسم العميل..."
+    "searchPlaceholder": "بحث برقم اللوحة أو اسم العميل...",
+    "awaitingApproval": "تنتظر تسعير/اعتماد",
+    "waitingParts": "في انتظار قطع الغيار",
+    "abandoned": "مركبات متروكة"
   },
   "vehicle": {
     "plateNumber": "رقم اللوحة",
@@ -65,13 +73,17 @@
     "services": "الخدمات",
     "technician": "الفني المسؤول",
     "notes": "ملاحظات",
-    "trackingLink": "رابط التتبع"
+    "trackingLink": "رابط التتبع",
+    "details": "تفاصيل المركبة",
+    "updateStatus": "تحديث الحالة"
   },
   "status": {
     "diagnosis": "تشخيص",
     "quotation": "تعميد",
-    "repair": "إصلاح",
-    "ready": "جاهز"
+    "approved": "معتمد",
+    "repair": "تحت الإصلاح",
+    "ready": "جاهز للتسليم",
+    "delivered": "تم التسليم"
   },
   "analytics": {
     "title": "التحليلات والتقارير",
@@ -100,58 +112,43 @@
     "totalParts": "إجمالي القطع",
     "inventoryValue": "قيمة المخزون"
   },
-  "ai": {
-    "title": "مساعد الذكاء الاصطناعي",
-    "subtitle": "مدعوم بـ Claude AI",
-    "placeholder": "اكتب سؤالك هنا... مثل: ما هو سبب ارتفاع حرارة المحرك؟",
-    "send": "إرسال",
-    "thinking": "Claude يفكر...",
-    "welcome": "مرحباً! أنا مساعد الذكاء الاصطناعي الخاص بورشتك. يمكنني مساعدتك في:",
-    "features": [
-      "إيجاد حلول للمشاكل الميكانيكية",
-      "البحث عن قطع الغيار",
-      "تقديم نصائح الصيانة",
-      "الإجابة على الاستفسارات الفنية"
-    ]
+  "services": {
+    "title": "إدارة الخدمات",
+    "addTitle": "إضافة خدمة",
+    "listTitle": "قائمة الخدمات",
+    "duration": "المدة (دقيقة)"
   },
-  "tracking": {
-    "title": "تتبع مركبتك",
-    "currentStatus": "الحالة الحالية",
-    "workProgress": "مراحل العمل",
-    "vehicleInfo": "معلومات المركبة",
-    "completed": "تم الإنجاز",
-    "inProgress": "جاري العمل عليها",
-    "pending": "في الانتظار",
-    "contactUs": "هل لديك استفسار؟",
-    "callUs": "اتصل بنا",
-    "messageUs": "راسلنا"
+  "customers": {
+    "title": "إدارة العملاء",
+    "addCustomer": "إضافة عميل",
+    "customerName": "اسم العميل",
+    "phone": "رقم الهاتف",
+    "email": "البريد الإلكتروني",
+    "address": "العنوان",
+    "vehicles": "المركبات",
+    "serviceHistory": "سجل الخدمات"
   },
-  "invoice": {
-    "number": "رقم الفاتورة",
-    "date": "التاريخ",
-    "customer": "العميل",
-    "items": "البنود",
-    "subtotal": "المجموع الفرعي",
-    "tax": "الضريبة",
-    "total": "الإجمالي الكلي",
-    "paymentMethod": "وسيلة الدفع",
-    "cash": "كاش",
-    "card": "شبكة",
-    "type": {
-      "diagnosis": "فاتورة تشخيص",
-      "quotation": "عرض سعر",
-      "service": "فاتورة خدمة"
-    }
+  "technicians": {
+    "title": "إدارة الفنيين",
+    "addTechnician": "إضافة فني",
+    "name": "اسم الفني",
+    "specialization": "التخصص",
+    "experience": "مستوى الخبرة",
+    "currentOperations": "العمليات الحالية",
+    "rating": "التقييم"
   },
-  "settings": {
-    "title": "الإعدادات",
-    "language": "اللغة",
-    "theme": "المظهر",
-    "profile": "معلومات الورشة",
-    "workshopName": "اسم الورشة",
-    "workshopPhone": "رقم الهاتف",
-    "workshopAddress": "العنوان",
-    "taxNumber": "الرقم الضريبي"
+  "accounts": {
+    "title": "شجرة الحسابات",
+    "chartOfAccounts": "شجرة الحسابات",
+    "addAccount": "إضافة حساب",
+    "code": "الرمز",
+    "name": "الاسم",
+    "nameEn": "الاسم بالإنجليزية",
+    "type": "النوع",
+    "parent": "الحساب الأب",
+    "revenue": "إيراد",
+    "expense": "مصروف",
+    "balance": "الرصيد"
   },
   "operations": {
     "title": "عمليات الشراء/البيع",
@@ -173,19 +170,80 @@
     "enterPartNameAlert": "أدخل اسم القطعة",
     "defaultCategory": "عام",
     "savePartError": "تعذر حفظ القطعة",
-    "savePartToDb": "حفظ القطعة في قاعدة البيانات"
+    "savePartToDb": "حفظ القطعة في قاعدة البيانات",
+    "selectAccount": "اختر الحساب"
   },
-  "services": {
-    "addTitle": "إضافة خدمة",
-    "listTitle": "قائمة الخدمات",
-    "duration": "المدة (دقيقة)"
+  "invoice": {
+    "number": "رقم الفاتورة",
+    "date": "التاريخ",
+    "customer": "العميل",
+    "items": "البنود",
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة",
+    "total": "الإجمالي الكلي",
+    "paymentMethod": "وسيلة الدفع",
+    "cash": "كاش",
+    "card": "شبكة",
+    "type": {
+      "diagnosis": "فاتورة تشخيص",
+      "quotation": "عرض سعر",
+      "service": "فاتورة خدمة",
+      "invoice": "فاتورة",
+      "receipt": "سند قبض"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "profile": "معلومات الورشة",
+    "workshopName": "اسم الورشة",
+    "workshopPhone": "رقم الهاتف",
+    "workshopAddress": "العنوان",
+    "workshopEmail": "البريد الإلكتروني",
+    "taxNumber": "الرقم الضريبي",
+    "logo": "الشعار",
+    "slogan": "الشعار/السلوقان"
+  },
+  "approval": {
+    "title": "طلب اعتماد",
+    "requestApproval": "طلب اعتماد",
+    "amount": "المبلغ",
+    "status": "الحالة",
+    "pending": "بانتظار الرد",
+    "approved": "تمت الموافقة",
+    "rejected": "مرفوض",
+    "expiryDays": "صلاحية الرابط",
+    "images": "صور الأعطال"
   },
   "ai": {
+    "title": "مساعد الذكاء الاصطناعي",
     "assistantTitle": "Claude AI Assistant - متصل",
+    "subtitle": "مدعوم بـ Claude AI",
+    "placeholder": "اكتب سؤالك هنا... مثل: ما هو سبب ارتفاع حرارة المحرك؟",
+    "send": "إرسال",
+    "thinking": "Claude يفكر...",
+    "welcome": "مرحباً! أنا مساعد الذكاء الاصطناعي الخاص بورشتك. يمكنني مساعدتك في:",
     "welcomeMessage": "مرحباً! أنا مساعد الذكاء الاصطناعي الخاص بورشتك. يمكنني مساعدتك في:\n\n• إيجاد حلول للمشاكل الميكانيكية\n• البحث عن قطع الغيار\n• تقديم نصائح الصيانة\n• الإجابة على الاستفسارات الفنية\n\nكيف يمكنني مساعدتك اليوم؟",
     "connectionError": "حدث خطأ في الاتصال بالمساعد الذكي. الرجاء المحاولة مرة أخرى.",
     "poweredBy": "مدعوم بـ Claude AI",
-    "thinking": "Claude يفكر...",
-    "placeholder": "اكتب سؤالك هنا... مثل: ما هو سبب ارتفاع حرارة المحرك؟"
+    "features": [
+      "إيجاد حلول للمشاكل الميكانيكية",
+      "البحث عن قطع الغيار",
+      "تقديم نصائح الصيانة",
+      "الإجابة على الاستفسارات الفنية"
+    ]
+  },
+  "tracking": {
+    "title": "تتبع مركبتك",
+    "currentStatus": "الحالة الحالية",
+    "workProgress": "مراحل العمل",
+    "vehicleInfo": "معلومات المركبة",
+    "completed": "تم الإنجاز",
+    "inProgress": "جاري العمل عليها",
+    "pending": "في الانتظار",
+    "contactUs": "هل لديك استفسار؟",
+    "callUs": "اتصل بنا",
+    "messageUs": "راسلنا"
   }
 }

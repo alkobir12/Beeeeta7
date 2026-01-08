@@ -20,7 +20,14 @@
     "export": "Export",
     "filter": "Filter",
     "all": "All",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "name": "Name",
+    "category": "Category",
+    "price": "Price",
+    "currency": "SAR",
+    "minute": "minute",
+    "confirmDelete": "Are you sure you want to delete?",
+    "send": "Send"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -31,7 +38,12 @@
     "aiAssistant": "AI Assistant",
     "newVehicle": "New Vehicle",
     "operations": "Operations",
-    "settings": "Settings"
+    "services": "Services",
+    "parts": "Spare Parts",
+    "branches": "Branches & Accounts",
+    "settings": "Settings",
+    "knowledge": "Knowledge Base",
+    "invoiceDesigner": "Invoice Designer"
   },
   "dashboard": {
     "title": "Main Dashboard",
@@ -40,7 +52,10 @@
     "ready": "Ready for Delivery",
     "technicians": "Technicians",
     "recentVehicles": "Recent Vehicles",
-    "searchPlaceholder": "Search by plate number or customer name..."
+    "searchPlaceholder": "Search by plate number or customer name...",
+    "awaitingApproval": "Awaiting Pricing/Approval",
+    "waitingParts": "Waiting for Spare Parts",
+    "abandoned": "Abandoned Vehicles"
   },
   "vehicle": {
     "plateNumber": "Plate Number",
@@ -58,13 +73,17 @@
     "services": "Services",
     "technician": "Assigned Technician",
     "notes": "Notes",
-    "trackingLink": "Tracking Link"
+    "trackingLink": "Tracking Link",
+    "details": "Vehicle Details",
+    "updateStatus": "Update Status"
   },
   "status": {
     "diagnosis": "Diagnosis",
     "quotation": "Quotation",
-    "repair": "Repair",
-    "ready": "Ready"
+    "approved": "Approved",
+    "repair": "Under Repair",
+    "ready": "Ready for Delivery",
+    "delivered": "Delivered"
   },
   "analytics": {
     "title": "Analytics & Reports",
@@ -93,58 +112,43 @@
     "totalParts": "Total Parts",
     "inventoryValue": "Inventory Value"
   },
-  "ai": {
-    "title": "AI Assistant",
-    "subtitle": "Powered by Claude AI",
-    "placeholder": "Type your question here... e.g., What causes engine overheating?",
-    "send": "Send",
-    "thinking": "Claude is thinking...",
-    "welcome": "Welcome! I'm your workshop's AI assistant. I can help you with:",
-    "features": [
-      "Finding solutions to mechanical problems",
-      "Searching for spare parts",
-      "Providing maintenance advice",
-      "Answering technical questions"
-    ]
+  "services": {
+    "title": "Services Management",
+    "addTitle": "Add Service",
+    "listTitle": "Services List",
+    "duration": "Duration (minutes)"
   },
-  "tracking": {
-    "title": "Track Your Vehicle",
-    "currentStatus": "Current Status",
-    "workProgress": "Work Progress",
-    "vehicleInfo": "Vehicle Information",
-    "completed": "Completed",
-    "inProgress": "In Progress",
-    "pending": "Pending",
-    "contactUs": "Have a question?",
-    "callUs": "Call Us",
-    "messageUs": "Message Us"
+  "customers": {
+    "title": "Customer Management",
+    "addCustomer": "Add Customer",
+    "customerName": "Customer Name",
+    "phone": "Phone Number",
+    "email": "Email Address",
+    "address": "Address",
+    "vehicles": "Vehicles",
+    "serviceHistory": "Service History"
   },
-  "invoice": {
-    "number": "Invoice Number",
-    "date": "Date",
-    "customer": "Customer",
-    "items": "Items",
-    "subtotal": "Subtotal",
-    "tax": "Tax",
-    "total": "Total",
-    "paymentMethod": "Payment Method",
-    "cash": "Cash",
-    "card": "Card",
-    "type": {
-      "diagnosis": "Diagnosis Invoice",
-      "quotation": "Price Quote",
-      "service": "Service Invoice"
-    }
+  "technicians": {
+    "title": "Technician Management",
+    "addTechnician": "Add Technician",
+    "name": "Technician Name",
+    "specialization": "Specialization",
+    "experience": "Experience Level",
+    "currentOperations": "Current Operations",
+    "rating": "Rating"
   },
-  "settings": {
-    "title": "Settings",
-    "language": "Language",
-    "theme": "Theme",
-    "profile": "Workshop Information",
-    "workshopName": "Workshop Name",
-    "workshopPhone": "Phone Number",
-    "workshopAddress": "Address",
-    "taxNumber": "Tax Number"
+  "accounts": {
+    "title": "Chart of Accounts",
+    "chartOfAccounts": "Chart of Accounts",
+    "addAccount": "Add Account",
+    "code": "Code",
+    "name": "Name",
+    "nameEn": "Name (English)",
+    "type": "Type",
+    "parent": "Parent Account",
+    "revenue": "Revenue",
+    "expense": "Expense",
+    "balance": "Balance"
   },
   "operations": {
     "title": "Purchase / Sales Operations",
@@ -166,6 +170,80 @@
     "enterPartNameAlert": "Enter part name",
     "defaultCategory": "General",
     "savePartError": "Failed to save part",
-    "savePartToDb": "Save part to database"
+    "savePartToDb": "Save part to database",
+    "selectAccount": "Select Account"
+  },
+  "invoice": {
+    "number": "Invoice Number",
+    "date": "Date",
+    "customer": "Customer",
+    "items": "Items",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "total": "Total",
+    "paymentMethod": "Payment Method",
+    "cash": "Cash",
+    "card": "Card",
+    "type": {
+      "diagnosis": "Diagnosis Invoice",
+      "quotation": "Price Quote",
+      "service": "Service Invoice",
+      "invoice": "Invoice",
+      "receipt": "Receipt"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "profile": "Workshop Information",
+    "workshopName": "Workshop Name",
+    "workshopPhone": "Phone Number",
+    "workshopAddress": "Address",
+    "workshopEmail": "Email",
+    "taxNumber": "Tax Number",
+    "logo": "Logo",
+    "slogan": "Slogan"
+  },
+  "approval": {
+    "title": "Approval Request",
+    "requestApproval": "Request Approval",
+    "amount": "Amount",
+    "status": "Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "expiryDays": "Link Validity",
+    "images": "Damage Images"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "assistantTitle": "Claude AI Assistant - Connected",
+    "subtitle": "Powered by Claude AI",
+    "placeholder": "Type your question here... e.g., What causes engine overheating?",
+    "send": "Send",
+    "thinking": "Claude is thinking...",
+    "welcome": "Welcome! I'm your workshop's AI assistant. I can help you with:",
+    "welcomeMessage": "Welcome! I'm your workshop's AI assistant. I can help you with:\n\n• Finding solutions to mechanical problems\n• Searching for spare parts\n• Providing maintenance advice\n• Answering technical questions\n\nHow can I assist you today?",
+    "connectionError": "An error occurred connecting to the AI assistant. Please try again.",
+    "poweredBy": "Powered by Claude AI",
+    "features": [
+      "Finding solutions to mechanical problems",
+      "Searching for spare parts",
+      "Providing maintenance advice",
+      "Answering technical questions"
+    ]
+  },
+  "tracking": {
+    "title": "Track Your Vehicle",
+    "currentStatus": "Current Status",
+    "workProgress": "Work Progress",
+    "vehicleInfo": "Vehicle Information",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "pending": "Pending",
+    "contactUs": "Have a question?",
+    "callUs": "Call Us",
+    "messageUs": "Message Us"
   }
 }

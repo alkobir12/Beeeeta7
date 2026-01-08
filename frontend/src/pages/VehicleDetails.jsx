@@ -133,6 +133,82 @@ const VehicleDetails = () => {
     setVehicle(prev => ({ ...prev, services: newServices }));
   };
 
+  // Scanner Functions
+  const openScanner = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }, 
+        audio: false 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+      }
+      setScannerOpen(true);
+    } catch (err) {
+      console.error('Camera error:', err);
+      toast({ title: 'خطأ', description: 'فشل في فتح الكاميرا', variant: 'destructive' });
+    }
+  };
+
+  const closeScanner = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setScannerOpen(false);
+    setCapturedImage(null);
+  };
+
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      
+      // Compress image
+      canvas.toBlob(async (blob) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setCapturedImage(e.target.result);
+        };
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.7); // 70% quality
+    }
+  };
+
+  const uploadScannedImage = async () => {
+    if (!capturedImage) return;
+    
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const blob = await fetch(capturedImage).then(r => r.blob());
+      const file = new File([blob], `scan_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=photo`, { 
+        method: 'POST', 
+        body: formData 
+      });
+      
+      if (response.ok) {
+        toast({ title: 'تم الحفظ', description: 'تم حفظ الصورة بنجاح' });
+        closeScanner();
+        await fetchData();
+      } else {
+        throw new Error('فشل رفع الصورة');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast({ title: 'خطأ', description: 'فشل في رفع الصورة', variant: 'destructive' });
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div>;
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 

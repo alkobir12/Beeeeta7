@@ -240,6 +240,44 @@ async def update_workshop_profile(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post('/profile/upload-logo')
+async def upload_workshop_logo(file: UploadFile = File(...)):
+    """Upload workshop logo image"""
+    try:
+        import base64
+        
+        # Read file content
+        content = await file.read()
+        
+        # Check file size (max 2MB)
+        if len(content) > 2 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 2MB")
+        
+        # Convert to base64
+        base64_image = base64.b64encode(content).decode('utf-8')
+        content_type = file.content_type or 'image/png'
+        logo_url = f"data:{content_type};base64,{base64_image}"
+        
+        # Update profile with logo
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'memory' or db is None:
+            rows = _mem_read('workshop_profile')
+            profile = {**(rows[0] if rows else {}), "logo": logo_url, "id": "workshop_profile"}
+            _mem_write('workshop_profile', [profile])
+        else:
+            await db.workshop_profile.update_one(
+                {"id": "workshop_profile"}, 
+                {"$set": {"logo": logo_url, "updatedAt": datetime.utcnow()}}, 
+                upsert=True
+            )
+        
+        return {"success": True, "logo_url": logo_url, "url": logo_url}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # --------------------- Auth (WhatsApp OTP) ---------------------
 @router.post('/auth/request-otp')

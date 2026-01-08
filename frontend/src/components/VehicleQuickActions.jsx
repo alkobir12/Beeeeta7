@@ -55,15 +55,62 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     setDocumentDialogOpen(false);
   };
 
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [approvalForm, setApprovalForm] = useState({
+    title: 'طلب اعتماد الإصلاح',
+    amount: '',
+    expiryDays: '7',
+    images: []
+  });
+
   const handleRequestApproval = async () => {
+    setApprovalDialogOpen(true);
+  };
+
+  const handleApprovalImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + approvalForm.images.length > 5) {
+      toast({ title: 'تنبيه', description: 'الحد الأقصى 5 صور', variant: 'destructive' });
+      return;
+    }
+    
+    // Convert to base64
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setApprovalForm(prev => ({
+          ...prev,
+          images: [...prev.images, { data: e.target.result, name: file.name }]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeApprovalImage = (index) => {
+    setApprovalForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const submitApprovalRequest = async () => {
     try {
-      const title = window.prompt('عنوان طلب التعميد', 'طلب اعتماد الإصلاح');
-      if (title === null) return;
-      const amountStr = window.prompt('المبلغ المتوقع (ريال)', '0');
-      if (amountStr === null) return;
-      const amount = parseFloat(amountStr || '0');
+      if (!approvalForm.title || !approvalForm.amount) {
+        toast({ title: 'خطأ', description: 'الرجاء إدخال العنوان والمبلغ', variant: 'destructive' });
+        return;
+      }
+      
       setLoading(true);
-      const payload = { vehicleId: vehicle?.id, customerId: vehicle?.customerId, title, amount };
+      const payload = {
+        vehicleId: vehicle?.id,
+        customerId: vehicle?.customerId,
+        title: approvalForm.title,
+        amount: parseFloat(approvalForm.amount || '0'),
+        expiryDays: parseInt(approvalForm.expiryDays || '7'),
+        images: approvalForm.images
+      };
+      
       const { data } = await axios.post(`${API_URL}/approvals`, payload);
       toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
       const approvalLink = `${window.location.origin}/approval/${data.token}`;
@@ -72,10 +119,12 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       await sendToWhatsApp(
         'approval',
         approvalLink,
-        `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${title}\nالمبلغ المتوقع: ${amount} ر.س\nللاعتماد: ${approvalLink}`
+        `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${approvalForm.title}\nالمبلغ المتوقع: ${approvalForm.amount} ر.س\nللاعتماد: ${approvalLink}`
       );
       
       setNewStatus('quotation');
+      setApprovalDialogOpen(false);
+      setApprovalForm({ title: 'طلب اعتماد الإصلاح', amount: '', expiryDays: '7', images: [] });
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر إرسال طلب الاعتماد', variant: 'destructive' });
     } finally { setLoading(false); }

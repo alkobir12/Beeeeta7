@@ -94,6 +94,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const loadSettings = async () => {
     try {
+      // جلب بيانات الورشة من ملف الورشة أولاً
+      const profileRes = await axios.get(`${API_URL}/profile`).catch(() => ({ data: null }));
+      if (profileRes.data?.name) {
+        setWorkshopName(profileRes.data.name);
+        return;
+      }
+      
+      // إذا لم يوجد، نجلب من الإعدادات القديمة
       const { data } = await axios.get(`${API_URL}/settings`);
       if (data?.workshopName) setWorkshopName(data.workshopName);
     } catch (e) {

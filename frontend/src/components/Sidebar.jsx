@@ -245,13 +245,20 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white/50 backdrop-blur-md">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white/50 backdrop-blur-md space-y-2">
+          <button
+            onClick={toggleLanguage}
+            className="sidebar-item w-full text-blue-600 hover:bg-blue-50"
+          >
+            <Languages size={18} />
+            <span>{i18n.language === 'ar' ? 'English' : 'العربية'}</span>
+          </button>
           <button
             onClick={handleLogout}
             className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-600"
           >
             <LogOut size={18} />
-            <span>{t('common.back')} / {t('settings.language')}</span>
+            <span>{t('common.back')}</span>
           </button>
         </div>
       </aside>

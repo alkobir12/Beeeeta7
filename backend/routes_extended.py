@@ -1092,6 +1092,10 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
     try:
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
         token = f"APR-{str(uuid.uuid4())[:8].upper()}"
+        
+        # Get expiry days from payload (default 7)
+        expiry_days = int(payload.get('expiryDays', 7))
+        images = payload.get('images', [])
 
         # Supabase implementation
         if provider == 'supabase':
@@ -1105,8 +1109,9 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
                 'amount': float(payload.get('amount') or 0),
                 'service_items': payload.get('serviceItems') or [],
                 'service_items_text': payload.get('serviceItemsText'),
+                'images': images,
                 'status': 'pending',
-                'expires_at': (datetime.utcnow() + timedelta(days=7)).isoformat()
+                'expires_at': (datetime.utcnow() + timedelta(days=expiry_days)).isoformat()
             }
             res = supa.client.table('approval_requests').insert(row).execute()
             r = (res.data or [{}])[0]
@@ -1119,6 +1124,7 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
                 'amount': r.get('amount'),
                 'serviceItems': r.get('service_items') or [],
                 'serviceItemsText': r.get('service_items_text'),
+                'images': r.get('images') or [],
                 'status': r.get('status'),
                 'createdAt': r.get('created_at'),
                 'expiresAt': r.get('expires_at'),
@@ -1135,9 +1141,10 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
             'amount': float(payload.get('amount') or 0),
             'serviceItems': payload.get('serviceItems') or [],
             'serviceItemsText': payload.get('serviceItemsText'),
+            'images': images,
             'status': 'pending',
             'createdAt': datetime.utcnow(),
-            'expiresAt': datetime.utcnow() + timedelta(days=7)
+            'expiresAt': datetime.utcnow() + timedelta(days=expiry_days)
         }
         await db.approval_requests.insert_one(doc)
         doc.pop('_id', None)

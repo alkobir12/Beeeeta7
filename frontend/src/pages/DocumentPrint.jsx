@@ -414,6 +414,17 @@ const DocumentPrint = () => {
                   <CardTitle>{isArabic ? 'بيانات الورشة' : 'Workshop Details'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Logo & Slogan */}
+                  {(formData.workshop.logo || formData.workshop.slogan) && (
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border">
+                      {formData.workshop.logo && (
+                        <img src={formData.workshop.logo} alt="شعار الورشة" className="w-16 h-16 object-contain rounded" />
+                      )}
+                      {formData.workshop.slogan && (
+                        <p className="text-sm text-muted-foreground italic">{formData.workshop.slogan}</p>
+                      )}
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>{isArabic ? 'اسم الورشة' : 'Workshop Name'}</Label>

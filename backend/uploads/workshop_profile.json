@@ -1,16 +1,16 @@
 [
   {
     "id": "workshop_profile",
-    "name": "ورشة الاختبا",
+    "name": "ورشة عبدالله الكبير",
     "nameEnglish": "Test Workshop",
-    "phone": "0500000000",
-    "whatsapp": "0500000000",
+    "phone": "0553280100",
+    "whatsapp": "",
     "email": "test@example.com",
     "address": "",
     "city": "",
     "postalCode": "",
     "taxNumber": "",
-    "commercialRegister": "",
+    "commercialRegister": "111111111",
     "workingHours": "",
     "invoiceFooter": "",
     "termsAndConditions": ""

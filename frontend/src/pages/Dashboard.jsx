@@ -79,19 +79,19 @@ const Dashboard = () => {
 
   return (
     
-      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0">
+      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0" dir="rtl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-gray-500 text-sm sm:text-base mt-1">Workshop Overview</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
+            <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
           </div>
           <button 
             onClick={() => navigate('/new-vehicle')}
             className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <Plus size={18} />
-            <span>New Vehicle</span>
+            <span>{t('dashboard.new_vehicle')}</span>
           </button>
         </div>
 
@@ -100,7 +100,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('all')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total Vehicles</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.total_vehicles')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
@@ -112,7 +112,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">In Progress</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.in_progress')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
@@ -124,7 +124,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('ready')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Ready</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.ready')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.ready}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
@@ -136,7 +136,7 @@ const Dashboard = () => {
           <div onClick={() => navigate('/technicians')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Technicians</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.technicians')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.technicians}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
@@ -152,7 +152,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Search by name or plate..."
+              placeholder={t('dashboard.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="apple-input pr-10 text-sm sm:text-base"
@@ -169,7 +169,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {status === 'all' ? 'All' : getStatusConfigForVehicle(status).label}
+                {status === 'all' ? t('common.all') : getStatusConfigForVehicle(status).label}
               </button>
             ))}
           </div>
@@ -182,8 +182,8 @@ const Dashboard = () => {
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Car className="text-gray-400" size={40} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">No vehicles found</h3>
-              <p className="text-gray-500 mt-1">Try a different search</p>
+              <h3 className="text-lg font-medium text-gray-900">{t('common.no_data')}</h3>
+              <p className="text-gray-500 mt-1">{t('dashboard.search')}</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {

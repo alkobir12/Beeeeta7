@@ -1575,23 +1575,58 @@ async def init_default_accounts():
             return {'message': 'الحسابات موجودة بالفعل', 'count': count}
         
         default_accounts = [
-            # Revenue
-            { 'id': 'rev-main', 'code': '4000', 'name': 'الإيرادات', 'nameEn': 'Revenue', 'type': 'revenue', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'rev-services', 'code': '4100', 'name': 'إيرادات الخدمات', 'nameEn': 'Service Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'rev-parts', 'code': '4200', 'name': 'إيرادات قطع الغيار', 'nameEn': 'Parts Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'rev-other', 'code': '4900', 'name': 'إيرادات أخرى', 'nameEn': 'Other Revenue', 'type': 'revenue', 'parentId': 'rev-main', 'isSystem': True, 'balance': 0.0 },
+            # 1000 - Assets
+            { 'id': 'acc-1000', 'code': '1000', 'name': 'الأصول', 'nameEn': 'Assets', 'type': 'asset', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1100', 'code': '1100', 'name': 'الأصول المتداولة', 'nameEn': 'Current Assets', 'type': 'asset', 'parentId': 'acc-1000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1101', 'code': '1101', 'name': 'النقد', 'nameEn': 'Cash', 'type': 'asset', 'parentId': 'acc-1100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1102', 'code': '1102', 'name': 'البنك', 'nameEn': 'Bank', 'type': 'asset', 'parentId': 'acc-1100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1103', 'code': '1103', 'name': 'العملاء', 'nameEn': 'Accounts Receivable', 'type': 'asset', 'parentId': 'acc-1100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1105', 'code': '1105', 'name': 'مخزون قطع غيار', 'nameEn': 'Spare Parts Inventory', 'type': 'asset', 'parentId': 'acc-1100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1106', 'code': '1106', 'name': 'مخزون مستهلكات', 'nameEn': 'Consumables Inventory', 'type': 'asset', 'parentId': 'acc-1100', 'isSystem': True, 'balance': 0.0 },
             
-            # Expenses
-            { 'id': 'exp-main', 'code': '5000', 'name': 'المصروفات', 'nameEn': 'Expenses', 'type': 'expense', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-operational', 'code': '5100', 'name': 'مصروفات تشغيلية', 'nameEn': 'Operational Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-salaries', 'code': '5200', 'name': 'الرواتب والأجور', 'nameEn': 'Salaries & Wages', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-rent', 'code': '5300', 'name': 'الإيجار', 'nameEn': 'Rent', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-utilities', 'code': '5400', 'name': 'المرافق (كهرباء/ماء)', 'nameEn': 'Utilities', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-maintenance', 'code': '5500', 'name': 'صيانة وإصلاحات', 'nameEn': 'Maintenance & Repairs', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-parts-cost', 'code': '5600', 'name': 'تكلفة قطع الغيار', 'nameEn': 'Parts Cost', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-personal', 'code': '5700', 'name': 'مصروفات شخصية', 'nameEn': 'Personal Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-marketing', 'code': '5800', 'name': 'تسويق وإعلان', 'nameEn': 'Marketing & Advertising', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
-            { 'id': 'exp-other', 'code': '5900', 'name': 'مصروفات أخرى', 'nameEn': 'Other Expenses', 'type': 'expense', 'parentId': 'exp-main', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1200', 'code': '1200', 'name': 'الأصول الثابتة', 'nameEn': 'Fixed Assets', 'type': 'asset', 'parentId': 'acc-1000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1201', 'code': '1201', 'name': 'معدات ميكانيكية', 'nameEn': 'Mechanical Equipment', 'type': 'asset', 'parentId': 'acc-1200', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1202', 'code': '1202', 'name': 'رافعات سيارات', 'nameEn': 'Car Lifts', 'type': 'asset', 'parentId': 'acc-1200', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1203', 'code': '1203', 'name': 'أجهزة فحص', 'nameEn': 'Diagnostic Tools', 'type': 'asset', 'parentId': 'acc-1200', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-1207', 'code': '1207', 'name': 'مجمع الإهلاك', 'nameEn': 'Accumulated Depreciation', 'type': 'asset', 'parentId': 'acc-1200', 'isSystem': True, 'balance': 0.0 },
+            
+            # 2000 - Liabilities
+            { 'id': 'acc-2000', 'code': '2000', 'name': 'الخصوم', 'nameEn': 'Liabilities', 'type': 'liability', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-2100', 'code': '2100', 'name': 'الخصوم المتداولة', 'nameEn': 'Current Liabilities', 'type': 'liability', 'parentId': 'acc-2000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-2101', 'code': '2101', 'name': 'الموردون', 'nameEn': 'Accounts Payable', 'type': 'liability', 'parentId': 'acc-2100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-2102', 'code': '2102', 'name': 'مصروفات مستحقة', 'nameEn': 'Accrued Expenses', 'type': 'liability', 'parentId': 'acc-2100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-2103', 'code': '2103', 'name': 'رواتب مستحقة', 'nameEn': 'Accrued Salaries', 'type': 'liability', 'parentId': 'acc-2100', 'isSystem': True, 'balance': 0.0 },
+            
+            # 3000 - Equity
+            { 'id': 'acc-3000', 'code': '3000', 'name': 'حقوق الملكية', 'nameEn': 'Equity', 'type': 'equity', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-3100', 'code': '3100', 'name': 'حقوق المالك', 'nameEn': 'Owner\'s Equity', 'type': 'equity', 'parentId': 'acc-3000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-3101', 'code': '3101', 'name': 'رأس المال', 'nameEn': 'Owner Capital', 'type': 'equity', 'parentId': 'acc-3100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-3102', 'code': '3102', 'name': 'مسحوبات المالك', 'nameEn': 'Owner Drawings', 'type': 'equity', 'parentId': 'acc-3100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-3103', 'code': '3103', 'name': 'أرباح محتجزة', 'nameEn': 'Retained Earnings', 'type': 'equity', 'parentId': 'acc-3100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-3104', 'code': '3104', 'name': 'صافي الربح/الخسارة', 'nameEn': 'Net Profit/Loss', 'type': 'equity', 'parentId': 'acc-3100', 'isSystem': True, 'balance': 0.0 },
+            
+            # 4000 - Revenue
+            { 'id': 'acc-4000', 'code': '4000', 'name': 'الإيرادات', 'nameEn': 'Revenue', 'type': 'revenue', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-4100', 'code': '4100', 'name': 'إيرادات الخدمات', 'nameEn': 'Service Revenue', 'type': 'revenue', 'parentId': 'acc-4000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-4101', 'code': '4101', 'name': 'إيرادات خدمات ميكانيكية', 'nameEn': 'Mechanical Service Revenue', 'type': 'revenue', 'parentId': 'acc-4100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-4102', 'code': '4102', 'name': 'إيرادات إصلاح محركات', 'nameEn': 'Engine Repair Revenue', 'type': 'revenue', 'parentId': 'acc-4100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-4103', 'code': '4103', 'name': 'إيرادات فرامل وتعليق', 'nameEn': 'Brake & Suspension Revenue', 'type': 'revenue', 'parentId': 'acc-4100', 'isSystem': True, 'balance': 0.0 },
+            
+            # 5000 - Cost of Services
+            { 'id': 'acc-5000', 'code': '5000', 'name': 'تكلفة الخدمات', 'nameEn': 'Cost of Services', 'type': 'expense', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-5100', 'code': '5100', 'name': 'تكاليف مباشرة', 'nameEn': 'Direct Costs', 'type': 'expense', 'parentId': 'acc-5000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-5101', 'code': '5101', 'name': 'أجور فنيين مباشرة', 'nameEn': 'Technicians Wages - Direct', 'type': 'expense', 'parentId': 'acc-5100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-5102', 'code': '5102', 'name': 'قطع غيار مستخدمة', 'nameEn': 'Spare Parts Used', 'type': 'expense', 'parentId': 'acc-5100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-5103', 'code': '5103', 'name': 'مستهلكات مستخدمة', 'nameEn': 'Consumables Used', 'type': 'expense', 'parentId': 'acc-5100', 'isSystem': True, 'balance': 0.0 },
+            
+            # 6000 - Operating Expenses
+            { 'id': 'acc-6000', 'code': '6000', 'name': 'المصروفات التشغيلية', 'nameEn': 'Operating Expenses', 'type': 'expense', 'parentId': None, 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6100', 'code': '6100', 'name': 'مصروفات عامة وإدارية', 'nameEn': 'General & Administrative', 'type': 'expense', 'parentId': 'acc-6000', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6101', 'code': '6101', 'name': 'رواتب إدارية', 'nameEn': 'Administrative Salaries', 'type': 'expense', 'parentId': 'acc-6100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6102', 'code': '6102', 'name': 'إيجار المركز', 'nameEn': 'Workshop Rent', 'type': 'expense', 'parentId': 'acc-6100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6103', 'code': '6103', 'name': 'كهرباء ومياه', 'nameEn': 'Electricity & Water', 'type': 'expense', 'parentId': 'acc-6100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6104', 'code': '6104', 'name': 'صيانة معدات', 'nameEn': 'Equipment Maintenance', 'type': 'expense', 'parentId': 'acc-6100', 'isSystem': True, 'balance': 0.0 },
+            { 'id': 'acc-6105', 'code': '6105', 'name': 'ملابس وسلامة مهنية', 'nameEn': 'Uniforms & Safety', 'type': 'expense', 'parentId': 'acc-6100', 'isSystem': True, 'balance': 0.0 },
         ]
         
         for acc in default_accounts:

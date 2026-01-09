@@ -26,6 +26,7 @@ import {
   Bot
 } from 'lucide-react';
 import axios from 'axios';
+import { t } from '../translations';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
@@ -33,60 +34,60 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [workshopName, setWorkshopName] = useState('Workshop');
+  const [workshopName, setWorkshopName] = useState('الورشة');
 
   const MENU_ITEMS = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
-    { path: '/operations', label: 'Operations', icon: Wrench, enabled: true, permission: 'canManageVehicles' },
-    { path: '/customers', label: 'Customers', icon: Users, enabled: true, permission: 'canManageCustomers' },
-    { path: '/technicians', label: 'Technicians', icon: Users, enabled: true, permission: 'canManageUsers' },
-    { path: '/suppliers', label: 'Suppliers', icon: Truck, enabled: true, permission: 'canManageParts' },
+    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
+    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: 'canManageVehicles' },
+    { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: 'canManageCustomers' },
+    { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: 'canManageUsers' },
+    { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: 'canManageParts' },
     {
       group: true,
-      label: 'Inventory',
+      label: t('nav.inventory'),
       icon: BookOpen,
       enabled: true,
       permission: 'canManageParts',
       children: [
-        { path: '/catalog', label: 'Parts Catalog', enabled: true },
-        { path: '/parts', label: 'Parts Management', enabled: true },
+        { path: '/catalog', label: t('inventory.spare_parts'), enabled: true },
+        { path: '/parts', label: t('inventory.inventory'), enabled: true },
       ]
     },
-    { path: '/services', label: 'Services', icon: Wrench, enabled: true, permission: 'canManageServices' },
-    { path: '/diesel-expert', label: '🔧 Diesel Expert', icon: Bot, enabled: true, permission: 'canManageVehicles' },
-    { path: '/denso-diagnostics', label: '⚡ Denso Diagnostics', icon: Activity, enabled: true, permission: 'canManageVehicles' },
+    { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
+    { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true, permission: 'canManageVehicles' },
+    { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {
       group: true,
-      label: 'Documents',
+      label: t('nav.documents'),
       icon: FileText,
       enabled: true,
       permission: 'canManageVehicles',
       children: [
-        { path: '/print', label: 'Print', enabled: true },
-        { path: '/quotations', label: 'Quotations', enabled: true },
-        { path: '/templates', label: 'Templates', enabled: true },
-        { path: '/invoice-templates', label: 'Invoice Templates', enabled: true },
+        { path: '/print', label: t('buttons.print'), enabled: true },
+        { path: '/quotations', label: 'عروض الأسعار', enabled: true },
+        { path: '/templates', label: 'القوالب', enabled: true },
+        { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
       ]
     },
     {
       group: true,
-      label: 'Finance',
+      label: t('nav.finance'),
       icon: Building2,
       enabled: true,
       permission: 'canManageFinance',
       children: [
-        { path: '/analytics', label: 'Analytics', enabled: true },
-        { path: '/ceo', label: 'CEO Panel', enabled: true },
-        { path: '/payroll', label: 'Payroll', enabled: true },
-        { path: '/business-accounts', label: 'CEO Dashboard', enabled: true },
-        { path: '/customer-receipts', label: 'Customer Receipts', enabled: true },
+        { path: '/analytics', label: t('reports_module.analytics'), enabled: true },
+        { path: '/ceo', label: 'لوحة المدير', enabled: true },
+        { path: '/payroll', label: 'الرواتب', enabled: true },
+        { path: '/business-accounts', label: 'حسابات الأعمال', enabled: true },
+        { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
       ]
     },
-    { path: '/archive', label: 'Archive', icon: Archive, enabled: true, permission: 'canManageVehicles' },
-    { path: '/import', label: 'Import Data', icon: Upload, enabled: true, permission: 'canManageSettings' },
-    { path: '/users', label: 'Users', icon: UserCircle, enabled: true, permission: 'canManageUsers' },
-    { path: '/profile', label: 'Profile', icon: Building2, enabled: true, permission: 'canManageSettings' },
-    { path: '/settings', label: 'Settings', icon: Settings, enabled: true, permission: 'canManageSettings' },
+    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: 'canManageVehicles' },
+    { path: '/import', label: t('nav.import'), icon: Upload, enabled: true, permission: 'canManageSettings' },
+    { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: 'canManageUsers' },
+    { path: '/profile', label: t('nav.profile'), icon: Building2, enabled: true, permission: 'canManageSettings' },
+    { path: '/settings', label: t('nav.settings'), icon: Settings, enabled: true, permission: 'canManageSettings' },
   ];
 
   const loadSettings = async () => {

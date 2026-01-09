@@ -12,34 +12,40 @@ const DieselExpertFloatingButton = () => {
   }
 
   return (
-    <button
-      onClick={() => navigate('/diesel-expert')}
-      className="fixed bottom-6 left-6 z-50 group bg-gradient-to-r from-emergent-green via-emergent-green-light to-emergent-green shadow-glow-lg hover:shadow-glow-lg hover:scale-105 transition-all duration-300 rounded-full"
-      title="خبير الديزل 24/7"
-      style={{ 
-        animation: 'float 3s ease-in-out infinite'
-      }}
+    <div 
+      className="fixed bottom-6 left-6 z-50" 
+      style={{ pointerEvents: 'none' }}
     >
-      <div className="flex items-center gap-3 px-4 py-3 rounded-full">
-        {/* Avatar with online indicator */}
-        <div className="relative">
-          <img 
-            src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-            alt="Diesel Expert"
-            className="w-10 h-10 rounded-full border-2 border-white shadow-lg"
-          />
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-emergent-green shadow-md">
-            <div className="w-full h-full bg-white rounded-full animate-ping opacity-75"></div>
+      <button
+        onClick={() => navigate('/diesel-expert')}
+        className="group bg-gradient-to-r from-emergent-green via-emergent-green-light to-emergent-green shadow-glow-lg hover:shadow-glow-lg hover:scale-105 transition-all duration-300 rounded-full"
+        title="خبير الديزل 24/7"
+        style={{ 
+          animation: 'float 3s ease-in-out infinite',
+          pointerEvents: 'auto'
+        }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3 rounded-full">
+          {/* Avatar with online indicator */}
+          <div className="relative">
+            <img 
+              src="https://www.genspark.ai/api/files/s/owCUM0vz" 
+              alt="Diesel Expert"
+              className="w-10 h-10 rounded-full border-2 border-white shadow-lg"
+            />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-emergent-green shadow-md">
+              <div className="w-full h-full bg-white rounded-full animate-ping opacity-75"></div>
+            </div>
+          </div>
+          
+          {/* Text */}
+          <div className="flex items-center gap-2 text-emergent-black font-bold">
+            <Wrench className="w-5 h-5" />
+            <span className="hidden sm:inline">خبير الديزل 24/7</span>
           </div>
         </div>
-        
-        {/* Text */}
-        <div className="flex items-center gap-2 text-emergent-black font-bold">
-          <Wrench className="w-5 h-5" />
-          <span className="hidden sm:inline">خبير الديزل 24/7</span>
-        </div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 };
 

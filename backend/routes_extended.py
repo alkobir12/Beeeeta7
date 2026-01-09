@@ -1237,10 +1237,24 @@ async def public_approval(token: str):
                 raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
             
             # Check expiry
-            from datetime import datetime
             if d.get('expires_at'):
-                expires_at = datetime.fromisoformat(d['expires_at'].replace('Z', '+00:00'))
-                if expires_at < datetime.utcnow():
+                from datetime import datetime, timezone
+                expires_str = d['expires_at']
+                if isinstance(expires_str, str):
+                    # Parse ISO string with timezone
+                    if expires_str.endswith('Z'):
+                        expires_str = expires_str[:-1] + '+00:00'
+                    expires_at = datetime.fromisoformat(expires_str)
+                else:
+                    expires_at = expires_str
+                
+                # Compare with timezone-aware datetime
+                now_utc = datetime.now(timezone.utc)
+                if expires_at.tzinfo is None:
+                    # Make timezone-aware
+                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+                
+                if expires_at < now_utc:
                     raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
             
             return {

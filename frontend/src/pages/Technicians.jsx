@@ -28,8 +28,8 @@ const Technicians = () => {
     } catch (error) {
       console.error('Error fetching technicians:', error);
       toast({
-        title: "خطأ",
-        description: "فشل في تحميل الفنيين",
+        title: t('common.error'),
+        description: t('messages.error_occurred'),
         variant: "destructive"
       });
     } finally {

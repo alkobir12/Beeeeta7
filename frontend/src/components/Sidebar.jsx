@@ -167,7 +167,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
 
           {!isCollapsed && (
-            <div className={`mr-9 ${isRTL ? 'mr-9' : 'ml-9'} space-y-1 mt-1`}>
+            <div className="ml-9 space-y-1 mt-1">
               {item.children.map((child, childIndex) => {
                 if (!child.enabled) return null;
                 const isActive = location.pathname === child.path;

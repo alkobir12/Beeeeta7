@@ -210,7 +210,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      <aside className={`sidebar-modern ${isOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')}`}>
+      <aside className={`sidebar-modern ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0071E3] to-[#00C7BE] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">

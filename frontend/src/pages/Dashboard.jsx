@@ -88,16 +88,13 @@ const Dashboard = () => {
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
             <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <LanguageToggleButton />
-            <button 
-              onClick={() => navigate('/new-vehicle')}
-              className="apple-button flex items-center gap-2 flex-1 sm:flex-initial justify-center"
-            >
-              <Plus size={18} />
-              <span>{t('dashboard.new_vehicle')}</span>
-            </button>
-          </div>
+          <button 
+            onClick={() => navigate('/new-vehicle')}
+            className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            <Plus size={18} />
+            <span>{t('dashboard.new_vehicle')}</span>
+          </button>
         </div>
 
         {/* Stats Grid - Responsive 2x2 on mobile, 4 on desktop */}

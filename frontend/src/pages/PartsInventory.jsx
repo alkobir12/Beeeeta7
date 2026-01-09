@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { partAPI, fileAPI } from '../services/api';
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '../components/ui/label';
 
 const PartsInventory = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [parts, setParts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,9 +46,9 @@ const PartsInventory = () => {
       setUploading(true);
       const response = await fileAPI.upload(file);
       setFormData({ ...formData, image: response.data.url });
-      toast({ title: 'تم الرفع', description: 'تم رفع الصورة بنجاح' });
+      toast({ title: t('common.success'), description: t('common.success') });
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل رفع الصورة', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -70,12 +72,12 @@ const PartsInventory = () => {
       
       const result = await res.json();
       toast({ 
-        title: 'تم الاستيراد', 
-        description: `تم استيراد ${result.imported} وتحديث ${result.updated} قطعة بنجاح` 
+        title: t('common.success'), 
+        description: t('common.success')
       });
       loadParts();
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل استيراد الملف. تأكد من الصيغة والأعمدة.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
     } finally {
       setImporting(false);
       e.target.value = ''; // reset input
@@ -95,27 +97,27 @@ const PartsInventory = () => {
     try {
       if (editingPart) {
         await partAPI.update(editingPart.id, payload);
-        toast({ title: 'تم التحديث', description: 'تم تحديث القطعة بنجاح' });
+        toast({ title: t('common.success'), description: t('common.success') });
       } else {
         await partAPI.create(payload);
-        toast({ title: 'تمت الإضافة', description: 'تمت إضافة القطعة بنجاح' });
+        toast({ title: t('common.success'), description: t('common.success') });
       }
       setIsDialogOpen(false);
       resetForm();
       loadParts();
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشلت العملية', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه القطعة؟')) return;
+    if (!window.confirm(t('common.confirmDelete'))) return;
     try {
       await partAPI.delete(id);
-      toast({ title: 'تم الحذف', description: 'تم حذف القطعة بنجاح' });
+      toast({ title: t('common.success'), description: t('common.success') });
       loadParts();
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل الحذف', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
     }
   };
 
@@ -145,8 +147,8 @@ const PartsInventory = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إدارة المخزون</h1>
-          <p className="text-gray-500 mt-1">إدارة قطع الغيار والمستودع</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('parts.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('parts.title')}</p>
         </div>
         <div className="flex gap-2">
           <div className="relative">
@@ -162,7 +164,7 @@ const PartsInventory = () => {
               <Button variant="outline" asChild className="cursor-pointer bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
                 <span>
                   <FileSpreadsheet className="ml-2" size={18} />
-                  {importing ? 'جاري الاستيراد...' : 'استيراد Excel'}
+                  {importing ? t('common.loading') : t('common.export')}
                 </span>
               </Button>
             </label>
@@ -172,59 +174,59 @@ const PartsInventory = () => {
             <DialogTrigger asChild>
               <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="apple-button">
                 <Plus className="ml-2" size={18} />
-                إضافة قطعة
+                {t('parts.addPart')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingPart ? 'تعديل قطعة' : 'إضافة قطعة جديدة'}</DialogTitle>
+                <DialogTitle>{editingPart ? t('common.edit') : t('parts.addPart')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>رقم القطعة *</Label>
+                    <Label>{t('parts.partNumber')} *</Label>
                     <Input required value={formData.partNumber} onChange={e => setFormData({...formData, partNumber: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>اسم القطعة *</Label>
+                    <Label>{t('parts.name')} *</Label>
                     <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>التصنيف *</Label>
+                    <Label>{t('parts.category')} *</Label>
                     <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>الموقع/الرف</Label>
+                    <Label>{t('parts.supplier')}</Label>
                     <Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="A-12" />
                   </div>
                   <div className="space-y-2">
-                    <Label>الكمية *</Label>
+                    <Label>{t('parts.quantity')} *</Label>
                     <Input required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>الحد الأدنى</Label>
+                    <Label>{t('parts.minQuantity')}</Label>
                     <Input type="number" value={formData.minQuantity} onChange={e => setFormData({...formData, minQuantity: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>سعر الشراء *</Label>
+                    <Label>{t('parts.purchasePrice')} *</Label>
                     <Input required type="number" value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>سعر البيع *</Label>
+                    <Label>{t('parts.sellingPrice')} *</Label>
                     <Input required type="number" value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: e.target.value})} />
                   </div>
                   <div className="space-y-2 col-span-2">
-                    <Label>المورد</Label>
+                    <Label>{t('parts.supplier')}</Label>
                     <Input value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>صورة القطعة</Label>
+                  <Label>{t('parts.image')}</Label>
                   <div className="flex items-center gap-4">
                     <label className="cursor-pointer apple-button-secondary flex items-center gap-2 px-4 py-2">
                       <Upload size={16} />
-                      <span>{uploading ? 'جاري الرفع...' : 'رفع صورة'}</span>
+                      <span>{uploading ? t('common.loading') : t('vehicle.uploadFile')}</span>
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
                     </label>
                     {formData.image && <img src={formData.image} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-gray-200" />}
@@ -232,8 +234,8 @@ const PartsInventory = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">إلغاء</Button>
-                  <Button type="submit" className="flex-1 apple-button">حفظ</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">{t('common.cancel')}</Button>
+                  <Button type="submit" className="flex-1 apple-button">{t('common.save')}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -245,7 +247,7 @@ const PartsInventory = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 mb-1">إجمالي القطع</p>
+            <p className="text-sm text-gray-500 mb-1">{t('parts.totalParts')}</p>
             <p className="text-2xl font-bold text-gray-900">{parts.length}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
@@ -254,7 +256,7 @@ const PartsInventory = () => {
         </div>
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 mb-1">منخفضة المخزون</p>
+            <p className="text-sm text-gray-500 mb-1">{t('parts.lowStock')}</p>
             <p className="text-2xl font-bold text-red-600">{lowStockCount}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
@@ -263,7 +265,7 @@ const PartsInventory = () => {
         </div>
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 mb-1">إجمالي الكمية</p>
+            <p className="text-sm text-gray-500 mb-1">{t('parts.quantity')}</p>
             <p className="text-2xl font-bold text-green-600">{parts.reduce((sum, p) => sum + p.quantity, 0)}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
@@ -272,7 +274,7 @@ const PartsInventory = () => {
         </div>
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 mb-1">قيمة المخزون</p>
+            <p className="text-sm text-gray-500 mb-1">{t('parts.inventoryValue')}</p>
             <p className="text-2xl font-bold text-purple-600">{parts.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0).toLocaleString()}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
@@ -287,20 +289,20 @@ const PartsInventory = () => {
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
             className="apple-input pr-10"
-            placeholder="بحث برقم القطعة أو الاسم..."
+            placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadParts} variant="outline">بحث</Button>
+          <Button onClick={loadParts} variant="outline">{t('common.search')}</Button>
           <Button
             variant={showLowStock ? 'default' : 'outline'}
             onClick={() => setShowLowStock(!showLowStock)}
             className={showLowStock ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
           >
             <AlertTriangle className="ml-2" size={18} />
-            منخفض
+            {t('parts.lowStock')}
           </Button>
         </div>
       </div>

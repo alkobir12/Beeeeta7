@@ -161,6 +161,30 @@ const translations = {
     restore: "استعادة",
     system_settings: "إعدادات النظام"
   },
+  // Additional common texts
+  messages: {
+    success_saved: "تم الحفظ بنجاح",
+    success_updated: "تم التحديث بنجاح",
+    success_deleted: "تم الحذف بنجاح",
+    error_occurred: "حدث خطأ",
+    loading_data: "جاري تحميل البيانات...",
+    no_results: "لا توجد نتائج",
+    confirm_action: "هل أنت متأكد؟",
+    action_cancelled: "تم الإلغاء",
+    processing: "جاري المعالجة..."
+  },
+  forms: {
+    required_field: "هذا الحقل مطلوب",
+    invalid_email: "البريد الإلكتروني غير صالح",
+    invalid_phone: "رقم الهاتف غير صالح",
+    name: "الاسم",
+    phone: "رقم الهاتف",
+    email: "البريد الإلكتروني",
+    address: "العنوان",
+    notes: "ملاحظات",
+    select: "اختر",
+    select_option: "اختر خياراً"
+  },
   // Additional translations
   nav: {
     dashboard: "لوحة التحكم",

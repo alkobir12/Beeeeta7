@@ -68,21 +68,10 @@ const Protected = ({ children }) => {
 
 function App() {
   const { i18n } = useTranslation();
-  const [currentLang, setCurrentLang] = useState(i18n.language);
-
-  useEffect(() => {
-    const handleLanguageChange = (lng) => {
-      setCurrentLang(lng);
-    };
-    i18n.on('languageChanged', handleLanguageChange);
-    return () => {
-      i18n.off('languageChanged', handleLanguageChange);
-    };
-  }, [i18n]);
 
   return (
     <ThemeProvider>
-      <div className="App" key={currentLang} style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
+      <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />

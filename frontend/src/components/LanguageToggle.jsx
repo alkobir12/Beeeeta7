@@ -8,16 +8,20 @@ const LanguageToggle = () => {
 
   const setLang = (lng) => {
     if (lng === current) return;
-    i18n.changeLanguage(lng);
+    
+    // Save to localStorage first
     try {
       localStorage.setItem('language', lng);
     } catch (_) {}
+    
+    // Update document direction
     if (typeof document !== 'undefined') {
       document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
       document.documentElement.lang = lng;
     }
-    // Force reload to ensure all components update
-    window.location.reload();
+    
+    // Change language - React will re-render automatically
+    i18n.changeLanguage(lng);
   };
 
   return (

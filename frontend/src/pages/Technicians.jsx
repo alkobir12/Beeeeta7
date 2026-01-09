@@ -260,7 +260,6 @@ const Technicians = () => {
         )}
 
       </div>
-    
   );
 };
 

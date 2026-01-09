@@ -246,7 +246,8 @@
     "recentOperations": "العمليات الأخيرة",
     "noOperations": "لا توجد عمليات",
     "partner": "الطرف الآخر",
-    "date": "التاريخ"
+    "date": "التاريخ",
+    "ceoPanelTitle": "لوحة المدير التنفيذي"
   },
   "customers": {
     "title": "إدارة العملاء",

@@ -246,7 +246,8 @@
     "recentOperations": "Recent Operations",
     "noOperations": "No operations",
     "partner": "Partner",
-    "date": "Date"
+    "date": "Date",
+    "ceoPanelTitle": "CEO Dashboard"
   },
   "customers": {
     "title": "Customer Management",

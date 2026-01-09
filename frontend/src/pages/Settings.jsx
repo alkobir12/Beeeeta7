@@ -3,12 +3,13 @@ import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { useTheme } from '../contexts/ThemeContext';
 import { Building2, Globe, Palette, Database, Save, ChevronRight } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Settings = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(true);

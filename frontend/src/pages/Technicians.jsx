@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Wrench, Search, Phone, Star, CheckCircle, Users } from 'lucide-react';
 import { technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const Technicians = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');

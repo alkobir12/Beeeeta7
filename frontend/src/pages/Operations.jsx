@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);

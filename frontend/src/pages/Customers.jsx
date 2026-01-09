@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const Customers = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');

@@ -6,10 +6,11 @@ import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as Im
 import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const PartsInventory = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
   const [parts, setParts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');

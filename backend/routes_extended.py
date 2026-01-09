@@ -628,6 +628,27 @@ async def operations_pending_analytics():
 @router.put('/biz-accounts/{aid}')
 async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            upd = {}
+            for k in ('name', 'currency', 'isActive', 'code'):
+                if (payload or {}).get(k) is not None:
+                    upd[k] = payload[k]
+            
+            if not upd:
+                return {'status': 'no_changes'}
+            
+            res = supa.client.table('business_accounts').update(upd).eq('id', aid).execute()
+            if not res.data:
+                raise HTTPException(status_code=404, detail='not found')
+            
+            return res.data[0]
+        
+        # MongoDB fallback
         upd = {}
         for k in ('name','currency'):
             if (payload or {}).get(k) is not None:

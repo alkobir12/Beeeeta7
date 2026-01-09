@@ -213,7 +213,7 @@ sql_commands = [
       code text not null unique,
       name text not null,
       name_en text,
-      type text not null,
+      type text not null check (type in ('asset', 'liability', 'equity', 'revenue', 'expense')),
       parent_id text references accounts(id) on delete restrict,
       is_system boolean default false,
       balance numeric(14,2) default 0,
@@ -221,6 +221,7 @@ sql_commands = [
     );
     create index if not exists idx_accounts_code on accounts(code);
     create index if not exists idx_accounts_parent on accounts(parent_id);
+    create index if not exists idx_accounts_type on accounts(type);
     """,
     
     # i18n table

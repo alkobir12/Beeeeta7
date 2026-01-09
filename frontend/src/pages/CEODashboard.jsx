@@ -27,7 +27,14 @@ const CEODashboard = () => {
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [dateRange, setDateRange] = useState('month'); // today, week, month, year, custom
-  const [expandedAccounts, setExpandedAccounts] = useState({});
+  const [expandedAccounts, setExpandedAccounts] = useState({
+    'acc-1000': true,
+    'acc-2000': true,
+    'acc-3000': true,
+    'acc-4000': true,
+    'acc-5000': true,
+    'acc-6000': true
+  }); // Expand main accounts by default
   const [showAddAccount, setShowAddAccount] = useState(false);
   const [showAddBranch, setShowAddBranch] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);

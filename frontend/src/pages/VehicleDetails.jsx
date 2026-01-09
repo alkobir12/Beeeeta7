@@ -38,18 +38,25 @@ const VehicleDetails = () => {
     try {
       setLoading(true);
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-      const [vehicleRes, techniciansRes, filesRes, approvalsRes, opsRes] = await Promise.all([
+      const [vehicleRes, techniciansRes, filesRes, approvalsRes, opsRes, visitsRes] = await Promise.all([
         vehicleAPI.getById(id),
         technicianAPI.getAll(),
         fetch(`${API_URL}/vehicles/${id}/files`).then(r => r.json()).catch(() => ({files: []})),
         fetch(`${API_URL}/approvals?vehicle_id=${id}`).then(r => r.json()).catch(() => []),
-        axios.get(`${API_URL}/operations?vehicle_id=${id}`)
+        axios.get(`${API_URL}/operations?vehicle_id=${id}`),
+        axios.get(`${API_URL}/vehicles/${id}/visits`).catch(() => ({ data: [] }))
       ]);
       setVehicle(vehicleRes.data);
       setTechnicians(techniciansRes.data);
       setVehicleFiles(filesRes.files || []);
       setApprovals(approvalsRes || []);
       setVehicleOperations(opsRes.data || []);
+      setVisits(visitsRes.data || []);
+      
+      // Set current visit (latest in-progress visit or create new one)
+      const activeVisit = visitsRes.data?.find(v => v.status === 'in_progress');
+      setCurrentVisit(activeVisit || null);
+      
       setStatus(vehicleRes.data.status || 'diagnosis');
       setNotes(vehicleRes.data.notes || '');
       setAssignedTech(vehicleRes.data.technicianId || '');

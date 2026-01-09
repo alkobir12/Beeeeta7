@@ -222,6 +222,33 @@ sql_commands = [
     create index if not exists idx_accounts_code on accounts(code);
     create index if not exists idx_accounts_parent on accounts(parent_id);
     create index if not exists idx_accounts_type on accounts(type);
+    
+    -- Vehicle Visits table
+    create table if not exists vehicle_visits (
+      id uuid primary key default gen_random_uuid(),
+      vehicle_id uuid references vehicles(id) on delete cascade,
+      entry_date timestamptz default now(),
+      exit_date timestamptz,
+      status text default 'in_progress',
+      mileage integer,
+      notes text,
+      technician_id uuid references technicians(id) on delete set null,
+      created_at timestamptz default now()
+    );
+    create index if not exists idx_visits_vehicle on vehicle_visits(vehicle_id);
+    create index if not exists idx_visits_date on vehicle_visits(entry_date);
+    
+    -- Add visit_id to operations table
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name='operations' AND column_name='visit_id'
+        ) THEN
+            ALTER TABLE operations ADD COLUMN visit_id uuid references vehicle_visits(id) on delete set null;
+            CREATE INDEX idx_operations_visit ON operations(visit_id);
+        END IF;
+    END $$;
     """,
     
     # i18n table

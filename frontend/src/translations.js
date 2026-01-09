@@ -207,16 +207,5 @@ const translations = {
   }
 };
 
-// Get translation by key path (e.g., "app.dashboard" or "buttons.save")
-export const t = (key) => {
-  const keys = key.split('.');
-  let value = translations;
-  for (const k of keys) {
-    value = value?.[k];
-    if (value === undefined) return key; // Return key if not found
-  }
-  return value;
-};
-
 // Export all translations
 export default translations;

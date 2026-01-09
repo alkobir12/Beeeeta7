@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
           >
             <Menu size={22} className="text-foreground" />
           </button>
-          <h1 className="text-base font-bold text-foreground">Workshop Management</h1>
+          <h1 className="text-base font-bold text-foreground">{t('app.dashboard')}</h1>
           <div className="w-10"></div>
         </div>
         

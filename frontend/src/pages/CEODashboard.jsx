@@ -326,17 +326,17 @@ const CEODashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">لوحة المدير التنفيذي</h1>
-          <p className="text-gray-500 mt-1">تحليلات شاملة وإدارة الحسابات والفروع</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('ceo.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('ceo.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={loadAllData} variant="outline">
             <RefreshCw size={16} className="ml-2" />
-            تحديث
+            {t('common.refresh')}
           </Button>
           <Button onClick={() => setShowAddBranch(true)}>
             <Plus size={16} className="ml-2" />
-            فرع جديد
+            {t('ceo.newBranch')}
           </Button>
         </div>
       </div>

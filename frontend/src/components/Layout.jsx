@@ -20,14 +20,14 @@ const Layout = ({ children }) => {
       />
       
       {/* Main Content */}
-      <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 1 }}>
+      <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10 }}>
         {/* Top Left Language Toggle (Desktop/Tablet) */}
-        <div className="hidden lg:flex justify-end px-4 py-2">
+        <div className="hidden lg:flex justify-end px-4 py-2" style={{ position: 'relative', zIndex: 50 }}>
            <LanguageToggle />
         </div>
 
         {/* Mobile Header - Fixed at top */}
-        <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-3 bg-card/95 backdrop-blur-lg rounded-xl shadow-lg border border-border mb-4">
+        <div className="lg:hidden sticky top-0 z-50 flex items-center justify-between p-3 bg-card/95 backdrop-blur-lg rounded-xl shadow-lg border border-border mb-4">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2.5 hover:bg-muted rounded-xl transition-colors"
@@ -40,7 +40,7 @@ const Layout = ({ children }) => {
         </div>
         
         {/* Page Content */}
-        <div className="animate-fade-in">
+        <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
           {children}
         </div>
       </main>

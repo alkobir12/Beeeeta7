@@ -14,8 +14,24 @@ const resources = {
   }
 };
 
-// Read preferred language from localStorage if available
-const savedLng = (typeof window !== 'undefined' && localStorage.getItem('language')) || 'ar';
+// Get detected language from browser/device
+const getDetectedLanguage = () => {
+  // First check if user has a saved preference
+  const savedLng = typeof window !== 'undefined' && localStorage.getItem('language');
+  if (savedLng) return savedLng;
+  
+  // Detect from browser/device language
+  const browserLang = navigator.language || navigator.userLanguage || '';
+  // Check if browser language starts with 'ar' (Arabic)
+  if (browserLang.startsWith('ar')) return 'ar';
+  // Check if browser language starts with 'en' (English)
+  if (browserLang.startsWith('en')) return 'en';
+  
+  // Default to Arabic if not detected
+  return 'ar';
+};
+
+const detectedLng = typeof window !== 'undefined' ? getDetectedLanguage() : 'ar';
 
 i18n
   .use(LanguageDetector)
@@ -23,19 +39,40 @@ i18n
   .init({
     resources,
     fallbackLng: 'ar',
-    lng: savedLng,
+    lng: detectedLng,
     debug: false,
+    detection: {
+      // Order of language detection
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      // Cache user language preference
+      caches: ['localStorage'],
+      lookupLocalStorage: 'language',
+    },
     interpolation: {
       escapeValue: false
     }
   });
 
-// Expose to window so existing code (Settings.jsx) can call window.i18n.changeLanguage
+// Apply direction and language to document
+const applyLanguageDirection = (lang) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+  }
+};
+
+// Apply initial direction
+applyLanguageDirection(detectedLng);
+
+// Listen for language changes
+i18n.on('languageChanged', (lng) => {
+  applyLanguageDirection(lng);
+  localStorage.setItem('language', lng);
+});
+
+// Expose to window
 if (typeof window !== 'undefined') {
   window.i18n = i18n;
-  // Ensure document direction reflects current language immediately
-  document.documentElement.dir = savedLng === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.lang = savedLng;
 }
 
 export default i18n;

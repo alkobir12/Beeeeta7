@@ -8,8 +8,10 @@ import { customerAPI } from '../services/api';
 import { ArrowRight, User, Phone, Mail, Car, Calendar, DollarSign, Star, History } from 'lucide-react';
 import Layout from '../components/Layout';
 import AIHelper from '../components/AIHelper';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const CustomerDetails = () => {
+  const { t, isRTL } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);

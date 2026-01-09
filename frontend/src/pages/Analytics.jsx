@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Wallet, Car, Calendar, ArrowRight, BarChart3 } from 'lucide-react';
 import { statsAPI, transactionAPI, vehicleAPI } from '../services/api';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Analytics = () => {
+  const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [transactions, setTransactions] = useState({ transactions: [], summary: { income: 0, expenses: 0, profit: 0 } });

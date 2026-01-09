@@ -31,8 +31,8 @@ export const LanguageProvider = ({ children }) => {
   // دالة الترجمة
   const t = (key) => {
     if (language === 'en') {
-      // إرجاع المفتاح نفسه للإنجليزية (النصوص الحالية في الكود)
-      return key;
+      // استخدام النصوص الإنجليزية المحددة
+      return englishTexts[key] || key;
     }
     
     // للعربية، نبحث في ملف الترجمات

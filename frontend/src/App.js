@@ -101,6 +101,7 @@ function App() {
                     <Route path="/business-accounts" element={<CEODashboard />} />
                     <Route path="/ceo" element={<CEODashboard />} />
                     <Route path="/database-setup" element={<DatabaseSetup />} />
+                    <Route path="/setup" element={<DatabaseSetup />} />
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customer-receipts" element={<CustomerReceipts />} />
                     <Route path="/import" element={<ImportPage />} />

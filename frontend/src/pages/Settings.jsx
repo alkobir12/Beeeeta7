@@ -3,10 +3,12 @@ import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { useTheme } from '../contexts/ThemeContext';
 import { Building2, Globe, Palette, Database, Save, ChevronRight } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Settings = () => {
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(true);
@@ -46,10 +48,10 @@ const Settings = () => {
       await axios.post(`${API_URL}/settings`, settings);
       localStorage.setItem('language', settings.language);
       
-      toast({ title: 'تم الحفظ', description: 'تم حفظ الإعدادات بنجاح' });
+      toast({ title: t('common.success'), description: t('messages.success_saved') });
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل في حفظ الإعدادات', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
       setLoading(false);
     }
   };
@@ -76,8 +78,7 @@ const Settings = () => {
   );
 
   return (
-    
-      <div className="max-w-3xl mx-auto pb-20">
+    <div className={`max-w-3xl mx-auto pb-20 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex items-center justify-between mb-8 pt-4">
           <h1 className="text-3xl font-bold text-gray-900">الإعدادات</h1>
           <button 

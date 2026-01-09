@@ -19,7 +19,7 @@ import VehicleArchive from "./pages/VehicleArchive";
 import Layout from "./components/Layout";
 import CEO from "./pages/CEO";
 import Payroll from "./pages/Payroll";
-import BusinessAccounts from "./pages/BusinessAccounts";
+import CEODashboard from "./pages/CEODashboard";
 import Operations from "./pages/Operations";
 import CustomerReceipts from "./pages/CustomerReceipts";
 import ApprovalPublic from "./pages/ApprovalPublic";
@@ -97,7 +97,8 @@ function App() {
                     <Route path="/archive" element={<VehicleArchive />} />
                     <Route path="/ceo" element={<CEO />} />
                     <Route path="/payroll" element={<Payroll />} />
-                    <Route path="/business-accounts" element={<BusinessAccounts />} />
+                    <Route path="/business-accounts" element={<CEODashboard />} />
+                    <Route path="/ceo" element={<CEODashboard />} />
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customer-receipts" element={<CustomerReceipts />} />
                     <Route path="/import" element={<ImportPage />} />

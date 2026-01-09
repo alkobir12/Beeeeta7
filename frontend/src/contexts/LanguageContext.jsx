@@ -17,13 +17,10 @@ export const LanguageProvider = ({ children }) => {
   const detectLanguage = () => {
     const browserLang = navigator.language || navigator.userLanguage;
     // إذا كانت اللغة تبدأ بـ 'ar' (مثل ar, ar-SA, ar-EG)، نستخدم العربية
-    const detectedLang = browserLang.startsWith('ar') ? 'ar' : 'en';
-    console.log('[LanguageProvider] Detected language:', detectedLang, 'from browser:', browserLang);
-    return detectedLang;
+    return browserLang.startsWith('ar') ? 'ar' : 'en';
   };
 
   const [language, setLanguage] = useState(detectLanguage());
-  console.log('[LanguageProvider] Initialized with language:', language);
 
   // تحديث اتجاه الصفحة عند تغيير اللغة
   useEffect(() => {

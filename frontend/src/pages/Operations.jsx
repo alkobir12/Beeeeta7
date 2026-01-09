@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
@@ -103,8 +105,8 @@ const Operations = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">العمليات والمبيعات</h1>
-          <p className="text-gray-500 mt-1">إدارة الفواتير، المشتريات، وعروض الأسعار</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('operations.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('operations.title')}</p>
         </div>
 
         {/* Create Operation Card */}
@@ -113,13 +115,13 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
               <Plus size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">عملية جديدة</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('operations.addOperation')}</h2>
           </div>
 
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">الفرع / الحساب</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -127,14 +129,14 @@ const Operations = () => {
                     value={form.accountId} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
-                    <option value="">اختر الفرع...</option>
+                    <option value="">{t('operations.selectAccount')}</option>
                     {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">المركبة (اختياري)</label>
+                <label className="text-sm font-medium text-gray-700">{t('vehicle.details')}</label>
                 <div className="relative">
                   <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -162,7 +164,7 @@ const Operations = () => {
                       }
                     }}
                   >
-                    <option value="">اختر مركبة...</option>
+                    <option value="">{t('vehicle.details')}...</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>
                         {v.plateNumber} - {v.brand} {v.model}
@@ -173,7 +175,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">الزيارة (اختياري)</label>
+                <label className="text-sm font-medium text-gray-700">{t('common.date')}</label>
                 <div className="relative">
                   <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -182,11 +184,11 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, visitId: e.target.value })}
                     disabled={!form.vehicleId}
                   >
-                    <option value="">بدون زيارة</option>
+                    <option value="">---</option>
                     {visits.map(v => (
                       <option key={v.id} value={v.id}>
                         {new Date(v.entryDate || v.entry_date).toLocaleDateString('ar-SA')} 
-                        {v.status === 'in_progress' ? ' (حالية)' : ''}
+                        {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
                       </option>
                     ))}
                   </select>
@@ -194,7 +196,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">نوع العملية</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.operationType')}</label>
                 <div className="relative">
                   <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -202,14 +204,14 @@ const Operations = () => {
                     value={form.type} 
                     onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
                   >
-                    <option value="purchase">شراء (مصروفات)</option>
-                    <option value="sale">بيع (إيرادات)</option>
+                    <option value="purchase">{t('operations.purchase')}</option>
+                    <option value="sale">{t('operations.sale')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">الحساب (اختياري)</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -217,7 +219,7 @@ const Operations = () => {
                     value={form.accountId || ''} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
-                    <option value="">اختر الحساب</option>
+                    <option value="">{t('operations.selectAccount')}</option>
                     {accounts.filter(acc => 
                       !acc.parent_id && !acc.parentId
                     ).map(account => (
@@ -231,13 +233,13 @@ const Operations = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  {form.partnerType === 'supplier' ? 'اسم المورد' : 'اسم العميل'}
+                  {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
                 </label>
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     className="apple-input pr-10"
-                    placeholder="الاسم..." 
+                    placeholder={t('common.name')} 
                     value={form.partnerName} 
                     onChange={e => setForm({ ...form, partnerName: e.target.value })} 
                   />
@@ -245,7 +247,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">طريقة الدفع</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.paymentMethod')}</label>
                 <div className="relative">
                   <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -253,10 +255,10 @@ const Operations = () => {
                     value={form.paymentMethod} 
                     onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
                   >
-                    <option value="cash">كاش</option>
-                    <option value="card">شبكة</option>
-                    <option value="transfer">تحويل بنكي</option>
-                    <option value="credit">آجل</option>
+                    <option value="cash">{t('operations.cash')}</option>
+                    <option value="card">{t('operations.card')}</option>
+                    <option value="transfer">{t('operations.transfer')}</option>
+                    <option value="credit">{t('operations.credit')}</option>
                   </select>
                 </div>
               </div>

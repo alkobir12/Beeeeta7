@@ -151,11 +151,16 @@ const CEODashboard = () => {
   // Account Management Functions
   const saveAccount = async () => {
     try {
+      const submitData = {
+        ...accountForm,
+        parentId: accountForm.parentId === '__none__' ? null : accountForm.parentId
+      };
+      
       if (editingAccount) {
-        await axios.put(`${API_URL}/accounts/${editingAccount.id}`, accountForm);
+        await axios.put(`${API_URL}/accounts/${editingAccount.id}`, submitData);
         toast({ title: 'تم', description: 'تم تحديث الحساب بنجاح' });
       } else {
-        await axios.post(`${API_URL}/accounts`, { ...accountForm, isSystem: false });
+        await axios.post(`${API_URL}/accounts`, { ...submitData, isSystem: false });
         toast({ title: 'تم', description: 'تم إضافة الحساب بنجاح' });
       }
       setShowAddAccount(false);
@@ -616,7 +621,7 @@ const CEODashboard = () => {
                   <SelectValue placeholder="اختر الحساب الأب" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">بدون حساب أب</SelectItem>
+                  <SelectItem value="__none__">بدون حساب أب</SelectItem>
                   {accounts.filter(a => !a.parent_id && !a.parentId).map(account => (
                     <SelectItem key={account.id} value={account.id}>
                       {account.name} ({account.code})

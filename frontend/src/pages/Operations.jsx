@@ -41,14 +41,15 @@ const Operations = () => {
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
         : `${API_URL}/operations`;
 
-      const [accRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
+      const [accRes, chartAccRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
         axios.get(`${API_URL}/business-accounts`),
+        axios.get(`${API_URL}/accounts`),
         axios.get(`${API_URL}/parts`),
         axios.get(`${API_URL}/services`),
         axios.get(operationsUrl),
         axios.get(`${API_URL}/vehicles`)
       ]);
-      setAccounts(accRes.data || []);
+      setAccounts(chartAccRes.data || []); // Use chart of accounts
       setParts(partsRes.data || []);
       setServices(servicesRes.data || []);
       setOps(opsRes.data || []);

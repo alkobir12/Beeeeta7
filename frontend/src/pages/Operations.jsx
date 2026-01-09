@@ -266,23 +266,23 @@ const Operations = () => {
 
             {/* Items Section */}
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
-              <label className="block text-sm font-semibold text-gray-900 mb-4">إضافة بنود</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-4">{t('operations.addItems')}</label>
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">النوع</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.itemType')}</label>
                   <select 
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 
                     onChange={e=>setItem({...item, itemType: e.target.value})}
                   >
-                    <option value="part">قطعة غيار</option>
-                    <option value="service">خدمة</option>
+                    <option value="part">{t('operations.part')}</option>
+                    <option value="service">{t('operations.service')}</option>
                   </select>
                 </div>
                 
                 <div className="md:col-span-4">
-                  <label className="text-xs text-gray-500 mb-1 block">البند</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.items')}</label>
                   {item.itemType === 'part' ? (
                     <select 
                       className="apple-input h-9 text-sm"
@@ -292,7 +292,7 @@ const Operations = () => {
                         setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.sellingPrice || 0}); 
                       }}
                     >
-                      <option value="">اختر قطعة...</option>
+                      <option value="">{t('operations.selectPart')}</option>
                       {parts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   ) : (
@@ -304,14 +304,14 @@ const Operations = () => {
                         setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); 
                       }}
                     >
-                      <option value="">اختر خدمة...</option>
+                      <option value="">{t('operations.selectService')}</option>
                       {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">الكمية</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.quantity')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -321,7 +321,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">السعر</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.price')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -337,7 +337,7 @@ const Operations = () => {
                     className="apple-button w-full h-9 flex items-center justify-center gap-1 bg-gray-900 hover:bg-black"
                   >
                     <Plus size={16} />
-                    <span>إضافة</span>
+                    <span>{t('common.add')}</span>
                   </button>
                 </div>
               </div>
@@ -348,18 +348,18 @@ const Operations = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-gray-600">
                       <tr>
-                        <th className="p-3 text-right font-medium">النوع</th>
-                        <th className="p-3 text-right font-medium">الاسم</th>
-                        <th className="p-3 text-right font-medium">الكمية</th>
-                        <th className="p-3 text-right font-medium">السعر</th>
-                        <th className="p-3 text-right font-medium">الإجمالي</th>
+                        <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
+                        <th className="p-3 text-right font-medium">{t('common.name')}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.quantity')}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.price')}</th>
+                        <th className="p-3 text-right font-medium">{t('common.total')}</th>
                         <th className="p-3"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {form.items.map((it, idx)=> (
                         <tr key={idx}>
-                          <td className="p-3 text-gray-600">{it.itemType==='part'?'قطعة':'خدمة'}</td>
+                          <td className="p-3 text-gray-600">{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
                           <td className="p-3 font-medium text-gray-900">{it.name}</td>
                           <td className="p-3 text-gray-600">{it.quantity}</td>
                           <td className="p-3 text-gray-600">{it.price}</td>
@@ -382,8 +382,8 @@ const Operations = () => {
                     </tbody>
                     <tfoot className="bg-gray-50 font-bold text-gray-900">
                       <tr>
-                        <td colSpan="4" className="p-3 text-left">الإجمالي الكلي:</td>
-                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} ر.س</td>
+                        <td colSpan="4" className="p-3 text-left">{t('common.total')}:</td>
+                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {t('common.currency')}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -398,7 +398,7 @@ const Operations = () => {
                 disabled={form.items.length === 0}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
               >
-                حفظ العملية
+                {t('operations.submit')}
               </button>
             </div>
           </form>
@@ -410,19 +410,19 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
               <FileText size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">سجل العمليات الأخيرة</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('operations.recentOperations')}</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="p-4 text-right font-medium">التاريخ</th>
-                  <th className="p-4 text-right font-medium">النوع</th>
-                  <th className="p-4 text-right font-medium">الطرف</th>
-                  <th className="p-4 text-right font-medium">البنود</th>
-                  <th className="p-4 text-right font-medium">الإجمالي</th>
-                  <th className="p-4 text-right font-medium">الإجراءات</th>
+                  <th className="p-4 text-right font-medium">{t('operations.date')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.operationType')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.partner')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.items')}</th>
+                  <th className="p-4 text-right font-medium">{t('common.total')}</th>
+                  <th className="p-4 text-right font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -433,11 +433,11 @@ const Operations = () => {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
-                        {op.type === 'sale' ? 'بيع' : 'شراء'}
+                        {op.type === 'sale' ? t('operations.sale') : t('operations.purchase')}
                       </span>
                     </td>
                     <td className="p-4 font-medium text-gray-900">{op.partnerName || '-'}</td>
-                    <td className="p-4 text-gray-500">{op.items?.length || 0} بند</td>
+                    <td className="p-4 text-gray-500">{op.items?.length || 0}</td>
                     <td className="p-4 font-bold text-gray-900">{Number(op.total).toFixed(2)}</td>
                     <td className="p-4 flex gap-2">
                       <button
@@ -445,7 +445,7 @@ const Operations = () => {
                         className="apple-button-secondary text-xs h-8 px-3"
                         disabled={!op.vehicleId}
                       >
-                        طباعة
+                        {t('common.print')}
                       </button>
                     </td>
                   </tr>

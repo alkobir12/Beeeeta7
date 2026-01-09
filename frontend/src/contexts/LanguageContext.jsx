@@ -24,10 +24,8 @@ export const LanguageProvider = ({ children }) => {
 
   // تحديث اتجاه الصفحة عند تغيير اللغة
   useEffect(() => {
-    console.log('[LanguageProvider] Language changed to:', language);
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    console.log('[LanguageProvider] Set dir to:', document.documentElement.dir);
   }, [language]);
 
   // دالة الترجمة

@@ -155,6 +155,27 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الحساب (اختياري)</label>
+                <div className="relative">
+                  <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select 
+                    className="apple-input pr-10"
+                    value={form.accountId || ''} 
+                    onChange={e => setForm({ ...form, accountId: e.target.value })}
+                  >
+                    <option value="">اختر الحساب</option>
+                    {accounts.filter(acc => 
+                      !acc.parent_id && !acc.parentId
+                    ).map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} ({account.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   {form.partnerType === 'supplier' ? 'اسم المورد' : 'اسم العميل'}
                 </label>

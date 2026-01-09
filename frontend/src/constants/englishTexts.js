@@ -189,5 +189,28 @@ export const englishTexts = {
   
   'system.backup': 'Backup',
   'system.restore': 'Restore',
-  'system.system_settings': 'System Settings'
+  'system.system_settings': 'System Settings',
+  
+  // Messages
+  'messages.success_saved': 'Saved Successfully',
+  'messages.success_updated': 'Updated Successfully',
+  'messages.success_deleted': 'Deleted Successfully',
+  'messages.error_occurred': 'An Error Occurred',
+  'messages.loading_data': 'Loading Data...',
+  'messages.no_results': 'No Results Found',
+  'messages.confirm_action': 'Are you sure?',
+  'messages.action_cancelled': 'Action Cancelled',
+  'messages.processing': 'Processing...',
+  
+  // Forms
+  'forms.required_field': 'This field is required',
+  'forms.invalid_email': 'Invalid email address',
+  'forms.invalid_phone': 'Invalid phone number',
+  'forms.name': 'Name',
+  'forms.phone': 'Phone',
+  'forms.email': 'Email',
+  'forms.address': 'Address',
+  'forms.notes': 'Notes',
+  'forms.select': 'Select',
+  'forms.select_option': 'Select an option'
 };

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+
 import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 
 const Customers = () => {
-  const { t } = useTranslation();
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,28 +38,28 @@ const Customers = () => {
     try {
       if (editingCustomer) {
         await customerAPI.update(editingCustomer.id, formData);
-        toast({ title: t('common.success'), description: t('common.success') });
+        toast({ title: "Success", description: "Success" });
       } else {
         await customerAPI.create(formData);
-        toast({ title: t('common.success'), description: t('common.success') });
+        toast({ title: "Success", description: "Success" });
       }
       setShowModal(false);
       setEditingCustomer(null);
       setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
       fetchCustomers();
     } catch (error) {
-      toast({ title: t('common.error'), description: t('common.error'), variant: "destructive" });
+      toast({ title: "Error", description: "Error", variant: "destructive" });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm(t('common.confirmDelete'))) return;
+    if (!window.confirm("Are you sure you want to delete?")) return;
     try {
       await customerAPI.delete(id);
-      toast({ title: t('common.success'), description: t('common.success') });
+      toast({ title: "Success", description: "Success" });
       fetchCustomers();
     } catch (error) {
-      toast({ title: t('common.error'), description: t('common.error'), variant: "destructive" });
+      toast({ title: "Error", description: "Error", variant: "destructive" });
     }
   };
 
@@ -86,15 +86,15 @@ const Customers = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('customers.title')}</h1>
-            <p className="text-gray-500 mt-1">{t('customers.title')}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{"Customers"}</h1>
+            <p className="text-gray-500 mt-1">{"Customers"}</p>
           </div>
           <button 
             onClick={() => openModal()}
             className="apple-button flex items-center gap-2"
           >
             <Plus size={18} />
-            <span>{t('customers.addCustomer')}</span>
+            <span>{"Add Customer"}</span>
           </button>
         </div>
 
@@ -103,7 +103,7 @@ const Customers = () => {
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
-              placeholder={t('customers.search')}
+              placeholder={"Search by name or phone..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="apple-input pr-10"
@@ -158,7 +158,7 @@ const Customers = () => {
                   )}
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Car size={14} className="text-gray-400" />
-                    <span>{customer.totalVisits || 0} {t('customers.vehicles')}</span>
+                    <span>{customer.totalVisits || 0} {"visits"}</span>
                   </div>
                 </div>
               </div>
@@ -172,42 +172,42 @@ const Customers = () => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
               <div className="p-6 border-b border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {editingCustomer ? t('common.edit') : t('customers.addCustomer')}
+                  {editingCustomer ? "Edit" : "Add Customer"}
                 </h2>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">{t('common.name')}</label>
+                    <label className="text-sm font-medium text-gray-700">{"Name"}</label>
                     <input required className="apple-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">{t('customers.phone')}</label>
+                    <label className="text-sm font-medium text-gray-700">{"Phone"}</label>
                     <input required className="apple-input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{t('customers.email')}</label>
+                  <label className="text-sm font-medium text-gray-700">{"Email"}</label>
                   <input type="email" className="apple-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{t('customers.address')}</label>
+                  <label className="text-sm font-medium text-gray-700">{"Address"}</label>
                   <input className="apple-input" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                 </div>
 
                 {!editingCustomer && (
                   <div className="bg-gray-50 p-4 rounded-xl space-y-4 mt-4">
-                    <h3 className="font-medium text-gray-900 text-sm">{t('vehicle.info')}</h3>
+                    <h3 className="font-medium text-gray-900 text-sm">{"Vehicle Info (optional)"}</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <input placeholder={t('vehicle.brand')} className="apple-input bg-white" value={formData.vehicleBrand} onChange={e => setFormData({...formData, vehicleBrand: e.target.value})} />
-                      <input placeholder={t('vehicle.plateNumber')} className="apple-input bg-white" value={formData.vehiclePlate} onChange={e => setFormData({...formData, vehiclePlate: e.target.value})} />
+                      <input placeholder={"Vehicle Brand"} className="apple-input bg-white" value={formData.vehicleBrand} onChange={e => setFormData({...formData, vehicleBrand: e.target.value})} />
+                      <input placeholder={"Plate Number"} className="apple-input bg-white" value={formData.vehiclePlate} onChange={e => setFormData({...formData, vehiclePlate: e.target.value})} />
                     </div>
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 apple-button-secondary">{t('common.cancel')}</button>
-                  <button type="submit" className="flex-1 apple-button">{t('common.save')}</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 apple-button-secondary">{"Cancel"}</button>
+                  <button type="submit" className="flex-1 apple-button">{"Save"}</button>
                 </div>
               </form>
             </div>

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./App.css"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import NewVehicle from "./pages/NewVehicle";

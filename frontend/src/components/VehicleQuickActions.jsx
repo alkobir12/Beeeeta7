@@ -10,10 +10,12 @@ import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DocumentFormDialog from './DocumentFormDialog';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [newStatus, setNewStatus] = useState(vehicle?.status || 'diagnosis');

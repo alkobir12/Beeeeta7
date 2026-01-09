@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import translations from '../translations';
 import { englishTexts } from '../constants/englishTexts';
 
@@ -16,26 +16,31 @@ export const LanguageProvider = ({ children }) => {
   // الكشف التلقائي عن لغة المتصفح/الجهاز
   const detectLanguage = () => {
     const browserLang = navigator.language || navigator.userLanguage;
-    console.log('Browser language detected:', browserLang);
-    // إذا كانت اللغة تبدأ بـ 'ar' (مثل ar, ar-SA, ar-EG)، نستخدم العربية
+    console.log('🌍 Browser language detected:', browserLang);
     return browserLang.startsWith('ar') ? 'ar' : 'en';
   };
 
   const [language, setLanguage] = useState(detectLanguage());
+  const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
+
+  // Handle language change
+  const changeLanguage = (newLang) => {
+    console.log('🔄 Changing language from', language, 'to', newLang);
+    setLanguage(newLang);
+    setRenderKey(prev => prev + 1); // Force all consumers to re-render
+  };
 
   // تحديث اتجاه الصفحة عند تغيير اللغة
   useEffect(() => {
-    console.log('Language changed to:', language);
+    console.log('✅ Language effect triggered:', language);
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [language]);
 
-  // دالة الترجمة - معتمدة على language state
-  const t = useCallback((key) => {
+  // دالة الترجمة
+  const t = (key) => {
     if (language === 'en') {
-      // استخدام النصوص الإنجليزية المحددة
-      const translation = englishTexts[key] || key;
-      return translation;
+      return englishTexts[key] || key;
     }
     
     // للعربية، نبحث في ملف الترجمات
@@ -45,21 +50,21 @@ export const LanguageProvider = ({ children }) => {
     for (const k of keys) {
       value = value?.[k];
       if (value === undefined) {
-        // إذا لم نجد الترجمة، نرجع المفتاح
-        console.warn('Translation missing for key:', key, 'in language:', language);
+        console.warn('⚠️ Translation missing for key:', key, 'in language:', language);
         return key;
       }
     }
     
     return value;
-  }, [language]); // CRITICAL: Re-create function when language changes
+  };
 
-  const value = useMemo(() => ({
+  const value = {
     language,
-    setLanguage,
+    setLanguage: changeLanguage, // Use custom change function
     t,
-    isRTL: language === 'ar'
-  }), [language, t]); // CRITICAL: Re-create context value when language or t changes
+    isRTL: language === 'ar',
+    renderKey // Expose renderKey for debugging
+  };
 
   return (
     <LanguageContext.Provider value={value}>

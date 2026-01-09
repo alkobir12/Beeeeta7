@@ -61,6 +61,8 @@ export const LanguageProvider = ({ children }) => {
     t,
     isRTL: language === 'ar'
   };
+  
+  console.log('[LanguageProvider] Providing context:', { language, isRTL: language === 'ar' });
 
   return (
     <LanguageContext.Provider value={value}>

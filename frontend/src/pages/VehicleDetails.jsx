@@ -143,6 +143,54 @@ const VehicleDetails = () => {
     setVehicle(prev => ({ ...prev, services: newServices }));
   };
 
+  // Visits Functions
+  const createNewVisit = async () => {
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const mileage = window.prompt('أدخل قراءة العداد (كم):', '');
+      if (mileage === null) return;
+      
+      const visitData = {
+        entryDate: new Date().toISOString(),
+        status: 'in_progress',
+        mileage: parseInt(mileage) || 0,
+        technicianId: assignedTech,
+        notes: notes
+      };
+      
+      const res = await axios.post(`${API_URL}/vehicles/${id}/visits`, visitData);
+      setCurrentVisit(res.data);
+      await fetchData();
+      toast({ title: 'تم', description: 'تم إنشاء زيارة جديدة' });
+    } catch (err) {
+      toast({ title: 'خطأ', description: 'فشل في إنشاء الزيارة', variant: 'destructive' });
+    }
+  };
+
+  const selectVisit = (visit) => {
+    setCurrentVisit(visit);
+    // Load operations for this visit
+    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+    axios.get(`${API_URL}/visits/${visit.id}/operations`)
+      .then(res => setVehicleOperations(res.data || []))
+      .catch(err => console.error(err));
+  };
+
+  const completeVisit = async (visitId) => {
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      await axios.put(`${API_URL}/visits/${visitId}`, {
+        status: 'completed',
+        exitDate: new Date().toISOString()
+      });
+      toast({ title: 'تم', description: 'تم إغلاق الزيارة' });
+      await fetchData();
+      setCurrentVisit(null);
+    } catch (err) {
+      toast({ title: 'خطأ', description: 'فشل في إغلاق الزيارة', variant: 'destructive' });
+    }
+  };
+
   // Scanner Functions
   const openScanner = async () => {
     try {

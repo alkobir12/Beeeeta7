@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
-  const { t } = useTranslation();
+  
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [parts, setParts] = useState([]);
@@ -105,8 +105,8 @@ const Operations = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('operations.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('operations.title')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{"Operations"}</h1>
+          <p className="text-gray-500 mt-1">{"Operations"}</p>
         </div>
 
         {/* Create Operation Card */}
@@ -115,13 +115,13 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
               <Plus size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('operations.addOperation')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{"New Operation"}</h2>
           </div>
 
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Account"}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -129,14 +129,14 @@ const Operations = () => {
                     value={form.accountId} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
-                    <option value="">{t('operations.selectAccount')}</option>
+                    <option value="">{"Select Account"}</option>
                     {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('vehicle.details')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Vehicle"}</label>
                 <div className="relative">
                   <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -164,7 +164,7 @@ const Operations = () => {
                       }
                     }}
                   >
-                    <option value="">{t('vehicle.details')}...</option>
+                    <option value="">{"Vehicle"}...</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>
                         {v.plateNumber} - {v.brand} {v.model}
@@ -175,7 +175,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('common.date')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Date"}</label>
                 <div className="relative">
                   <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -188,7 +188,7 @@ const Operations = () => {
                     {visits.map(v => (
                       <option key={v.id} value={v.id}>
                         {new Date(v.entryDate || v.entry_date).toLocaleDateString('ar-SA')} 
-                        {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
+                        {v.status === 'in_progress' ? ` (${"In Progress"})` : ''}
                       </option>
                     ))}
                   </select>
@@ -196,7 +196,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.operationType')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Operation Type"}</label>
                 <div className="relative">
                   <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -204,14 +204,14 @@ const Operations = () => {
                     value={form.type} 
                     onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
                   >
-                    <option value="purchase">{t('operations.purchase')}</option>
-                    <option value="sale">{t('operations.sale')}</option>
+                    <option value="purchase">{"Purchase"}</option>
+                    <option value="sale">{"Sale"}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Account"}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -219,7 +219,7 @@ const Operations = () => {
                     value={form.accountId || ''} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
-                    <option value="">{t('operations.selectAccount')}</option>
+                    <option value="">{"Select Account"}</option>
                     {accounts.filter(acc => 
                       !acc.parent_id && !acc.parentId
                     ).map(account => (
@@ -233,13 +233,13 @@ const Operations = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
+                  {form.partnerType === 'supplier' ? "Supplier Name" : "Customer Name"}
                 </label>
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     className="apple-input pr-10"
-                    placeholder={t('common.name')} 
+                    placeholder={"Name"} 
                     value={form.partnerName} 
                     onChange={e => setForm({ ...form, partnerName: e.target.value })} 
                   />
@@ -247,7 +247,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.paymentMethod')}</label>
+                <label className="text-sm font-medium text-gray-700">{"Payment Method"}</label>
                 <div className="relative">
                   <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -255,10 +255,10 @@ const Operations = () => {
                     value={form.paymentMethod} 
                     onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
                   >
-                    <option value="cash">{t('operations.cash')}</option>
-                    <option value="card">{t('operations.card')}</option>
-                    <option value="transfer">{t('operations.transfer')}</option>
-                    <option value="credit">{t('operations.credit')}</option>
+                    <option value="cash">{"Cash"}</option>
+                    <option value="card">{"Card"}</option>
+                    <option value="transfer">{"Transfer"}</option>
+                    <option value="credit">{"Credit"}</option>
                   </select>
                 </div>
               </div>
@@ -266,23 +266,23 @@ const Operations = () => {
 
             {/* Items Section */}
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
-              <label className="block text-sm font-semibold text-gray-900 mb-4">{t('operations.addItems')}</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-4">{"Add Items"}</label>
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.itemType')}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{"Type"}</label>
                   <select 
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 
                     onChange={e=>setItem({...item, itemType: e.target.value})}
                   >
-                    <option value="part">{t('operations.part')}</option>
-                    <option value="service">{t('operations.service')}</option>
+                    <option value="part">{"Part"}</option>
+                    <option value="service">{"Service"}</option>
                   </select>
                 </div>
                 
                 <div className="md:col-span-4">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.items')}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{"Items"}</label>
                   {item.itemType === 'part' ? (
                     <select 
                       className="apple-input h-9 text-sm"
@@ -292,7 +292,7 @@ const Operations = () => {
                         setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.sellingPrice || 0}); 
                       }}
                     >
-                      <option value="">{t('operations.selectPart')}</option>
+                      <option value="">{"Select Part"}</option>
                       {parts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   ) : (
@@ -304,14 +304,14 @@ const Operations = () => {
                         setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); 
                       }}
                     >
-                      <option value="">{t('operations.selectService')}</option>
+                      <option value="">{"Select Service"}</option>
                       {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.quantity')}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{"Qty"}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -321,7 +321,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.price')}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{"Price"}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -337,7 +337,7 @@ const Operations = () => {
                     className="apple-button w-full h-9 flex items-center justify-center gap-1 bg-gray-900 hover:bg-black"
                   >
                     <Plus size={16} />
-                    <span>{t('common.add')}</span>
+                    <span>{"Add"}</span>
                   </button>
                 </div>
               </div>
@@ -348,18 +348,18 @@ const Operations = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-gray-600">
                       <tr>
-                        <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
-                        <th className="p-3 text-right font-medium">{t('common.name')}</th>
-                        <th className="p-3 text-right font-medium">{t('operations.quantity')}</th>
-                        <th className="p-3 text-right font-medium">{t('operations.price')}</th>
-                        <th className="p-3 text-right font-medium">{t('common.total')}</th>
+                        <th className="p-3 text-right font-medium">{"Type"}</th>
+                        <th className="p-3 text-right font-medium">{"Name"}</th>
+                        <th className="p-3 text-right font-medium">{"Qty"}</th>
+                        <th className="p-3 text-right font-medium">{"Price"}</th>
+                        <th className="p-3 text-right font-medium">{"Total"}</th>
                         <th className="p-3"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {form.items.map((it, idx)=> (
                         <tr key={idx}>
-                          <td className="p-3 text-gray-600">{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
+                          <td className="p-3 text-gray-600">{it.itemType==='part'? "Part" : "Service"}</td>
                           <td className="p-3 font-medium text-gray-900">{it.name}</td>
                           <td className="p-3 text-gray-600">{it.quantity}</td>
                           <td className="p-3 text-gray-600">{it.price}</td>
@@ -382,8 +382,8 @@ const Operations = () => {
                     </tbody>
                     <tfoot className="bg-gray-50 font-bold text-gray-900">
                       <tr>
-                        <td colSpan="4" className="p-3 text-left">{t('common.total')}:</td>
-                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {t('common.currency')}</td>
+                        <td colSpan="4" className="p-3 text-left">{"Total"}:</td>
+                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {"SAR"}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -398,7 +398,7 @@ const Operations = () => {
                 disabled={form.items.length === 0}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
               >
-                {t('operations.submit')}
+                {"Save"}
               </button>
             </div>
           </form>
@@ -410,19 +410,19 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
               <FileText size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('operations.recentOperations')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{"Recent Operations"}</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="p-4 text-right font-medium">{t('operations.date')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.operationType')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.partner')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.items')}</th>
-                  <th className="p-4 text-right font-medium">{t('common.total')}</th>
-                  <th className="p-4 text-right font-medium">{t('common.actions')}</th>
+                  <th className="p-4 text-right font-medium">{"Date"}</th>
+                  <th className="p-4 text-right font-medium">{"Operation Type"}</th>
+                  <th className="p-4 text-right font-medium">{"Partner"}</th>
+                  <th className="p-4 text-right font-medium">{"Items"}</th>
+                  <th className="p-4 text-right font-medium">{"Total"}</th>
+                  <th className="p-4 text-right font-medium">{"Actions"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -433,7 +433,7 @@ const Operations = () => {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
-                        {op.type === 'sale' ? t('operations.sale') : t('operations.purchase')}
+                        {op.type === 'sale' ? "Sale" : "Purchase"}
                       </span>
                     </td>
                     <td className="p-4 font-medium text-gray-900">{op.partnerName || '-'}</td>
@@ -445,7 +445,7 @@ const Operations = () => {
                         className="apple-button-secondary text-xs h-8 px-3"
                         disabled={!op.vehicleId}
                       >
-                        {t('common.print')}
+                        {"Print"}
                       </button>
                     </td>
                   </tr>

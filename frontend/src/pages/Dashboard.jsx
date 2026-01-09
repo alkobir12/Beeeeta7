@@ -82,15 +82,15 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
-            <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-gray-500 text-sm sm:text-base mt-1">Workshop Overview</p>
           </div>
           <button 
             onClick={() => navigate('/new-vehicle')}
             className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <Plus size={18} />
-            <span>{t('dashboard.receiveVehicle')}</span>
+            <span>New Vehicle</span>
           </button>
         </div>
 
@@ -99,7 +99,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('all')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.totalVehicles')}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total Vehicles</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
@@ -111,7 +111,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.inProgress')}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">In Progress</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
@@ -123,7 +123,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('ready')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.ready')}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Ready</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.ready}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
@@ -135,7 +135,7 @@ const Dashboard = () => {
           <div onClick={() => navigate('/technicians')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.technicians')}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Technicians</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.technicians}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">

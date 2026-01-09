@@ -84,13 +84,25 @@ const Dashboard = () => {
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
             <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
           </div>
-          <button 
-            onClick={() => navigate('/new-vehicle')}
-            className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
-          >
-            <Plus size={18} />
-            <span>{t('dashboard.new_vehicle')}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const newLang = language === 'ar' ? 'en' : 'ar';
+                console.log('🔄 Direct toggle:', language, '→', newLang);
+                setLanguage(newLang);
+              }}
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700"
+            >
+              {language === 'ar' ? 'EN' : 'عربي'}
+            </button>
+            <button 
+              onClick={() => navigate('/new-vehicle')}
+              className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <Plus size={18} />
+              <span>{t('dashboard.new_vehicle')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid - Responsive 2x2 on mobile, 4 on desktop */}

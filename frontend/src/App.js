@@ -123,7 +123,6 @@ function App() {
           </Router>
         </div>
       </ThemeProvider>
-      </LanguageProvider>
     </ErrorBoundary>
   );
 }

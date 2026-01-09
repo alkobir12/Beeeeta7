@@ -70,17 +70,14 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      
-        <div className="flex items-center justify-center h-[50vh]">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
-      
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    
-      <div className={`max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>

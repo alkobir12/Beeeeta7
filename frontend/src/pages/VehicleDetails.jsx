@@ -691,57 +691,108 @@ const VehicleDetails = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3 text-blue-600">
                   <FileText size={20} />
-                  <h3 className="font-bold text-gray-900">سجل الصيانة والعمليات</h3>
+                  <h3 className="font-bold text-gray-900">الزيارات والعمليات</h3>
                 </div>
-                <span className="text-xs text-gray-500">
-                  عدد الزيارات: {vehicleOperations.length}
-                </span>
+                <button
+                  onClick={createNewVisit}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
+                >
+                  <Plus size={14} />
+                  زيارة جديدة
+                </button>
               </div>
 
-              {vehicleOperations.length === 0 ? (
-                <p className="text-sm text-gray-400">لا توجد عمليات مسجّلة لهذه المركبة بعد.</p>
+              {visits.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-400 mb-3">لا توجد زيارات مسجلة</p>
+                  <button
+                    onClick={createNewVisit}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    إنشاء أول زيارة
+                  </button>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {/* آخر عملية (أحدث سجل) */}
-                  <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-blue-700">آخر عملية صيانة</p>
-                      <p className="text-sm font-semibold text-blue-900">
-                        {new Date(vehicleOperations[0].date || vehicleOperations[0].createdAt).toLocaleDateString('en-GB')}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/operations?vehicleId=${id}`)}
-                      className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      عرض جميع العمليات
-                    </button>
-                  </div>
-
-                  {/* قائمة مختصرة لآخر 3 عمليات */}
-                  <div className="space-y-2">
-                    {(vehicleOperations || []).slice(0, 3).filter(Boolean).map((op, idx) => (
-                      <div
-                        key={`op-${op.id || idx}`}
-                        className="p-3 rounded-lg border border-gray-100 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-                        onClick={() => navigate(`/operations?vehicleId=${id}`)}
-                      >
-                        <div className="text-xs text-gray-600">
-                          <p className="font-medium text-gray-900">
-                            {op.type === 'sale' ? 'عملية بيع / فاتورة' : op.type === 'purchase' ? 'عملية شراء / مصروف' : 'عملية'}
-                          </p>
-                          <p className="text-[11px] text-gray-500 mt-0.5">
-                            {op.partnerName || 'غير محدد'}
-                          </p>
+                <div className="space-y-4">
+                  {/* Current/Latest Visit */}
+                  {currentVisit && (
+                    <div className="p-4 rounded-xl bg-green-50 border-2 border-green-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-sm font-bold text-green-700">الزيارة الحالية</span>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900">{Number(op.total || 0).toLocaleString('ar-SA')} ر.س</p>
-                          <p className="text-[11px] text-gray-400">
-                            {op.date ? new Date(op.date).toLocaleDateString('en-GB') : ''}
-                          </p>
+                        <button
+                          onClick={() => completeVisit(currentVisit.id)}
+                          className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          إغلاق الزيارة
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">تاريخ الدخول:</span>
+                          <p className="font-semibold">{new Date(currentVisit.entryDate || currentVisit.entry_date).toLocaleDateString('ar-SA')}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">القراءة:</span>
+                          <p className="font-semibold">{currentVisit.mileage?.toLocaleString('ar-SA')} كم</p>
                         </div>
                       </div>
-                    ))}
+                      
+                      {/* Operations for current visit */}
+                      <div className="mt-3 pt-3 border-t border-green-200">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">عمليات هذه الزيارة:</p>
+                        {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).length > 0 ? (
+                          <div className="space-y-1">
+                            {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).slice(0, 3).map((op, idx) => (
+                              <div key={idx} className="flex justify-between text-xs bg-white p-2 rounded">
+                                <span>{op.partnerName || 'عملية'}</span>
+                                <span className="font-semibold">{Number(op.totalAmount || op.total || 0).toFixed(2)} ر.س</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500">لا توجد عمليات لهذه الزيارة</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Previous Visits */}
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">الزيارات السابقة ({visits.filter(v => v.status === 'completed').length})</p>
+                    <div className="space-y-2">
+                      {visits.filter(v => v.status === 'completed').slice(0, 5).map((visit, idx) => (
+                        <div
+                          key={visit.id}
+                          className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => selectVisit(visit)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs">
+                              <p className="font-medium text-gray-900">
+                                {new Date(visit.entryDate || visit.entry_date).toLocaleDateString('ar-SA')}
+                                {visit.exitDate || visit.exit_date ? (
+                                  <> - {new Date(visit.exitDate || visit.exit_date).toLocaleDateString('ar-SA')}</>
+                                ) : ''}
+                              </p>
+                              <p className="text-gray-500">القراءة: {visit.mileage?.toLocaleString('ar-SA')} كم</p>
+                            </div>
+                            <span className="text-xs px-2 py-1 bg-gray-200 rounded">مكتملة</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {visits.length > 5 && (
+                      <button
+                        onClick={() => navigate(`/operations?vehicleId=${id}`)}
+                        className="w-full mt-2 text-xs text-blue-600 hover:underline"
+                      >
+                        عرض جميع الزيارات ({visits.length})
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

@@ -50,6 +50,14 @@ i18n
     },
     interpolation: {
       escapeValue: false
+    },
+    react: {
+      useSuspense: false, // Prevents issues with SSR and Safari
+      bindI18n: 'languageChanged loaded',
+      bindI18nStore: 'added removed',
+      transEmptyNodeValue: '',
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p', 'span'],
     }
   });
 

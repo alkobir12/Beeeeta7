@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Customers = () => {
-  
+  const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');

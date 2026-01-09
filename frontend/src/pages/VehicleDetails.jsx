@@ -19,6 +19,9 @@ const VehicleDetails = () => {
   const [vehicleFiles, setVehicleFiles] = useState([]);
   const [vehicleOperations, setVehicleOperations] = useState([]);
   const [approvals, setApprovals] = useState([]);
+  const [visits, setVisits] = useState([]);
+  const [currentVisit, setCurrentVisit] = useState(null);
+  const [showNewVisit, setShowNewVisit] = useState(false);
   const [newService, setNewService] = useState('');
   const [fileType, setFileType] = useState('photo');
   const [newItem, setNewItem] = useState({ itemType: 'service', name: '', quantity: 1, price: 0 });

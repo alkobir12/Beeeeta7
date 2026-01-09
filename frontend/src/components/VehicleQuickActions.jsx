@@ -30,22 +30,22 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   }, [vehicle]);
 
   const statusOptions = [
-    { value: 'diagnosis', label: 'تشخيص', color: 'bg-yellow-500' },
-    { value: 'quotation', label: 'تسعير', color: 'bg-blue-500' },
-    { value: 'approved', label: 'معتمد', color: 'bg-green-500' },
-    { value: 'repair', label: 'تحت الإصلاح', color: 'bg-orange-500' },
-    { value: 'ready', label: 'جاهز للتسليم', color: 'bg-green-600' },
-    { value: 'delivered', label: 'تم التسليم', color: 'bg-gray-500' }
+    { value: 'diagnosis', label: t('status.diagnosis'), color: 'bg-yellow-500' },
+    { value: 'quotation', label: t('vehicle_details.quotation'), color: 'bg-blue-500' },
+    { value: 'approved', label: t('status.waiting_approval'), color: 'bg-green-500' },
+    { value: 'repair', label: t('status.in_progress'), color: 'bg-orange-500' },
+    { value: 'ready', label: t('status.ready'), color: 'bg-green-600' },
+    { value: 'delivered', label: t('status.delivered'), color: 'bg-gray-500' }
   ];
 
   const handleStatusUpdate = async () => {
     try {
       setLoading(true);
       await onStatusUpdate(newStatus);
-      toast({ title: 'تم بنجاح', description: 'تم تحديث حالة المركبة' });
+      toast({ title: t('common.success'), description: t('messages.success_updated') });
       onClose();
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل في تحديث الحالة', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally { setLoading(false); }
   };
 
@@ -55,7 +55,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const handleDocumentSaved = (savedDoc) => {
-    toast({ title: 'تم الحفظ', description: 'تم حفظ وطباعة المستند بنجاح' });
+    toast({ title: t('common.success'), description: t('messages.success_saved') });
     setDocumentDialogOpen(false);
   };
 

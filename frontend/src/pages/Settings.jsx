@@ -80,27 +80,27 @@ const Settings = () => {
   return (
     <div className={`max-w-3xl mx-auto pb-20 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex items-center justify-between mb-8 pt-4">
-          <h1 className="text-3xl font-bold text-gray-900">الإعدادات</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
           <button 
             onClick={saveSettings}
             disabled={loading}
             className="apple-button flex items-center gap-2"
           >
             <Save size={18} />
-            <span>{loading ? 'جاري الحفظ...' : 'حفظ التغييرات'}</span>
+            <span>{loading ? t('settings.saving') : t('settings.save_changes')}</span>
           </button>
         </div>
 
-        <Section title="معلومات الورشة" icon={Building2}>
-          <Row label="اسم الورشة">
+        <Section title={t('settings.workshop_info')} icon={Building2}>
+          <Row label={t('settings.workshop_name')}>
             <input 
               className="text-left bg-transparent outline-none text-gray-600 placeholder:text-gray-300 w-64"
               value={settings.workshopName}
               onChange={e => setSettings({...settings, workshopName: e.target.value})}
-              placeholder="أدخل الاسم"
+              placeholder={t('settings.workshop_name')}
             />
           </Row>
-          <Row label="رقم الهاتف">
+          <Row label={t('settings.workshop_phone')}>
             <input 
               className="text-left bg-transparent outline-none text-gray-600 placeholder:text-gray-300 w-64"
               value={settings.workshopPhone}
@@ -108,40 +108,40 @@ const Settings = () => {
               placeholder="05xxxxxxxx"
             />
           </Row>
-          <Row label="العنوان">
+          <Row label={t('settings.workshop_address')}>
             <input 
               className="text-left bg-transparent outline-none text-gray-600 placeholder:text-gray-300 w-64"
               value={settings.workshopAddress}
               onChange={e => setSettings({...settings, workshopAddress: e.target.value})}
-              placeholder="المدينة، الحي"
+              placeholder={t('settings.workshop_address')}
             />
           </Row>
         </Section>
 
-        <Section title="النظام والمظهر" icon={Globe}>
-          <Row label="اللغة">
+        <Section title={t('settings.system_appearance')} icon={Globe}>
+          <Row label={t('settings.language')}>
             <select 
               className="bg-transparent outline-none text-gray-600"
               value={settings.language}
               onChange={e => setSettings({...settings, language: e.target.value})}
             >
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
+              <option value="ar">{t('settings.arabic')}</option>
+              <option value="en">{t('settings.english')}</option>
             </select>
             <ChevronRight size={16} className="text-gray-300" />
           </Row>
-          <Row label="المظهر">
+          <Row label={t('settings.theme')}>
             <select 
               className="bg-transparent outline-none text-gray-600"
               value={settings.themeName}
               onChange={e => setSettings({...settings, themeName: e.target.value})}
             >
-              <option value="light">فاتح</option>
-              <option value="dark">داكن</option>
+              <option value="light">{t('settings.light')}</option>
+              <option value="dark">{t('settings.dark')}</option>
             </select>
             <ChevronRight size={16} className="text-gray-300" />
           </Row>
-          <Row label="العملة">
+          <Row label={t('settings.currency')}>
             <select 
               className="bg-transparent outline-none text-gray-600"
               value={settings.currency}

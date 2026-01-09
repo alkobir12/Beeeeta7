@@ -37,7 +37,6 @@ import PartsCatalog from "./pages/PartsCatalog";
 import DieselExpertChat from "./pages/DieselExpertChat";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
 
 const getSessionFromCookie = () => {
   try {

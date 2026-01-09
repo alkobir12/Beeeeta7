@@ -37,7 +37,11 @@
     "date": "Date",
     "amount": "Amount",
     "total": "Total",
-    "notes": "Notes"
+    "notes": "Notes",
+    "logout": "Logout"
+  },
+  "ai": {
+    "title": "Diesel AI Expert"
   },
   "nav": {
     "dashboard": "Dashboard",

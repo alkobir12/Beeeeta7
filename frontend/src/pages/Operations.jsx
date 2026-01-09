@@ -11,10 +11,12 @@ const Operations = () => {
   const [parts, setParts] = useState([]);
   const [services, setServices] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [visits, setVisits] = useState([]);
   const [ops, setOps] = useState([]);
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',
+    visitId: '',
     type: 'purchase', 
     partnerType: 'supplier', 
     partnerName: '', 

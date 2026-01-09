@@ -41,6 +41,7 @@
     "services": "الخدمات",
     "parts": "قطع الغيار",
     "branches": "الفروع والحسابات",
+    "ceoDashboard": "لوحة المدير التنفيذي",
     "settings": "الإعدادات",
     "knowledge": "المراجع/المعرفة",
     "invoiceDesigner": "مصمم الفواتير"
@@ -148,7 +149,12 @@
     "parent": "الحساب الأب",
     "revenue": "إيراد",
     "expense": "مصروف",
-    "balance": "الرصيد"
+    "asset": "أصل",
+    "liability": "خصم",
+    "equity": "حقوق ملكية",
+    "balance": "الرصيد",
+    "transactions": "المعاملات",
+    "total": "الإجمالي"
   },
   "operations": {
     "title": "عمليات الشراء/البيع",

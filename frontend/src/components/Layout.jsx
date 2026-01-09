@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
-import LanguageToggle from './LanguageToggle';
 import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 import AnimatedBackground from './AnimatedBackground';
 
@@ -21,22 +20,17 @@ const Layout = ({ children }) => {
       
       {/* Main Content */}
       <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10 }}>
-        {/* Top Left Language Toggle (Desktop/Tablet) */}
-        <div className="hidden lg:flex justify-end px-4 py-2" style={{ position: 'relative', zIndex: 50 }}>
-           <LanguageToggle />
-        </div>
-
         {/* Mobile Header - Fixed at top */}
         <div className="lg:hidden sticky top-0 z-50 flex items-center justify-between p-3 bg-card/95 backdrop-blur-lg rounded-xl shadow-lg border border-border mb-4">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2.5 hover:bg-muted rounded-xl transition-colors"
-            aria-label="فتح القائمة"
+            aria-label="Open Menu"
           >
             <Menu size={22} className="text-foreground" />
           </button>
-          <h1 className="text-base font-bold text-foreground">نظام إدارة الورش</h1>
-          <LanguageToggle />
+          <h1 className="text-base font-bold text-foreground">Workshop Management</h1>
+          <div className="w-10"></div>
         </div>
         
         {/* Page Content */}

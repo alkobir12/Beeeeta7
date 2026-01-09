@@ -88,13 +88,13 @@ const Dashboard = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                const newLang = language === 'ar' ? 'en' : 'ar';
-                console.log('🔄 Direct toggle:', language, '→', newLang);
-                setLanguage(newLang);
+                const newLang = i18n.language === 'ar' ? 'en' : 'ar';
+                console.log('🔄 Changing language to:', newLang);
+                i18n.changeLanguage(newLang);
               }}
               className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700"
             >
-              {language === 'ar' ? 'EN' : 'عربي'}
+              {i18n.language === 'ar' ? 'EN' : 'عربي'}
             </button>
             <button 
               onClick={() => navigate('/new-vehicle')}

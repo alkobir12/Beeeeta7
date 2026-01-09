@@ -1340,6 +1340,118 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
 
 
 
+# --------------------- Database Initialization Endpoint ---------------------
+@router.post('/admin/init-database')
+async def init_database():
+    """Initialize database tables and default data"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            results = {
+                'images_column': False,
+                'accounts_table': False,
+                'default_accounts': False,
+                'errors': []
+            }
+            
+            # Step 1: Add images column to approval_requests
+            try:
+                # Check if column exists
+                existing = supa.client.table('approval_requests').select('images').limit(1).execute()
+                results['images_column'] = True
+                results['messages'] = ['images column already exists']
+            except Exception as e:
+                error_msg = str(e)
+                if 'images' in error_msg and 'column' in error_msg.lower():
+                    # Column doesn't exist, need to add it manually
+                    results['errors'].append('images column needs manual addition in Supabase Dashboard')
+                else:
+                    results['images_column'] = True
+            
+            # Step 2: Create accounts table by trying to insert
+            try:
+                # Try to query accounts table
+                existing_accounts = supa.client.table('accounts').select('*').limit(1).execute()
+                results['accounts_table'] = True
+                
+                # Check if we need to insert default accounts
+                if not existing_accounts.data:
+                    # Insert default accounts
+                    default_accounts = [
+                        { 'id': 'acc-1000', 'code': '1000', 'name': 'الأصول', 'name_en': 'Assets', 'type': 'asset', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1100', 'code': '1100', 'name': 'الأصول المتداولة', 'name_en': 'Current Assets', 'type': 'asset', 'parent_id': 'acc-1000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1101', 'code': '1101', 'name': 'النقد', 'name_en': 'Cash', 'type': 'asset', 'parent_id': 'acc-1100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1102', 'code': '1102', 'name': 'البنك', 'name_en': 'Bank', 'type': 'asset', 'parent_id': 'acc-1100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1103', 'code': '1103', 'name': 'العملاء', 'name_en': 'Accounts Receivable', 'type': 'asset', 'parent_id': 'acc-1100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1105', 'code': '1105', 'name': 'مخزون قطع غيار', 'name_en': 'Spare Parts Inventory', 'type': 'asset', 'parent_id': 'acc-1100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1106', 'code': '1106', 'name': 'مخزون مستهلكات', 'name_en': 'Consumables Inventory', 'type': 'asset', 'parent_id': 'acc-1100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1200', 'code': '1200', 'name': 'الأصول الثابتة', 'name_en': 'Fixed Assets', 'type': 'asset', 'parent_id': 'acc-1000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1201', 'code': '1201', 'name': 'معدات ميكانيكية', 'name_en': 'Mechanical Equipment', 'type': 'asset', 'parent_id': 'acc-1200', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1202', 'code': '1202', 'name': 'رافعات سيارات', 'name_en': 'Car Lifts', 'type': 'asset', 'parent_id': 'acc-1200', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1203', 'code': '1203', 'name': 'أجهزة فحص', 'name_en': 'Diagnostic Tools', 'type': 'asset', 'parent_id': 'acc-1200', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-1207', 'code': '1207', 'name': 'مجمع الإهلاك', 'name_en': 'Accumulated Depreciation', 'type': 'asset', 'parent_id': 'acc-1200', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-2000', 'code': '2000', 'name': 'الخصوم', 'name_en': 'Liabilities', 'type': 'liability', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-2100', 'code': '2100', 'name': 'الخصوم المتداولة', 'name_en': 'Current Liabilities', 'type': 'liability', 'parent_id': 'acc-2000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-2101', 'code': '2101', 'name': 'الموردون', 'name_en': 'Accounts Payable', 'type': 'liability', 'parent_id': 'acc-2100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-2102', 'code': '2102', 'name': 'مصروفات مستحقة', 'name_en': 'Accrued Expenses', 'type': 'liability', 'parent_id': 'acc-2100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-2103', 'code': '2103', 'name': 'رواتب مستحقة', 'name_en': 'Accrued Salaries', 'type': 'liability', 'parent_id': 'acc-2100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3000', 'code': '3000', 'name': 'حقوق الملكية', 'name_en': 'Equity', 'type': 'equity', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3100', 'code': '3100', 'name': 'حقوق المالك', 'name_en': "Owner's Equity", 'type': 'equity', 'parent_id': 'acc-3000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3101', 'code': '3101', 'name': 'رأس المال', 'name_en': 'Owner Capital', 'type': 'equity', 'parent_id': 'acc-3100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3102', 'code': '3102', 'name': 'مسحوبات المالك', 'name_en': 'Owner Drawings', 'type': 'equity', 'parent_id': 'acc-3100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3103', 'code': '3103', 'name': 'أرباح محتجزة', 'name_en': 'Retained Earnings', 'type': 'equity', 'parent_id': 'acc-3100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-3104', 'code': '3104', 'name': 'صافي الربح/الخسارة', 'name_en': 'Net Profit/Loss', 'type': 'equity', 'parent_id': 'acc-3100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-4000', 'code': '4000', 'name': 'الإيرادات', 'name_en': 'Revenue', 'type': 'revenue', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-4100', 'code': '4100', 'name': 'إيرادات الخدمات', 'name_en': 'Service Revenue', 'type': 'revenue', 'parent_id': 'acc-4000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-4101', 'code': '4101', 'name': 'إيرادات خدمات ميكانيكية', 'name_en': 'Mechanical Service Revenue', 'type': 'revenue', 'parent_id': 'acc-4100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-4102', 'code': '4102', 'name': 'إيرادات إصلاح محركات', 'name_en': 'Engine Repair Revenue', 'type': 'revenue', 'parent_id': 'acc-4100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-4103', 'code': '4103', 'name': 'إيرادات فرامل وتعليق', 'name_en': 'Brake & Suspension Revenue', 'type': 'revenue', 'parent_id': 'acc-4100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-5000', 'code': '5000', 'name': 'تكلفة الخدمات', 'name_en': 'Cost of Services', 'type': 'expense', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-5100', 'code': '5100', 'name': 'تكاليف مباشرة', 'name_en': 'Direct Costs', 'type': 'expense', 'parent_id': 'acc-5000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-5101', 'code': '5101', 'name': 'أجور فنيين مباشرة', 'name_en': 'Technicians Wages - Direct', 'type': 'expense', 'parent_id': 'acc-5100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-5102', 'code': '5102', 'name': 'قطع غيار مستخدمة', 'name_en': 'Spare Parts Used', 'type': 'expense', 'parent_id': 'acc-5100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-5103', 'code': '5103', 'name': 'مستهلكات مستخدمة', 'name_en': 'Consumables Used', 'type': 'expense', 'parent_id': 'acc-5100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6000', 'code': '6000', 'name': 'المصروفات التشغيلية', 'name_en': 'Operating Expenses', 'type': 'expense', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6100', 'code': '6100', 'name': 'مصروفات عامة وإدارية', 'name_en': 'General & Administrative', 'type': 'expense', 'parent_id': 'acc-6000', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6101', 'code': '6101', 'name': 'رواتب إدارية', 'name_en': 'Administrative Salaries', 'type': 'expense', 'parent_id': 'acc-6100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6102', 'code': '6102', 'name': 'إيجار المركز', 'name_en': 'Workshop Rent', 'type': 'expense', 'parent_id': 'acc-6100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6103', 'code': '6103', 'name': 'كهرباء ومياه', 'name_en': 'Electricity & Water', 'type': 'expense', 'parent_id': 'acc-6100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6104', 'code': '6104', 'name': 'صيانة معدات', 'name_en': 'Equipment Maintenance', 'type': 'expense', 'parent_id': 'acc-6100', 'is_system': True, 'balance': 0.0 },
+                        { 'id': 'acc-6105', 'code': '6105', 'name': 'ملابس وسلامة مهنية', 'name_en': 'Uniforms & Safety', 'type': 'expense', 'parent_id': 'acc-6100', 'is_system': True, 'balance': 0.0 },
+                    ]
+                    
+                    try:
+                        supa.client.table('accounts').insert(default_accounts).execute()
+                        results['default_accounts'] = True
+                        results['accounts_created'] = len(default_accounts)
+                    except Exception as e:
+                        results['errors'].append(f'Failed to insert accounts: {str(e)[:100]}')
+                else:
+                    results['default_accounts'] = True
+                    results['accounts_created'] = len(existing_accounts.data)
+                    results['message'] = 'Accounts already exist'
+                    
+            except Exception as e:
+                error_msg = str(e)
+                if 'accounts' in error_msg and 'schema cache' in error_msg.lower():
+                    results['errors'].append('accounts table does not exist - needs manual creation in Supabase Dashboard')
+                else:
+                    results['errors'].append(f'Error with accounts table: {str(e)[:100]}')
+            
+            return results
+        
+        # MongoDB - just return success
+        return {'message': 'MongoDB does not require initialization', 'provider': 'mongo'}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 # --------------------- Chart of Accounts APIs ---------------------
 @router.get('/accounts')
 async def list_accounts():

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, X, Paperclip, Minimize2 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DieselExpertChat = () => {
-  const { t, language, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const isArabic = language === 'ar';
+  const isArabic = i18n.language === 'ar';
   
   const [messages, setMessages] = useState([
     {

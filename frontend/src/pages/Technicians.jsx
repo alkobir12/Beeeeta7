@@ -54,20 +54,20 @@ const Technicians = () => {
 
   return (
     
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className={`max-w-7xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">الفنيين</h1>
-          <p className="text-gray-500 mt-1">إدارة فريق العمل ومتابعة الأداء</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('staff.technicians')}</h1>
+          <p className="text-gray-500 mt-1">{t('staff.performance_report')}</p>
         <div className="flex items-center justify-between mt-4">
           <p className="text-gray-500 text-sm">
-            يمكنك إضافة فنيين جدد وإدارتهم من هنا.
+            {t('staff.add_technician')}
           </p>
           <button
             onClick={() => setShowAddTech(true)}
             className="apple-button px-4 py-2 text-sm"
           >
-            + إضافة فني جديد
+            + {t('staff.add_technician')}
           </button>
         </div>
 
@@ -77,7 +77,7 @@ const Technicians = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="apple-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">إجمالي الفنيين</p>
+              <p className="text-sm text-gray-500 mb-1">{t('staff.technicians')}</p>
               <p className="text-2xl font-bold text-gray-900">{technicians.length}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
@@ -87,7 +87,7 @@ const Technicians = () => {
 
           <div className="apple-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">أعمال جارية</p>
+              <p className="text-sm text-gray-500 mb-1">{t('status.in_progress')}</p>
               <p className="text-2xl font-bold text-gray-900">{technicians.reduce((sum, t) => sum + t.activeJobs, 0)}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
@@ -97,7 +97,7 @@ const Technicians = () => {
 
           <div className="apple-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">أعمال مكتملة</p>
+              <p className="text-sm text-gray-500 mb-1">{t('status.completed')}</p>
               <p className="text-2xl font-bold text-gray-900">{technicians.reduce((sum, t) => sum + t.completedJobs, 0)}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">

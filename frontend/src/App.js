@@ -66,8 +66,6 @@ const Protected = ({ children }) => {
 };
 
 function App() {
-  const { i18n } = useTranslation();
-
   return (
     <ThemeProvider>
       <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>

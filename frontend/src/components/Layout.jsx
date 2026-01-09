@@ -3,9 +3,11 @@ import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 import AnimatedBackground from './AnimatedBackground';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>

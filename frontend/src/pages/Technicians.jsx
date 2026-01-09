@@ -44,17 +44,14 @@ const Technicians = () => {
 
   if (loading) {
     return (
-      
-        <div className="flex items-center justify-center h-[50vh]">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
-      
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    
-      <div className={`max-w-7xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`max-w-7xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('staff.technicians')}</h1>

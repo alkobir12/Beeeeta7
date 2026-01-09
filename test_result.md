@@ -367,36 +367,33 @@ However, the **Language Toggle Button is NOT WORKING**, which prevents users fro
 
 ---
 
-## Comprehensive Translation System Testing - Final Verification (2025-01-09)
+## Full Application Translation Testing - All Pages (2025-01-09)
 
 ### Test Objective:
-Verify the complete translation system implementation across all updated pages with manual language toggle, including Settings, PartsInventory, NewVehicle, and Suppliers pages.
+Test the translation system across ALL pages in the application to identify which pages are NOT translating correctly, as reported by user: "معظم الصفحات" (most pages) are NOT translating.
 
 ### Testing Agent Report:
 
-#### ✅ CRITICAL SUCCESS: Language Toggle Button NOW WORKING!
+#### 🔴 CRITICAL FINDING: Translation System NOT WORKING
+
+**Root Cause Identified:**
+The LanguageContext and translation infrastructure are correctly implemented, BUT the pages are NOT re-rendering when language changes. The `t()` function is wrapped in `useCallback` with `language` as a dependency, but components are not detecting the change.
 
 **Test Results:**
 
-**1. Language Toggle Button Functionality**
-- ✅ **Status**: WORKING CORRECTLY
+**1. Language Toggle Button**
 - ✅ Button found with `data-testid="language-toggle-button"`
-- ✅ Button located in Sidebar at the bottom (above Logout button)
-- ✅ Button text changes correctly:
-  - When language is English: Shows "عربي AR"
-  - When language is Arabic: Shows "English EN"
-- ✅ Multiple rapid toggles (3x) work without errors
-- ✅ Direction alternates correctly: ltr ↔ rtl
+- ✅ Button located in Sidebar
+- ✅ Button clicks successfully
+- ❌ **CRITICAL**: Document direction does NOT change (stays "ltr" even after toggle)
+- ❌ **CRITICAL**: Page content does NOT re-render with new translations
 
-**2. Dashboard Page Translation**
-- ✅ **English State**: ALL 7 texts found correctly
-  - "Dashboard", "Workshop Overview", "Total Vehicles"
-  - "In Progress", "Ready for Delivery", "Available Technicians"
-  - "New Vehicle"
-- ⚠️ **Arabic State**: Translation keys not rendering (0/7 found)
-  - Issue: After toggle, Arabic translation keys are not being displayed
-  - The toggle IS working (direction changes to RTL)
-  - But the translated text is not appearing
+**2. Dashboard Page**
+- ❌ **NOT TRANSLATING**
+- Title stays "Dashboard" in both English and Arabic modes
+- Uses `t('dashboard.title')` correctly in code
+- But the translation function is not returning the Arabic text
+- **Evidence**: Screenshot shows "Dashboard" title even when sidebar is in Arabic
 
 **3. Sidebar Menu Translation**
 - ✅ **English State**: ALL 8 menu items found correctly

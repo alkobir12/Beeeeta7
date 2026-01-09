@@ -140,12 +140,53 @@ const Operations = () => {
                   <select 
                     className="apple-input pr-10"
                     value={form.vehicleId} 
-                    onChange={e => setForm({ ...form, vehicleId: e.target.value })}
+                    onChange={async (e) => {
+                      const vehicleId = e.target.value;
+                      setForm({ ...form, vehicleId, visitId: '' });
+                      
+                      // Load visits for selected vehicle
+                      if (vehicleId) {
+                        try {
+                          const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
+                          setVisits(res.data || []);
+                          // Auto-select current visit if exists
+                          const activeVisit = res.data?.find(v => v.status === 'in_progress');
+                          if (activeVisit) {
+                            setForm(prev => ({ ...prev, visitId: activeVisit.id }));
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      } else {
+                        setVisits([]);
+                      }
+                    }}
                   >
                     <option value="">اختر مركبة...</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>
                         {v.plateNumber} - {v.brand} {v.model}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الزيارة (اختياري)</label>
+                <div className="relative">
+                  <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select 
+                    className="apple-input pr-10"
+                    value={form.visitId || ''} 
+                    onChange={e => setForm({ ...form, visitId: e.target.value })}
+                    disabled={!form.vehicleId}
+                  >
+                    <option value="">بدون زيارة</option>
+                    {visits.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {new Date(v.entryDate || v.entry_date).toLocaleDateString('ar-SA')} 
+                        {v.status === 'in_progress' ? ' (حالية)' : ''}
                       </option>
                     ))}
                   </select>

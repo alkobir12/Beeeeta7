@@ -41,11 +41,19 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'ar' ? 'en' : 'ar';
-    i18n.changeLanguage(newLang);
+    
+    // Save language preference
     localStorage.setItem('language', newLang);
+    
+    // Update document direction and language
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = newLang;
-    window.location.reload(); // Reload to apply RTL/LTR changes
+    
+    // Change language without page reload
+    i18n.changeLanguage(newLang);
+    
+    // Force re-render by updating a state or using forceUpdate
+    // The i18n change will trigger React re-render automatically
   };
 
   const MENU_ITEMS = [

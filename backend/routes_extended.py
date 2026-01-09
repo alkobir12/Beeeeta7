@@ -1201,6 +1201,46 @@ async def list_approvals(vehicle_id: Optional[str] = None):
 @router.get('/approvals/public/{token}')
 async def public_approval(token: str):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            res = supa.client.table('approval_requests').select('*').eq('token', token).execute()
+            if not res.data:
+                raise HTTPException(status_code=404, detail='رابط غير صحيح')
+            
+            d = res.data[0]
+            if d.get('revoked'):
+                raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+            
+            # Check expiry
+            from datetime import datetime
+            if d.get('expires_at'):
+                expires_at = datetime.fromisoformat(d['expires_at'].replace('Z', '+00:00'))
+                if expires_at < datetime.utcnow():
+                    raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+            
+            return {
+                'id': d.get('id'),
+                'token': d.get('token'),
+                'vehicleId': d.get('vehicle_id'),
+                'customerId': d.get('customer_id'),
+                'title': d.get('title'),
+                'amount': d.get('amount'),
+                'serviceItems': d.get('service_items') or [],
+                'serviceItemsText': d.get('service_items_text'),
+                'images': d.get('images') or [],
+                'status': d.get('status'),
+                'createdAt': d.get('created_at'),
+                'expiresAt': d.get('expires_at'),
+                'respondedAt': d.get('responded_at'),
+                'signature': d.get('signature'),
+                'clientIp': d.get('client_ip')
+            }
+        
+        # MongoDB fallback
         d = await db.approval_requests.find_one({'token': token})
         if not d:
             raise HTTPException(status_code=404, detail='رابط غير صحيح')

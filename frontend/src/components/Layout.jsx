@@ -5,7 +5,7 @@ import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
           >
             <Menu size={22} className="text-foreground" />
           </button>
-          <h1 className="text-base font-bold text-foreground">{t('app.dashboard')}</h1>
+          <h1 className="text-base font-bold text-foreground">{pageTitle || t('app.dashboard')}</h1>
           <div className="w-10"></div>
         </div>
         

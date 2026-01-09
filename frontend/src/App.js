@@ -68,58 +68,60 @@ const Protected = ({ children }) => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/approval/:token" element={<ApprovalPublic />} />
-            <Route path="/report/:token" element={<ReportPublic />} />
-            <Route path="/track/:trackingId" element={<CustomerTracking />} />
+    <ErrorBoundary>
+      <ThemeProvider>
+        <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/approval/:token" element={<ApprovalPublic />} />
+              <Route path="/report/:token" element={<ReportPublic />} />
+              <Route path="/track/:trackingId" element={<CustomerTracking />} />
 
-            <Route path="*" element={
-              <Protected>
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/customers" element={<Customers />} />
-                    <Route path="/new-vehicle" element={<NewVehicle />} />
-                    <Route path="/vehicle/:id" element={<VehicleDetails />} />
-                    <Route path="/customer/:id" element={<CustomerDetails />} />
-                    <Route path="/technicians" element={<Technicians />} />
-                    <Route path="/suppliers" element={<Suppliers />} />
-                    <Route path="/parts" element={<PartsInventory />} />
-                    <Route path="/catalog" element={<PartsCatalog />} />
-                    <Route path="/services" element={<ServicesManagement />} />
-                    <Route path="/templates" element={<Templates />} />
-                    <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/profile" element={<WorkshopProfile />} />
-                    <Route path="/archive" element={<VehicleArchive />} />
-                    <Route path="/ceo" element={<CEO />} />
-                    <Route path="/payroll" element={<Payroll />} />
-                    <Route path="/business-accounts" element={<CEODashboard />} />
-                    <Route path="/ceo" element={<CEODashboard />} />
-                    <Route path="/database-setup" element={<DatabaseSetup />} />
-                    <Route path="/setup" element={<DatabaseSetup />} />
-                    <Route path="/operations" element={<Operations />} />
-                    <Route path="/customer-receipts" element={<CustomerReceipts />} />
-                    <Route path="/import" element={<ImportPage />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/quotations" element={<QuotationGenerator />} />
-                    <Route path="/print" element={<DocumentPrint />} />
-                    <Route path="/diesel-expert" element={<DieselExpertChat />} />
-                    <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
-                    <Route path="/chat" element={<DieselExpertChat />} />
-                  </Routes>
-                </Layout>
-              </Protected>
-            } />
-          </Routes>
-        </Router>
-      </div>
-    </ThemeProvider>
+              <Route path="*" element={
+                <Protected>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/customers" element={<Customers />} />
+                      <Route path="/new-vehicle" element={<NewVehicle />} />
+                      <Route path="/vehicle/:id" element={<VehicleDetails />} />
+                      <Route path="/customer/:id" element={<CustomerDetails />} />
+                      <Route path="/technicians" element={<Technicians />} />
+                      <Route path="/suppliers" element={<Suppliers />} />
+                      <Route path="/parts" element={<PartsInventory />} />
+                      <Route path="/catalog" element={<PartsCatalog />} />
+                      <Route path="/services" element={<ServicesManagement />} />
+                      <Route path="/templates" element={<Templates />} />
+                      <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/profile" element={<WorkshopProfile />} />
+                      <Route path="/archive" element={<VehicleArchive />} />
+                      <Route path="/ceo" element={<CEO />} />
+                      <Route path="/payroll" element={<Payroll />} />
+                      <Route path="/business-accounts" element={<CEODashboard />} />
+                      <Route path="/ceo" element={<CEODashboard />} />
+                      <Route path="/database-setup" element={<DatabaseSetup />} />
+                      <Route path="/setup" element={<DatabaseSetup />} />
+                      <Route path="/operations" element={<Operations />} />
+                      <Route path="/customer-receipts" element={<CustomerReceipts />} />
+                      <Route path="/import" element={<ImportPage />} />
+                      <Route path="/users" element={<Users />} />
+                      <Route path="/quotations" element={<QuotationGenerator />} />
+                      <Route path="/print" element={<DocumentPrint />} />
+                      <Route path="/diesel-expert" element={<DieselExpertChat />} />
+                      <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
+                      <Route path="/chat" element={<DieselExpertChat />} />
+                    </Routes>
+                  </Layout>
+                </Protected>
+              } />
+            </Routes>
+          </Router>
+        </div>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

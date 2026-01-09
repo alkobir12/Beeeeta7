@@ -5,7 +5,6 @@ import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 import { useLanguage } from '../contexts/LanguageContext';
-import LanguageToggleButton from '../components/LanguageToggleButton';
 
 const Dashboard = () => {
   const { t, isRTL } = useLanguage();

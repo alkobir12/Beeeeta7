@@ -26,11 +26,12 @@ import {
   Bot
 } from 'lucide-react';
 import axios from 'axios';
-import { t } from '../translations';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});

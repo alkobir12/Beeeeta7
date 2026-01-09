@@ -71,10 +71,9 @@ const Protected = ({ children }) => {
 function App() {
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <ThemeProvider>
-          <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
-            <Router>
+      <ThemeProvider>
+        <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
+          <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/approval/:token" element={<ApprovalPublic />} />

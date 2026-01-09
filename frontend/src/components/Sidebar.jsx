@@ -91,7 +91,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/analytics', label: t('nav.analytics'), enabled: true },
         { path: '/ceo', label: t('operations.ceoPanelTitle'), enabled: true },
         { path: '/payroll', label: 'الرواتب', enabled: true },
-        { path: '/business-accounts', label: 'الحسابات التجارية', enabled: true },
+        { path: '/business-accounts', label: 'لوحة المدير التنفيذي', enabled: true },
         { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
       ]
     },

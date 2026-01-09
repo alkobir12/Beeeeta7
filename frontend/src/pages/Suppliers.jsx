@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Search, Phone, Mail, MapPin, Trash2, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Suppliers = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [suppliers, setSuppliers] = useState([]);

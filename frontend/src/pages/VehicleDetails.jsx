@@ -5,10 +5,11 @@ import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCir
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const VehicleDetails = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();

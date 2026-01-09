@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Wrench, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const NewVehicle = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);

@@ -8,10 +8,11 @@ import { customerAPI } from '../services/api';
 import { ArrowRight, User, Phone, Mail, Car, Calendar, DollarSign, Star, History } from 'lucide-react';
 import Layout from '../components/Layout';
 import AIHelper from '../components/AIHelper';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const CustomerDetails = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { id } = useParams();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);

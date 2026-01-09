@@ -381,6 +381,196 @@ Verify that the complete i18next translation system works correctly across all u
 **Implementation Verified:**
 The application has successfully migrated from custom LanguageContext to i18next library. The translation system is now functional with proper language detection and toggle capabilities.
 
+**Test Results Summary:**
+
+**1. ✅ Language Toggle Functionality - WORKING**
+- Sidebar language toggle button found with `data-testid="language-toggle-button"`
+- Dashboard header toggle button also present
+- JavaScript click successfully triggers language change
+- Document direction changes: `ltr` ↔ `rtl`
+- Document language changes: `en-US@posix` ↔ `ar`
+- Console logs confirm: "🔄 i18next language changed to: ar"
+
+**2. ✅ Dashboard Translation - FULLY WORKING**
+- **English State:**
+  - Title: "Dashboard"
+  - Stats: "Total Vehicles", "In Progress", "Ready for Delivery", "Available Technicians"
+  - Direction: LTR
+  
+- **Arabic State:**
+  - Title: "لوحة التحكم" ✅
+  - Stats: "إجمالي المركبات", "قيد العمل", "جاهز للتسليم", "الفنيين المتاحين" ✅
+  - Direction: RTL ✅
+  - All filter buttons translated ✅
+
+**3. ✅ Sidebar Menu Translation - FULLY WORKING**
+- **Arabic:** لوحة التحكم, العمليات, العملاء, الفنيون, الموردون, المخزون, الخدمات ✅
+- **English:** Dashboard, Operations, Customers, Technicians, Suppliers, Inventory, Services ✅
+- All main menu items properly translated
+- Submenu items include mix of translated and hardcoded text (e.g., "🔧 خبير الديزل", "⚡ تشخيص دينسو")
+
+**4. ❌ CRITICAL ISSUE: Language Persistence NOT Working**
+- **Problem:** When navigating to other pages (Customers, Technicians, Operations, Settings, Suppliers), the language resets to English
+- **Evidence:**
+  - Set language to Arabic on Dashboard
+  - Navigate to /customers → Language resets to `en-US@posix`
+  - Navigate to /technicians → Language resets to `en-US@posix`
+  - Navigate to /operations → Language resets to `en-US@posix`
+- **Root Cause:** i18next is re-initializing on each page load without persisting the user's language choice
+- **Impact:** Users must toggle language on every page navigation
+
+**5. ⚠️ VehicleDetails Page - Partial Hardcoded Text**
+- Page maintains language state when navigated from Dashboard
+- **Hardcoded Arabic text found:** "بيانات المركبة", "بيانات العميل" (as reported by user)
+- These labels are NOT using the translation system
+- Page needs to be updated to use `t()` function for all labels
+
+**6. ⚠️ VehicleQuickActions Component - Mostly Translated**
+- Status options use `t()` function ✅
+- Some hardcoded Arabic text remains: "خيارات المركبة", "تحديث الحالة", "إجراءات سريعة"
+- Needs complete translation implementation
+
+**7. ⚠️ Other Pages - Mixed Translation Status**
+- **Customers:** Title shows "Dashboard" instead of "Customers" (Layout component issue)
+- **Technicians:** Title shows "Dashboard" instead of "Technicians"
+- **Operations:** Title shows "Dashboard" instead of "Operations"
+- **Settings:** Title shows "Dashboard" instead of "Settings"
+- **Suppliers:** Title shows "Dashboard" instead of "Suppliers"
+- **Issue:** All pages show "Dashboard" as h1 title, likely due to Layout component or mobile header
+
+### 📊 COMPREHENSIVE TRANSLATION STATUS:
+
+| Component | Translation Status | Issues Found |
+|-----------|-------------------|--------------|
+| **Dashboard** | ✅ FULLY WORKING | None - perfect implementation |
+| **Sidebar** | ✅ FULLY WORKING | Some submenu items hardcoded (minor) |
+| **Language Toggle** | ✅ WORKING | Toggle works but persistence fails |
+| **VehicleDetails** | ⚠️ PARTIAL | Hardcoded Arabic: "بيانات المركبة", "بيانات العميل" |
+| **VehicleQuickActions** | ⚠️ MOSTLY WORKING | Some hardcoded Arabic labels |
+| **Customers** | ⚠️ NEEDS FIX | Page title shows "Dashboard" |
+| **Technicians** | ⚠️ NEEDS FIX | Page title shows "Dashboard" |
+| **Operations** | ⚠️ NEEDS FIX | Page title shows "Dashboard" |
+| **Settings** | ⚠️ NEEDS FIX | Page title shows "Dashboard" |
+| **Suppliers** | ⚠️ NEEDS FIX | Page title shows "Dashboard" |
+| **Language Persistence** | ❌ NOT WORKING | Resets to English on navigation |
+
+### 🔴 CRITICAL ISSUES REQUIRING IMMEDIATE FIX:
+
+**HIGHEST PRIORITY:**
+
+1. **Language Persistence Across Navigation**
+   - **Problem:** i18next does not persist language choice when navigating between pages
+   - **Current Behavior:** Language resets to English (en-US@posix) on every page navigation
+   - **Expected Behavior:** Language should persist across all pages after user toggles
+   - **Solution Needed:** Configure i18next to use localStorage or cookies for language persistence
+   - **Code Location:** `/app/frontend/src/i18n.js` - detection configuration needs `localStorage` cache
+
+2. **Page Titles Show "Dashboard" on All Pages**
+   - **Problem:** All pages (Customers, Technicians, Operations, Settings, Suppliers) show "Dashboard" as h1 title
+   - **Likely Cause:** Layout component or mobile header is overriding page titles
+   - **Impact:** Users cannot identify which page they're on
+   - **Solution Needed:** Check Layout.jsx and ensure each page's h1 is rendered correctly
+
+**HIGH PRIORITY:**
+
+3. **VehicleDetails Hardcoded Arabic Text**
+   - **Hardcoded Labels:** "بيانات المركبة", "بيانات العميل", "الملفات والمرفقات", "إدارة العمل"
+   - **Solution:** Replace with translation keys:
+     - "بيانات المركبة" → `t('vehicle_details.vehicle_info')`
+     - "بيانات العميل" → `t('vehicle_details.customer_info')`
+     - "الملفات والمرفقات" → `t('vehicle_details.files')`
+     - "إدارة العمل" → `t('vehicle_details.work_management')`
+
+4. **VehicleQuickActions Hardcoded Arabic Text**
+   - **Hardcoded Labels:** "خيارات المركبة", "تحديث الحالة", "إجراءات سريعة"
+   - **Solution:** Replace with translation keys
+
+### ✅ WHAT'S WORKING PERFECTLY:
+
+1. **i18next Initialization** ✅
+   - Console logs confirm: "✅ i18next initialized with language: en-US@posix"
+   - Language detection working
+   - RTL/LTR switching working
+
+2. **Dashboard Page** ✅
+   - Complete translation in both languages
+   - All stats cards, buttons, filters translated
+   - RTL layout perfect in Arabic mode
+
+3. **Sidebar Menu** ✅
+   - All main menu items translated
+   - Language toggle button functional
+   - Proper RTL/LTR alignment
+
+4. **Language Toggle Button** ✅
+   - Sidebar toggle with `data-testid="language-toggle-button"` works
+   - Dashboard header toggle works
+   - JavaScript click successfully changes language
+   - Visual feedback (button text changes: "عربي" ↔ "EN")
+
+### 🎯 RECOMMENDATIONS FOR MAIN AGENT:
+
+**IMMEDIATE ACTIONS:**
+
+1. **Fix Language Persistence (CRITICAL)**
+   ```javascript
+   // In /app/frontend/src/i18n.js
+   detection: {
+     order: ['localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
+     caches: ['localStorage']  // Change from [] to ['localStorage']
+   }
+   ```
+
+2. **Fix Page Titles (CRITICAL)**
+   - Investigate Layout.jsx mobile header
+   - Ensure each page's h1 is not being overridden
+   - Verify that page-specific titles are rendered
+
+3. **Replace Hardcoded Text in VehicleDetails**
+   - Add translation keys to translations.js and englishTexts.js
+   - Replace all hardcoded Arabic labels with `t()` calls
+
+4. **Replace Hardcoded Text in VehicleQuickActions**
+   - Add translation keys for all hardcoded labels
+   - Ensure complete translation coverage
+
+5. **Test After Fixes**
+   - Verify language persists across navigation
+   - Verify all page titles display correctly
+   - Verify VehicleDetails and VehicleQuickActions fully translated
+
+### 📸 Test Evidence:
+
+- **Screenshot 1:** Initial English state - Dashboard with LTR layout
+- **Screenshot 2:** After toggle - Arabic state with RTL layout, "لوحة التحكم" title
+- **Screenshot 3:** VehicleDetails page showing hardcoded Arabic text
+- **Screenshot 4:** After second toggle - Back to English state
+
+### Console Logs Evidence:
+
+```
+✅ i18next initialized with language: en-US@posix
+🔄 Toggling language: en-US@posix → ar
+🔄 i18next language changed to: ar
+✅ i18next initialized with language: en-US@posix (on page navigation - resets!)
+```
+
+### Conclusion:
+
+**USER REPORT PARTIALLY CONFIRMED:** The i18next translation system IS working on the Dashboard and Sidebar, but:
+1. ❌ Language does NOT persist across page navigation (resets to English)
+2. ❌ Page titles show "Dashboard" on all pages
+3. ⚠️ VehicleDetails and VehicleQuickActions have hardcoded Arabic text
+
+**The main agent needs to:**
+1. Enable localStorage caching in i18next configuration (CRITICAL)
+2. Fix page title rendering issue (CRITICAL)
+3. Replace hardcoded text in VehicleDetails and VehicleQuickActions (HIGH PRIORITY)
+
+Once these fixes are applied, the translation system will be fully functional and production-ready.
+
+---
+
 **Test Results:**
 
 **1. Language Toggle Button**

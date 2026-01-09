@@ -85,15 +85,15 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">لوحة التحكم</h1>
-            <p className="text-gray-500 text-sm sm:text-base mt-1">نظرة عامة على حالة الورشة</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
+            <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
           </div>
           <button 
             onClick={() => navigate('/new-vehicle')}
             className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <Plus size={18} />
-            <span>استقبال مركبة</span>
+            <span>{t('dashboard.receiveVehicle')}</span>
           </button>
         </div>
 
@@ -102,7 +102,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('all')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">إجمالي المركبات</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.totalVehicles')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
@@ -114,7 +114,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">قيد العمل</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.inProgress')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
@@ -126,7 +126,7 @@ const Dashboard = () => {
           <div onClick={() => setFilterStatus('ready')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">جاهز للتسليم</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.ready')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.ready}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
@@ -138,7 +138,7 @@ const Dashboard = () => {
           <div onClick={() => navigate('/technicians')} className="stat-card group">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">الفنيين المتاحين</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.technicians')}</p>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.technicians}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
@@ -154,7 +154,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="بحث باسم العميل أو رقم اللوحة..."
+              placeholder={t('dashboard.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="apple-input pr-10 text-sm sm:text-base"
@@ -171,7 +171,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {status === 'all' ? 'الكل' : getStatusConfig(status).label}
+                {status === 'all' ? t('common.all') : getStatusConfigForVehicle(status).label}
               </button>
             ))}
           </div>
@@ -184,12 +184,12 @@ const Dashboard = () => {
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Car className="text-gray-400" size={40} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">لا توجد مركبات</h3>
-              <p className="text-gray-500 mt-1">لم يتم العثور على مركبات تطابق بحثك</p>
+              <h3 className="text-lg font-medium text-gray-900">{t('common.noData')}</h3>
+              <p className="text-gray-500 mt-1">{t('dashboard.searchPlaceholder')}</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {
-              const statusConfig = getStatusConfig(vehicle.status);
+              const statusConfig = getStatusConfigForVehicle(vehicle.status);
               return (
                 <div 
                   key={`vehicle-${vehicle.id}`} 
@@ -213,7 +213,7 @@ const Dashboard = () => {
                         setShowQuickActions(true);
                       }}
                       className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                      aria-label="خيارات سريعة"
+                      aria-label={t('quickActions.title')}
                     >
                       <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>

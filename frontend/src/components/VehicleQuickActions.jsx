@@ -64,6 +64,20 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     expiryDays: '7',
     images: []
   });
+  const [workshopProfile, setWorkshopProfile] = useState(null);
+
+  useEffect(() => {
+    // Load workshop profile
+    const loadProfile = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/profile`);
+        setWorkshopProfile(res.data);
+      } catch (e) {
+        console.error('Failed to load workshop profile:', e);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleRequestApproval = async () => {
     setApprovalDialogOpen(true);
@@ -117,12 +131,24 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
       const approvalLink = `${window.location.origin}/approval/${data.token}`;
       
+      // Get workshop name and slogan
+      const workshopName = workshopProfile?.name || 'ورشة عبدالله الكبير';
+      const workshopSlogan = workshopProfile?.sloganAr || workshopProfile?.slogan || '';
+      
+      // Build WhatsApp message with workshop identity
+      let message = `*${workshopName}*\n`;
+      if (workshopSlogan) {
+        message += `${workshopSlogan}\n`;
+      }
+      message += `\nالسلام عليكم ${vehicle?.customerName}\n\n`;
+      message += `📋 *${approvalForm.title}*\n`;
+      message += `💰 المبلغ المتوقع: *${approvalForm.amount} ر.س*\n\n`;
+      message += `للموافقة على الطلب، يرجى الضغط على الرابط:\n`;
+      message += `${approvalLink}\n\n`;
+      message += `🔒 الرابط آمن وصالح لمدة ${approvalForm.expiryDays} يوم`;
+      
       // Send to WhatsApp
-      await sendToWhatsApp(
-        'approval',
-        approvalLink,
-        `السلام عليكم ${vehicle?.customerName}\nطلب اعتماد: ${approvalForm.title}\nالمبلغ المتوقع: ${approvalForm.amount} ر.س\nللاعتماد: ${approvalLink}`
-      );
+      await sendToWhatsApp('approval', approvalLink, message);
       
       setNewStatus('quotation');
       setApprovalDialogOpen(false);

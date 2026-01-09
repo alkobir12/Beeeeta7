@@ -60,6 +60,16 @@ const Operations = () => {
       // إذا تم استدعاء الصفحة لمركبة محددة، نربط الفورم بهذه المركبة تلقائياً
       if (vehicleIdFromUrl) {
         setForm(prev => ({ ...prev, vehicleId: vehicleIdFromUrl }));
+        
+        // Load visits for this vehicle
+        const visitsRes = await axios.get(`${API_URL}/vehicles/${vehicleIdFromUrl}/visits`);
+        setVisits(visitsRes.data || []);
+        
+        // Set current visit if exists
+        const activeVisit = visitsRes.data?.find(v => v.status === 'in_progress');
+        if (activeVisit) {
+          setForm(prev => ({ ...prev, visitId: activeVisit.id }));
+        }
       }
     } catch (e) {
       console.error(e);

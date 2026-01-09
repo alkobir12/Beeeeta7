@@ -26,8 +26,8 @@ i18n
     },
     fallbackLng: 'en',
     detection: {
-      order: ['navigator', 'htmlTag', 'path', 'subdomain'],
-      caches: []
+      order: ['localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
+      caches: ['localStorage'] // Enable localStorage to persist language choice
     },
     interpolation: {
       escapeValue: false

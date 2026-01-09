@@ -218,7 +218,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="font-bold text-gray-900 text-lg leading-tight">{workshopName}</h2>
-              <p className="text-xs text-gray-500">{t('common.appName')}</p>
+              <p className="text-xs text-gray-500">Workshop Management System</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-gray-500">

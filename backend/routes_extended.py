@@ -1345,6 +1345,15 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
 async def list_accounts():
     """Get all accounts in the chart of accounts"""
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            res = supa.client.table('accounts').select('*').order('code').execute()
+            return res.data or []
+        
+        # MongoDB fallback
         docs = await db.accounts.find({}, {"_id": 0}).sort('code', 1).to_list(length=1000)
         return docs
     except Exception as e:
@@ -1354,12 +1363,43 @@ async def list_accounts():
 async def create_account(payload: Dict[str, Any] = Body(...)):
     """Create a new account"""
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        account_id = str(uuid.uuid4())
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            row = {
+                'id': account_id,
+                'code': payload.get('code'),
+                'name': payload.get('name'),
+                'name_en': payload.get('nameEn', ''),
+                'type': payload.get('type', 'expense'),
+                'parent_id': payload.get('parentId'),
+                'is_system': payload.get('isSystem', False),
+                'balance': 0.0,
+            }
+            res = supa.client.table('accounts').insert(row).execute()
+            r = (res.data or [{}])[0]
+            return {
+                'id': r.get('id'),
+                'code': r.get('code'),
+                'name': r.get('name'),
+                'nameEn': r.get('name_en'),
+                'type': r.get('type'),
+                'parentId': r.get('parent_id'),
+                'isSystem': r.get('is_system'),
+                'balance': r.get('balance'),
+                'createdAt': r.get('created_at')
+            }
+        
+        # MongoDB fallback
         doc = {
-            'id': str(uuid.uuid4()),
+            'id': account_id,
             'code': payload.get('code'),
             'name': payload.get('name'),
             'nameEn': payload.get('nameEn', ''),
-            'type': payload.get('type', 'expense'),  # expense or revenue
+            'type': payload.get('type', 'expense'),
             'parentId': payload.get('parentId'),
             'isSystem': payload.get('isSystem', False),
             'balance': 0.0,
@@ -1375,6 +1415,34 @@ async def create_account(payload: Dict[str, Any] = Body(...)):
 async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
     """Update an existing account"""
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            upd = {}
+            if 'code' in payload: upd['code'] = payload['code']
+            if 'name' in payload: upd['name'] = payload['name']
+            if 'nameEn' in payload: upd['name_en'] = payload['nameEn']
+            if 'type' in payload: upd['type'] = payload['type']
+            if 'parentId' in payload: upd['parent_id'] = payload['parentId']
+            if 'balance' in payload: upd['balance'] = payload['balance']
+            
+            res = supa.client.table('accounts').update(upd).eq('id', account_id).execute()
+            r = (res.data or [{}])[0]
+            return {
+                'id': r.get('id'),
+                'code': r.get('code'),
+                'name': r.get('name'),
+                'nameEn': r.get('name_en'),
+                'type': r.get('type'),
+                'parentId': r.get('parent_id'),
+                'isSystem': r.get('is_system'),
+                'balance': r.get('balance'),
+                'createdAt': r.get('created_at')
+            }
+        
+        # MongoDB fallback
         upd = {k: v for k, v in payload.items() if k not in ['id', '_id', 'createdAt']}
         await db.accounts.update_one({'id': account_id}, {'$set': upd})
         doc = await db.accounts.find_one({'id': account_id}, {"_id": 0})
@@ -1386,14 +1454,36 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
 async def delete_account(account_id: str):
     """Delete an account (only if not system and has no children)"""
     try:
-        # Check if system account
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            # Check if account exists and is system
+            res = supa.client.table('accounts').select('*').eq('id', account_id).execute()
+            acc = (res.data or [None])[0]
+            if not acc:
+                raise HTTPException(status_code=404, detail='الحساب غير موجود')
+            if acc.get('is_system'):
+                raise HTTPException(status_code=400, detail='لا يمكن حذف حساب نظام')
+            
+            # Check if has children
+            children_res = supa.client.table('accounts').select('id').eq('parent_id', account_id).limit(1).execute()
+            if children_res.data:
+                raise HTTPException(status_code=400, detail='لا يمكن حذف حساب يحتوي على حسابات فرعية')
+            
+            # Delete account
+            supa.client.table('accounts').delete().eq('id', account_id).execute()
+            return {'success': True}
+        
+        # MongoDB fallback
         acc = await db.accounts.find_one({'id': account_id}, {"_id": 0})
         if not acc:
             raise HTTPException(status_code=404, detail='الحساب غير موجود')
         if acc.get('isSystem'):
             raise HTTPException(status_code=400, detail='لا يمكن حذف حساب نظام')
         
-        # Check if has children
         children = await db.accounts.find_one({'parentId': account_id}, {"_id": 0})
         if children:
             raise HTTPException(status_code=400, detail='لا يمكن حذف حساب يحتوي على حسابات فرعية')
@@ -1409,6 +1499,42 @@ async def delete_account(account_id: str):
 async def init_default_accounts():
     """Initialize default chart of accounts if empty"""
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            # Check if accounts exist
+            res = supa.client.table('accounts').select('id').limit(1).execute()
+            if res.data:
+                return {'message': 'الحسابات موجودة بالفعل', 'count': len(res.data)}
+            
+            # Insert default accounts
+            default_accounts = [
+                # Revenue
+                { 'id': 'rev-main', 'code': '4000', 'name': 'الإيرادات', 'name_en': 'Revenue', 'type': 'revenue', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                { 'id': 'rev-services', 'code': '4100', 'name': 'إيرادات الخدمات', 'name_en': 'Service Revenue', 'type': 'revenue', 'parent_id': 'rev-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'rev-parts', 'code': '4200', 'name': 'إيرادات قطع الغيار', 'name_en': 'Parts Revenue', 'type': 'revenue', 'parent_id': 'rev-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'rev-other', 'code': '4900', 'name': 'إيرادات أخرى', 'name_en': 'Other Revenue', 'type': 'revenue', 'parent_id': 'rev-main', 'is_system': True, 'balance': 0.0 },
+                
+                # Expenses
+                { 'id': 'exp-main', 'code': '5000', 'name': 'المصروفات', 'name_en': 'Expenses', 'type': 'expense', 'parent_id': None, 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-operational', 'code': '5100', 'name': 'مصروفات تشغيلية', 'name_en': 'Operational Expenses', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-salaries', 'code': '5200', 'name': 'الرواتب والأجور', 'name_en': 'Salaries & Wages', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-rent', 'code': '5300', 'name': 'الإيجار', 'name_en': 'Rent', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-utilities', 'code': '5400', 'name': 'المرافق (كهرباء/ماء)', 'name_en': 'Utilities', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-maintenance', 'code': '5500', 'name': 'صيانة وإصلاحات', 'name_en': 'Maintenance & Repairs', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-parts-cost', 'code': '5600', 'name': 'تكلفة قطع الغيار', 'name_en': 'Parts Cost', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-personal', 'code': '5700', 'name': 'مصروفات شخصية', 'name_en': 'Personal Expenses', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-marketing', 'code': '5800', 'name': 'تسويق وإعلان', 'name_en': 'Marketing & Advertising', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+                { 'id': 'exp-other', 'code': '5900', 'name': 'مصروفات أخرى', 'name_en': 'Other Expenses', 'type': 'expense', 'parent_id': 'exp-main', 'is_system': True, 'balance': 0.0 },
+            ]
+            
+            supa.client.table('accounts').insert(default_accounts).execute()
+            return {'message': 'تم إنشاء شجرة الحسابات الافتراضية', 'count': len(default_accounts)}
+        
+        # MongoDB fallback
         count = await db.accounts.count_documents({})
         if count > 0:
             return {'message': 'الحسابات موجودة بالفعل', 'count': count}

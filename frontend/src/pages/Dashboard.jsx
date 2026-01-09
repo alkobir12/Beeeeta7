@@ -151,7 +151,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder={t('dashboard.searchPlaceholder')}
+              placeholder="Search by name or plate..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="apple-input pr-10 text-sm sm:text-base"
@@ -168,7 +168,7 @@ const Dashboard = () => {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {status === 'all' ? t('common.all') : getStatusConfigForVehicle(status).label}
+                {status === 'all' ? 'All' : getStatusConfigForVehicle(status).label}
               </button>
             ))}
           </div>
@@ -181,8 +181,8 @@ const Dashboard = () => {
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Car className="text-gray-400" size={40} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">{t('common.noData')}</h3>
-              <p className="text-gray-500 mt-1">{t('dashboard.searchPlaceholder')}</p>
+              <h3 className="text-lg font-medium text-gray-900">No vehicles found</h3>
+              <p className="text-gray-500 mt-1">Try a different search</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {

@@ -26,13 +26,14 @@ import {
   Bot
 } from 'lucide-react';
 import axios from 'axios';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import LanguageToggleButton from './LanguageToggleButton';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});

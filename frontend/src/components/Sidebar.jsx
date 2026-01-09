@@ -163,7 +163,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <Icon size={18} className={hasActiveChild ? 'text-[#0071E3]' : 'text-gray-500'} />
               <span>{item.label}</span>
             </span>
-            {isCollapsed ? <ChevronLeft size={14} className={isRTL ? "rotate-180" : ""} /> : <ChevronDown size={14} />}
+            {isCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
           </button>
 
           {!isCollapsed && (

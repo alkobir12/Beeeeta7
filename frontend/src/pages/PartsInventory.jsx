@@ -327,7 +327,7 @@ const PartsInventory = () => {
                 {part.quantity <= part.minQuantity && (
                   <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
                     <AlertTriangle size={12} />
-                    <span>منخفض</span>
+                    <span>{t('parts.lowStock')}</span>
                   </div>
                 )}
               </div>
@@ -343,25 +343,25 @@ const PartsInventory = () => {
 
                 <div className="space-y-1 text-sm mb-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">الكمية</span>
+                    <span className="text-gray-500">{t('parts.quantity')}</span>
                     <span className="font-medium">{part.quantity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">سعر الشراء</span>
+                    <span className="text-gray-500">{t('parts.purchasePrice')}</span>
                     <span>{part.purchasePrice}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">سعر البيع</span>
+                    <span className="text-gray-500">{t('parts.sellingPrice')}</span>
                     <span className="font-bold text-green-600">{part.sellingPrice}</span>
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t border-gray-50">
                   <button onClick={() => openEditDialog(part)} className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <Edit size={14} /> تعديل
+                    <Edit size={14} /> {t('common.edit')}
                   </button>
                   <button onClick={() => handleDelete(part.id)} className="flex-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <Trash2 size={14} /> حذف
+                    <Trash2 size={14} /> {t('common.delete')}
                   </button>
                 </div>
               </div>

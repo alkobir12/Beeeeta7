@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Wrench, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const NewVehicle = () => {
+  const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -37,17 +39,17 @@ const NewVehicle = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.plateNumber || !formData.customerName || !formData.customerPhone || !formData.brand) {
-      toast({ title: 'تنبيه', description: 'الرجاء تعبئة الحقول المطلوبة', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('forms.required_field'), variant: 'destructive' });
       return;
     }
 
     try {
       setLoading(true);
       await vehicleAPI.create(formData);
-      toast({ title: 'تم بنجاح', description: 'تم استقبال المركبة بنجاح' });
+      toast({ title: t('common.success'), description: t('messages.success_saved') });
       setTimeout(() => navigate('/'), 1500);
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل في إضافة المركبة', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }

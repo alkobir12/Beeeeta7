@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Search, Phone, Mail, MapPin, Trash2, Edit } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Suppliers = () => {
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [suppliers, setSuppliers] = useState([]);
@@ -33,12 +35,12 @@ const Suppliers = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_URL}/suppliers`, formData);
-      toast({ title: "تم الإضافة", description: "تم إضافة المورد بنجاح" });
+      toast({ title: t('common.success'), description: t('messages.success_saved') });
       setShowModal(false);
       setFormData({ name: '', contactPerson: '', phone: '', email: '', address: '', city: '', category: '', rating: 5.0 });
       fetchSuppliers();
     } catch (error) {
-      toast({ title: "خطأ", description: "فشل الحفظ", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: "destructive" });
     }
   };
 

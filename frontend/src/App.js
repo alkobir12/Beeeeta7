@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css"
+import "./i18n"; // Initialize i18next
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";

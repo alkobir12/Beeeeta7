@@ -210,7 +210,7 @@ const Dashboard = () => {
                         setShowQuickActions(true);
                       }}
                       className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                      aria-label={t('quickActions.title')}
+                      aria-label="Quick Actions"
                     >
                       <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>

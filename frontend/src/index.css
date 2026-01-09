@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* RTL/LTR Dynamic Support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Fix sidebar position for RTL */
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="ltr"] .sidebar {
+  left: 0;
+  right: auto;
+}
+
+/* Fix icons in RTL */
+[dir="rtl"] .rotate-icon {
+  transform: scaleX(-1);
+}
+
 /* Floating button animation */
 @keyframes float {
   0%, 100% {

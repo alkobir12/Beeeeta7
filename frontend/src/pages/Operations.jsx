@@ -101,12 +101,11 @@ const Operations = () => {
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || 0), 0);
 
   return (
-    
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className={`max-w-7xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{"Operations"}</h1>
-          <p className="text-gray-500 mt-1">{"Operations"}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('operations.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('operations.subtitle')}</p>
         </div>
 
         {/* Create Operation Card */}
@@ -115,13 +114,13 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
               <Plus size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{"New Operation"}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('operations.new_operation')}</h2>
           </div>
 
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{"Account"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -129,14 +128,14 @@ const Operations = () => {
                     value={form.accountId} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
-                    <option value="">{"Select Account"}</option>
+                    <option value="">{t('operations.select_account')}</option>
                     {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{"Vehicle"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.vehicle')}</label>
                 <div className="relative">
                   <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -164,7 +163,7 @@ const Operations = () => {
                       }
                     }}
                   >
-                    <option value="">{"Vehicle"}...</option>
+                    <option value="">{t('operations.select_vehicle')}...</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>
                         {v.plateNumber} - {v.brand} {v.model}
@@ -175,7 +174,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{"Date"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.date')}</label>
                 <div className="relative">
                   <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -187,8 +186,8 @@ const Operations = () => {
                     <option value="">---</option>
                     {visits.map(v => (
                       <option key={v.id} value={v.id}>
-                        {new Date(v.entryDate || v.entry_date).toLocaleDateString('ar-SA')} 
-                        {v.status === 'in_progress' ? ` (${"In Progress"})` : ''}
+                        {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
+                        {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
                       </option>
                     ))}
                   </select>
@@ -196,7 +195,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{"Operation Type"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.operation_type')}</label>
                 <div className="relative">
                   <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 

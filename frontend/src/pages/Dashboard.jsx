@@ -80,7 +80,7 @@ const Dashboard = () => {
 
   return (
     
-      <div className="max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0" dir="rtl">
+      <div className={`max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>

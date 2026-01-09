@@ -139,9 +139,7 @@ html {
   
   /* Sidebar Styles - Emergent Theme */
   .sidebar-modern {
-    @apply fixed top-0 bottom-0 w-[280px] bg-card/95 backdrop-blur-xl border-l border-border z-50 transition-transform duration-300 ease-in-out;
-    /* Directional positioning */
-    @apply rtl:right-0 ltr:left-0 rtl:border-l ltr:border-r;
+    @apply fixed top-0 bottom-0 left-0 w-[280px] bg-card/95 backdrop-blur-xl border-r border-border z-50 transition-transform duration-300 ease-in-out;
   }
   
   .sidebar-item {
@@ -159,10 +157,14 @@ html {
   
   .content-area {
     @apply flex-1 p-3 sm:p-4 md:p-6 transition-all duration-300 w-full;
-    /* Directional margin for desktop only */
-    @apply lg:rtl:mr-[280px] lg:ltr:ml-[280px];
-    /* No margin on mobile/tablet */
-    @apply rtl:mr-0 ltr:ml-0;
+    /* Add margin for desktop only */
+    margin-left: 0;
+  }
+  
+  @media (min-width: 1024px) {
+    .content-area {
+      margin-left: 280px;
+    }
   }
   
   /* Responsive Grid for Stats */

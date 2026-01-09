@@ -236,6 +236,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white/50 backdrop-blur-md space-y-2">
+          <LanguageToggleButton />
           <button
             onClick={handleLogout}
             className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-600"

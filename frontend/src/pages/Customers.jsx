@@ -38,28 +38,28 @@ const Customers = () => {
     try {
       if (editingCustomer) {
         await customerAPI.update(editingCustomer.id, formData);
-        toast({ title: "Success", description: "Success" });
+        toast({ title: t('common.success'), description: t('messages.success_updated') });
       } else {
         await customerAPI.create(formData);
-        toast({ title: "Success", description: "Success" });
+        toast({ title: t('common.success'), description: t('messages.success_saved') });
       }
       setShowModal(false);
       setEditingCustomer(null);
       setFormData({ name: '', phone: '', email: '', address: '', vehicleBrand: '', vehiclePlate: '', vehicleKm: 0 });
       fetchCustomers();
     } catch (error) {
-      toast({ title: "Error", description: "Error", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: "destructive" });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete?")) return;
+    if (!window.confirm(t('common.confirm_delete'))) return;
     try {
       await customerAPI.delete(id);
-      toast({ title: "Success", description: "Success" });
+      toast({ title: t('common.success'), description: t('messages.success_deleted') });
       fetchCustomers();
     } catch (error) {
-      toast({ title: "Error", description: "Error", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: "destructive" });
     }
   };
 

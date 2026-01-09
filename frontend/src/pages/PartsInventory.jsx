@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { partAPI, fileAPI } from '../services/api';
@@ -7,9 +6,10 @@ import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as Im
 import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const PartsInventory = () => {
-  
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [parts, setParts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,9 +46,9 @@ const PartsInventory = () => {
       setUploading(true);
       const response = await fileAPI.upload(file);
       setFormData({ ...formData, image: response.data.url });
-      toast({ title: "Success", description: "Success" });
+      toast({ title: t('common.success'), description: t('messages.success_saved') });
     } catch (error) {
-      toast({ title: "Error", description: "Error", variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -72,12 +72,12 @@ const PartsInventory = () => {
       
       const result = await res.json();
       toast({ 
-        title: "Success", 
-        description: "Success"
+        title: t('common.success'), 
+        description: t('messages.success_saved')
       });
       loadParts();
     } catch (error) {
-      toast({ title: "Error", description: "Error", variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally {
       setImporting(false);
       e.target.value = ''; // reset input

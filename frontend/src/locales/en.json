@@ -41,6 +41,7 @@
     "services": "Services",
     "parts": "Spare Parts",
     "branches": "Branches & Accounts",
+    "ceoDashboard": "CEO Dashboard",
     "settings": "Settings",
     "knowledge": "Knowledge Base",
     "invoiceDesigner": "Invoice Designer"
@@ -148,7 +149,12 @@
     "parent": "Parent Account",
     "revenue": "Revenue",
     "expense": "Expense",
-    "balance": "Balance"
+    "asset": "Asset",
+    "liability": "Liability",
+    "equity": "Equity",
+    "balance": "Balance",
+    "transactions": "Transactions",
+    "total": "Total"
   },
   "operations": {
     "title": "Purchase / Sales Operations",

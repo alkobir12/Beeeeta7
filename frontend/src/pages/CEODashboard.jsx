@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Building2, TrendingUp, TrendingDown, DollarSign, BarChart3, 
   PieChart, ArrowUpRight, ArrowDownRight, Calendar, Filter,
@@ -18,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CEODashboard = () => {
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   
   // State

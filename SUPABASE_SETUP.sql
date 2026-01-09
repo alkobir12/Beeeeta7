@@ -41,6 +41,34 @@ CREATE INDEX idx_accounts_type ON accounts(type);
 
 RAISE NOTICE '✅ Created accounts table';
 
+-- إنشاء جدول الزيارات
+CREATE TABLE IF NOT EXISTS vehicle_visits (
+  id uuid primary key default gen_random_uuid(),
+  vehicle_id uuid references vehicles(id) on delete cascade,
+  entry_date timestamptz default now(),
+  exit_date timestamptz,
+  status text default 'in_progress',
+  mileage integer,
+  notes text,
+  technician_id uuid references technicians(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_visits_vehicle ON vehicle_visits(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_visits_date ON vehicle_visits(entry_date);
+
+-- إضافة visit_id لجدول العمليات
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='operations' AND column_name='visit_id'
+    ) THEN
+        ALTER TABLE operations ADD COLUMN visit_id uuid references vehicle_visits(id) on delete set null;
+        CREATE INDEX idx_operations_visit ON operations(visit_id);
+    END IF;
+END $$;
+
 -- STEP 3: Insert default chart of accounts (45 accounts)
 -- --------------------------------------------------------------------
 

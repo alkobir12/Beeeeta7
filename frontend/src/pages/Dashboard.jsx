@@ -40,7 +40,7 @@ const Dashboard = () => {
       setTechnicians(techniciansRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({ title: t('common.error'), description: t('common.loading'), variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

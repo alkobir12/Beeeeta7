@@ -239,7 +239,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-600"
           >
             <LogOut size={18} />
-            <span>Logout</span>
+            <span>{t('app.logout')}</span>
           </button>
         </div>
       </aside>

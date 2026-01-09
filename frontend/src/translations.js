@@ -1,0 +1,222 @@
+// Simple Arabic translations - No external library needed
+const translations = {
+  app: {
+    dashboard: "لوحة التحكم",
+    home: "الرئيسية",
+    settings: "الإعدادات",
+    reports: "التقارير",
+    notifications: "الإشعارات",
+    profile: "الملف الشخصي",
+    logout: "تسجيل الخروج",
+    admin: "المدير",
+    user: "مستخدم",
+    users: "المستخدمون",
+    roles_permissions: "الأدوار والصلاحيات"
+  },
+  buttons: {
+    add_new: "إضافة جديد",
+    edit: "تعديل",
+    save: "حفظ",
+    cancel: "إلغاء",
+    delete: "حذف",
+    view: "عرض",
+    details: "التفاصيل",
+    search: "بحث",
+    filter: "تصفية",
+    export: "تصدير",
+    print: "طباعة",
+    refresh: "تحديث",
+    back: "رجوع",
+    confirm: "تأكيد",
+    close: "إغلاق"
+  },
+  customers: {
+    customers: "العملاء",
+    add_customer: "إضافة عميل",
+    edit_customer: "تعديل بيانات العميل",
+    delete_customer: "حذف العميل",
+    customer_profile: "ملف العميل",
+    view_vehicles: "عرض المركبات",
+    customer_balance: "رصيد العميل",
+    customer_history: "سجل العميل"
+  },
+  vehicles: {
+    vehicles: "المركبات",
+    add_vehicle: "إضافة مركبة",
+    edit_vehicle: "تعديل المركبة",
+    delete_vehicle: "حذف المركبة",
+    vehicle_details: "تفاصيل المركبة",
+    update_mileage: "تحديث عداد الكيلومترات",
+    service_history: "سجل الصيانة",
+    plate_number: "رقم اللوحة",
+    vin: "رقم الشاصي",
+    model: "موديل السيارة",
+    year: "سنة الصنع",
+    mileage: "عداد الكيلومترات"
+  },
+  work_orders: {
+    work_orders: "أوامر العمل",
+    create_work_order: "إنشاء أمر عمل",
+    edit_work_order: "تعديل أمر العمل",
+    assign_technician: "تعيين فني",
+    change_status: "تغيير الحالة",
+    start_work: "بدء العمل",
+    complete_work: "إنهاء العمل",
+    deliver_vehicle: "تسليم المركبة",
+    cancel_order: "إلغاء الأمر",
+    job_description: "وصف العمل",
+    estimated_time: "الوقت المتوقع",
+    completion_date: "تاريخ الإنجاز",
+    assigned_technician: "الفني المكلّف"
+  },
+  status: {
+    status: "الحالة",
+    open: "مفتوح",
+    in_progress: "قيد التنفيذ",
+    waiting_for_parts: "بانتظار قطع الغيار",
+    completed: "مكتمل",
+    delivered: "تم التسليم",
+    cancelled: "ملغى",
+    diagnosis: "تشخيص",
+    waiting_approval: "بانتظار الموافقة",
+    quality_check: "فحص الجودة",
+    ready: "جاهز للتسليم"
+  },
+  staff: {
+    technicians: "الفنيون",
+    mechanic: "ميكانيكي",
+    supervisor: "مشرف",
+    add_technician: "إضافة فني",
+    edit_technician: "تعديل بيانات الفني",
+    assign_job: "إسناد مهمة",
+    attendance: "الحضور",
+    working_hours: "ساعات العمل",
+    performance_report: "تقرير الأداء"
+  },
+  inventory: {
+    inventory: "المخزون",
+    spare_parts: "قطع الغيار",
+    suppliers: "الموردون",
+    add_item: "إضافة صنف",
+    edit_item: "تعديل الصنف",
+    delete_item: "حذف الصنف",
+    stock_in: "إضافة للمخزون",
+    stock_out: "صرف من المخزون",
+    low_stock_alert: "تنبيه نقص المخزون",
+    item_code: "كود الصنف",
+    quantity: "الكمية",
+    unit_price: "سعر الوحدة"
+  },
+  invoices: {
+    invoices: "الفواتير",
+    create_invoice: "إنشاء فاتورة",
+    edit_invoice: "تعديل الفاتورة",
+    delete_invoice: "حذف الفاتورة",
+    view_invoice: "عرض الفاتورة",
+    print_invoice: "طباعة الفاتورة",
+    apply_discount: "تطبيق خصم",
+    add_tax: "إضافة ضريبة",
+    invoice_number: "رقم الفاتورة",
+    invoice_date: "تاريخ الفاتورة",
+    total_amount: "المبلغ الإجمالي",
+    discount: "خصم",
+    vat: "ضريبة القيمة المضافة",
+    net_amount: "صافي المبلغ"
+  },
+  payments: {
+    payments: "المدفوعات",
+    add_payment: "إضافة دفعة",
+    payment_method: "طريقة الدفع",
+    cash: "نقدًا",
+    credit_card: "بطاقة ائتمان",
+    bank_transfer: "تحويل بنكي",
+    mark_as_paid: "تحديد كمدفوع",
+    partial_payment: "دفعة جزئية",
+    paid: "مدفوع",
+    unpaid: "غير مدفوع",
+    partially_paid: "مدفوع جزئيًا"
+  },
+  reports_module: {
+    daily_report: "تقرير يومي",
+    monthly_report: "تقرير شهري",
+    financial_report: "تقرير مالي",
+    profit_loss: "الأرباح والخسائر",
+    cash_flow: "التدفق النقدي",
+    export_pdf: "تصدير PDF",
+    export_excel: "تصدير Excel",
+    analytics: "التحليلات",
+    summary: "ملخص",
+    kpi: "مؤشرات الأداء"
+  },
+  auth: {
+    login: "تسجيل الدخول",
+    username: "اسم المستخدم",
+    password: "كلمة المرور",
+    remember_me: "تذكرني",
+    forgot_password: "نسيت كلمة المرور؟",
+    change_password: "تغيير كلمة المرور"
+  },
+  system: {
+    backup: "نسخة احتياطية",
+    restore: "استعادة",
+    system_settings: "إعدادات النظام"
+  },
+  // Additional translations
+  nav: {
+    dashboard: "لوحة التحكم",
+    operations: "العمليات",
+    customers: "العملاء",
+    technicians: "الفنيون",
+    suppliers: "الموردون",
+    inventory: "المخزون",
+    services: "الخدمات",
+    documents: "المستندات",
+    finance: "المالية",
+    archive: "الأرشيف",
+    import: "استيراد البيانات",
+    users: "المستخدمين",
+    profile: "الملف الشخصي",
+    settings: "الإعدادات"
+  },
+  dashboard: {
+    title: "لوحة التحكم",
+    overview: "نظرة عامة على الورشة",
+    total_vehicles: "إجمالي المركبات",
+    in_progress: "قيد العمل",
+    ready: "جاهز للتسليم",
+    technicians: "الفنيين المتاحين",
+    new_vehicle: "استقبال مركبة",
+    search: "بحث باسم العميل أو رقم اللوحة..."
+  },
+  common: {
+    all: "الكل",
+    save: "حفظ",
+    cancel: "إلغاء",
+    delete: "حذف",
+    edit: "تعديل",
+    add: "إضافة",
+    search: "بحث",
+    loading: "جاري التحميل...",
+    no_data: "لا توجد بيانات",
+    success: "تم بنجاح",
+    error: "حدث خطأ",
+    confirm_delete: "هل أنت متأكد من الحذف؟",
+    print: "طباعة",
+    total: "الإجمالي",
+    currency: "ر.س"
+  }
+};
+
+// Get translation by key path (e.g., "app.dashboard" or "buttons.save")
+export const t = (key) => {
+  const keys = key.split('.');
+  let value = translations;
+  for (const k of keys) {
+    value = value?.[k];
+    if (value === undefined) return key; // Return key if not found
+  }
+  return value;
+};
+
+// Export all translations
+export default translations;

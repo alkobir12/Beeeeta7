@@ -1408,6 +1408,157 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
         if not norm.startswith('966'):
             norm = '966' + norm
         import urllib.parse
+
+
+# --------------------- Visits APIs ---------------------
+@router.get('/vehicles/{vehicle_id}/visits')
+async def get_vehicle_visits(vehicle_id: str):
+    """Get all visits for a vehicle"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            res = supa.client.table('vehicle_visits').select('*').eq('vehicle_id', vehicle_id).order('entry_date', desc=True).execute()
+            return res.data or []
+        
+        # MongoDB fallback
+        docs = await db.vehicle_visits.find({'vehicleId': vehicle_id}, {"_id": 0}).sort('entryDate', -1).to_list(length=1000)
+        for d in docs:
+            for k in ('entryDate', 'exitDate', 'createdAt'):
+                if d.get(k) and hasattr(d[k], 'isoformat'):
+                    d[k] = d[k].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/vehicles/{vehicle_id}/visits')
+async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
+    """Create a new visit for a vehicle"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        visit_id = str(uuid.uuid4())
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            row = {
+                'id': visit_id,
+                'vehicle_id': vehicle_id,
+                'entry_date': payload.get('entryDate') or datetime.now(timezone.utc).isoformat(),
+                'exit_date': payload.get('exitDate'),
+                'status': payload.get('status', 'in_progress'),
+                'mileage': payload.get('mileage'),
+                'notes': payload.get('notes', ''),
+                'technician_id': payload.get('technicianId'),
+            }
+            
+            res = supa.client.table('vehicle_visits').insert(row).execute()
+            r = (res.data or [{}])[0]
+            return {
+                'id': r.get('id'),
+                'vehicleId': r.get('vehicle_id'),
+                'entryDate': r.get('entry_date'),
+                'exitDate': r.get('exit_date'),
+                'status': r.get('status'),
+                'mileage': r.get('mileage'),
+                'notes': r.get('notes'),
+                'technicianId': r.get('technician_id'),
+                'createdAt': r.get('created_at')
+            }
+        
+        # MongoDB fallback
+        doc = {
+            'id': visit_id,
+            'vehicleId': vehicle_id,
+            'entryDate': payload.get('entryDate') or datetime.now(timezone.utc),
+            'exitDate': payload.get('exitDate'),
+            'status': payload.get('status', 'in_progress'),
+            'mileage': payload.get('mileage'),
+            'notes': payload.get('notes', ''),
+            'technicianId': payload.get('technicianId'),
+            'createdAt': datetime.now(timezone.utc)
+        }
+        
+        await db.vehicle_visits.insert_one(doc)
+        doc.pop('_id', None)
+        for k in ('entryDate', 'exitDate', 'createdAt'):
+            if doc.get(k) and hasattr(doc[k], 'isoformat'):
+                doc[k] = doc[k].isoformat()
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/visits/{visit_id}/operations')
+async def get_visit_operations(visit_id: str):
+    """Get all operations for a specific visit"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            res = supa.client.table('operations').select('*').eq('visit_id', visit_id).order('date', desc=True).execute()
+            return res.data or []
+        
+        # MongoDB fallback
+        docs = await db.operations.find({'visitId': visit_id}, {"_id": 0}).sort('date', -1).to_list(length=1000)
+        for d in docs:
+            if d.get('date') and hasattr(d['date'], 'isoformat'):
+                d['date'] = d['date'].isoformat()
+        return docs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/visits/{visit_id}')
+async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
+    """Update a visit"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            supa = SupabaseService()
+            
+            upd = {}
+            if 'exitDate' in payload: upd['exit_date'] = payload['exitDate']
+            if 'status' in payload: upd['status'] = payload['status']
+            if 'mileage' in payload: upd['mileage'] = payload['mileage']
+            if 'notes' in payload: upd['notes'] = payload['notes']
+            if 'technicianId' in payload: upd['technician_id'] = payload['technicianId']
+            
+            res = supa.client.table('vehicle_visits').update(upd).eq('id', visit_id).execute()
+            r = (res.data or [{}])[0]
+            return {
+                'id': r.get('id'),
+                'vehicleId': r.get('vehicle_id'),
+                'entryDate': r.get('entry_date'),
+                'exitDate': r.get('exit_date'),
+                'status': r.get('status'),
+                'mileage': r.get('mileage'),
+                'notes': r.get('notes'),
+                'technicianId': r.get('technician_id')
+            }
+        
+        # MongoDB fallback
+        upd = {}
+        if 'exitDate' in payload: upd['exitDate'] = payload['exitDate']
+        if 'status' in payload: upd['status'] = payload['status']
+        if 'mileage' in payload: upd['mileage'] = payload['mileage']
+        if 'notes' in payload: upd['notes'] = payload['notes']
+        if 'technicianId' in payload: upd['technicianId'] = payload['technicianId']
+        
+        await db.vehicle_visits.update_one({'id': visit_id}, {'$set': upd})
+        doc = await db.vehicle_visits.find_one({'id': visit_id}, {"_id": 0})
+        for k in ('entryDate', 'exitDate', 'createdAt'):
+            if doc.get(k) and hasattr(doc[k], 'isoformat'):
+                doc[k] = doc[k].isoformat()
+        return doc or {}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         deeplink = f"https://wa.me/{norm}?text={urllib.parse.quote(msg)}"
         return {'whatsappDeeplink': deeplink}
     except Exception as e:

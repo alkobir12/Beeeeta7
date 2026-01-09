@@ -3,11 +3,11 @@ import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 import AnimatedBackground from './AnimatedBackground';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t } = useTranslation();
 
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>

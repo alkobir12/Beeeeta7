@@ -323,3 +323,200 @@ CREATE INDEX idx_accounts_parent ON accounts(parent_id);
 - ceo_dashboard_accounts_tab.png - Shows empty accounts with default button
 - ceo_dashboard_branches_tab.png - Shows branches list
 - ceo_dashboard_final.png - Final state of dashboard
+
+---
+
+## FINAL COMPREHENSIVE TESTING (2026-01-09)
+
+### Test Date: 2026-01-09
+### Tested By: Testing Agent
+### Test Type: Complete Backend API Testing
+
+### Test Results Summary:
+
+**Total Tests Run**: 14
+**Passed**: 11 ✅ (78.6%)
+**Failed**: 3 ❌ (21.4%)
+
+---
+
+### 1. ENHANCED APPROVAL SYSTEM ⚠️ (PARTIALLY WORKING)
+
+#### ✅ WORKING FEATURES:
+1. **POST /api/approvals with expiryDays=14 and images** - ✅ WORKING
+   - Successfully creates approval with custom expiry (14 days)
+   - Images array is properly stored and returned
+   - Token generated: APR-35E7E9C9
+   - ExpiresAt field correctly set to 14 days from creation
+   
+2. **GET /api/approvals** - ✅ WORKING
+   - Successfully retrieves all approvals (11 approvals found)
+   - Filtering and sorting work correctly
+
+#### ❌ CRITICAL ISSUES:
+1. **GET /api/approvals/public/{token}** - ❌ FAILED
+   - **Error**: `'NoneType' object has no attribute 'approval_requests'`
+   - **Root Cause**: Endpoint at line 1201-1219 in routes_extended.py uses MongoDB code (`await db.approval_requests.find_one`)
+   - **Impact**: Public approval links don't work
+   - **Fix Required**: Implement Supabase version for public approval endpoint
+
+---
+
+### 2. CHART OF ACCOUNTS (شجرة الحسابات) ✅ (FULLY WORKING)
+
+#### ✅ ALL FEATURES WORKING:
+1. **GET /api/accounts** - ✅ WORKING
+   - Retrieved 40 accounts (expected ~45)
+   - Default accounts successfully initialized
+   - Tree structure properly maintained
+
+2. **POST /api/accounts** - ✅ WORKING
+   - Successfully created new account: "مصروفات تسويقية"
+   - Account ID: de17b77e-1fb8-4eda-af58-f7b72a634020
+   - All fields properly saved
+
+3. **PUT /api/accounts/{id}** - ✅ WORKING
+   - Successfully updated account name to "مصروفات تسويق وإعلان"
+   - Update operation works correctly
+
+4. **DELETE /api/accounts/{id} (non-system)** - ✅ WORKING
+   - Successfully deleted non-system account
+   - No errors encountered
+
+5. **DELETE /api/accounts/{id} (system account)** - ✅ WORKING
+   - Correctly prevented deletion of system account (acc-1000)
+   - Protection mechanism working as expected
+
+6. **Verify account tree structure** - ✅ WORKING
+   - Parent accounts: 40
+   - Child accounts: 34
+   - Tree hierarchy properly maintained
+
+**Status**: Chart of Accounts is FULLY FUNCTIONAL ✅
+
+---
+
+### 3. BRANCHES (الفروع) ⚠️ (PARTIALLY WORKING)
+
+#### ✅ WORKING FEATURES:
+1. **GET /api/biz-accounts** - ✅ WORKING
+   - Retrieved 3 branches successfully:
+     - فيول برو (Code: 03)
+     - خاض (Code: 02)
+     - الفرع الرئيسي (Code: MAIN)
+
+2. **POST /api/biz-accounts** - ✅ WORKING
+   - Successfully created new branch: "فرع الاختبار"
+   - Branch ID: eb4589a8-cfd1-4132-8665-871b4503a7de
+   - Code: TEST
+
+#### ❌ CRITICAL ISSUES:
+1. **PUT /api/biz-accounts/{id}** - ❌ FAILED
+   - **Error**: `'NoneType' object has no attribute 'business_accounts'`
+   - **Root Cause**: Endpoint at line 628-650 in routes_extended.py uses MongoDB code (`await db.business_accounts.update_one`)
+   - **Impact**: Cannot update existing branches
+   - **Fix Required**: Implement Supabase version for branch update endpoint
+
+---
+
+### 4. OPERATIONS LINKED TO ACCOUNTS ⚠️ (PARTIALLY WORKING)
+
+#### ✅ WORKING FEATURES:
+1. **GET /api/operations** - ✅ WORKING
+   - Retrieved 8 operations successfully
+   - List endpoint works correctly
+
+#### ❌ CRITICAL ISSUES:
+1. **POST /api/operations with accountId** - ❌ FAILED
+   - **Error**: `invalid input syntax for type uuid: "acc-4000"`
+   - **Root Cause**: Account IDs are strings (e.g., "acc-4000") but Supabase operations table expects UUID format
+   - **Impact**: Cannot create operations linked to accounts
+   - **Fix Required**: 
+     - Option 1: Change account IDs to UUID format
+     - Option 2: Change operations.accountId column to text type
+     - Option 3: Add mapping/conversion logic
+
+---
+
+### DETAILED FINDINGS:
+
+#### Database Schema Status:
+1. ✅ **accounts table** - EXISTS and WORKING
+   - 40 default accounts successfully created
+   - All CRUD operations functional
+   - Tree structure properly maintained
+
+2. ✅ **approval_requests table** - EXISTS with images column
+   - Images column is present and working
+   - Custom expiry days working correctly
+
+3. ✅ **business_accounts table** - EXISTS
+   - GET and POST operations work
+   - PUT operation has MongoDB dependency
+
+4. ⚠️ **operations table** - EXISTS but has UUID constraint issue
+   - accountId column expects UUID format
+   - Current account IDs are strings like "acc-4000"
+
+#### Code Issues Found:
+1. **MongoDB Dependencies** (3 endpoints):
+   - GET /api/approvals/public/{token} (line 1201-1219)
+   - PUT /api/biz-accounts/{id} (line 628-650)
+   - These need Supabase implementation
+
+2. **Data Type Mismatch**:
+   - Account IDs: string format ("acc-4000")
+   - Operations.accountId: expects UUID
+   - Needs resolution strategy
+
+---
+
+### PRIORITY FIXES REQUIRED:
+
+#### HIGH PRIORITY:
+1. **Fix GET /api/approvals/public/{token}**
+   - Implement Supabase version
+   - Remove MongoDB dependency
+   - Test public approval links
+
+2. **Fix PUT /api/biz-accounts/{id}**
+   - Implement Supabase version
+   - Remove MongoDB dependency
+   - Test branch updates
+
+3. **Resolve Account ID / Operations UUID Mismatch**
+   - Decide on approach (UUID accounts vs text accountId)
+   - Implement chosen solution
+   - Test operations with account linking
+
+#### MEDIUM PRIORITY:
+1. **Complete Chart of Accounts Testing**
+   - Test with 45 accounts (currently 40)
+   - Verify all account types
+   - Test complex tree operations
+
+---
+
+### SUMMARY FOR MAIN AGENT:
+
+**WORKING SYSTEMS** ✅:
+- Chart of Accounts: FULLY FUNCTIONAL (100%)
+- Enhanced Approval System: 67% functional (POST and GET work)
+- Branches: 67% functional (GET and POST work)
+- Operations: 50% functional (GET works)
+
+**BROKEN SYSTEMS** ❌:
+- Public approval links (MongoDB dependency)
+- Branch updates (MongoDB dependency)
+- Operations with account linking (UUID mismatch)
+
+**OVERALL ASSESSMENT**:
+The system is 78.6% functional. The main issues are:
+1. Some endpoints still using MongoDB code instead of Supabase
+2. Data type mismatch between account IDs (string) and operations.accountId (UUID)
+
+**RECOMMENDATION**:
+Fix the 3 failed endpoints before deployment. The fixes are straightforward:
+1. Add Supabase implementation for public approvals endpoint
+2. Add Supabase implementation for branch update endpoint
+3. Resolve UUID/string mismatch for account linking

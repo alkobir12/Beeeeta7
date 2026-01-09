@@ -182,3 +182,144 @@ CREATE INDEX idx_accounts_parent ON accounts(parent_id);
 **Priority Actions Required:**
 1. HIGH: Add `images` column to `approval_requests` table in Supabase
 2. CRITICAL: Implement complete Chart of Accounts system for Supabase (table + endpoints + service methods)
+
+---
+
+## CEO DASHBOARD TESTING (2026-01-09)
+
+### Test Date: 2026-01-09
+### Tested By: Testing Agent
+### Page URL: /business-accounts
+
+### Test Results Summary:
+
+#### ✅ WORKING FEATURES:
+1. **Login System** - Successfully logs in with username "مدير"
+2. **Page Navigation** - /business-accounts page loads correctly
+3. **KPI Cards (4 cards)** - All displayed correctly:
+   - الإيرادات (Revenue) - Shows 0.00 ر.س
+   - المصروفات (Expenses) - Shows 0.00 ر.س
+   - صافي الربح (Net Profit) - Shows 0.00 ر.س
+   - هامش الربح (Profit Margin) - Shows 0.0%
+4. **Branch Filter** - Dropdown works with "جميع الفروع" option
+   - Shows 3 existing branches: فيول برو, خاض, الفرع الرئيسي
+5. **Time Period Filter** - Dropdown works with all 4 options:
+   - اليوم (Today)
+   - هذا الأسبوع (This Week)
+   - هذا الشهر (This Month)
+   - هذه السنة (This Year)
+6. **Tabs Navigation** - All 3 tabs exist:
+   - شجرة الحسابات (Chart of Accounts) ✓
+   - الفروع (Branches) ✓
+   - التحليلات التفصيلية (Detailed Analytics) ✓
+
+#### ❌ CRITICAL ISSUES:
+
+1. **UI Overlay/Interception Issue** - BLOCKING MULTIPLE FEATURES
+   - **Severity**: CRITICAL
+   - **Impact**: Cannot click on multiple buttons due to HTML element intercepting pointer events
+   - **Affected Features**:
+     - ✗ Analytics tab (التحليلات التفصيلية) - Cannot be clicked
+     - ✗ "حساب جديد" button - Cannot be clicked
+     - ✗ "فرع جديد" button - Cannot be clicked
+     - ✗ Language toggle buttons (EN/AR) - Cannot be clicked
+   - **Error**: `<html lang="ar" dir="rtl" class="light">…</html> intercepts pointer events`
+   - **Root Cause**: Likely caused by AnimatedBackground component or z-index/positioning issue in Layout component
+   - **Fix Required**: Review Layout.jsx and AnimatedBackground.jsx for z-index and pointer-events CSS properties
+
+2. **Chart of Accounts - Database Table Missing** - CONFIRMED
+   - **Severity**: CRITICAL
+   - **Status**: NOT WORKING
+   - **API Error**: `Could not find the table 'public.accounts' in the schema cache`
+   - **Evidence**: 
+     - GET /api/accounts returns error: "Could not find the table 'public.accounts'"
+     - UI shows "لا توجد حسابات" (No accounts)
+     - "إنشاء الحسابات الافتراضية" button is visible but cannot be clicked (due to overlay issue)
+   - **Backend Implementation**: EXISTS in routes_extended.py (lines 1343-1600) for Supabase
+   - **Missing Component**: `accounts` table in Supabase database
+   - **Fix Required**: 
+     1. Create `accounts` table in Supabase with schema:
+        ```sql
+        CREATE TABLE IF NOT EXISTS accounts (
+          id text primary key,
+          code text not null unique,
+          name text not null,
+          name_en text,
+          type text not null,
+          parent_id text references accounts(id) on delete restrict,
+          is_system boolean default false,
+          balance numeric(14,2) default 0,
+          created_at timestamptz default now()
+        );
+        CREATE INDEX idx_accounts_code ON accounts(code);
+        CREATE INDEX idx_accounts_parent ON accounts(parent_id);
+        ```
+     2. Fix the UI overlay issue to allow clicking "إنشاء الحسابات الافتراضية" button
+
+#### ⚠️ PARTIALLY TESTED FEATURES:
+
+1. **Add New Account** - Cannot test due to overlay issue
+   - Form exists and modal opens (confirmed in code)
+   - Cannot click "حساب جديد" button to verify
+   
+2. **Add New Branch** - Cannot test due to overlay issue
+   - Form exists and modal opens (confirmed in code)
+   - Cannot click "فرع جديد" button to verify
+
+3. **Language Toggle** - Cannot test due to overlay issue
+   - Buttons exist (EN/AR visible in screenshots)
+   - Cannot click to verify language switching
+
+#### 📊 API ENDPOINTS STATUS:
+
+| Endpoint | Status | Notes |
+|----------|--------|-------|
+| GET /api/accounts | ❌ FAILED | Table 'accounts' doesn't exist |
+| POST /api/accounts | ❌ FAILED | Table 'accounts' doesn't exist |
+| POST /api/accounts/init-defaults | ❌ FAILED | Table 'accounts' doesn't exist |
+| GET /api/biz-accounts | ✅ WORKING | Returns 3 branches |
+| POST /api/biz-accounts | ⚠️ UNTESTED | Cannot test due to UI issue |
+| GET /api/operations | ⚠️ UNTESTED | Not directly tested |
+
+#### 🔍 DETAILED FINDINGS:
+
+1. **KPIs Display**: All KPI cards show 0.00 values, which is expected since there are no operations/transactions in the system yet.
+
+2. **Branches Data**: The system has 3 existing branches:
+   - فيول برو (Code: 03)
+   - خاض (Code: 02)
+   - الفرع الرئيسي (Code: MAIN)
+
+3. **UI/UX Issues**:
+   - The overlay issue is preventing interaction with critical buttons
+   - This is likely a CSS z-index or pointer-events issue
+   - The AnimatedBackground component in Layout.jsx might be causing this
+
+4. **Database Schema**: The `accounts` table is completely missing from Supabase, which is blocking the entire Chart of Accounts feature.
+
+### PRIORITY FIXES REQUIRED:
+
+1. **URGENT - Fix UI Overlay Issue**:
+   - Review Layout.jsx and AnimatedBackground.jsx
+   - Check z-index values and pointer-events CSS properties
+   - Ensure buttons are not blocked by background elements
+   - Test all clickable elements after fix
+
+2. **CRITICAL - Create Accounts Table**:
+   - Run SQL schema to create `accounts` table in Supabase
+   - Test POST /api/accounts/init-defaults to populate default accounts
+   - Verify Chart of Accounts tree display
+   - Test add/edit/delete account functionality
+
+3. **HIGH - Test Remaining Features** (after fixes):
+   - Add new account functionality
+   - Add new branch functionality
+   - Language toggle (EN/AR)
+   - Analytics tab content
+
+### Screenshots Captured:
+- ceo_dashboard_kpis.png - Shows all 4 KPI cards
+- ceo_dashboard_filters.png - Shows filter dropdowns
+- ceo_dashboard_accounts_tab.png - Shows empty accounts with default button
+- ceo_dashboard_branches_tab.png - Shows branches list
+- ceo_dashboard_final.png - Final state of dashboard

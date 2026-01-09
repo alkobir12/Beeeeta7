@@ -7,7 +7,7 @@ import VehicleQuickActions from '../components/VehicleQuickActions';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Dashboard = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');

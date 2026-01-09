@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
+import LanguageToggleButton from './LanguageToggleButton';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 

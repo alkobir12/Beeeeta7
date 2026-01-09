@@ -213,7 +213,6 @@ const Customers = () => {
           </div>
         )}
       </div>
-    
   );
 };
 

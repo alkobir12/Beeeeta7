@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Users,
@@ -24,58 +23,38 @@ import {
   Upload,
   BookOpen,
   Truck,
-  Bot,
-  Languages
+  Bot
 } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === 'rtl';
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [workshopName, setWorkshopName] = useState(t('settings.workshopName'));
-
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'ar' ? 'en' : 'ar';
-    
-    // Save language preference
-    localStorage.setItem('language', newLang);
-    
-    // Update document direction and language
-    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = newLang;
-    
-    // Change language without page reload
-    i18n.changeLanguage(newLang);
-    
-    // Force re-render by updating a state or using forceUpdate
-    // The i18n change will trigger React re-render automatically
-  };
+  const [workshopName, setWorkshopName] = useState('Workshop');
 
   const MENU_ITEMS = [
-    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
-    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: 'canManageVehicles' },
-    { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: 'canManageCustomers' },
-    { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: 'canManageUsers' },
-    { path: '/suppliers', label: t('parts.supplier'), icon: Truck, enabled: true, permission: 'canManageParts' },
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
+    { path: '/operations', label: 'Operations', icon: Wrench, enabled: true, permission: 'canManageVehicles' },
+    { path: '/customers', label: 'Customers', icon: Users, enabled: true, permission: 'canManageCustomers' },
+    { path: '/technicians', label: 'Technicians', icon: Users, enabled: true, permission: 'canManageUsers' },
+    { path: '/suppliers', label: 'Suppliers', icon: Truck, enabled: true, permission: 'canManageParts' },
     {
       group: true,
-      label: t('nav.inventory'),
+      label: 'Inventory',
       icon: BookOpen,
       enabled: true,
       permission: 'canManageParts',
       children: [
-        { path: '/catalog', label: t('parts.totalParts'), enabled: true },
-        { path: '/parts', label: t('parts.title'), enabled: true },
+        { path: '/catalog', label: 'Parts Catalog', enabled: true },
+        { path: '/parts', label: 'Parts Management', enabled: true },
       ]
     },
-    { path: '/services', label: t('services.listTitle'), icon: Wrench, enabled: true, permission: 'canManageServices' },
-    { path: '/diesel-expert', label: '🔧 ' + t('ai.title'), icon: Bot, enabled: true, permission: 'canManageVehicles' },
-    { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
+    { path: '/services', label: 'Services', icon: Wrench, enabled: true, permission: 'canManageServices' },
+    { path: '/diesel-expert', label: '🔧 Diesel Expert', icon: Bot, enabled: true, permission: 'canManageVehicles' },
+    { path: '/denso-diagnostics', label: '⚡ Denso Diagnostics', icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {
       group: true,
       label: t('nav.analytics'),

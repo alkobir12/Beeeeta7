@@ -395,125 +395,137 @@ The LanguageContext and translation infrastructure are correctly implemented, BU
 - But the translation function is not returning the Arabic text
 - **Evidence**: Screenshot shows "Dashboard" title even when sidebar is in Arabic
 
-**3. Sidebar Menu Translation**
-- ✅ **English State**: ALL 8 menu items found correctly
-  - "Dashboard", "Operations", "Customers", "Technicians"
-  - "Suppliers", "Inventory", "Services", "Logout"
-- ✅ Sidebar structure is correct
-- ✅ Language toggle button is properly positioned
+**3. VehicleDetails Page (USER REPORTED - CRITICAL)**
+- ❌ **NOT TRANSLATING**
+- **ALL text is HARDCODED in Arabic**
+- Uses `useLanguage` hook but does NOT use `t()` function
+- Examples of hardcoded text:
+  - "بيانات المركبة" (Vehicle Information)
+  - "بيانات العميل" (Customer Information)
+  - "الملفات والمرفقات" (Files and Attachments)
+  - "إدارة العمل" (Work Management)
+- **Evidence**: Found hardcoded Arabic labels even in "English" mode
+- **Impact**: Page shows Arabic text regardless of language setting
 
-**4. Customers Page**
-- ✅ **Status**: WORKING
-- ✅ Page loads correctly
-- ✅ Title shows "Customers" in English
-- ✅ "Add Customer" button visible
-- ✅ Customer data displayed correctly
+**4. VehicleQuickActions Component (USER REPORTED - CRITICAL)**
+- ❌ **MOSTLY NOT TRANSLATING**
+- Uses `t()` for status options ONLY
+- **Most text is HARDCODED in Arabic**:
+  - "خيارات المركبة" (Vehicle Options)
+  - "تحديث الحالة" (Update Status)
+  - "إجراءات سريعة" (Quick Actions)
+  - "طلب اعتماد" (Request Approval)
+- **Evidence**: Screenshot shows Arabic text in dialog even in "English" mode
+- **Impact**: Quick actions menu always shows Arabic text
 
-**5. Technicians Page**
-- ✅ **Status**: WORKING
-- ✅ Page loads correctly
-- ✅ Title shows "Technicians" in English
-- ✅ "Add Technician" button visible
-- ✅ Stats cards showing correctly
-- ⚠️ Some hardcoded Arabic text remains (e.g., "بحث بالاسم أو التخصص...")
+**5. Customers Page**
+- ⚠️ **PARTIALLY TRANSLATING**
+- Title uses `t()` but shows "Dashboard" (wrong translation key or not updating)
+- **Hardcoded English text**:
+  - Search placeholder: "Search by name or phone..."
+  - Modal labels: "Name", "Phone", "Email", "Address"
+  - Buttons: "Edit", "Add Customer", "Cancel", "Save"
+- **Impact**: Mixed English/Arabic text depending on language
 
-**6. RTL/LTR Layout**
-- ✅ **Status**: WORKING
-- ✅ Document direction changes on toggle
-- ✅ LTR (left-to-right) for English
-- ✅ RTL (right-to-left) for Arabic
-- ✅ No layout breaks or overlaps observed
+**6. Technicians Page**
+- ⚠️ **PARTIALLY TRANSLATING**
+- Title uses `t()` correctly
+- **Hardcoded Arabic text**:
+  - Search placeholder: "بحث بالاسم أو التخصص..."
+  - Labels: "جارية", "مكتملة", "متاح للعمل"
+  - Modal: "إضافة فني جديد", "الاسم", "رقم الجوال"
+- **Impact**: Shows Arabic text even in English mode
 
-**7. Console Errors**
-- ✅ **Status**: CLEAN
-- ✅ No critical console errors found
-- ✅ No React errors
-- ✅ No translation-related errors
+**7. Operations Page**
+- ⚠️ **MOSTLY NOT TRANSLATING**
+- Title uses `t()` correctly
+- **Extensive hardcoded English text**:
+  - Labels: "Account", "Vehicle", "Type", "Name", "Payment Method"
+  - Options: "Purchase", "Sale", "Cash", "Card", "Transfer"
+  - Table headers: "Date", "Operation Type", "Partner", "Items", "Total"
+  - Buttons: "Add", "Save", "Print"
+- **Impact**: Shows English text even in Arabic mode
 
-**8. Navigation**
-- ✅ **Status**: WORKING
-- ✅ Customers page navigation works
-- ✅ Technicians page navigation works
-- ✅ All sidebar links functional
+**8. Settings Page**
+- ✅ **MOSTLY TRANSLATING**
+- Title and most labels use `t()` correctly
+- Some hardcoded Arabic text in tax section
+- **Status**: Best implementation among tested pages
 
-### 🔴 CRITICAL ISSUE FOUND:
+### 📊 COMPREHENSIVE PAGE TRANSLATION STATUS:
 
-**Issue**: Arabic translations not rendering after language toggle
+| Page | Translation Status | Issues Found |
+|------|-------------------|--------------|
+| Dashboard | ❌ NOT WORKING | Translation system not re-rendering |
+| Sidebar | ✅ WORKING | Properly uses `t()` for all menu items |
+| VehicleDetails | ❌ NOT IMPLEMENTED | ALL text hardcoded in Arabic |
+| VehicleQuickActions | ❌ MOSTLY HARDCODED | Only status options use `t()` |
+| Customers | ⚠️ PARTIAL | Title uses `t()`, forms hardcoded English |
+| Technicians | ⚠️ PARTIAL | Title uses `t()`, content hardcoded Arabic |
+| Operations | ⚠️ MINIMAL | Title uses `t()`, most content hardcoded English |
+| Settings | ✅ MOSTLY WORKING | Good implementation with `t()` |
 
-**Symptoms**:
-- Language toggle button works (text changes, direction changes)
-- Document direction changes to RTL correctly
-- BUT: Dashboard content does not show Arabic translations
-- English text remains visible even after toggling to Arabic
+### 🔴 ROOT CAUSE ANALYSIS:
 
-**Root Cause Analysis**:
-The LanguageContext is working correctly (button text changes, direction changes), but the Dashboard component is not re-rendering with the new translations. This suggests:
-1. The `t()` function might not be reactive to language changes
-2. Dashboard component might not be subscribed to language context updates
-3. Translation keys might not be properly mapped in the Arabic translations file
+**Primary Issue**: Translation system is NOT re-rendering components when language changes
+- Language toggle button works (clicks, changes button text)
+- BUT document direction does NOT change (stays "ltr")
+- Components do NOT re-render with new translations
+- The `t()` function is not being called again after language change
 
-**Evidence**:
-- Toggle button shows "English EN" after toggle (correct - means language is now Arabic)
-- Document direction is "rtl" (correct for Arabic)
-- But page content still shows English text instead of Arabic translations
+**Secondary Issues**: Many pages have hardcoded text instead of using `t()` function
+- VehicleDetails: 100% hardcoded Arabic
+- VehicleQuickActions: 90% hardcoded Arabic
+- Operations: 80% hardcoded English
+- Customers: 50% hardcoded English
+- Technicians: 50% hardcoded Arabic
 
-### 📊 OVERALL ASSESSMENT:
+### 🎯 CRITICAL RECOMMENDATIONS FOR MAIN AGENT:
 
-**Translation System Infrastructure**: ✅ WORKING
-- LanguageContext provider functioning
-- Language toggle mechanism working
-- RTL/LTR direction switching working
-- Translation files properly structured
+**HIGHEST PRIORITY - FIX TRANSLATION SYSTEM REACTIVITY**:
+1. **Investigate LanguageContext re-rendering issue**:
+   - The `useCallback` and `useMemo` dependencies are correct
+   - But components are NOT re-rendering when language changes
+   - Check if there's a missing dependency or state update issue
+   - Verify that `setLanguage` is actually updating the state
+   - Test if adding a force re-render helps
 
-**Translation Rendering**: ❌ NOT WORKING
-- Dashboard not showing Arabic translations after toggle
-- Components not re-rendering with new language
+2. **Debug the `t()` function**:
+   - Add console.log to verify it's being called
+   - Check if it's returning the correct translations
+   - Verify the translation key lookup is working
 
-**Pages Tested**:
-| Page | Translation Hooks | English Working | Arabic Working | Notes |
-|------|------------------|-----------------|----------------|-------|
-| Dashboard | ✅ Yes | ✅ Yes | ❌ No | Translations not rendering |
-| Sidebar | ✅ Yes | ✅ Yes | ⚠️ Partial | Some hardcoded text |
-| Customers | ✅ Yes | ✅ Yes | ❓ Not tested | Need to toggle and verify |
-| Technicians | ✅ Yes | ✅ Yes | ⚠️ Partial | Some hardcoded Arabic text |
-| Settings | ✅ Yes | ❓ Not tested | ❓ Not tested | Has translation hooks |
-| PartsInventory | ✅ Yes | ❓ Not tested | ❓ Not tested | Has translation hooks |
-| NewVehicle | ✅ Yes | ❓ Not tested | ❓ Not tested | Has translation hooks |
-| Suppliers | ✅ Yes | ❓ Not tested | ❓ Not tested | Has translation hooks |
+**HIGH PRIORITY - IMPLEMENT MISSING TRANSLATIONS**:
+3. **VehicleDetails.jsx** - Replace ALL hardcoded Arabic text with `t()` calls:
+   - "بيانات المركبة" → `t('vehicle_details.vehicle_info')`
+   - "بيانات العميل" → `t('vehicle_details.customer_info')`
+   - "الملفات والمرفقات" → `t('vehicle_details.files')`
+   - And all other hardcoded labels
 
-### 🎯 RECOMMENDATIONS FOR MAIN AGENT:
+4. **VehicleQuickActions.jsx** - Replace hardcoded Arabic text:
+   - "خيارات المركبة" → `t('quick_actions.title')`
+   - "تحديث الحالة" → `t('quick_actions.change_status')`
+   - "إجراءات سريعة" → `t('quick_actions.title')`
+   - And all other hardcoded labels
 
-**HIGH PRIORITY**:
-1. **Fix Dashboard Translation Rendering**:
-   - Check if Dashboard component is properly using `useLanguage()` hook
-   - Verify that the component re-renders when language changes
-   - Ensure translation keys match between englishTexts.js and translations.js
-   - Test if `t()` function is returning correct values after language change
+5. **Operations.jsx** - Replace hardcoded English text with `t()` calls
 
-2. **Debug Translation Function**:
-   - Add console.log in LanguageContext to verify `t()` function is being called
-   - Check if translation keys are being found in the translations object
-   - Verify the key structure matches (e.g., "dashboard.title" vs "dashboard.title")
+6. **Customers.jsx** - Replace hardcoded English form labels with `t()` calls
 
-3. **Test Arabic Translation Display**:
-   - Manually toggle language in browser DevTools
-   - Check React DevTools to see if language state is updating
-   - Verify that components are re-rendering when language changes
+7. **Technicians.jsx** - Replace hardcoded Arabic text with `t()` calls
 
-**MEDIUM PRIORITY**:
-4. Complete translation coverage for remaining pages (Settings, PartsInventory, NewVehicle, Suppliers)
-5. Remove hardcoded Arabic text from Technicians page
-6. Test all pages in both English and Arabic states
-
-**LOW PRIORITY**:
-7. Add loading states during language toggle
-8. Consider adding language preference persistence (localStorage)
-
-### Testing Limitations:
-- Could not fully test Arabic translations due to rendering issue
-- Settings, PartsInventory, NewVehicle, Suppliers pages not tested (need Dashboard fix first)
-- Some pages have hardcoded text that needs to be replaced with translation keys
+### Testing Evidence:
+- Screenshot: quick_actions_arabic.png shows hardcoded Arabic text in dialog
+- Console logs: No errors, but translation system not reactive
+- Document direction: Stays "ltr" even after toggle (should change to "rtl")
 
 ### Conclusion:
-The translation system infrastructure is **WORKING CORRECTLY** - the language toggle button functions properly, direction changes work, and the LanguageContext is operational. However, there is a **CRITICAL ISSUE** with translation rendering where Arabic translations are not being displayed after toggling the language. The main agent needs to investigate why the Dashboard component is not re-rendering with the new translations after the language state changes.
+**USER REPORT CONFIRMED**: "معظم الصفحات" (most pages) are indeed NOT translating correctly. The issues are:
+1. **Translation system is not reactive** - components don't re-render when language changes
+2. **VehicleDetails and VehicleQuickActions** (user-reported pages) have extensive hardcoded text
+3. **Most pages** have partial or no translation implementation
+
+The main agent needs to:
+1. Fix the LanguageContext reactivity issue FIRST
+2. Then systematically replace hardcoded text with `t()` calls in all pages
 

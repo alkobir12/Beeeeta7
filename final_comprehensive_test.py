@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Final Comprehensive Backend Test Suite
-Testing all new features as requested in Arabic review request
+Comprehensive Backend Testing for Workshop Management System
+Testing: Enhanced Approval System, Chart of Accounts, Branches, Operations
 """
 
 import requests
 import json
 import sys
 from datetime import datetime
+import uuid
 
-# Backend URL from environment
-BACKEND_URL = "https://mechanic-dashboard-15.preview.emergentagent.com/api"
+# Configuration
+BASE_URL = "https://mechanic-dashboard-15.preview.emergentagent.com/api"
+USERNAME = "مدير"
 
 class Colors:
     GREEN = '\033[92m'
@@ -20,477 +22,660 @@ class Colors:
     RESET = '\033[0m'
     BOLD = '\033[1m'
 
-def print_section(title):
+def print_header(text):
     print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*80}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{title}{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{text.center(80)}{Colors.RESET}")
     print(f"{Colors.BOLD}{Colors.BLUE}{'='*80}{Colors.RESET}\n")
 
-def print_test(test_name, passed, details=""):
-    status = f"{Colors.GREEN}✅ PASSED{Colors.RESET}" if passed else f"{Colors.RED}❌ FAILED{Colors.RESET}"
-    print(f"{status}: {test_name}")
+def print_test(name, passed, details=""):
+    status = f"{Colors.GREEN}✅ PASS{Colors.RESET}" if passed else f"{Colors.RED}❌ FAIL{Colors.RESET}"
+    print(f"{status} - {name}")
     if details:
-        print(f"  {Colors.YELLOW}→ {details}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}{details}{Colors.RESET}")
 
-def test_references_system():
-    """Test نظام المراجع (References System)"""
-    print_section("1. نظام المراجع (References System)")
-    
-    results = {
-        'total': 0,
-        'passed': 0,
-        'failed': 0,
-        'details': []
-    }
-    
-    # Test 1: GET /api/references/dtc?code=P0087
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/references/dtc", params={'code': 'P0087'}, timeout=10)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            count = data.get('count', 0)
-            print_test(f"GET /api/references/dtc?code=P0087", True, f"Status: {response.status_code}, Count: {count}")
-            results['details'].append(f"✅ DTC P0087: {count} references found")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/references/dtc?code=P0087", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ DTC P0087: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/references/dtc?code=P0087", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ DTC P0087: Exception - {str(e)}")
-    
-    # Test 2: GET /api/references/electrical?component=بطارية
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/references/electrical", params={'component': 'بطارية'}, timeout=10)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            count = data.get('count', 0)
-            print_test(f"GET /api/references/electrical?component=بطارية", True, f"Status: {response.status_code}, Count: {count}")
-            results['details'].append(f"✅ Electrical بطارية: {count} references found")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/references/electrical?component=بطارية", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Electrical بطارية: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/references/electrical?component=بطارية", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Electrical بطارية: Exception - {str(e)}")
-    
-    # Test 3: POST /api/references/electrical/smart-search
-    try:
-        results['total'] += 1
-        payload = {'query': 'كم جهد المولد؟'}
-        response = requests.post(f"{BACKEND_URL}/references/electrical/smart-search", json=payload, timeout=30)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            answer = data.get('answer', '')[:100]
-            matches = data.get('count', 0)
-            print_test(f"POST /api/references/electrical/smart-search", True, f"Status: {response.status_code}, Matches: {matches}")
-            results['details'].append(f"✅ Smart Search: {matches} matches, Answer preview: {answer}...")
-        else:
-            results['failed'] += 1
-            print_test(f"POST /api/references/electrical/smart-search", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Smart Search: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"POST /api/references/electrical/smart-search", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Smart Search: Exception - {str(e)}")
-    
-    # Test 4: GET /api/references/download-excel-program
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/references/download-excel-program", timeout=15)
-        passed = response.status_code == 200 and 'application' in response.headers.get('content-type', '')
-        
-        if passed:
-            results['passed'] += 1
-            size = len(response.content)
-            print_test(f"GET /api/references/download-excel-program", True, f"Status: {response.status_code}, Size: {size} bytes")
-            results['details'].append(f"✅ Excel Download: {size} bytes")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/references/download-excel-program", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Excel Download: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/references/download-excel-program", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Excel Download: Exception - {str(e)}")
-    
-    return results
+def print_section(text):
+    print(f"\n{Colors.BOLD}{text}{Colors.RESET}")
+    print(f"{'-'*80}")
 
-def test_knowledge_system():
-    """Test نظام المعرفة (Knowledge System)"""
-    print_section("2. نظام المعرفة (Knowledge System)")
-    
-    results = {
-        'total': 0,
-        'passed': 0,
-        'failed': 0,
-        'details': []
-    }
-    
-    # Test 1: GET /api/ai/kb/docs (count documents)
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/ai/kb/docs", timeout=10)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            count = data.get('count', 0) if isinstance(data, dict) else len(data)
-            print_test(f"GET /api/ai/kb/docs", True, f"Status: {response.status_code}, Documents: {count}")
-            results['details'].append(f"✅ KB Documents: {count} documents in knowledge base")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/ai/kb/docs", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ KB Documents: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/ai/kb/docs", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ KB Documents: Exception - {str(e)}")
-    
-    # Test 2: POST /api/ai/kb/smart-search with "كهرباء"
-    try:
-        results['total'] += 1
-        payload = {'query': 'كهرباء'}
-        response = requests.post(f"{BACKEND_URL}/ai/kb/smart-search", json=payload, timeout=30)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            results_count = len(data.get('results', [])) if isinstance(data, dict) else 0
-            print_test(f"POST /api/ai/kb/smart-search (كهرباء)", True, f"Status: {response.status_code}, Results: {results_count}")
-            results['details'].append(f"✅ KB Smart Search: {results_count} results for 'كهرباء'")
-        else:
-            results['failed'] += 1
-            print_test(f"POST /api/ai/kb/smart-search (كهرباء)", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ KB Smart Search: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"POST /api/ai/kb/smart-search (كهرباء)", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ KB Smart Search: Exception - {str(e)}")
-    
-    # Test 3: POST /api/ai/kb/extract-dtc-cards with "P0088"
-    try:
-        results['total'] += 1
-        payload = {'code': 'P0088'}
-        # Note: This endpoint might not exist, checking if it's available
-        response = requests.post(f"{BACKEND_URL}/ai/kb/extract-dtc-cards", json=payload, timeout=30)
-        passed = response.status_code in [200, 404]  # 404 is acceptable if endpoint doesn't exist
-        
-        if response.status_code == 200:
-            results['passed'] += 1
-            data = response.json()
-            print_test(f"POST /api/ai/kb/extract-dtc-cards (P0088)", True, f"Status: {response.status_code}")
-            results['details'].append(f"✅ DTC Extract: Endpoint exists and working")
-        elif response.status_code == 404:
-            results['passed'] += 1
-            print_test(f"POST /api/ai/kb/extract-dtc-cards (P0088)", True, f"Endpoint not implemented (404) - acceptable")
-            results['details'].append(f"⚠️ DTC Extract: Endpoint not implemented (404)")
-        else:
-            results['failed'] += 1
-            print_test(f"POST /api/ai/kb/extract-dtc-cards (P0088)", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ DTC Extract: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"POST /api/ai/kb/extract-dtc-cards (P0088)", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ DTC Extract: Exception - {str(e)}")
-    
-    return results
+# Test Results Storage
+test_results = {
+    'total': 0,
+    'passed': 0,
+    'failed': 0,
+    'tests': []
+}
 
-def test_operations_system():
-    """Test نظام العمليات (Operations System)"""
-    print_section("3. نظام العمليات (Operations System)")
+def record_test(name, passed, details="", response=None):
+    test_results['total'] += 1
+    if passed:
+        test_results['passed'] += 1
+    else:
+        test_results['failed'] += 1
     
-    results = {
-        'total': 0,
-        'passed': 0,
-        'failed': 0,
-        'details': []
-    }
-    
-    # Test: GET /api/operations/analytics/summary
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/operations/analytics/summary", timeout=10)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
-        
-        if passed:
-            results['passed'] += 1
-            
-            # Check today's data
-            today = data.get('today', {})
-            today_sales = today.get('sales', 0)
-            today_expenses = today.get('expenses', 0)
-            today_profit = today.get('profit', 0)
-            
-            # Check accounts summary
-            accounts_summary = data.get('accountsSummary', [])
-            accounts_count = len(accounts_summary)
-            
-            print_test(f"GET /api/operations/analytics/summary", True, 
-                      f"Status: {response.status_code}, Today Sales: {today_sales}, Expenses: {today_expenses}, Profit: {today_profit}")
-            
-            results['details'].append(f"✅ Operations Analytics:")
-            results['details'].append(f"   - Today Sales: {today_sales}")
-            results['details'].append(f"   - Today Expenses: {today_expenses}")
-            results['details'].append(f"   - Today Profit: {today_profit}")
-            results['details'].append(f"   - Accounts Summary: {accounts_count} accounts")
-            
-            # Verify required fields exist
-            if 'today' in data and 'sales' in today and 'expenses' in today and 'profit' in today:
-                print_test(f"  ↳ Required fields present", True, "today.sales, today.expenses, today.profit ✓")
-            else:
-                print_test(f"  ↳ Required fields check", False, "Missing some required fields")
-                results['details'].append(f"   ⚠️ Some required fields missing")
-            
-            if 'accountsSummary' in data:
-                print_test(f"  ↳ accountsSummary present", True, f"{accounts_count} accounts")
-            else:
-                print_test(f"  ↳ accountsSummary check", False, "accountsSummary missing")
-                results['details'].append(f"   ⚠️ accountsSummary missing")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/operations/analytics/summary", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Operations Analytics: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/operations/analytics/summary", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Operations Analytics: Exception - {str(e)}")
-    
-    return results
+    test_results['tests'].append({
+        'name': name,
+        'passed': passed,
+        'details': details,
+        'response': response
+    })
+    print_test(name, passed, details)
 
-def test_users_system():
-    """Test نظام المستخدمين (Users System)"""
-    print_section("4. نظام المستخدمين (Users System)")
-    
-    results = {
-        'total': 0,
-        'passed': 0,
-        'failed': 0,
-        'details': []
-    }
-    
-    # Test: GET /api/users
-    try:
-        results['total'] += 1
-        response = requests.get(f"{BACKEND_URL}/users", timeout=10)
-        passed = response.status_code == 200
-        data = response.json() if passed else []
-        
-        if passed:
-            results['passed'] += 1
-            users_count = len(data) if isinstance(data, list) else 0
-            
-            # Check permissions
-            has_permissions = False
-            if users_count > 0 and isinstance(data, list):
-                first_user = data[0]
-                if 'permissions' in first_user:
-                    has_permissions = True
-                    permissions = first_user['permissions']
-                    print_test(f"GET /api/users", True, f"Status: {response.status_code}, Users: {users_count}, Permissions: ✓")
-                    results['details'].append(f"✅ Users System: {users_count} users found")
-                    results['details'].append(f"   - Permissions structure present: {list(permissions.keys())[:5]}")
-                else:
-                    print_test(f"GET /api/users", True, f"Status: {response.status_code}, Users: {users_count}, Permissions: ✗")
-                    results['details'].append(f"✅ Users System: {users_count} users found")
-                    results['details'].append(f"   ⚠️ No permissions field in user data")
-            else:
-                print_test(f"GET /api/users", True, f"Status: {response.status_code}, Users: {users_count}")
-                results['details'].append(f"✅ Users System: {users_count} users (empty list is acceptable)")
-        else:
-            results['failed'] += 1
-            print_test(f"GET /api/users", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Users System: Failed with status {response.status_code}")
-    except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"GET /api/users", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Users System: Exception - {str(e)}")
-    
-    return results
+# ============================================================================
+# 1. ENHANCED APPROVAL SYSTEM TESTS
+# ============================================================================
 
-def test_print_system():
-    """Test نظام الطباعة (Print System)"""
-    print_section("5. نظام الطباعة (Print System)")
+def test_enhanced_approval_system():
+    print_header("1. ENHANCED APPROVAL SYSTEM")
     
-    results = {
-        'total': 0,
-        'passed': 0,
-        'failed': 0,
-        'details': []
-    }
-    
-    # Test: POST /api/print/render with complete data
+    # First, get a vehicle to use for testing
+    print_section("Setup: Getting test vehicle")
     try:
-        results['total'] += 1
-        payload = {
-            'override_type': 'invoice',
-            'data': {
-                'CUSTOMER_NAME': 'أحمد محمد الراشد',
-                'CUSTOMER_PHONE': '+966501234567',
-                'VEHICLE_PLATE': 'ABC-1234',
-                'VEHICLE_MODEL': 'كامري',
-                'VEHICLE_YEAR': '2022',
-                'INVOICE_NO': 'INV-20250101-TEST',
-                'SUBTOTAL': '1500.00',
-                'TAX': '225.00',
-                'TOTAL': '1725.00',
-                'items': [
-                    {
-                        'name': 'تغيير زيت المحرك',
-                        'category': 'صيانة',
-                        'unit': 'خدمة',
-                        'quantity': 1,
-                        'price': 500.00,
-                        'total': 500.00
-                    },
-                    {
-                        'name': 'فلتر هواء',
-                        'category': 'قطع غيار',
-                        'unit': 'قطعة',
-                        'quantity': 2,
-                        'price': 250.00,
-                        'total': 500.00
-                    },
-                    {
-                        'name': 'فحص شامل',
-                        'category': 'تشخيص',
-                        'unit': 'خدمة',
-                        'quantity': 1,
-                        'price': 500.00,
-                        'total': 500.00
-                    }
-                ]
+        resp = requests.get(f"{BASE_URL}/vehicles", timeout=10)
+        vehicles = resp.json()
+        if not vehicles:
+            print(f"{Colors.YELLOW}⚠️  No vehicles found. Creating test vehicle...{Colors.RESET}")
+            # Create a test vehicle
+            vehicle_data = {
+                "customerName": "عميل الاختبار",
+                "customerPhone": "0501234567",
+                "plateNumber": "ABC-1234",
+                "make": "تويوتا",
+                "model": "كامري",
+                "year": 2020,
+                "mileage": 50000,
+                "status": "diagnosis"
             }
+            resp = requests.post(f"{BASE_URL}/vehicles", json=vehicle_data, timeout=10)
+            vehicle = resp.json()
+            vehicle_id = vehicle['id']
+            customer_id = vehicle.get('customerId')
+            print(f"{Colors.GREEN}✓ Created test vehicle: {vehicle_id}{Colors.RESET}")
+        else:
+            vehicle = vehicles[0]
+            vehicle_id = vehicle['id']
+            customer_id = vehicle.get('customerId')
+            print(f"{Colors.GREEN}✓ Using existing vehicle: {vehicle_id}{Colors.RESET}")
+    except Exception as e:
+        print(f"{Colors.RED}✗ Failed to get/create vehicle: {e}{Colors.RESET}")
+        vehicle_id = None
+        customer_id = None
+    
+    # Test 1: POST /api/approvals with custom expiryDays and images
+    print_section("Test 1: Create approval with custom expiry (14 days) and images")
+    try:
+        approval_data = {
+            "vehicleId": vehicle_id,
+            "customerId": customer_id,
+            "title": "طلب اعتماد إصلاح شامل",
+            "amount": 2500.00,
+            "expiryDays": 14,
+            "serviceItems": [
+                {"name": "تغيير زيت المحرك", "price": 150.00},
+                {"name": "فحص الفرامل", "price": 200.00},
+                {"name": "تبديل فلتر الهواء", "price": 100.00}
+            ],
+            "serviceItemsText": "تغيير زيت المحرك\nفحص الفرامل\nتبديل فلتر الهواء",
+            "images": [
+                "https://example.com/image1.jpg",
+                "https://example.com/image2.jpg"
+            ]
         }
         
-        response = requests.post(f"{BACKEND_URL}/print/render", json=payload, timeout=15)
-        passed = response.status_code == 200
-        data = response.json() if passed else {}
+        resp = requests.post(f"{BASE_URL}/approvals", json=approval_data, timeout=10)
         
-        if passed:
-            results['passed'] += 1
-            html = data.get('html', '')
-            html_length = len(html)
+        if resp.status_code == 200:
+            result = resp.json()
+            token = result.get('token')
+            has_images = 'images' in result and len(result.get('images', [])) > 0
+            has_expiry = 'expiresAt' in result
             
-            # Check if Arabic content is preserved
-            has_arabic = 'أحمد' in html and 'كامري' in html
-            has_items = 'زيت' in html or 'فلتر' in html
-            has_totals = '1725' in html or '1500' in html
-            
-            print_test(f"POST /api/print/render", True, 
-                      f"Status: {response.status_code}, HTML Length: {html_length} chars")
-            
-            results['details'].append(f"✅ Print System: HTML generated successfully")
-            results['details'].append(f"   - HTML Length: {html_length} characters")
-            results['details'].append(f"   - Arabic Content: {'✓' if has_arabic else '✗'}")
-            results['details'].append(f"   - Items Present: {'✓' if has_items else '✗'}")
-            results['details'].append(f"   - Totals Present: {'✓' if has_totals else '✗'}")
-            
-            if has_arabic and has_items and has_totals:
-                print_test(f"  ↳ Content validation", True, "Arabic, items, and totals all present")
+            if has_images and has_expiry:
+                record_test(
+                    "POST /api/approvals with expiryDays=14 and images",
+                    True,
+                    f"Token: {token}, Images: {len(result.get('images', []))}, ExpiresAt: {result.get('expiresAt')}"
+                )
+                
+                # Test 2: GET /api/approvals/public/{token}
+                print_section("Test 2: Get public approval by token")
+                try:
+                    resp_public = requests.get(f"{BASE_URL}/approvals/public/{token}", timeout=10)
+                    if resp_public.status_code == 200:
+                        public_data = resp_public.json()
+                        has_images_public = 'images' in public_data and len(public_data.get('images', [])) > 0
+                        record_test(
+                            "GET /api/approvals/public/{token}",
+                            True,
+                            f"Retrieved approval with {len(public_data.get('images', []))} images"
+                        )
+                    else:
+                        record_test(
+                            "GET /api/approvals/public/{token}",
+                            False,
+                            f"Status: {resp_public.status_code}, Error: {resp_public.text[:200]}"
+                        )
+                except Exception as e:
+                    record_test("GET /api/approvals/public/{token}", False, str(e))
             else:
-                print_test(f"  ↳ Content validation", False, "Some content missing")
-                results['details'].append(f"   ⚠️ Some expected content missing in HTML")
+                record_test(
+                    "POST /api/approvals with expiryDays=14 and images",
+                    False,
+                    f"Missing fields - Images: {has_images}, ExpiresAt: {has_expiry}. Response: {json.dumps(result)[:200]}"
+                )
         else:
-            results['failed'] += 1
-            print_test(f"POST /api/print/render", False, f"Status: {response.status_code}")
-            results['details'].append(f"❌ Print System: Failed with status {response.status_code}")
+            error_detail = resp.text[:500]
+            record_test(
+                "POST /api/approvals with expiryDays=14 and images",
+                False,
+                f"Status: {resp.status_code}, Error: {error_detail}"
+            )
     except Exception as e:
-        results['total'] += 1
-        results['failed'] += 1
-        print_test(f"POST /api/print/render", False, f"Error: {str(e)}")
-        results['details'].append(f"❌ Print System: Exception - {str(e)}")
+        record_test("POST /api/approvals with expiryDays=14 and images", False, str(e))
     
-    return results
+    # Test 3: GET /api/approvals (list all)
+    print_section("Test 3: List all approvals")
+    try:
+        resp = requests.get(f"{BASE_URL}/approvals", timeout=10)
+        if resp.status_code == 200:
+            approvals = resp.json()
+            record_test(
+                "GET /api/approvals",
+                True,
+                f"Retrieved {len(approvals)} approvals"
+            )
+        else:
+            record_test("GET /api/approvals", False, f"Status: {resp.status_code}")
+    except Exception as e:
+        record_test("GET /api/approvals", False, str(e))
 
-def generate_summary_report(all_results):
-    """Generate final summary report"""
-    print_section("📊 FINAL SUMMARY REPORT")
+# ============================================================================
+# 2. CHART OF ACCOUNTS TESTS
+# ============================================================================
+
+def test_chart_of_accounts():
+    print_header("2. CHART OF ACCOUNTS (شجرة الحسابات)")
     
-    total_tests = 0
-    total_passed = 0
-    total_failed = 0
-    
-    for system_name, results in all_results.items():
-        total_tests += results['total']
-        total_passed += results['passed']
-        total_failed += results['failed']
+    # Test 1: GET /api/accounts (should return 45 accounts)
+    print_section("Test 1: Get all accounts (expecting 45 default accounts)")
+    try:
+        resp = requests.get(f"{BASE_URL}/accounts", timeout=10)
         
-        success_rate = (results['passed'] / results['total'] * 100) if results['total'] > 0 else 0
+        if resp.status_code == 200:
+            accounts = resp.json()
+            account_count = len(accounts)
+            
+            if account_count == 0:
+                # Try to initialize default accounts
+                print(f"{Colors.YELLOW}⚠️  No accounts found. Attempting to initialize...{Colors.RESET}")
+                try:
+                    init_resp = requests.post(f"{BASE_URL}/admin/init-database", timeout=15)
+                    if init_resp.status_code == 200:
+                        init_result = init_resp.json()
+                        print(f"{Colors.GREEN}✓ Database initialization result: {json.dumps(init_result, indent=2)}{Colors.RESET}")
+                        
+                        # Try getting accounts again
+                        resp = requests.get(f"{BASE_URL}/accounts", timeout=10)
+                        if resp.status_code == 200:
+                            accounts = resp.json()
+                            account_count = len(accounts)
+                except Exception as init_error:
+                    print(f"{Colors.RED}✗ Failed to initialize database: {init_error}{Colors.RESET}")
+            
+            if account_count >= 40:  # Allow some flexibility
+                record_test(
+                    "GET /api/accounts",
+                    True,
+                    f"Retrieved {account_count} accounts (expected ~45)"
+                )
+            elif account_count > 0:
+                record_test(
+                    "GET /api/accounts",
+                    False,
+                    f"Retrieved {account_count} accounts, expected 45. Database may not be fully initialized."
+                )
+            else:
+                record_test(
+                    "GET /api/accounts",
+                    False,
+                    "No accounts found. Database table may not exist or is empty."
+                )
+        else:
+            error_detail = resp.text[:500]
+            record_test(
+                "GET /api/accounts",
+                False,
+                f"Status: {resp.status_code}, Error: {error_detail}"
+            )
+    except Exception as e:
+        record_test("GET /api/accounts", False, str(e))
+    
+    # Test 2: POST /api/accounts (create new account)
+    print_section("Test 2: Create new account")
+    try:
+        new_account = {
+            "code": "6200",
+            "name": "مصروفات تسويقية",
+            "nameEn": "Marketing Expenses",
+            "type": "expense",
+            "parentId": "acc-6000",
+            "isSystem": False
+        }
         
-        print(f"\n{Colors.BOLD}{system_name}:{Colors.RESET}")
-        print(f"  Tests: {results['total']} | Passed: {Colors.GREEN}{results['passed']}{Colors.RESET} | Failed: {Colors.RED}{results['failed']}{Colors.RESET} | Success Rate: {success_rate:.1f}%")
+        resp = requests.post(f"{BASE_URL}/accounts", json=new_account, timeout=10)
         
-        if results['details']:
-            print(f"\n  Details:")
-            for detail in results['details']:
-                print(f"    {detail}")
+        if resp.status_code == 200:
+            result = resp.json()
+            account_id = result.get('id')
+            record_test(
+                "POST /api/accounts",
+                True,
+                f"Created account: {result.get('name')} (ID: {account_id})"
+            )
+            
+            # Test 3: PUT /api/accounts/{id} (update account)
+            print_section("Test 3: Update account")
+            try:
+                update_data = {
+                    "name": "مصروفات تسويق وإعلان",
+                    "nameEn": "Marketing & Advertising Expenses"
+                }
+                
+                resp_update = requests.put(f"{BASE_URL}/accounts/{account_id}", json=update_data, timeout=10)
+                
+                if resp_update.status_code == 200:
+                    updated = resp_update.json()
+                    record_test(
+                        "PUT /api/accounts/{id}",
+                        True,
+                        f"Updated account name to: {updated.get('name')}"
+                    )
+                else:
+                    record_test(
+                        "PUT /api/accounts/{id}",
+                        False,
+                        f"Status: {resp_update.status_code}, Error: {resp_update.text[:200]}"
+                    )
+            except Exception as e:
+                record_test("PUT /api/accounts/{id}", False, str(e))
+            
+            # Test 4: DELETE /api/accounts/{id} (delete non-system account)
+            print_section("Test 4: Delete non-system account")
+            try:
+                resp_delete = requests.delete(f"{BASE_URL}/accounts/{account_id}", timeout=10)
+                
+                if resp_delete.status_code == 200:
+                    record_test(
+                        "DELETE /api/accounts/{id} (non-system)",
+                        True,
+                        "Successfully deleted non-system account"
+                    )
+                else:
+                    record_test(
+                        "DELETE /api/accounts/{id} (non-system)",
+                        False,
+                        f"Status: {resp_delete.status_code}"
+                    )
+            except Exception as e:
+                record_test("DELETE /api/accounts/{id} (non-system)", False, str(e))
+        else:
+            record_test(
+                "POST /api/accounts",
+                False,
+                f"Status: {resp.status_code}, Error: {resp.text[:200]}"
+            )
+    except Exception as e:
+        record_test("POST /api/accounts", False, str(e))
     
-    overall_success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
+    # Test 5: DELETE system account (should fail)
+    print_section("Test 5: Attempt to delete system account (should fail)")
+    try:
+        # Try to delete a system account (e.g., acc-1000 - Assets)
+        resp = requests.delete(f"{BASE_URL}/accounts/acc-1000", timeout=10)
+        
+        if resp.status_code == 400 or resp.status_code == 403:
+            record_test(
+                "DELETE /api/accounts/{id} (system account)",
+                True,
+                "Correctly prevented deletion of system account"
+            )
+        elif resp.status_code == 404:
+            record_test(
+                "DELETE /api/accounts/{id} (system account)",
+                False,
+                "System account not found - database may not be initialized"
+            )
+        elif resp.status_code == 200:
+            record_test(
+                "DELETE /api/accounts/{id} (system account)",
+                False,
+                "CRITICAL: System account was deleted! Protection not working."
+            )
+        else:
+            record_test(
+                "DELETE /api/accounts/{id} (system account)",
+                False,
+                f"Unexpected status: {resp.status_code}"
+            )
+    except Exception as e:
+        record_test("DELETE /api/accounts/{id} (system account)", False, str(e))
     
-    print(f"\n{Colors.BOLD}{'='*80}{Colors.RESET}")
-    print(f"{Colors.BOLD}OVERALL RESULTS:{Colors.RESET}")
-    print(f"  Total Tests: {total_tests}")
-    print(f"  Passed: {Colors.GREEN}{total_passed}{Colors.RESET}")
-    print(f"  Failed: {Colors.RED}{total_failed}{Colors.RESET}")
-    print(f"  Success Rate: {Colors.BOLD}{overall_success_rate:.1f}%{Colors.RESET}")
-    print(f"{Colors.BOLD}{'='*80}{Colors.RESET}\n")
+    # Test 6: Verify tree structure
+    print_section("Test 6: Verify account tree structure")
+    try:
+        resp = requests.get(f"{BASE_URL}/accounts", timeout=10)
+        if resp.status_code == 200:
+            accounts = resp.json()
+            
+            # Check for parent-child relationships
+            parent_accounts = [a for a in accounts if a.get('parent_id') is None or a.get('parentId') is None]
+            child_accounts = [a for a in accounts if a.get('parent_id') or a.get('parentId')]
+            
+            has_structure = len(parent_accounts) > 0 and len(child_accounts) > 0
+            
+            record_test(
+                "Verify account tree structure",
+                has_structure,
+                f"Parents: {len(parent_accounts)}, Children: {len(child_accounts)}"
+            )
+        else:
+            record_test("Verify account tree structure", False, "Could not retrieve accounts")
+    except Exception as e:
+        record_test("Verify account tree structure", False, str(e))
+
+# ============================================================================
+# 3. BRANCHES (BUSINESS ACCOUNTS) TESTS
+# ============================================================================
+
+def test_branches():
+    print_header("3. BRANCHES (الفروع)")
     
-    return {
-        'total': total_tests,
-        'passed': total_passed,
-        'failed': total_failed,
-        'success_rate': overall_success_rate
-    }
+    # Test 1: GET /api/biz-accounts
+    print_section("Test 1: Get all branches")
+    try:
+        resp = requests.get(f"{BASE_URL}/biz-accounts", timeout=10)
+        
+        if resp.status_code == 200:
+            branches = resp.json()
+            record_test(
+                "GET /api/biz-accounts",
+                True,
+                f"Retrieved {len(branches)} branches"
+            )
+            
+            # Display existing branches
+            if branches:
+                print(f"\n{Colors.BLUE}Existing branches:{Colors.RESET}")
+                for branch in branches[:5]:  # Show first 5
+                    print(f"  - {branch.get('name')} (Code: {branch.get('code')})")
+        else:
+            record_test("GET /api/biz-accounts", False, f"Status: {resp.status_code}")
+    except Exception as e:
+        record_test("GET /api/biz-accounts", False, str(e))
+    
+    # Test 2: POST /api/biz-accounts
+    print_section("Test 2: Create new branch")
+    try:
+        new_branch = {
+            "name": "فرع الاختبار",
+            "code": "TEST",
+            "currency": "SAR"
+        }
+        
+        resp = requests.post(f"{BASE_URL}/biz-accounts", json=new_branch, timeout=10)
+        
+        if resp.status_code == 200:
+            result = resp.json()
+            branch_id = result.get('id')
+            record_test(
+                "POST /api/biz-accounts",
+                True,
+                f"Created branch: {result.get('name')} (ID: {branch_id})"
+            )
+            
+            # Test 3: PUT /api/biz-accounts/{id}
+            print_section("Test 3: Update branch")
+            try:
+                update_data = {
+                    "name": "فرع الاختبار المحدث",
+                    "currency": "USD"
+                }
+                
+                resp_update = requests.put(f"{BASE_URL}/biz-accounts/{branch_id}", json=update_data, timeout=10)
+                
+                if resp_update.status_code == 200:
+                    updated = resp_update.json()
+                    record_test(
+                        "PUT /api/biz-accounts/{id}",
+                        True,
+                        f"Updated branch: {updated.get('name')}"
+                    )
+                else:
+                    record_test(
+                        "PUT /api/biz-accounts/{id}",
+                        False,
+                        f"Status: {resp_update.status_code}, Error: {resp_update.text[:200]}"
+                    )
+            except Exception as e:
+                record_test("PUT /api/biz-accounts/{id}", False, str(e))
+        else:
+            record_test(
+                "POST /api/biz-accounts",
+                False,
+                f"Status: {resp.status_code}, Error: {resp.text[:200]}"
+            )
+    except Exception as e:
+        record_test("POST /api/biz-accounts", False, str(e))
+
+# ============================================================================
+# 4. OPERATIONS WITH ACCOUNT LINKING TESTS
+# ============================================================================
+
+def test_operations_with_accounts():
+    print_header("4. OPERATIONS LINKED TO ACCOUNTS")
+    
+    # First, get an account ID to use
+    print_section("Setup: Getting account for testing")
+    account_id = None
+    try:
+        resp = requests.get(f"{BASE_URL}/accounts", timeout=10)
+        if resp.status_code == 200:
+            accounts = resp.json()
+            if accounts:
+                # Find a revenue account
+                revenue_accounts = [a for a in accounts if a.get('type') == 'revenue']
+                if revenue_accounts:
+                    account_id = revenue_accounts[0].get('id')
+                    print(f"{Colors.GREEN}✓ Using account: {revenue_accounts[0].get('name')} (ID: {account_id}){Colors.RESET}")
+                else:
+                    account_id = accounts[0].get('id')
+                    print(f"{Colors.YELLOW}⚠️  Using first available account: {accounts[0].get('name')}{Colors.RESET}")
+    except Exception as e:
+        print(f"{Colors.RED}✗ Failed to get account: {e}{Colors.RESET}")
+    
+    # Get a vehicle for testing
+    vehicle_id = None
+    try:
+        resp = requests.get(f"{BASE_URL}/vehicles", timeout=10)
+        if resp.status_code == 200:
+            vehicles = resp.json()
+            if vehicles:
+                vehicle_id = vehicles[0]['id']
+                print(f"{Colors.GREEN}✓ Using vehicle: {vehicle_id}{Colors.RESET}")
+    except Exception as e:
+        print(f"{Colors.RED}✗ Failed to get vehicle: {e}{Colors.RESET}")
+    
+    # Test 1: POST /api/operations with accountId
+    print_section("Test 1: Create operation with accountId")
+    try:
+        operation_data = {
+            "type": "service",
+            "accountId": account_id,
+            "vehicleId": vehicle_id,
+            "partnerType": "customer",
+            "partnerName": "عميل الاختبار",
+            "items": [
+                {
+                    "name": "تغيير زيت",
+                    "quantity": 1,
+                    "price": 150.00,
+                    "itemType": "service"
+                },
+                {
+                    "name": "فلتر زيت",
+                    "quantity": 1,
+                    "price": 50.00,
+                    "itemType": "part"
+                }
+            ],
+            "paymentMethod": "cash",
+            "notes": "عملية اختبار"
+        }
+        
+        resp = requests.post(f"{BASE_URL}/operations", json=operation_data, timeout=10)
+        
+        if resp.status_code == 200:
+            result = resp.json()
+            operation_id = result.get('id')
+            linked_account = result.get('accountId')
+            
+            if linked_account == account_id:
+                record_test(
+                    "POST /api/operations with accountId",
+                    True,
+                    f"Created operation (ID: {operation_id}) linked to account: {account_id}"
+                )
+                
+                # Test 2: GET /api/operations and verify linking
+                print_section("Test 2: Verify operation is linked to account")
+                try:
+                    resp_ops = requests.get(f"{BASE_URL}/operations", timeout=10)
+                    
+                    if resp_ops.status_code == 200:
+                        operations = resp_ops.json()
+                        found_operation = None
+                        for op in operations:
+                            if op.get('id') == operation_id:
+                                found_operation = op
+                                break
+                        
+                        if found_operation and found_operation.get('accountId') == account_id:
+                            record_test(
+                                "GET /api/operations - verify account linking",
+                                True,
+                                f"Operation correctly linked to account {account_id}"
+                            )
+                        else:
+                            record_test(
+                                "GET /api/operations - verify account linking",
+                                False,
+                                "Operation not found or not linked to account"
+                            )
+                    else:
+                        record_test(
+                            "GET /api/operations - verify account linking",
+                            False,
+                            f"Status: {resp_ops.status_code}"
+                        )
+                except Exception as e:
+                    record_test("GET /api/operations - verify account linking", False, str(e))
+            else:
+                record_test(
+                    "POST /api/operations with accountId",
+                    False,
+                    f"Account linking failed. Expected: {account_id}, Got: {linked_account}"
+                )
+        else:
+            record_test(
+                "POST /api/operations with accountId",
+                False,
+                f"Status: {resp.status_code}, Error: {resp.text[:200]}"
+            )
+    except Exception as e:
+        record_test("POST /api/operations with accountId", False, str(e))
+    
+    # Test 3: GET /api/operations (list all)
+    print_section("Test 3: List all operations")
+    try:
+        resp = requests.get(f"{BASE_URL}/operations", timeout=10)
+        
+        if resp.status_code == 200:
+            operations = resp.json()
+            record_test(
+                "GET /api/operations",
+                True,
+                f"Retrieved {len(operations)} operations"
+            )
+        else:
+            record_test("GET /api/operations", False, f"Status: {resp.status_code}")
+    except Exception as e:
+        record_test("GET /api/operations", False, str(e))
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+def print_summary():
+    print_header("TEST SUMMARY")
+    
+    total = test_results['total']
+    passed = test_results['passed']
+    failed = test_results['failed']
+    pass_rate = (passed / total * 100) if total > 0 else 0
+    
+    print(f"{Colors.BOLD}Total Tests: {total}{Colors.RESET}")
+    print(f"{Colors.GREEN}Passed: {passed}{Colors.RESET}")
+    print(f"{Colors.RED}Failed: {failed}{Colors.RESET}")
+    print(f"{Colors.BOLD}Pass Rate: {pass_rate:.1f}%{Colors.RESET}\n")
+    
+    if failed > 0:
+        print(f"{Colors.RED}{Colors.BOLD}FAILED TESTS:{Colors.RESET}")
+        for test in test_results['tests']:
+            if not test['passed']:
+                print(f"  ❌ {test['name']}")
+                if test['details']:
+                    print(f"     {test['details']}")
+        print()
+    
+    # Categorize issues
+    critical_issues = []
+    for test in test_results['tests']:
+        if not test['passed']:
+            if 'schema cache' in test['details'].lower() or 'table' in test['details'].lower():
+                critical_issues.append(f"Database schema issue: {test['name']}")
+            elif 'column' in test['details'].lower():
+                critical_issues.append(f"Missing column: {test['name']}")
+    
+    if critical_issues:
+        print(f"{Colors.RED}{Colors.BOLD}CRITICAL ISSUES FOUND:{Colors.RESET}")
+        for issue in critical_issues:
+            print(f"  🔴 {issue}")
+        print()
 
 def main():
-    """Main test execution"""
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*80}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}FINAL COMPREHENSIVE BACKEND TEST SUITE{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}Testing All New Features{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{'='*80}{Colors.RESET}\n")
-    print(f"Backend URL: {BACKEND_URL}")
+    print_header("COMPREHENSIVE BACKEND TESTING")
+    print(f"Backend URL: {BASE_URL}")
+    print(f"Test User: {USERNAME}")
     print(f"Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     
-    all_results = {}
-    
-    # Run all test suites
-    all_results['1. نظام المراجع'] = test_references_system()
-    all_results['2. نظام المعرفة'] = test_knowledge_system()
-    all_results['3. نظام العمليات'] = test_operations_system()
-    all_results['4. نظام المستخدمين'] = test_users_system()
-    all_results['5. نظام الطباعة'] = test_print_system()
-    
-    # Generate summary
-    summary = generate_summary_report(all_results)
-    
-    # Exit with appropriate code
-    sys.exit(0 if summary['failed'] == 0 else 1)
+    try:
+        # Run all test suites
+        test_enhanced_approval_system()
+        test_chart_of_accounts()
+        test_branches()
+        test_operations_with_accounts()
+        
+        # Print summary
+        print_summary()
+        
+        # Exit with appropriate code
+        sys.exit(0 if test_results['failed'] == 0 else 1)
+        
+    except KeyboardInterrupt:
+        print(f"\n{Colors.YELLOW}Testing interrupted by user{Colors.RESET}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n{Colors.RED}Fatal error during testing: {e}{Colors.RESET}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

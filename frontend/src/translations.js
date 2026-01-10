@@ -292,7 +292,7 @@ const translations = {
     updating: "جاري التحديث...",
     services: "الخدمات",
     parts: "القطع",
-    files: "الملفات",
+    files: "الملفات والمرفقات",
     operations: "العمليات",
     approvals: "الاعتمادات",
     visits: "الزيارات",
@@ -310,7 +310,11 @@ const translations = {
     current_visit: "الزيارة الحالية",
     entry_date: "تاريخ الدخول",
     exit_date: "تاريخ الخروج",
-    visit_notes: "ملاحظات الزيارة"
+    visit_notes: "ملاحظات الزيارة",
+    brand_model: "الماركة والموديل",
+    vin_number: "رقم الهيكل",
+    color: "اللون",
+    registered_services: "الخدمات المسجّلة لهذه المركبة"
   },
   quick_actions: {
     title: "إجراءات سريعة",

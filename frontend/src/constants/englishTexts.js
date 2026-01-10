@@ -340,6 +340,10 @@ export const englishTexts = {
   'vehicle_details.entry_date': 'Entry Date',
   'vehicle_details.exit_date': 'Exit Date',
   'vehicle_details.visit_notes': 'Visit Notes',
+  'vehicle_details.brand_model': 'Brand & Model',
+  'vehicle_details.vin_number': 'VIN Number',
+  'vehicle_details.color': 'Color',
+  'vehicle_details.registered_services': 'Registered Services for this Vehicle',
   
   // Quick Actions
   'quick_actions.title': 'Quick Actions',

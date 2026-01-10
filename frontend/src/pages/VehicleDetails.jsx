@@ -344,22 +344,22 @@ const VehicleDetails = () => {
                     <span className="font-medium">{vehicle.plateNumber}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">الماركة والموديل</span>
+                    <span className="text-gray-500">{t('vehicle_details.brand_model')}</span>
                     <span className="font-medium">{vehicle.brand} {vehicle.model}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">رقم الهيكل</span>
+                    <span className="text-gray-500">{t('vehicle_details.vin_number')}</span>
                     <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-500">اللون</span>
+                    <span className="text-gray-500">{t('vehicle_details.color')}</span>
                     <span className="font-medium">{vehicle.color || '-'}</span>
                   </div>
                 {/* Registered Services for this vehicle */}
                 <div className="mt-4 pt-4 border-t border-gray-800">
                   <h4 className="text-sm font-semibold text-gray-100 mb-2 flex items-center gap-2">
                     <Wrench size={16} className="text-orange-400" />
-                    <span>الخدمات المسجّلة لهذه المركبة</span>
+                    <span>{t('vehicle_details.registered_services')}</span>
                   </h4>
 
                   {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}

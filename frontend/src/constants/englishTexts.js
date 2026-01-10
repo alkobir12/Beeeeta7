@@ -358,5 +358,12 @@ export const englishTexts = {
   'quick_actions.confirm_delete': 'Are you sure you want to delete this vehicle?',
   'quick_actions.cancel': 'Cancel',
   'quick_actions.confirm': 'Confirm',
-  'quick_actions.close': 'Close'
+  'quick_actions.close': 'Close',
+  'quick_actions.vehicle_options': 'Vehicle Options',
+  'quick_actions.quick_actions': 'Quick Actions',
+  'quick_actions.diagnosis_report': 'Diagnosis Report',
+  'quick_actions.receipt': 'Receipt',
+  'quick_actions.details': 'Details',
+  'quick_actions.spare_parts': 'Spare Parts',
+  'quick_actions.operations': 'Operations'
 };

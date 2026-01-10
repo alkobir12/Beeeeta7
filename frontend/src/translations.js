@@ -318,18 +318,25 @@ const translations = {
   },
   quick_actions: {
     title: "إجراءات سريعة",
-    change_status: "تغيير الحالة",
+    change_status: "تحديث الحالة",
     current_status: "الحالة الحالية",
     new_status: "الحالة الجديدة",
-    print_quotation: "طباعة عرض سعر",
-    print_invoice: "طباعة فاتورة",
-    send_approval: "إرسال اعتماد",
-    add_operations: "إضافة عمليات",
+    print_quotation: "عرض سعر",
+    print_invoice: "فاتورة",
+    send_approval: "طلب اعتماد",
+    add_operations: "العمليات",
     delete_vehicle: "حذف المركبة",
-    confirm_delete: "هل أنت متأكد من حذف هذه المركبة؟",
+    confirm_delete: "هل أنت متأكد من الحذف؟",
     cancel: "إلغاء",
     confirm: "تأكيد",
-    close: "إغلاق"
+    close: "إغلاق",
+    vehicle_options: "خيارات المركبة",
+    quick_actions: "إجراءات سريعة",
+    diagnosis_report: "تقرير تشخيص",
+    receipt: "سند قبض",
+    details: "التفاصيل",
+    spare_parts: "قطع الغيار",
+    operations: "العمليات"
   },
   // Additional translations
   nav: {

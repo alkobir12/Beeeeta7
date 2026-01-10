@@ -336,11 +336,11 @@ const VehicleDetails = () => {
               <div className="apple-card p-6">
                 <div className="flex items-center gap-3 mb-4 text-blue-600">
                   <Car size={20} />
-                  <h3 className="font-bold text-gray-900">بيانات المركبة</h3>
+                  <h3 className="font-bold text-gray-900">{t('vehicle_details.vehicle_info')}</h3>
                 </div>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">رقم اللوحة</span>
+                    <span className="text-gray-500">{t('vehicles.plate_number')}</span>
                     <span className="font-medium">{vehicle.plateNumber}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-50">
@@ -523,11 +523,11 @@ const VehicleDetails = () => {
               <div className="apple-card p-6">
                 <div className="flex items-center gap-3 mb-4 text-green-600">
                   <User size={20} />
-                  <h3 className="font-bold text-gray-900">بيانات العميل</h3>
+                  <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
                 </div>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">الاسم</span>
+                    <span className="text-gray-500">{t('vehicles_page.customer_name')}</span>
                     <span className="font-medium">{vehicle.customerName}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-50">
@@ -547,7 +547,7 @@ const VehicleDetails = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3 text-purple-600">
                   <FileText size={20} />
-                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">الملفات والمرفقات</h3>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t('vehicle_details.files')}</h3>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -807,12 +807,12 @@ const VehicleDetails = () => {
             <div className="apple-card p-6">
               <div className="flex items-center gap-3 mb-6 text-orange-600">
                 <Wrench size={20} />
-                <h3 className="font-bold text-gray-900">إدارة العمل</h3>
+                <h3 className="font-bold text-gray-900">{t('vehicle_details.status')}</h3>
               </div>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">تحديث الحالة</label>
+                  <label className="text-sm font-medium text-gray-700">{t('quick_actions.change_status')}</label>
                   <select className="apple-input" value={status} onChange={e => setStatus(e.target.value)}>
                     {statusSteps.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                   </select>

@@ -240,10 +240,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className={`w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
           <DialogHeader className="sticky top-0 bg-card z-10 pb-2">
             <DialogTitle className="flex items-center justify-between text-base sm:text-lg">
-              <span>خيارات المركبة</span>
+              <span>{t('quick_actions.title')}</span>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10"><X size={18} /></Button>
             </DialogTitle>
           </DialogHeader>
@@ -258,7 +258,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
             {/* Status Update */}
             <div className="space-y-2 sm:space-y-3">
-              <Label className="text-sm sm:text-base font-semibold">تحديث الحالة</Label>
+              <Label className="text-sm sm:text-base font-semibold">{t('quick_actions.change_status')}</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
                 <SelectTrigger className="w-full h-10 sm:h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -273,19 +273,19 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                 </SelectContent>
               </Select>
               <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full h-10 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                <CheckCircle size={16} className="ml-2" />تحديث الحالة
+                <CheckCircle size={16} className="ml-2" />{t('quick_actions.change_status')}
               </Button>
             </div>
 
             {/* Quick Actions Grid - 2 columns on mobile */}
             <div className="space-y-2 sm:space-y-3">
-              <Label className="text-sm sm:text-base font-semibold">إجراءات سريعة</Label>
+              <Label className="text-sm sm:text-base font-semibold">{t('quick_actions.title')}</Label>
 
               <div className="grid grid-cols-2 gap-2">
                 {/* Approval Request */}
                 <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-green-500/10 hover:text-green-400">
                   <BadgeCheck size={18} />
-                  <span>طلب اعتماد</span>
+                  <span>{t('quick_actions.send_approval')}</span>
                 </Button>
 
                 {/* Diagnosis Report - Navigate to print page */}

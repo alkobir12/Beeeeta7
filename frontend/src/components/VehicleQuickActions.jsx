@@ -332,18 +332,18 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-orange-500/10 hover:text-orange-400"
                 >
                   <Wrench size={18} />
-                  <span>العمليات</span>
+                  <span>{t('quick_actions.operations')}</span>
                 </Button>
               </div>
 
               {/* Full Width Actions */}
               <div className="space-y-2 pt-2">
                 <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full h-10 justify-start text-sm hover:bg-green-500/10 hover:text-green-400">
-                  <CheckCircle size={16} className="ml-2" />تسليم المركبة
+                  <CheckCircle size={16} className="ml-2" />{t('work_orders.deliver_vehicle')}
                 </Button>
 
                 <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full h-10 justify-start text-sm hover:bg-red-600">
-                  <Trash2 size={16} className="ml-2" />حذف المركبة
+                  <Trash2 size={16} className="ml-2" />{t('quick_actions.delete_vehicle')}
                 </Button>
               </div>
             </div>

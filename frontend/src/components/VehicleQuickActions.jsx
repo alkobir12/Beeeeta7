@@ -291,37 +291,37 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                 {/* Diagnosis Report - Navigate to print page */}
                 <Button onClick={() => navigate(`/print?type=diagnosis&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
                   <FileText size={18} />
-                  <span>تقرير تشخيص</span>
+                  <span>{t('quick_actions.diagnosis_report')}</span>
                 </Button>
 
                 {/* Quote - Navigate to print page */}
                 <Button onClick={() => navigate(`/print?type=quote&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
                   <FileText size={18} />
-                  <span>عرض سعر</span>
+                  <span>{t('quick_actions.print_quotation')}</span>
                 </Button>
 
                 {/* Invoice - Navigate to print page */}
                 <Button onClick={() => navigate(`/print?type=invoice&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
                   <Printer size={18} />
-                  <span>فاتورة</span>
+                  <span>{t('quick_actions.print_invoice')}</span>
                 </Button>
 
                 {/* Receipt - Navigate to print page */}
                 <Button onClick={() => navigate(`/print?type=receipt&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
                   <FileText size={18} />
-                  <span>سند قبض</span>
+                  <span>{t('quick_actions.receipt')}</span>
                 </Button>
 
                 {/* Details */}
                 <Button onClick={() => navigate(`/vehicle/${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-slate-700/50">
                   <FileText size={18} />
-                  <span>التفاصيل</span>
+                  <span>{t('quick_actions.details')}</span>
                 </Button>
 
                 {/* Parts - Navigate to vehicle page with parts tab */}
                 <Button onClick={() => navigate(`/vehicle/${vehicle.id}?tab=parts`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
                   <Package size={18} />
-                  <span>قطع الغيار</span>
+                  <span>{t('quick_actions.spare_parts')}</span>
                 </Button>
 
                 {/* Operations */}

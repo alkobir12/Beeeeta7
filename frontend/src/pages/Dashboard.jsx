@@ -30,6 +30,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
+    
+    // Auto-refresh when returning to dashboard
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchData = async () => {

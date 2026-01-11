@@ -348,7 +348,7 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
 
 @api_router.delete("/vehicles/{vehicle_id}")
 async def delete_vehicle(vehicle_id: str):
-    """Delete a vehicle and its related invoices (if any)."""
+    """Delete a vehicle and its related invoices and operations."""
     # Supabase mode
     if DB_PROVIDER == 'supabase':
         try:
@@ -359,6 +359,12 @@ async def delete_vehicle(vehicle_id: str):
                 except Exception as invoice_error:
                     # Invoices table might not exist - this is acceptable
                     print(f"⚠️ Could not delete invoices for vehicle {vehicle_id}: {invoice_error}")
+                
+                # Delete operations linked to this vehicle
+                try:
+                    supabase_service.client.table('operations').delete().eq('vehicleId', vehicle_id).execute()
+                except Exception as ops_error:
+                    print(f"⚠️ Could not delete operations for vehicle {vehicle_id}: {ops_error}")
             supabase_service.vehicles_delete(vehicle_id)
             return {"success": True}
         except Exception as e:
@@ -369,10 +375,17 @@ async def delete_vehicle(vehicle_id: str):
         rows = _mem_read('vehicles')
         rows = [r for r in rows if r.get('id') != vehicle_id]
         _mem_write('vehicles', rows)
+        
+        # Delete operations for this vehicle
+        ops = _mem_read('operations')
+        ops = [op for op in ops if op.get('vehicleId') != vehicle_id]
+        _mem_write('operations', ops)
+        
         return {"success": True}
 
     # MongoDB mode (legacy)
     await db.invoices.delete_many({"vehicleId": vehicle_id})
+    await db.operations.delete_many({"vehicleId": vehicle_id})
     await db.vehicles.delete_one({"id": vehicle_id})
     return {"success": True}
 

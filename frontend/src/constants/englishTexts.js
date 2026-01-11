@@ -55,7 +55,7 @@ export const englishTexts = {
   
   'status.status': 'Status',
   'status.open': 'Open',
-  'status.in_progress': 'In Progress',
+  'status.in_progress': 'Repair',
   'status.waiting_for_parts': 'Waiting for Parts',
   'status.completed': 'Completed',
   'status.delivered': 'Delivered',
@@ -83,7 +83,7 @@ export const englishTexts = {
   'dashboard.title': 'Dashboard',
   'dashboard.overview': 'Workshop Overview',
   'dashboard.total_vehicles': 'Total Vehicles',
-  'dashboard.in_progress': 'In Progress',
+  'dashboard.in_progress': 'Repair',
   'dashboard.ready': 'Ready for Delivery',
   'dashboard.technicians': 'Available Technicians',
   'dashboard.new_vehicle': 'New Vehicle',

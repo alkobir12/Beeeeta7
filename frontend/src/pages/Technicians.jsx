@@ -130,16 +130,16 @@ const Technicians = () => {
         </div>
 
         {/* Technicians Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredTechnicians.map(tech => (
-            <div key={tech.id} className="apple-card p-6 hover:shadow-md transition-all duration-200">
+            <div key={tech.id} className="apple-card p-4 sm:p-6 hover:shadow-md transition-all duration-200">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-lg">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-base sm:text-lg">
                     {tech.name[0]}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{tech.name}</h3>
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">{tech.name}</h3>
                     <span className="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium mt-1">
                       {tech.specialty}
                     </span>
@@ -151,28 +151,28 @@ const Technicians = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-4 sm:mb-6">
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Phone size={16} />
                   <span dir="ltr">{tech.phone}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg text-center">
-                  <p className="text-lg font-bold text-gray-900">{tech.activeJobs}</p>
-                  <p className="text-xs text-gray-500">جارية</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
+                <div className="p-2 sm:p-3 bg-gray-50 rounded-lg text-center">
+                  <p className="text-base sm:text-lg font-bold text-gray-900">{tech.activeJobs}</p>
+                  <p className="text-xs text-gray-500">{t('technicians.active_jobs')}</p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg text-center">
-                  <p className="text-lg font-bold text-gray-900">{tech.completedJobs}</p>
-                  <p className="text-xs text-gray-500">مكتملة</p>
+                <div className="p-2 sm:p-3 bg-gray-50 rounded-lg text-center">
+                  <p className="text-base sm:text-lg font-bold text-gray-900">{tech.completedJobs}</p>
+                  <p className="text-xs text-gray-500">{t('technicians.completed_jobs')}</p>
                 </div>
               </div>
 
               {tech.activeJobs === 0 && (
-                <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-sm font-medium">
+                <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-2 rounded-lg text-xs sm:text-sm font-medium">
                   <CheckCircle size={16} />
-                  <span>متاح للعمل</span>
+                  <span>{t('technicians.available')}</span>
                 </div>
               )}
             </div>

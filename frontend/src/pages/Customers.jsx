@@ -117,28 +117,28 @@ const Customers = () => {
             <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {customers.map(customer => (
-              <div key={customer.id} className="apple-card p-5 hover:shadow-md transition-all group">
+              <div key={customer.id} className="apple-card p-4 sm:p-5 hover:shadow-md transition-all group">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-lg group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-base sm:text-lg group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
                       {customer.name[0]}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{customer.name}</h3>
+                      <h3 className="font-bold text-gray-900 text-sm sm:text-base">{customer.name}</h3>
                       <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                         <Phone size={12} />
                         <span dir="ltr">{customer.phone}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openModal(customer)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
-                      <Edit size={16} />
+                  <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openModal(customer)} className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+                      <Edit size={14} className="sm:w-4 sm:h-4" />
                     </button>
-                    <button onClick={() => handleDelete(customer.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500">
-                      <Trash2 size={16} />
+                    <button onClick={() => handleDelete(customer.id)} className="p-1.5 sm:p-2 hover:bg-red-50 rounded-lg text-red-500">
+                      <Trash2 size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>

@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
 # Backend URL from environment
-BACKEND_URL = "https://arabmechanic.preview.emergentagent.com/api"
+BACKEND_URL = "https://mechanic-hub-57.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

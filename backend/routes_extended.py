@@ -817,6 +817,48 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.delete('/operations/{op_id}')
+async def delete_operation(op_id: str):
+    """Delete a single operation"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            supa.operations_delete(op_id)
+            return {"success": True}
+
+        if provider == 'memory' or db is None:
+            ops = _mem_read('operations')
+            ops = [o for o in ops if o.get('id') != op_id]
+            _mem_write('operations', ops)
+            return {"success": True}
+
+        await db.operations.delete_one({'id': op_id})
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete('/operations')
+async def delete_all_operations():
+    """Delete all operations - for cleanup/reset"""
+    try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        if provider == 'supabase':
+            supa = SupabaseService()
+            # Delete all operations
+            supa.client.table('operations').delete().neq('id', '').execute()
+            return {"success": True, "message": "All operations deleted"}
+
+        if provider == 'memory' or db is None:
+            _mem_write('operations', [])
+            return {"success": True, "message": "All operations deleted"}
+
+        result = await db.operations.delete_many({})
+        return {"success": True, "message": f"Deleted {result.deleted_count} operations"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post('/operations')
 async def create_operation(payload: Dict[str, Any] = Body(...)):
     try:

@@ -625,13 +625,27 @@ async def create_technician(technician: Technician):
     if DB_PROVIDER == 'supabase':
         if not supabase_service.client or supabase_service.mock_mode:
             raise HTTPException(status_code=500, detail="Supabase client not configured")
-        data = technician.dict()
-        # Let Supabase generate UUID if not provided
-        if not data.get('id'):
-            data.pop('id', None)
+        # Convert to snake_case for Supabase
+        data = {
+            'name': technician.name,
+            'phone': technician.phone,
+            'specialty': technician.specialty,
+            'active_jobs': technician.activeJobs,
+            'completed_jobs': technician.completedJobs,
+            'rating': technician.rating
+        }
         res = supabase_service.client.table('technicians').insert(data).execute()
         row = (res.data or [{}])[0]
-        return Technician(**row)
+        # Convert back to camelCase
+        return Technician(
+            id=row.get('id'),
+            name=row.get('name'),
+            phone=row.get('phone', ''),
+            specialty=row.get('specialty', ''),
+            activeJobs=row.get('active_jobs', 0),
+            completedJobs=row.get('completed_jobs', 0),
+            rating=row.get('rating', 5.0)
+        )
 
     if DB_PROVIDER == 'memory':
         rows = _mem_read('technicians')

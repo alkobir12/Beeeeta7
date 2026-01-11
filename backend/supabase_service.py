@@ -137,7 +137,20 @@ class SupabaseService:
         if self.mock_mode:
             return []
         res = self.client.table('technicians').select('*').order('created_at', desc=True).execute()
-        return res.data or []
+        rows = res.data or []
+        # Convert snake_case to camelCase
+        out = []
+        for r in rows:
+            out.append({
+                'id': r.get('id'),
+                'name': r.get('name'),
+                'phone': r.get('phone', ''),
+                'specialty': r.get('specialty', ''),
+                'activeJobs': r.get('active_jobs', 0),
+                'completedJobs': r.get('completed_jobs', 0),
+                'rating': float(r.get('rating', 5.0))
+            })
+        return out
 
     # -------------------- Services --------------------
     def services_list(self) -> List[Dict[str, Any]]:

@@ -217,14 +217,14 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`هل أنت متأكد من حذف المركبة ${vehicle?.plateNumber}؟`)) return;
+    if (!window.confirm(t('quick_actions.confirm_delete'))) return;
     try {
       setLoading(true);
       await onDelete();
-      toast({ title: 'تم الحذف', description: 'تم حذف المركبة بنجاح' });
+      toast({ title: t('common.success'), description: t('messages.success_deleted') });
       onClose();
     } catch (error) {
-      toast({ title: 'خطأ', description: 'فشل في حذف المركبة', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally { setLoading(false); }
   };
 

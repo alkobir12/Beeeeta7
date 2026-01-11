@@ -128,6 +128,12 @@ const VehicleDetails = () => {
       toast({ title: t('common.success'), description: t('messages.success_saved') });
       // Refresh data from server
       await fetchData();
+      
+      // Notify other pages (like Dashboard) to refresh
+      window.dispatchEvent(new CustomEvent('vehicleUpdated', { 
+        detail: { vehicleId: id, status, timestamp: Date.now() } 
+      }));
+      
     } catch (error) {
       console.error('Save error:', error);
       toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: "destructive" });

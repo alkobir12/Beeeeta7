@@ -489,7 +489,7 @@ const VehicleDetails = () => {
                           </tbody>
                           <tfoot className="bg-gray-100 border-t-2 border-gray-200">
                             <tr>
-                              <td colSpan="4" className="p-3 text-left font-bold text-gray-700">المجموع الكلي:</td>
+                              <td colSpan="4" className="p-3 text-left font-bold text-gray-700">{t('operations.subtotal')}:</td>
                               <td className="p-3 font-bold text-blue-700 text-sm">
                                 {totalParts.toLocaleString('ar-SA')} ر.س
                               </td>
@@ -734,18 +734,18 @@ const VehicleDetails = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-gray-600">تاريخ الدخول:</span>
+                          <span className="text-gray-600">{t('vehicle_details.entry_date')}:</span>
                           <p className="font-semibold">{new Date(currentVisit.entryDate || currentVisit.entry_date).toLocaleDateString('ar-SA')}</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">القراءة:</span>
+                          <span className="text-gray-600">{t('vehicles.mileage')}:</span>
                           <p className="font-semibold">{currentVisit.mileage?.toLocaleString('ar-SA')} كم</p>
                         </div>
                       </div>
                       
                       {/* Operations for current visit */}
                       <div className="mt-3 pt-3 border-t border-green-200">
-                        <p className="text-xs font-semibold text-gray-700 mb-2">عمليات هذه الزيارة:</p>
+                        <p className="text-xs font-semibold text-gray-700 mb-2">{t('vehicle_details.operations')}:</p>
                         {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).length > 0 ? (
                           <div className="space-y-1">
                             {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).slice(0, 3).map((op, idx) => (
@@ -764,7 +764,7 @@ const VehicleDetails = () => {
 
                   {/* Previous Visits */}
                   <div>
-                    <p className="text-sm font-semibold text-gray-700 mb-2">الزيارات السابقة ({visits.filter(v => v.status === 'completed').length})</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('vehicle_details.visits')} ({visits.filter(v => v.status === 'completed').length})</p>
                     <div className="space-y-2">
                       {visits.filter(v => v.status === 'completed').slice(0, 5).map((visit, idx) => (
                         <div
@@ -780,7 +780,7 @@ const VehicleDetails = () => {
                                   <> - {new Date(visit.exitDate || visit.exit_date).toLocaleDateString('ar-SA')}</>
                                 ) : ''}
                               </p>
-                              <p className="text-gray-500">القراءة: {visit.mileage?.toLocaleString('ar-SA')} كم</p>
+                              <p className="text-gray-500">{t('vehicles.mileage')}: {visit.mileage?.toLocaleString(isRTL ? 'ar-SA' : 'en-US')} {isRTL ? 'كم' : 'km'}</p>
                             </div>
                             <span className="text-xs px-2 py-1 bg-gray-200 rounded">مكتملة</span>
                           </div>

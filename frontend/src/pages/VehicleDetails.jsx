@@ -125,12 +125,12 @@ const VehicleDetails = () => {
         }
       }
       
-      toast({ title: 'تم الحفظ', description: 'تم حفظ جميع التحديثات بنجاح' });
-      // Only fetch after successful save to sync with server
+      toast({ title: t('common.success'), description: t('messages.success_saved') });
+      // Refresh data from server
       await fetchData();
     } catch (error) {
       console.error('Save error:', error);
-      toast({ title: "خطأ", description: "فشل الحفظ", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: "destructive" });
     } finally {
       setLoading(false);
     }

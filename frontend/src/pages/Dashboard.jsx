@@ -38,10 +38,18 @@ const Dashboard = () => {
       }
     };
     
+    // Listen for vehicle updates from other pages (VehicleDetails, VehicleQuickActions)
+    const handleVehicleUpdated = () => {
+      console.log('🔄 Vehicle updated event received - refreshing dashboard');
+      fetchData();
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('vehicleUpdated', handleVehicleUpdated);
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('vehicleUpdated', handleVehicleUpdated);
     };
   }, []);
 

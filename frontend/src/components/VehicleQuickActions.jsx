@@ -43,6 +43,12 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     try {
       setLoading(true);
       await onStatusUpdate(newStatus);
+      
+      // Notify Dashboard and other pages to refresh
+      window.dispatchEvent(new CustomEvent('vehicleUpdated', { 
+        detail: { vehicleId: vehicle?.id, status: newStatus, timestamp: Date.now() } 
+      }));
+      
       toast({ title: t('common.success'), description: t('messages.success_updated') });
       onClose();
     } catch (error) {

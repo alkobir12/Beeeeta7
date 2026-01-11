@@ -34,5 +34,41 @@
     "filePath": "/app/backend/uploads/vehicles/641b1f96-6a55-46db-80e7-a76e3d1f394d/test_invoice.txt",
     "uploadedAt": "2026-01-06T19:12:35.813262+00:00",
     "uploadedBy": "system"
+  },
+  {
+    "id": "869fa6ca-368f-4507-a290-92bc5f388906",
+    "vehicleId": "1a8d6eba-27e8-4603-a8ef-876a2f664167",
+    "filename": "f59f1fb6-cadf-4b0b-932a-e183aabd55a0.jpeg",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/1a8d6eba-27e8-4603-a8ef-876a2f664167/f59f1fb6-cadf-4b0b-932a-e183aabd55a0.jpeg",
+    "uploadedAt": "2026-01-11T20:02:55.828827+00:00",
+    "uploadedBy": "system"
+  },
+  {
+    "id": "b190e546-81e9-4031-a789-a84b925a31db",
+    "vehicleId": "eceae870-0427-4bc9-9a08-ae3e37ac4f5e",
+    "filename": "c86690ee-1c84-4342-8e3e-3778c2960807.jpeg",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/eceae870-0427-4bc9-9a08-ae3e37ac4f5e/c86690ee-1c84-4342-8e3e-3778c2960807.jpeg",
+    "uploadedAt": "2026-01-11T20:08:54.887951+00:00",
+    "uploadedBy": "system"
+  },
+  {
+    "id": "17d50574-27b8-489d-a158-c2c90e3b5675",
+    "vehicleId": "fc0e7716-e24d-4aeb-a45f-3a1a25fbeb46",
+    "filename": "bb5fa9b5-4d7e-45f5-80f2-392358d769e0.jpeg",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/fc0e7716-e24d-4aeb-a45f-3a1a25fbeb46/bb5fa9b5-4d7e-45f5-80f2-392358d769e0.jpeg",
+    "uploadedAt": "2026-01-11T20:11:27.894941+00:00",
+    "uploadedBy": "system"
+  },
+  {
+    "id": "38b9780a-6594-4aad-a18e-2b434da79afc",
+    "vehicleId": "3bd7dfd4-e831-4583-8399-e9d86aa9275b",
+    "filename": "7f0cb065-fe89-47e0-9e89-c81df8d85cd6.jpeg",
+    "fileType": "diagnostic",
+    "filePath": "/app/backend/uploads/vehicles/3bd7dfd4-e831-4583-8399-e9d86aa9275b/7f0cb065-fe89-47e0-9e89-c81df8d85cd6.jpeg",
+    "uploadedAt": "2026-01-11T20:13:18.920375+00:00",
+    "uploadedBy": "system"
   }
 ]

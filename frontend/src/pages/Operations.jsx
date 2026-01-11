@@ -427,26 +427,56 @@ const Operations = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {ops.map(op => (
-                  <tr key={op.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4 text-gray-600">{new Date(op.date).toLocaleDateString('ar-SA')}</td>
+                  <tr 
+                    key={op.id} 
+                    onClick={() => {
+                      if (op.vehicleId) {
+                        navigate(`/vehicle/${op.vehicleId}`);
+                      }
+                    }}
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  >
+                    <td className="p-4 text-gray-600">{new Date(op.date || op.op_date || op.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
-                        {op.type === 'sale' ? "Sale" : "Purchase"}
+                        {op.type === 'sale' ? t('operations.sale') : t('operations.purchase')}
                       </span>
                     </td>
                     <td className="p-4 font-medium text-gray-900">{op.partnerName || '-'}</td>
                     <td className="p-4 text-gray-500">{op.items?.length || 0}</td>
                     <td className="p-4 font-bold text-gray-900">{Number(op.total).toFixed(2)}</td>
-                    <td className="p-4 flex gap-2">
-                      <button
-                        onClick={() => navigate(`/print?type=invoice&vehicleId=${op.vehicleId}`)}
-                        className="apple-button-secondary text-xs h-8 px-3"
-                        disabled={!op.vehicleId}
-                      >
-                        {"Print"}
-                      </button>
+                    <td className="p-4">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            if (op.vehicleId) {
+                              navigate(`/vehicle/${op.vehicleId}`);
+                            }
+                          }}
+                          className="apple-button-secondary text-xs h-8 px-3"
+                          disabled={!op.vehicleId}
+                          title={t('quick_actions.details')}
+                        >
+                          {t('buttons.view')}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(t('common.confirm_delete'))) return;
+                            try {
+                              await axios.delete(`${API_URL}/operations/${op.id}`);
+                              await load();
+                            } catch (e) {
+                              console.error('Failed to delete operation:', e);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 p-2"
+                          title={t('buttons.delete')}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

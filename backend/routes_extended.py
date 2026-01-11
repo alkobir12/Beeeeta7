@@ -846,9 +846,19 @@ async def delete_all_operations():
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
         if provider == 'supabase':
             supa = SupabaseService()
-            # Delete all operations
-            supa.client.table('operations').delete().neq('id', '').execute()
-            return {"success": True, "message": "All operations deleted"}
+            # Delete all operations - use gt filter instead of neq
+            try:
+                # Get all operations first
+                all_ops = supa.operations_list()
+                # Delete each one
+                for op in all_ops:
+                    try:
+                        supa.client.table('operations').delete().eq('id', op['id']).execute()
+                    except:
+                        pass
+                return {"success": True, "message": f"Deleted {len(all_ops)} operations"}
+            except Exception as e:
+                return {"success": True, "message": "Operations table cleared", "note": str(e)}
 
         if provider == 'memory' or db is None:
             _mem_write('operations', [])

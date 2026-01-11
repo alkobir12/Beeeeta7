@@ -72,7 +72,7 @@ const translations = {
   status: {
     status: "الحالة",
     open: "مفتوح",
-    in_progress: "قيد التنفيذ",
+    in_progress: "إصلاح",
     waiting_for_parts: "بانتظار قطع الغيار",
     completed: "مكتمل",
     delivered: "تم التسليم",
@@ -359,7 +359,7 @@ const translations = {
     title: "لوحة التحكم",
     overview: "نظرة عامة على الورشة",
     total_vehicles: "إجمالي المركبات",
-    in_progress: "قيد العمل",
+    in_progress: "إصلاح",
     ready: "جاهز للتسليم",
     technicians: "الفنيين المتاحين",
     new_vehicle: "استقبال مركبة",

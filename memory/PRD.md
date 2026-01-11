@@ -27,18 +27,36 @@
 ### الجلسة الحالية (11 يناير 2025)
 
 #### ✅ إصلاح التحديث الفوري للوحة التحكم (P0)
-**المشكلة**: عند تغيير حالة المركبة من صفحة التفاصيل أو القائمة السريعة، لا تتحدث إحصائيات لوحة التحكم فوراً.
+**المشكلة**: عند تغيير حالة المركبة، لا تتحدث إحصائيات لوحة التحكم فوراً.
 
 **الحل المطبق**:
 1. أضفت مستمع للحدث `vehicleUpdated` في `Dashboard.jsx`
 2. أضفت إرسال الحدث في `VehicleQuickActions.jsx` بعد تغيير الحالة
-3. `VehicleDetails.jsx` كان يرسل الحدث مسبقاً
+3. أضفت الحالات المفقودة (`repair`, `approved`, `quotation`) في `STATUS_CONFIG`
+
+#### ✅ إصلاح مشكلة حفظ فني جديد
+**المشكلة**: خطأ 500 عند محاولة إضافة فني جديد.
+
+**السبب**: عدم تطابق أسماء الحقول بين الكود (camelCase) وقاعدة بيانات Supabase (snake_case).
+
+**الحل**:
+1. تحديث دالة `create_technician` في `server.py` لتحويل الأسماء
+2. تحديث دالة `technicians_list` في `supabase_service.py` لتحويل الأسماء
+
+#### ✅ تحسين دعم الجوال (Responsive Design)
+- تحسين الشريط الجانبي (Sidebar) ليظهر بشكل صحيح على الجوال
+- تحسين صفحة الفنيين لتعمل بشكل أفضل على الشاشات الصغيرة
+- تحسين صفحة العملاء والنوافذ المنبثقة
+- جعل أزرار التحرير والحذف مرئية دائماً على الجوال
 
 **الملفات المعدلة**:
-- `/app/frontend/src/pages/Dashboard.jsx`
-- `/app/frontend/src/components/VehicleQuickActions.jsx`
-
-**حالة الاختبار**: ✅ تم التحقق يدوياً - الإحصائيات تتحدث فوراً
+- `/app/frontend/src/pages/Dashboard.jsx` - إضافة STATUS_CONFIG للحالات المفقودة
+- `/app/frontend/src/components/VehicleQuickActions.jsx` - إرسال حدث التحديث
+- `/app/frontend/src/components/Sidebar.jsx` - تحسين العرض على الجوال
+- `/app/frontend/src/pages/Technicians.jsx` - تحسين responsive
+- `/app/frontend/src/pages/Customers.jsx` - تحسين responsive
+- `/app/backend/server.py` - إصلاح إضافة الفنيين
+- `/app/backend/supabase_service.py` - تحويل أسماء الحقول
 
 ### الجلسات السابقة
 - ✅ ترحيل كامل لنظام الترجمة إلى `react-i18next`
@@ -53,7 +71,7 @@
 ## المهام المعلقة
 
 ### P1 - أولوية عالية
-- [ ] التحقق من تغطية الترجمة الكاملة (بعض النصوص قد لا تزال غير مترجمة)
+- [ ] التحقق من تغطية الترجمة الكاملة
 - [ ] اختبار نظام الزيارات بشكل كامل
 
 ### P2 - أولوية متوسطة
@@ -70,42 +88,51 @@
 ```
 /app
 ├── backend/
-│   ├── server.py           # API الرئيسي + cascade delete
-│   └── routes_extended.py  # مسارات إضافية
+│   ├── server.py           # API الرئيسي + cascade delete + إضافة الفنيين
+│   ├── supabase_service.py # تحويل أسماء الحقول
+│   └── models.py           # نماذج البيانات
 └── frontend/
     ├── src/
     │   ├── components/
-    │   │   ├── Sidebar.jsx
-    │   │   ├── VehicleQuickActions.jsx  # معدل - يرسل vehicleUpdated event
-    │   │   └── LanguageToggleButton.jsx
+    │   │   ├── Sidebar.jsx             # محسن للجوال
+    │   │   ├── VehicleQuickActions.jsx # يرسل vehicleUpdated event
+    │   │   └── Layout.jsx
     │   ├── pages/
-    │   │   ├── Dashboard.jsx            # معدل - يستمع لـ vehicleUpdated event
-    │   │   ├── VehicleDetails.jsx       # يرسل vehicleUpdated event
+    │   │   ├── Dashboard.jsx           # STATUS_CONFIG محدث
+    │   │   ├── VehicleDetails.jsx
+    │   │   ├── Technicians.jsx         # محسن للجوال
+    │   │   ├── Customers.jsx           # محسن للجوال
     │   │   └── Operations.jsx
-    │   ├── locales/
-    │   │   ├── ar.json
-    │   │   └── en.json
-    │   ├── i18n.js                      # إعداد react-i18next
-    │   └── translations.js              # الترجمات العربية
+    │   ├── i18n.js
+    │   └── translations.js
 ```
 
 ---
 
 ## ملاحظات تقنية
 
+### تحويل أسماء الحقول (Supabase)
+```python
+# Backend -> Supabase (camelCase -> snake_case)
+data = {
+    'active_jobs': technician.activeJobs,
+    'completed_jobs': technician.completedJobs
+}
+
+# Supabase -> Backend (snake_case -> camelCase)
+return {
+    'activeJobs': row.get('active_jobs', 0),
+    'completedJobs': row.get('completed_jobs', 0)
+}
+```
+
 ### نظام التحديث الفوري (Real-time Updates)
 ```javascript
-// إرسال الحدث (VehicleDetails, VehicleQuickActions)
+// إرسال الحدث
 window.dispatchEvent(new CustomEvent('vehicleUpdated', { 
   detail: { vehicleId, status, timestamp: Date.now() } 
 }));
 
-// الاستماع للحدث (Dashboard)
+// الاستماع للحدث
 window.addEventListener('vehicleUpdated', () => fetchData());
 ```
-
-### نظام الترجمة
-- المكتبة: `react-i18next`
-- الكشف عن اللغة: `i18next-browser-languagedetector`
-- الحفظ: `localStorage`
-- الملفات: `/src/translations.js` (عربي) + `/src/constants/englishTexts.js` (إنجليزي)

@@ -169,29 +169,29 @@ const Customers = () => {
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {editingCustomer ? "Edit" : "Add Customer"}
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+              <div className="p-4 sm:p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {editingCustomer ? t('buttons.edit') : t('customers.add_customer')}
                 </h2>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">{"Name"}</label>
+                    <label className="text-sm font-medium text-gray-700">{t('customers.name')}</label>
                     <input required className="apple-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">{"Phone"}</label>
+                    <label className="text-sm font-medium text-gray-700">{t('customers.phone')}</label>
                     <input required className="apple-input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{"Email"}</label>
+                  <label className="text-sm font-medium text-gray-700">{t('customers.email')}</label>
                   <input type="email" className="apple-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{"Address"}</label>
+                  <label className="text-sm font-medium text-gray-700">{t('customers.address')}</label>
                   <input className="apple-input" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                 </div>
 

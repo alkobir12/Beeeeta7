@@ -230,13 +230,13 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <nav className="px-4 pb-32 overflow-y-auto flex-1">
-          <div className="space-y-1">
+        <nav className="px-4 overflow-y-auto flex-1 min-h-0">
+          <div className="space-y-1 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>
         </nav>
 
-        <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-border bg-card/95 backdrop-blur-md space-y-2 z-20">
+        <div className="flex-shrink-0 p-4 border-t border-border bg-card/95 backdrop-blur-md space-y-2">
           <LanguageToggleButton />
           <button
             onClick={handleLogout}

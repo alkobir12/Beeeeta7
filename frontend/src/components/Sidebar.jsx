@@ -236,7 +236,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </nav>
 
-        <div className="flex-shrink-0 p-4 border-t border-border bg-card/95 backdrop-blur-md space-y-2">
+        <div className="flex-shrink-0 p-4 pb-20 border-t border-border bg-card space-y-2">
           <LanguageToggleButton />
           <button
             onClick={handleLogout}

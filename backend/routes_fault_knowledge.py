@@ -17,10 +17,20 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
 supabase_client = None
+use_supabase_faults = False
+
 try:
     from supabase import create_client
     if SUPABASE_URL and SUPABASE_KEY:
         supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Test if table exists
+        try:
+            supabase_client.table('fault_knowledge').select('id').limit(1).execute()
+            use_supabase_faults = True
+            print("✅ fault_knowledge table found in Supabase")
+        except Exception as e:
+            print(f"⚠️ fault_knowledge table not found, using in-memory: {e}")
+            use_supabase_faults = False
 except Exception as e:
     print(f"Supabase not configured for fault knowledge: {e}")
 

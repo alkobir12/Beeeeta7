@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, X, Paperclip, Minimize2 } from 'lucide-react';
+import { Send, Loader2, X, Paperclip, Minimize2, Database, Search, BookOpen, ExternalLink, Mic, Video } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,17 +15,21 @@ const DieselExpertChat = () => {
     {
       role: 'assistant',
       content: isArabic 
-        ? 'مرحباً! أنا خبير صيانة الديزل. كيف يمكنني مساعدتك؟ 🔧'
-        : 'Hello! I\'m a diesel maintenance expert. How can I help you? 🔧'
+        ? 'مرحباً! أنا خبير صيانة الديزل المتصل بقاعدة المعرفة. يمكنني:\n\n🔍 البحث في قاعدة الأعطال المحفوظة\n📚 الاقتباس من حلول سابقة\n🌐 البحث على الإنترنت\n📷 تحليل الصور والفيديو\n\nكيف يمكنني مساعدتك؟ 🔧'
+        : 'Hello! I\'m the diesel expert connected to the knowledge base. I can:\n\n🔍 Search saved faults\n📚 Quote previous solutions\n🌐 Search the web\n📷 Analyze images/videos\n\nHow can I help? 🔧'
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [quickResults, setQuickResults] = useState([]);
+  const [showQuickResults, setShowQuickResults] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}`);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,6 +38,37 @@ const DieselExpertChat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Quick search as user types
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (input.length >= 3) {
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const response = await axios.get(`${API_URL}/diesel-expert/quick-search`, {
+            params: { q: input }
+          });
+          if (response.data.results?.length > 0) {
+            setQuickResults(response.data.results);
+            setShowQuickResults(true);
+          } else {
+            setShowQuickResults(false);
+          }
+        } catch (e) {
+          setShowQuickResults(false);
+        }
+      }, 500);
+    } else {
+      setShowQuickResults(false);
+    }
+    
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [input]);
 
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
@@ -58,15 +93,13 @@ const DieselExpertChat = () => {
   };
 
   const removeAttachment = (index) => {
-    const newAttachments = attachments.filter((_, i) => i !== index);
-    setAttachments(newAttachments);
+    setAttachments(attachments.filter((_, i) => i !== index));
   };
 
   const handleSend = async () => {
     if ((!input.trim() && attachments.length === 0) || loading) return;
 
     const textContent = input.trim();
-    // For display in UI, we might want to append attachment info
     let displayContent = textContent;
     if (attachments.length > 0) {
       displayContent += (displayContent ? '\n\n' : '') + `[${isArabic ? 'المرفقات' : 'Attachments'}: ${attachments.map(a => a.name).join(', ')}]`;
@@ -76,13 +109,12 @@ const DieselExpertChat = () => {
     setInput('');
     setAttachments([]);
     setLoading(true);
+    setShowQuickResults(false);
 
-    // Add to local state for display
     const newMessages = [...messages, { role: 'user', content: displayContent }];
     setMessages(newMessages);
 
     try {
-      // Prepare payload with explicit attachments
       const payloadMessages = [...messages, { 
         role: 'user', 
         content: textContent || (isArabic ? 'تحليل المرفقات' : 'Analyze attachments'),
@@ -93,14 +125,32 @@ const DieselExpertChat = () => {
         }))
       }];
 
-      const response = await axios.post(`${API_URL}/diesel-chat`, {
-        messages: payloadMessages
+      // Use the enhanced diesel expert endpoint
+      const response = await axios.post(`${API_URL}/diesel-expert`, {
+        messages: payloadMessages,
+        sessionId
       });
 
       if (response.data.success) {
+        let assistantContent = response.data.response;
+        
+        // Add sources info if available
+        if (response.data.sources?.length > 0) {
+          assistantContent += `\n\n📚 **${isArabic ? 'المصادر من قاعدة المعرفة' : 'Knowledge Base Sources'}:**`;
+          response.data.sources.forEach((src, i) => {
+            assistantContent += `\n${i + 1}. ${src.title}`;
+          });
+        }
+        
+        if (response.data.dtc_codes_found?.length > 0) {
+          assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;
+        }
+        
         setMessages([...newMessages, {
           role: 'assistant',
-          content: response.data.response
+          content: assistantContent,
+          sources: response.data.sources,
+          knowledgeUsed: response.data.knowledge_used
         }]);
       } else {
         throw new Error('Failed to get response');
@@ -118,6 +168,11 @@ const DieselExpertChat = () => {
     }
   };
 
+  const handleQuickResultClick = (result) => {
+    setInput(`${isArabic ? 'معلومات عن العطل' : 'Info about fault'}: ${result.title} - ${result.symptom}`);
+    setShowQuickResults(false);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -130,15 +185,11 @@ const DieselExpertChat = () => {
       <div className="fixed bottom-6 left-6 z-50">
         <button
           onClick={() => setIsMinimized(false)}
-          className="bg-gradient-to-r from-emergent-green via-emergent-green to-emergent-green-dark text-emergent-black rounded-full p-3 shadow-glow-lg hover:scale-105 transition-transform animate-glow-pulse"
+          className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-full p-3 shadow-lg hover:scale-105 transition-transform"
         >
           <div className="flex items-center gap-2">
-            <img 
-              src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-              alt="Expert"
-              className="w-8 h-8 rounded-full border-2 border-white"
-            />
-            <span className="text-sm font-bold">خبير الديزل</span>
+            <Database size={20} />
+            <span className="text-sm font-bold">{isArabic ? 'خبير الديزل' : 'Diesel Expert'}</span>
           </div>
         </button>
       </div>
@@ -146,84 +197,87 @@ const DieselExpertChat = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="bg-gradient-to-br from-emergent-black via-emergent-dark to-emergent-black rounded-2xl shadow-2xl border border-border w-full max-w-2xl h-[600px] flex flex-col overflow-hidden">
-        {/* Header - Emergent Style */}
-        <div className="bg-gradient-to-r from-emergent-green/90 via-emergent-green to-emergent-green/90 px-3 py-2 flex items-center justify-between shadow-glow">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-2xl h-[90vh] sm:h-[600px] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-primary/90 to-primary px-3 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <img 
-                src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-                alt="Diesel Expert"
-                className="w-8 h-8 rounded-full border-2 border-white"
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-white rounded-full border border-emergen t-green animate-glow-pulse"></div>
+            <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center">
+              <Database className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-emergent-black leading-tight">
-                {isArabic ? 'خبير الديزل 24/7' : 'Diesel Expert 24/7'}
+              <h2 className="text-sm font-bold text-primary-foreground leading-tight">
+                {isArabic ? 'خبير الديزل المتكامل' : 'Integrated Diesel Expert'}
               </h2>
-              <p className="text-xs text-emergent-black/70 leading-tight">
-                {isArabic ? 'تويوتا • إيسوزو • ميتسوبيشي' : 'Toyota • Isuzu • Mitsubishi'}
+              <p className="text-xs text-primary-foreground/70 leading-tight flex items-center gap-1">
+                <BookOpen size={10} />
+                {isArabic ? 'متصل بقاعدة المعرفة' : 'Connected to Knowledge Base'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => navigate('/fault-knowledge')}
+              className="text-primary-foreground/80 hover:text-primary-foreground p-1 rounded transition-colors"
+              title={isArabic ? 'قاعدة المعرفة' : 'Knowledge Base'}
+            >
+              <Database className="w-4 h-4" />
+            </button>
+            <button
               onClick={() => setIsMinimized(true)}
-              className="text-emergent-black/80 hover:text-emergent-black p-1 rounded transition-colors"
-              title={isArabic ? 'تصغير' : 'Minimize'}
+              className="text-primary-foreground/80 hover:text-primary-foreground p-1 rounded transition-colors"
             >
               <Minimize2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(-1)}
-              className="text-emergent-black/80 hover:text-emergent-black p-1 rounded transition-colors"
-              title={isArabic ? 'إغلاق' : 'Close'}
+              className="text-primary-foreground/80 hover:text-primary-foreground p-1 rounded transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Messages - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 bg-emergent-black">
-          <div className="space-y-2">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 bg-background">
+          <div className="space-y-3">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
-                  <img 
-                    src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-                    alt="Expert"
-                    className="w-6 h-6 rounded-full border border-emergent-green flex-shrink-0 shadow-glow-sm"
-                  />
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Database className="w-3 h-3 text-primary" />
+                  </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                  className={`max-w-[85%] rounded-xl px-3 py-2 ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-br from-emergent-green to-emergent-green-dark text-emergent-black shadow-glow'
-                      : 'bg-emergent-dark text-foreground border border-border'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground border border-border'
                   }`}
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                  {msg.knowledgeUsed && (
+                    <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-primary">
+                      <BookOpen size={12} />
+                      {isArabic ? 'تم الاستعانة بقاعدة المعرفة' : 'Knowledge base referenced'}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             
             {loading && (
               <div className="flex gap-2 justify-start">
-                <img 
-                  src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-                  alt="Expert"
-                  className="w-6 h-6 rounded-full border border-emergent-green shadow-glow-sm"
-                />
-                <div className="bg-emergent-dark rounded-lg px-3 py-2 border border-border">
+                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Database className="w-3 h-3 text-primary" />
+                </div>
+                <div className="bg-muted rounded-xl px-3 py-2 border border-border">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin text-emergent-green" />
-                    <span className="text-sm">{isArabic ? 'جاري التحليل...' : 'Analyzing...'}</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm">{isArabic ? 'جاري البحث والتحليل...' : 'Searching & analyzing...'}</span>
                   </div>
                 </div>
               </div>
@@ -233,14 +287,53 @@ const DieselExpertChat = () => {
           </div>
         </div>
 
-        {/* Attachments Preview - Very Compact */}
+        {/* Quick Results */}
+        {showQuickResults && quickResults.length > 0 && (
+          <div className="border-t border-border bg-muted/50 px-3 py-2 max-h-32 overflow-y-auto">
+            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+              <Search size={12} />
+              {isArabic ? 'نتائج سريعة من قاعدة المعرفة:' : 'Quick results from knowledge base:'}
+            </p>
+            <div className="space-y-1">
+              {quickResults.map((result, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleQuickResultClick(result)}
+                  className="w-full text-right p-2 bg-card rounded-lg border border-border hover:border-primary/50 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">{result.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{result.symptom}</p>
+                  {result.dtc_codes?.length > 0 && (
+                    <div className="flex gap-1 mt-1">
+                      {result.dtc_codes.slice(0, 2).map((code, i) => (
+                        <span key={i} className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded font-mono">
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Attachments Preview */}
         {attachments.length > 0 && (
-          <div className="border-t border-border bg-emergent-dark px-3 py-1.5">
+          <div className="border-t border-border bg-muted/30 px-3 py-1.5">
             <div className="flex gap-1.5 flex-wrap">
               {attachments.map((att, idx) => (
-                <div key={idx} className="relative bg-emergent-gray rounded p-1.5 border border-border flex items-center gap-1.5 hover:border-primary transition-colors">
+                <div key={idx} className="relative bg-card rounded p-1.5 border border-border flex items-center gap-1.5">
                   {att.type.startsWith('image/') ? (
                     <img src={att.url} alt={att.name} className="w-8 h-8 object-cover rounded" />
+                  ) : att.type.startsWith('audio/') ? (
+                    <div className="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center">
+                      <Mic className="w-4 h-4 text-blue-400" />
+                    </div>
+                  ) : att.type.startsWith('video/') ? (
+                    <div className="w-8 h-8 bg-purple-500/20 rounded flex items-center justify-center">
+                      <Video className="w-4 h-4 text-purple-400" />
+                    </div>
                   ) : (
                     <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
                       <Paperclip className="w-4 h-4 text-muted-foreground" />
@@ -256,14 +349,14 @@ const DieselExpertChat = () => {
           </div>
         )}
 
-        {/* Input - Very Compact */}
-        <div className="border-t border-border bg-emergent-dark px-3 py-2">
+        {/* Input */}
+        <div className="border-t border-border bg-card px-3 py-2">
           <div className="flex gap-2 items-center">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="bg-emergent-gray hover:bg-muted disabled:bg-emergent-gray/50 text-foreground rounded-lg p-1.5 transition-colors hover:shadow-glow-sm"
-              title={isArabic ? 'إرفاق ملف' : 'Attach file'}
+              className="bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground rounded-lg p-1.5 transition-colors"
+              title={isArabic ? 'إرفاق صورة/فيديو/صوت' : 'Attach image/video/audio'}
             >
               <Paperclip className="w-4 h-4" />
             </button>
@@ -271,7 +364,7 @@ const DieselExpertChat = () => {
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,video/*,audio/*"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -280,16 +373,51 @@ const DieselExpertChat = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={isArabic ? 'اكتب سؤالك... (P0087، ضغط وقود)' : 'Ask... (P0087, fuel pressure)'}
-              className="flex-1 bg-input border border-border rounded-lg px-3 py-1.5 text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              placeholder={isArabic ? 'اكتب سؤالك أو كود العطل (P0087)...' : 'Ask or enter DTC code (P0087)...'}
+              className="flex-1 bg-input border border-border rounded-lg px-3 py-1.5 text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               disabled={loading}
             />
             <button
               onClick={handleSend}
               disabled={(!input.trim() && attachments.length === 0) || loading}
-              className="bg-gradient-to-br from-emergent-green to-emergent-green-dark hover:shadow-glow disabled:from-muted disabled:to-muted text-emergent-black rounded-lg px-3 py-1.5 transition-all disabled:cursor-not-allowed font-medium"
+              className="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground rounded-lg px-3 py-1.5 transition-all disabled:cursor-not-allowed font-medium"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
+          
+          {/* Quick Actions */}
+          <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setInput('P0087')}
+              className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-full whitespace-nowrap hover:bg-red-500/30"
+            >
+              P0087
+            </button>
+            <button
+              onClick={() => setInput('P0234')}
+              className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-full whitespace-nowrap hover:bg-red-500/30"
+            >
+              P0234
+            </button>
+            <button
+              onClick={() => setInput(isArabic ? 'مشكلة التيربو' : 'Turbo issue')}
+              className="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full whitespace-nowrap hover:bg-blue-500/30"
+            >
+              {isArabic ? 'تيربو' : 'Turbo'}
+            </button>
+            <button
+              onClick={() => setInput(isArabic ? 'ضغط الوقود منخفض' : 'Low fuel pressure')}
+              className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full whitespace-nowrap hover:bg-yellow-500/30"
+            >
+              {isArabic ? 'ضغط الوقود' : 'Fuel Pressure'}
+            </button>
+            <button
+              onClick={() => navigate('/fault-knowledge')}
+              className="text-xs px-2 py-1 bg-primary/20 text-primary rounded-full whitespace-nowrap hover:bg-primary/30 flex items-center gap-1"
+            >
+              <Database size={10} />
+              {isArabic ? 'قاعدة المعرفة' : 'Knowledge Base'}
             </button>
           </div>
         </div>

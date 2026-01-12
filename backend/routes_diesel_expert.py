@@ -5,29 +5,17 @@ from fastapi import APIRouter, HTTPException, Body, UploadFile, File, Form
 from typing import List, Dict, Any, Optional
 import os
 import uuid
-import json
+import re
 import base64
-import httpx
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+
+# Import fault knowledge database
+from routes_fault_knowledge import get_fault_knowledge_db
 
 router = APIRouter(prefix="/api")
 
 # Load Keys
 EMERGENT_LLM_KEY = os.getenv("EMERGENT_LLM_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
-
-# Supabase client for fault knowledge
-supabase_client = None
-try:
-    from supabase import create_client
-    if SUPABASE_URL and SUPABASE_KEY:
-        supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    print(f"Supabase not configured: {e}")
-
-# In-memory fallback
-fault_knowledge_db = []
 
 DIESEL_EXPERT_SYSTEM_PROMPT = """أنت خبير صيانة سيارات الديزل متخصص في تويوتا وإيسوزو وميتسوبيشي. تتميز بـ:
 - تحليل Datastream و Livestream

@@ -47,7 +47,7 @@ async def list_faults(
 ):
     """قائمة الأعطال المحفوظة"""
     try:
-        if supabase_client:
+        if use_supabase_faults:
             query = supabase_client.table('fault_knowledge').select('*').order('created_at', desc=True).limit(limit)
             if vehicle_type:
                 query = query.ilike('vehicle_type', f'%{vehicle_type}%')

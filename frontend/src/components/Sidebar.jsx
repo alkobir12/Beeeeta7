@@ -58,6 +58,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
     { path: '/diesel-expert', label: '🔧 خبير الديزل', icon: Bot, enabled: true, permission: 'canManageVehicles' },
+    { path: '/fault-knowledge', label: '📚 قاعدة المعرفة', icon: Archive, enabled: true, permission: 'canManageVehicles' },
     { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {
       group: true,

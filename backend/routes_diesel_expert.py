@@ -42,36 +42,25 @@ DIESEL_EXPERT_SYSTEM_PROMPT = """أنت خبير صيانة سيارات الد�
 async def search_fault_knowledge(query: str, dtc_code: str = None) -> List[Dict]:
     """البحث في قاعدة المعرفة المحلية"""
     try:
-        if supabase_client:
-            # Search in Supabase
-            conditions = []
-            if query:
-                conditions.append(f"symptom_description.ilike.%{query}%")
-                conditions.append(f"title.ilike.%{query}%")
-                conditions.append(f"solution.ilike.%{query}%")
-            if dtc_code:
-                conditions.append(f"dtc_codes.cs.{{{dtc_code}}}")
-            
-            if conditions:
-                result = supabase_client.table('fault_knowledge').select('*').or_(','.join(conditions)).limit(5).execute()
-                return result.data or []
-        else:
-            # In-memory search
-            results = []
-            query_lower = query.lower() if query else ""
-            for fault in fault_knowledge_db:
-                score = 0
-                if query_lower in fault.get('symptom_description', '').lower():
-                    score += 2
-                if query_lower in fault.get('title', '').lower():
-                    score += 2
-                if query_lower in fault.get('solution', '').lower():
-                    score += 1
-                if dtc_code and dtc_code in fault.get('dtc_codes', []):
-                    score += 3
-                if score > 0:
-                    results.append(fault)
-            return results[:5]
+        fault_knowledge_db = get_fault_knowledge_db()
+        results = []
+        query_lower = query.lower() if query else ""
+        
+        for fault in fault_knowledge_db:
+            score = 0
+            if query_lower and query_lower in fault.get('symptom_description', '').lower():
+                score += 2
+            if query_lower and query_lower in fault.get('title', '').lower():
+                score += 2
+            if query_lower and query_lower in fault.get('solution', '').lower():
+                score += 1
+            if dtc_code and dtc_code.upper() in fault.get('dtc_codes', []):
+                score += 3
+            if score > 0:
+                results.append({**fault, 'score': score})
+        
+        results.sort(key=lambda x: x.get('score', 0), reverse=True)
+        return results[:5]
     except Exception as e:
         print(f"Knowledge search error: {e}")
         return []

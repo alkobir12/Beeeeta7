@@ -49,6 +49,8 @@ from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_ge
 from routes_payroll import router as payroll_router, set_db as set_db_payroll
 # Import Diesel Chat Routes
 from routes_diesel_chat import router as diesel_chat_router
+# Import Diesel Expert (Enhanced) Routes
+from routes_diesel_expert import router as diesel_expert_router
 # Import Fault Knowledge Routes
 from routes_fault_knowledge import router as fault_knowledge_router
 

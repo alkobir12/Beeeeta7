@@ -114,6 +114,7 @@ function App() {
                       <Route path="/print" element={<DocumentPrint />} />
                       <Route path="/diesel-expert" element={<DieselExpertChat />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
+                      <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                       <Route path="/chat" element={<DieselExpertChat />} />
                     </Routes>
                   </Layout>

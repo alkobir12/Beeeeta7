@@ -54,7 +54,7 @@ async def diesel_chat(payload: Dict[str, Any] = Body(...)):
             api_key=api_key,
             session_id=session_id,
             system_message=DIESEL_EXPERT_SYSTEM_PROMPT
-        ).with_model("openai", "gpt-4o") # Using GPT-4o for best vision/reasoning
+        ).with_model("openai", "gpt-4o-mini") # Using GPT-4o-mini for faster responses
         
         # We only send the LAST user message to the LLM for now to keep it simple with this library
         # But for history, we should reconstruct.

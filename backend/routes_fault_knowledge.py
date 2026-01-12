@@ -93,7 +93,7 @@ async def add_fault(
             file_ext = media_file.filename.split('.')[-1].lower()
             media_type = "audio" if file_ext in ['mp3', 'wav', 'ogg', 'm4a'] else "video" if file_ext in ['mp4', 'mov', 'avi', 'webm'] else "image"
             
-            if supabase_client:
+            if use_supabase_faults:
                 # Upload to Supabase Storage
                 file_path = f"faults/{fault_id}/{media_file.filename}"
                 try:
@@ -129,7 +129,7 @@ async def add_fault(
             'usage_count': 0
         }
         
-        if supabase_client:
+        if use_supabase_faults:
             result = supabase_client.table('fault_knowledge').insert(fault_data).execute()
             return {"success": True, "fault": result.data[0] if result.data else fault_data}
         else:
@@ -155,7 +155,7 @@ async def search_similar_faults(
     try:
         results = []
         
-        if supabase_client:
+        if use_supabase_faults:
             query = supabase_client.table('fault_knowledge').select('*')
             
             # Build search query
@@ -215,7 +215,7 @@ async def search_similar_faults(
 async def get_fault(fault_id: str):
     """جلب تفاصيل عطل محدد"""
     try:
-        if supabase_client:
+        if use_supabase_faults:
             result = supabase_client.table('fault_knowledge').select('*').eq('id', fault_id).execute()
             if result.data:
                 return {"success": True, "fault": result.data[0]}
@@ -235,7 +235,7 @@ async def get_fault(fault_id: str):
 async def delete_fault(fault_id: str):
     """حذف عطل"""
     try:
-        if supabase_client:
+        if use_supabase_faults:
             supabase_client.table('fault_knowledge').delete().eq('id', fault_id).execute()
         else:
             global fault_knowledge_db
@@ -249,7 +249,7 @@ async def delete_fault(fault_id: str):
 async def get_stats():
     """إحصائيات قاعدة المعرفة"""
     try:
-        if supabase_client:
+        if use_supabase_faults:
             result = supabase_client.table('fault_knowledge').select('*').execute()
             faults = result.data or []
         else:

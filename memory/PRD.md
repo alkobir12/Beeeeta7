@@ -7,6 +7,7 @@
 - نظام ثنائي اللغة (عربي/إنجليزي)
 - إدارة الفنيين والعمليات
 - المستندات والفواتير
+- **خبير ديزل ذكي مع قاعدة معرفة ذاتية التعلم**
 
 ## المستخدمين المستهدفين
 - مدراء الورش
@@ -16,70 +17,53 @@
 ## التقنيات المستخدمة
 - **Frontend**: React + Tailwind CSS + Shadcn/UI
 - **Backend**: FastAPI (Python)
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Supabase (PostgreSQL) + In-Memory (Fault Knowledge)
 - **i18n**: react-i18next
-- **AI**: Groq API (خبير الديزل)
+- **AI**: OpenAI GPT-4o-mini (via Emergent LLM Key)
 
 ---
 
 ## ما تم إنجازه
 
-### الجلسة الحالية (11 يناير 2025)
+### الجلسة الحالية (12 يناير 2025)
 
-#### ✅ إصلاح التحديث الفوري للوحة التحكم (P0)
-**المشكلة**: عند تغيير حالة المركبة، لا تتحدث إحصائيات لوحة التحكم فوراً.
+#### ✅ نظام خبير الديزل المتكامل مع قاعدة المعرفة
+**الميزات الجديدة:**
 
-**الحل المطبق**:
-1. أضفت مستمع للحدث `vehicleUpdated` في `Dashboard.jsx`
-2. أضفت إرسال الحدث في `VehicleQuickActions.jsx` بعد تغيير الحالة
-3. أضفت الحالات المفقودة (`repair`, `approved`, `quotation`) في `STATUS_CONFIG`
+1. **قاعدة معرفة الأعطال (التطوير الذاتي)**
+   - إضافة أعطال جديدة مع: العنوان، نوع المركبة، الأعراض، أكواد DTC، خطوات التشخيص، الحل، القطع المطلوبة، التكلفة
+   - رفع ملفات صوت/فيديو للأعطال
+   - البحث في الأعطال المحفوظة
+   - إحصائيات قاعدة المعرفة
 
-#### ✅ إصلاح مشكلة حفظ فني جديد
-**المشكلة**: خطأ 500 عند محاولة إضافة فني جديد.
+2. **خبير الديزل المتكامل**
+   - ربط مع قاعدة المعرفة (يقتبس من الحلول السابقة)
+   - **بحث سريع أثناء الكتابة** - يعرض نتائج من قاعدة المعرفة
+   - كشف أكواد الأعطال تلقائياً من النص
+   - عرض مصادر المعرفة في الرد
+   - نموذج GPT-4o-mini للسرعة
 
-**السبب**: عدم تطابق أسماء الحقول بين الكود (camelCase) وقاعدة بيانات Supabase (snake_case).
+3. **أزرار سريعة**: P0087, P0234, Turbo, Fuel Pressure, Knowledge Base
 
-**الحل**:
-1. تحديث دالة `create_technician` في `server.py` لتحويل الأسماء
-2. تحديث دالة `technicians_list` في `supabase_service.py` لتحويل الأسماء
+4. **واجهة محسنة للجوال**
+   - القائمة الجانبية تعرض جميع العناصر
+   - صفحات محسنة للشاشات الصغيرة
 
-#### ✅ تحسين دعم الجوال (Responsive Design)
-- تحسين الشريط الجانبي (Sidebar) ليظهر بشكل صحيح على الجوال
-- تحسين صفحة الفنيين لتعمل بشكل أفضل على الشاشات الصغيرة
-- تحسين صفحة العملاء والنوافذ المنبثقة
-- جعل أزرار التحرير والحذف مرئية دائماً على الجوال
+**الملفات الجديدة:**
+- `/app/backend/routes_fault_knowledge.py` - API قاعدة المعرفة
+- `/app/backend/routes_diesel_expert.py` - خبير الديزل المتكامل
+- `/app/frontend/src/pages/FaultKnowledge.jsx` - واجهة قاعدة المعرفة
+- `/app/frontend/src/pages/DieselExpertChat.jsx` - واجهة خبير الديزل المحسنة
 
-**الملفات المعدلة**:
-- `/app/frontend/src/pages/Dashboard.jsx` - إضافة STATUS_CONFIG للحالات المفقودة
-- `/app/frontend/src/components/VehicleQuickActions.jsx` - إرسال حدث التحديث
-- `/app/frontend/src/components/Sidebar.jsx` - تحسين العرض على الجوال
-- `/app/frontend/src/pages/Technicians.jsx` - تحسين responsive
-- `/app/frontend/src/pages/Customers.jsx` - تحسين responsive
-- `/app/backend/server.py` - إصلاح إضافة الفنيين
-- `/app/backend/supabase_service.py` - تحويل أسماء الحقول
+**الملفات المعدلة:**
+- `/app/frontend/src/App.js` - إضافة مسار /fault-knowledge
+- `/app/frontend/src/components/Sidebar.jsx` - إضافة رابط قاعدة المعرفة
 
 ### الجلسات السابقة
-- ✅ ترحيل كامل لنظام الترجمة إلى `react-i18next`
-- ✅ إصلاح زر تبديل اللغة (مشكلة z-index)
-- ✅ حفظ اختيار اللغة في localStorage
-- ✅ حذف العمليات المرتبطة عند حذف مركبة (cascade delete)
-- ✅ تحسين صفحة العمليات (التنقل والحذف)
-- ✅ توحيد مصطلحات الحالة
-
----
-
-## المهام المعلقة
-
-### P1 - أولوية عالية
-- [ ] التحقق من تغطية الترجمة الكاملة
-- [ ] اختبار نظام الزيارات بشكل كامل
-
-### P2 - أولوية متوسطة
-- [ ] ربط Google Drive
-- [ ] ميزة المرفقات في محادثة الديزل
-
-### P3 - أولوية منخفضة
-- [ ] مشكلة "Save to GitHub" (تحتاج دعم المنصة)
+- ✅ ترحيل نظام الترجمة إلى `react-i18next`
+- ✅ إصلاح التحديث الفوري للوحة التحكم
+- ✅ إصلاح مشكلة حفظ فني جديد
+- ✅ حذف العمليات المرتبطة عند حذف مركبة
 
 ---
 
@@ -88,51 +72,51 @@
 ```
 /app
 ├── backend/
-│   ├── server.py           # API الرئيسي + cascade delete + إضافة الفنيين
-│   ├── supabase_service.py # تحويل أسماء الحقول
-│   └── models.py           # نماذج البيانات
+│   ├── server.py                    # API الرئيسي
+│   ├── routes_diesel_expert.py      # NEW: خبير الديزل المتكامل
+│   ├── routes_fault_knowledge.py    # NEW: قاعدة المعرفة
+│   └── routes_diesel_chat.py        # المحادثة الأساسية
 └── frontend/
     ├── src/
-    │   ├── components/
-    │   │   ├── Sidebar.jsx             # محسن للجوال
-    │   │   ├── VehicleQuickActions.jsx # يرسل vehicleUpdated event
-    │   │   └── Layout.jsx
     │   ├── pages/
-    │   │   ├── Dashboard.jsx           # STATUS_CONFIG محدث
-    │   │   ├── VehicleDetails.jsx
-    │   │   ├── Technicians.jsx         # محسن للجوال
-    │   │   ├── Customers.jsx           # محسن للجوال
-    │   │   └── Operations.jsx
-    │   ├── i18n.js
-    │   └── translations.js
+    │   │   ├── DieselExpertChat.jsx # محسن: مع بحث سريع
+    │   │   ├── FaultKnowledge.jsx   # NEW: إدارة الأعطال
+    │   │   └── Dashboard.jsx
+    │   ├── components/
+    │   │   └── Sidebar.jsx          # محسن: روابط جديدة
+    │   └── App.js                   # مسارات جديدة
 ```
 
 ---
 
-## ملاحظات تقنية
+## API Endpoints
 
-### تحويل أسماء الحقول (Supabase)
-```python
-# Backend -> Supabase (camelCase -> snake_case)
-data = {
-    'active_jobs': technician.activeJobs,
-    'completed_jobs': technician.completedJobs
-}
+### قاعدة المعرفة
+- `GET /api/faults/list` - قائمة الأعطال
+- `POST /api/faults/add` - إضافة عطل (FormData)
+- `POST /api/faults/search` - بحث في الأعطال
+- `GET /api/faults/{id}` - تفاصيل عطل
+- `DELETE /api/faults/{id}` - حذف عطل
+- `GET /api/faults/stats/summary` - إحصائيات
 
-# Supabase -> Backend (snake_case -> camelCase)
-return {
-    'activeJobs': row.get('active_jobs', 0),
-    'completedJobs': row.get('completed_jobs', 0)
-}
-```
+### خبير الديزل المتكامل
+- `POST /api/diesel-expert` - محادثة مع قاعدة المعرفة
+- `GET /api/diesel-expert/quick-search?q=` - بحث سريع
+- `POST /api/diesel-expert/analyze` - تحليل عطل شامل
+- `GET /api/diesel-expert/health` - حالة الخدمة
 
-### نظام التحديث الفوري (Real-time Updates)
-```javascript
-// إرسال الحدث
-window.dispatchEvent(new CustomEvent('vehicleUpdated', { 
-  detail: { vehicleId, status, timestamp: Date.now() } 
-}));
+---
 
-// الاستماع للحدث
-window.addEventListener('vehicleUpdated', () => fetchData());
-```
+## المهام المعلقة
+
+### P1 - أولوية عالية
+- [ ] التحقق من تغطية الترجمة الكاملة
+- [ ] اختبار نظام الزيارات
+
+### P2 - أولوية متوسطة
+- [ ] ربط Google Drive
+- [ ] حفظ قاعدة المعرفة في Supabase (حالياً في الذاكرة)
+
+### P3 - أولوية منخفضة
+- [ ] إضافة بحث الإنترنت الفعلي
+- [ ] تحليل الفيديو/الصوت بالذكاء الاصطناعي

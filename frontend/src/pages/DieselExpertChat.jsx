@@ -578,6 +578,88 @@ const DieselExpertChat = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modal حفظ في قاعدة المعرفة */}
+      {saveKbOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" dir={isArabic ? 'rtl' : 'ltr'}>
+          <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="px-4 py-2 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-bold">
+                {isArabic ? 'حفظ العطل في قاعدة المعرفة' : 'Save fault to Knowledge Base'}
+              </h3>
+              <button
+                onClick={() => setSaveKbOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveKbSubmit} className="p-4 space-y-3 overflow-y-auto">
+              <div>
+                <label className="block text-xs font-medium mb-1">{isArabic ? 'عنوان العطل' : 'Fault title'}</label>
+                <input
+                  value={saveKbForm.title}
+                  onChange={(e) => setSaveKbForm({ ...saveKbForm, title: e.target.value })}
+                  className="apple-input text-xs"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">{isArabic ? 'وصف الأعراض' : 'Symptoms description'}</label>
+                <textarea
+                  rows={3}
+                  value={saveKbForm.symptom_description}
+                  onChange={(e) => setSaveKbForm({ ...saveKbForm, symptom_description: e.target.value })}
+                  className="apple-input text-xs resize-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">DTC</label>
+                <input
+                  value={saveKbForm.dtc_codes}
+                  onChange={(e) => setSaveKbForm({ ...saveKbForm, dtc_codes: e.target.value })}
+                  className="apple-input text-xs"
+                  placeholder="P0087, P0234"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">{isArabic ? 'معرّف المركبة' : 'Vehicle ID'}</label>
+                  <input
+                    value={saveKbForm.vehicle_id}
+                    onChange={(e) => setSaveKbForm({ ...saveKbForm, vehicle_id: e.target.value })}
+                    className="apple-input text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">{isArabic ? 'رقم اللوحة' : 'Plate'}</label>
+                  <input
+                    value={saveKbForm.vehicle_plate}
+                    onChange={(e) => setSaveKbForm({ ...saveKbForm, vehicle_plate: e.target.value })}
+                    className="apple-input text-xs"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setSaveKbOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs bg-muted text-muted-foreground hover:bg-muted/80"
+                >
+                  {isArabic ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-lg text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isArabic ? 'حفظ' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

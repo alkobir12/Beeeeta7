@@ -234,14 +234,14 @@ const DieselExpertChat = () => {
         
         // Add sources info if available
         if (response.data.sources?.length > 0) {
-          assistantContent += `\n\n📚 **${isArabic ? 'المصادر من قاعدة المعرفة' : 'Knowledge Base Sources'}:**`;
+          assistantContent += `\n\n📚 ${isArabic ? 'المصادر من قاعدة المعرفة:' : 'Knowledge Base Sources:'}`;
           response.data.sources.forEach((src, i) => {
             assistantContent += `\n${i + 1}. ${src.title}`;
           });
         }
         
         if (response.data.dtc_codes_found?.length > 0) {
-          assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;
+          assistantContent += `\n\n🔍 ${isArabic ? 'أكواد الأعطال المكتشفة:' : 'Detected DTC Codes:'} ${response.data.dtc_codes_found.join(', ')}`;
         }
 
         assistantMessage = {

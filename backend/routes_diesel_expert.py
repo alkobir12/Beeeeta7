@@ -308,80 +308,119 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
 async def analyze_media(
     description: str = Form(None),
     vehicle_type: str = Form(None),
+    vehicle_id: str = Form(None),
+    vehicle_plate: str = Form(None),
     media_file: UploadFile = File(...)
 ):
-    """تحليل صورة/فيديو/صوت للعطل"""
+    """تحليل صورة/فيديو/صوت للعطل باستخدام محرك نقاط + LLM (مع قيود حجم)."""
     try:
         api_key = EMERGENT_LLM_KEY or os.getenv("EMERGENT_LLM_KEY")
         if not api_key:
             raise HTTPException(status_code=500, detail="LLM configuration missing")
-        
+
+        # حد الحجم للتحليل (25MB)
+        max_bytes = 25 * 1024 * 1024
+        if media_file.size and media_file.size > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة."
+            )
+
         file_content = await media_file.read()
+        if len(file_content) > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة."
+            )
+
         file_ext = media_file.filename.split('.')[-1].lower()
         b64 = base64.b64encode(file_content).decode()
-        
+
         # Determine media type
         if file_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
             media_type = "image"
             media_prompt = "حلل هذه الصورة وحدد أي مشاكل أو أعطال واضحة في المحرك أو النظام."
+            transcription_text = None
         elif file_ext in ['mp4', 'mov', 'avi', 'webm']:
             media_type = "video"
-            media_prompt = "حلل هذا الفيديو وحدد أي مشاكل أو أعطال واضحة. لاحظ أي أصوات غير طبيعية أو اهتزازات."
+            media_prompt = "حلل هذا الفيديو وحدد أي مشاكل أو أعطال واضحة. لاحظ أي أصوات غير طبيعية أو اهتزازات." \
+                " ركّز على وصف الظواهر، وسيتم استخدام محرك النقاط مع قاعدة المعرفة." 
+            transcription_text = None
         elif file_ext in ['mp3', 'wav', 'ogg', 'm4a']:
             media_type = "audio"
-            media_prompt = "تم إرفاق ملف صوتي. يرجى وصف الصوت الذي تسمعه من المحرك حتى أتمكن من تحليله."
+            media_prompt = "تم إرفاق ملف صوتي لمحرك ديزل. ركّز على وصف نمط الصوت (تقطيع، طقطقة، صفير تيربو، طرق في البخاخات...)."
+            # استخدام Whisper لتحويل الصوت إلى نص
+            stt = OpenAISpeechToText(api_key=api_key)
+            import io
+            audio_file = io.BytesIO(file_content)
+            audio_file.name = media_file.filename
+            stt_response = await stt.transcribe(
+                file=audio_file,
+                model="whisper-1",
+                response_format="json"
+            )
+            transcription_text = getattr(stt_response, "text", None) or ""
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
-        
+
+        # بناء الأدلة ومحرك النقاط
+        base_text = (description or "") + "\n" + (transcription_text or "")
+        kb_faults = get_fault_knowledge_db()
+        evidence = {
+            **build_evidence_from_text(base_text),
+            "vehicle_type": vehicle_type or "",
+        }
+        dtc_codes = extract_dtc_codes(base_text)
+        ranked_causes = score_causes_from_knowledge(evidence, dtc_codes, kb_faults)
+
         # Build analysis prompt
-        analysis_prompt = f"""قم بتحليل هذا {media_type} وقدم تشخيص شامل:
+        analysis_prompt = f"""Evidence summary for media-based diesel fault analysis:
 
-{media_prompt}
+- Media type: {media_type}
+- Vehicle type: {vehicle_type or 'غير محدد'}
+- Vehicle ID: {vehicle_id or '-'}
+- Plate: {vehicle_plate or '-'}
+- Technician description: {description or 'لم يتم تقديم وصف'}
+- Transcribed audio (if any): {transcription_text or 'لا يوجد نص مستخلص'}
 
-**معلومات إضافية:**
-- نوع المركبة: {vehicle_type or 'غير محدد'}
-- وصف المشكلة: {description or 'لم يتم تقديم وصف'}
+The deterministic engine has already produced ranked suspected causes based on local rules and knowledge base. Use ONLY these causes.
+"""
 
-قدم:
-1. وصف ما تراه/تسمعه
-2. التشخيص المحتمل
-3. الأسباب المحتملة
-4. خطوات الفحص المقترحة
-5. الحل المقترح
-6. هل يجب حفظ هذا العطل في قاعدة المعرفة؟"""
-        
-        # Search knowledge base for similar issues
-        knowledge_results = await search_fault_knowledge(description or vehicle_type or "")
-        knowledge_context = format_knowledge_context(knowledge_results)
-        if knowledge_context:
-            analysis_prompt += f"\n\n{knowledge_context}"
-        
+        if ranked_causes:
+            analysis_prompt += "\n\nRanked suspected causes (from deterministic engine):\n"
+            for idx, c in enumerate(ranked_causes, 1):
+                analysis_prompt += f"{idx}. {c.get('title')} (score={c.get('score')}) - DTC: {', '.join(c.get('dtc_codes') or [])}\n"
+                if c.get("evidence_notes"):
+                    analysis_prompt += f"   evidence: {c['evidence_notes']}\n"
+
+        analysis_prompt += "\n\nGenerate a structured technician-grade diagnostic report as described in your system prompt."
+
         # Send to LLM
         chat = LlmChat(
             api_key=api_key,
             session_id=str(uuid.uuid4()),
             system_message=DIESEL_EXPERT_SYSTEM_PROMPT
-        ).with_model("openai", "gpt-4o")  # Use GPT-4o for better vision
-        
+        ).with_model("openai", "gpt-4o")  # Use GPT-4o for better vision/audio reasoning
+
         file_contents = [ImageContent(image_base64=b64)] if media_type in ["image", "video"] else []
-        
+
         user_message_obj = UserMessage(
             text=analysis_prompt,
             file_contents=file_contents if file_contents else None
         )
-        
+
         response = await chat.send_message(user_message_obj)
-        
+
         return {
             "success": True,
             "analysis": response,
             "media_type": media_type,
             "filename": media_file.filename,
-            "similar_faults": [{
-                'title': f.get('title'),
-                'id': f.get('id')
-            } for f in knowledge_results],
-            "suggestion": "يمكنك حفظ هذا العطل في قاعدة المعرفة للاستفادة منه في المستقبل"
+            "ranked_causes": ranked_causes,
+            "dtc_codes_found": dtc_codes,
+            "vehicle_id": vehicle_id,
+            "vehicle_plate": vehicle_plate,
+            "suggestion": "يمكنك حفظ هذا العطل في قاعدة المعرفة وربطه بالمركبة للاستفادة منه في المستقبل"
         }
     
     except HTTPException:

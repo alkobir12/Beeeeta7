@@ -128,9 +128,21 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
-            <p className="text-gray-500 text-sm sm:text-base mt-1">{t('dashboard.overview')}</p>
+            <p className="text-gray-500 text-sm sm:text-base mt-1 flex items-center gap-2">
+              {t('dashboard.overview')}
+              {isRefreshing && (
+                <RefreshCw size={14} className="animate-spin text-primary" />
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => fetchData(false)}
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              title={isRTL ? 'تحديث' : 'Refresh'}
+            >
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin text-primary' : 'text-gray-600'} />
+            </button>
             <button
               onClick={() => {
                 const newLang = i18n.language === 'ar' ? 'en' : 'ar';

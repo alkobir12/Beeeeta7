@@ -195,20 +195,6 @@ def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], 
     ranked.sort(key=lambda x: x.get("score", 0), reverse=True)
     return ranked[:5]
 
-    for i, fault in enumerate(faults, 1):
-        context += f"\n**{i}. {fault.get('title', 'عطل')}**\n"
-        context += f"   - المركبة: {fault.get('vehicle_type', '')} {fault.get('vehicle_model', '')}\n"
-        if fault.get('dtc_codes'):
-            codes = fault.get('dtc_codes') if isinstance(fault.get('dtc_codes'), list) else []
-            context += f"   - الأكواد: {', '.join(codes)}\n"
-        context += f"   - الأعراض: {str(fault.get('symptom_description', ''))[:200]}...\n"
-        context += f"   - الحل: {str(fault.get('solution', ''))[:300]}...\n"
-        parts = fault.get('parts_needed') if isinstance(fault.get('parts_needed'), list) else []
-        if parts:
-            context += f"   - القطع: {', '.join(parts)}\n"
-    
-    return context
-
 
 @router.post('/diesel-expert')
 async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):

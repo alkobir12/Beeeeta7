@@ -362,6 +362,8 @@ const DieselExpertChat = () => {
             
             {loading && (
               <div className="flex gap-2 justify-start">
+        {/* Save to Knowledge Base hint will be added in future iteration when technician confirms diagnosis */
+
                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                   <Database className="w-3 h-3 text-primary" />
                 </div>

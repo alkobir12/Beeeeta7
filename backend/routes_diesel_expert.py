@@ -8,6 +8,7 @@ import uuid
 import re
 import base64
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+from emergentintegrations.llm.openai import OpenAISpeechToText
 
 # Import fault knowledge database
 from routes_fault_knowledge import get_fault_knowledge_db

@@ -227,46 +227,6 @@ const DieselExpertChat = () => {
           content: assistantContent,
           sources: response.data.sources,
           knowledgeUsed: response.data.knowledge_used,
-  const openSaveToKbModal = (msg) => {
-    const firstCause = (msg.rankedCauses && msg.rankedCauses[0]) || {};
-    setSaveKbForm({
-      title: firstCause.title || '',
-      vehicle_type: '',
-      vehicle_model: '',
-      symptom_description: lastUserQuestion || '',
-      dtc_codes: (msg.dtcCodes || []).join(', '),
-      diagnosis_steps: '',
-      solution: '',
-      vehicle_id: vehicleIdFromUrl || '',
-      vehicle_plate: vehiclePlateFromUrl || ''
-    });
-    setSaveKbOpen(true);
-  };
-
-  const handleSaveKbSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const data = new FormData();
-      Object.entries(saveKbForm).forEach(([key, value]) => {
-        if (value) data.append(key, value);
-      });
-      await axios.post(`${API_URL}/faults/add`, data);
-      alert(
-        isArabic
-          ? 'تم حفظ العطل في قاعدة المعرفة بنجاح.'
-          : 'Fault saved to knowledge base successfully.'
-      );
-      setSaveKbOpen(false);
-    } catch (err) {
-      console.error('Save KB error:', err);
-      alert(
-        isArabic
-          ? 'حدث خطأ أثناء الحفظ في قاعدة المعرفة.'
-          : 'An error occurred while saving to knowledge base.'
-      );
-    }
-  };
-
           rankedCauses: response.data.ranked_causes || [],
           dtcCodes: response.data.dtc_codes_found || [],
         };

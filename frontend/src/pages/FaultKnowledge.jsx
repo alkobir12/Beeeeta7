@@ -34,7 +34,9 @@ const FaultKnowledge = () => {
     solution: '',
     parts_needed: '',
     estimated_cost: '',
-    difficulty_level: 'medium'
+    difficulty_level: 'medium',
+    vehicle_id: '',
+    vehicle_plate: ''
   });
   const [mediaFile, setMediaFile] = useState(null);
   const [saving, setSaving] = useState(false);

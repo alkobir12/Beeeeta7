@@ -338,16 +338,12 @@ async def analyze_media(
         # Determine media type
         if file_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
             media_type = "image"
-            media_prompt = "حلل هذه الصورة وحدد أي مشاكل أو أعطال واضحة في المحرك أو النظام."
             transcription_text = None
         elif file_ext in ['mp4', 'mov', 'avi', 'webm']:
             media_type = "video"
-            media_prompt = "حلل هذا الفيديو وحدد أي مشاكل أو أعطال واضحة. لاحظ أي أصوات غير طبيعية أو اهتزازات." \
-                " ركّز على وصف الظواهر، وسيتم استخدام محرك النقاط مع قاعدة المعرفة." 
             transcription_text = None
         elif file_ext in ['mp3', 'wav', 'ogg', 'm4a']:
             media_type = "audio"
-            media_prompt = "تم إرفاق ملف صوتي لمحرك ديزل. ركّز على وصف نمط الصوت (تقطيع، طقطقة، صفير تيربو، طرق في البخاخات...)."
             # استخدام Whisper لتحويل الصوت إلى نص
             stt = OpenAISpeechToText(api_key=api_key)
             import io

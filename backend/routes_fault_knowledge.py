@@ -118,6 +118,8 @@ async def add_fault(
             'difficulty_level': difficulty_level,
             'media_url': media_url,
             'media_type': media_type,
+            'vehicle_id': vehicle_id,
+            'vehicle_plate': vehicle_plate,
             'usage_count': 0,
             'created_at': datetime.utcnow().isoformat()
         }

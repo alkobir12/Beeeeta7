@@ -323,10 +323,37 @@ const DieselExpertChat = () => {
                   }`}
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+
+                  {/* وسم يوضح استخدام قاعدة المعرفة */}
                   {msg.knowledgeUsed && (
                     <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-primary">
                       <BookOpen size={12} />
                       {isArabic ? 'تم الاستعانة بقاعدة المعرفة' : 'Knowledge base referenced'}
+                    </div>
+                  )}
+
+                  {/* عرض الأسباب المرتبة إن وُجدت */}
+                  {msg.rankedCauses && msg.rankedCauses.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-1">
+                      <div className="font-semibold flex items-center gap-1">
+                        <Search size={12} />
+                        <span>{isArabic ? 'أعلى الأسباب المشتبه بها' : 'Top suspected causes'}</span>
+                      </div>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {msg.rankedCauses.map((c, i) => (
+                          <li key={i}>
+                            <span className="font-medium">{c.title}</span>
+                            {typeof c.score === 'number' && (
+                              <span className="ml-1 text-muted-foreground">({Math.round(c.score * 100)}%)</span>
+                            )}
+                            {c.evidence_notes && (
+                              <span className="block text-[11px] text-muted-foreground mt-0.5">
+                                {c.evidence_notes}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>

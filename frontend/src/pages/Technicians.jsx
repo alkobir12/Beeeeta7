@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wrench, Search, Phone, Star, CheckCircle, Users } from 'lucide-react';
+import { Wrench, Search, Phone, Star, CheckCircle, Users, RefreshCw } from 'lucide-react';
 import { technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -13,30 +13,42 @@ const Technicians = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAddTech, setShowAddTech] = useState(false);
   const [newTech, setNewTech] = useState({ name: '', phone: '', specialty: '' });
   const [saving, setSaving] = useState(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    fetchTechnicians();
+    isMountedRef.current = true;
+    fetchTechnicians(true);
+    return () => { isMountedRef.current = false; };
   }, []);
 
-  const fetchTechnicians = async () => {
+  const fetchTechnicians = useCallback(async (showLoading = false) => {
+    if (!isMountedRef.current) return;
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
+      else setIsRefreshing(true);
+      
       const response = await technicianAPI.getAll();
-      setTechnicians(response.data);
+      if (isMountedRef.current) setTechnicians(response.data);
     } catch (error) {
       console.error('Error fetching technicians:', error);
-      toast({
-        title: t('common.error'),
-        description: t('messages.error_occurred'),
-        variant: "destructive"
-      });
+      if (showLoading) {
+        toast({
+          title: t('common.error'),
+          description: t('messages.error_occurred'),
+          variant: "destructive"
+        });
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  };
+  }, [t, toast]);
 
   const filteredTechnicians = technicians.filter(tech => 
     tech.name.toLowerCase().includes(searchQuery.toLowerCase()) || 

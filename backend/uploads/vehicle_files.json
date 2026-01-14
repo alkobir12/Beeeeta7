@@ -70,5 +70,14 @@
     "filePath": "/app/backend/uploads/vehicles/3bd7dfd4-e831-4583-8399-e9d86aa9275b/7f0cb065-fe89-47e0-9e89-c81df8d85cd6.jpeg",
     "uploadedAt": "2026-01-11T20:13:18.920375+00:00",
     "uploadedBy": "system"
+  },
+  {
+    "id": "c12d6496-ab51-4d9e-9f5a-e2e618128c5e",
+    "vehicleId": "e062c31c-4ab7-4944-93ea-452957b5c6b3",
+    "filename": "image.jpg",
+    "fileType": "photo",
+    "filePath": "/app/backend/uploads/vehicles/e062c31c-4ab7-4944-93ea-452957b5c6b3/image.jpg",
+    "uploadedAt": "2026-01-13T12:13:42.839255+00:00",
+    "uploadedBy": "system"
   }
 ]

@@ -71,6 +71,8 @@ async def add_fault(
     parts_needed: str = Form(None),
     estimated_cost: float = Form(None),
     difficulty_level: str = Form("medium"),
+    vehicle_id: str = Form(None),
+    vehicle_plate: str = Form(None),
     media_file: UploadFile = File(None)
 ):
     """إضافة عطل جديد لقاعدة المعرفة"""

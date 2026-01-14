@@ -93,6 +93,9 @@ const FaultKnowledge = () => {
       Object.entries(formData).forEach(([key, value]) => {
         if (value) data.append(key, value);
       });
+      // TODO: يمكن لاحقًا ربط هذه القيم من شاشة المركبة مباشرة
+      if (formData.vehicle_id) data.append('vehicle_id', formData.vehicle_id);
+      if (formData.vehicle_plate) data.append('vehicle_plate', formData.vehicle_plate);
       if (mediaFile) {
         data.append('media_file', mediaFile);
       }

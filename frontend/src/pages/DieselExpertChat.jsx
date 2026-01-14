@@ -250,7 +250,8 @@ const DieselExpertChat = () => {
           throw new Error('Failed to get response');
         }
 
-        const parsed = parseStructuredReport(response.data.response);
+        const structured = response.data.structured || null;
+        const parsed = parseStructuredReport(response.data.response || '');
         let assistantContent = parsed.text || (typeof response.data.response === 'string' ? response.data.response : '');
         
         // Add sources info if available

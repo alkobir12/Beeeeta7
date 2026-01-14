@@ -7,6 +7,7 @@ import os
 import uuid
 import re
 import base64
+import json
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 # from emergentintegrations.llm.openai import OpenAISpeechToText  # Temporarily disabled due to import issues
 

@@ -219,7 +219,8 @@ const DieselExpertChat = () => {
           throw new Error('Failed to analyze media');
         }
 
-        const mediaParsed = parseStructuredReport(response.data.analysis);
+        const structured = response.data.structured || null;
+        const mediaParsed = parseStructuredReport(response.data.analysis || '');
         let assistantContent = mediaParsed.text || (typeof response.data.analysis === 'string' ? response.data.analysis : '');
 
         if (response.data.dtc_codes_found?.length > 0) {

@@ -421,9 +421,19 @@ The deterministic engine has already produced ranked suspected causes based on l
 
         response = await chat.send_message(user_message_obj)
 
+        structured = None
+        if isinstance(response, str):
+            resp_trimmed = response.strip()
+            if resp_trimmed.startswith('{') and resp_trimmed.endswith('}'):
+                try:
+                    structured = json.loads(resp_trimmed)
+                except Exception:
+                    structured = None
+
         return {
             "success": True,
-            "analysis": response,
+            "analysis": "" if structured else response,
+            "structured": structured,
             "media_type": media_type,
             "filename": media_file.filename,
             "ranked_causes": ranked_causes,

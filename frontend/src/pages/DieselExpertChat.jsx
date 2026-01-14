@@ -57,18 +57,6 @@ const DieselExpertChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Quick search as user types
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    if (input.length >= 3) {
-      searchTimeoutRef.current = setTimeout(async () => {
-        try {
-          const response = await axios.get(`${API_URL}/diesel-expert/quick-search`, {
-            params: { q: input }
-          });
   const parseStructuredReport = (raw) => {
     if (!raw) return { text: '', structured: null };
     if (typeof raw === 'object') {
@@ -87,6 +75,18 @@ const DieselExpertChat = () => {
     return { text: raw, structured: null };
   };
 
+  // Quick search as user types
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (input.length >= 3) {
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const response = await axios.get(`${API_URL}/diesel-expert/quick-search`, {
+            params: { q: input }
+          });
 
           if (response.data.results?.length > 0) {
             setQuickResults(response.data.results);

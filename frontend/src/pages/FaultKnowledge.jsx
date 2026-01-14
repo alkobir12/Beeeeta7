@@ -342,6 +342,27 @@ const FaultKnowledge = () => {
                 />
               </div>
               
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{isArabic ? 'معرّف المركبة في النظام (اختياري)' : 'Vehicle ID in system (optional)'}</label>
+                  <input
+                    value={formData.vehicle_id}
+                    onChange={(e) => setFormData({...formData, vehicle_id: e.target.value})}
+                    className="apple-input"
+                    placeholder={isArabic ? 'إن وجد من شاشة المركبة' : 'If known from vehicle screen'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{isArabic ? 'رقم اللوحة (اختياري)' : 'Plate Number (optional)'}</label>
+                  <input
+                    value={formData.vehicle_plate}
+                    onChange={(e) => setFormData({...formData, vehicle_plate: e.target.value})}
+                    className="apple-input"
+                    placeholder={isArabic ? 'مثال: ب ص ل 1234' : 'e.g. ABC 1234'}
+                  />
+                </div>
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium mb-1">{isArabic ? 'وصف الأعراض *' : 'Symptom Description *'}</label>
                 <textarea

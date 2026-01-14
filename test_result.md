@@ -1241,3 +1241,167 @@ The automatic page refresh issue that was previously causing form data loss has 
 - ✅ Media analysis route working  
 - ✅ File size limits enforced
 - ✅ No unexpected errors found
+
+---
+
+## Diesel Expert Interface Testing After Recent Modifications (2025-01-14)
+
+### Test Objective
+اختبار واجهة خبير الديزل بعد التعديلات الأخيرة:
+1. تسجيل الدخول من الصفحة الرئيسية
+2. فتح واجهة خبير الديزل من `/diesel-expert`
+3. إرسال سؤال نصي واختبار ظهور قسم "أعلى الأسباب المشتبه بها"
+4. اختبار رفع الملفات والتحقق من تنبيه حجم الملف (25MB)
+5. التأكد من عدم وجود أخطاء JavaScript وعدم حدوث تحديث غير متوقع للصفحة
+
+### Test Results - COMPLETED ✅
+
+#### ✅ WORKING FEATURES:
+
+**1. Login and Navigation**
+- ✅ Login functionality: WORKING
+- ✅ Diesel Expert page access: WORKING via `/diesel-expert`
+- ✅ Interface loads correctly with proper header "Integrated Diesel Expert"
+- ✅ Connected to Knowledge Base indicator visible
+
+**2. Text Input and Messaging**
+- ✅ Text input field: WORKING
+- ✅ Message sending: WORKING (Enter key and send button)
+- ✅ Loading indicator: WORKING ("Searching & analyzing..." appears)
+- ✅ AI response system: WORKING (backend API calls successful - status 200 OK)
+- ✅ DTC code detection: WORKING (P0087 detected and displayed)
+
+**3. File Attachment System**
+- ✅ File input present: `accept="image/*,video/*,audio/*"`
+- ✅ Multiple file support: enabled
+- ✅ File type validation: image, video, audio files accepted
+- ✅ 25MB size limit: IMPLEMENTED in code (lines 80-93 in DieselExpertChat.jsx)
+
+**4. System Stability**
+- ✅ No JavaScript errors detected
+- ✅ No unexpected page refresh
+- ✅ Page stability maintained during testing
+- ✅ Backend API endpoints responding correctly
+
+#### ❌ CRITICAL ISSUES FOUND:
+
+**1. 🔴 CRITICAL: Response Formatting Issue**
+- **Problem**: AI responses display raw JSON data instead of formatted text
+- **Evidence**: Screenshots show JSON objects like `"test_description"`, `"procedure"`, `"interpretation"` being displayed directly in chat
+- **Impact**: Users see unreadable technical data instead of helpful diagnostic information
+- **Location**: Frontend response parsing in DieselExpertChat.jsx
+- **Status**: BLOCKING - Makes the feature unusable for end users
+
+**2. 🔴 CRITICAL: "Top Suspected Causes" Section Not Visible**
+- **Problem**: The "أعلى الأسباب المشتبه بها" / "Top suspected causes" section is not appearing in responses
+- **Code Status**: Implementation exists in lines 336-358 of DieselExpertChat.jsx
+- **Possible Causes**: 
+  - Response formatting issue preventing proper rendering
+  - Backend not returning `ranked_causes` data
+  - Frontend conditional rendering not triggering
+- **Impact**: Key feature requested by user is not functional
+
+**3. 🔴 CRITICAL: Paperclip Attachment Button Not Accessible**
+- **Problem**: Paperclip attachment button not found or not clickable in UI
+- **Code Status**: Button exists in code (lines 446-453)
+- **Impact**: Users cannot attach media files for analysis
+- **Testing**: Multiple selectors tried, button not accessible via automation
+
+#### ⚠️ MINOR ISSUES:
+
+**1. 25MB Size Limit Warning**
+- **Issue**: Size limit not prominently displayed in UI
+- **Code Status**: Alert implementation exists but not visible to users
+- **Recommendation**: Add visible size limit indicator near attachment button
+
+**2. Session Management**
+- **Issue**: Sessions expire during extended testing
+- **Impact**: Users may need to re-login frequently
+- **Status**: Normal behavior but could affect user experience
+
+### 📊 COMPREHENSIVE TEST STATUS:
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Login System** | ✅ WORKING | Successful authentication |
+| **Page Navigation** | ✅ WORKING | `/diesel-expert` accessible |
+| **Text Input** | ✅ WORKING | Input field and sending functional |
+| **AI Backend** | ✅ WORKING | API calls successful (200 OK) |
+| **DTC Detection** | ✅ WORKING | P0087 code detected correctly |
+| **Response Display** | ❌ BROKEN | Raw JSON shown instead of formatted text |
+| **Top Suspected Causes** | ❌ NOT VISIBLE | Section not appearing in responses |
+| **Attachment Button** | ❌ NOT ACCESSIBLE | Button present in code but not clickable |
+| **File Size Limit** | ✅ IMPLEMENTED | 25MB limit coded but not prominently shown |
+| **Page Stability** | ✅ WORKING | No crashes or unexpected refreshes |
+
+### 🔴 CRITICAL FINDINGS REQUIRING IMMEDIATE FIX:
+
+**HIGHEST PRIORITY:**
+
+1. **Response Formatting Issue (BLOCKING)**
+   - **Problem**: Frontend displays raw JSON instead of parsed AI response
+   - **Evidence**: Screenshots show technical JSON objects in chat interface
+   - **Solution Needed**: Fix response parsing in DieselExpertChat.jsx handleSend function
+   - **Impact**: Feature completely unusable for end users
+
+2. **Top Suspected Causes Section Missing**
+   - **Problem**: Key feature not visible despite code implementation
+   - **Root Cause**: Likely related to response formatting issue above
+   - **Solution Needed**: Ensure `msg.rankedCauses` data is properly received and rendered
+   - **User Request**: This was specifically requested in the test requirements
+
+3. **Attachment Button Accessibility**
+   - **Problem**: Paperclip button not accessible for file uploads
+   - **Solution Needed**: Investigate button rendering and click handlers
+   - **Impact**: Media analysis feature not usable
+
+### 🎯 RECOMMENDATIONS FOR MAIN AGENT:
+
+**IMMEDIATE ACTIONS:**
+
+1. **Fix Response Parsing (CRITICAL)**
+   - Investigate why AI responses are showing as raw JSON
+   - Check response handling in lines 149-233 of DieselExpertChat.jsx
+   - Ensure proper content extraction from API response
+
+2. **Debug Top Suspected Causes Rendering**
+   - Verify backend returns `ranked_causes` in response
+   - Check conditional rendering logic in lines 336-358
+   - Test with sample data to ensure section displays
+
+3. **Fix Attachment Button**
+   - Investigate paperclip button click handlers
+   - Check file input accessibility
+   - Test file selection workflow
+
+4. **Improve User Experience**
+   - Add visible 25MB size limit indicator
+   - Improve error handling for failed responses
+   - Add better loading states
+
+### 📸 Test Evidence:
+- ✅ Login successful and dashboard accessible
+- ✅ Diesel Expert interface loads correctly
+- ❌ Raw JSON data visible in chat responses (critical issue)
+- ✅ DTC code P0087 detected in response
+- ❌ "Top suspected causes" section not visible
+- ✅ Backend API calls successful (logs show 200 OK)
+
+### Conclusion:
+
+**PARTIAL SUCCESS**: The Diesel Expert interface is accessible and the backend is working correctly, but critical frontend issues prevent the feature from being usable:
+
+1. ❌ **Response formatting is broken** - shows raw JSON instead of readable text
+2. ❌ **"Top suspected causes" section is not visible** - key requested feature missing
+3. ❌ **Attachment functionality is not accessible** - button not clickable
+4. ✅ **Backend API is working** - all endpoints responding correctly
+5. ✅ **DTC detection is working** - codes properly identified
+6. ✅ **No system crashes** - interface stable
+
+**USER REQUEST STATUS**: The specific requirements from the Arabic test request are NOT met due to the critical frontend formatting issues. The main agent needs to fix the response parsing before this feature can be considered functional.
+
+**Next Steps for Main Agent:**
+1. Fix JSON response parsing in DieselExpertChat.jsx (CRITICAL)
+2. Debug "Top suspected causes" section rendering (HIGH PRIORITY)
+3. Fix attachment button accessibility (HIGH PRIORITY)
+4. Test with real user scenarios after fixes

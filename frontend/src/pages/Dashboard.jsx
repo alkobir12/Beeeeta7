@@ -16,8 +16,10 @@ const Dashboard = () => {
   const [vehicles, setVehicles] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const isMountedRef = useRef(true);
   
   const STATUS_CONFIG = {
     diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },

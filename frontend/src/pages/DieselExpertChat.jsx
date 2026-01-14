@@ -31,6 +31,11 @@ const DieselExpertChat = () => {
   const fileInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
+  // TODO: لاحقًا يمكن تمرير vehicleId / plate من شاشة المركبة عبر URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const vehicleIdFromUrl = searchParams.get('vehicleId') || '';
+  const vehiclePlateFromUrl = searchParams.get('plate') || '';
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -141,13 +146,54 @@ const DieselExpertChat = () => {
         }))
       }];
 
-      // Use the enhanced diesel expert endpoint
-      const response = await axios.post(`${API_URL}/diesel-expert`, {
-        messages: payloadMessages,
-        sessionId
-      });
+      let assistantMessage = null;
 
-      if (response.data.success) {
+      // إذا كانت هناك مرفقات (صوت/فيديو/صورة) نستخدم مسار تحليل الوسائط
+      const allMedia = currentAttachments.length > 0 && currentAttachments.every(a => 
+        a.type.startsWith('image/') || a.type.startsWith('video/') || a.type.startsWith('audio/')
+      );
+
+      if (allMedia && currentAttachments.length > 0) {
+        const formData = new FormData();
+        formData.append('description', textContent || '');
+        if (vehicleIdFromUrl) formData.append('vehicle_id', vehicleIdFromUrl);
+        if (vehiclePlateFromUrl) formData.append('vehicle_plate', vehiclePlateFromUrl);
+        formData.append('media_file', currentAttachments[0].file);
+
+        const response = await axios.post(`${API_URL}/diesel-expert/analyze-media`, formData);
+
+        if (!response.data.success) {
+          throw new Error('Failed to analyze media');
+        }
+
+        let assistantContent = response.data.analysis;
+
+        if (response.data.dtc_codes_found?.length > 0) {
+          assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;
+        }
+
+        assistantMessage = {
+          role: 'assistant',
+          content: assistantContent,
+          rankedCauses: response.data.ranked_causes || [],
+          knowledgeUsed: (response.data.ranked_causes || []).length > 0,
+          mediaMeta: {
+            vehicleId: response.data.vehicle_id,
+            vehiclePlate: response.data.vehicle_plate,
+            mediaType: response.data.media_type,
+          },
+        };
+      } else {
+        // استخدام مسار الدردشة النصية العادي
+        const response = await axios.post(`${API_URL}/diesel-expert`, {
+          messages: payloadMessages,
+          sessionId
+        });
+
+        if (!response.data.success) {
+          throw new Error('Failed to get response');
+        }
+
         let assistantContent = response.data.response;
         
         // Add sources info if available
@@ -161,16 +207,18 @@ const DieselExpertChat = () => {
         if (response.data.dtc_codes_found?.length > 0) {
           assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;
         }
-        
-        setMessages([...newMessages, {
+
+        assistantMessage = {
           role: 'assistant',
           content: assistantContent,
           sources: response.data.sources,
-          knowledgeUsed: response.data.knowledge_used
-        }]);
-      } else {
-        throw new Error('Failed to get response');
+          knowledgeUsed: response.data.knowledge_used,
+          rankedCauses: response.data.ranked_causes || [],
+          dtcCodes: response.data.dtc_codes_found || [],
+        };
       }
+
+      setMessages([...newMessages, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
       setMessages([...newMessages, {

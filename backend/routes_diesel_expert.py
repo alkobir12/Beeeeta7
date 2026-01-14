@@ -167,22 +167,22 @@ def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], 
             inter = dtc_set & fault_dtc
             if inter:
                 score += 0.6
-                reason_parts.append(f"تطابق DTC: {', '.join(inter)}")
+                reason_parts.append(f"DTC match: {', '.join(inter)}")
 
-        # تطابق نوع المركبة
+        # Vehicle type match
         if evidence.get("vehicle_type") and fault.get("vehicle_type"):
             if evidence["vehicle_type"].lower() in fault["vehicle_type"].lower() or \
                fault["vehicle_type"].lower() in evidence["vehicle_type"].lower():
                 score += 0.2
-                reason_parts.append("تطابق نوع المركبة")
+                reason_parts.append("Vehicle type match")
 
-        # كلمات من الأعراض
+        # Symptom keyword match
         text = (evidence.get("raw_text") or "").lower()
         if text and fault.get("symptom_description"):
             symp = str(fault["symptom_description"]).lower()
             if any(k in symp and k in text for k in ["smoke", "دخان", "boost", "ضغط", "fuel", "وقود"]):
                 score += 0.15
-                reason_parts.append("تشابه في وصف الأعراض")
+                reason_parts.append("Similar symptom description")
 
         if score > 0:
             ranked.append({

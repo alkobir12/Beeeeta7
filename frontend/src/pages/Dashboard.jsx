@@ -34,46 +34,65 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    isMountedRef.current = true;
+    fetchData(true); // Initial load with loading indicator
     
-    // Auto-refresh when returning to dashboard
+    // Background refresh when returning to dashboard
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchData();
+      if (!document.hidden && isMountedRef.current) {
+        fetchData(false); // Background refresh without loading indicator
       }
     };
     
-    // Listen for vehicle updates from other pages (VehicleDetails, VehicleQuickActions)
+    // Listen for vehicle updates from other pages
     const handleVehicleUpdated = () => {
-      console.log('🔄 Vehicle updated event received - refreshing dashboard');
-      fetchData();
+      console.log('🔄 Vehicle updated - background refresh');
+      if (isMountedRef.current) {
+        fetchData(false);
+      }
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('vehicleUpdated', handleVehicleUpdated);
     
     return () => {
+      isMountedRef.current = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('vehicleUpdated', handleVehicleUpdated);
     };
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showLoading = false) => {
+    if (!isMountedRef.current) return;
+    
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
+      
       const [vehiclesRes, techniciansRes] = await Promise.all([
         vehicleAPI.getAll(),
         technicianAPI.getAll()
       ]);
-      setVehicles(vehiclesRes.data);
-      setTechnicians(techniciansRes.data);
+      
+      if (isMountedRef.current) {
+        setVehicles(vehiclesRes.data);
+        setTechnicians(techniciansRes.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({ title: t('common.error'), description: t('common.loading'), variant: 'destructive' });
+      if (showLoading) {
+        toast({ title: t('common.error'), description: t('common.loading'), variant: 'destructive' });
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  };
+  }, [t, toast]);
 
   const stats = {
     totalVehicles: vehicles.length,

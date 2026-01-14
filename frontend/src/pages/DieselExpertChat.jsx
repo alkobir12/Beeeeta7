@@ -69,6 +69,25 @@ const DieselExpertChat = () => {
           const response = await axios.get(`${API_URL}/diesel-expert/quick-search`, {
             params: { q: input }
           });
+  const parseStructuredReport = (raw) => {
+    if (!raw) return { text: '', structured: null };
+    if (typeof raw === 'object') {
+      return { text: '', structured: raw };
+    }
+    if (typeof raw !== 'string') return { text: String(raw), structured: null };
+    const trimmed = raw.trim();
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return { text: '', structured: parsed };
+      } catch (e) {
+        return { text: raw, structured: null };
+      }
+    }
+    return { text: raw, structured: null };
+  };
+
+
           if (response.data.results?.length > 0) {
             setQuickResults(response.data.results);
             setShowQuickResults(true);

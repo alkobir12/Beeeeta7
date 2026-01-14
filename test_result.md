@@ -1266,6 +1266,126 @@ The automatic page refresh issue that was previously causing form data loss has 
 - ✅ Interface loads correctly with proper header "Integrated Diesel Expert"
 - ✅ Connected to Knowledge Base indicator visible
 
+**2. Text Input and Message Sending**
+- ✅ Text input field: WORKING (found with placeholder containing "Ask" or "اسأل")
+- ✅ Message sending: WORKING (Enter key successfully sends message)
+- ✅ Backend API calls: WORKING (status 200 OK responses confirmed in logs)
+- ✅ DTC code detection: WORKING (P0087 detected and displayed in response)
+
+**3. System Stability**
+- ✅ No JavaScript errors detected
+- ✅ No unexpected page refresh
+- ✅ Page stability maintained during testing
+- ✅ Backend API endpoints responding correctly
+
+#### ❌ CRITICAL ISSUES FOUND:
+
+**1. 🔴 CRITICAL: Response Formatting Issue (BLOCKING)**
+- **Problem**: AI responses display raw JSON data instead of formatted text
+- **Evidence**: Screenshots show JSON objects like `"test_description"`, `"procedure"`, `"interpretation"` being displayed directly in chat
+- **Impact**: Users see unreadable technical data instead of helpful diagnostic information
+- **Location**: Frontend response parsing in DieselExpertChat.jsx
+- **Status**: BLOCKING - Makes the feature unusable for end users
+
+**2. 🔴 CRITICAL: "Top Suspected Causes" Section Not Visible (BLOCKING)**
+- **Problem**: The "أعلى الأسباب المشتبه بها" / "Top suspected causes" section is not appearing in responses
+- **Code Status**: Implementation exists in lines 390-424 of DieselExpertChat.jsx
+- **Root Cause**: Response formatting issue preventing proper rendering of `msg.rankedCauses` data
+- **Impact**: Key feature requested by user is not functional - **CANNOT TEST SAVE BUTTON WITHOUT THIS SECTION**
+
+**3. 🔴 CRITICAL: Save Button Cannot Be Tested**
+- **Problem**: Since "Top Suspected Causes" section is not visible, the save button (which appears within that section) cannot be accessed
+- **Code Location**: Lines 413-423 in DieselExpertChat.jsx show save button implementation
+- **Button Text**: "حفظ هذا التحليل في قاعدة المعرفة" / "Save this analysis to KB"
+- **Impact**: Primary test objective cannot be completed
+
+**4. 🔴 CRITICAL: Modal Cannot Be Tested**
+- **Problem**: Without access to save button, the modal functionality cannot be verified
+- **Modal Fields**: Code shows implementation for title, symptom_description, DTC, vehicle_id, vehicle_plate
+- **API Endpoint**: `/api/faults/add` endpoint exists but cannot be tested through UI
+
+### 📊 COMPREHENSIVE TEST STATUS:
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Login System** | ✅ WORKING | Successful authentication |
+| **Page Navigation** | ✅ WORKING | `/diesel-expert` accessible |
+| **Text Input** | ✅ WORKING | Input field and sending functional |
+| **AI Backend** | ✅ WORKING | API calls successful (200 OK) |
+| **DTC Detection** | ✅ WORKING | P0087 code detected correctly |
+| **Response Display** | ❌ BROKEN | Raw JSON shown instead of formatted text |
+| **Top Suspected Causes** | ❌ NOT VISIBLE | Section not appearing in responses |
+| **Save Button** | ❌ NOT ACCESSIBLE | Cannot access due to missing causes section |
+| **Save Modal** | ❌ CANNOT TEST | Dependent on save button accessibility |
+| **Modal Fields** | ❌ CANNOT TEST | Cannot verify without modal access |
+| **API Integration** | ❌ CANNOT TEST | Cannot test `/api/faults/add` through UI |
+
+### 🔴 ROOT CAUSE ANALYSIS:
+
+**Primary Issue**: Frontend response parsing is broken in DieselExpertChat.jsx
+- The AI backend is working correctly (confirmed by 200 OK responses)
+- The issue is in how the frontend processes and displays the AI response
+- Raw JSON data is being displayed instead of parsed, formatted text
+- This prevents the `rankedCauses` data from being properly rendered
+- Without `rankedCauses`, the "Top Suspected Causes" section doesn't appear
+- Without that section, the save button is not accessible
+
+### 🎯 CRITICAL RECOMMENDATIONS FOR MAIN AGENT:
+
+**IMMEDIATE ACTIONS REQUIRED (BLOCKING ISSUES):**
+
+1. **Fix Response Parsing in DieselExpertChat.jsx (HIGHEST PRIORITY)**
+   - **Problem**: Lines 149-233 in handleSend function are not properly parsing AI response
+   - **Evidence**: Raw JSON objects visible in chat interface
+   - **Solution**: Debug response handling and ensure proper content extraction from API response
+   - **Impact**: This fix will enable all other functionality
+
+2. **Verify rankedCauses Data Flow**
+   - **Check**: Ensure backend returns `ranked_causes` in API response
+   - **Verify**: Frontend properly assigns `rankedCauses` to message object (line 230)
+   - **Test**: Conditional rendering logic in lines 390-424 works correctly
+
+3. **Test Save Button After Response Fix**
+   - **Location**: Button should appear in lines 413-423 after rankedCauses is visible
+   - **Text**: "حفظ هذا التحليل في قاعدة المعرفة" / "Save this analysis to KB"
+   - **Action**: Verify button click opens modal correctly
+
+4. **Verify Modal Implementation**
+   - **Fields**: Ensure all required fields are present (title, symptom_description, DTC, vehicle_id, vehicle_plate)
+   - **API**: Test form submission to `/api/faults/add` endpoint
+   - **UX**: Verify modal closes after successful save
+
+### 📸 Test Evidence:
+
+- ✅ Login successful and diesel expert interface accessible
+- ❌ Raw JSON data visible in chat responses (critical issue)
+- ✅ DTC code P0087 detected in response
+- ❌ "Top suspected causes" section not visible
+- ✅ Backend API calls successful (logs show 200 OK)
+
+### Conclusion:
+
+**CRITICAL FAILURE**: The primary test objective cannot be completed due to a critical frontend response parsing issue. While the backend is working correctly and the save button/modal code exists, the response formatting problem prevents the "Top Suspected Causes" section from appearing, which means the save button is not accessible.
+
+**USER REQUEST STATUS**: ❌ **CANNOT BE TESTED** - The specific Arabic test requirements cannot be fulfilled due to the blocking response formatting issue.
+
+**Next Steps for Main Agent:**
+1. **URGENT**: Fix response parsing in DieselExpertChat.jsx handleSend function
+2. Debug why raw JSON is displayed instead of formatted text
+3. Ensure `rankedCauses` data is properly processed and rendered
+4. Re-test save button functionality after response parsing is fixed
+5. Verify complete save-to-KB workflow once UI issues are resolved
+
+**Testing Agent Note**: This is a critical regression that makes the Diesel Expert feature unusable for end users. The save button functionality cannot be properly tested until the response formatting issue is resolved.
+
+#### ✅ WORKING FEATURES:
+
+**1. Login and Navigation**
+- ✅ Login functionality: WORKING
+- ✅ Diesel Expert page access: WORKING via `/diesel-expert`
+- ✅ Interface loads correctly with proper header "Integrated Diesel Expert"
+- ✅ Connected to Knowledge Base indicator visible
+
 **2. Text Input and Messaging**
 - ✅ Text input field: WORKING
 - ✅ Message sending: WORKING (Enter key and send button)

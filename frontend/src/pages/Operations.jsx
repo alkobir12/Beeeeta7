@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
+import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -16,6 +16,9 @@ const Operations = () => {
   const [vehicles, setVehicles] = useState([]);
   const [visits, setVisits] = useState([]);
   const [ops, setOps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isMountedRef = useRef(true);
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',
@@ -40,8 +43,12 @@ const Operations = () => {
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
 
-  const load = async () => {
+  const load = useCallback(async (showLoading = false) => {
+    if (!isMountedRef.current) return;
     try {
+      if (showLoading) setLoading(true);
+      else setIsRefreshing(true);
+      
       const operationsUrl = vehicleIdFromUrl 
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
         : `${API_URL}/operations`;

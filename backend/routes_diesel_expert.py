@@ -217,22 +217,23 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         # 1. استخراج أكواد الأعطال
         dtc_codes = extract_dtc_codes(text_content)
         
-        # 2. البحث في قاعدة المعرفة
-        knowledge_results = []
-        if text_content or dtc_codes:
-            knowledge_results = await search_fault_knowledge(
-                text_content, 
-                dtc_codes[0] if dtc_codes else None
-            )
-        
-        # 3. تجهيز السياق
-        knowledge_context = format_knowledge_context(knowledge_results)
-        
+        # 2. جلب قاعدة المعرفة كاملة ثم تطبيق محرك النقاط
+        knowledge_db = get_fault_knowledge_db()
+        evidence = build_evidence_from_text(text_content)
+        ranked_causes = score_causes_from_knowledge(evidence, dtc_codes, knowledge_db)
+
+        # 3. تجهيز سياق نصي للـ LLM يتضمن النتائج المرتبة
+        causes_block = ""
+        if ranked_causes:
+            causes_block += "\n\n📊 Ranked suspected causes (from deterministic engine):\n"
+            for idx, c in enumerate(ranked_causes, 1):
+                causes_block += f"{idx}. {c.get('title')} (score={c.get('score')}) - DTC: {', '.join(c.get('dtc_codes') or [])}\n"
+                if c.get("evidence_notes"):
+                    causes_block += f"   evidence: {c['evidence_notes']}\n"
+
         # 4. تجهيز الرسالة
-        enhanced_content = text_content
-        if knowledge_context:
-            enhanced_content = f"{text_content}\n\n{knowledge_context}"
-        
+        enhanced_content = text_content + causes_block
+
         # 5. معالجة المرفقات (صور، فيديو، صوت)
         file_contents = []
         media_notes = []

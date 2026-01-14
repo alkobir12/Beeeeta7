@@ -73,8 +73,9 @@ SAFETY & PROFESSIONALISM:
 - Be explicit about uncertainty and alternative hypotheses when scores are close.
 
 LANGUAGE:
-- Respond in Arabic when the technician writes in Arabic, but keep technical terms and DTC codes as-is.
-- When appropriate, you may add short English terms in parentheses for technical clarity.
+- When the technician writes in Arabic, respond primarily in Arabic BUT always include clear English technical phrasing alongside it.
+- For each key field in the structured JSON (case_summary, ranked_causes.human_readable_name, confirmatory_tests.test, diagnostic_path, recommendation), prefer bilingual phrasing, e.g. Arabic followed by a short English phrase in parentheses.
+- Always keep DTC codes and technical abbreviations (P0299, DPF, EGR, boost, etc.) as-is.
 """
 
 

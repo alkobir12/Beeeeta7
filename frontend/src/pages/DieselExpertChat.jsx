@@ -49,11 +49,6 @@ const DieselExpertChat = () => {
   const vehicleIdFromUrl = searchParams.get('vehicleId') || '';
   const vehiclePlateFromUrl = searchParams.get('plate') || '';
 
-  // TODO: لاحقًا يمكن تمرير vehicleId / plate من شاشة المركبة عبر URL
-  const searchParams = new URLSearchParams(window.location.search);
-  const vehicleIdFromUrl = searchParams.get('vehicleId') || '';
-  const vehiclePlateFromUrl = searchParams.get('plate') || '';
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };

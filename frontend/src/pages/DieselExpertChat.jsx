@@ -199,7 +199,8 @@ const DieselExpertChat = () => {
           throw new Error('Failed to analyze media');
         }
 
-        let assistantContent = response.data.analysis;
+        const mediaParsed = parseStructuredReport(response.data.analysis);
+        let assistantContent = mediaParsed.text || (typeof response.data.analysis === 'string' ? response.data.analysis : '');
 
         if (response.data.dtc_codes_found?.length > 0) {
           assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;

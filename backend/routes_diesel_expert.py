@@ -118,6 +118,70 @@ def format_knowledge_context(faults: List[Dict]) -> str:
         return ""
     
     context = "\n\n📚 **معلومات من قاعدة المعرفة المحلية:**\n"
+
+# ------------------------
+# Deterministic Scoring Engine (MVP)
+# ------------------------
+
+def build_evidence_from_text(text: str) -> Dict[str, Any]:
+    """مساعدة: تحويل نص حر إلى مفاتيح أدلة بسيطة (MVP)."""
+    text_lower = (text or "").lower()
+    return {
+        "raw_text": text,
+        "has_low_power": any(k in text_lower for k in ["ضعف", "ما يمشي", "ما يسحب", "no power", "low power"]),
+        "has_smoke": any(k in text_lower for k in ["دخان", "smoke"]),
+    }
+
+
+def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], kb_faults: List[Dict]) -> List[Dict[str, Any]]:
+    """محرك نقاط بسيط يعتمد على fault_knowledge (MVP).
+
+    - يجلب الأعطال التي تشترك في DTC أو في كلمات من النص.
+    - يحسب درجة تقريبية لكل عطل بناءً على تطابق DTC + كلمات مفتاحية.
+    - يعيد قائمة مرتبة يمكن تمريرها للـ LLM على أنها ranked_causes.
+    """
+    ranked: List[Dict[str, Any]] = []
+    dtc_set = {c.upper() for c in (dtc_codes or [])}
+
+    for fault in kb_faults:
+        score = 0.0
+        reason_parts = []
+
+        fault_dtc = set(fault.get("dtc_codes") or [])
+        if dtc_set and fault_dtc:
+            inter = dtc_set & fault_dtc
+            if inter:
+                score += 0.6
+                reason_parts.append(f"تطابق DTC: {', '.join(inter)}")
+
+        # تطابق نوع المركبة
+        if evidence.get("vehicle_type") and fault.get("vehicle_type"):
+            if evidence["vehicle_type"].lower() in fault["vehicle_type"].lower() or \
+               fault["vehicle_type"].lower() in evidence["vehicle_type"].lower():
+                score += 0.2
+                reason_parts.append("تطابق نوع المركبة")
+
+        # كلمات من الأعراض
+        text = (evidence.get("raw_text") or "").lower()
+        if text and fault.get("symptom_description"):
+            symp = str(fault["symptom_description"]).lower()
+            if any(k in symp and k in text for k in ["smoke", "دخان", "boost", "ضغط", "fuel", "وقود"]):
+                score += 0.15
+                reason_parts.append("تشابه في وصف الأعراض")
+
+        if score > 0:
+            ranked.append({
+                "fault_id": fault.get("id"),
+                "title": fault.get("title"),
+                "vehicle_type": fault.get("vehicle_type"),
+                "dtc_codes": list(fault_dtc),
+                "score": round(score, 3),
+                "evidence_notes": "; ".join(reason_parts) or "", 
+            })
+
+    ranked.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return ranked[:5]
+
     for i, fault in enumerate(faults, 1):
         context += f"\n**{i}. {fault.get('title', 'عطل')}**\n"
         context += f"   - المركبة: {fault.get('vehicle_type', '')} {fault.get('vehicle_model', '')}\n"

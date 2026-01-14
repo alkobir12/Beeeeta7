@@ -277,7 +277,17 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         
         response = await chat.send_message(user_message_obj)
 
-        # 7. بناء قائمة المصادر من الأسباب المرتبة
+        # 7. محاولة تحويل الرد إلى JSON منظّم إن أمكن
+        structured = None
+        if isinstance(response, str):
+            resp_trimmed = response.strip()
+            if resp_trimmed.startswith('{') and resp_trimmed.endswith('}'):
+                try:
+                    structured = json.loads(resp_trimmed)
+                except Exception:
+                    structured = None
+
+        # 8. بناء قائمة المصادر من الأسباب المرتبة
         sources = []
         if ranked_causes:
             sources = [{
@@ -288,7 +298,8 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
             } for c in ranked_causes]
 
         return {
-            "response": response,
+            "response": "" if structured else response,
+            "structured": structured,
             "model": "gpt-4o-mini",
             "success": True,
             "sessionId": session_id,

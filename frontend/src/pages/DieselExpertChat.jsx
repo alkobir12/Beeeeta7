@@ -401,6 +401,39 @@ const DieselExpertChat = () => {
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
 
+                  {/* عرض التقرير المنظم إن وُجد */}
+                  {msg.structuredReport && (
+                    <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-1">
+                      {msg.structuredReport.case_summary && (
+                        <p className="font-semibold">
+                          {isArabic ? 'ملخص الحالة:' : 'Case summary:'} {msg.structuredReport.case_summary}
+                        </p>
+                      )}
+                      {msg.structuredReport.risk_level && (
+                        <p>
+                          <span className="font-semibold">{isArabic ? 'مستوى الخطورة:' : 'Risk level:'}</span>
+                          <span className="ml-1">{msg.structuredReport.risk_level}</span>
+                        </p>
+                      )}
+                      {msg.structuredReport.recommendation && (
+                        <p>
+                          <span className="font-semibold">{isArabic ? 'التوصية:' : 'Recommendation:'}</span>
+                          <span className="ml-1">{msg.structuredReport.recommendation}</span>
+                        </p>
+                      )}
+                      {Array.isArray(msg.structuredReport.follow_up_questions) && msg.structuredReport.follow_up_questions.length > 0 && (
+                        <div>
+                          <p className="font-semibold mb-0.5">{isArabic ? 'أسئلة متابعة مقترحة:' : 'Suggested follow-up questions:'}</p>
+                          <ul className="list-disc pl-4 space-y-0.5">
+                            {msg.structuredReport.follow_up_questions.map((q, i) => (
+                              <li key={i}>{q}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* وسم يوضح استخدام قاعدة المعرفة */}
                   {msg.knowledgeUsed && (
                     <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-primary">

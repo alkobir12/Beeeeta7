@@ -408,6 +408,18 @@ const DieselExpertChat = () => {
                           </li>
                         ))}
                       </ul>
+
+                      {/* زر حفظ في قاعدة المعرفة */}
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => openSaveToKbModal(msg)}
+                          className="text-[11px] px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1"
+                        >
+                          <BookOpen size={10} />
+                          {isArabic ? 'حفظ هذا التحليل في قاعدة المعرفة' : 'Save this analysis to KB'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

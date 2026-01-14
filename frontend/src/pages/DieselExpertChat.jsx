@@ -139,6 +139,7 @@ const DieselExpertChat = () => {
     if ((!input.trim() && attachments.length === 0) || loading) return;
 
     const textContent = input.trim();
+    setLastUserQuestion(textContent);
     let displayContent = textContent;
     if (attachments.length > 0) {
       displayContent += (displayContent ? '\n\n' : '') + `[${isArabic ? 'المرفقات' : 'Attachments'}: ${attachments.map(a => a.name).join(', ')}]`;

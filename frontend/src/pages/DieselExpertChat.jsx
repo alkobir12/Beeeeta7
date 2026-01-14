@@ -71,9 +71,25 @@ const DieselExpertChat = () => {
   }, [input]);
 
   const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const MAX_AI_BYTES = 25 * 1024 * 1024; // 25MB حد OpenAI للتحليل
+
+    const validFiles = [];
+    for (const file of files) {
+      if (file.size > MAX_AI_BYTES) {
+        alert(
+          isArabic
+            ? 'الملف أكبر من 25MB، لا يمكن تحليله بالذكاء الاصطناعي. الرجاء تقصير المقطع أو ضغطه أو حفظه في قاعدة المعرفة فقط.'
+            : 'File is larger than 25MB and cannot be analyzed by AI. Please trim/compress it or store it only in the knowledge base.'
+        );
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
     
-    const newAttachments = await Promise.all(files.map(async (file) => {
+    const newAttachments = await Promise.all(validFiles.map(async (file) => {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => {

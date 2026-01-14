@@ -346,18 +346,17 @@ async def analyze_media(
             transcription_text = None
         elif file_ext in ['mp3', 'wav', 'ogg', 'm4a']:
             media_type = "audio"
-            # TODO: استخدام Whisper لتحويل الصوت إلى نص (معطل مؤقتاً)
-            # stt = OpenAISpeechToText(api_key=api_key)
-            # import io
-            # audio_file = io.BytesIO(file_content)
-            # audio_file.name = media_file.filename
-            # stt_response = await stt.transcribe(
-            #     file=audio_file,
-            #     model="whisper-1",
-            #     response_format="json"
-            # )
-            # transcription_text = getattr(stt_response, "text", None) or ""
-            transcription_text = "[Audio transcription temporarily disabled]"
+            # استخدام Whisper لتحويل الصوت إلى نص
+            stt = OpenAISpeechToText(api_key=api_key)
+            import io
+            audio_file = io.BytesIO(file_content)
+            audio_file.name = media_file.filename
+            stt_response = await stt.transcribe(
+                file=audio_file,
+                model="whisper-1",
+                response_format="json"
+            )
+            transcription_text = getattr(stt_response, "text", None) or ""
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 

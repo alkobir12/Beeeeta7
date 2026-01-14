@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin } from 'lucide-react';
+import { Users, Search, Phone, Mail, Plus, Edit, Trash2, Car, MapPin, RefreshCw } from 'lucide-react';
 import { customerAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -13,26 +13,38 @@ const Customers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({
     name: '', phone: '', email: '', address: '',
     vehicleBrand: '', vehiclePlate: '', vehicleKm: 0
   });
+  const isMountedRef = useRef(true);
 
-  useEffect(() => { fetchCustomers(); }, []);
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchCustomers(true);
+    return () => { isMountedRef.current = false; };
+  }, []);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async (showLoading = false) => {
+    if (!isMountedRef.current) return;
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
+      else setIsRefreshing(true);
+      
       const response = await customerAPI.getAll(searchQuery);
-      setCustomers(response.data);
+      if (isMountedRef.current) setCustomers(response.data);
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  };
+  }, [searchQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

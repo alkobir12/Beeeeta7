@@ -274,23 +274,25 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         )
         
         response = await chat.send_message(user_message_obj)
-        
-        # 7. إضافة مصادر المعرفة
+
+        # 7. بناء قائمة المصادر من الأسباب المرتبة
         sources = []
-        if knowledge_results:
+        if ranked_causes:
             sources = [{
-                'type': 'knowledge_base',
-                'title': f.get('title'),
-                'id': f.get('id')
-            } for f in knowledge_results]
-        
+                "type": "knowledge_base",
+                "title": c.get("title"),
+                "id": c.get("fault_id"),
+                "score": c.get("score"),
+            } for c in ranked_causes]
+
         return {
             "response": response,
             "model": "gpt-4o-mini",
             "success": True,
             "sessionId": session_id,
             "sources": sources,
-            "knowledge_used": len(knowledge_results) > 0,
+            "ranked_causes": ranked_causes,
+            "knowledge_used": len(ranked_causes) > 0,
             "dtc_codes_found": dtc_codes,
             "media_analyzed": len(file_contents) > 0
         }

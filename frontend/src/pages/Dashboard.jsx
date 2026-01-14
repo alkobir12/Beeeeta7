@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock } from 'lucide-react';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, RefreshCw } from 'lucide-react';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';

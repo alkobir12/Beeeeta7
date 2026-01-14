@@ -84,9 +84,9 @@ const Operations = () => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [vehicleIdFromUrl]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(true); }, [load]);
 
   const addItem = () => {
     if (!item.name && !item.itemId) return;

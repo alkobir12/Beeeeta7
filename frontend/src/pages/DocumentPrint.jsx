@@ -348,6 +348,23 @@ const DocumentPrint = () => {
   const totals = calculateTotal();
   const DocIcon = docTypes[docType]?.icon || FileText;
 
+  const saveDefaults = async () => {
+    try {
+      setLoading(true);
+      await axios.post(`${API_URL}/settings/print-defaults`, {
+        theme: formData.settings.theme,
+        style: formData.settings.style,
+        tax_rate: formData.settings.tax_rate,
+      });
+      alert(isArabic ? 'تم حفظ الإعدادات الافتراضية للطباعة وعروض الأسعار' : 'Default print & quote settings saved');
+    } catch (error) {
+      console.error('Error saving defaults:', error);
+      alert(isArabic ? 'فشل حفظ الإعدادات الافتراضية' : 'Failed to save default settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 max-w-6xl">

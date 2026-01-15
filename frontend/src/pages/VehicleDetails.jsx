@@ -441,7 +441,7 @@ const VehicleDetails = () => {
 
                     {vehicle.parts && vehicle.parts.length > 0 && (
                       <div className="mt-2 border border-gray-800 rounded-lg overflow-x-auto">
-                        <table className="w-full min-w-[640px] text-xs">
+                        <table className="w-full min-w-[900px] text-xs">
                           <thead className="bg-gray-800 text-gray-300">
                             <tr>
                               <th className="p-2 text-right font-medium">النوع</th>

@@ -392,6 +392,10 @@ const DocumentPrint = () => {
               {loading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} className={isArabic ? 'ml-2' : 'mr-2'} />}
               {isArabic ? 'تحميل' : 'Download'}
             </Button>
+            <Button variant="outline" onClick={saveDefaults} disabled={loading}>
+              <Save size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
+              {isArabic ? 'حفظ التعديلات كإعداد افتراضي' : 'Save as default'}
+            </Button>
           </div>
         </div>
 

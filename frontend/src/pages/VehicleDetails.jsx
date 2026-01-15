@@ -361,155 +361,157 @@ const VehicleDetails = () => {
                     <span className="text-gray-500">{t('vehicle_details.color')}</span>
                     <span className="font-medium">{vehicle.color || '-'}</span>
                   </div>
-                {/* Registered Services for this vehicle */}
-                <div className="mt-4 pt-4 border-t border-gray-800">
-                  <h4 className="text-sm font-semibold text-gray-100 mb-2 flex items-center gap-2">
-                    <Wrench size={16} className="text-orange-400" />
-                    <span>{t('vehicle_details.registered_services')}</span>
-                  </h4>
+                </div>
+              </div>
 
-                  {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
-                  <div className="mt-4 space-y-3">
-                    <div className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-2">
-                        <label className="text-[11px] text-gray-400 mb-1 block">النوع</label>
-                        <select
-                          className="apple-input h-8 text-xs"
-                          value={newItem.itemType}
-                          onChange={e => setNewItem({ ...newItem, itemType: e.target.value })}
-                        >
-                          <option value="service">خدمة</option>
-                          <option value="part">قطعة غيار</option>
-                        </select>
-                      </div>
-                      <div className="col-span-4">
-                        <label className="text-[11px] text-gray-400 mb-1 block">الاسم</label>
-                        <input
-                          className="apple-input h-8 text-xs"
-                          placeholder="وصف البند (خدمة/قطعة)"
-                          value={newItem.name}
-                          onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-[11px] text-gray-400 mb-1 block">الكمية</label>
-                        <input
-                          type="number"
-                          className="apple-input h-8 text-xs"
-                          value={newItem.quantity}
-                          onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) || 1 })}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-[11px] text-gray-400 mb-1 block">السعر</label>
-                        <input
-                          type="number"
-                          className="apple-input h-8 text-xs"
-                          value={newItem.price}
-                          onChange={e => setNewItem({ ...newItem, price: Number(e.target.value) || 0 })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="col-span-2 flex justify-end">
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-white hover:bg-gray-600"
-                          onClick={() => {
-                            const name = (newItem.name || '').trim();
-                            if (!name) {
-                              toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
-                              return;
-                            }
-                            const existing = vehicle.parts || [];
-                            const item = {
-                              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                              itemType: newItem.itemType,
-                              name,
-                              quantity: newItem.quantity || 1,
-                              price: newItem.price || 0,
-                            };
-                            const updatedParts = [...existing, item];
-                            updatePartsLocally(updatedParts);
-                            setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
-                            toast({ title: 'تمت الإضافة', description: 'اضغط حفظ التحديثات للتثبيت' });
-                          }}
-                        >
-                          إضافة بند
-                        </button>
-                      </div>
+              {/* Registered Services & Parts - منفصلة في كرت كامل العرض داخل العمود الأيسر */}
+              <div className="apple-card p-6 md:col-span-2">
+                <div className="flex items-center gap-3 mb-4 text-orange-400">
+                  <Wrench size={20} />
+                  <h3 className="font-bold text-gray-100">{t('vehicle_details.registered_services')}</h3>
+                </div>
+
+                {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
+                <div className="mt-2 space-y-3 text-sm">
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-2">
+                      <label className="text-[11px] text-gray-400 mb-1 block">النوع</label>
+                      <select
+                        className="apple-input h-8 text-xs"
+                        value={newItem.itemType}
+                        onChange={e => setNewItem({ ...newItem, itemType: e.target.value })}
+                      >
+                        <option value="service">خدمة</option>
+                        <option value="part">قطعة غيار</option>
+                      </select>
                     </div>
+                    <div className="col-span-4">
+                      <label className="text-[11px] text-gray-400 mb-1 block">الاسم</label>
+                      <input
+                        className="apple-input h-8 text-xs"
+                        placeholder="وصف البند (خدمة/قطعة)"
+                        value={newItem.name}
+                        onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[11px] text-gray-400 mb-1 block">الكمية</label>
+                      <input
+                        type="number"
+                        className="apple-input h-8 text-xs"
+                        value={newItem.quantity}
+                        onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) || 1 })}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[11px] text-gray-400 mb-1 block">السعر</label>
+                      <input
+                        type="number"
+                        className="apple-input h-8 text-xs"
+                        value={newItem.price}
+                        onChange={e => setNewItem({ ...newItem, price: Number(e.target.value) || 0 })}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-white hover:bg-gray-600"
+                        onClick={() => {
+                          const name = (newItem.name || '').trim();
+                          if (!name) {
+                            toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
+                            return;
+                          }
+                          const existing = vehicle.parts || [];
+                          const item = {
+                            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                            itemType: newItem.itemType,
+                            name,
+                            quantity: newItem.quantity || 1,
+                            price: newItem.price || 0,
+                          };
+                          const updatedParts = [...existing, item];
+                          updatePartsLocally(updatedParts);
+                          setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
+                          toast({ title: 'تمت الإضافة', description: 'اضغط حفظ التحديثات للتثبيت' });
+                        }}
+                      >
+                        إضافة بند
+                      </button>
+                    </div>
+                  </div>
 
-                    {vehicle.parts && vehicle.parts.length > 0 && (
-                      <div className="mt-2 border border-gray-800 rounded-lg overflow-x-auto">
-                        <table className="w-full min-w-[900px] text-xs">
-                          <thead className="bg-gray-800 text-gray-300">
-                            <tr>
-                              <th className="p-2 text-right font-medium">النوع</th>
-                              <th className="p-2 text-right font-medium">الاسم</th>
-                              <th className="p-2 text-right font-medium">الكمية</th>
-                              <th className="p-2 text-right font-medium">السعر</th>
-                              <th className="p-2 text-right font-medium">الإجمالي</th>
-                              <th className="p-2"></th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-800 bg-gray-900/50">
-                            {(vehicle.parts || []).filter(Boolean).map((it, idx) => (
-                              <tr key={`part-${it.id || idx}-${idx}`}>
-                                <td className="p-2 text-gray-400">
-                                  {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
-                                </td>
-                                <td className="p-2 text-gray-200 font-medium">{it.name}</td>
-                                <td className="p-2 text-gray-400">{it.quantity || 1}</td>
-                                <td className="p-2">
-                                  <input
-                                    type="number"
-                                    className="w-20 px-2 py-1 text-xs border border-gray-700 bg-gray-800 rounded text-white"
-                                    value={it.price || 0}
-                                    onChange={(e) => {
-                                      const newPrice = Number(e.target.value) || 0;
-                                      const updatedParts = [...(vehicle.parts || [])];
-                                      updatedParts[idx] = { ...updatedParts[idx], price: newPrice };
-                                      updatePartsLocally(updatedParts);
-                                    }}
-                                  />
-                                  <span className="text-xs text-gray-500 mr-1">ر.س</span>
-                                </td>
-                                <td className="p-2 text-gray-200 font-semibold">
-                                  {((it.quantity || 1) * (it.price || 0)).toLocaleString('ar-SA')} ر.س
-                                </td>
-                                <td className="p-2 text-right">
-                                  <button
-                                    type="button"
-                                    className="p-1 rounded-full hover:bg-red-900/20 text-red-500"
-                                    onClick={() => {
-                                      const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
-                                      updatePartsLocally(updated);
-                                      toast({ title: 'تم الحذف مؤقتاً', description: 'اضغط حفظ التحديثات للتثبيت' });
-                                    }}
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot className="bg-gray-100 border-t-2 border-gray-200">
-                            <tr>
-                              <td colSpan="4" className="p-3 text-left font-bold text-gray-700">{t('operations.subtotal')}:</td>
-                              <td className="p-3 font-bold text-blue-700 text-sm">
-                                {totalParts.toLocaleString('ar-SA')} ر.س
+                  {vehicle.parts && vehicle.parts.length > 0 && (
+                    <div className="mt-2 border border-gray-800 rounded-lg overflow-x-auto">
+                      <table className="w-full min-w-[900px] text-xs">
+                        <thead className="bg-gray-800 text-gray-300">
+                          <tr>
+                            <th className="p-2 text-right font-medium">النوع</th>
+                            <th className="p-2 text-right font-medium">الاسم</th>
+                            <th className="p-2 text-right font-medium">الكمية</th>
+                            <th className="p-2 text-right font-medium">السعر</th>
+                            <th className="p-2 text-right font-medium">الإجمالي</th>
+                            <th className="p-2"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800 bg-gray-900/50">
+                          {(vehicle.parts || []).filter(Boolean).map((it, idx) => (
+                            <tr key={`part-${it.id || idx}-${idx}`}>
+                              <td className="p-2 text-gray-400">
+                                {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
                               </td>
-                              <td></td>
+                              <td className="p-2 text-gray-200 font-medium">{it.name}</td>
+                              <td className="p-2 text-gray-400">{it.quantity || 1}</td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  className="w-20 px-2 py-1 text-xs border border-gray-700 bg-gray-800 rounded text-white"
+                                  value={it.price || 0}
+                                  onChange={(e) => {
+                                    const newPrice = Number(e.target.value) || 0;
+                                    const updatedParts = [...(vehicle.parts || [])];
+                                    updatedParts[idx] = { ...updatedParts[idx], price: newPrice };
+                                    updatePartsLocally(updatedParts);
+                                  }}
+                                />
+                                <span className="text-xs text-gray-500 mr-1">ر.س</span>
+                              </td>
+                              <td className="p-2 text-gray-200 font-semibold">
+                                {((it.quantity || 1) * (it.price || 0)).toLocaleString('ar-SA')} ر.س
+                              </td>
+                              <td className="p-2 text-right">
+                                <button
+                                  type="button"
+                                  className="p-1 rounded-full hover:bg-red-900/20 text-red-500"
+                                  onClick={() => {
+                                    const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
+                                    updatePartsLocally(updated);
+                                    toast({ title: 'تم الحذف مؤقتاً', description: 'اضغط حفظ التحديثات للتثبيت' });
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
                             </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-
-                  </div>
-                  
-                  {(!vehicle.services || vehicle.services.length === 0) ? (
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-gray-100 border-t-2 border-gray-200">
+                          <tr>
+                            <td colSpan="4" className="p-3 text-left font-bold text-gray-700">{t('operations.subtotal')}:</td>
+                            <td className="p-3 font-bold text-blue-700 text-sm">
+                              {totalParts.toLocaleString('ar-SA')} ر.س
+                            </td>
+                            <td></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {(!vehicle.services || vehicle.services.length === 0) ? (
                     <p className="text-xs text-gray-500 mt-2">لا توجد خدمات مسجّلة.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2 mt-3">

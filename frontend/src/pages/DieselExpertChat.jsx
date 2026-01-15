@@ -428,83 +428,119 @@ const DieselExpertChat = () => {
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
 
-                  {/* عرض التقرير المنظم إن وُجد */}
+                  {/* تقرير تشخيص منظم بأسلوب كروت */}
                   {msg.structuredReport && (
-                    <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-2">
-                      {msg.structuredReport.case_summary && (
-                        <p className="font-semibold">
-                          {isArabic ? 'ملخص الحالة:' : 'Case summary:'} {msg.structuredReport.case_summary}
-                        </p>
-                      )}
-                      {msg.structuredReport.risk_level && (
-                        <p>
-                          <span className="font-semibold">{isArabic ? 'مستوى الخطورة:' : 'Risk level:'}</span>
-                          <span className="ml-1">{msg.structuredReport.risk_level}</span>
-                        </p>
-                      )}
-                      {msg.structuredReport.recommendation && (
-                        <p>
-                          <span className="font-semibold">{isArabic ? 'التوصية:' : 'Recommendation:'}</span>
-                          <span className="ml-1">{msg.structuredReport.recommendation}</span>
-                        </p>
+                    <div className="mt-3 space-y-2 text-xs">
+                      {/* Card: Summary + Risk */}
+                      {(msg.structuredReport.case_summary || msg.structuredReport.risk_level || msg.structuredReport.recommendation) && (
+                        <div className="rounded-lg border border-border bg-card/80 p-2 flex gap-2">
+                          <div className="mt-0.5 flex-shrink-0">
+                            <Database className="w-3 h-3 text-primary" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">
+                              {isArabic ? 'ملخص التشخيص' : 'Diagnostic summary'}
+                            </p>
+                            {msg.structuredReport.case_summary && (
+                              <p className="text-[11px] leading-snug text-foreground">
+                                {msg.structuredReport.case_summary}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-1.5 text-[10px] mt-1">
+                              {msg.structuredReport.risk_level && (
+                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/30">
+                                  {isArabic ? 'الخطورة:' : 'Risk:'} {msg.structuredReport.risk_level}
+                                </span>
+                              )}
+                              {msg.structuredReport.recommendation && (
+                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                                  {msg.structuredReport.recommendation}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       )}
 
-                      {/* الأسباب المشتبه بها من التقرير المنظم */}
+                      {/* Card: Ranked causes */}
                       {Array.isArray(msg.structuredReport.ranked_causes) && msg.structuredReport.ranked_causes.length > 0 && (
-                        <div>
-                          <p className="font-semibold mb-0.5">{isArabic ? 'الأسباب المشتبه بها (من التقرير):' : 'Ranked causes (from report):'}</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
+                        <div className="rounded-lg border border-border bg-card/70 p-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Search size={11} className="text-primary" />
+                            <p className="text-[11px] font-semibold text-primary">
+                              {isArabic ? 'الأسباب المشتبه بها' : 'Top suspected causes'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
                             {msg.structuredReport.ranked_causes.map((c, i) => (
-                              <li key={i}>
-                                <span className="font-medium">{c.human_readable_name || c.cause_key}</span>
-                                {typeof c.confidence === 'number' && (
-                                  <span className="ml-1 text-muted-foreground">({Math.round(c.confidence * 100)}%)</span>
-                                )}
-                                {c.evidence_support && (
-                                  <span className="block text-[11px] text-muted-foreground mt-0.5">
-                                    {c.evidence_support}
+                              <div key={i} className="rounded-md bg-background/80 px-2 py-1 border border-border/60">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium text-[11px] text-foreground">
+                                    {c.human_readable_name || c.cause_key}
                                   </span>
+                                  {typeof c.confidence === 'number' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono">
+                                      {Math.round(c.confidence * 100)}%
+                                    </span>
+                                  )}
+                                </div>
+                                {c.evidence_support && (
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug">
+                                    {c.evidence_support}
+                                  </p>
                                 )}
                                 {c.conflicting_evidence && (
-                                  <span className="block text-[11px] text-destructive mt-0.5">
+                                  <p className="mt-0.5 text-[10px] text-destructive leading-snug">
                                     {isArabic ? 'أدلة معاكسة:' : 'Conflicting:'} {c.conflicting_evidence}
-                                  </span>
+                                  </p>
                                 )}
-                              </li>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
 
-                      {/* الاختبارات التأكيدية */}
+                      {/* Card: Confirmatory tests */}
                       {Array.isArray(msg.structuredReport.confirmatory_tests) && msg.structuredReport.confirmatory_tests.length > 0 && (
-                        <div>
-                          <p className="font-semibold mb-0.5">{isArabic ? 'اختبارات تأكيدية مقترحة:' : 'Confirmatory tests:'}</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
+                        <div className="rounded-lg border border-border bg-card/70 p-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <BookOpen size={11} className="text-primary" />
+                            <p className="text-[11px] font-semibold text-primary">
+                              {isArabic ? 'اختبارات تأكيدية' : 'Confirmatory tests'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
                             {msg.structuredReport.confirmatory_tests.map((t, i) => (
-                              <li key={i}>
-                                <span className="font-medium">{t.test}</span>
+                              <div key={i} className="rounded-md bg-background/80 px-2 py-1 border border-border/60">
+                                <p className="text-[11px] font-medium text-foreground">{t.test}</p>
                                 {t.procedure && (
-                                  <span className="block text-[11px] text-muted-foreground mt-0.5">
-                                    {isArabic ? 'الإجراء:' : 'Procedure:'} {t.procedure}
-                                  </span>
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug">
+                                    <span className="font-semibold">{isArabic ? 'الإجراء:' : 'Procedure:'}</span>{' '}
+                                    {t.procedure}
+                                  </p>
                                 )}
                                 {t.interpretation && (
-                                  <span className="block text-[11px] text-muted-foreground mt-0.5">
-                                    {isArabic ? 'التفسير:' : 'Interpretation:'} {t.interpretation}
-                                  </span>
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug">
+                                    <span className="font-semibold">{isArabic ? 'التفسير:' : 'Interpretation:'}</span>{' '}
+                                    {t.interpretation}
+                                  </p>
                                 )}
-                              </li>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
 
-                      {/* المسار التشخيصي */}
+                      {/* Card: Diagnostic path */}
                       {Array.isArray(msg.structuredReport.diagnostic_path) && msg.structuredReport.diagnostic_path.length > 0 && (
-                        <div>
-                          <p className="font-semibold mb-0.5">{isArabic ? 'المسار التشخيصي المقترح:' : 'Suggested diagnostic path:'}</p>
-                          <ol className="list-decimal pl-4 space-y-0.5">
+                        <div className="rounded-lg border border-border bg-card/70 p-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <ExternalLink size={11} className="text-primary" />
+                            <p className="text-[11px] font-semibold text-primary">
+                              {isArabic ? 'المسار التشخيصي المقترح' : 'Suggested diagnostic path'}
+                            </p>
+                          </div>
+                          <ol className="list-decimal pl-4 space-y-0.5 text-[10px] text-foreground leading-snug">
                             {msg.structuredReport.diagnostic_path.map((step, i) => (
                               <li key={i}>{step}</li>
                             ))}
@@ -512,10 +548,13 @@ const DieselExpertChat = () => {
                         </div>
                       )}
 
+                      {/* Follow-up questions */}
                       {Array.isArray(msg.structuredReport.follow_up_questions) && msg.structuredReport.follow_up_questions.length > 0 && (
-                        <div>
-                          <p className="font-semibold mb-0.5">{isArabic ? 'أسئلة متابعة مقترحة:' : 'Suggested follow-up questions:'}</p>
-                          <ul className="list-disc pl-4 space-y-0.5">
+                        <div className="rounded-lg border border-border bg-card/70 p-2">
+                          <p className="text-[11px] font-semibold text-primary mb-1">
+                            {isArabic ? 'أسئلة متابعة مقترحة' : 'Follow-up questions'}
+                          </p>
+                          <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-foreground leading-snug">
                             {msg.structuredReport.follow_up_questions.map((q, i) => (
                               <li key={i}>{q}</li>
                             ))}

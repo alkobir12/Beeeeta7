@@ -183,10 +183,7 @@ const DieselExpertChat = () => {
         }
 
         const rawAnalysis = typeof response.data.analysis === 'string' ? response.data.analysis : '';
-        const mediaParsed = parseStructuredReport(rawAnalysis);
-        let assistantContent = mediaParsed.structured
-          ? (isArabic ? 'تم توليد تقرير تشخيص منظم من الملف.' : 'Generated structured diagnostic report from media.')
-          : (mediaParsed.text || rawAnalysis);
+        let assistantContent = rawAnalysis;
 
         if (response.data.dtc_codes_found?.length > 0) {
           assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;

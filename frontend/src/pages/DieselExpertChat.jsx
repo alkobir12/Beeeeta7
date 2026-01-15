@@ -216,11 +216,7 @@ const DieselExpertChat = () => {
         }
 
         const rawResponse = typeof response.data.response === 'string' ? response.data.response : '';
-        const parsed = parseStructuredReport(rawResponse);
-        // إذا كان لدينا تقرير منظم، لا نعرض JSON الخام، نكتفي برسالة قصيرة
-        let assistantContent = parsed.structured
-          ? (isArabic ? 'تم توليد تقرير تشخيص منظم.' : 'Generated structured diagnostic report.')
-          : (parsed.text || rawResponse);
+        let assistantContent = rawResponse;
         
         // Add sources info if available
         if (response.data.sources?.length > 0) {

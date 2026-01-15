@@ -154,6 +154,7 @@ const DieselExpertChat = () => {
       const payloadMessages = [...messages, { 
         role: 'user', 
         content: textContent || (isArabic ? 'تحليل المرفقات' : 'Analyze attachments'),
+        // نرسل السؤال النصي فقط، بدون محاولة تضمين JSON أو بنية خاصة من الواجهة
         attachments: currentAttachments.map(a => ({
           name: a.name,
           type: a.type,

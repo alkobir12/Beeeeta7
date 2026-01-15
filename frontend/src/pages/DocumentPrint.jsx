@@ -87,6 +87,31 @@ const DocumentPrint = () => {
     }
   }, [vehicleId]);
 
+  // عند التحميل، نقرأ printDefaults إن وجدت
+  useEffect(() => {
+    const loadPrintDefaults = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/settings`);
+        const defaults = res.data?.printDefaults;
+        if (defaults) {
+          setFormData(prev => ({
+            ...prev,
+            settings: {
+              ...prev.settings,
+              theme: defaults.theme || prev.settings.theme,
+              style: defaults.style || prev.settings.style,
+              tax_rate: typeof defaults.tax_rate === 'number' ? defaults.tax_rate : prev.settings.tax_rate,
+            }
+          }));
+        }
+      } catch (e) {
+        // تجاهل أي خطأ في قراءة الإعدادات، ليست حرجة
+      }
+    };
+
+    loadPrintDefaults();
+  }, []);
+
   const loadWorkshopSettings = async () => {
     try {
       // نجلب إعدادات النظام + ملف الورشة، ونعطي أولوية لبيانات "ملف الورشة"

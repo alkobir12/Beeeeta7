@@ -607,8 +607,6 @@ async def download_vehicle_file(vehicle_id: str, file_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return service
-
 @api_router.put("/services/{service_id}", response_model=Service)
 async def update_service(service_id: str, service: Service):
     if DB_PROVIDER == 'supabase':

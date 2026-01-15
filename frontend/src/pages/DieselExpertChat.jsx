@@ -194,7 +194,7 @@ const DieselExpertChat = () => {
           content: assistantContent,
           rankedCauses: response.data.ranked_causes || [],
           knowledgeUsed: (response.data.ranked_causes || []).length > 0,
-          structuredReport: mediaParsed.structured || null,
+          structuredReport: null,
           mediaMeta: {
             vehicleId: response.data.vehicle_id,
             vehiclePlate: response.data.vehicle_plate,

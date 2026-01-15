@@ -67,10 +67,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageVehicles',
       children: [
-        { path: '/print', label: t('buttons.print'), enabled: true },
-        { path: '/quotations', label: 'عروض الأسعار', enabled: true },
-        { path: '/templates', label: 'القوالب', enabled: true },
-        { path: '/invoice-templates', label: 'قوالب الفواتير', enabled: true },
+        { path: '/print', label: 'الطباعة و عروض الأسعار', enabled: true },
       ]
     },
     {

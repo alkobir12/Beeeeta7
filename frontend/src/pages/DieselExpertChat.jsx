@@ -219,9 +219,11 @@ const DieselExpertChat = () => {
           throw new Error('Failed to analyze media');
         }
 
-        const structured = response.data.structured || null;
-        const mediaParsed = parseStructuredReport(response.data.analysis || '');
-        let assistantContent = mediaParsed.text || (typeof response.data.analysis === 'string' ? response.data.analysis : '');
+        const rawAnalysis = typeof response.data.analysis === 'string' ? response.data.analysis : '';
+        const mediaParsed = parseStructuredReport(rawAnalysis);
+        let assistantContent = mediaParsed.structured
+          ? (isArabic ? 'تم توليد تقرير تشخيص منظم من الملف.' : 'Generated structured diagnostic report from media.')
+          : (mediaParsed.text || rawAnalysis);
 
         if (response.data.dtc_codes_found?.length > 0) {
           assistantContent += `\n\n🔍 **${isArabic ? 'أكواد الأعطال المكتشفة' : 'Detected DTC Codes'}:** ${response.data.dtc_codes_found.join(', ')}`;
@@ -250,8 +252,12 @@ const DieselExpertChat = () => {
           throw new Error('Failed to get response');
         }
 
-        const parsed = parseStructuredReport(response.data.response || '');
-        let assistantContent = parsed.text || (typeof response.data.response === 'string' ? response.data.response : '');
+        const rawResponse = typeof response.data.response === 'string' ? response.data.response : '';
+        const parsed = parseStructuredReport(rawResponse);
+        // إذا كان لدينا تقرير منظم، لا نعرض JSON الخام، نكتفي برسالة قصيرة
+        let assistantContent = parsed.structured
+          ? (isArabic ? 'تم توليد تقرير تشخيص منظم.' : 'Generated structured diagnostic report.')
+          : (parsed.text || rawResponse);
         
         // Add sources info if available
         if (response.data.sources?.length > 0) {

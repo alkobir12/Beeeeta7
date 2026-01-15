@@ -509,23 +509,21 @@ const VehicleDetails = () => {
                     </div>
                   )}
                 </div>
-              </div>
-              
-              {(!vehicle.services || vehicle.services.length === 0) ? (
-                    <p className="text-xs text-gray-500 mt-2">لا توجد خدمات مسجّلة.</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {(vehicle.services || []).filter(Boolean).map((service, i) => (
-                        <span
-                          key={`service-${i}-${typeof service === 'string' ? service.slice(0,10) : i}`}
-                          className="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20"
-                        >
-                          {service}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+
+                {(!vehicle.services || vehicle.services.length === 0) ? (
+                  <p className="text-xs text-gray-500 mt-2">لا توجد خدمات مسجّلة.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {(vehicle.services || []).filter(Boolean).map((service, i) => (
+                      <span
+                        key={`service-${i}-${typeof service === 'string' ? service.slice(0,10) : i}`}
+                        className="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20"
+                      >
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="apple-card p-6">

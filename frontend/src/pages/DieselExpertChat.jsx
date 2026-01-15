@@ -57,44 +57,6 @@ const DieselExpertChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const parseStructuredReport = (raw) => {
-    if (!raw) return { text: '', structured: null };
-    if (typeof raw === 'object') {
-      return { text: '', structured: raw };
-    }
-    if (typeof raw !== 'string') return { text: String(raw), structured: null };
-
-    const trimmed = raw.trim();
-    // الحالة البسيطة: النص كله JSON
-    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return { text: '', structured: parsed };
-      } catch (e) {
-        // نكمل للمحاولة التالية
-      }
-    }
-
-    // محاولة استخراج JSON من داخل نص أطول (مثل ```json ...```)
-    const firstBrace = raw.indexOf('{');
-    const lastBrace = raw.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      const jsonCandidate = raw.slice(firstBrace, lastBrace + 1);
-      try {
-        const parsed = JSON.parse(jsonCandidate);
-        const before = raw.slice(0, firstBrace).trim();
-        const after = raw.slice(lastBrace + 1).trim();
-        const cleanText = [before, after].filter(Boolean).join('\n\n');
-        return { text: cleanText, structured: parsed };
-      } catch (e) {
-        // فشل التحويل، نرجع النص كما هو
-        return { text: raw, structured: null };
-      }
-    }
-
-    return { text: raw, structured: null };
-  };
-
   // Quick search as user types
   useEffect(() => {
     if (searchTimeoutRef.current) {

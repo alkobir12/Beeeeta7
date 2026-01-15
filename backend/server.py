@@ -394,20 +394,6 @@ async def save_print_defaults(payload: dict):
     write_settings(data)
     return {"success": True, "printDefaults": data['printDefaults']}
 
-                if 'estimatedCompletion' in upd and isinstance(upd['estimatedCompletion'], datetime):
-                    upd['estimatedCompletion'] = upd['estimatedCompletion'].isoformat()
-                if 'completionDate' in upd and isinstance(upd['completionDate'], datetime):
-                    upd['completionDate'] = upd['completionDate'].isoformat()
-                
-                rows[i] = {**r, **upd}
-                _mem_write('vehicles', rows)
-                return Vehicle(**rows[i])
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-
-    await db.vehicles.update_one({"id": vehicle_id}, {"$set": upd})
-    vehicle = await db.vehicles.find_one({"id": vehicle_id})
-    return Vehicle(**vehicle)
-
 @api_router.delete("/vehicles/{vehicle_id}")
 async def delete_vehicle(vehicle_id: str):
     """Delete a vehicle and its related invoices and operations."""

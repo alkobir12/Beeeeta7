@@ -170,6 +170,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============ Settings: simple JSON-based global settings ============
+
+SETTINGS_FILE = ROOT_DIR / 'uploads' / 'settings.json'
+
+def read_settings() -> dict:
+    if not SETTINGS_FILE.exists():
+        return {}
+    try:
+        with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def write_settings(data: dict):
+    SETTINGS_FILE.parent.mkdir(exist_ok=True, parents=True)
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
 # Include Routers
 app.include_router(users_router)
 app.include_router(injectors_router)

@@ -67,7 +67,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageVehicles',
       children: [
-        { path: '/print', label: 'الطباعة و عروض الأسعار', enabled: true },
+        { path: '/print', label: i18n.language === 'ar' ? 'الطباعة و عروض الأسعار' : 'Print & Quotes', enabled: true },
       ]
     },
     {

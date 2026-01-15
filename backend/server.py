@@ -358,6 +358,29 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
         for i, r in enumerate(rows):
             if r.get('id') == vehicle_id:
                 # handle dates
+
+# ============ Print & Quote Settings API ============
+
+@api_router.get("/settings")
+async def get_settings():
+    """إرجاع إعدادات الورشة/الطباعة المخزنة في ملف JSON بسيط.
+    ملاحظة: هذا مسار عام يمكن توسيعه لاحقًا لدمج إعدادات أخرى.
+    """
+    data = read_settings()
+    return data
+
+
+@api_router.post("/settings/print-defaults")
+async def save_print_defaults(payload: dict):
+    """حفظ الإعدادات الافتراضية للطباعة وعروض الأسعار (theme/style/tax_rate)."""
+    data = read_settings()
+    data.setdefault('printDefaults', {})
+    data['printDefaults']['theme'] = payload.get('theme')
+    data['printDefaults']['style'] = payload.get('style')
+    data['printDefaults']['tax_rate'] = payload.get('tax_rate')
+    write_settings(data)
+    return {"success": True, "printDefaults": data['printDefaults']}
+
                 if 'estimatedCompletion' in upd and isinstance(upd['estimatedCompletion'], datetime):
                     upd['estimatedCompletion'] = upd['estimatedCompletion'].isoformat()
                 if 'completionDate' in upd and isinstance(upd['completionDate'], datetime):

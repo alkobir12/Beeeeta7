@@ -1358,6 +1358,102 @@ async def _approvals_broadcast(event: Dict[str, Any]):
 @router.post('/approvals/public/{token}/respond')
 async def respond_public_approval(token: str, request: Request, status: str = 'approved', name: str = '', phone: str = '', notes: str = ''):
     try:
+        provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+
+        # ---------- Supabase implementation ----------
+        if provider == 'supabase':
+            from supabase_service import SupabaseService
+            import hashlib
+            from datetime import datetime as _dt, timezone as _tz
+
+            supa = SupabaseService()
+
+            # Fetch approval by token
+            res = supa.client.table('approval_requests').select('*').eq('token', token).execute()
+            if not res.data:
+                raise HTTPException(status_code=404, detail='رابط غير صحيح')
+
+            d = res.data[0]
+
+            # Check revoked
+            if d.get('revoked'):
+                raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
+
+            # Check expiry similar to public_approval
+            expires_str = d.get('expires_at')
+            if expires_str:
+                if isinstance(expires_str, str):
+                    if expires_str.endswith('Z'):
+                        expires_str = expires_str[:-1] + '+00:00'
+                    expires_at = _dt.fromisoformat(expires_str)
+                else:
+                    expires_at = expires_str
+
+                now_utc = _dt.now(_tz.utc)
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=_tz.utc)
+
+                if expires_at < now_utc:
+                    raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
+
+            # Digital Signature Logic
+            client_ip = request.client.host
+            user_agent = request.headers.get('user-agent', 'unknown')
+            timestamp = _dt.utcnow().isoformat()
+
+            raw_data = f"{token}:{status}:{timestamp}:{client_ip}:{user_agent}"
+            signature = hashlib.sha256(raw_data.encode()).hexdigest()
+
+            upd = {
+                'status': status,
+                'responded_at': timestamp,
+                'responder_name': name,
+                'responder_phone': phone,
+                'notes': notes,
+                'client_ip': client_ip,
+                'user_agent': user_agent,
+                'signature': signature,
+            }
+
+            supa.client.table('approval_requests').update(upd).eq('token', token).execute()
+
+            # Re-fetch updated row
+            res2 = supa.client.table('approval_requests').select('*').eq('token', token).execute()
+            nd = (res2.data or [d])[0]
+
+            # Broadcast SSE update (without relying on MongoDB)
+            try:
+                await _approvals_broadcast({
+                    'type': 'approval_updated',
+                    'token': nd.get('token'),
+                    'vehicleId': nd.get('vehicle_id'),
+                    'customerId': nd.get('customer_id'),
+                    'status': nd.get('status'),
+                    'respondedAt': nd.get('responded_at'),
+                })
+            except Exception:
+                pass
+
+            # Normalize response shape to match public_approval
+            return {
+                'id': nd.get('id'),
+                'token': nd.get('token'),
+                'vehicleId': nd.get('vehicle_id'),
+                'customerId': nd.get('customer_id'),
+                'title': nd.get('title'),
+                'amount': nd.get('amount'),
+                'serviceItems': nd.get('service_items') or [],
+                'serviceItemsText': nd.get('service_items_text'),
+                'images': nd.get('images') or [],
+                'status': nd.get('status'),
+                'createdAt': nd.get('created_at'),
+                'expiresAt': nd.get('expires_at'),
+                'respondedAt': nd.get('responded_at'),
+                'signature': nd.get('signature'),
+                'clientIp': nd.get('client_ip'),
+            }
+
+        # ---------- MongoDB / legacy implementation ----------
         d = await db.approval_requests.find_one({'token': token})
         if not d:
             raise HTTPException(status_code=404, detail='رابط غير صحيح')
@@ -1365,32 +1461,30 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
             raise HTTPException(status_code=410, detail='تم إلغاء الطلب')
         if d.get('expiresAt') and d['expiresAt'] < datetime.utcnow():
             raise HTTPException(status_code=410, detail='انتهت صلاحية الرابط')
-        
+
         # Digital Signature Logic
         import hashlib
         client_ip = request.client.host
-
-        
         user_agent = request.headers.get('user-agent', 'unknown')
         timestamp = datetime.utcnow().isoformat()
-        
+
         # Create a hash of the approval data
         raw_data = f"{token}:{status}:{timestamp}:{client_ip}:{user_agent}"
         signature = hashlib.sha256(raw_data.encode()).hexdigest()
-        
+
         upd = {
-            'status': status, 
-            'respondedAt': datetime.utcnow(), 
-            'responderName': name, 
-            'responderPhone': phone, 
+            'status': status,
+            'respondedAt': datetime.utcnow(),
+            'responderName': name,
+            'responderPhone': phone,
             'notes': notes,
             'clientIp': client_ip,
             'userAgent': user_agent,
-            'signature': signature
+            'signature': signature,
         }
-        
+
         await db.approval_requests.update_one({'token': token}, {'$set': upd})
-        
+
         # Append to customer history
         if d.get('customerId'):
             history_entry = {
@@ -1400,25 +1494,42 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
                 'respondedAt': timestamp,
                 'clientIp': client_ip,
                 'signature': signature,
-                'title': d.get('title')
+                'title': d.get('title'),
             }
             await db.customers.update_one(
                 {'id': d.get('customerId')},
-                {'$push': {'approvalsHistory': history_entry}}
+                {'$push': {'approvalsHistory': history_entry}},
             )
 
         nd = await db.approval_requests.find_one({'token': token})
         nd.pop('_id', None)
-        for k in ('createdAt','expiresAt','respondedAt'):
-            if nd.get(k) and hasattr(nd[k],'isoformat'):
+        for k in ('createdAt', 'expiresAt', 'respondedAt'):
+            if nd.get(k) and hasattr(nd[k], 'isoformat'):
                 nd[k] = nd[k].isoformat()
         # log
         try:
-            await _log_approval_event(token, nd.get('vehicleId'), nd.get('customerId'), nd.get('title','طلب اعتماد'), float(nd.get('amount') or 0), nd.get('status'), nd.get('serviceItems') or [], nd.get('serviceItemsText'), datetime.utcnow())
+            await _log_approval_event(
+                token,
+                nd.get('vehicleId'),
+                nd.get('customerId'),
+                nd.get('title', 'طلب اعتماد'),
+                float(nd.get('amount') or 0),
+                nd.get('status'),
+                nd.get('serviceItems') or [],
+                nd.get('serviceItemsText'),
+                datetime.utcnow(),
+            )
         except Exception as le:
             print(f"log approval error: {le}")
         # broadcast SSE
-        await _approvals_broadcast({'type':'approval_updated','token': token,'vehicleId': nd.get('vehicleId'),'customerId': nd.get('customerId'),'status': nd.get('status'),'respondedAt': nd.get('respondedAt')})
+        await _approvals_broadcast({
+            'type': 'approval_updated',
+            'token': token,
+            'vehicleId': nd.get('vehicleId'),
+            'customerId': nd.get('customerId'),
+            'status': nd.get('status'),
+            'respondedAt': nd.get('respondedAt'),
+        })
         return nd
     except HTTPException:
         raise

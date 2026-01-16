@@ -168,14 +168,14 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const sendToWhatsApp = (type, link, customMessage) => {
-    // نرسل طلب الاعتماد مباشرة عبر رابط واتساب في نفس التبويب بدون نوافذ منبثقة
+    // نرسل طلب الاعتماد مباشرة عبر واتساب بدون استدعاء backend لتقليل المشاكل مع النوافذ المنبثقة
     const rawPhone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
     if (!rawPhone) {
       toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
       return;
     }
 
-    // تطبيع الرقم لصيغة دولية (نفترض السعودية 966، عدّل حسب حاجتك لاحقاً)
+    // تطبيع الرقم لصيغة دولية (نفترض السعودية 966، يمكن تعديلها لاحقاً لو لديك دول أخرى)
     let norm = rawPhone;
     if (norm.startsWith('0')) {
       norm = '966' + norm.slice(1);
@@ -185,10 +185,20 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
     const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
     const encoded = encodeURIComponent(msg);
-    const whatsappUrl = `https://wa.me/${norm}?text=${encoded}`;
 
-    // استخدام location.href لتفادي حظر النوافذ المنبثقة وفتح تطبيق واتساب مباشرة
-    window.location.href = whatsappUrl;
+    // 1) نحاول فتح تطبيق واتساب مباشرة عبر البروتوكول whatsapp://
+    const appUrl = `whatsapp://send?phone=${norm}&text=${encoded}`;
+    // 2) لو لم يفتح التطبيق (مثلاً على بعض المتصفحات)، نرجع إلى رابط الويب الرسمي
+    const webUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
+
+    // على iOS/Android: المحاولة الأولى تفتح التطبيق، والثانية تعمل كـ fallback
+    window.location.href = appUrl;
+    setTimeout(() => {
+      // إذا لم يتم التحويل للتطبيق خلال جزء من الثانية، نحاول رابط الويب
+      if (window.location.href.indexOf('whatsapp://') === -1) {
+        window.location.href = webUrl;
+      }
+    }, 800);
   };
 
   const handlePrintAndSend = async (type) => {

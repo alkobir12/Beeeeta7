@@ -175,9 +175,14 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
     
     try {
-      const prep = await axios.post(`${API_URL}/notifications/prepare`, { type, phone, link });
+      const prep = await axios.post(`${API_URL}/notifications/prepare`, { type, phone, link, message: customMessage });
       setTimeout(() => {
-        const wa = window.open(prep.data.whatsappDeeplink, '_blank', 'noopener,noreferrer');
+        // backend يعيد whatsappUrl، والكود القديم كان يستخدم whatsappDeeplink فقط
+        const deeplink = prep?.data?.whatsappUrl || prep?.data?.whatsappDeeplink;
+        if (!deeplink) {
+          throw new Error('Missing WhatsApp URL in response');
+        }
+        const wa = window.open(deeplink, '_blank', 'noopener,noreferrer');
         if (!wa) {
           toast({ 
             title: 'افتح الواتساب يدوياً', 

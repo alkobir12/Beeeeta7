@@ -1461,7 +1461,8 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
             norm = '966' + norm
         import urllib.parse
         encoded_msg = urllib.parse.quote(msg)
-        whatsapp_url = f"https://wa.me/{norm}?text={encoded_msg}"
+        # نستخدم endpoint الرسمي الأقدم والأكثر توافقاً
+        whatsapp_url = f"https://api.whatsapp.com/send?phone={norm}&text={encoded_msg}"
         return {"whatsappUrl": whatsapp_url, "phone": norm, "message": msg}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

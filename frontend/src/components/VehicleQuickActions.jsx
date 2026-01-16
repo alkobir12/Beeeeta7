@@ -168,45 +168,39 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const sendToWhatsApp = (type, link, customMessage) => {
-    // أبسط وأكثر استقراراً: فتح رابط wa.me مباشرة في نفس التبويب
     const rawPhone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
     if (!rawPhone) {
       toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
       return;
     }
 
-    // كل الأرقام تبدأ بـ 05 حسب كلامك -> نحولها لصيغة دولية 9665xxxxxxx
+    // تحويل الرقم لصيغة دولية سعودية 9665xxxxxxx
     let norm = rawPhone;
     if (norm.startsWith('0')) {
-      norm = '966' + norm.slice(1); // 05xxxxxx -> 9665xxxxxx
+      norm = '966' + norm.slice(1);
     } else if (!norm.startsWith('966')) {
-      norm = '966' + norm; // في حال كتب الرقم بدون 0
+      norm = '966' + norm;
     }
 
-    const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
+    // نبقي الرسالة بسيطة بدون تنسيقات معقّدة لتفادي مشاكل iOS
+    const msg = customMessage || `السلام عليكم ${vehicle?.customerName} - ${link}`;
     const encoded = encodeURIComponent(msg);
 
-    // استخدام رابط api.whatsapp.com القياسي لأنه الأكثر استقراراً على أجهزة iOS
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
 
-    // نسخ الرابط تلقائياً إلى الحافظة كحل احتياطي في حال لم يُفتح الواتساب
+    // إغلاق نافذة طلب الاعتماد (إن كانت مفتوحة) قبل الانتقال للواتساب لتفادي مشاكل iOS مع الـ Dialog
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(whatsappUrl).catch(() => {});
-      }
+      setApprovalDialogOpen(false);
     } catch (e) {
-      // تجاهل أي خطأ في النسخ
+      // تجاهل أي خطأ
     }
 
-    // إظهار تنبيه بسيط للمستخدم بوجود الرابط في الحافظة
-    toast({
-      title: 'سيتم فتح الواتساب',
-      description: 'في حال لم يُفتح الواتساب، تم نسخ الرابط ويمكنك لصقه يدوياً داخل المحادثة.',
-    });
-
-    // فتح الرابط في نفس التبويب لضمان عمله داخل Safari على الآيفون
-    console.log('Opening WhatsApp URL:', whatsappUrl);
-    window.location.href = whatsappUrl;
+    // فتح الرابط في تبويب جديد لتقليل مشاكل iOS Safari مع النوافذ المنبثقة من داخل المودال
+    const newWindow = window.open(whatsappUrl, '_blank');
+    if (!newWindow) {
+      // في حال منع المتصفح النافذة، نستخدم الانتقال العادي كخطة بديلة
+      window.location.href = whatsappUrl;
+    }
   };
 
   const handlePrintAndSend = async (type) => {

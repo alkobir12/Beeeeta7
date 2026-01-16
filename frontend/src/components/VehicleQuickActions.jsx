@@ -185,10 +185,12 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
     const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
     const encoded = encodeURIComponent(msg);
-    const whatsappUrl = `https://wa.me/${norm}?text=${encoded}`;
 
-    // استخدام location.assign بدلاً من window.open أو whatsapp:// لتفادي أي صفحات منبثقة أو حظر
-    window.location.assign(whatsappUrl);
+    // استخدام رابط api.whatsapp.com القياسي لأنه الأكثر استقراراً على أجهزة iOS
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
+
+    // فتح الرابط في نفس التبويب لضمان عمله داخل Safari على الآيفون
+    window.location.href = whatsappUrl;
   };
 
   const handlePrintAndSend = async (type) => {

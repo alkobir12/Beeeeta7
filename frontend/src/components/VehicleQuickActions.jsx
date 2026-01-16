@@ -208,8 +208,6 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const handlePrintAndSend = async (type) => {
-    await handlePrint(type);
-    
     // Generate link for sharing
     const trackingLink = `${window.location.origin}/track/${vehicle?.trackingLink || vehicle?.id}`;
     let message = `السلام عليكم ${vehicle?.customerName}\n`;

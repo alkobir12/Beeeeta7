@@ -1226,7 +1226,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://fixmycar-18.preview.emergentagent.com/api`
+**Backend URL**: `https://carcare-sys.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional

@@ -189,7 +189,23 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     // استخدام رابط api.whatsapp.com القياسي لأنه الأكثر استقراراً على أجهزة iOS
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
 
+    // نسخ الرابط تلقائياً إلى الحافظة كحل احتياطي في حال لم يُفتح الواتساب
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(whatsappUrl).catch(() => {});
+      }
+    } catch (e) {
+      // تجاهل أي خطأ في النسخ
+    }
+
+    // إظهار تنبيه بسيط للمستخدم بوجود الرابط في الحافظة
+    toast({
+      title: 'سيتم فتح الواتساب',
+      description: 'في حال لم يُفتح الواتساب، تم نسخ الرابط ويمكنك لصقه يدوياً داخل المحادثة.',
+    });
+
     // فتح الرابط في نفس التبويب لضمان عمله داخل Safari على الآيفون
+    console.log('Opening WhatsApp URL:', whatsappUrl);
     window.location.href = whatsappUrl;
   };
 

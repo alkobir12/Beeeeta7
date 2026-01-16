@@ -1404,14 +1404,13 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
             raw_data = f"{token}:{status}:{timestamp}:{client_ip}:{user_agent}"
             signature = hashlib.sha256(raw_data.encode()).hexdigest()
 
+            # الحد الأدنى من الحقول لضمان توافق الجدول الحالي في Supabase
             upd = {
                 'status': status,
                 'responded_at': timestamp,
                 'responder_name': name,
                 'responder_phone': phone,
                 'notes': notes,
-                'client_ip': client_ip,
-                'user_agent': user_agent,
                 'signature': signature,
             }
 

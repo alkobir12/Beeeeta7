@@ -167,44 +167,28 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     } finally { setLoading(false); }
   };
 
-  const sendToWhatsApp = async (type, link, customMessage) => {
-    const phone = (vehicle?.customerPhone || '').replace(/[^0-9+]/g, '');
-    if (!phone) {
+  const sendToWhatsApp = (type, link, customMessage) => {
+    // نرسل طلب الاعتماد مباشرة عبر رابط واتساب في نفس التبويب بدون نوافذ منبثقة
+    const rawPhone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
+    if (!rawPhone) {
       toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
       return;
     }
-    
-    try {
-      const prep = await axios.post(`${API_URL}/notifications/prepare`, { type, phone, link, message: customMessage });
-      setTimeout(() => {
-        // backend يعيد whatsappUrl، والكود القديم كان يستخدم whatsappDeeplink فقط
-        const deeplink = prep?.data?.whatsappUrl || prep?.data?.whatsappDeeplink;
-        if (!deeplink) {
-          throw new Error('Missing WhatsApp URL in response');
-        }
-        const wa = window.open(deeplink, '_blank', 'noopener,noreferrer');
-        if (!wa) {
-          toast({ 
-            title: 'افتح الواتساب يدوياً', 
-            description: 'المتصفح منع النافذة المنبثقة. انسخ الرابط وأرسله للعميل.',
-            variant: 'destructive' 
-          });
-        }
-      }, 300);
-    } catch (_e) {
-      // Fallback to direct WhatsApp link
-      const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
-      setTimeout(() => {
-        const wa = window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-        if (!wa) {
-          toast({ 
-            title: 'افتح الواتساب يدوياً', 
-            description: 'المتصفح منع النافذة المنبثقة',
-            variant: 'destructive' 
-          });
-        }
-      }, 300);
+
+    // تطبيع الرقم لصيغة دولية (نفترض السعودية 966، عدّل حسب حاجتك لاحقاً)
+    let norm = rawPhone;
+    if (norm.startsWith('0')) {
+      norm = '966' + norm.slice(1);
+    } else if (!norm.startsWith('966')) {
+      norm = '966' + norm;
     }
+
+    const msg = customMessage || `السلام عليكم ${vehicle?.customerName}\n${link}`;
+    const encoded = encodeURIComponent(msg);
+    const whatsappUrl = `https://wa.me/${norm}?text=${encoded}`;
+
+    // استخدام location.href لتفادي حظر النوافذ المنبثقة وفتح تطبيق واتساب مباشرة
+    window.location.href = whatsappUrl;
   };
 
   const handlePrintAndSend = async (type) => {

@@ -167,53 +167,45 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     } finally { setLoading(false); }
   };
 
-  const sendToWhatsApp = async (type, link, customMessage) => {
+  const [lastWhatsappUrl, setLastWhatsappUrl] = useState('');
+
+  const sendToWhatsApp = (type, link, customMessage) => {
     const phone = vehicle?.customerPhone || '';
     if (!phone) {
       toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
       return;
     }
 
+    // تطبيع الرقم لصيغة دولية سعودية 9665xxxxxxx
+    let norm = phone.replace(/[^0-9+]/g, '');
+    if (norm.startsWith('00')) norm = norm.slice(2);
+    if (norm.startsWith('+')) norm = norm.slice(1);
+    if (norm.startsWith('05')) {
+      norm = '966' + norm.slice(1);
+    } else if (norm.startsWith('5') && norm.length === 9) {
+      norm = '966' + norm;
+    } else if (!norm.startsWith('966')) {
+      norm = '966' + norm;
+    }
+
     // رسالة بسيطة وواضحة لتقليل مشاكل iOS
     const msg = customMessage || `السلام عليكم ${vehicle?.customerName} - ${link}`;
+    const encoded = encodeURIComponent(msg);
 
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
+    setLastWhatsappUrl(whatsappUrl);
+
+    // إغلاق نافذة طلب الاعتماد قبل الانتقال
     try {
-      // نستخدم مسار backend الجاهز لتحضير رابط الواتساب (يتكفل بتنسيق الرقم والرسالة)
-      const { data } = await axios.post(`${API_URL}/notifications/prepare`, {
-        phone,
-        link,
-        message: msg,
-      });
-
-      const whatsappUrl = data.whatsappUrl || data.whatsappDeeplink;
-      if (!whatsappUrl) {
-        toast({ title: 'خطأ', description: 'تعذر إنشاء رابط الواتساب', variant: 'destructive' });
-        return;
-      }
-
-      // إغلاق نافذة طلب الاعتماد قبل الانتقال
-      try {
-        setApprovalDialogOpen(false);
-      } catch (e) {
-        // تجاهل أي خطأ
-      }
-
-      // محاولة نسخ الرابط كحل احتياطي في حال لم يُفتح الواتساب
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(whatsappUrl);
-        }
-      } catch (e) {
-        // تجاهل أخطاء النسخ
-      }
-
-      // فتح الرابط مباشرة في نفس التبويب (الأكثر استقراراً على iOS)
-      window.location.href = whatsappUrl;
-    } catch (error) {
-      console.error('WhatsApp link error', error);
-      toast({ title: 'خطأ', description: 'تعذر تحضير رابط الواتساب، حاول مرة أخرى', variant: 'destructive' });
+      setApprovalDialogOpen(false);
+    } catch (e) {
+      // تجاهل أي خطأ
     }
+
+    // فتح الرابط مباشرة في نفس التبويب (الأكثر استقراراً على iOS)
+    window.location.href = whatsappUrl;
   };
+
 
   const handlePrintAndSend = async (type) => {
     // Generate link for sharing

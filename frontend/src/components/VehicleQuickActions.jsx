@@ -167,39 +167,51 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     } finally { setLoading(false); }
   };
 
-  const sendToWhatsApp = (type, link, customMessage) => {
-    const rawPhone = (vehicle?.customerPhone || '').replace(/[^0-9]/g, '');
-    if (!rawPhone) {
+  const sendToWhatsApp = async (type, link, customMessage) => {
+    const phone = vehicle?.customerPhone || '';
+    if (!phone) {
       toast({ title: 'تنبيه', description: 'رقم هاتف العميل غير متوفر', variant: 'destructive' });
       return;
     }
 
-    // تحويل الرقم لصيغة دولية سعودية 9665xxxxxxx
-    let norm = rawPhone;
-    if (norm.startsWith('0')) {
-      norm = '966' + norm.slice(1);
-    } else if (!norm.startsWith('966')) {
-      norm = '966' + norm;
-    }
-
-    // نبقي الرسالة بسيطة بدون تنسيقات معقّدة لتفادي مشاكل iOS
+    // رسالة بسيطة وواضحة لتقليل مشاكل iOS
     const msg = customMessage || `السلام عليكم ${vehicle?.customerName} - ${link}`;
-    const encoded = encodeURIComponent(msg);
 
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${norm}&text=${encoded}`;
-
-    // إغلاق نافذة طلب الاعتماد (إن كانت مفتوحة) قبل الانتقال للواتساب لتفادي مشاكل iOS مع الـ Dialog
     try {
-      setApprovalDialogOpen(false);
-    } catch (e) {
-      // تجاهل أي خطأ
-    }
+      // نستخدم مسار backend الجاهز لتحضير رابط الواتساب (يتكفل بتنسيق الرقم والرسالة)
+      const { data } = await axios.post(`${API_URL}/notifications/prepare`, {
+        phone,
+        link,
+        message: msg,
+      });
 
-    // فتح الرابط في تبويب جديد لتقليل مشاكل iOS Safari مع النوافذ المنبثقة من داخل المودال
-    const newWindow = window.open(whatsappUrl, '_blank');
-    if (!newWindow) {
-      // في حال منع المتصفح النافذة، نستخدم الانتقال العادي كخطة بديلة
+      const whatsappUrl = data.whatsappUrl || data.whatsappDeeplink;
+      if (!whatsappUrl) {
+        toast({ title: 'خطأ', description: 'تعذر إنشاء رابط الواتساب', variant: 'destructive' });
+        return;
+      }
+
+      // إغلاق نافذة طلب الاعتماد قبل الانتقال
+      try {
+        setApprovalDialogOpen(false);
+      } catch (e) {
+        // تجاهل أي خطأ
+      }
+
+      // محاولة نسخ الرابط كحل احتياطي في حال لم يُفتح الواتساب
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(whatsappUrl);
+        }
+      } catch (e) {
+        // تجاهل أخطاء النسخ
+      }
+
+      // فتح الرابط مباشرة في نفس التبويب (الأكثر استقراراً على iOS)
       window.location.href = whatsappUrl;
+    } catch (error) {
+      console.error('WhatsApp link error', error);
+      toast({ title: 'خطأ', description: 'تعذر تحضير رابط الواتساب، حاول مرة أخرى', variant: 'destructive' });
     }
   };
 

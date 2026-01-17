@@ -61,9 +61,14 @@ def _mem_write(name: str, items: list):
 def set_db(database):
     global db, templates_bucket
     db = database
+    # Only initialize GridFS bucket when we have a valid MongoDB database.
     try:
-        templates_bucket = AsyncIOMotorGridFSBucket(db, bucket_name='invoice_templates')
+        if db is not None:
+            templates_bucket = AsyncIOMotorGridFSBucket(db, bucket_name='invoice_templates')
+        else:
+            templates_bucket = None
     except Exception as e:
+        templates_bucket = None
         print(f"GridFS bucket init failed: {e}")
 
 

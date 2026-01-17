@@ -146,6 +146,24 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Create the main app
 app = FastAPI(title="Workshop Management API")
+# Health check endpoint for deployment readiness
+@app.get("/health")
+async def health_check():
+    """Simple health check used by deployment platform."""
+    # Optional: check DB connectivity when using Mongo
+    if DB_PROVIDER == 'mongo':
+        try:
+            if client is None or db is None:
+                return {"status": "degraded", "db": "not_configured"}
+            # Use a lightweight ping command
+            await db.command("ping")
+            return {"status": "ok", "db": "connected"}
+        except Exception as e:
+            # Do not crash app on health check failure – just report degraded state
+            return {"status": "degraded", "db": "error", "detail": str(e)[:200]}
+    # For other providers (supabase/memory), just return ok
+    return {"status": "ok"}
+
 
 # Add validation error handler
 from fastapi.exceptions import RequestValidationError

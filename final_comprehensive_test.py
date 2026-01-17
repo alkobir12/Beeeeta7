@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://carcare-sys.preview.emergentagent.com/api"
+BASE_URL = "https://workshop-manager-49.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

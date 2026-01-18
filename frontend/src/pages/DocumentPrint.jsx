@@ -66,7 +66,8 @@ const DocumentPrint = () => {
       style: 'حديث',
       tax_rate: 15,
       description: '',
-      notes: ''
+      notes: '',
+      approval_token: ''
     }
   });
 

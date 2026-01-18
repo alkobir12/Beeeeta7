@@ -547,6 +547,52 @@ const VehicleDetails = () => {
                 </div>
               </div>
             </div>
+            {/* Approval Info Box */}
+            <div className="apple-card p-6">
+              <div className="flex items-center gap-3 mb-4 text-indigo-600">
+                <CheckCircle size={20} />
+                <h3 className="font-bold text-gray-900">سجل موافقة العميل</h3>
+              </div>
+              {approvals && approvals.length > 0 ? (
+                <div className="space-y-2 text-xs sm:text-sm">
+                  {(() => {
+                    const latest = [...approvals].sort((a, b) => new Date(b.respondedAt || b.createdAt) - new Date(a.respondedAt || a.createdAt))[0];
+                    const meta = (latest.serviceItemsText || '').split('|').reduce((acc, part) => {
+                      const [k, v] = part.split('=');
+                      if (k && v) acc[k.trim()] = v.trim();
+                      return acc;
+                    }, {} as any);
+                    return (
+                      <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="text-gray-500">الحالة</span>
+                          <span className="font-semibold text-gray-900">{latest.status || '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="text-gray-500">اسم الموافق</span>
+                          <span className="font-semibold text-gray-900">{latest.responderName || '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="text-gray-500">جوال الموافق</span>
+                          <span className="font-semibold text-gray-900" dir="ltr">{latest.responderPhone || '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="text-gray-500">وقت الموافقة</span>
+                          <span className="font-semibold text-gray-900">{latest.respondedAt ? new Date(latest.respondedAt).toLocaleString('ar-SA') : '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-500">عنوان الجهاز (IP)</span>
+                          <span className="font-mono text-gray-900 text-xs">{meta.ip || '-'}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">لا توجد موافقة مسجلة حتى الآن.</p>
+              )}
+            </div>
+
 
             {/* Files & Images Section */}
             <div className="apple-card p-4 sm:p-6">

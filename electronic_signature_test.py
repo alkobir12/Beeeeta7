@@ -110,7 +110,7 @@ class ApprovalSystemTester:
                 self.log_result("Public Approval Response", False, "No approval token available")
                 return False
             
-            # Submit approval response
+            # Submit approval response as form data
             response_data = {
                 "status": "approved",
                 "name": "أحمد محمد العميل",
@@ -123,7 +123,8 @@ class ApprovalSystemTester:
                 data=response_data,
                 headers={
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15',
-                    'X-Forwarded-For': '192.168.1.100'
+                    'X-Forwarded-For': '192.168.1.100',
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
             )
             

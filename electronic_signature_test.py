@@ -345,7 +345,7 @@ class ApprovalSystemTester:
             # This is a logical test - we can't directly test React components
             # but we can verify the backend endpoints work as expected for frontend calls
             
-            # Test 1: DocumentPrint.jsx scenario - sending settings with approval_token
+            # Test 1: DocumentPrint.jsx scenario - sending settings with approval_token (without approval_info)
             doc_data_with_token = {
                 "doc_type": "invoice",
                 "workshop": {"name": "Test Workshop"},

@@ -348,6 +348,40 @@ def create_unified_document_routes(router):
             vehicle_data = request.vehicle.dict() if request.vehicle else None
             items = [item.dict() for item in request.items]
             settings = request.settings.dict() if request.settings else {}
+
+            # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase (في وضع Supabase فقط)
+            token = settings.get('approval_token')
+            if token:
+                try:
+                    import os
+                    provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+                    if provider == 'supabase':
+                        from supabase_service import SupabaseService
+                        supa = SupabaseService()
+                        res = supa.client.table('approval_requests').select('*').eq('token', token).execute()
+                        rows = res.data or []
+                        if rows:
+                            r = rows[0]
+                            # نستخدم فقط الموافقات الناجحة
+                            if (r.get('status') or '').lower() == 'approved':
+                                meta = {}
+                                text = r.get('service_items_text') or ''
+                                for part in text.split('|'):
+                                    if '=' in part:
+                                        k, v = part.split('=', 1)
+                                        meta[k.strip()] = v.strip()
+                                settings['approval_info'] = {
+                                    'token': r.get('token'),
+                                    'status': r.get('status'),
+                                    'responderName': r.get('responder_name'),
+                                    'responderPhone': r.get('responder_phone'),
+                                    'respondedAt': r.get('responded_at'),
+                                    'clientIp': meta.get('ip'),
+                                    'userAgent': meta.get('ua'),
+                                }
+                except Exception:
+                    # في حال فشل جلب الموافقة، نستمر بدون تعطيل توليد المستند
+                    pass
             
             # توليد HTML
             html_content = generator.generate_document(

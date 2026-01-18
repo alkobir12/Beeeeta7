@@ -36,7 +36,14 @@ const ApprovalPublic = () => {
   const respond = async (status) => {
     try {
       setSending(true);
-      await axios.post(`${API_URL}/approvals/public/${token}/respond`, null, { params: { status, name, phone, notes } });
+      const formData = new URLSearchParams();
+      formData.append('status', status);
+      formData.append('name', name);
+      formData.append('phone', phone);
+      formData.append('notes', notes);
+      await axios.post(`${API_URL}/approvals/public/${token}/respond`, formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
       await load();
     } catch (e) {
       setError('تعذر إرسال الرد');

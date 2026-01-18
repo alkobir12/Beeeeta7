@@ -1363,14 +1363,7 @@ async def _approvals_broadcast(event: Dict[str, Any]):
         approvals_subscribers.discard(q)
 
 @router.post('/approvals/public/{token}/respond')
-async def respond_public_approval(
-    token: str, 
-    request: Request, 
-    status: str = Form('approved'), 
-    name: str = Form(''), 
-    phone: str = Form(''), 
-    notes: str = Form('')
-):
+async def respond_public_approval(token: str, request: Request):
     try:
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
 

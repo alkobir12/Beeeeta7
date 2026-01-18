@@ -322,6 +322,14 @@ class ApprovalSystemTester:
             print(f"DEBUG: Generated HTML sample (first 2000 chars):")
             print(html_content[:2000])
             print("...")
+            
+            # Find and print the approval section
+            if "موافقة العميل" in html_content:
+                start_idx = html_content.find("موافقة العميل")
+                approval_section = html_content[start_idx-200:start_idx+800]
+                print(f"DEBUG: Approval section:")
+                print(approval_section)
+            
             print(f"DEBUG: HTML contains 'موافقة العميل': {'موافقة العميل' in html_content}")
             print(f"DEBUG: HTML contains 'تمت الموافقة إلكترونياً من': {'تمت الموافقة إلكترونياً من' in html_content}")
             

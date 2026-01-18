@@ -39,6 +39,59 @@ class UnifiedDocumentGenerator:
         items: List[Dict],
         settings: Optional[Dict] = None
     ) -> str:
+        """توليد مستند HTML مع دعم توقيع الموافقة الإلكترونية"""
+        
+        settings = settings or {}
+        
+        # استخراج معلومات الموافقة إن وجدت
+        approval_info = settings.get('approval_info') or {}
+        approval_token = approval_info.get('token') or settings.get('approval_token')
+        approval_meta = None
+        approval_qr_data_uri = None
+
+        # إذا توفّر approval_info جاهز، نبنيه مباشرة
+        if approval_info and approval_info.get('status') == 'approved':
+            approval_meta = {
+                'token': approval_info.get('token'),
+                'status': approval_info.get('status'),
+                'responder_name': approval_info.get('responderName') or approval_info.get('responder_name'),
+                'responder_phone': approval_info.get('responderPhone') or approval_info.get('responder_phone'),
+                'responded_at': approval_info.get('respondedAt') or approval_info.get('responded_at'),
+                'client_ip': approval_info.get('clientIp') or approval_info.get('client_ip'),
+                'user_agent': approval_info.get('userAgent') or approval_info.get('user_agent'),
+            }
+        # TODO: في خطوة لاحقة يمكن أن نضيف هنا منطق جلب approval من Supabase باستخدام approval_token فقط
+
+        # توليد QR من بيانات الموافقة إن وجدت
+        if approval_meta and approval_meta.get('token'):
+            try:
+                qr_payload = json.dumps({
+                    'type': 'approval',
+                    'token': approval_meta['token'],
+                    'status': approval_meta.get('status'),
+                    'name': approval_meta.get('responder_name'),
+                    'phone': approval_meta.get('responder_phone'),
+                    'responded_at': approval_meta.get('responded_at'),
+                    'client_ip': approval_meta.get('client_ip'),
+                }, ensure_ascii=False)
+
+                qr = qrcode.QRCode(box_size=4, border=1)
+                qr.add_data(qr_payload)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                buf = io.BytesIO()
+                img.save(buf, format='PNG')
+                qr_b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+                approval_qr_data_uri = f"data:image/png;base64,{qr_b64}"
+            except Exception:
+                approval_qr_data_uri = None
+
+        # تمرير معلومات الموافقة لمُولد الـ HTML (العرض فقط)
+        if approval_meta:
+            self.builder.quotation['approval_info'] = approval_meta
+        if approval_qr_data_uri:
+            self.builder.quotation['approval_qr'] = approval_qr_data_uri
+
         """توليد مستند موحد"""
         
         settings = settings or {}

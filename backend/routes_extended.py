@@ -1410,13 +1410,20 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
             signature = hashlib.sha256(raw_data.encode()).hexdigest()
 
             # الحد الأدنى من الحقول لضمان توافق الجدول الحالي في Supabase
+            # ملاحظة: جدول approval_requests لا يحتوي أعمدة signature أو notes،
+            # لذلك نخزن هذه المعلومات داخل service_items_text أو نتجاهلها حتى لا يحدث خطأ سكيمة.
+            meta_parts = []
+            if notes:
+                meta_parts.append(f"notes={notes}")
+            meta_parts.append(f"ip={client_ip}")
+            meta_parts.append(f"ua={user_agent[:120]}")
+
             upd = {
                 'status': status,
                 'responded_at': timestamp,
                 'responder_name': name,
                 'responder_phone': phone,
-                'notes': notes,
-                'signature': signature,
+                'service_items_text': " | ".join(meta_parts) if meta_parts else d.get('service_items_text'),
             }
 
             supa.client.table('approval_requests').update(upd).eq('token', token).execute()

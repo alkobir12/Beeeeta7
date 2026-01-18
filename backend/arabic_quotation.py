@@ -328,8 +328,7 @@ class ArabicQuotationBuilder:
             <div class="signatures-section">
                 <div class="signature-box">
                     <h4>موافقة العميل</h4>
-                    <div class="signature-line"></div>
-                    <p>الاسم والتوقيع والتاريخ</p>
+                    {self._render_approval_block()}
                 </div>
                 <div class="signature-box">
                     <h4>الشركة</h4>

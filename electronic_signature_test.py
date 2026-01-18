@@ -332,9 +332,9 @@ class ApprovalSystemTester:
             # Test 1: DocumentPrint.jsx scenario - sending settings with approval_token
             doc_data_with_token = {
                 "doc_type": "invoice",
-                "workshop_data": {"name": "Test Workshop"},
-                "customer_data": {"name": "Test Customer"},
-                "vehicle_data": {"brand": "Test"},
+                "workshop": {"name": "Test Workshop"},
+                "customer": {"name": "Test Customer"},
+                "vehicle": {"brand": "Test"},
                 "items": [{"description": "Test", "quantity": 1, "unit_price": 100}],
                 "settings": {
                     "approval_token": self.test_data.get('approval_token', 'TEST-TOKEN')

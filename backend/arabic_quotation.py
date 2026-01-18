@@ -128,13 +128,7 @@ class ArabicQuotationBuilder:
         qr = self.quotation.get('approval_qr')
         status = (info.get('status') or '').lower()
         
-        print(f"DEBUG: _render_approval_block called")
-        print(f"DEBUG: info = {info}")
-        print(f"DEBUG: qr = {qr}")
-        print(f"DEBUG: status = {status}")
-        
         if not info or status != 'approved':
-            print(f"DEBUG: Using default signature block")
             return """
             <div class="signature-line"></div>
             <p>الاسم والتوقيع والتاريخ</p>
@@ -147,7 +141,6 @@ class ArabicQuotationBuilder:
 
         qr_html = f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>' if qr else ''
 
-        print(f"DEBUG: Using electronic signature block with name={name}, phone={phone}")
         return f"""
         <p class="text-sm mb-2">
             تمت الموافقة إلكترونياً من:

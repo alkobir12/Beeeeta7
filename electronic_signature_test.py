@@ -51,13 +51,14 @@ class ApprovalSystemTester:
             vehicle_data = {
                 "brand": "تويوتا",
                 "model": "برادو",
-                "year": "2020",
+                "year": 2020,
                 "plateNumber": "ABC-1234",
+                "color": "أبيض",
                 "customerName": "أحمد محمد",
                 "customerPhone": "0501234567",
                 "customerEmail": "ahmed@test.com",
-                "problem": "فحص دوري وصيانة",
-                "status": "diagnosis"
+                "notes": "فحص دوري وصيانة",
+                "services": []
             }
             
             response = self.session.post(f"{BACKEND_URL}/vehicles", json=vehicle_data)

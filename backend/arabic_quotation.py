@@ -122,6 +122,38 @@ class ArabicQuotationBuilder:
         self.quotation['tax_amount'] = taxable_amount * (self.quotation['tax_rate'] / 100)
         self.quotation['total'] = subtotal + self.quotation['tax_amount']
     
+    def _render_approval_block(self) -> str:
+        """إنشاء جزء HTML لتوقيع الموافقة الإلكترونية إن توفّر"""
+        info = self.quotation.get('approval_info') or {}
+        qr = self.quotation.get('approval_qr')
+        status = (info.get('status') or '').lower()
+        if not info or status != 'approved':
+            return """
+            <div class="signature-line"></div>
+            <p>الاسم والتوقيع والتاريخ</p>
+            """
+
+        name = info.get('responder_name') or 'العميل'
+        phone = info.get('responder_phone') or '-'
+        responded_at = info.get('responded_at') or ''
+        client_ip = info.get('client_ip') or ''
+
+        qr_html = f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>' if qr else ''
+
+        return f"""
+        <p class="text-sm mb-2">
+            تمت الموافقة إلكترونياً من:
+            <strong>{name}</strong>
+            – جوال:
+            <strong>{phone}</strong><br/>
+            وقت الموافقة:
+            <strong>{responded_at}</strong><br/>
+            عنوان الجهاز (IP):
+            <strong>{client_ip}</strong>
+        </p>
+        {qr_html}
+        """
+
     def add_term(self, term: str):
         """إضافة شرط"""
         self.quotation['terms'].append(term)

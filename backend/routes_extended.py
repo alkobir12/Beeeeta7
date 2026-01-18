@@ -1434,9 +1434,6 @@ async def respond_public_approval(token: str, request: Request):
                 'responder_phone': phone,
                 'service_items_text': " | ".join(meta_parts) if meta_parts else d.get('service_items_text'),
             }
-            
-            print(f"DEBUG: Updating approval with data: {upd}")
-            print(f"DEBUG: name='{name}', phone='{phone}'")
 
             supa.client.table('approval_requests').update(upd).eq('token', token).execute()
 

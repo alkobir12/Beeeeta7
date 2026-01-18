@@ -580,9 +580,13 @@ const VehicleDetails = () => {
                           <span className="text-gray-500">وقت الموافقة</span>
                           <span className="font-semibold text-gray-900">{latest.respondedAt ? new Date(latest.respondedAt).toLocaleString('ar-SA') : '-'}</span>
                         </div>
-                        <div className="flex justify-between py-1">
+                        <div className="flex justify-between py-1 border-b border-gray-100">
                           <span className="text-gray-500">عنوان الجهاز (IP)</span>
                           <span className="font-mono text-gray-900 text-xs">{meta.ip || '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-500">نوع الجهاز / المتصفح</span>
+                          <span className="text-gray-900 text-xs">{meta.ua || '-'}</span>
                         </div>
                       </div>
                     );

@@ -12,6 +12,7 @@ beautifulsoup4==4.14.2
 black==25.9.0
 boto3==1.40.50
 botocore==1.40.50
+brotli==1.2.0
 cachetools==6.2.1
 certifi==2025.10.5
 cffi==2.0.0
@@ -42,6 +43,7 @@ google-api-core==2.26.0
 google-api-python-client==2.184.0
 google-auth==2.41.1
 google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.3
 google-genai==1.43.0
 google-generativeai==0.8.5
 googleapis-common-protos==1.70.0
@@ -61,6 +63,7 @@ huggingface-hub==0.35.3
 hyperframe==6.1.0
 idna==3.10
 importlib_metadata==8.7.0
+inflate64==1.0.4
 iniconfig==2.1.0
 isort==6.1.0
 Jinja2==3.1.6
@@ -71,7 +74,11 @@ jq==1.10.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 litellm==1.78.0
-# llama-index-* dependencies أُزيلت لتخفيف استهلاك الموارد في الإنتاج.
+llama-index-core==0.14.7
+llama-index-embeddings-openai==0.5.1
+llama-index-instrumentation==0.4.2
+llama-index-readers-file==0.5.4
+llama-index-workflows==2.11.1
 lxml==6.0.2
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3
@@ -81,6 +88,7 @@ mcp==1.21.0
 mdurl==0.1.2
 motor==3.3.1
 multidict==6.7.0
+multivolumefile==0.2.3
 mypy==1.18.2
 mypy_extensions==1.1.0
 nest-asyncio==1.6.0
@@ -104,10 +112,15 @@ postgrest==2.24.0
 propcache==0.4.1
 proto-plus==1.26.1
 protobuf==5.29.5
+psutil==7.1.3
+psycopg2-binary==2.9.11
+py7zr==1.0.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
+pybcj==1.0.6
 pycodestyle==2.14.0
 pycparser==2.23
+pycryptodomex==3.23.0
 pydantic==2.12.0
 pydantic-settings==2.12.0
 pydantic_core==2.41.1
@@ -119,6 +132,7 @@ pyparsing==3.2.5
 pypdf==6.2.0
 PyPDF2==3.0.1
 pypdfium2==5.0.0
+pyppmd==1.2.0
 pytest==8.4.2
 python-dateutil==2.9.0.post0
 python-docx==1.2.0
@@ -128,6 +142,9 @@ python-multipart==0.0.20
 pytokens==0.1.10
 pytz==2025.2
 PyYAML==6.0.3
+pyzstd==0.18.0
+qrcode==8.2
+rarfile==4.2
 realtime==2.24.0
 referencing==0.37.0
 regex==2025.9.18
@@ -153,6 +170,7 @@ supabase==2.24.0
 supabase-auth==2.24.0
 supabase-functions==2.24.0
 tenacity==9.1.2
+texttable==1.7.0
 tiktoken==0.12.0
 tokenizers==0.22.1
 tqdm==4.67.1

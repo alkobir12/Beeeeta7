@@ -318,6 +318,13 @@ class ApprovalSystemTester:
             # Save HTML for inspection if needed
             self.test_data['generated_html'] = html_content
             
+            # Print a sample of the HTML to debug
+            print(f"DEBUG: Generated HTML sample (first 2000 chars):")
+            print(html_content[:2000])
+            print("...")
+            print(f"DEBUG: HTML contains 'موافقة العميل': {'موافقة العميل' in html_content}")
+            print(f"DEBUG: HTML contains 'تمت الموافقة إلكترونياً من': {'تمت الموافقة إلكترونياً من' in html_content}")
+            
             return all_passed
             
         except Exception as e:

@@ -685,14 +685,29 @@ const DocumentPrint = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <Label>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</Label>
-                  <Textarea
-                    value={formData.settings.notes}
-                    onChange={(e) => handleSettingsChange('notes', e.target.value)}
-                    placeholder={isArabic ? 'ملاحظات تظهر في المستند...' : 'Notes to appear in document...'}
-                    rows={3}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</Label>
+                    <Textarea
+                      value={formData.settings.notes}
+                      onChange={(e) => handleSettingsChange('notes', e.target.value)}
+                      placeholder={isArabic ? 'ملاحظات تظهر في المستند...' : 'Notes to appear in document...'}
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label>{isArabic ? 'رمز طلب الاعتماد (APR-...)' : 'Approval Request Token (APR-...)'}</Label>
+                    <Input
+                      value={formData.settings.approval_token || ''}
+                      onChange={(e) => handleSettingsChange('approval_token', e.target.value)}
+                      placeholder={isArabic ? 'أدخل رمز طلب الاعتماد المطابق للمركبة (اختياري)' : 'Enter related approval token (optional)'}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isArabic
+                        ? 'عند إدخال رمز طلب اعتماد تمت الموافقة عليه، سيتم إظهار التوقيع الإلكتروني ووقت الموافقة وباركود في أسفل الفاتورة.'
+                        : 'If you enter an approved approval token, an electronic signature with timestamp & QR will be shown on the invoice.'}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

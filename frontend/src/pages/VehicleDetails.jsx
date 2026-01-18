@@ -561,7 +561,7 @@ const VehicleDetails = () => {
                       const [k, v] = part.split('=');
                       if (k && v) acc[k.trim()] = v.trim();
                       return acc;
-                    }, {} as any);
+                    }, {});
                     return (
                       <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
                         <div className="flex justify-between py-1 border-b border-gray-100">

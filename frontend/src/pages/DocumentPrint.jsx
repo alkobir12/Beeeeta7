@@ -283,7 +283,11 @@ const DocumentPrint = () => {
         customer: formData.customer,
         vehicle: formData.vehicle,
         items: formData.items.filter(item => item.description),
-        settings: formData.settings
+        settings: {
+          ...formData.settings,
+          // مبدئياً نمرّر رمز الاعتماد فقط (يمكن توسيعه لاحقاً لمعلومات كاملة)
+          approval_token: formData.settings.approval_token || undefined,
+        },
       });
 
       if (response.data.success) {
@@ -343,7 +347,11 @@ const DocumentPrint = () => {
         customer: formData.customer,
         vehicle: formData.vehicle,
         items: formData.items.filter(item => item.description),
-        settings: formData.settings
+        settings: {
+          ...formData.settings,
+          // مبدئياً نمرّر رمز الاعتماد فقط (يمكن توسيعه لاحقاً لمعلومات كاملة)
+          approval_token: formData.settings.approval_token || undefined,
+        },
       });
 
       if (response.data.success && response.data.html) {

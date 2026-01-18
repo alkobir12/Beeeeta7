@@ -48,13 +48,9 @@ class UnifiedDocumentGenerator:
         approval_token = approval_info.get('token') or settings.get('approval_token')
         approval_meta = None
         approval_qr_data_uri = None
-        
-        print(f"DEBUG: approval_info = {approval_info}")
-        print(f"DEBUG: approval_token = {approval_token}")
 
         # إذا توفّر approval_info جاهز، نبنيه مباشرة
         if approval_info and approval_info.get('status') == 'approved':
-            print(f"DEBUG: Processing approval_info with status = {approval_info.get('status')}")
             approval_meta = {
                 'token': approval_info.get('token'),
                 'status': approval_info.get('status'),
@@ -64,9 +60,6 @@ class UnifiedDocumentGenerator:
                 'client_ip': approval_info.get('clientIp') or approval_info.get('client_ip'),
                 'user_agent': approval_info.get('userAgent') or approval_info.get('user_agent'),
             }
-            print(f"DEBUG: approval_meta = {approval_meta}")
-        else:
-            print(f"DEBUG: Not processing approval_info - missing or status not approved")
 
         # TODO (مرحلة لاحقة): يمكن ربط approval_token باستعلام حقيقي من Supabase
         # في هذه المرحلة، نستخدم فقط approval_info إذا تم تمريره من الواجهة

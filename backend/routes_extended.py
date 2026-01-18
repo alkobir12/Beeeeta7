@@ -1366,6 +1366,13 @@ async def _approvals_broadcast(event: Dict[str, Any]):
 async def respond_public_approval(token: str, request: Request):
     try:
         provider = os.environ.get('DB_PROVIDER', 'mongo').lower()
+        
+        # Parse form data manually
+        form_data = await request.form()
+        status = form_data.get('status', 'approved')
+        name = form_data.get('name', '')
+        phone = form_data.get('phone', '')
+        notes = form_data.get('notes', '')
 
         # ---------- Supabase implementation ----------
         if provider == 'supabase':

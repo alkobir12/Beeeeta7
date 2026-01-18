@@ -60,7 +60,9 @@ class UnifiedDocumentGenerator:
                 'client_ip': approval_info.get('clientIp') or approval_info.get('client_ip'),
                 'user_agent': approval_info.get('userAgent') or approval_info.get('user_agent'),
             }
-        # TODO: في خطوة لاحقة يمكن أن نضيف هنا منطق جلب approval من Supabase باستخدام approval_token فقط
+
+        # TODO (مرحلة لاحقة): يمكن ربط approval_token باستعلام حقيقي من Supabase
+        # في هذه المرحلة، نستخدم فقط approval_info إذا تم تمريره من الواجهة
 
         # توليد QR من بيانات الموافقة إن وجدت
         if approval_meta and approval_meta.get('token'):

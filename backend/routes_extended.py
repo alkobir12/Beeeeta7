@@ -1258,7 +1258,9 @@ async def list_approvals(vehicle_id: Optional[str] = None):
                     'status': r.get('status'),
                     'createdAt': r.get('created_at'),
                     'expiresAt': r.get('expires_at'),
-                    'respondedAt': r.get('responded_at')
+                    'respondedAt': r.get('responded_at'),
+                    'responderName': r.get('responder_name'),
+                    'responderPhone': r.get('responder_phone'),
                 })
             return out
 

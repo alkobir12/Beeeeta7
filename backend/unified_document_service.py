@@ -11,6 +11,10 @@ Unified Document Generation Service
 import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
+import io
+import base64
+import json
+import qrcode
 from arabic_quotation import ArabicQuotationBuilder
 
 

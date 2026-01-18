@@ -1462,6 +1462,8 @@ async def respond_public_approval(token: str, request: Request, status: str = 'a
                 'createdAt': nd.get('created_at'),
                 'expiresAt': nd.get('expires_at'),
                 'respondedAt': nd.get('responded_at'),
+                'responderName': nd.get('responder_name'),
+                'responderPhone': nd.get('responder_phone'),
                 'signature': nd.get('signature'),
                 'clientIp': nd.get('client_ip'),
             }

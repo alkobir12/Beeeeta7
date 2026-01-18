@@ -104,10 +104,8 @@ class UnifiedDocumentGenerator:
         # تمرير معلومات الموافقة لمُولد الـ HTML بعد إعادة التعيين
         if approval_meta:
             self.builder.quotation['approval_info'] = approval_meta
-            print(f"DEBUG: Set approval_info on quotation: {approval_meta}")
         if approval_qr_data_uri:
             self.builder.quotation['approval_qr'] = approval_qr_data_uri
-            print(f"DEBUG: Set approval_qr on quotation")
         
         # تعيين بيانات الورشة/الشركة
         self.builder.set_company(

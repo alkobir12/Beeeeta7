@@ -217,7 +217,7 @@ class ApprovalSystemTester:
             # Prepare document generation data with approval_info
             doc_data = {
                 "doc_type": "invoice",
-                "workshop_data": {
+                "workshop": {
                     "name": "ورشة الخليج للسيارات",
                     "name_en": "Gulf Auto Workshop",
                     "address": "الرياض، المملكة العربية السعودية",
@@ -225,14 +225,14 @@ class ApprovalSystemTester:
                     "email": "info@gulfauto.com",
                     "tax_number": "123456789"
                 },
-                "customer_data": {
+                "customer": {
                     "name": "أحمد محمد العميل",
                     "company": "",
                     "address": "الرياض",
                     "phone": "0501234567",
                     "email": "ahmed@test.com"
                 },
-                "vehicle_data": {
+                "vehicle": {
                     "brand": "تويوتا",
                     "model": "برادو",
                     "year": "2020",

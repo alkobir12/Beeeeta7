@@ -328,8 +328,24 @@ class ArabicQuotationBuilder:
             <div class="signatures-section">
                 <div class="signature-box">
                     <h4>موافقة العميل</h4>
-                    <div class="signature-line"></div>
-                    <p>الاسم والتوقيع والتاريخ</p>
+                    {% if approval_info and approval_info.status == 'approved' %}
+                        <p class="text-sm mb-2">
+                            تمت الموافقة إلكترونياً من:
+                            <strong>{{ approval_info.responder_name or 'العميل' }}</strong>
+                            – جوال:
+                            <strong>{{ approval_info.responder_phone or '-' }}</strong><br/>
+                            وقت الموافقة:
+                            <strong>{{ approval_info.responded_at or '' }}</strong>
+                        </p>
+                        {% if approval_qr %}
+                            <div class="mt-2 flex justify-center">
+                                <img src="{{ approval_qr }}" alt="QR" style="width:90px;height:90px;object-fit:contain;" />
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="signature-line"></div>
+                        <p>الاسم والتوقيع والتاريخ</p>
+                    {% endif %}
                 </div>
                 <div class="signature-box">
                     <h4>الشركة</h4>

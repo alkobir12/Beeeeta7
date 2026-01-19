@@ -138,6 +138,9 @@ class ArabicQuotationBuilder:
         phone = info.get('responder_phone') or '-'
         responded_at = info.get('responded_at') or ''
         client_ip = info.get('client_ip') or ''
+        customer_name = info.get('customer_name') or ''
+        plate_number = info.get('plate_number') or ''
+        user_agent = info.get('user_agent') or ''
 
         qr_html = f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>' if qr else ''
 
@@ -147,10 +150,16 @@ class ArabicQuotationBuilder:
             <strong>{name}</strong>
             – جوال:
             <strong>{phone}</strong><br/>
+            صاحب المركبة:
+            <strong>{customer_name or '-'} </strong><br/>
+            رقم اللوحة:
+            <strong>{plate_number or '-'} </strong><br/>
             وقت الموافقة:
             <strong>{responded_at}</strong><br/>
             عنوان الجهاز (IP):
-            <strong>{client_ip}</strong>
+            <strong>{client_ip}</strong><br/>
+            بصمة الجهاز / المتصفح:
+            <strong>{user_agent or '-'} </strong>
         </p>
         {qr_html}
         """

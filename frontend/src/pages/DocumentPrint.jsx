@@ -317,8 +317,9 @@ const DocumentPrint = () => {
         items: formData.items.filter(item => item.description),
         settings: {
           ...formData.settings,
-          // مبدئياً نمرّر رمز الاعتماد فقط (يمكن توسيعه لاحقاً لمعلومات كاملة)
+          // نمرّر رمز الاعتماد إن وُجد، بالإضافة إلى vehicleId لربط الموافقة تلقائياً
           approval_token: formData.settings.approval_token || undefined,
+          approval_vehicle_id: vehicleId || undefined,
         },
       });
 
@@ -381,8 +382,9 @@ const DocumentPrint = () => {
         items: formData.items.filter(item => item.description),
         settings: {
           ...formData.settings,
-          // مبدئياً نمرّر رمز الاعتماد فقط (يمكن توسيعه لاحقاً لمعلومات كاملة)
+          // نمرّر رمز الاعتماد إن وُجد، بالإضافة إلى vehicleId لربط الموافقة تلقائياً
           approval_token: formData.settings.approval_token || undefined,
+          approval_vehicle_id: vehicleId || undefined,
         },
       });
 

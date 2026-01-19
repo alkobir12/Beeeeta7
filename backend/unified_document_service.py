@@ -61,6 +61,12 @@ class UnifiedDocumentGenerator:
                 'user_agent': approval_info.get('userAgent') or approval_info.get('user_agent'),
             }
 
+            # enrich approval metadata with customer and vehicle info for better signature details
+            if customer_data:
+                approval_meta['customer_name'] = customer_data.get('name') or customer_data.get('customerName')
+            if vehicle_data:
+                approval_meta['plate_number'] = vehicle_data.get('plateNumber') or vehicle_data.get('plate')
+
         # TODO (مرحلة لاحقة): يمكن ربط approval_token باستعلام حقيقي من Supabase
         # في هذه المرحلة، نستخدم فقط approval_info إذا تم تمريره من الواجهة
 
@@ -75,6 +81,9 @@ class UnifiedDocumentGenerator:
                     'phone': approval_meta.get('responder_phone'),
                     'responded_at': approval_meta.get('responded_at'),
                     'client_ip': approval_meta.get('client_ip'),
+                    'customer_name': approval_meta.get('customer_name'),
+                    'plate_number': approval_meta.get('plate_number'),
+                    'user_agent': approval_meta.get('user_agent'),
                 }, ensure_ascii=False)
 
                 qr = qrcode.QRCode(box_size=4, border=1)

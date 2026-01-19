@@ -387,6 +387,45 @@ def create_unified_document_routes(router):
                                 'responderPhone': r.get('responder_phone'),
                                 'respondedAt': r.get('responded_at'),
                                 'clientIp': meta.get('ip'),
+
+            # في حال لم يتم تمرير approval_info لكن لدينا معرف مركبة، نحاول جلب أحدث موافقة تلقائياً حسب رقم المركبة
+            if not settings.get('approval_info'):
+                # نأخذ vehicle_id إما من الإعدادات أو من بيانات المركبة
+                approval_vehicle_id = settings.get('approval_vehicle_id') or (vehicle_data or {}).get('id') or (vehicle_data or {}).get('vehicleId')
+                if approval_vehicle_id:
+                    try:
+                        from supabase_service import SupabaseService
+                        supa = SupabaseService()
+                        # نجلب أحدث موافقة لهذه المركبة (الأحدث حسب responded_at أو created_at)
+                        res2 = supa.client.table('approval_requests') \
+                            .select('*') \
+                            .eq('vehicle_id', approval_vehicle_id) \
+                            .order('responded_at', desc=True) \
+                            .limit(1) \
+                            .execute()
+                        rows2 = res2.data or []
+                        if rows2:
+                            r2 = rows2[0]
+                            if (r2.get('status') or '').lower() == 'approved':
+                                meta2 = {}
+                                text2 = r2.get('service_items_text') or ''
+                                for part in text2.split('|'):
+                                    if '=' in part:
+                                        k, v = part.split('=', 1)
+                                        meta2[k.strip()] = v.strip()
+                                settings['approval_info'] = {
+                                    'token': r2.get('token'),
+                                    'status': r2.get('status'),
+                                    'responderName': r2.get('responder_name'),
+                                    'responderPhone': r2.get('responder_phone'),
+                                    'respondedAt': r2.get('responded_at'),
+                                    'clientIp': meta2.get('ip'),
+                                    'userAgent': meta2.get('ua'),
+                                }
+                    except Exception:
+                        # إذا فشلنا في الجلب التلقائي لا نكسر توليد المستند
+                        pass
+
                                 'userAgent': meta.get('ua'),
                             }
                 except Exception:

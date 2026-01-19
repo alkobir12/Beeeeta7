@@ -85,6 +85,7 @@ const DocumentPrint = () => {
     loadWorkshopSettings();
     if (vehicleId) {
       loadVehicleData(vehicleId);
+      loadLatestApprovalToken(vehicleId);
     }
   }, [vehicleId]);
 
@@ -195,6 +196,37 @@ const DocumentPrint = () => {
       console.error('Error loading vehicle:', e);
     }
   };
+
+  const loadLatestApprovalToken = async (id) => {
+    try {
+      const { data } = await axios.get(`${API_URL}/approvals?vehicle_id=${id}`);
+      if (!Array.isArray(data) || data.length === 0) return;
+
+      // نفضل الموافقات المعتمدة، وإن لم توجد نأخذ أحدث أي طلب
+      const approved = data.filter(a => (a.status || '').toLowerCase() === 'approved');
+      const candidates = approved.length > 0 ? approved : data;
+
+      const sorted = [...candidates].sort((a, b) => {
+        const aDate = a.respondedAt || a.responded_at || a.createdAt || a.created_at || a.requestedAt || a.requested_at;
+        const bDate = b.respondedAt || b.responded_at || b.createdAt || b.created_at || b.requestedAt || b.requested_at;
+        return new Date(bDate || 0) - new Date(aDate || 0);
+      });
+
+      const latest = sorted[0];
+      if (latest && latest.token) {
+        setFormData(prev => ({
+          ...prev,
+          settings: {
+            ...prev.settings,
+            approval_token: latest.token,
+          },
+        }));
+      }
+    } catch (e) {
+      console.error('Error loading latest approval token:', e);
+    }
+  };
+
 
   const handleWorkshopChange = (field, value) => {
     setFormData(prev => ({

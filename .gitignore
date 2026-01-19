@@ -22,41 +22,12 @@ frontend/node_modules/.cache/default-development/6.pack
 frontend/node_modules/.cache/default-development/8.pack
 frontend/node_modules/.cache/default-development/5.pack
 frontend/node_modules/.cache/default-development/4.pack
--e 
-# Environment files
-*.env
-*.env.*
+# Environment files (none ignored so .env can be deployed)
+
+
 frontend/node_modules/.cache/default-development/10.pack
 frontend/node_modules/.cache/default-development/9.pack
 frontend/node_modules/.cache/default-development/11.pack
 frontend/node_modules/.cache/default-development/12.pack
 frontend/node_modules/.cache/default-development/14.pack
 frontend/node_modules/.cache/default-development/7.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*

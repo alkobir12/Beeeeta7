@@ -372,21 +372,25 @@ def create_unified_document_routes(router):
                     rows = res.data or []
                     if rows:
                         r = rows[0]
-                        # نستخدم فقط الموافقات الناجحة
-                        if (r.get('status') or '').lower() == 'approved':
-                            meta = {}
-                            text = r.get('service_items_text') or ''
-                            for part in text.split('|'):
-                                if '=' in part:
-                                    k, v = part.split('=', 1)
-                                    meta[k.strip()] = v.strip()
-                            settings['approval_info'] = {
-                                'token': r.get('token'),
-                                'status': r.get('status'),
-                                'responderName': r.get('responder_name'),
-                                'responderPhone': r.get('responder_phone'),
-                                'respondedAt': r.get('responded_at'),
-                                'clientIp': meta.get('ip'),
+                        meta = {}
+                        text = r.get('service_items_text') or ''
+                        for part in text.split('|'):
+                            if '=' in part:
+                                k, v = part.split('=', 1)
+                                meta[k.strip()] = v.strip()
+                        # نملأ بيانات الموافقة حتى لو كانت الحالة مختلفة، وسيتم عرضها كما هي في الفاتورة
+                        settings['approval_info'] = {
+                            'token': r.get('token'),
+                            'status': r.get('status'),
+                            'responderName': r.get('responder_name'),
+                            'responderPhone': r.get('responder_phone'),
+                            'respondedAt': r.get('responded_at'),
+                            'clientIp': meta.get('ip'),
+                            'userAgent': meta.get('ua'),
+                        }
+                except Exception:
+                    # في حال فشل جلب الموافقة، نستمر بدون تعطيل توليد المستند
+                    pass
 
             # في حال لم يتم تمرير approval_info لكن لدينا معرف مركبة، نحاول جلب أحدث موافقة تلقائياً حسب رقم المركبة
             if not settings.get('approval_info'):
@@ -406,31 +410,24 @@ def create_unified_document_routes(router):
                         rows2 = res2.data or []
                         if rows2:
                             r2 = rows2[0]
-                            if (r2.get('status') or '').lower() == 'approved':
-                                meta2 = {}
-                                text2 = r2.get('service_items_text') or ''
-                                for part in text2.split('|'):
-                                    if '=' in part:
-                                        k, v = part.split('=', 1)
-                                        meta2[k.strip()] = v.strip()
-                                settings['approval_info'] = {
-                                    'token': r2.get('token'),
-                                    'status': r2.get('status'),
-                                    'responderName': r2.get('responder_name'),
-                                    'responderPhone': r2.get('responder_phone'),
-                                    'respondedAt': r2.get('responded_at'),
-                                    'clientIp': meta2.get('ip'),
-                                    'userAgent': meta2.get('ua'),
-                                }
+                            meta2 = {}
+                            text2 = r2.get('service_items_text') or ''
+                            for part in text2.split('|'):
+                                if '=' in part:
+                                    k, v = part.split('=', 1)
+                                    meta2[k.strip()] = v.strip()
+                            settings['approval_info'] = {
+                                'token': r2.get('token'),
+                                'status': r2.get('status'),
+                                'responderName': r2.get('responder_name'),
+                                'responderPhone': r2.get('responder_phone'),
+                                'respondedAt': r2.get('responded_at'),
+                                'clientIp': meta2.get('ip'),
+                                'userAgent': meta2.get('ua'),
+                            }
                     except Exception:
                         # إذا فشلنا في الجلب التلقائي لا نكسر توليد المستند
                         pass
-
-                                'userAgent': meta.get('ua'),
-                            }
-                except Exception:
-                    # في حال فشل جلب الموافقة، نستمر بدون تعطيل توليد المستند
-                    pass
             
             # توليد HTML
             html_content = generator.generate_document(

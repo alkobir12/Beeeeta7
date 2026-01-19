@@ -358,14 +358,17 @@ def create_unified_document_routes(router):
             items = [item.dict() for item in request.items]
             settings = request.settings.dict() if request.settings else {}
 
-            # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase (في وضع Supabase فقط)
-            token = settings.get('approval_token')
+            # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase
+            raw_token = settings.get('approval_token')
+            token = str(raw_token).strip() if raw_token is not None else ''
             if token:
                 try:
                     # نحاول دائماً جلب بيانات الموافقة من Supabase بغض النظر عن نوع مزود قاعدة البيانات
                     from supabase_service import SupabaseService
                     supa = SupabaseService()
-                    res = supa.client.table('approval_requests').select('*').eq('token', token).execute()
+                    # رموز الموافقة تحفظ حالياً بصيغة APR-XXXX كبيرة، لذلك نحوّل الإدخال إلى حروف كبيرة
+                    token_norm = token.upper()
+                    res = supa.client.table('approval_requests').select('*').eq('token', token_norm).execute()
                     rows = res.data or []
                     if rows:
                         r = rows[0]

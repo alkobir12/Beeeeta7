@@ -740,6 +740,7 @@ const DocumentPrint = () => {
                     <Input
                       value={formData.settings.approval_token || ''}
                       onChange={(e) => handleSettingsChange('approval_token', e.target.value)}
+                      readOnly={!!vehicleId}
                       placeholder={isArabic ? 'أدخل رمز طلب الاعتماد المطابق للمركبة (اختياري)' : 'Enter related approval token (optional)'}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">

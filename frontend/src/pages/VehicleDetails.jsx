@@ -25,6 +25,7 @@ const VehicleDetails = () => {
   const [visits, setVisits] = useState([]);
   const [currentVisit, setCurrentVisit] = useState(null);
   const [showNewVisit, setShowNewVisit] = useState(false);
+  const [newVisitMileage, setNewVisitMileage] = useState('');
   const [newService, setNewService] = useState('');
   const [fileType, setFileType] = useState('photo');
   const [newItem, setNewItem] = useState({ itemType: 'service', name: '', quantity: 1, price: 0 });
@@ -156,13 +157,16 @@ const VehicleDetails = () => {
   const createNewVisit = async () => {
     try {
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-      const mileage = window.prompt('أدخل قراءة العداد (كم):', '');
-      if (mileage === null) return;
-      
+      const mileageValue = parseInt(newVisitMileage, 10);
+      if (!newVisitMileage || Number.isNaN(mileageValue)) {
+        toast({ title: 'تنبيه', description: 'يرجى إدخال قراءة العداد بشكل صحيح', variant: 'destructive' });
+        return;
+      }
+
       const visitData = {
         entryDate: new Date().toISOString(),
         status: 'in_progress',
-        mileage: parseInt(mileage) || 0,
+        mileage: mileageValue,
         technicianId: assignedTech,
         notes: notes
       };
@@ -170,6 +174,8 @@ const VehicleDetails = () => {
       const res = await axios.post(`${API_URL}/vehicles/${id}/visits`, visitData);
       setCurrentVisit(res.data);
       await fetchData();
+      setShowNewVisit(false);
+      setNewVisitMileage('');
       toast({ title: 'تم', description: 'تم إنشاء زيارة جديدة' });
     } catch (err) {
       toast({ title: 'خطأ', description: 'فشل في إنشاء الزيارة', variant: 'destructive' });

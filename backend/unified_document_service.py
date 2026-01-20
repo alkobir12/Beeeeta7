@@ -84,6 +84,7 @@ class UnifiedDocumentGenerator:
                     'customer_name': approval_meta.get('customer_name'),
                     'plate_number': approval_meta.get('plate_number'),
                     'user_agent': approval_meta.get('user_agent'),
+                    'display_text': f"موافقة العميل\nتمت الموافقة إلكترونياً من: {approval_meta.get('responder_name') or 'العميل'} – جوال: {approval_meta.get('responder_phone') or '-'}\nصاحب المركبة: {approval_meta.get('customer_name') or ''}\nرقم اللوحة: {approval_meta.get('plate_number') or ''}\nوقت الموافقة: {approval_meta.get('responded_at') or ''}",
                 }, ensure_ascii=False)
 
                 qr = qrcode.QRCode(box_size=4, border=1)

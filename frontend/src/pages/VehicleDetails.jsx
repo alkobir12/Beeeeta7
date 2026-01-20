@@ -335,10 +335,11 @@ const VehicleDetails = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Info */}
+          {/* Left Column: Info + Timeline */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Vehicle & Customer Cards */}
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* Vehicle & Customer Cards - أولاً */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Vehicle Info */}
               <div className="apple-card p-6">
                 <div className="flex items-center gap-3 mb-4 text-blue-600">
                   <Car size={20} />
@@ -364,15 +365,63 @@ const VehicleDetails = () => {
                 </div>
               </div>
 
-              {/* Registered Services & Parts - منفصلة في كرت كامل العرض داخل العمود الأيسر */}
-              <div className="apple-card p-6 md:col-span-2">
-                <div className="flex items-center gap-3 mb-4 text-orange-400">
-                  <Wrench size={20} />
-                  <h3 className="font-bold text-gray-100">{t('vehicle_details.registered_services')}</h3>
+              {/* Customer Info */}
+              <div className="apple-card p-6">
+                <div className="flex items-center gap-3 mb-4 text-green-600">
+                  <User size={20} />
+                  <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
                 </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">{t('vehicles_page.customer_name')}</span>
+                    <span className="font-medium">{vehicle.customerName}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-50">
+                    <span className="text-gray-500">
+0631
+0642
+0645 
+0627
+0644
+062c
+0648
+0627
+0644</span>
+                    <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">
+0627
+0644
+0628
+0631
+064a
+062f 
+0627
+0644
+0625
+0644
+0643
+062a
+0631
+0648
+0646
+064a</span>
+                    <span className="font-medium">{vehicle.customerEmail || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
-                <div className="mt-2 space-y-3 text-sm">
+            {/* Registered Services & Parts - ثانياً */}
+            <div className="apple-card p-6">
+              <div className="flex items-center gap-3 mb-4 text-orange-400">
+                <Wrench size={20} />
+                <h3 className="font-bold text-gray-100">{t('vehicle_details.registered_services')}</h3>
+              </div>
+
+              {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}
+              <div className="mt-2 space-y-3 text-sm">
                   <div className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-2">
                       <label className="text-[11px] text-gray-400 mb-1 block">النوع</label>
@@ -753,13 +802,44 @@ const VehicleDetails = () => {
                   <h3 className="font-bold text-gray-900">الزيارات والعمليات</h3>
                 </div>
                 <button
-                  onClick={createNewVisit}
+                  onClick={() => setShowNewVisit(true)}
                   className="px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
                 >
                   <Plus size={14} />
                   زيارة جديدة
                 </button>
               </div>
+
+              {showNewVisit && (
+                <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-end gap-3">
+                    <div className="flex-1">
+                      <label className="text-xs font-medium text-gray-700">عداد المركبة (كم)</label>
+                      <input
+                        type="number"
+                        className="apple-input h-9 text-xs"
+                        value={newVisitMileage}
+                        onChange={e => setNewVisitMileage(e.target.value)}
+                        placeholder="أدخل قراءة العداد عند هذه الزيارة"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={createNewVisit}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        حفظ الزيارة
+                      </button>
+                      <button
+                        onClick={() => { setShowNewVisit(false); setNewVisitMileage(''); }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {visits.length === 0 ? (
                 <div className="text-center py-8">

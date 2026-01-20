@@ -144,19 +144,10 @@ class ArabicQuotationBuilder:
 
         qr_html = f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>' if qr else ''
 
-        # نعرض فقط معلومات بسيطة على الفاتورة، بينما تبقى التفاصيل الكاملة (IP, User-Agent, ...) داخل ال QR
+        # نعرض فقط جملة بسيطة على الفاتورة، بينما تبقى جميع التفاصيل (الاسم، الجوال، اللوحة، الوقت، IP، بصمة الجهاز) داخل ال QR
         return f"""
-        <p class="text-sm mb-2">
-            تمت الموافقة إلكترونياً من:
-            <strong>{name}</strong>
-            – جوال:
-            <strong>{phone}</strong><br/>
-            صاحب المركبة:
-            <strong>{customer_name or '-'} </strong><br/>
-            رقم اللوحة:
-            <strong>{plate_number or '-'} </strong><br/>
-            وقت الموافقة:
-            <strong>{responded_at}</strong>
+        <p class="text-sm mb-2 font-semibold">
+            تمت الموافقة إلكترونياً من العميل
         </p>
         {qr_html}
         """

@@ -957,7 +957,6 @@ const VehicleDetails = () => {
           </div>
         </div>
 
-        {/* Scanner Modal */}
         {scannerOpen && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4">

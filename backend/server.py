@@ -146,6 +146,11 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Create the main app
 app = FastAPI(title="Workshop Management API")
+
+# Runtime guard middleware (مراقبة وحماية خفيفة أثناء التشغيل)
+from runtime_guard import runtime_guard_middleware
+app.middleware("http")(runtime_guard_middleware)
+
 # Health check endpoint for deployment readiness
 @app.get("/health")
 async def health_check():

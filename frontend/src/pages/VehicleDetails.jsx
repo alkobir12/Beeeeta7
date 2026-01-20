@@ -383,36 +383,11 @@ const VehicleDetails = () => {
                     <span className="font-medium">{vehicle.customerName}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">
-0631
-0642
-0645 
-0627
-0644
-062c
-0648
-0627
-0644</span>
+                    <span className="text-gray-500">رقم الجوال</span>
                     <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-500">
-0627
-0644
-0628
-0631
-064a
-062f 
-0627
-0644
-0625
-0644
-0643
-062a
-0631
-0648
-0646
-064a</span>
+                    <span className="text-gray-500">البريد الإلكتروني</span>
                     <span className="font-medium">{vehicle.customerEmail || '-'}</span>
                   </div>
                 </div>

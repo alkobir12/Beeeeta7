@@ -556,27 +556,6 @@ const VehicleDetails = () => {
                 )}
               </div>
 
-              <div className="apple-card p-6">
-                <div className="flex items-center gap-3 mb-4 text-green-600">
-                  <User size={20} />
-                  <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
-                </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">{t('vehicles_page.customer_name')}</span>
-                    <span className="font-medium">{vehicle.customerName}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">رقم الجوال</span>
-                    <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">البريد الإلكتروني</span>
-                    <span className="font-medium">{vehicle.customerEmail || '-'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
             {/* Approval Info Box */}
             <div className="apple-card p-6">
               <div className="flex items-center gap-3 mb-4 text-indigo-600">

@@ -407,7 +407,7 @@ class ArabicQuotationBuilder:
         """
     
     def _get_modern_style(self, colors: Dict) -> str:
-        """نمط حديث"""
+        """نمط حديث - محسّن لحجم A4"""
         return f"""
         * {{
             margin: 0;
@@ -420,18 +420,45 @@ class ArabicQuotationBuilder:
             direction: rtl;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             color: #1e293b;
-            line-height: 1.7;
-            font-size: 14px;
+            line-height: 1.4;
+            font-size: 11px;
         }}
         
         .container {{
-            max-width: 900px;
-            margin: 20px auto;
+            max-width: 210mm;
+            height: 297mm;
+            margin: 10px auto;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.05);
+            padding: 0;
+        }}
+        
+        /* تحسينات الطباعة لحجم A4 */
+        @media print {{
+            body {{
+                background: white;
+                margin: 0;
+                padding: 0;
+            }}
+            
+            .container {{
+                width: 210mm;
+                height: 297mm;
+                max-width: 210mm;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                page-break-after: avoid;
+            }}
+            
+            @page {{
+                size: A4 portrait;
+                margin: 0;
+            }}
         }}
         
         .header {{

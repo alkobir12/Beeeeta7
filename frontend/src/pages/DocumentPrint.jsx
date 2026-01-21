@@ -470,28 +470,30 @@ const DocumentPrint = () => {
         </div>
 
         {/* Document Type Selection */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-slate-900">
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => {
                 const isActive = docType === type;
                 return (
                   <button
                     key={type}
                     onClick={() => setDocType(type)}
-                    className={`relative h-auto py-5 px-3 flex flex-col items-center gap-2 rounded-xl border-2 transition-all font-medium ${
+                    className={`relative h-auto py-5 px-4 flex flex-col items-center gap-3 rounded-xl transition-all duration-300 ${
                       isActive 
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white border-blue-400 shadow-xl scale-105' 
-                        : 'bg-slate-700/50 text-slate-400 border-slate-600 hover:bg-slate-700 hover:border-blue-500 hover:text-white'
+                        ? 'bg-blue-600 text-white border-4 border-blue-400 shadow-2xl shadow-blue-500/50 scale-105' 
+                        : 'bg-slate-800/80 text-slate-400 border-2 border-slate-700 hover:border-blue-600 hover:text-white hover:bg-slate-700'
                     }`}
                   >
                     {isActive && (
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                        <Check size={16} className="text-white font-bold" />
+                      <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                        <Check size={18} className="text-white font-bold" />
                       </div>
                     )}
-                    <Icon size={28} className={isActive ? 'drop-shadow-lg' : ''} />
-                    <span className="text-xs font-semibold">{label}</span>
+                    <Icon size={32} className={isActive ? 'text-white' : 'text-slate-500'} strokeWidth={isActive ? 2.5 : 2} />
+                    <span className={`text-sm font-bold text-center leading-tight ${isActive ? 'text-white' : 'text-slate-400'}`}>
+                      {label}
+                    </span>
                   </button>
                 );
               })}

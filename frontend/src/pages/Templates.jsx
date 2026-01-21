@@ -19,7 +19,7 @@ const Templates = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/templates`);
-      setTemplates(response.data || []);
+      setTemplates(response.data?.templates || []);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 

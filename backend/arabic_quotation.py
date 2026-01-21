@@ -467,7 +467,7 @@ class ArabicQuotationBuilder:
         .header {{
             background: linear-gradient(135deg, {colors['primary']} 0%, {colors['secondary']} 100%);
             color: white;
-            padding: 1.2rem 1.5rem;
+            padding: 1.8rem 2rem;
             position: relative;
         }}
         

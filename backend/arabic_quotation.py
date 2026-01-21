@@ -464,7 +464,7 @@ class ArabicQuotationBuilder:
         .header {{
             background: linear-gradient(135deg, {colors['primary']} 0%, {colors['secondary']} 100%);
             color: white;
-            padding: 2.5rem 2rem;
+            padding: 1.2rem 1.5rem;
             position: relative;
         }}
         
@@ -489,41 +489,41 @@ class ArabicQuotationBuilder:
         .company-section {{
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }}
         
         .logo {{
-            width: 90px;
-            height: 90px;
+            width: 55px;
+            height: 55px;
             background: rgba(255,255,255,0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.3);
             backdrop-filter: blur(10px);
         }}
         
         .logo-text {{
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 0.75rem;
         }}
         
         .company-info h1 {{
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }}
         
         .company-name-en {{
-            font-size: 1rem;
+            font-size: 0.7rem;
             opacity: 0.9;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.1rem;
         }}
         
         .company-address {{
-            font-size: 0.9rem;
+            font-size: 0.65rem;
             opacity: 0.8;
         }}
         

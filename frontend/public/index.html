@@ -177,12 +177,13 @@
             });
         </script>
 
+
         <!-- FIXSA Smart Assistant - Genspark AI (Simplified) -->
         <script>
 /**
- * FIXSA Smart Assistant - Genspark AI
- * ===================================
- * واجهة بسيطة لـ Genspark Bot
+ * FIXSA Smart Assistant - Genspark AI (Simplified)
+ * ================================================
+ * واجهة بسيطة لـ Genspark Bot فقط
  */
 
 (function() {
@@ -196,127 +197,6 @@
     }
   };
 
-  // ==========================================
-  // Gemini AI Service
-  // ==========================================
-  const GeminiAI = {
-    async generateContent(prompt) {
-      const url = `${CONFIG.gemini.baseUrl}/${CONFIG.gemini.model}:generateContent?key=${CONFIG.gemini.apiKey}`;
-      
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048
-            }
-          })
-        });
-        
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'لا توجد نتيجة';
-      } catch (error) {
-        console.error('Gemini Error:', error);
-        return 'حدث خطأ في الاتصال';
-      }
-    },
-
-    async explainDiagram(engineType, systemType) {
-      const prompt = `أنت خبير صيانة سيارات تويوتا. اشرح بالتفصيل وبالعربية:
-
-مخطط ${systemType} لمحرك ${engineType}
-
-اشرح:
-1. مكونات النظام الرئيسية وأرقام القطع الأصلية
-2. ألوان الأسلاك Toyota (B=أسود, W=أبيض, R=أحمر, G=أخضر, L=أزرق, Y=أصفر)
-3. مسار التيار/الوقود/الهواء
-4. أطراف ECU المهمة
-5. أكواد الأعطال الشائعة (P0xxx) وأسبابها
-6. خطوات التشخيص والفحص
-7. قيم الفحص الطبيعية
-
-قدم المعلومات بشكل منظم مع جداول.`;
-
-      return await this.generateContent(prompt);
-    },
-
-    async decodeVINDetailed(vin) {
-      const prompt = `أنت خبير فك تشفير VIN لسيارات تويوتا.
-
-فك تشفير هذا الرقم: ${vin}
-
-قدم:
-1. بلد الصنع ومصنع التجميع
-2. سنة الصنع
-3. نوع المحرك ومواصفاته الكاملة
-4. نوع ناقل الحركة
-5. مستوى التجهيز
-6. أنظمة السلامة
-7. جدول الصيانة الموصى به
-8. أكواد الأعطال الشائعة لهذا الموديل
-9. رابط Partsouq للقطع
-
-استخدم جداول للتنظيم.`;
-
-      return await this.generateContent(prompt);
-    },
-
-    async troubleshoot(code, carModel) {
-      const prompt = `أنت خبير تشخيص أعطال سيارات تويوتا.
-
-كود العطل: ${code}
-السيارة: ${carModel}
-
-قدم:
-1. معنى الكود بالتفصيل
-2. الأسباب المحتملة (مرتبة بالاحتمالية)
-3. خطوات التشخيص بالتسلسل
-4. الأدوات المطلوبة
-5. قيم الفحص الطبيعية
-6. طريقة الإصلاح
-7. أرقام القطع الأصلية إذا لزم الأمر
-8. تكلفة تقريبية للإصلاح
-9. فيديوهات مقترحة للمساعدة
-
-قدم المعلومات بشكل عملي للفني.`;
-
-      return await this.generateContent(prompt);
-    }
-  };
-
-  // ==========================================
-  // VIN Decoder
-  // ==========================================
-  const VINDecoder = {
-    yearCodes: {'A':2010,'B':2011,'C':2012,'D':2013,'E':2014,'F':2015,'G':2016,'H':2017,'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026},
-    engineCodes: {
-      'A': '1VD-FTV V8 4.5L Twin Turbo Diesel',
-      'G': '1GD-FTV I4 2.8L Turbo Diesel',
-      'P': 'V35A-FTS V6 3.5L Twin Turbo Petrol',
-      'X': 'F33A-FTV V6 3.3L Twin Turbo Diesel'
-    },
-    countryCodes: {'J': '🇯🇵 اليابان', 'M': '🇹🇭 تايلاند', '1': '🇺🇸 أمريكا'},
-    
-    decode(vin) {
-      vin = vin.replace(/[^A-HJ-NPR-Z0-9]/gi, '').toUpperCase();
-      if (vin.length !== 17) return { error: 'VIN يجب 17 خانة' };
-      
-      return {
-        vin,
-        country: this.countryCodes[vin[0]] || 'غير معروف',
-        year: this.yearCodes[vin[9]] || 'غير معروف',
-        engine: this.engineCodes[vin[5]] || 'غير معروف',
-        partsouqLink: CONFIG.partsouq.vinUrl + vin
-      };
-    }
-  };
-
-  // ==========================================
-  // UI
-  // ==========================================
   function createWidget() {
     if (document.getElementById('fixsa-widget')) return;
 
@@ -336,27 +216,10 @@
       #fixsa-header-info h3{margin:0;font-size:15px}
       #fixsa-header-info p{margin:3px 0 0;font-size:11px;opacity:.85}
       #fixsa-actions{margin-right:auto;display:flex;gap:8px}
-      #fixsa-actions button{background:rgba(255,255,255,0.2);border:none;color:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:16px}
-      #fixsa-tabs{display:flex;background:#f1f5f9;border-bottom:1px solid #e2e8f0}
-      #fixsa-tabs button{flex:1;padding:12px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#64748b;transition:all .2s}
-      #fixsa-tabs button.active{background:#fff;color:#1e40af;font-weight:600;border-bottom:2px solid #1e40af}
+      #fixsa-actions button{background:rgba(255,255,255,0.2);border:none;color:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:16px;transition:all .2s}
+      #fixsa-actions button:hover{background:rgba(255,255,255,0.3)}
       #fixsa-body{flex:1;overflow:hidden;position:relative}
       #fixsa-iframe{width:100%;height:100%;border:none}
-      .fixsa-panel{position:absolute;top:0;left:0;right:0;bottom:0;background:#fff;padding:20px;display:none;overflow-y:auto}
-      .fixsa-panel.show{display:block}
-      .fixsa-input{width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:10px;box-sizing:border-box}
-      .fixsa-input:focus{border-color:#3b82f6;outline:none}
-      .fixsa-btn-primary{width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer}
-      .fixsa-btn-primary:hover{background:#1e3a8a}
-      .fixsa-btn-primary:disabled{background:#94a3b8;cursor:not-allowed}
-      .fixsa-result{margin-top:15px;padding:15px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;white-space:pre-wrap;font-size:13px;line-height:1.6}
-      .fixsa-result h4{color:#1e40af;margin:0 0 10px}
-      .fixsa-loading{text-align:center;padding:20px;color:#64748b}
-      .fixsa-loading::after{content:'';display:inline-block;width:20px;height:20px;border:2px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-right:10px}
-      @keyframes spin{to{transform:rotate(360deg)}}
-      .fixsa-quick-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:15px}
-      .fixsa-quick-btns button{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:12px;cursor:pointer}
-      .fixsa-quick-btns button:hover{background:#eff6ff;border-color:#3b82f6}
       @media(max-width:500px){#fixsa-win{width:calc(100vw - 20px);height:calc(100vh - 120px);right:10px;bottom:90px}}
     `;
     document.head.appendChild(styles);
@@ -374,84 +237,16 @@
           <img src="${CONFIG.bot.avatar}" alt="FIXSA">
           <div id="fixsa-header-info">
             <h3>${CONFIG.bot.name}</h3>
-            <p>🟢 متصل | Gemini AI + Partsouq</p>
+            <p>🟢 متصل | Powered by Genspark AI</p>
           </div>
           <div id="fixsa-actions">
-            <button onclick="window.open('${CONFIG.bot.embed}','_blank')" title="فتح">↗</button>
+            <button onclick="window.open('${CONFIG.bot.embed}','_blank')" title="فتح في نافذة جديدة">↗</button>
             <button onclick="document.getElementById('fixsa-win').classList.remove('open')" title="إغلاق">✕</button>
           </div>
         </div>
         
-        <div id="fixsa-tabs">
-          <button class="active" onclick="FIXSA.showTab('chat')">💬 الدردشة</button>
-          <button onclick="FIXSA.showTab('vin')">🔍 VIN</button>
-          <button onclick="FIXSA.showTab('diagram')">📊 مخططات</button>
-          <button onclick="FIXSA.showTab('dtc')">🔧 أكواد</button>
-        </div>
-        
         <div id="fixsa-body">
           <iframe id="fixsa-iframe" src="${CONFIG.bot.embed}" allow="microphone"></iframe>
-          
-          <!-- VIN Panel -->
-          <div id="fixsa-vin-panel" class="fixsa-panel">
-            <h4>🔍 فك تشفير VIN</h4>
-            <input type="text" id="vin-input" class="fixsa-input" placeholder="أدخل VIN (17 خانة)" maxlength="17" style="text-align:left;direction:ltr;font-family:monospace">
-            <div class="fixsa-quick-btns">
-              <button onclick="document.getElementById('vin-input').value='JTMAABBJ7P4039559'">LC300</button>
-              <button onclick="document.getElementById('vin-input').value='JTMDV09J194022240'">LC200</button>
-              <button onclick="document.getElementById('vin-input').value='MR0HA8CD5K1058519'">Hilux</button>
-            </div>
-            <button class="fixsa-btn-primary" onclick="FIXSA.decodeVIN()">فك التشفير بـ Gemini AI</button>
-            <div id="vin-result" class="fixsa-result" style="display:none"></div>
-          </div>
-          
-          <!-- Diagram Panel -->
-          <div id="fixsa-diagram-panel" class="fixsa-panel">
-            <h4>📊 شرح المخططات الكهربائية</h4>
-            <select id="engine-select" class="fixsa-input">
-              <option value="">اختر المحرك</option>
-              <option value="1VD-FTV">1VD-FTV (LC200/LC70 V8 Diesel)</option>
-              <option value="1GD-FTV">1GD-FTV (Hilux/Fortuner/Prado)</option>
-              <option value="F33A-FTV">F33A-FTV (LC300 Diesel)</option>
-              <option value="V35A-FTS">V35A-FTS (LC300 Petrol)</option>
-              <option value="2GD-FTV">2GD-FTV (Hilux 2.4)</option>
-            </select>
-            <select id="system-select" class="fixsa-input">
-              <option value="">اختر النظام</option>
-              <option value="Common Rail">Common Rail System</option>
-              <option value="Glow Plug">Glow Plug Circuit</option>
-              <option value="Turbo VNT">Turbo/VNT System</option>
-              <option value="DPF">DPF/DPR System</option>
-              <option value="EGR">EGR System</option>
-              <option value="Injectors">Injectors Wiring</option>
-              <option value="ECU Pinout">ECU Pinout</option>
-            </select>
-            <button class="fixsa-btn-primary" onclick="FIXSA.explainDiagram()">اشرح بـ Gemini AI</button>
-            <div id="diagram-result" class="fixsa-result" style="display:none"></div>
-          </div>
-          
-          <!-- DTC Panel -->
-          <div id="fixsa-dtc-panel" class="fixsa-panel">
-            <h4>🔧 تشخيص أكواد الأعطال</h4>
-            <input type="text" id="dtc-input" class="fixsa-input" placeholder="أدخل كود العطل (مثال: P0087)" style="text-align:left;direction:ltr">
-            <div class="fixsa-quick-btns">
-              <button onclick="document.getElementById('dtc-input').value='P0087'">P0087</button>
-              <button onclick="document.getElementById('dtc-input').value='P0088'">P0088</button>
-              <button onclick="document.getElementById('dtc-input').value='P0093'">P0093</button>
-              <button onclick="document.getElementById('dtc-input').value='P0234'">P0234</button>
-              <button onclick="document.getElementById('dtc-input').value='P0401'">P0401</button>
-              <button onclick="document.getElementById('dtc-input').value='P2002'">P2002</button>
-            </div>
-            <select id="car-select" class="fixsa-input">
-              <option value="Land Cruiser 200 1VD-FTV">Land Cruiser 200 (1VD-FTV)</option>
-              <option value="Land Cruiser 300 F33A-FTV">Land Cruiser 300 Diesel</option>
-              <option value="Hilux 1GD-FTV">Hilux (1GD-FTV)</option>
-              <option value="Fortuner 1GD-FTV">Fortuner (1GD-FTV)</option>
-              <option value="Prado 1GD-FTV">Prado (1GD-FTV)</option>
-            </select>
-            <button class="fixsa-btn-primary" onclick="FIXSA.troubleshoot()">تشخيص بـ Gemini AI</button>
-            <div id="dtc-result" class="fixsa-result" style="display:none"></div>
-          </div>
         </div>
       </div>
     `;
@@ -461,99 +256,15 @@
       document.getElementById('fixsa-win').classList.toggle('open');
     };
 
-    console.log('✅ FIXSA + Gemini AI loaded');
+    console.log('✅ FIXSA Genspark AI loaded');
   }
 
-  // ==========================================
-  // API
-  // ==========================================
   window.FIXSA = {
     open: () => document.getElementById('fixsa-win').classList.add('open'),
     close: () => document.getElementById('fixsa-win').classList.remove('open'),
-    
-    showTab(tab) {
-      // Update tabs
-      document.querySelectorAll('#fixsa-tabs button').forEach((btn, i) => {
-        btn.classList.toggle('active', ['chat','vin','diagram','dtc'][i] === tab);
-      });
-      
-      // Show/hide panels
-      document.getElementById('fixsa-iframe').style.display = tab === 'chat' ? 'block' : 'none';
-      document.getElementById('fixsa-vin-panel').classList.toggle('show', tab === 'vin');
-      document.getElementById('fixsa-diagram-panel').classList.toggle('show', tab === 'diagram');
-      document.getElementById('fixsa-dtc-panel').classList.toggle('show', tab === 'dtc');
-    },
-    
-    async decodeVIN() {
-      const vin = document.getElementById('vin-input').value.trim();
-      if (!vin) return alert('أدخل رقم VIN');
-      
-      const resultDiv = document.getElementById('vin-result');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML = '<div class="fixsa-loading">جاري التحليل بـ Gemini AI...</div>';
-      
-      // Quick decode first
-      const quick = VINDecoder.decode(vin);
-      if (quick.error) {
-        resultDiv.innerHTML = `<p style="color:red">❌ ${quick.error}</p>`;
-        return;
-      }
-      
-      // Gemini detailed analysis
-      const detailed = await GeminiAI.decodeVINDetailed(vin);
-      resultDiv.innerHTML = `
-        <h4>✅ نتيجة فك التشفير</h4>
-        <p><strong>VIN:</strong> ${vin}</p>
-        <hr style="margin:10px 0;border-color:#e2e8f0">
-        ${detailed.replace(/\n/g, '<br>')}
-        <hr style="margin:10px 0;border-color:#e2e8f0">
-        <a href="${quick.partsouqLink}" target="_blank" style="display:block;padding:10px;background:#22c55e;color:#fff;text-align:center;border-radius:8px;text-decoration:none;margin-top:10px">📦 عرض القطع في Partsouq</a>
-      `;
-    },
-    
-    async explainDiagram() {
-      const engine = document.getElementById('engine-select').value;
-      const system = document.getElementById('system-select').value;
-      
-      if (!engine || !system) return alert('اختر المحرك والنظام');
-      
-      const resultDiv = document.getElementById('diagram-result');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML = '<div class="fixsa-loading">جاري إنشاء الشرح بـ Gemini AI...</div>';
-      
-      const explanation = await GeminiAI.explainDiagram(engine, system);
-      resultDiv.innerHTML = `
-        <h4>📊 ${system} - ${engine}</h4>
-        <hr style="margin:10px 0;border-color:#e2e8f0">
-        ${explanation.replace(/\n/g, '<br>')}
-        <hr style="margin:10px 0;border-color:#e2e8f0">
-        <a href="${CONFIG.partsouq.searchUrl}${encodeURIComponent(engine)}" target="_blank" style="display:block;padding:10px;background:#3b82f6;color:#fff;text-align:center;border-radius:8px;text-decoration:none">📦 قطع ${engine} في Partsouq</a>
-      `;
-    },
-    
-    async troubleshoot() {
-      const code = document.getElementById('dtc-input').value.trim();
-      const car = document.getElementById('car-select').value;
-      
-      if (!code) return alert('أدخل كود العطل');
-      
-      const resultDiv = document.getElementById('dtc-result');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML = '<div class="fixsa-loading">جاري التشخيص بـ Gemini AI...</div>';
-      
-      const diagnosis = await GeminiAI.troubleshoot(code, car);
-      resultDiv.innerHTML = `
-        <h4>🔧 تشخيص ${code}</h4>
-        <p style="color:#64748b;font-size:12px">${car}</p>
-        <hr style="margin:10px 0;border-color:#e2e8f0">
-        ${diagnosis.replace(/\n/g, '<br>')}
-      `;
-    },
-    
     config: CONFIG
   };
 
-  // Initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', createWidget);
   } else {

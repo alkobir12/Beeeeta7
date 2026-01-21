@@ -217,6 +217,7 @@ app.include_router(injectors_router)
 app.include_router(import_router)
 app.include_router(gemini_chat_router)
 app.include_router(fault_knowledge_router)
+app.include_router(templates_router)
 # Temporarily disable payroll router - needs Supabase implementation
 # app.include_router(payroll_router)
 app.include_router(language_router)

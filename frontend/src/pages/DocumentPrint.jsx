@@ -472,16 +472,20 @@ const DocumentPrint = () => {
         {/* Document Type Selection */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => (
                 <Button
                   key={type}
                   variant={docType === type ? "default" : "outline"}
                   onClick={() => setDocType(type)}
-                  className={docType === type ? "bg-blue-600" : ""}
+                  className={`h-auto py-4 flex flex-col items-center gap-2 ${
+                    docType === type 
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600" 
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  <Icon size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
-                  {label}
+                  <Icon size={24} />
+                  <span className="text-xs sm:text-sm font-medium">{label}</span>
                 </Button>
               ))}
             </div>

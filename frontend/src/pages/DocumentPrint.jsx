@@ -473,20 +473,27 @@ const DocumentPrint = () => {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="grid grid-cols-2 gap-3">
-              {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => (
-                <button
-                  key={type}
-                  onClick={() => setDocType(type)}
-                  className={`h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all ${
-                    docType === type 
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg shadow-blue-500/50" 
-                      : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-blue-400"
-                  }`}
-                >
-                  <Icon size={24} />
-                  <span className="text-xs sm:text-sm font-medium">{label}</span>
-                </button>
-              ))}
+              {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => {
+                const isActive = docType === type;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setDocType(type)}
+                    style={{
+                      background: isActive 
+                        ? 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' 
+                        : 'transparent',
+                      color: isActive ? '#ffffff' : 'inherit',
+                      borderColor: isActive ? '#2563eb' : '#cbd5e1',
+                      boxShadow: isActive ? '0 4px 12px rgba(37, 99, 235, 0.4)' : 'none'
+                    }}
+                    className={`h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all hover:scale-105`}
+                  >
+                    <Icon size={24} />
+                    <span className="text-xs sm:text-sm font-medium">{label}</span>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

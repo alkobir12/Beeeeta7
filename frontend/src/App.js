@@ -37,6 +37,8 @@ import PartsCatalog from "./pages/PartsCatalog";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import FaultKnowledge from "./pages/FaultKnowledge";
 import TemplatesManager from "./pages/TemplatesManager";
+import FinancialDashboard from "./pages/FinancialDashboard";
+import AIRecommendationsPage from "./pages/AIRecommendationsPage";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {
@@ -113,6 +115,8 @@ function App() {
                       <Route path="/quotations" element={<QuotationGenerator />} />
                       <Route path="/print" element={<DocumentPrint />} />
                       <Route path="/templates" element={<TemplatesManager />} />
+                      <Route path="/financial-dashboard" element={<FinancialDashboard />} />
+                      <Route path="/ai-recommendations" element={<AIRecommendationsPage />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                     </Routes>

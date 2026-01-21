@@ -251,44 +251,24 @@ class ArabicQuotationBuilder:
                             <span class="label">الاسم:</span>
                             <span class="value">{self.quotation['client']['name']}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">الشركة:</span>
-                            <span class="value">{self.quotation['client']['company']}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">العنوان:</span>
-                            <span class="value">{self.quotation['client']['address']}</span>
-                        </div>
+                        {self._render_if_value(self.quotation['client']['company'], 'الشركة')}
+                        {self._render_if_value(self.quotation['client']['address'], 'العنوان')}
                         <div class="info-item">
                             <span class="label">الهاتف:</span>
                             <span class="value">{self.quotation['client']['phone']}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">البريد:</span>
-                            <span class="value">{self.quotation['client']['email']}</span>
-                        </div>
+                        {self._render_if_value(self.quotation['client']['email'], 'البريد')}
                     </div>
                 </div>
                 
                 <div class="quote-info">
-                    <h3 class="section-title">تفاصيل العرض</h3>
+                    <h3 class="section-title">بيانات الفاتورة</h3>
                     <div class="info-grid">
                         <div class="info-item">
                             <span class="label">التاريخ:</span>
                             <span class="value">{self.quotation['date']}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">صالح حتى:</span>
-                            <span class="value">{self.quotation['valid_until']}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">رقم الضريبة:</span>
-                            <span class="value">{self.company['tax_number']}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">العملة:</span>
-                            <span class="value">ريال سعودي</span>
-                        </div>
+                        {self._render_if_value(self.company.get('tax_number', ''), 'رقم الضريبة')}
                     </div>
                 </div>
             </div>

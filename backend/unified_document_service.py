@@ -125,7 +125,8 @@ class UnifiedDocumentGenerator:
             phone=workshop_data.get('phone', ''),
             email=workshop_data.get('email', ''),
             website=workshop_data.get('website', ''),
-            tax_number=workshop_data.get('tax_number', workshop_data.get('taxNumber', ''))
+            tax_number=workshop_data.get('tax_number', workshop_data.get('taxNumber', '')),
+            logo=workshop_data.get('logo', '')
         )
         
         # تعيين بيانات العميل

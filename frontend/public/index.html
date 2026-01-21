@@ -177,39 +177,22 @@
             });
         </script>
 
-        <!-- FIXSA Smart Assistant - Genspark AI + Gemini -->
+        <!-- FIXSA Smart Assistant - Genspark AI (Simplified) -->
         <script>
 /**
- * FIXSA Smart Assistant - With Gemini AI
- * =====================================
- * - Genspark Bot للمحادثة
- * - Gemini AI للصور والشروحات
- * - Partsouq للقطع
- * - VIN Decoder
+ * FIXSA Smart Assistant - Genspark AI
+ * ===================================
+ * واجهة بسيطة لـ Genspark Bot
  */
 
 (function() {
   'use strict';
 
-  // ==========================================
-  // الإعدادات
-  // ==========================================
   const CONFIG = {
-    gemini: {
-      apiKey: 'AIzaSyCaow2fRY3d_JwbPO2EsGzJK0KGAR95guk',
-      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
-      model: 'gemini-1.5-flash'
-    },
     bot: {
-      id: '36bfb79d-fd34-46f8-8a85-80832e70a5e8',
       embed: 'https://www.genspark.ai/embed/agents/36bfb79d-fd34-46f8-8a85-80832e70a5e8',
       avatar: 'https://www.genspark.ai/api/files/s/owCUM0vz?cache_control=3600',
       name: 'مساعد FIXSA الذكي'
-    },
-    partsouq: {
-      baseUrl: 'https://partsouq.com',
-      searchUrl: 'https://partsouq.com/en/search/all?q=',
-      vinUrl: 'https://partsouq.com/en/catalog/genuine/vehicle?c=Toyota&q='
     }
   };
 

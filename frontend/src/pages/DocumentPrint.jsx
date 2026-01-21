@@ -474,19 +474,18 @@ const DocumentPrint = () => {
           <CardContent className="p-4">
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => (
-                <Button
+                <button
                   key={type}
-                  variant={docType === type ? "default" : "outline"}
                   onClick={() => setDocType(type)}
-                  className={`h-auto py-4 flex flex-col items-center gap-2 ${
+                  className={`h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all ${
                     docType === type 
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600" 
-                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg shadow-blue-500/50" 
+                      : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-blue-400"
                   }`}
                 >
                   <Icon size={24} />
                   <span className="text-xs sm:text-sm font-medium">{label}</span>
-                </Button>
+                </button>
               ))}
             </div>
           </CardContent>

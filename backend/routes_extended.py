@@ -948,9 +948,6 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         }
         await db.operations.insert_one(op)
 
-        # تطبيق تأثير العملية على دليل الحسابات (AutoProfit Pro)
-        _apply_operation_to_accounts(op)
-
         # inventory adjust for parts
         if op['type'] in ('purchase', 'sale'):
             for it in items:

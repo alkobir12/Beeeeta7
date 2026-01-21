@@ -17,7 +17,7 @@ const TemplatesManager = () => {
   const { t, i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   
-  const [templates, setTemplates] = useState([]);
+  const [templatesList, setTemplatesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     name: '',
@@ -42,14 +42,14 @@ const TemplatesManager = () => {
       const response = await axios.get(`${API_URL}/templates`);
       const templatesData = response.data?.templates;
       if (Array.isArray(templatesData)) {
-        setTemplates(templatesData);
+        setTemplatesList(templatesData);
       } else {
         console.warn('Templates data is not an array:', templatesData);
-        setTemplates([]);
+        setTemplatesList([]);
       }
     } catch (error) {
       console.error('Error loading templates:', error);
-      setTemplates([]);
+      setTemplatesList([]);
     }
   };
 
@@ -272,12 +272,12 @@ const TemplatesManager = () => {
             <FileText size={20} />
             {isArabic ? 'النماذج المحفوظة' : 'Saved Templates'}
             <span className="text-sm font-normal text-muted-foreground">
-              ({Array.isArray(templates) ? templates.length : 0})
+              ({Array.isArray(templatesList) ? templatesList.length : 0})
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!Array.isArray(templates) || templates.length === 0 ? (
+          {!Array.isArray(templatesList) || templatesList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText size={48} className="mx-auto mb-4 opacity-20" />
               <p>{isArabic ? 'لا توجد نماذج محفوظة بعد' : 'No templates saved yet'}</p>
@@ -287,7 +287,7 @@ const TemplatesManager = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.isArray(templates) && templates.map((template) => (
+              {Array.isArray(templatesList) && templatesList.map((template) => (
                 <div
                   key={template.id}
                   className="border rounded-lg p-4 hover:shadow-lg transition-shadow bg-slate-50 dark:bg-slate-800"

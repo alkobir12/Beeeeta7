@@ -24,7 +24,9 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
       const win = iframeRef.current?.contentWindow;
       win?.focus();
       win?.print();
-    } catch (e) {}
+    } catch (e) {
+      // Ignore print errors
+    }
   };
 
   const handleDownload = () => {

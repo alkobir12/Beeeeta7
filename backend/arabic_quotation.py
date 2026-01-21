@@ -234,9 +234,7 @@ class ArabicQuotationBuilder:
         <header class="header">
             <div class="header-content">
                 <div class="company-section">
-                    <div class="logo">
-                        <div class="logo-text">الشعار</div>
-                    </div>
+                    {self._render_logo()}
                     <div class="company-info">
                         <h1>{self.company['name']}</h1>
                         <p class="company-name-en">{self.company['name_en']}</p>

@@ -731,12 +731,11 @@ const DocumentPrint = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <Label>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</Label>
-                    <Textarea
-                      value={formData.settings.notes}
-                      onChange={(e) => handleSettingsChange('notes', e.target.value)}
-                      placeholder={isArabic ? 'ملاحظات تظهر في المستند...' : 'Notes to appear in document...'}
-                      rows={3}
+                    <Label>{isArabic ? 'تاريخ الفاتورة' : 'Invoice Date'}</Label>
+                    <Input
+                      type="date"
+                      value={formData.settings.date}
+                      onChange={(e) => handleSettingsChange('date', e.target.value)}
                     />
                   </div>
                   <div>
@@ -752,6 +751,26 @@ const DocumentPrint = () => {
                         ? 'عند إدخال رمز طلب اعتماد تمت الموافقة عليه، سيتم إظهار التوقيع الإلكتروني ووقت الموافقة وباركود في أسفل الفاتورة.'
                         : 'If you enter an approved approval token, an electronic signature with timestamp & QR will be shown on the invoice.'}
                     </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 mt-4">
+                  <div>
+                    <Label>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</Label>
+                    <Textarea
+                      value={formData.settings.notes}
+                      onChange={(e) => handleSettingsChange('notes', e.target.value)}
+                      placeholder={isArabic ? 'ملاحظات تظهر في المستند...' : 'Notes to appear in document...'}
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label>{isArabic ? 'الشروط والأحكام (سطر واحد لكل شرط)' : 'Terms and Conditions (one per line)'}</Label>
+                    <Textarea
+                      value={formData.settings.terms?.join('\n') || ''}
+                      onChange={(e) => handleSettingsChange('terms', e.target.value.split('\n').filter(t => t.trim()))}
+                      placeholder={isArabic ? 'أدخل كل شرط في سطر منفصل...' : 'Enter each term on a new line...'}
+                      rows={5}
+                    />
                   </div>
                 </div>
               </CardContent>

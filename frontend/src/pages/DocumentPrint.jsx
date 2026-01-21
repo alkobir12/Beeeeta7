@@ -478,20 +478,32 @@ const DocumentPrint = () => {
                 return (
                   <button
                     key={type}
-                    onClick={() => setDocType(type)}
+                    onClick={() => {
+                      console.log('Switching doc type to:', type);
+                      setDocType(type);
+                    }}
                     style={{
                       background: isActive 
                         ? 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' 
-                        : 'transparent',
-                      color: isActive ? '#ffffff' : 'inherit',
-                      borderColor: isActive ? '#2563eb' : '#cbd5e1',
-                      boxShadow: isActive ? '0 4px 12px rgba(37, 99, 235, 0.4)' : 'none'
+                        : '#1e293b',
+                      color: '#ffffff',
+                      borderWidth: '2px',
+                      borderStyle: 'solid',
+                      borderColor: isActive ? '#60a5fa' : '#475569',
+                      boxShadow: isActive ? '0 4px 16px rgba(37, 99, 235, 0.5)' : '0 2px 4px rgba(0,0,0,0.1)',
+                      transform: isActive ? 'scale(1.02)' : 'scale(1)'
                     }}
-                    className={`h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all hover:scale-105`}
+                    className="h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg transition-all duration-200 hover:scale-105"
                   >
-                    <Icon size={24} />
+                    <Icon size={24} className={isActive ? 'animate-pulse' : ''} />
                     <span className="text-xs sm:text-sm font-medium">{label}</span>
+                    {isActive && <div className="w-8 h-1 bg-white rounded-full mt-1"></div>}
                   </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
                 );
               })}
             </div>

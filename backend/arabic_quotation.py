@@ -530,81 +530,82 @@ class ArabicQuotationBuilder:
         .quote-section {{
             text-align: left;
             background: rgba(255,255,255,0.1);
-            padding: 1.5rem;
-            border-radius: 12px;
+            padding: 0.8rem;
+            border-radius: 8px;
             backdrop-filter: blur(10px);
         }}
         
         .quote-title {{
-            font-size: 3rem;
-            font-weight: 900;
-            margin-bottom: 0.5rem;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }}
         
         .quote-number {{
-            font-size: 1.2rem;
+            font-size: 0.8rem;
             opacity: 0.9;
         }}
         
         .content {{
-            padding: 2.5rem;
+            padding: 1.2rem 1.5rem;
         }}
         
         .section-title {{
-            font-size: 1.4rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: {colors['primary']};
-            margin-bottom: 1.5rem;
-            padding: 0.75rem 0;
-            border-bottom: 3px solid {colors['primary']};
+            margin-bottom: 0.8rem;
+            padding: 0.4rem 0;
+            border-bottom: 2px solid {colors['primary']};
             position: relative;
         }}
         
         .section-title::after {{
             content: '';
             position: absolute;
-            bottom: -3px;
+            bottom: -2px;
             right: 0;
-            width: 60px;
-            height: 3px;
+            width: 40px;
+            height: 2px;
             background: {colors['secondary']};
         }}
         
         .details-section {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }}
         
         .client-info, .quote-info {{
             background: {colors['accent']};
-            padding: 2rem;
-            border-radius: 12px;
+            padding: 1rem;
+            border-radius: 8px;
             border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }}
         
         .info-grid {{
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.5rem;
         }}
         
         .info-item {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem;
+            padding: 0.4rem 0.6rem;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }}
         
         .label {{
             font-weight: 600;
             color: {colors['secondary']};
+            font-size: 0.75rem;
         }}
         
         .value {{

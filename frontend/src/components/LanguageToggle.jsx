@@ -12,7 +12,9 @@ const LanguageToggle = () => {
     // Save to localStorage first
     try {
       localStorage.setItem('language', lng);
-    } catch (_) {}
+    } catch (_) {
+      // Ignore localStorage errors
+    }
     
     // Update document direction
     if (typeof document !== 'undefined') {

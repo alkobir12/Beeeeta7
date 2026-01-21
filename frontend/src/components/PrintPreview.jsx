@@ -38,7 +38,9 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
       a.download = `${title}.html`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (e) {}
+    } catch (e) {
+      // Ignore download errors
+    }
   };
 
   const handleOpenFullPage = () => {

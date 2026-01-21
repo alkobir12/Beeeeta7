@@ -9,7 +9,7 @@
     "description_en": "Integrated system for diagnostics and spare parts supporting all vehicle types and engines"
   },
   "api_keys": {
-    "google_api_key": "AIzaSyDqTL_NAa3gC_ER54ZHcyuIE6cPUD108gM",
+    "google_api_key": "{{GOOGLE_API_KEY}}",
     "nhtsa_vpic_api": "https://vpic.nhtsa.dot.gov/api/vehicles",
     "parts_catalog_api": "https://api.parts-catalog.com/v1",
     "automotive_wiring_api": "https://api.automotive-wiring.com/v1",

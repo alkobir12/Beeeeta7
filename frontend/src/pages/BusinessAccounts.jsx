@@ -44,11 +44,6 @@ const BusinessAccounts = () => {
     code: '', name: '', nameEn: '', type: 'expense', parentId: '' 
   });
 
-  useEffect(() => { 
-    loadBranches(); 
-    loadAccounts();
-  }, []);
-
   const loadBranches = async () => {
     try {
       const res = await axios.get(`${API_URL}/biz-accounts`);
@@ -72,6 +67,11 @@ const BusinessAccounts = () => {
       setAccounts(DEFAULT_ACCOUNTS);
     }
   };
+
+  useEffect(() => { 
+    loadBranches(); 
+    loadAccounts();
+  }, []);
 
   const addBranch = async (e) => {
     e.preventDefault();

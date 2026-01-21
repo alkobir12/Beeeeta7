@@ -498,11 +498,6 @@ const DocumentPrint = () => {
             </div>
           </CardContent>
         </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
 
         <Tabs defaultValue="customer" className="space-y-6">
           <TabsList className="grid grid-cols-4 w-full max-w-md">

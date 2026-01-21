@@ -247,6 +247,16 @@ class UnifiedDocumentGenerator:
     def _customize_for_type(self, doc_type: str, settings: Dict):
         """تخصيص المستند حسب النوع"""
         
+        # تعديل عنوان المستند حسب النوع
+        title_map = {
+            'invoice': 'فاتورة مبيعات',
+            'diagnosis': 'تقرير تشخيص',
+            'quote': 'عرض سعر',
+            'receipt': 'إيصال استلام'
+        }
+        self.builder.quotation['doc_title'] = title_map.get(doc_type, 'مستند')
+        self.builder.quotation['doc_type'] = doc_type
+        
         # تعديل رقم المستند
         doc_number = settings.get('document_number')
         if doc_number:

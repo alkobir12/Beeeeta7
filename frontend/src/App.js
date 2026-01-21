@@ -112,6 +112,7 @@ function App() {
                       <Route path="/users" element={<Users />} />
                       <Route path="/quotations" element={<QuotationGenerator />} />
                       <Route path="/print" element={<DocumentPrint />} />
+                      <Route path="/templates" element={<TemplatesManager />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                     </Routes>

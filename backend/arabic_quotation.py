@@ -543,22 +543,25 @@ class ArabicQuotationBuilder:
         
         .quote-section {{
             text-align: left;
-            background: rgba(255,255,255,0.1);
-            padding: 0.8rem;
-            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }}
         
         .quote-title {{
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 0.2rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.3rem;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
         }}
         
         .quote-number {{
-            font-size: 0.8rem;
-            opacity: 0.9;
+            font-size: 1rem;
+            opacity: 0.95;
+            font-weight: 600;
         }}
         
         .content {{

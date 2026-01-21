@@ -51,6 +51,8 @@ from routes_payroll import router as payroll_router, set_db as set_db_payroll
 from routes_fault_knowledge import router as fault_knowledge_router
 # Import Templates Routes
 from routes_templates import router as templates_router
+# Import Chart of Accounts Routes
+from routes_accounts_chart import router as accounts_chart_router
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -218,6 +220,7 @@ app.include_router(import_router)
 app.include_router(gemini_chat_router)
 app.include_router(fault_knowledge_router)
 app.include_router(templates_router)
+app.include_router(accounts_chart_router)
 # Temporarily disable payroll router - needs Supabase implementation
 # app.include_router(payroll_router)
 app.include_router(language_router)

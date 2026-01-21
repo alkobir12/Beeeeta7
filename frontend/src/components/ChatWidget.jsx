@@ -112,6 +112,16 @@ const ChatWidget = () => {
     [vehicles, currentVehicleIdFromPath]
   );
 
+  // اقتراح نوع المستند تلقائياً بناءً على حالة المركبة
+  const suggestedDocType = useMemo(() => {
+    if (!currentVehicle) return null;
+    const status = currentVehicle.status || '';
+    if (status === 'diagnosis') return 'diagnosis';
+    if (status === 'quotation') return 'quote';
+    if (status === 'ready' || status === 'delivered') return 'invoice';
+    return null;
+  }, [currentVehicle]);
+
   // لا نظهر الودجت داخل شاشة تسجيل الدخول أو الشاشات العامة (approval/report)
   if (typeof window !== 'undefined') {
     const path = window.location.pathname;
@@ -130,16 +140,6 @@ const ChatWidget = () => {
     setIsOpen(false);
     navigate(`/print?type=${encodeURIComponent(type)}&vehicleId=${encodeURIComponent(vehicleId)}`);
   };
-
-  // اقتراح نوع المستند تلقائياً بناءً على حالة المركبة
-  const suggestedDocType = useMemo(() => {
-    if (!currentVehicle) return null;
-    const status = currentVehicle.status || '';
-    if (status === 'diagnosis') return 'diagnosis';
-    if (status === 'quotation') return 'quote';
-    if (status === 'ready' || status === 'delivered') return 'invoice';
-    return null;
-  }, [currentVehicle]);
 
   const suggestedDocLabel =
     suggestedDocType === 'diagnosis'

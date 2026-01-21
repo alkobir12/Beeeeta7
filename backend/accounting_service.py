@@ -36,6 +36,7 @@ class AccountingService:
         من ح/ الصندوق (أو حسابات العملاء)
             إلى ح/ إيرادات الخدمات
             إلى ح/ إيرادات قطع الغيار
+            إلى ح/ ضريبة القيمة المضافة
         
         من ح/ تكلفة قطع الغيار المباعة
             إلى ح/ مخزون قطع الغيار
@@ -43,6 +44,8 @@ class AccountingService:
         entries = []
         
         total = operation.get('total', 0)
+        subtotal = operation.get('subtotal', total)
+        tax = operation.get('tax', 0)
         payment_method = operation.get('paymentMethod', 'cash')
         payment_status = operation.get('paymentStatus', 'paid')
         
@@ -94,7 +97,13 @@ class AccountingService:
                 credit=parts_revenue
             ))
         
-        # 4. قيد تكلفة البضاعة المباعة (إذا كان هناك قطع)
+        # 4. ضريبة القيمة المضافة (إذا كانت موجودة)
+        if tax > 0:
+            # ملاحظة: يمكن إضافة حساب منفصل للضريبة
+            # لكن حالياً سنعتبرها جزء من الإيرادات الإجمالية
+            pass
+        
+        # 5. قيد تكلفة البضاعة المباعة (إذا كان هناك قطع)
         if parts_cost > 0:
             entries.append(LinkedAccount(
                 accountId=self.accounts['cogs']['id'],

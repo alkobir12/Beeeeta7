@@ -479,19 +479,19 @@ const DocumentPrint = () => {
                   <button
                     key={type}
                     onClick={() => setDocType(type)}
-                    className={`relative h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                    className={`relative h-auto py-5 px-3 flex flex-col items-center gap-2 rounded-xl border-2 transition-all font-medium ${
                       isActive 
-                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
-                        : 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700 hover:border-slate-500'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white border-blue-400 shadow-xl scale-105' 
+                        : 'bg-slate-700/50 text-slate-400 border-slate-600 hover:bg-slate-700 hover:border-blue-500 hover:text-white'
                     }`}
                   >
                     {isActive && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                        <Check size={14} className="text-white" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                        <Check size={16} className="text-white font-bold" />
                       </div>
                     )}
-                    <Icon size={24} />
-                    <span className="text-xs sm:text-sm font-medium">{label}</span>
+                    <Icon size={28} className={isActive ? 'drop-shadow-lg' : ''} />
+                    <span className="text-xs font-semibold">{label}</span>
                   </button>
                 );
               })}

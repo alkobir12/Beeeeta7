@@ -70,19 +70,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/templates', label: i18n.language === 'ar' ? '🎨 إدارة النماذج' : '🎨 Templates Manager', enabled: true },
       ]
     },
-    {
-      group: true,
-      label: t('nav.finance'),
-      icon: Building2,
-      enabled: true,
-      permission: 'canManageFinance',
-      children: [
-        { path: '/analytics', label: t('reports_module.analytics'), enabled: true },
-        { path: '/business-accounts', label: 'حسابات الأعمال', enabled: true },
-        { path: '/payroll', label: 'الرواتب', enabled: true },
-        { path: '/customer-receipts', label: 'إيصالات العملاء', enabled: true },
-      ]
-    },
+ 
     { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: 'canManageVehicles' },
     { path: '/import', label: t('nav.import'), icon: Upload, enabled: true, permission: 'canManageSettings' },
     { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: 'canManageUsers' },

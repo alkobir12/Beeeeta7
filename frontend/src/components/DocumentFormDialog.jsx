@@ -291,7 +291,15 @@ const DocumentFormDialog = ({
                   <div className="font-bold">معاينة — {docTitles[documentType]}</div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" onClick={downloadHtml}><Download size={16} className="ml-1"/>تحميل HTML</Button>
-                    <Button size="sm" onClick={()=>{ try{ const w = iframeRef.current?.contentWindow; w?.focus(); w?.print(); } catch(e){} }}>طباعة</Button>
+                    <Button size="sm" onClick={()=>{ 
+                      try{ 
+                        const w = iframeRef.current?.contentWindow; 
+                        w?.focus(); 
+                        w?.print(); 
+                      } catch(e){
+                        // Ignore print errors
+                      } 
+                    }}>طباعة</Button>
                     <Button size="sm" variant="destructive" onClick={()=> setPreviewOpen(false)}><X size={16} className="ml-1"/>إغلاق</Button>
                   </div>
                 </div>

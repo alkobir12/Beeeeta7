@@ -57,8 +57,27 @@ const PrintPreview = ({ open, onClose, title = 'معاينة الطباعة', ht
     }
   };
 
+  const handleDialogClose = (v) => {
+    if (!v) {
+      try {
+        const frame = iframeRef.current;
+        if (frame) {
+          const doc = frame.contentDocument || frame.contentWindow?.document;
+          if (doc) {
+            doc.open();
+            doc.write('');
+            doc.close();
+          }
+        }
+      } catch (e) {
+        // Ignore iframe cleanup errors
+      }
+      onClose?.();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v)=>{ if(!v){ try{ const frame = iframeRef.current; if(frame){ const doc = frame.contentDocument || frame.contentWindow?.document; if(doc){ doc.open(); doc.write(''); doc.close(); } } }catch(e){} onClose?.(); } }}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-[900px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

@@ -162,6 +162,18 @@ class ArabicQuotationBuilder:
                         </div>"""
         return ""
 
+    def _render_logo(self) -> str:
+        """عرض الشعار إذا كان موجوداً"""
+        logo_url = self.company.get('logo', '')
+        if logo_url and str(logo_url).strip():
+            return f'''<div class="logo">
+                        <img src="{logo_url}" alt="شعار الورشة" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+                    </div>'''
+        else:
+            return '''<div class="logo">
+                        <div class="logo-text">الشعار</div>
+                    </div>'''
+
     def add_term(self, term: str):
         """إضافة شرط"""
         self.quotation['terms'].append(term)

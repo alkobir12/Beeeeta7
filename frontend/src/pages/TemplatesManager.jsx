@@ -264,7 +264,9 @@ const TemplatesManager = () => {
           <CardTitle className="flex items-center gap-2">
             <FileText size={20} />
             {isArabic ? 'النماذج المحفوظة' : 'Saved Templates'}
-            <span className="text-sm font-normal text-muted-foreground">({templates.length})</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              ({Array.isArray(templates) ? templates.length : 0})
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>

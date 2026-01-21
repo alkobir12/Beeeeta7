@@ -40,9 +40,16 @@ const TemplatesManager = () => {
   const loadTemplates = async () => {
     try {
       const response = await axios.get(`${API_URL}/templates`);
-      setTemplates(response.data.templates || []);
+      const templatesData = response.data?.templates;
+      if (Array.isArray(templatesData)) {
+        setTemplates(templatesData);
+      } else {
+        console.warn('Templates data is not an array:', templatesData);
+        setTemplates([]);
+      }
     } catch (error) {
       console.error('Error loading templates:', error);
+      setTemplates([]);
     }
   };
 

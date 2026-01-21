@@ -542,7 +542,8 @@ const CEODashboard = () => {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics">
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* أفضل الحسابات */}
             <Card>
               <CardHeader>
                 <CardTitle>أفضل 10 حسابات</CardTitle>
@@ -570,6 +571,36 @@ const CEODashboard = () => {
                   {analytics.accountBreakdown.length === 0 && (
                     <p className="text-center text-gray-500 py-8">لا توجد معاملات في هذه الفترة</p>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* التوصيات الذكية */}
+            <Card>
+              <CardHeader>
+                <CardTitle>التوصيات الذكية (ملخص)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500 mb-3">
+                  لعرض كافة تفاصيل التوصيات الذكية، استخدم صفحة التوصيات، وهنا يظهر لك ملخص رقمي فقط.
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="p-3 rounded-lg bg-red-50">
+                    <div className="text-2xl font-bold text-red-600">3</div>
+                    <div className="text-xs text-red-700">أولوية عالية</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-yellow-50">
+                    <div className="text-2xl font-bold text-yellow-600">5</div>
+                    <div className="text-xs text-yellow-700">أولوية متوسطة</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-green-50">
+                    <div className="text-2xl font-bold text-green-600">4</div>
+                    <div className="text-xs text-green-700">أولوية منخفضة</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-blue-50">
+                    <div className="text-lg font-bold text-blue-600">15,000 ر.س</div>
+                    <div className="text-xs text-blue-700">قيمة متوقعة</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

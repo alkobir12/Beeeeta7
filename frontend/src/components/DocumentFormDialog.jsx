@@ -267,7 +267,9 @@ const DocumentFormDialog = ({
       a.download = `${docTitles[documentType] || 'document'}.html`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (e) {}
+    } catch (e) {
+      // Ignore download errors
+    }
   };
 
   return (

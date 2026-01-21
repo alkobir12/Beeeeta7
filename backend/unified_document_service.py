@@ -142,6 +142,12 @@ class UnifiedDocumentGenerator:
         project_desc = self._build_project_description(doc_type, vehicle_data, settings)
         self.builder.set_project(project_desc)
         
+        # تعيين التاريخ إذا كان موجوداً في الإعدادات
+        if settings.get('date'):
+            # تحويل التاريخ من YYYY-MM-DD إلى YYYY/MM/DD
+            date_str = settings['date'].replace('-', '/')
+            self.builder.quotation['date'] = date_str
+        
         # تعيين نسبة الضريبة
         self.builder.quotation['tax_rate'] = tax_rate
         
@@ -155,7 +161,11 @@ class UnifiedDocumentGenerator:
             )
         
         # تعيين الشروط حسب نوع المستند
-        self.builder.quotation['terms'] = self._get_terms_for_type(doc_type, settings)
+        # إذا كان المستخدم قد أدخل شروط مخصصة، استخدمها
+        if settings.get('terms') and isinstance(settings['terms'], list) and len(settings['terms']) > 0:
+            self.builder.quotation['terms'] = settings['terms']
+        else:
+            self.builder.quotation['terms'] = self._get_terms_for_type(doc_type, settings)
         
         # تعديل العنوان حسب النوع
         self._customize_for_type(doc_type, settings)

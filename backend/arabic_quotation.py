@@ -55,6 +55,8 @@ class ArabicQuotationBuilder:
             'number': self._generate_number(),
             'date': datetime.now().strftime('%Y/%m/%d'),
             'valid_until': (datetime.now() + timedelta(days=30)).strftime('%Y/%m/%d'),
+            'doc_type': 'quote',
+            'doc_title': 'عرض سعر',
             'client': {
                 'name': 'العميل المحترم',
                 'company': 'الشركة المحترمة',

@@ -706,41 +706,42 @@ class ArabicQuotationBuilder:
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
+            padding: 0.4rem 0;
             border-bottom: 1px solid rgba(14,165,233,0.2);
-            font-size: 1.1rem;
+            font-size: 0.75rem;
         }}
         
         .total-row {{
             border-bottom: none;
-            border-top: 3px solid {colors['primary']};
+            border-top: 2px solid {colors['primary']};
             background: rgba(59,130,246,0.1);
-            margin: 1rem -2rem -2rem;
-            padding: 1.5rem 2rem;
+            margin: 0.5rem -1rem -0.8rem;
+            padding: 0.6rem 1rem;
             font-weight: 800;
-            font-size: 1.4rem;
+            font-size: 0.9rem;
             color: {colors['primary']};
-            border-radius: 0 0 12px 12px;
+            border-radius: 0 0 8px 8px;
         }}
         
         .terms-section {{
-            margin-bottom: 3rem;
+            margin-bottom: 1rem;
         }}
         
         .terms-list {{
             background: #fef3c7;
-            padding: 2rem;
-            border-radius: 12px;
-            border-right: 5px solid #f59e0b;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border-right: 3px solid #f59e0b;
             list-style: none;
-            box-shadow: 0 4px 12px rgba(245,158,11,0.1);
+            box-shadow: 0 2px 6px rgba(245,158,11,0.1);
         }}
         
         .terms-list li {{
-            margin-bottom: 1rem;
-            padding-right: 1.5rem;
+            margin-bottom: 0.4rem;
+            padding-right: 1rem;
             position: relative;
-            line-height: 1.7;
+            line-height: 1.4;
+            font-size: 0.7rem;
         }}
         
         .terms-list li::before {{
@@ -749,34 +750,35 @@ class ArabicQuotationBuilder:
             right: 0;
             color: #059669;
             font-weight: bold;
+            font-size: 0.7rem;
         }}
         
         .signatures-section {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }}
         
         .signature-box {{
             background: white;
-            padding: 2rem;
-            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
             text-align: center;
-            border: 2px dashed #cbd5e1;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px dashed #cbd5e1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }}
         
         .signature-box h4 {{
-            font-size: 1.2rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: {colors['secondary']};
-            margin-bottom: 2rem;
+            margin-bottom: 0.8rem;
         }}
         
         .signature-line {{
             width: 100%;
-            height: 2px;
+            height: 1px;
             background: #cbd5e1;
             margin: 2.5rem 0 1rem;
         }}

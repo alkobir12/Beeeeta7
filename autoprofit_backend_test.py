@@ -160,7 +160,7 @@ def test_top_performers():
                         missing_fields.extend([f"top_services[].{field}" for field in service_missing])
             
             if 'top_parts' in data and isinstance(data['top_parts'], list) and data['top_parts']:
-                part_fields = ['name', 'count', 'revenue']
+                part_fields = ['name', 'quantity', 'revenue']  # Note: uses 'quantity' not 'count'
                 for part in data['top_parts'][:1]:  # Check first item
                     part_missing = [field for field in part_fields if field not in part]
                     if part_missing:

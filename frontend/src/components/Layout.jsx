@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
-import DieselExpertFloatingButton from './DieselExpertFloatingButton';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 
@@ -40,9 +39,6 @@ const Layout = ({ children, pageTitle }) => {
           {children}
         </div>
       </main>
-      
-      {/* Diesel Expert Floating Button */}
-      <DieselExpertFloatingButton />
     </div>
   );
 };

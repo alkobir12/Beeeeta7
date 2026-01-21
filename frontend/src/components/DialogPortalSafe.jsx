@@ -12,7 +12,9 @@ export default function DialogPortalSafe({ children }) {
             // no-op; rely on Radix cleanup; avoid manual removeChild
           }
         });
-      } catch (_) {}
+      } catch (_) {
+        // Ignore cleanup errors
+      }
     };
   }, []);
   return children;

@@ -492,42 +492,53 @@ class ArabicQuotationBuilder:
         .company-section {{
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }}
         
         .logo {{
-            width: 55px;
-            height: 55px;
-            background: rgba(255,255,255,0.2);
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.15);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 3px solid rgba(255,255,255,0.4);
             backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }}
+        
+        .logo img {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
         }}
         
         .logo-text {{
             font-weight: bold;
-            font-size: 0.75rem;
+            font-size: 1rem;
+            color: white;
         }}
         
         .company-info h1 {{
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0.2rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.2;
         }}
         
         .company-name-en {{
-            font-size: 0.7rem;
-            opacity: 0.9;
-            margin-bottom: 0.1rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin-bottom: 0.2rem;
+            font-weight: 500;
         }}
         
         .company-address {{
-            font-size: 0.65rem;
-            opacity: 0.8;
+            font-size: 0.8rem;
+            opacity: 0.9;
         }}
         
         .quote-section {{

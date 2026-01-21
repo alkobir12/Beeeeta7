@@ -65,6 +65,8 @@ class Customer(CustomerBase):
     totalVisits: int = 0
     lastVisit: Optional[datetime] = None
     createdAt: Optional[datetime] = None
+    creditLimit: Optional[float] = 10000  # حد الائتمان
+    balance: Optional[float] = 0  # الرصيد المستحق
     
     class Config:
         json_encoders = {
@@ -88,6 +90,8 @@ class Service(BaseModel):
     category: str
     price: float
     duration: int  # بالدقائق
+    laborCost: Optional[float] = 0  # تكلفة العمالة
+    active: Optional[bool] = True
 
 # ============ Parts (قطع الغيار) Models ============
 class PartBase(BaseModel):

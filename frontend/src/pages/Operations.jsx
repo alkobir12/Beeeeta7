@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import FloatingAIAssistant from '../components/FloatingAIAssistant';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 

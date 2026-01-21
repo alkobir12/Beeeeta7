@@ -11,7 +11,8 @@ class CompleteDensoSystem:
     def __init__(self):
         self.system_version = "7.0 Final"
         # المفتاح الجديد الذي تم توفيره
-        self.google_api_key = "AIzaSyDqTL_NAa3gC_ER54ZHcyuIE6cPUD108gM"
+        import os
+        self.google_api_key = os.environ.get("GOOGLE_API_KEY", "")
         
         # قاعدة بيانات المحركات والمواصفات (مدمجة)
         self.engine_database = {

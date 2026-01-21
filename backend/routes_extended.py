@@ -991,11 +991,16 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             'subtotal': subtotal,
             'total': subtotal,
             'paymentMethod': payload.get('paymentMethod', 'cash'),
+            'paymentStatus': payload.get('paymentStatus', 'paid'),
             'notes': payload.get('notes'),
             'date': datetime.utcnow(),
             'createdAt': datetime.utcnow()
         }
         await db.operations.insert_one(op)
+
+        # تطبيق تأثير العملية على دليل الحسابات (AutoProfit Pro)
+        _apply_operation_to_accounts(op)
+
         # inventory adjust for parts
         if op['type'] in ('purchase', 'sale'):
             for it in items:

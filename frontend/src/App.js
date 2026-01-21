@@ -15,16 +15,11 @@ import ServicesManagement from "./pages/ServicesManagement";
 import Templates from "./pages/Templates";
 import InvoiceDesignerStudio from "./pages/InvoiceDesignerStudio";
 import Settings from "./pages/Settings";
-import Analytics from "./pages/Analytics";
 import WorkshopProfile from "./pages/WorkshopProfile";
 import VehicleArchive from "./pages/VehicleArchive";
 import Layout from "./components/Layout";
-import CEO from "./pages/CEO";
-import Payroll from "./pages/Payroll";
-import CEODashboard from "./pages/CEODashboard";
 import DatabaseSetup from "./pages/DatabaseSetup";
 import Operations from "./pages/Operations";
-import CustomerReceipts from "./pages/CustomerReceipts";
 import ApprovalPublic from "./pages/ApprovalPublic";
 import ReportPublic from "./pages/ReportPublic";
 import ImportPage from "./pages/Import";
@@ -37,9 +32,6 @@ import PartsCatalog from "./pages/PartsCatalog";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import FaultKnowledge from "./pages/FaultKnowledge";
 import TemplatesManager from "./pages/TemplatesManager";
-import FinancialDashboard from "./pages/FinancialDashboard";
-import AIRecommendationsPage from "./pages/AIRecommendationsPage";
-import AutoProfitDashboard from "./pages/AutoProfitDashboard";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {
@@ -100,25 +92,16 @@ function App() {
                       <Route path="/templates" element={<Templates />} />
                       <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
                       <Route path="/settings" element={<Settings />} />
-                      <Route path="/analytics" element={<Analytics />} />
                       <Route path="/profile" element={<WorkshopProfile />} />
                       <Route path="/archive" element={<VehicleArchive />} />
-                      <Route path="/ceo" element={<CEO />} />
-                      <Route path="/payroll" element={<Payroll />} />
-                      <Route path="/business-accounts" element={<CEODashboard />} />
-                      <Route path="/ceo" element={<CEODashboard />} />
                       <Route path="/database-setup" element={<DatabaseSetup />} />
                       <Route path="/setup" element={<DatabaseSetup />} />
                       <Route path="/operations" element={<Operations />} />
-                      <Route path="/customer-receipts" element={<CustomerReceipts />} />
                       <Route path="/import" element={<ImportPage />} />
                       <Route path="/users" element={<Users />} />
                       <Route path="/quotations" element={<QuotationGenerator />} />
                       <Route path="/print" element={<DocumentPrint />} />
                       <Route path="/templates" element={<TemplatesManager />} />
-                      <Route path="/financial-dashboard" element={<FinancialDashboard />} />
-                      <Route path="/ai-recommendations" element={<AIRecommendationsPage />} />
-                      <Route path="/autoprofit" element={<AutoProfitDashboard />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                     </Routes>

@@ -152,6 +152,16 @@ class ArabicQuotationBuilder:
         {qr_html}
         """
 
+    def _render_if_value(self, value: str, label: str) -> str:
+        """عرض الحقل فقط إذا كان له قيمة"""
+        if value and str(value).strip():
+            return f"""
+                        <div class="info-item">
+                            <span class="label">{label}:</span>
+                            <span class="value">{value}</span>
+                        </div>"""
+        return ""
+
     def add_term(self, term: str):
         """إضافة شرط"""
         self.quotation['terms'].append(term)

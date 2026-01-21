@@ -401,7 +401,7 @@ const BusinessAccounts = () => {
                   <SelectValue placeholder="اختر الحساب الأب" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">بدون (حساب رئيسي)</SelectItem>
+                  <SelectItem value="none">بدون (حساب رئيسي)</SelectItem>
                   {accounts.filter(a => a.type === accountForm.type).map(acc => (
                     <SelectItem key={acc.id} value={acc.id}>
                       {acc.code} - {acc.name}

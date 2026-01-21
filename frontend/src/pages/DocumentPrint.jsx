@@ -67,7 +67,9 @@ const DocumentPrint = () => {
       tax_rate: 15,
       description: '',
       notes: '',
-      approval_token: ''
+      approval_token: '',
+      date: new Date().toISOString().split('T')[0],
+      terms: []
     }
   });
 

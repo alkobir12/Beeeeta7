@@ -49,6 +49,8 @@ from routes_gemini_chat import router as gemini_chat_router, set_db as set_db_ge
 from routes_payroll import router as payroll_router, set_db as set_db_payroll
 # Import Fault Knowledge Routes
 from routes_fault_knowledge import router as fault_knowledge_router
+# Import Templates Routes
+from routes_templates import router as templates_router
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router

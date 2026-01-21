@@ -611,31 +611,32 @@ class ArabicQuotationBuilder:
         .value {{
             font-weight: 500;
             color: #1e293b;
+            font-size: 0.75rem;
         }}
         
         .project-section {{
-            margin-bottom: 3rem;
+            margin-bottom: 1.2rem;
         }}
         
         .project-description {{
             background: linear-gradient(135deg, #fef7cd 0%, #fef3c7 100%);
-            padding: 2rem;
-            border-radius: 12px;
-            border-right: 5px solid #f59e0b;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            box-shadow: 0 4px 12px rgba(245,158,11,0.1);
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border-right: 3px solid #f59e0b;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 6px rgba(245,158,11,0.1);
         }}
         
         .items-section {{
-            margin-bottom: 3rem;
+            margin-bottom: 1.2rem;
         }}
         
         .table-container {{
             background: white;
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.05);
         }}
         
@@ -647,17 +648,18 @@ class ArabicQuotationBuilder:
         .items-table th {{
             background: {colors['primary']};
             color: white;
-            padding: 1.25rem;
+            padding: 0.5rem 0.6rem;
             text-align: center;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.7rem;
         }}
         
         .items-table td {{
-            padding: 1.25rem;
+            padding: 0.5rem 0.6rem;
             text-align: center;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
+            font-size: 0.7rem;
         }}
         
         .items-table tr:nth-child(even) {{
@@ -666,38 +668,38 @@ class ArabicQuotationBuilder:
         
         .items-table tr:hover {{
             background: {colors['accent']};
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }}
 
         .items-table tfoot td {{
-            padding: 1rem;
-            border-top: 2px solid #e2e8f0;
+            padding: 0.5rem;
+            border-top: 1px solid #e2e8f0;
             background: #f8fafc;
+            font-size: 0.7rem;
         }}
 
         .items-table .total-row-table td {{
             background: {colors['accent']};
             color: {colors['primary']};
-            font-size: 1.1rem;
+            font-size: 0.8rem;
             border-top: 2px solid {colors['primary']};
+            font-weight: 700;
         }}
         
         .text-right {{
             text-align: right !important;
-            padding-right: 1.5rem;
+            padding-right: 0.8rem;
         }}
         
         .summary-section {{
-            margin-bottom: 3rem;
+            margin-bottom: 1.2rem;
         }}
         
         .summary-box {{
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            padding: 2rem;
-            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
             border: 1px solid #0ea5e9;
-            box-shadow: 0 6px 20px rgba(14,165,233,0.1);
+            box-shadow: 0 3px 10px rgba(14,165,233,0.1);
         }}
         
         .summary-row {{

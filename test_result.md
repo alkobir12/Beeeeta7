@@ -1376,7 +1376,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://mechanic-dashboard-17.preview.emergentagent.com/api`
+**Backend URL**: `https://fixsa-system.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional

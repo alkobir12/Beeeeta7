@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://mechanic-dashboard-17.preview.emergentagent.com/api"
+BACKEND_URL = "https://fixsa-system.preview.emergentagent.com/api"
 
 def test_get_vehicles():
     """Get available vehicles to use for testing"""

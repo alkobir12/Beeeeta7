@@ -47,7 +47,8 @@ class ArabicQuotationBuilder:
             'phone': '+966 11 123 4567',
             'email': 'info@company.sa',
             'website': 'www.company.sa',
-            'tax_number': '300012345600003'
+            'tax_number': '300012345600003',
+            'logo': ''
         }
         
         self.quotation = {

@@ -257,7 +257,7 @@ class ArabicQuotationBuilder:
                     </div>
                 </div>
                 <div class="quote-section">
-                    <h2 class="quote-title">عرض سعر</h2>
+                    <h2 class="quote-title">{self.quotation['doc_title']}</h2>
                     <p class="quote-number">{self.quotation['number']}</p>
                 </div>
             </div>

@@ -172,6 +172,8 @@ class TransactionBase(BaseModel):
     paymentMethod: Optional[str] = None
     reference: Optional[str] = None  # رقم الفاتورة أو المرجع
     accountId: Optional[str] = None  # للربط بالفروع
+    paymentStatus: Optional[str] = "paid"  # paid, unpaid, pending
+    linkedAccounts: Optional[List[dict]] = []  # القيود المحاسبية
 
 class TransactionCreate(TransactionBase):
     pass

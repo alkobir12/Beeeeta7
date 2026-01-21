@@ -478,26 +478,20 @@ const DocumentPrint = () => {
                 return (
                   <button
                     key={type}
-                    onClick={() => {
-                      console.log('Switching doc type to:', type);
-                      setDocType(type);
-                    }}
-                    style={{
-                      background: isActive 
-                        ? 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' 
-                        : '#1e293b',
-                      color: '#ffffff',
-                      borderWidth: '2px',
-                      borderStyle: 'solid',
-                      borderColor: isActive ? '#60a5fa' : '#475569',
-                      boxShadow: isActive ? '0 4px 16px rgba(37, 99, 235, 0.5)' : '0 2px 4px rgba(0,0,0,0.1)',
-                      transform: isActive ? 'scale(1.02)' : 'scale(1)'
-                    }}
-                    className="h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg transition-all duration-200 hover:scale-105"
+                    onClick={() => setDocType(type)}
+                    className={`relative h-auto py-4 px-3 flex flex-col items-center gap-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                      isActive 
+                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
+                        : 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700 hover:border-slate-500'
+                    }`}
                   >
-                    <Icon size={24} className={isActive ? 'animate-pulse' : ''} />
+                    {isActive && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check size={14} className="text-white" />
+                      </div>
+                    )}
+                    <Icon size={24} />
                     <span className="text-xs sm:text-sm font-medium">{label}</span>
-                    {isActive && <div className="w-8 h-1 bg-white rounded-full mt-1"></div>}
                   </button>
                 );
               })}

@@ -780,13 +780,18 @@ class ArabicQuotationBuilder:
             width: 100%;
             height: 1px;
             background: #cbd5e1;
-            margin: 2.5rem 0 1rem;
+            margin: 1rem 0 0.5rem;
+        }}
+        
+        .signature-box p {{
+            font-size: 0.65rem;
+            color: #64748b;
         }}
         
         .footer {{
             background: #1e293b;
             color: white;
-            padding: 2rem;
+            padding: 0.8rem 1rem;
             text-align: center;
         }}
         
@@ -795,17 +800,30 @@ class ArabicQuotationBuilder:
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.5rem;
+        }}
+        
+        .footer-content p {{
+            font-size: 0.65rem;
         }}
         
         .contact-info {{
             display: flex;
-            gap: 2rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }}
         
         .contact-info span {{
-            font-size: 0.95rem;
+            font-size: 0.65rem;
+        }}
+        
+        @media print {{
+            .footer {{
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }}
         }}
         
         @media (max-width: 768px) {{

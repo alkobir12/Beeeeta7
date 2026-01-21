@@ -492,7 +492,6 @@ const Operations = () => {
             </table>
           </div>
         </div>
-      </div>
       
       {/* المساعد المالي الذكي */}
       <FloatingAIAssistant context="operations" contextData={{ operations: ops, accounts }} />

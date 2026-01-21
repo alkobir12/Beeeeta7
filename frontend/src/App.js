@@ -36,6 +36,7 @@ import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import FaultKnowledge from "./pages/FaultKnowledge";
+import TemplatesManager from "./pages/TemplatesManager";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {

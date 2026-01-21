@@ -53,6 +53,8 @@ from routes_fault_knowledge import router as fault_knowledge_router
 from routes_templates import router as templates_router
 # Import Chart of Accounts Routes
 from routes_accounts_chart import router as accounts_chart_router
+# Import Advanced Analytics Routes
+from routes_analytics_advanced import router as analytics_advanced_router
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -221,6 +223,7 @@ app.include_router(gemini_chat_router)
 app.include_router(fault_knowledge_router)
 app.include_router(templates_router)
 app.include_router(accounts_chart_router)
+app.include_router(analytics_advanced_router)
 # Temporarily disable payroll router - needs Supabase implementation
 # app.include_router(payroll_router)
 app.include_router(language_router)

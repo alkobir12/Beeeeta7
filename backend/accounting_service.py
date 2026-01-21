@@ -98,10 +98,22 @@ class AccountingService:
             ))
         
         # 4. ضريبة القيمة المضافة (إذا كانت موجودة)
-        if tax > 0:
-            # ملاحظة: يمكن إضافة حساب منفصل للضريبة
-            # لكن حالياً سنعتبرها جزء من الإيرادات الإجمالية
-            pass
+        # نعتبر الضريبة التزام على الشركة تجاه الحكومة
+        # في الواقع: الضريبة جزء من الإيرادات لكن يجب دفعها للحكومة
+        # لذلك نسجلها كالتزام (أو نعتبرها ضمن الإيرادات مباشرة)
+        # حالياً: نسجلها كجزء من إيرادات الخدمات/القطع بنسبة
+        if tax > 0 and (services_revenue > 0 or parts_revenue > 0):
+            # توزيع الضريبة على الإيرادات
+            tax_on_services = (services_revenue / subtotal) * tax if subtotal > 0 else 0
+            tax_on_parts = (parts_revenue / subtotal) * tax if subtotal > 0 else 0
+            
+            # تحديث الإيرادات لتشمل الضريبة
+            # (في نموذج مبسط، الإيرادات تشمل الضريبة)
+            for entry in entries:
+                if entry.accountCode == '4001' and tax_on_services > 0:
+                    entry.credit += tax_on_services
+                elif entry.accountCode == '4002' and tax_on_parts > 0:
+                    entry.credit += tax_on_parts
         
         # 5. قيد تكلفة البضاعة المباعة (إذا كان هناك قطع)
         if parts_cost > 0:

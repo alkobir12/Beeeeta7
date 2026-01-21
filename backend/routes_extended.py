@@ -870,6 +870,58 @@ async def delete_all_operations():
             return {"success": True, "message": "All operations deleted"}
 
         result = await db.operations.delete_many({})
+
+# ============ AutoProfit Pro Integration: Apply Accounting Entries ============
+from accounting_service import accounting_service
+from routes_accounts_chart import accounts_db, _initialize_accounts
+
+
+def _apply_operation_to_accounts(op: Dict[str, Any]):
+    """تحديث أرصدة دليل الحسابات الافتراضي بناءً على عملية جديدة.
+    هذا يعمل فقط على accounts_db التجريبية الحالية.
+    """
+    try:
+        _initialize_accounts()
+        items = op.get('items', []) or []
+        operation_data = {
+            'total': op.get('total', op.get('subtotal', 0)),
+            'subtotal': op.get('subtotal', 0),
+            'tax': op.get('tax', 0),
+            'paymentMethod': op.get('paymentMethod', 'cash'),
+            'paymentStatus': op.get('paymentStatus', 'paid'),
+            'items': [
+                {
+                    'itemType': it.get('itemType') or it.get('type') or 'part',
+                    'total': it.get('total') or (float(it.get('price', 0)) * float(it.get('qty', 1)))
+                }
+                for it in items
+            ]
+        }
+        # حالياً لا نحسب cost منفصل للقطع، يمكن تمديده لاحقاً
+        linked_accounts = accounting_service.generate_journal_entry(op.get('type', 'sale'), operation_data, parts_cost=0)
+        if not linked_accounts:
+            return
+
+        # تحديث أرصدة accounts_db بناءً على نوع الحساب
+        for entry in linked_accounts:
+            code = entry.accountCode
+            if not code:
+                continue
+            acc = next((a for a in accounts_db if a['code'] == code), None)
+            if not acc:
+                continue
+            debit = float(entry.debit or 0)
+            credit = float(entry.credit or 0)
+            if acc['type'] in ('asset', 'expense'):
+                acc['balance'] += debit
+                acc['balance'] -= credit
+            else:  # liability, revenue, equity
+                acc['balance'] -= debit
+                acc['balance'] += credit
+    except Exception:
+        # لا نكسر إنشاء العملية إذا فشلت التحديثات التجريبية
+        pass
+
         return {"success": True, "message": f"Deleted {result.deleted_count} operations"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -268,7 +268,7 @@ const TemplatesManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {templates.length === 0 ? (
+          {!Array.isArray(templates) || templates.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText size={48} className="mx-auto mb-4 opacity-20" />
               <p>{isArabic ? 'لا توجد نماذج محفوظة بعد' : 'No templates saved yet'}</p>

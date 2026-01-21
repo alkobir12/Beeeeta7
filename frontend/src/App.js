@@ -39,6 +39,7 @@ import FaultKnowledge from "./pages/FaultKnowledge";
 import TemplatesManager from "./pages/TemplatesManager";
 import FinancialDashboard from "./pages/FinancialDashboard";
 import AIRecommendationsPage from "./pages/AIRecommendationsPage";
+import AutoProfitDashboard from "./pages/AutoProfitDashboard";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {
@@ -117,6 +118,7 @@ function App() {
                       <Route path="/templates" element={<TemplatesManager />} />
                       <Route path="/financial-dashboard" element={<FinancialDashboard />} />
                       <Route path="/ai-recommendations" element={<AIRecommendationsPage />} />
+                      <Route path="/autoprofit" element={<AutoProfitDashboard />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                     </Routes>

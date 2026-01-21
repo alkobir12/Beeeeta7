@@ -77,6 +77,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageFinance',
       children: [
+        { path: '/autoprofit', label: i18n.language === 'ar' ? '🚗 AutoProfit Pro' : '🚗 AutoProfit Pro', enabled: true },
         { path: '/financial-dashboard', label: i18n.language === 'ar' ? '📊 لوحة التحكم المالية' : '📊 Financial Dashboard', enabled: true },
         { path: '/ai-recommendations', label: i18n.language === 'ar' ? '🤖 التوصيات الذكية' : '🤖 AI Recommendations', enabled: true },
         { path: '/analytics', label: t('reports_module.analytics'), enabled: true },

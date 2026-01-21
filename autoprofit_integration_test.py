@@ -191,7 +191,7 @@ def test_autoprofit_integration():
     # Step 2: Create a new operation
     print("\n[1] Testing POST /api/operations (Create new operation)")
     operation_payload = {
-        "accountId": "test-account-001",
+        "accountId": None,  # Let the system handle account assignment
         "vehicleId": None,
         "type": "sale",
         "partnerType": "customer",

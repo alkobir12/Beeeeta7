@@ -870,6 +870,7 @@ async def delete_all_operations():
             return {"success": True, "message": "All operations deleted"}
 
         result = await db.operations.delete_many({})
+        return {"success": True, "message": f"Deleted {result.deleted_count} operations"}
 
 # ============ AutoProfit Pro Integration: Apply Accounting Entries ============
 from accounting_service import accounting_service

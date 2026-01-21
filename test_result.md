@@ -1272,6 +1272,189 @@ All AutoProfit Pro backend endpoints are working perfectly:
 
 
 
+## AutoProfit Pro Financial Integration Testing (2026-01-21)
+
+### Test Objective (Arabic User Request):
+اختبار ربط العمليات بالنظام المالي AutoProfit Pro بعد التعديلات الأخيرة:
+1) اختبار إنشاء عملية جديدة عبر API: POST /api/operations مع payload بسيط (مزيف)
+2) بعد إنشاء العملية مباشرةً، استدعاء: GET /api/accounts-chart/balance-sheet/summary, GET /api/analytics-advanced/financial-ratios, GET /api/analytics-advanced/profit-loss
+3) تحقق من تغيّر قيم: revenue (إيرادات), assets/cash, net_income/net_profit, النسب المالية
+4) سجّل snapshot قبل وبعد للقيم الرئيسية في balance-sheet
+5) لا حاجة لاختبارات واجهة أمامية، التركيز على أن الربط بين APIs يعمل بشكل صحيح
+
+### Test Environment:
+- Backend URL: https://fixsa-system.preview.emergentagent.com/api
+- Testing Date: 2026-01-21 20:06:22
+- Test Focus: AutoProfit Pro financial integration after operations creation
+
+### Test Results Summary: ⚠️ PARTIAL SUCCESS (4/5 tests passed)
+
+#### ✅ WORKING FEATURES:
+
+**1. ✅ Operation Creation API**
+- **Endpoint**: POST /api/operations
+- **Status**: ✅ WORKING (200 OK)
+- **Test Payload**:
+  ```json
+  {
+    "accountId": null,
+    "vehicleId": null,
+    "type": "sale",
+    "partnerType": "customer",
+    "partnerName": "عميل اختبار",
+    "items": [
+      {"itemType": "service", "name": "تغيير زيت", "quantity": 1, "price": 200},
+      {"itemType": "part", "name": "فلتر زيت", "quantity": 1, "price": 50}
+    ],
+    "paymentMethod": "cash",
+    "paymentStatus": "paid",
+    "notes": "عملية اختبارية للربط المالي"
+  }
+  ```
+- **Response**: Operation ID: 7bfe6171-3394-4644-85ea-0eaa168f248c, Total: 250.0, Subtotal: 250.0
+
+**2. ✅ Balance Sheet Summary API**
+- **Endpoint**: GET /api/accounts-chart/balance-sheet/summary
+- **Status**: ✅ WORKING (200 OK)
+- **Response Fields**: Assets: 250000.0, Revenue: 0.0, Net Income: 0.0, Liabilities: 15000.0
+
+**3. ✅ Financial Ratios API**
+- **Endpoint**: GET /api/analytics-advanced/financial-ratios
+- **Status**: ✅ WORKING (200 OK)
+- **Response Fields**: Current Ratio: 16.67, Quick Ratio: 11.67, Gross Margin: 0, Net Margin: 0
+
+**4. ✅ Profit & Loss API**
+- **Endpoint**: GET /api/analytics-advanced/profit-loss
+- **Status**: ✅ WORKING (200 OK)
+- **Response Fields**: Revenue Total: 0.0, Net Profit: 0.0, Cost of Goods Sold: 0.0
+
+#### ❌ CRITICAL ISSUE FOUND:
+
+**❌ Financial Integration NOT Working**
+- **Problem**: No financial changes detected after operation creation
+- **Evidence**: Complete snapshot comparison shows NO changes in any financial values:
+  
+  **Before Operation:**
+  - Assets: 250000.0, Revenue: 0.0, Net Income: 0.0
+  - Current Ratio: 16.67, Net Margin: 0
+  - Revenue Total: 0.0, Net Profit: 0.0
+  
+  **After Operation (250 SAR sale):**
+  - Assets: 250000.0, Revenue: 0.0, Net Income: 0.0 (NO CHANGE)
+  - Current Ratio: 16.67, Net Margin: 0 (NO CHANGE)
+  - Revenue Total: 0.0, Net Profit: 0.0 (NO CHANGE)
+
+- **Expected Behavior**: After creating a 250 SAR sale operation, we should see:
+  - Revenue increase by 250
+  - Assets/Cash increase by 250 (if cash payment)
+  - Net Income increase by 250
+  - Financial ratios recalculated
+
+- **Actual Behavior**: All financial values remained exactly the same
+- **Impact**: Operations are NOT integrated with the financial system
+- **Root Cause**: The AutoProfit Pro integration between /api/operations and financial endpoints is not functioning
+
+### 📊 DETAILED FINANCIAL ANALYSIS:
+
+**Snapshot Comparison Results:**
+```
+Balance Sheet Changes:
+  • assets: 250000.0 → 250000.0 (No change)
+  • liabilities: 15000.0 → 15000.0 (No change)  
+  • revenue: 0.0 → 0.0 (No change)
+  • net_income: 0.0 → 0.0 (No change)
+
+Profit & Loss Changes:
+  • Total Revenue: 0.0 → 0.0 (No change)
+  • Net Profit: 0.0 → 0.0 (No change)
+
+Financial Ratios Changes:
+  • current_ratio: 16.67 → 16.67 (No change)
+  • quick_ratio: 11.67 → 11.67 (No change)
+  • gross_margin: 0 → 0 (No change)
+  • net_margin: 0 → 0 (No change)
+```
+
+### 🔧 TECHNICAL FINDINGS:
+
+**✅ What's Working:**
+1. All individual API endpoints respond correctly with 200 OK
+2. Operation creation works and returns proper total/subtotal calculations
+3. Financial endpoints return well-structured JSON with all required fields
+4. No HTTP errors or timeouts during testing
+5. Backend service is stable and running without exceptions
+
+**❌ What's NOT Working:**
+1. **CRITICAL**: Financial integration between operations and accounting system
+2. Operations do not update balance sheet values
+3. Operations do not affect profit & loss calculations
+4. Operations do not trigger financial ratio recalculations
+5. No accounting entries are created when operations are processed
+
+### 🎯 ROOT CAUSE ANALYSIS:
+
+The issue appears to be in the AutoProfit Pro integration layer. While the operation is successfully created and stored, it is not triggering the accounting entries that should update the financial system. This suggests:
+
+1. **Missing Integration Code**: The operation creation endpoint may not be calling the accounting service
+2. **Disabled Integration**: The financial integration may be commented out or disabled
+3. **Configuration Issue**: The accounting service may not be properly configured
+4. **Database Sync Issue**: Operations and financial data may be stored in different systems without sync
+
+### 🚨 IMPACT ASSESSMENT:
+
+**Business Impact**: HIGH
+- Financial reports will not reflect actual business operations
+- Revenue tracking is completely broken
+- Profit/loss calculations are inaccurate
+- Financial ratios do not represent real business performance
+- AutoProfit Pro dashboard will show incorrect financial data
+
+**User Experience Impact**: HIGH
+- Users cannot rely on financial reports
+- Business decisions based on financial data will be incorrect
+- Accounting reconciliation will be impossible
+
+### 📋 RECOMMENDATIONS FOR MAIN AGENT:
+
+**IMMEDIATE ACTION REQUIRED:**
+
+1. **Investigate Operation-to-Accounting Integration**:
+   - Check if `_apply_operation_to_accounts()` function is being called
+   - Verify accounting service is properly imported and configured
+   - Ensure operation creation triggers accounting entries
+
+2. **Review AutoProfit Pro Integration Code**:
+   - Check `/app/backend/routes_extended.py` lines 875+ for integration logic
+   - Verify `accounting_service` import and usage
+   - Ensure financial calculations are triggered after operation creation
+
+3. **Test Accounting Service Directly**:
+   - Verify accounts chart initialization works
+   - Test manual accounting entry creation
+   - Check if financial calculations update properly
+
+4. **Database Verification**:
+   - Ensure operations and financial data are in the same database
+   - Check if there are sync issues between different data stores
+   - Verify account balances are being updated
+
+**TESTING VERIFICATION:**
+After fixes, re-run the integration test to verify:
+- Revenue increases by operation total (250 SAR)
+- Assets/Cash increases appropriately
+- Net income reflects the new operation
+- Financial ratios are recalculated
+
+### Conclusion:
+
+**Status**: ❌ **FINANCIAL INTEGRATION BROKEN**
+
+The AutoProfit Pro financial integration is NOT working. While all individual API endpoints function correctly, operations are not integrated with the financial system. This is a critical issue that prevents accurate financial reporting and business analytics.
+
+**User Request Status**: ✅ **COMPLETED** - Successfully tested and identified the integration issue
+**Next Steps**: Main agent must fix the operation-to-accounting integration before the financial system can be considered functional.
+
+---
 ## Page Auto-Refresh Bug Verification (2025-01-14)
 
 ### Test Objective

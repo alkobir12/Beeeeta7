@@ -34,7 +34,6 @@ import Users from "./pages/UsersManagement";
 import QuotationGenerator from "./pages/QuotationGenerator";
 import DocumentPrint from "./pages/DocumentPrint";
 import PartsCatalog from "./pages/PartsCatalog";
-import DieselExpertChat from "./pages/DieselExpertChat";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import FaultKnowledge from "./pages/FaultKnowledge";
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -112,10 +111,8 @@ function App() {
                       <Route path="/users" element={<Users />} />
                       <Route path="/quotations" element={<QuotationGenerator />} />
                       <Route path="/print" element={<DocumentPrint />} />
-                      <Route path="/diesel-expert" element={<DieselExpertChat />} />
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
-                      <Route path="/chat" element={<DieselExpertChat />} />
                     </Routes>
                   </Layout>
                 </Protected>

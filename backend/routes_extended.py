@@ -922,10 +922,6 @@ def _apply_operation_to_accounts(op: Dict[str, Any]):
         # لا نكسر إنشاء العملية إذا فشلت التحديثات التجريبية
         pass
 
-        return {"success": True, "message": f"Deleted {result.deleted_count} operations"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.post('/operations')
 async def create_operation(payload: Dict[str, Any] = Body(...)):
     try:

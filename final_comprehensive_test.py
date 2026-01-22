@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://fixsa-system.preview.emergentagent.com/api"
+BASE_URL = "https://fincleanup-deploy.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

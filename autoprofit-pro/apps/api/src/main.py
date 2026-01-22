@@ -92,9 +92,20 @@ app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["tr
 app.include_router(customers.router, prefix="/api/v1/customers", tags=["customers"])
 app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["inventory"])
 app.include_router(payroll.router, prefix="/api/v1/payroll", tags=["payroll"])
+app.include_router(workshop.router, prefix="/api/v1", tags=["workshop"])
 
-# Health check endpoint
+# Health check endpoint (root-level)
 @app.get("/health")
+async def health_check_root():
+    return {
+        "status": "healthy",
+        "service": "autoprofit-api",
+        "version": "2.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# Health check endpoint (API-style)
+@app.get("/api/health")
 async def health_check():
     return {
         "status": "healthy",

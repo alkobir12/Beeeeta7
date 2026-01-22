@@ -13,11 +13,7 @@ import {
   Calendar,
   Settings,
   FileText,
-  CreditCard,
   TrendingUp,
-  Shield,
-  ClipboardCheck,
-  Truck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -27,14 +23,21 @@ import {
   BookOpen,
   Receipt,
   LogOut,
+  ClipboardList,
 } from 'lucide-react';
+
+interface SubMenuItem {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+}
 
 interface NavItem {
   title: string;
   href?: string;
   icon: React.ElementType;
   submenu?: boolean;
-  items?: { title: string; href: string; icon: React.ElementType }[];
+  items?: SubMenuItem[];
 }
 
 const Sidebar = () => {
@@ -54,7 +57,7 @@ const Sidebar = () => {
       submenu: true,
       items: [
         { title: 'دليل الحسابات', href: '/accounting/chart-of-accounts', icon: FolderTree },
-        { title: 'القيود اليومية', href: '/accounting/journal-entries', icon: ClipboardCheck },
+        { title: 'القيود اليومية', href: '/accounting/journal-entries', icon: ClipboardList },
         { title: 'الميزانية العمومية', href: '/accounting/balance-sheet', icon: BarChart3 },
         { title: 'قائمة الدخل', href: '/accounting/income-statement', icon: TrendingUp },
         { title: 'التدفقات النقدية', href: '/accounting/cash-flow', icon: Wallet },
@@ -74,14 +77,13 @@ const Sidebar = () => {
     { title: 'العملاء', href: '/customers', icon: Users },
     { title: 'الخدمات', href: '/services', icon: Wrench },
     { title: 'المواعيد', href: '/appointments', icon: Calendar },
-    { title: 'الموردين', href: '/suppliers', icon: Truck },
     { title: 'التقارير', href: '/reports', icon: FileText },
     { title: 'الإعدادات', href: '/settings', icon: Settings },
   ];
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
-    return pathname === href || pathname?.startsWith(href);
+    return pathname === href || pathname?.startsWith(href + '/');
   };
 
   const toggleMenu = (title: string) => {
@@ -98,15 +100,15 @@ const Sidebar = () => {
     <aside
       className={`fixed right-0 top-0 h-screen bg-gray-900 text-white z-50 ${
         isCollapsed ? 'w-20' : 'w-64'
-      } transition-all duration-300 flex flex-col`}
+      } transition-all duration-300 flex flex-col shadow-xl`}
       data-testid="sidebar"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-700 flex-shrink-0">
+      <div className="p-4 border-b border-gray-800 flex-shrink-0">
         {!isCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="font-bold text-lg">AP</span>
               </div>
               <div>
@@ -116,46 +118,48 @@ const Sidebar = () => {
             </div>
             <button 
               onClick={() => setIsCollapsed(true)}
-              className="p-1 hover:bg-gray-800 rounded"
+              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
+              title="طي القائمة"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
               <span className="font-bold">AP</span>
             </div>
             <button 
               onClick={() => setIsCollapsed(false)}
-              className="p-1 hover:bg-gray-800 rounded"
+              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
+              title="فتح القائمة"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </button>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
         {navigationItems.map((item) => (
           <div key={item.title}>
-            {item.submenu ? (
+            {item.submenu && item.items ? (
               <div>
                 <button
                   onClick={() => toggleMenu(item.title)}
                   className={`flex items-center justify-between w-full p-3 rounded-lg transition-colors ${
-                    isMenuOpen(item.title) ? 'bg-gray-800' : 'hover:bg-gray-800'
+                    isMenuOpen(item.title) ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon size={20} className="text-gray-400" />
+                    <item.icon size={20} />
                     {!isCollapsed && <span className="font-medium">{item.title}</span>}
                   </div>
                   {!isCollapsed && (
                     <ChevronDown 
                       size={16} 
-                      className={`text-gray-400 transition-transform ${
+                      className={`transition-transform duration-200 ${
                         isMenuOpen(item.title) ? 'rotate-180' : ''
                       }`} 
                     />
@@ -163,14 +167,14 @@ const Sidebar = () => {
                 </button>
                 
                 {!isCollapsed && isMenuOpen(item.title) && (
-                  <div className="mt-1 mr-4 space-y-1 border-r border-gray-700 pr-3">
-                    {item.items?.map((subItem) => (
+                  <div className="mt-1 mr-3 space-y-0.5 border-r-2 border-gray-700 pr-3">
+                    {item.items.map((subItem) => (
                       <Link
                         key={subItem.href}
                         href={subItem.href}
-                        className={`flex items-center gap-3 p-2.5 rounded-lg text-sm transition-colors ${
+                        className={`flex items-center gap-3 p-2.5 rounded-lg text-sm transition-all ${
                           isActive(subItem.href) 
-                            ? 'bg-blue-600 text-white' 
+                            ? 'bg-blue-600 text-white shadow-md' 
                             : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                         }`}
                       >
@@ -184,9 +188,9 @@ const Sidebar = () => {
             ) : (
               <Link
                 href={item.href || '/'}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                   isActive(item.href || '/') 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-blue-600 text-white shadow-md' 
                     : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                 }`}
               >
@@ -199,10 +203,10 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-700 flex-shrink-0">
+      <div className="p-3 border-t border-gray-800 flex-shrink-0">
         <Link
           href="/login"
-          className="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          className="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors"
         >
           <LogOut size={20} />
           {!isCollapsed && <span>تسجيل الخروج</span>}

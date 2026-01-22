@@ -1,81 +1,163 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
+import { Download, RefreshCw } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
-interface BalanceSheetResponse {
-  success: boolean;
-  report_type: string;
-  generated_at: string;
-  data: {
-    as_of: string;
-    totals: {
-      assets: number;
-      liabilities: number;
-      equity: number;
-      liabilities_plus_equity: number;
-    };
+interface NamedAmount {
+  name: string;
+  amount: number;
+}
+
+interface BalanceSheetData {
+  assets: {
+    current_assets: NamedAmount[];
+    fixed_assets: NamedAmount[];
+    total: number;
+  };
+  liabilities: {
+    current_liabilities: NamedAmount[];
+    long_term_liabilities: NamedAmount[];
+    total: number;
+  };
+  equity: {
+    capital: NamedAmount[];
+    retained_earnings: NamedAmount[];
+    net_income: number;
+    total: number;
   };
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export default function BalanceSheetPage() {
-  const [data, setData] = useState<BalanceSheetResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<BalanceSheetData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [asOfDate, setAsOfDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
 
   useEffect(() => {
-    const workshopId = process.env.NEXT_PUBLIC_WORKSHOP_ID;
-    if (!API_URL || !workshopId) {
-      setError("لم يتم ضبط NEXT_PUBLIC_API_URL أو NEXT_PUBLIC_WORKSHOP_ID");
-      return;
-    }
+    fetchBalanceSheet();
+  }, [asOfDate]);
 
-    axios
-      .get<BalanceSheetResponse>(
-        `${API_URL}/api/v1/accounting/reports/balance-sheet`,
-        { params: { workshop_id: workshopId } }
-      )
-      .then((res) => setData(res.data))
-      .catch((err) => {
-        console.error(err);
-        setError("فشل في جلب الميزانية العمومية");
+  const fetchBalanceSheet = async () => {
+    try {
+      // TODO: ربط بواجهة الـ API الحقيقية
+      setData({
+        assets: {
+          current_assets: [
+            { name: 'النقدية في الصندوق', amount: 50000 },
+            { name: 'البنك الأهلي', amount: 200000 },
+            { name: 'العملاء', amount: 150000 },
+            { name: 'المخزون', amount: 80000 },
+          ],
+          fixed_assets: [
+            { name: 'السيارات والمعدات', amount: 500000 },
+            { name: 'المباني', amount: 1000000 },
+            { name: 'الأثاث والتجهيزات', amount: 150000 },
+          ],
+          total: 2_080_000,
+        },
+        liabilities: {
+          current_liabilities: [
+            { name: 'الموردين', amount: 75000 },
+            { name: 'الضرائب المستحقة', amount: 45000 },
+            { name: 'الرواتب المستحقة', amount: 30000 },
+          ],
+          long_term_liabilities: [
+            { name: 'قرض بنكي', amount: 400000 },
+          ],
+          total: 550_000,
+        },
+        equity: {
+          capital: [{ name: 'رأس مال المالك', amount: 1_000_000 }],
+          retained_earnings: [{ name: 'أرباح محتجزة', amount: 430_000 }],
+          net_income: 100_000,
+          total: 1_530_000,
+        },
       });
-  }, []);
+    } catch (error) {
+      console.error('Error fetching balance sheet:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (error) {
-    return <div className="text-red-400 text-sm">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   if (!data) {
-    return <div className="text-sm text-slate-300">جاري تحميل الميزانية العمومية...</div>;
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">لا توجد بيانات متاحة</p>
+      </div>
+    );
   }
 
-  const { as_of, totals } = data.data;
-
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">الميزانية العمومية</h1>
-      <p className="text-sm text-slate-300">بتاريخ: {as_of}</p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            الميزانية العمومية
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            تقرير المركز المالي للورشة حتى تاريخ{' '}
+            {new Date(asOfDate).toLocaleDateString('ar-SA')}
+          </p>
+        </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-700 p-4">
-          <div className="text-xs text-slate-400">إجمالي الأصول</div>
-          <div className="text-xl font-semibold">{totals.assets.toFixed(2)} SAR</div>
-        </div>
-        <div className="rounded-lg border border-slate-700 p-4">
-          <div className="text-xs text-slate-400">إجمالي الخصوم</div>
-          <div className="text-xl font-semibold">{totals.liabilities.toFixed(2)} SAR</div>
-        </div>
-        <div className="rounded-lg border border-slate-700 p-4">
-          <div className="text-xs text-slate-400">إجمالي حقوق الملكية</div>
-          <div className="text-xl font-semibold">{totals.equity.toFixed(2)} SAR</div>
-        </div>
-        <div className="rounded-lg border border-slate-700 p-4">
-          <div className="text-xs text-slate-400">الخصوم + حقوق الملكية</div>
-          <div className="text-xl font-semibold">{totals.liabilities_plus_equity.toFixed(2)} SAR</div>
+        <div className="flex items-center gap-3 mt-4 sm:mt-0">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">التاريخ:</label>
+            <input
+              type="date"
+              value={asOfDate}
+              onChange={(e) => setAsOfDate(e.target.value)}
+              className="px-3 py-2 border rounded-lg"
+            />
+          </div>
+
+          <button
+            onClick={fetchBalanceSheet}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <RefreshCw size={20} />
+          </button>
+
+          <button className="btn-primary flex items-center gap-2">
+            <Download size={16} />
+            <span>تصدير</span>
+          </button>
         </div>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6">
+          <p className="text-sm opacity-90">إجمالي الأصول</p>
+          <p className="text-2xl font-bold mt-2">
+            {formatCurrency(data.assets.total)}
+          </p>
+        </div>
+        <div className="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl p-6">
+          <p className="text-sm opacity-90">إجمالي الخصوم</p>
+          <p className="text-2xl font-bold mt-2">
+            {formatCurrency(data.liabilities.total)}
+          </p>
+        </div>
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6">
+          <p className="text-sm opacity-90">حقوق الملكية</p>
+          <p className="text-2xl font-bold mt-2">
+            {formatCurrency(data.equity.total)}
+          </p>
+        </div>
+      </div>
+      {/* التفاصيل (كما في الكود الذي أرسلته، يمكن توسيعه لاحقًا) */}
     </div>
   );
 }

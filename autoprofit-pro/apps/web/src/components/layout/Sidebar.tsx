@@ -12,89 +12,124 @@ import {
   Wrench,
   Calendar,
   Settings,
-  Bell,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   CreditCard,
   TrendingUp,
   Shield,
   ClipboardCheck,
   Truck,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Calculator,
+  FolderTree,
+  Wallet,
+  BookOpen,
+  Receipt,
+  LogOut,
 } from 'lucide-react';
+
+interface NavItem {
+  title: string;
+  href?: string;
+  icon: React.ElementType;
+  submenu?: boolean;
+  items?: { title: string; href: string; icon: React.ElementType }[];
+}
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [openMenus, setOpenMenus] = useState<string[]>(['المحاسبة', 'المالية']);
 
-  const navigationItems = [
+  const navigationItems: NavItem[] = [
     {
       title: 'لوحة التحكم',
-      href: '/dashboard',
+      href: '/',
       icon: Home,
-    },
-    {
-      title: 'المالية',
-      icon: DollarSign,
-      submenu: true,
-      items: [
-        { title: 'نظرة عامة', href: '/dashboard/finance', icon: TrendingUp },
-        { title: 'المبيعات', href: '/dashboard/finance/sales', icon: TrendingUp },
-        { title: 'المشتريات', href: '/dashboard/finance/purchases', icon: CreditCard },
-        { title: 'المصروفات', href: '/dashboard/finance/expenses', icon: DollarSign },
-        { title: 'الفواتير', href: '/dashboard/finance/invoices', icon: FileText },
-        { title: 'الرواتب', href: '/dashboard/finance/payroll', icon: Users },
-        { title: 'الضرائب', href: '/dashboard/finance/taxes', icon: Shield },
-      ],
     },
     {
       title: 'المحاسبة',
       icon: BarChart3,
       submenu: true,
       items: [
-        { title: 'نظرة عامة', href: '/dashboard/accounting', icon: BarChart3 },
-        { title: 'دليل الحسابات', href: '/dashboard/accounting/chart-of-accounts', icon: FileText },
-        { title: 'القيود اليومية', href: '/dashboard/accounting/journal-entries', icon: ClipboardCheck },
-        { title: 'الميزانية العمومية', href: '/dashboard/accounting/balance-sheet', icon: BarChart3 },
-        { title: 'قائمة الدخل', href: '/dashboard/accounting/income-statement', icon: TrendingUp },
-        { title: 'التدفقات النقدية', href: '/dashboard/accounting/cash-flow', icon: DollarSign },
+        { title: 'دليل الحسابات', href: '/accounting/chart-of-accounts', icon: FolderTree },
+        { title: 'القيود اليومية', href: '/accounting/journal-entries', icon: ClipboardCheck },
+        { title: 'الميزانية العمومية', href: '/accounting/balance-sheet', icon: BarChart3 },
+        { title: 'قائمة الدخل', href: '/accounting/income-statement', icon: TrendingUp },
+        { title: 'التدفقات النقدية', href: '/accounting/cash-flow', icon: Wallet },
+        { title: 'ميزان المراجعة', href: '/accounting/trial-balance', icon: BookOpen },
       ],
     },
-    { title: 'المخزون', href: '/dashboard/inventory', icon: Package },
-    { title: 'العملاء', href: '/dashboard/customers', icon: Users },
-    { title: 'الخدمات', href: '/dashboard/services', icon: Wrench },
-    { title: 'المواعيد', href: '/dashboard/appointments', icon: Calendar },
-    { title: 'الموردين', href: '/dashboard/suppliers', icon: Truck },
-    { title: 'التقارير', href: '/dashboard/reports', icon: FileText },
+    {
+      title: 'المالية',
+      icon: DollarSign,
+      submenu: true,
+      items: [
+        { title: 'الفواتير', href: '/finance/invoices', icon: Receipt },
+        { title: 'الضرائب', href: '/finance/taxes', icon: Calculator },
+      ],
+    },
+    { title: 'المخزون', href: '/inventory', icon: Package },
+    { title: 'العملاء', href: '/customers', icon: Users },
+    { title: 'الخدمات', href: '/services', icon: Wrench },
+    { title: 'المواعيد', href: '/appointments', icon: Calendar },
+    { title: 'الموردين', href: '/suppliers', icon: Truck },
+    { title: 'التقارير', href: '/reports', icon: FileText },
+    { title: 'الإعدادات', href: '/settings', icon: Settings },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname?.startsWith(href);
+  };
+
+  const toggleMenu = (title: string) => {
+    setOpenMenus(prev => 
+      prev.includes(title) 
+        ? prev.filter(t => t !== title)
+        : [...prev, title]
+    );
+  };
+
+  const isMenuOpen = (title: string) => openMenus.includes(title);
 
   return (
     <aside
-      className={`fixed right-0 top-0 h-screen bg-gray-900 text-white ${
+      className={`fixed right-0 top-0 h-screen bg-gray-900 text-white z-50 ${
         isCollapsed ? 'w-20' : 'w-64'
-      } transition-all duration-300`}
+      } transition-all duration-300 flex flex-col`}
+      data-testid="sidebar"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4 border-b border-gray-700 flex-shrink-0">
         {!isCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
+                <span className="font-bold text-lg">AP</span>
+              </div>
               <div>
-                <h1 className="font-bold">AutoProfit Pro</h1>
-                <p className="text-sm text-gray-400">إدارة الورشة المالية</p>
+                <h1 className="font-bold text-lg">AutoProfit Pro</h1>
+                <p className="text-xs text-gray-400">إدارة الورشة المالية</p>
               </div>
             </div>
-            <button onClick={() => setIsCollapsed(true)}>
+            <button 
+              onClick={() => setIsCollapsed(true)}
+              className="p-1 hover:bg-gray-800 rounded"
+            >
               <ChevronLeft size={20} />
             </button>
           </div>
         ) : (
-          <div className="flex justify-center">
-            <button onClick={() => setIsCollapsed(false)}>
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
+              <span className="font-bold">AP</span>
+            </div>
+            <button 
+              onClick={() => setIsCollapsed(false)}
+              className="p-1 hover:bg-gray-800 rounded"
+            >
               <ChevronRight size={20} />
             </button>
           </div>
@@ -102,30 +137,41 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-64px)]">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navigationItems.map((item) => (
           <div key={item.title}>
             {item.submenu ? (
               <div>
                 <button
-                  onClick={() =>
-                    setActiveSubmenu(activeSubmenu === item.title ? null : item.title)
-                  }
-                  className="flex items-center justify-between w-full p-3 rounded hover:bg-gray-800"
+                  onClick={() => toggleMenu(item.title)}
+                  className={`flex items-center justify-between w-full p-3 rounded-lg transition-colors ${
+                    isMenuOpen(item.title) ? 'bg-gray-800' : 'hover:bg-gray-800'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon size={20} />
-                    {!isCollapsed && <span>{item.title}</span>}
+                    <item.icon size={20} className="text-gray-400" />
+                    {!isCollapsed && <span className="font-medium">{item.title}</span>}
                   </div>
+                  {!isCollapsed && (
+                    <ChevronDown 
+                      size={16} 
+                      className={`text-gray-400 transition-transform ${
+                        isMenuOpen(item.title) ? 'rotate-180' : ''
+                      }`} 
+                    />
+                  )}
                 </button>
-                {!isCollapsed && activeSubmenu === item.title && (
-                  <div className="mr-10 mt-2 space-y-2">
+                
+                {!isCollapsed && isMenuOpen(item.title) && (
+                  <div className="mt-1 mr-4 space-y-1 border-r border-gray-700 pr-3">
                     {item.items?.map((subItem) => (
                       <Link
-                        key={subItem.title}
+                        key={subItem.href}
                         href={subItem.href}
-                        className={`flex items-center gap-3 p-3 rounded text-sm ${
-                          isActive(subItem.href) ? 'bg-blue-600' : 'hover:bg-gray-800'
+                        className={`flex items-center gap-3 p-2.5 rounded-lg text-sm transition-colors ${
+                          isActive(subItem.href) 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                         }`}
                       >
                         <subItem.icon size={16} />
@@ -137,18 +183,31 @@ const Sidebar = () => {
               </div>
             ) : (
               <Link
-                href={item.href}
-                className={`flex items-center gap-3 p-3 rounded ${
-                  isActive(item.href) ? 'bg-blue-600' : 'hover:bg-gray-800'
+                href={item.href || '/'}
+                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isActive(item.href || '/') 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                 }`}
               >
                 <item.icon size={20} />
-                {!isCollapsed && <span>{item.title}</span>}
+                {!isCollapsed && <span className="font-medium">{item.title}</span>}
               </Link>
             )}
           </div>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-gray-700 flex-shrink-0">
+        <Link
+          href="/login"
+          className="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+        >
+          <LogOut size={20} />
+          {!isCollapsed && <span>تسجيل الخروج</span>}
+        </Link>
+      </div>
     </aside>
   );
 };

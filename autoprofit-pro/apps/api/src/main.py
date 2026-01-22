@@ -94,6 +94,8 @@ app.include_router(customers.router, prefix="/api/v1/customers", tags=["customer
 app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["inventory"])
 app.include_router(payroll.router, prefix="/api/v1/payroll", tags=["payroll"])
 app.include_router(workshop.router, prefix="/api/v1", tags=["workshop"])
+app.include_router(chart_of_accounts.router, prefix="/api/v1/accounting", tags=["accounting"])
+app.include_router(journal_entries.router, prefix="/api/v1/accounting", tags=["accounting-journals"])
 
 # Health check endpoint (root-level)
 @app.get("/health")

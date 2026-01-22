@@ -62,6 +62,32 @@ const Sidebar = ({ isOpen, onClose }) => {
       ]
     },
     { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
+    {
+      group: true,
+      label: i18n.language === 'ar' ? '📊 المحاسبة' : '📊 Accounting',
+      icon: BarChart3,
+      enabled: true,
+      permission: 'canManageSettings',
+      children: [
+        { path: '/accounting/chart-of-accounts', label: i18n.language === 'ar' ? 'دليل الحسابات' : 'Chart of Accounts', enabled: true },
+        { path: '/accounting/journal-entries', label: i18n.language === 'ar' ? 'القيود اليومية' : 'Journal Entries', enabled: true },
+        { path: '/accounting/balance-sheet', label: i18n.language === 'ar' ? 'الميزانية العمومية' : 'Balance Sheet', enabled: true },
+        { path: '/accounting/income-statement', label: i18n.language === 'ar' ? 'قائمة الدخل' : 'Income Statement', enabled: true },
+        { path: '/accounting/cash-flow', label: i18n.language === 'ar' ? 'التدفقات النقدية' : 'Cash Flow', enabled: true },
+        { path: '/accounting/trial-balance', label: i18n.language === 'ar' ? 'ميزان المراجعة' : 'Trial Balance', enabled: true },
+      ]
+    },
+    {
+      group: true,
+      label: i18n.language === 'ar' ? '💰 المالية' : '💰 Finance',
+      icon: DollarSign,
+      enabled: true,
+      permission: 'canManageSettings',
+      children: [
+        { path: '/finance/invoices', label: i18n.language === 'ar' ? 'الفواتير' : 'Invoices', enabled: true },
+        { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
+      ]
+    },
     { path: '/fault-knowledge', label: '📚 قاعدة المعرفة', icon: Archive, enabled: true, permission: 'canManageVehicles' },
     { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {

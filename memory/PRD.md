@@ -1,121 +1,113 @@
-# Workshop Management System - PRD
+# AutoProfit Pro - نظام إدارة ورش السيارات المالي
 
-## المتطلبات الأصلية
-نظام إدارة ورشة سيارات متكامل يدعم:
-- إدارة المركبات والعملاء
-- تتبع حالة الإصلاح
-- نظام ثنائي اللغة (عربي/إنجليزي)
-- إدارة الفنيين والعمليات
-- المستندات والفواتير
-- **خبير ديزل ذكي مع قاعدة معرفة ذاتية التعلم**
+## نظرة عامة
+نظام مالي متكامل لإدارة ورش السيارات، يشمل المحاسبة المتقدمة والفواتير والتقارير المالية والذكاء الاصطناعي.
 
-## المستخدمين المستهدفين
-- مدراء الورش
-- الفنيين
-- موظفي الاستقبال
+## البنية التقنية
+- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Backend**: FastAPI + SQLAlchemy + PostgreSQL
+- **AI**: OpenAI GPT-5.2 via Emergent LLM Key
+- **Infrastructure**: Docker Compose, Redis, Celery, Nginx
 
-## التقنيات المستخدمة
-- **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Backend**: FastAPI (Python)
-- **Database**: Supabase (PostgreSQL) + In-Memory (Fault Knowledge)
-- **i18n**: react-i18next
-- **AI**: OpenAI GPT-4o-mini (via Emergent LLM Key)
+## الميزات المنجزة
 
----
+### المحاسبة (100% مكتمل)
+- ✅ دليل الحسابات (Chart of Accounts) - مع دعم الدليل السعودي
+- ✅ القيود اليومية (Journal Entries) - مع القيد المزدوج
+- ✅ الميزانية العمومية (Balance Sheet)
+- ✅ قائمة الدخل (Income Statement)
+- ✅ قائمة التدفقات النقدية (Cash Flow Statement)
+- ✅ ميزان المراجعة (Trial Balance)
 
-## ما تم إنجازه
+### الفواتير (100% مكتمل)
+- ✅ إنشاء فواتير المبيعات والمشتريات
+- ✅ إصدار الفواتير وإنشاء القيود تلقائياً
+- ✅ تسجيل المدفوعات
+- ✅ تتبع حالة الدفع
 
-### الجلسة الحالية (12 يناير 2025)
+### الذكاء الاصطناعي (100% مكتمل)
+- ✅ تحليل الميزانية العمومية
+- ✅ تحليل قائمة الدخل
+- ✅ توصيات مالية ذكية
+- ✅ الإجابة على الأسئلة المالية
 
-#### ✅ نظام خبير الديزل المتكامل مع قاعدة المعرفة
-**الميزات الجديدة:**
+### الواجهة الأمامية (90% مكتمل)
+- ✅ صفحة الميزانية العمومية - مربوطة بالـ API
+- ✅ صفحة قائمة الدخل - مربوطة بالـ API
+- ✅ صفحة التدفقات النقدية - مربوطة بالـ API
+- ✅ صفحة ميزان المراجعة - مربوطة بالـ API
+- ✅ صفحة دليل الحسابات - مربوطة بالـ API
+- ✅ صفحة الفواتير - مع نماذج الإنشاء والدفع
+- ✅ Sidebar متكامل مع كل الصفحات
+- ⏳ صفحة القيود اليومية (قيد التطوير)
 
-1. **قاعدة معرفة الأعطال (التطوير الذاتي)**
-   - إضافة أعطال جديدة مع: العنوان، نوع المركبة، الأعراض، أكواد DTC، خطوات التشخيص، الحل، القطع المطلوبة، التكلفة
-   - رفع ملفات صوت/فيديو للأعطال
-   - البحث في الأعطال المحفوظة
-   - إحصائيات قاعدة المعرفة
+## الملفات الرئيسية
 
-2. **خبير الديزل المتكامل**
-   - ربط مع قاعدة المعرفة (يقتبس من الحلول السابقة)
-   - **بحث سريع أثناء الكتابة** - يعرض نتائج من قاعدة المعرفة
-   - كشف أكواد الأعطال تلقائياً من النص
-   - عرض مصادر المعرفة في الرد
-   - نموذج GPT-4o-mini للسرعة
+### Backend
+- `/app/autoprofit-pro/apps/api/src/main.py` - نقطة الدخول الرئيسية
+- `/app/autoprofit-pro/apps/api/src/models.py` - نماذج قاعدة البيانات
+- `/app/autoprofit-pro/apps/api/src/services/accounting/` - خدمات المحاسبة
+- `/app/autoprofit-pro/apps/api/src/services/ai/` - خدمات الذكاء الاصطناعي
+- `/app/autoprofit-pro/apps/api/src/api/v1/endpoints/` - نقاط API
 
-3. **أزرار سريعة**: P0087, P0234, Turbo, Fuel Pressure, Knowledge Base
-
-4. **واجهة محسنة للجوال**
-   - القائمة الجانبية تعرض جميع العناصر
-   - صفحات محسنة للشاشات الصغيرة
-
-**الملفات الجديدة:**
-- `/app/backend/routes_fault_knowledge.py` - API قاعدة المعرفة
-- `/app/backend/routes_diesel_expert.py` - خبير الديزل المتكامل
-- `/app/frontend/src/pages/FaultKnowledge.jsx` - واجهة قاعدة المعرفة
-- `/app/frontend/src/pages/DieselExpertChat.jsx` - واجهة خبير الديزل المحسنة
-
-**الملفات المعدلة:**
-- `/app/frontend/src/App.js` - إضافة مسار /fault-knowledge
-- `/app/frontend/src/components/Sidebar.jsx` - إضافة رابط قاعدة المعرفة
-
-### الجلسات السابقة
-- ✅ ترحيل نظام الترجمة إلى `react-i18next`
-- ✅ إصلاح التحديث الفوري للوحة التحكم
-- ✅ إصلاح مشكلة حفظ فني جديد
-- ✅ حذف العمليات المرتبطة عند حذف مركبة
-
----
-
-## البنية المعمارية
-
-```
-/app
-├── backend/
-│   ├── server.py                    # API الرئيسي
-│   ├── routes_diesel_expert.py      # NEW: خبير الديزل المتكامل
-│   ├── routes_fault_knowledge.py    # NEW: قاعدة المعرفة
-│   └── routes_diesel_chat.py        # المحادثة الأساسية
-└── frontend/
-    ├── src/
-    │   ├── pages/
-    │   │   ├── DieselExpertChat.jsx # محسن: مع بحث سريع
-    │   │   ├── FaultKnowledge.jsx   # NEW: إدارة الأعطال
-    │   │   └── Dashboard.jsx
-    │   ├── components/
-    │   │   └── Sidebar.jsx          # محسن: روابط جديدة
-    │   └── App.js                   # مسارات جديدة
-```
-
----
+### Frontend
+- `/app/autoprofit-pro/apps/web/src/lib/api.ts` - عميل API المركزي
+- `/app/autoprofit-pro/apps/web/src/app/(dashboard)/` - صفحات التطبيق
+- `/app/autoprofit-pro/apps/web/src/components/layout/Sidebar.tsx` - الشريط الجانبي
 
 ## API Endpoints
 
-### قاعدة المعرفة
-- `GET /api/faults/list` - قائمة الأعطال
-- `POST /api/faults/add` - إضافة عطل (FormData)
-- `POST /api/faults/search` - بحث في الأعطال
-- `GET /api/faults/{id}` - تفاصيل عطل
-- `DELETE /api/faults/{id}` - حذف عطل
-- `GET /api/faults/stats/summary` - إحصائيات
+### المحاسبة
+- `GET /api/v1/accounting/reports/balance-sheet` - الميزانية العمومية
+- `GET /api/v1/accounting/reports/income-statement` - قائمة الدخل
+- `GET /api/v1/accounting/reports/cash-flow` - التدفقات النقدية
+- `GET /api/v1/accounting/reports/trial-balance` - ميزان المراجعة
+- `GET /api/v1/accounting/accounts` - دليل الحسابات
+- `POST /api/v1/accounting/accounts/seed` - تهيئة الدليل السعودي
 
-### خبير الديزل المتكامل
-- `POST /api/diesel-expert` - محادثة مع قاعدة المعرفة
-- `GET /api/diesel-expert/quick-search?q=` - بحث سريع
-- `POST /api/diesel-expert/analyze` - تحليل عطل شامل
-- `GET /api/diesel-expert/health` - حالة الخدمة
+### الفواتير
+- `GET /api/v1/accounting/invoices` - قائمة الفواتير
+- `POST /api/v1/accounting/invoices` - إنشاء فاتورة
+- `POST /api/v1/accounting/invoices/{id}/issue` - إصدار فاتورة
+- `POST /api/v1/accounting/invoices/{id}/payments` - تسجيل دفعة
+
+### الذكاء الاصطناعي
+- `POST /api/v1/ai/analyze` - تحليل تقرير مالي
+- `GET /api/v1/ai/insights` - رؤى مالية
+- `POST /api/v1/ai/ask` - سؤال مالي
+- `POST /api/v1/ai/recommendations` - توصيات مالية
+
+## المهام القادمة (P1)
+1. صفحة القيود اليومية في الواجهة الأمامية
+2. نظام المصادقة (Login/Register)
+3. تفعيل Celery للمهام الخلفية
+4. إرسال إشعارات الفواتير
+
+## المهام المستقبلية (P2-P3)
+- وحدة الضرائب السعودية
+- المخزون
+- إدارة العملاء
+- المواعيد
+- تقارير متقدمة
+- تصدير PDF
+
+## إعدادات التشغيل
+```bash
+# تشغيل المشروع
+cd /app/autoprofit-pro/infrastructure
+docker-compose up -d
+
+# أو تشغيل كل خدمة منفصلة
+docker-compose up -d postgres redis
+cd apps/api && uvicorn src.main:app --reload --port 8000
+cd apps/web && yarn dev
+```
+
+## متغيرات البيئة المطلوبة
+- `DATABASE_URL` - اتصال PostgreSQL
+- `REDIS_URL` - اتصال Redis
+- `SECRET_KEY` - مفتاح التشفير
+- `EMERGENT_LLM_KEY` - مفتاح OpenAI/Emergent
 
 ---
-
-## المهام المعلقة
-
-### P1 - أولوية عالية
-- [ ] التحقق من تغطية الترجمة الكاملة
-- [ ] اختبار نظام الزيارات
-
-### P2 - أولوية متوسطة
-- [ ] ربط Google Drive (يتطلب OAuth من المستخدم)
-
-### ✅ تم إنجازها
-- [x] حفظ قاعدة المعرفة في Supabase بشكل دائم
-- [x] تحليل الصور/الفيديو بالذكاء الاصطناعي
+آخر تحديث: ديسمبر 2025

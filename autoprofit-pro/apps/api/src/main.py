@@ -11,7 +11,7 @@ from .core.config import settings
 from .core.database import engine, SessionLocal
 from .core.security import create_access_token, verify_password
 from .models import Base
-from .api.v1.endpoints import auth, users, accounts, transactions, customers, inventory, payroll
+from .api.v1.endpoints import auth, users, accounts, transactions, customers, inventory, payroll, workshop
 from .services.websocket import ws_manager
 
 # Configure logging

@@ -23,7 +23,12 @@ import {
   Upload,
   BookOpen,
   Truck,
-  Bot
+  Bot,
+  Calculator,
+  TrendingUp,
+  Wallet,
+  FolderTree,
+  ClipboardList
 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';

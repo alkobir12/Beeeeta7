@@ -258,6 +258,188 @@ class Inventory(Base):
     
     # Relationships
     workshop = relationship("Workshop", back_populates="inventory")
+
+
+class Invoice(Base):
+    """نموذج الفاتورة"""
+    __tablename__ = "invoices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    invoice_number = Column(String(100), unique=True, nullable=False, index=True)
+    invoice_type = Column(
+        Enum("sale", "purchase", "refund", "credit_note", name="invoice_type_enum"),
+        nullable=False,
+    )
+    invoice_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    due_date = Column(DateTime, nullable=True)
+
+    # معلومات العميل/المورد
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
+    supplier_id = Column(UUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=True)
+    customer_name = Column(String(200))
+    customer_vat_number = Column(String(50))
+    customer_address = Column(Text)
+
+    # المبالغ
+    subtotal = Column(Float, default=0.0)
+    discount_amount = Column(Float, default=0.0)
+    tax_amount = Column(Float, default=0.0)
+    shipping_amount = Column(Float, default=0.0)
+    total_amount = Column(Float, nullable=False)
+    amount_paid = Column(Float, default=0.0)
+    balance_due = Column(Float, default=0.0)
+
+    # الضرائب
+    tax_rate = Column(Float, default=15.0)
+    tax_type_id = Column(UUID(as_uuid=True), ForeignKey("tax_types.id"), nullable=True)
+
+    # الحالة
+    status = Column(
+        Enum(
+            "draft",
+            "issued",
+            "sent",
+            "paid",
+            "partially_paid",
+            "overdue",
+            "cancelled",
+            "refunded",
+            name="invoice_status_enum",
+        ),
+        default="draft",
+    )
+    payment_status = Column(
+        Enum("unpaid", "partial", "paid", "overdue", name="invoice_payment_status_enum"),
+        default="unpaid",
+    )
+
+    workshop_id = Column(UUID(as_uuid=True), ForeignKey("workshops.id"), nullable=False)
+
+    # التوثيق
+    terms_and_conditions = Column(Text)
+    notes = Column(Text)
+    internal_notes = Column(Text)
+
+    # التكامل مع المحاسبة
+    journal_entry_id = Column(UUID(as_uuid=True), ForeignKey("journal_entries.id"), nullable=True)
+
+    # معلومات إضافية
+    currency = Column(String(3), default="SAR")
+    exchange_rate = Column(Float, nullable=False, default=1.0)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # العلاقات
+    customer = relationship("Customer", back_populates="invoices")
+    supplier = relationship("Supplier", back_populates="invoices")
+    items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
+    payments = relationship("InvoicePayment", back_populates="invoice", cascade="all, delete-orphan")
+    journal_entry = relationship("JournalEntry")
+    tax_type = relationship("TaxType")
+    workshop = relationship("Workshop")
+    created_by_user = relationship("User")
+
+
+class InvoiceItem(Base):
+    """بند في الفاتورة"""
+    __tablename__ = "invoice_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
+
+    # معلومات المنتج/الخدمة
+    item_type = Column(Enum("product", "service", name="invoice_item_type_enum"), default="service")
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=True)
+    service_id = Column(UUID(as_uuid=True), ForeignKey("services.id"), nullable=True)
+
+    # الوصف
+    description = Column(String(500), nullable=False)
+    unit = Column(String(50), default="piece")
+
+    # الكمية والسعر
+    quantity = Column(Float, nullable=False, default=1.0)
+    unit_price = Column(Float, nullable=False)
+    discount_percent = Column(Float, default=0.0)
+
+    # الحسابات
+    subtotal = Column(Float, nullable=False)  # قبل الخصم
+    discount_amount = Column(Float, default=0.0)
+    taxable_amount = Column(Float, nullable=False)
+    tax_amount = Column(Float, default=0.0)
+    total_amount = Column(Float, nullable=False)
+
+    # معلومات الضريبة
+    is_taxable = Column(Boolean, default=True)
+    tax_rate = Column(Float, default=15.0)
+
+    # المخزون
+    inventory_transaction_id = Column(
+        UUID(as_uuid=True), ForeignKey("inventory_transactions.id"), nullable=True
+    )
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # العلاقات
+    invoice = relationship("Invoice", back_populates="items")
+    product = relationship("Product")
+    service = relationship("Service")
+    inventory_transaction = relationship("InventoryTransaction")
+
+
+class InvoicePayment(Base):
+    """دفعة على فاتورة"""
+    __tablename__ = "invoice_payments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
+    payment_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # طريقة الدفع
+    payment_method = Column(
+        Enum(
+            "cash",
+            "bank_transfer",
+            "credit_card",
+            "check",
+            "mobile_wallet",
+            "other",
+            name="invoice_payment_method_enum",
+        ),
+        nullable=False,
+    )
+
+    # معلومات الدفع
+    amount = Column(Float, nullable=False)
+    currency = Column(String(3), default="SAR")
+    exchange_rate = Column(Float, default=1.0)
+
+    # معلومات إضافية
+    reference_number = Column(String(100))
+    bank_name = Column(String(100))
+    check_number = Column(String(50))
+    card_last_four = Column(String(4))
+
+    # الحالة
+    status = Column(
+        Enum("pending", "completed", "failed", "refunded", name="invoice_payment_status_enum"),
+        default="completed",
+    )
+
+    # التكامل مع المحاسبة
+    journal_entry_id = Column(UUID(as_uuid=True), ForeignKey("journal_entries.id"), nullable=True)
+
+    workshop_id = Column(UUID(as_uuid=True), ForeignKey("workshops.id"), nullable=False)
+    received_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # العلاقات
+    invoice = relationship("Invoice", back_populates="payments")
+    journal_entry = relationship("JournalEntry")
+    workshop = relationship("Workshop")
+    receiver = relationship("User", foreign_keys=[received_by])
+
     supplier = relationship("Supplier", back_populates="inventory_items")
     transactions = relationship("Transaction", back_populates="inventory_item")
 

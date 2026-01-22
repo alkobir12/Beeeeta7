@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Dict, List
+from typing import Any, Dict, List
 import uuid
 
 from sqlalchemy import func

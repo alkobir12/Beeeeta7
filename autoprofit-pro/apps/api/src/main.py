@@ -13,6 +13,7 @@ from .core.security import create_access_token, verify_password
 from .models import Base
 from .api.v1.endpoints import auth, users, accounts, transactions, customers, inventory, payroll, workshop
 from .api.v1.endpoints.accounting import chart_of_accounts, journal_entries, reports, invoices
+from .api.v1.endpoints import ai
 from .services.websocket import ws_manager
 
 # Configure logging
@@ -98,6 +99,7 @@ app.include_router(chart_of_accounts.router, prefix="/api/v1/accounting", tags=[
 app.include_router(journal_entries.router, prefix="/api/v1/accounting", tags=["accounting-journals"])
 app.include_router(reports.router, prefix="/api/v1/accounting", tags=["accounting-reports"])
 app.include_router(invoices.router, prefix="/api/v1/accounting", tags=["invoices"])
+app.include_router(ai.router, prefix="/api/v1/ai", tags=["ai-analysis"])
 
 # Health check endpoint (root-level)
 @app.get("/health")

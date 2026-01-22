@@ -65,6 +65,11 @@ async def startup_event():
     
     print("✅ Z.ai Engine ready!")
 
+@app.get("/api/z-ai/health")
+async def z_ai_health():
+    return {"status": "z-ai engine running"}
+
+
 @app.post("/api/z-ai/analyze")
 async def analyze_workshop_data(data: WorkshopData):
     """

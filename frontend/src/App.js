@@ -32,6 +32,8 @@ import PartsCatalog from "./pages/PartsCatalog";
 import DensoDiagnostics from "./pages/DensoDiagnostics";
 import FaultKnowledge from "./pages/FaultKnowledge";
 import TemplatesManager from "./pages/TemplatesManager";
+import Taxes from "./pages/Taxes";
+import Invoices from "./pages/Invoices";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {

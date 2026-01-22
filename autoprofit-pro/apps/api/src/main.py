@@ -12,7 +12,7 @@ from .core.database import engine, SessionLocal
 from .core.security import create_access_token, verify_password
 from .models import Base
 from .api.v1.endpoints import auth, users, accounts, transactions, customers, inventory, payroll, workshop
-from .api.v1.endpoints.accounting import chart_of_accounts, journal_entries
+from .api.v1.endpoints.accounting import chart_of_accounts, journal_entries, reports
 from .services.websocket import ws_manager
 
 # Configure logging
@@ -96,6 +96,7 @@ app.include_router(payroll.router, prefix="/api/v1/payroll", tags=["payroll"])
 app.include_router(workshop.router, prefix="/api/v1", tags=["workshop"])
 app.include_router(chart_of_accounts.router, prefix="/api/v1/accounting", tags=["accounting"])
 app.include_router(journal_entries.router, prefix="/api/v1/accounting", tags=["accounting-journals"])
+app.include_router(reports.router, prefix="/api/v1/accounting", tags=["accounting-reports"])
 
 # Health check endpoint (root-level)
 @app.get("/health")

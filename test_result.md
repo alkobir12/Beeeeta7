@@ -58,8 +58,8 @@ Quick test of financial pages after fixing data structure
   - Total Equity: 1,510,000 ريال.س ✅
 - **Balance Status**: Shows "الميزانية غير متوازنة" (unbalanced) - This is expected with test data (Assets ≠ Liabilities + Equity)
 
-**4. ⚠️ Income Statement Page (`/accounting/income-statement`) - MINOR DISPLAY ISSUE**
-- **Status**: ✅ DATA LOADING CORRECTLY
+**4. ✅ Income Statement Page (`/accounting/income-statement`) - FULLY WORKING**
+- **Status**: ✅ FULLY WORKING (FIXED)
 - **Accounts Displayed**: All 6 accounts showing (2 revenue + 4 expenses)
 - **Totals Display**:
   - Total Revenue: 600,000 ريال.س ✅
@@ -67,18 +67,27 @@ Quick test of financial pages after fixing data structure
   - Net Income: 255,000 ريال.س ✅
   - Profit Margin: 42.5% ✅
   
-- **⚠️ MINOR ISSUE**: Account names not displaying correctly
-  - **Current Display**: "حساب إيراد 411" (Revenue account 411) instead of "إيرادات خدمات الصيانة"
-  - **Root Cause**: Frontend code at IncomeStatement.jsx lines 200 and 239 hardcodes generic names instead of using the actual account name from backend
-  - **Backend Data**: Backend correctly returns `{code: {name, amount}}` structure
-  - **Frontend Code Issue**: 
-    ```javascript
-    // Line 200 - hardcoded
-    <div className="col-span-6 text-gray-800">حساب إيراد {acc.code}</div>
-    // Should use: acc.name or extract name from backend data
-    ```
-  - **Impact**: MINOR - Users see generic "Revenue account 411" instead of descriptive "Maintenance service revenue"
-  - **Recommendation**: Update IncomeStatement.jsx to extract and display the actual account name from backend response
+- **✅ ACCOUNT NAMES NOW DISPLAYING CORRECTLY**:
+  - **Revenue Accounts**:
+    - 411: "إيرادات خدمات الصيانة" ✅
+    - 412: "إيرادات بيع قطع الغيار" ✅
+  - **Expense Accounts**:
+    - 514: "مصاريف قطع الغيار" ✅
+    - 521: "مصاريف رواتب" ✅
+    - 522: "مصاريف إيجار" ✅
+    - 523: "مصاريف كهرباء وماء" ✅
+  
+- **Fix Applied**: Updated IncomeStatement.jsx lines 69-74 to properly extract account names from backend data:
+  ```javascript
+  const formatAccountList = (records) =>
+    Object.entries(records || {}).map(([code, data]) => ({ 
+      code, 
+      name: data.name || `حساب ${code}`, 
+      amount: data.amount || 0 
+    }));
+  ```
+- **Frontend Restart**: Required frontend service restart to apply changes
+- **Verification**: All account names now display correctly with no generic names
 
 #### 🔧 TECHNICAL FINDINGS:
 

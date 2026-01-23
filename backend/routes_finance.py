@@ -1,25 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
-from motor.motor_asyncio import AsyncIOMotorClient
-from pathlib import Path
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
-# MongoDB connection
-def get_db():
-    mongo_url = os.environ.get('MONGO_URL')
-    db_name = os.environ.get('DB_NAME', 'workshop_db')
-    if not mongo_url:
-        raise Exception("MONGO_URL environment variable not set")
-    client = AsyncIOMotorClient(mongo_url)
-    return client[db_name]
+# DB will be set from server.py
+db = None
+
+def set_db(database):
+    global db
+    db = database
 
 @router.get("/reports/balance-sheet")
 async def get_balance_sheet(
@@ -85,13 +75,6 @@ async def get_income_statement(
     قائمة الدخل من بيانات العمليات الحقيقية في MongoDB
     """
     try:
-        db = get_db()
-        
-        # تحويل التواريخ إلى datetime objects
-        start_dt = datetime.fromisoformat(start_date)
-        end_dt = datetime.fromisoformat(end_date)
-        end_dt = end_dt.replace(hour=23, minute=59, second=59)
-        
         # جلب جميع العمليات في الفترة الزمنية
         operations = await db.operations.find({
             "date": {

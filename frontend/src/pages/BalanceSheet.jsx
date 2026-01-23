@@ -50,7 +50,6 @@ const BalanceSheet = () => {
     Math.abs(totals.assets - totals.liabilities_plus_equity) < 0.01;
 
   const renderAccountsSection = (title, accounts, total, Icon, headerBg, accentText) => {
-    const Icon = icon;
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className={`${headerBg} px-4 py-3 flex items-center gap-2`}>

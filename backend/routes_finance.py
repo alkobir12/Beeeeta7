@@ -2,10 +2,38 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
 import uuid
+import os
+from supabase import create_client
+from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
-# DB will be set from server.py
+# Supabase connection for writing data
+supabase = create_client(
+    os.getenv("SUPABASE_URL", ""),
+    os.getenv("SUPABASE_KEY", "")
+)
+
+# MongoDB connection for reading operations (financial reports)
+mongo_client = None
+finance_db = None
+
+def init_mongo_connection():
+    global mongo_client, finance_db
+    mongo_uri = os.getenv("MONGO_URL")
+    if mongo_uri:
+        try:
+            mongo_client = AsyncIOMotorClient(mongo_uri)
+            finance_db = mongo_client.get_database(os.getenv("DB_NAME", "workshop_db"))
+            print("✅ MongoDB connected for Finance API")
+        except Exception as e:
+            print(f"⚠️ MongoDB connection failed: {e}")
+            finance_db = None
+
+# Initialize on module load
+init_mongo_connection()
+
+# Legacy: DB will be set from server.py (for backward compatibility)
 db = None
 
 def set_db(database):

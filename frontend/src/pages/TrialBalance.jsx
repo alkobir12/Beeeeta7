@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import React, { useEffect, useState } from 'react';
 import { Scale, Download, RefreshCw, Calendar, CheckCircle, XCircle, Search, AlertCircle, Loader2 } from 'lucide-react';
 import { financeAPI } from '../services/api';

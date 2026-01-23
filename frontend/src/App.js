@@ -34,6 +34,13 @@ import FaultKnowledge from "./pages/FaultKnowledge";
 import TemplatesManager from "./pages/TemplatesManager";
 import Taxes from "./pages/Taxes";
 import Invoices from "./pages/Invoices";
+import ChartOfAccounts from "./pages/ChartOfAccounts";
+import JournalEntries from "./pages/JournalEntries";
+import BalanceSheet from "./pages/BalanceSheet";
+import IncomeStatement from "./pages/IncomeStatement";
+import CashFlow from "./pages/CashFlow";
+import TrialBalance from "./pages/TrialBalance";
+import AIFinancial from "./pages/AIFinancial";
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getSessionFromCookie = () => {

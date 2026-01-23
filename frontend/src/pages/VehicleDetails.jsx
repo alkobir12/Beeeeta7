@@ -346,9 +346,11 @@ const VehicleDetails = () => {
       const tax = subtotal * 0.15; // 15% VAT
       const total = subtotal + tax;
       
+      console.log('🔄 Creating/Updating invoice for vehicle:', vehicleId);
+      
       // البحث عن فاتورة موجودة لهذه المركبة
       const invoicesRes = await axios.get(`${API_URL}/invoices?vehicleId=${vehicleId}`);
-      const existingInvoice = invoicesRes.data?.find(inv => inv.vehicleId === vehicleId && inv.status !== 'paid');
+      const existingInvoice = invoicesRes.data?.find(inv => inv.vehicle_id === vehicleId && inv.status !== 'paid');
       
       const invoiceData = {
         vehicleId: vehicleId,
@@ -368,17 +370,22 @@ const VehicleDetails = () => {
         date: new Date().toISOString()
       };
       
+      console.log('📄 Invoice data:', invoiceData);
+      
       if (existingInvoice) {
         // تحديث الفاتورة الموجودة
         await axios.put(`${API_URL}/invoices/${existingInvoice.id}`, invoiceData);
         console.log('✅ تم تحديث الفاتورة:', existingInvoice.id);
+        toast({ title: 'تم', description: 'تم تحديث الفاتورة تلقائياً' });
       } else {
         // إنشاء فاتورة جديدة
         const newInvoice = await axios.post(`${API_URL}/invoices`, invoiceData);
         console.log('✅ تم إنشاء فاتورة جديدة:', newInvoice.data.id);
+        toast({ title: 'تم', description: 'تم إنشاء فاتورة جديدة تلقائياً' });
       }
     } catch (error) {
-      console.error('خطأ في إنشاء/تحديث الفاتورة:', error);
+      console.error('❌ خطأ في إنشاء/تحديث الفاتورة:', error);
+      toast({ title: 'تنبيه', description: 'تم حفظ البند لكن فشل إنشاء الفاتورة', variant: 'destructive' });
     }
   };
 
@@ -547,24 +554,39 @@ const VehicleDetails = () => {
                       <button
                         type="button"
                         className="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-white hover:bg-gray-600"
-                        onClick={() => {
+                        onClick={async () => {
                           const name = (newItem.name || '').trim();
                           if (!name) {
                             toast({ title: 'تنبيه', description: 'الاسم مطلوب', variant: 'destructive' });
                             return;
                           }
-                          const existing = vehicle.parts || [];
-                          const item = {
-                            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                            itemType: newItem.itemType,
-                            name,
-                            quantity: newItem.quantity || 1,
-                            price: newItem.price || 0,
-                          };
-                          const updatedParts = [...existing, item];
-                          updatePartsLocally(updatedParts);
-                          setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
-                          toast({ title: 'تمت الإضافة', description: 'اضغط حفظ التحديثات للتثبيت' });
+                          
+                          try {
+                            const existing = vehicle.parts || [];
+                            const item = {
+                              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                              itemType: newItem.itemType,
+                              name,
+                              quantity: newItem.quantity || 1,
+                              price: newItem.price || 0,
+                            };
+                            const updatedParts = [...existing, item];
+                            
+                            // تحديث المركبة
+                            await vehicleAPI.update(id, { parts: updatedParts });
+                            
+                            // إنشاء/تحديث الفاتورة تلقائياً
+                            await createOrUpdateInvoice(id, updatedParts);
+                            
+                            // تحديث الواجهة
+                            setVehicle({ ...vehicle, parts: updatedParts });
+                            setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
+                            
+                            toast({ title: 'تمت الإضافة', description: 'تم إضافة البند وإنشاء الفاتورة' });
+                          } catch (error) {
+                            console.error('Error:', error);
+                            toast({ title: 'خطأ', description: 'فشل في الإضافة', variant: 'destructive' });
+                          }
                         }}
                       >
                         إضافة بند

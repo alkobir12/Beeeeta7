@@ -74,47 +74,98 @@ async def get_income_statement(
     end_date: str = Query(...)
 ):
     """
-    قائمة الدخل لفترة محددة
+    قائمة الدخل من بيانات العمليات الحقيقية في MongoDB
     """
-    # TODO: فلترة العمليات حسب التاريخ من MongoDB
-    # حالياً: بيانات تجريبية
-    
-    # بناء حسابات الإيرادات
-    revenue_accounts = {
-        "411": {"name": "إيرادات خدمات الصيانة", "amount": 475000},
-        "412": {"name": "إيرادات بيع قطع الغيار", "amount": 125000},
-    }
-    
-    # بناء حسابات المصروفات
-    expense_accounts = {
-        "521": {"name": "مصاريف رواتب", "amount": 150000},
-        "522": {"name": "مصاريف إيجار", "amount": 50000},
-        "514": {"name": "مصاريف قطع الغيار", "amount": 120000},
-        "523": {"name": "مصاريف كهرباء وماء", "amount": 25000},
-    }
-    
-    total_revenue = sum(acc["amount"] for acc in revenue_accounts.values())
-    total_expenses = sum(acc["amount"] for acc in expense_accounts.values())
-    net_income = total_revenue - total_expenses
-    
-    return {
-        "success": True,
-        "data": {
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            },
-            "totals": {
-                "revenue": total_revenue,
-                "expenses": total_expenses,
-                "net_income": net_income
-            },
-            "details": {
-                "revenue_by_account": revenue_accounts,
-                "expenses_by_account": expense_accounts
+    try:
+        db = get_db()
+        
+        # تحويل التواريخ إلى datetime objects
+        start_dt = datetime.fromisoformat(start_date)
+        end_dt = datetime.fromisoformat(end_date)
+        end_dt = end_dt.replace(hour=23, minute=59, second=59)
+        
+        # جلب جميع العمليات في الفترة الزمنية
+        operations = await db.operations.find({
+            "date": {
+                "$gte": start_dt,
+                "$lte": end_dt
+            }
+        }).to_list(1000)
+        
+        # تصنيف العمليات حسب النوع
+        revenue_accounts = {}
+        expense_accounts = {}
+        
+        for op in operations:
+            op_type = op.get('type', '')
+            total = op.get('total', 0) or 0
+            
+            if op_type == 'sale':
+                # عمليات البيع = إيرادات
+                code = "411"
+                if code not in revenue_accounts:
+                    revenue_accounts[code] = {
+                        "name": "إيرادات خدمات الصيانة وقطع الغيار",
+                        "amount": 0
+                    }
+                revenue_accounts[code]["amount"] += total
+                
+            elif op_type == 'purchase':
+                # عمليات الشراء = مصروفات
+                code = "514"
+                if code not in expense_accounts:
+                    expense_accounts[code] = {
+                        "name": "مصاريف قطع الغيار",
+                        "amount": 0
+                    }
+                expense_accounts[code]["amount"] += total
+                
+            elif op_type == 'expense':
+                # مصروفات أخرى
+                code = op.get('accountCode', '521')
+                account_name = op.get('accountName', 'مصاريف عامة')
+                if code not in expense_accounts:
+                    expense_accounts[code] = {
+                        "name": account_name,
+                        "amount": 0
+                    }
+                expense_accounts[code]["amount"] += total
+        
+        # حساب الإجماليات
+        total_revenue = sum(acc["amount"] for acc in revenue_accounts.values())
+        total_expenses = sum(acc["amount"] for acc in expense_accounts.values())
+        net_income = total_revenue - total_expenses
+        
+        return {
+            "success": True,
+            "data": {
+                "period": {
+                    "start_date": start_date,
+                    "end_date": end_date
+                },
+                "totals": {
+                    "revenue": total_revenue,
+                    "expenses": total_expenses,
+                    "net_income": net_income
+                },
+                "details": {
+                    "revenue_by_account": revenue_accounts,
+                    "expenses_by_account": expense_accounts
+                }
             }
         }
-    }
+        
+    except Exception as e:
+        print(f"Error in get_income_statement: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "totals": {"revenue": 0, "expenses": 0, "net_income": 0},
+                "details": {"revenue_by_account": {}, "expenses_by_account": {}}
+            }
+        }
 
 @router.get("/reports/cash-flow")
 async def get_cash_flow(

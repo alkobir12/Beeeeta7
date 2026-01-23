@@ -67,7 +67,11 @@ const IncomeStatement = () => {
   const grossMargin = '—'; // يمكن حسابه لاحقًا عندما نضيف تكلفة المبيعات منفصلة
 
   const formatAccountList = (records) =>
-    Object.entries(records || {}).map(([code, amount]) => ({ code, amount }));
+    Object.entries(records || {}).map(([code, data]) => ({ 
+      code, 
+      name: data.name || `حساب ${code}`, 
+      amount: data.amount || 0 
+    }));
 
   const revenueAccounts = formatAccountList(details.revenue_by_account);
   const expenseAccounts = formatAccountList(details.expenses_by_account);
@@ -197,7 +201,7 @@ const IncomeStatement = () => {
                     className="grid grid-cols-12 items-center text-sm py-1.5 px-1 rounded hover:bg-gray-50"
                   >
                     <div className="col-span-3 font-mono text-gray-500 text-xs">{acc.code}</div>
-                    <div className="col-span-6 text-gray-800">حساب إيراد {acc.code}</div>
+                    <div className="col-span-6 text-gray-800">{acc.name}</div>
                     <div className="col-span-3 text-left font-mono text-green-700">
                       {formatCurrency(acc.amount)}
                     </div>

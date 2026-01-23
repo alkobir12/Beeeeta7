@@ -1,47 +1,58 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import "./App.css"
 import "./i18n"; // Initialize i18next
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Dashboard from "./pages/Dashboard";
-import Customers from "./pages/Customers";
-import NewVehicle from "./pages/NewVehicle";
-import VehicleDetails from "./pages/VehicleDetails";
-import CustomerDetails from "./pages/CustomerDetails";
-import Technicians from "./pages/Technicians";
-import Suppliers from "./pages/Suppliers";
-import PartsInventory from "./pages/PartsInventory";
-import ServicesManagement from "./pages/ServicesManagement";
-import Templates from "./pages/Templates";
-import InvoiceDesignerStudio from "./pages/InvoiceDesignerStudio";
-import Settings from "./pages/Settings";
-import WorkshopProfile from "./pages/WorkshopProfile";
-import VehicleArchive from "./pages/VehicleArchive";
 import Layout from "./components/Layout";
-import DatabaseSetup from "./pages/DatabaseSetup";
-import Operations from "./pages/Operations";
-import ApprovalPublic from "./pages/ApprovalPublic";
-import ReportPublic from "./pages/ReportPublic";
-import ImportPage from "./pages/Import";
-import CustomerTracking from "./pages/CustomerTracking";
-import Login from "./pages/Login";
-import Users from "./pages/UsersManagement";
-import QuotationGenerator from "./pages/QuotationGenerator";
-import DocumentPrint from "./pages/DocumentPrint";
-import PartsCatalog from "./pages/PartsCatalog";
-import DensoDiagnostics from "./pages/DensoDiagnostics";
-import FaultKnowledge from "./pages/FaultKnowledge";
-import TemplatesManager from "./pages/TemplatesManager";
-import Taxes from "./pages/Taxes";
-import Invoices from "./pages/Invoices";
-import ChartOfAccounts from "./pages/ChartOfAccounts";
-import JournalEntries from "./pages/JournalEntries";
-import BalanceSheet from "./pages/BalanceSheet";
-import IncomeStatement from "./pages/IncomeStatement";
-import CashFlow from "./pages/CashFlow";
-import TrialBalance from "./pages/TrialBalance";
-import AIFinancial from "./pages/AIFinancial";
 import { ThemeProvider } from './contexts/ThemeContext';
+
+// Eager load critical pages
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+
+// Lazy load other pages for better performance
+const Customers = lazy(() => import("./pages/Customers"));
+const NewVehicle = lazy(() => import("./pages/NewVehicle"));
+const VehicleDetails = lazy(() => import("./pages/VehicleDetails"));
+const CustomerDetails = lazy(() => import("./pages/CustomerDetails"));
+const Technicians = lazy(() => import("./pages/Technicians"));
+const Suppliers = lazy(() => import("./pages/Suppliers"));
+const PartsInventory = lazy(() => import("./pages/PartsInventory"));
+const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
+const Templates = lazy(() => import("./pages/Templates"));
+const InvoiceDesignerStudio = lazy(() => import("./pages/InvoiceDesignerStudio"));
+const Settings = lazy(() => import("./pages/Settings"));
+const WorkshopProfile = lazy(() => import("./pages/WorkshopProfile"));
+const VehicleArchive = lazy(() => import("./pages/VehicleArchive"));
+const DatabaseSetup = lazy(() => import("./pages/DatabaseSetup"));
+const Operations = lazy(() => import("./pages/Operations"));
+const ApprovalPublic = lazy(() => import("./pages/ApprovalPublic"));
+const ReportPublic = lazy(() => import("./pages/ReportPublic"));
+const ImportPage = lazy(() => import("./pages/Import"));
+const CustomerTracking = lazy(() => import("./pages/CustomerTracking"));
+const Users = lazy(() => import("./pages/UsersManagement"));
+const QuotationGenerator = lazy(() => import("./pages/QuotationGenerator"));
+const DocumentPrint = lazy(() => import("./pages/DocumentPrint"));
+const PartsCatalog = lazy(() => import("./pages/PartsCatalog"));
+const DensoDiagnostics = lazy(() => import("./pages/DensoDiagnostics"));
+const FaultKnowledge = lazy(() => import("./pages/FaultKnowledge"));
+const TemplatesManager = lazy(() => import("./pages/TemplatesManager"));
+const Taxes = lazy(() => import("./pages/Taxes"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
+const JournalEntries = lazy(() => import("./pages/JournalEntries"));
+const BalanceSheet = lazy(() => import("./pages/BalanceSheet"));
+const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
+const CashFlow = lazy(() => import("./pages/CashFlow"));
+const TrialBalance = lazy(() => import("./pages/TrialBalance"));
+const AIFinancial = lazy(() => import("./pages/AIFinancial"));
+
+// Loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+  </div>
+);
 
 const getSessionFromCookie = () => {
   try {

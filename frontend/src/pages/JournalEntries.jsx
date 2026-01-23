@@ -138,12 +138,13 @@ export default function JournalEntries() {
           })),
           created_by: 'النظام',
           posted_at: entry.date,
+          vehicle_plate: entry.vehicle_plate,
+          customer_name: entry.customer_name
         }));
         setEntries(transformedEntries);
       }
     } catch (error) {
       console.error('Error fetching journal entries:', error);
-      // Fallback to sample data on error
       setEntries(SAMPLE_ENTRIES);
     } finally {
       setLoading(false);

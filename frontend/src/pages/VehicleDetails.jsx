@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock, Trash2, Camera, X, Scan, Plus } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { vehicleAPI, technicianAPI } from '../services/api';
+import { vehicleAPI, technicianAPI, financeAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +15,7 @@ const VehicleDetails = () => {
   const { toast } = useToast();
   const [vehicle, setVehicle] = useState(null);
   const [technicians, setTechnicians] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('diagnosis');
   const [notes, setNotes] = useState('');
@@ -35,6 +36,24 @@ const VehicleDetails = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        if (!workshopId) return;
+        const res = await financeAPI.getChartOfAccounts();
+        setAccounts(res.data || []);
+      } catch (err) {
+        console.error('Failed to load chart of accounts for vehicle details:', err);
+      }
+    };
+    loadAccounts();
+  }, [workshopId]);
+
+  const findAccountByCode = (code) => accounts.find((a) => a.code === code);
+
+
 
   useEffect(() => { fetchData(); }, [id]);
 
@@ -117,12 +136,48 @@ const VehicleDetails = () => {
           notes: `عملية من ملف المركبة: ${vehicle.plateNumber}`
         };
         
+        let operationResult = null;
         if (existingOps.length > 0) {
           // تحديث العملية الموجودة
-          await axios.put(`${API_URL}/operations/${existingOps[0].id}`, operationData);
+          const res = await axios.put(`${API_URL}/operations/${existingOps[0].id}`, operationData);
+          operationResult = res.data;
         } else {
           // إنشاء عملية جديدة
-          await axios.post(`${API_URL}/operations`, operationData);
+          const res = await axios.post(`${API_URL}/operations`, operationData);
+          operationResult = res.data;
+        }
+
+        // إنشاء قيد محاسبي تلقائي لعملية البيع (ذمم مدينة عملاء 113 / إيرادات صيانة 411)
+        try {
+          const total = operationItems.reduce((sum, it) => sum + (it.total || 0), 0);
+          const customerAccount = findAccountByCode('113');
+          const serviceRevenueAccount = findAccountByCode('411');
+
+          if (customerAccount && serviceRevenueAccount && total > 0) {
+            const journalPayload = {
+              entry_date: new Date().toISOString(),
+              description: `عملية بيع من ملف المركبة - ${vehicle.customerName || ''}`,
+              reference: operationResult?.id || null,
+              lines: [
+                {
+                  account_id: customerAccount.id,
+                  debit_amount: total,
+                  credit_amount: 0,
+                },
+                {
+                  account_id: serviceRevenueAccount.id,
+                  debit_amount: 0,
+                  credit_amount: total,
+                },
+              ],
+            };
+
+            await financeAPI.createJournalEntry(journalPayload);
+          } else {
+            console.warn('لم يتم العثور على حساب العملاء (113) أو إيرادات الصيانة (411) لإنشاء قيد من ملف المركبة');
+          }
+        } catch (jeError) {
+          console.error('فشل في إنشاء القيد المحاسبي لعملية ملف المركبة:', jeError);
         }
       }
       

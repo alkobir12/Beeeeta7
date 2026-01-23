@@ -236,11 +236,20 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
                     <option value="">{t('operations.select_account')}</option>
-                    {accounts.map(a => (
-                      <option key={a.id} value={a.id}>
-                        {a.name_ar || a.code}
-                      </option>
-                    ))}
+                    {/* 🔧 الإصلاح: تحقق من أن accounts مصفوفة قبل استخدام .map() */}
+                    {Array.isArray(accounts) ? (
+                      accounts.length > 0 ? (
+                        accounts.map(a => (
+                          <option key={a.id || a.code} value={a.id || a.code}>
+                            {a.name_ar || a.name || a.code}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">لا توجد حسابات</option>
+                      )
+                    ) : (
+                      <option value="">جاري تحميل الحسابات...</option>
+                    )}
                   </select>
                 </div>
               </div>

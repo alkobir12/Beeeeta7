@@ -107,6 +107,14 @@ const financeAPI = {
   getTrialBalance: (params) => api.get('/v1/accounting/reports/trial-balance', { params }),
   getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
   getJournalEntries: (params) => api.get('/v1/accounting/journal-entries', { params }),
+  createJournalEntry: (data) =>
+    api.post('/v1/accounting/journal-entries', data, {
+      params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
+    }),
+  getChartOfAccounts: () =>
+    api.get('/v1/accounting/chart-of-accounts', {
+      params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
+    }),
 };
 
 export { 

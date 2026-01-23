@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
-from models import Operation
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 

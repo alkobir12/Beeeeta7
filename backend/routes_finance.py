@@ -2,14 +2,22 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
+from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
 # MongoDB connection
 def get_db():
-    mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
-    db_name = os.getenv('DB_NAME', 'workshop_db')
+    mongo_url = os.environ.get('MONGO_URL')
+    db_name = os.environ.get('DB_NAME', 'workshop_db')
+    if not mongo_url:
+        raise Exception("MONGO_URL environment variable not set")
     client = AsyncIOMotorClient(mongo_url)
     return client[db_name]
 

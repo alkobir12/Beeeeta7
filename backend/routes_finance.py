@@ -519,11 +519,14 @@ async def get_chart_of_accounts(
     workshop_id: str = Query(...)
 ):
     """
-    دليل الحسابات من Supabase
+    دليل الحسابات محسوب من العمليات الحقيقية في Supabase
     """
     try:
-        # جلب الحسابات من Supabase
-        if supabase:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        # محاولة قراءة من جدول chart_of_accounts
+        try:
             response = supabase.table("chart_of_accounts") \
                 .select("*") \
                 .or_(f"workshop_id.eq.{workshop_id},workshop_id.eq.default") \
@@ -531,7 +534,7 @@ async def get_chart_of_accounts(
                 .order("code") \
                 .execute()
             
-            if response.data:
+            if response.data and len(response.data) > 0:
                 accounts = []
                 for acc in response.data:
                     accounts.append({
@@ -545,33 +548,67 @@ async def get_chart_of_accounts(
                     })
                 
                 return {"success": True, "data": accounts}
+        except Exception as e:
+            print(f"Chart of accounts table not found, will calculate from operations: {e}")
         
-        # Fallback: بيانات افتراضية
+        # البديل: حساب الحسابات من operations
+        ops_response = supabase.table("operations").select("*").execute()
+        operations = ops_response.data
+        
+        # حساب أرصدة الحسابات من العمليات
+        account_balances = {}
+        
+        for op in operations:
+            op_type = op.get('type', '')
+            total = float(op.get('total', 0) or 0)
+            payment_method = op.get('payment_method', 'cash')
+            
+            if op_type == 'sale':
+                # النقدية أو ذمم مدينة
+                if payment_method == 'cash':
+                    account_balances['101'] = account_balances.get('101', 0) + total
+                else:
+                    account_balances['113'] = account_balances.get('113', 0) + total
+                # إيرادات
+                account_balances['411'] = account_balances.get('411', 0) + total
+                
+            elif op_type == 'purchase':
+                # مصروفات قطع
+                account_balances['514'] = account_balances.get('514', 0) + total
+                # النقدية أو ذمم دائنة
+                if payment_method == 'cash':
+                    account_balances['101'] = account_balances.get('101', 0) - total
+                else:
+                    account_balances['211'] = account_balances.get('211', 0) + total
+        
+        # الأرباح المحتجزة
+        revenue = account_balances.get('411', 0)
+        expenses = account_balances.get('514', 0)
+        account_balances['302'] = revenue - expenses
+        
+        # بناء قائمة الحسابات
         accounts = [
-            {"id": "1", "code": "101", "name": "النقدية", "name_ar": "النقدية", "type": "asset", "balance": 0},
-            {"id": "2", "code": "113", "name": "ذمم مدينة عملاء", "name_ar": "ذمم مدينة عملاء", "type": "asset", "balance": 0},
+            {"id": "1", "code": "101", "name": "النقدية", "name_ar": "النقدية", "type": "asset", "balance": round(account_balances.get('101', 0), 2)},
+            {"id": "2", "code": "113", "name": "ذمم مدينة عملاء", "name_ar": "ذمم مدينة عملاء", "type": "asset", "balance": round(account_balances.get('113', 0), 2)},
             {"id": "3", "code": "121", "name": "مخزون قطع الغيار", "name_ar": "مخزون قطع الغيار", "type": "asset", "balance": 0},
-            {"id": "4", "code": "211", "name": "ذمم دائنة موردين", "name_ar": "ذمم دائنة موردين", "type": "liability", "balance": 0},
+            {"id": "4", "code": "211", "name": "ذمم دائنة موردين", "name_ar": "ذمم دائنة موردين", "type": "liability", "balance": round(account_balances.get('211', 0), 2)},
             {"id": "5", "code": "301", "name": "رأس المال", "name_ar": "رأس المال", "type": "equity", "balance": 0},
-            {"id": "6", "code": "411", "name": "إيرادات خدمات الصيانة", "name_ar": "إيرادات خدمات الصيانة", "type": "revenue", "balance": 0},
-            {"id": "7", "code": "412", "name": "إيرادات بيع قطع الغيار", "name_ar": "إيرادات بيع قطع الغيار", "type": "revenue", "balance": 0},
-            {"id": "8", "code": "514", "name": "مصاريف قطع الغيار", "name_ar": "مصاريف قطع الغيار", "type": "expense", "balance": 0},
-            {"id": "9", "code": "521", "name": "مصاريف رواتب", "name_ar": "مصاريف رواتب", "type": "expense", "balance": 0},
-            {"id": "10", "code": "522", "name": "مصاريف إيجار", "name_ar": "مصاريف إيجار", "type": "expense", "balance": 0},
-            {"id": "11", "code": "523", "name": "مصاريف كهرباء وماء", "name_ar": "مصاريف كهرباء وماء", "type": "expense", "balance": 0},
+            {"id": "6", "code": "302", "name": "الأرباح المحتجزة", "name_ar": "الأرباح المحتجزة", "type": "equity", "balance": round(account_balances.get('302', 0), 2)},
+            {"id": "7", "code": "411", "name": "إيرادات خدمات الصيانة", "name_ar": "إيرادات خدمات الصيانة", "type": "revenue", "balance": round(account_balances.get('411', 0), 2)},
+            {"id": "8", "code": "412", "name": "إيرادات بيع قطع الغيار", "name_ar": "إيرادات بيع قطع الغيار", "type": "revenue", "balance": 0},
+            {"id": "9", "code": "514", "name": "مصاريف قطع الغيار", "name_ar": "مصاريف قطع الغيار", "type": "expense", "balance": round(account_balances.get('514', 0), 2)},
+            {"id": "10", "code": "521", "name": "مصاريف رواتب", "name_ar": "مصاريف رواتب", "type": "expense", "balance": 0},
+            {"id": "11", "code": "522", "name": "مصاريف إيجار", "name_ar": "مصاريف إيجار", "type": "expense", "balance": 0},
         ]
         
         return {"success": True, "data": accounts}
         
     except Exception as e:
         print(f"Error in get_chart_of_accounts: {str(e)}")
-        # بيانات افتراضية في حالة الخطأ
         return {
-            "success": True,
-            "data": [
-                {"id": "1", "code": "101", "name": "النقدية", "name_ar": "النقدية", "type": "asset", "balance": 0},
-                {"id": "6", "code": "411", "name": "إيرادات خدمات", "name_ar": "إيرادات خدمات", "type": "revenue", "balance": 0},
-            ]
+            "success": False,
+            "error": str(e),
+            "data": []
         }
 
 @router.get("/journal-entries")

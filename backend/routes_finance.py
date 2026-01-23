@@ -581,28 +581,36 @@ async def create_journal_entry(
     workshop_id: str = Query(...)
 ):
     """
-    إنشاء قيد محاسبي جديد
+    إنشاء قيد محاسبي جديد في Supabase
     """
     try:
         # إضافة معلومات إضافية
-        entry['workshop_id'] = workshop_id
-        entry['created_at'] = datetime.now()
-        entry['id'] = entry.get('id', str(uuid.uuid4()))
+        entry_data = {
+            "id": str(uuid.uuid4()),
+            "workshop_id": workshop_id,
+            "date": entry.get("date", datetime.now().isoformat()),
+            "description": entry.get("description", ""),
+            "lines": entry.get("lines", []),
+            "total": entry.get("total", 0),
+            "created_at": datetime.now().isoformat()
+        }
         
-        # حفظ في MongoDB
-        result = await db.journal_entries.insert_one(entry)
+        # حفظ في Supabase
+        response = supabase.table("journal_entries").insert(entry_data).execute()
         
         return {
             "success": True,
             "message": "تم إنشاء القيد المحاسبي بنجاح",
-            "id": entry['id']
+            "id": entry_data['id'],
+            "data": response.data
         }
         
     except Exception as e:
         print(f"Error in create_journal_entry: {str(e)}")
         return {
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "message": "فشل في إنشاء القيد المحاسبي"
         }
 
 @router.get("/operations")

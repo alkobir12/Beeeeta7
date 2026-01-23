@@ -2050,3 +2050,430 @@ The automatic page refresh issue that was previously causing form data loss has 
 2. Debug "Top suspected causes" section rendering (HIGH PRIORITY)
 3. Fix attachment button accessibility (HIGH PRIORITY)
 4. Test with real user scenarios after fixes
+
+---
+
+## Finance Pages Testing (2026-01-23)
+
+### Test Objective:
+اختبار الصفحات المالية الجديدة (الميزانية العمومية، قائمة الدخل، دليل الحسابات) والتأكد من عدم وجود أخطاء 404 وعرض البيانات بشكل صحيح.
+
+Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) to ensure no 404 errors and proper data display.
+
+### Test Environment:
+- Frontend URL: https://finmodule-sync.preview.emergentagent.com
+- Backend API: /api/finance/reports/*
+- Workshop ID: finmodule-sync (from REACT_APP_WORKSHOP_ID)
+- Test Date: 2026-01-23
+
+### Test Results Summary: ⚠️ PARTIAL SUCCESS (2/3 pages working)
+
+---
+
+#### ✅ PAGES ACCESSIBLE - NO 404 ERRORS
+
+**All three pages load successfully:**
+1. ✅ Balance Sheet page (`/accounting/balance-sheet`) - Page loads, no 404
+2. ✅ Income Statement page (`/accounting/income-statement`) - Page loads, no 404
+3. ✅ Chart of Accounts page (`/accounting/chart-of-accounts`) - Page loads, no 404
+
+**UI Components Present:**
+- ✅ Page titles display correctly in Arabic
+- ✅ Navigation sidebar working
+- ✅ Date pickers and filters present
+- ✅ Summary cards render correctly
+- ✅ Refresh buttons functional
+
+---
+
+#### ❌ CRITICAL ISSUE: API DATA NOT DISPLAYING
+
+**Problem:** Balance Sheet and Income Statement pages show "No data available" messages despite backend APIs working correctly.
+
+**Evidence from Console Logs:**
+```
+error: Failed to load resource: the server responded with a status of 404 () 
+at https://finmodule-sync.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
+error: Failed to load resource: the server responded with a status of 404 () 
+at https://finmodule-sync.preview.emergentagent.com/api/v1/accounting/reports/income-statement
+```
+
+**Root Cause Analysis:**
+
+1. **API Endpoint Mismatch:**
+   - Frontend code in `api.js` correctly calls: `/api/finance/reports/balance-sheet`
+   - Backend routes correctly serve: `/api/finance/reports/balance-sheet`
+   - BUT console shows failed requests to: `/api/v1/accounting/reports/balance-sheet`
+   - This suggests there may be an old cached version or a proxy/rewrite rule issue
+
+2. **Backend API Verification (Working Correctly):**
+   ```bash
+   # Balance Sheet API - ✅ WORKING
+   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
+   Response: {"success": true, "data": {...}}
+   
+   # Income Statement API - ✅ WORKING
+   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
+   Response: {"success": true, "data": {...}}
+   
+   # Chart of Accounts API - ✅ WORKING
+   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
+   Response: {"success": true, "data": [11 accounts]}
+   ```
+
+3. **Data Structure Mismatch:**
+   
+   **Balance Sheet Page Expects:**
+   ```javascript
+   {
+     as_of: "date",
+     totals: { assets, liabilities, equity, liabilities_plus_equity },
+     sections: { 
+       assets: [{code, name, balance}],
+       liabilities: [{code, name, balance}],
+       equity: [{code, name, balance}]
+     }
+   }
+   ```
+   
+   **Backend Returns:**
+   ```javascript
+   {
+     period: "حتى 2026-01-23",
+     assets: { current: {...}, fixed: {...}, total: 1380000 },
+     liabilities: { current: {...}, long_term: {...}, total: 870000 },
+     equity: { capital: 1000000, retained_earnings: 510000, total: 1510000 }
+   }
+   ```
+   
+   **Income Statement Page Expects:**
+   ```javascript
+   {
+     totals: { revenue, expenses, net_income },
+     details: { 
+       revenue_by_account: {code: amount},
+       expenses_by_account: {code: amount}
+     }
+   }
+   ```
+   
+   **Backend Returns:**
+   ```javascript
+   {
+     period: "2025-01-01 إلى 2025-01-31",
+     revenue: { service_sales: 475000, parts_sales: 125000, total: 600000 },
+     expenses: { salaries: 150000, rent: 50000, parts_cost: 120000, utilities: 25000, total: 345000 },
+     net_income: 255000,
+     profit_margin: 42.5
+   }
+   ```
+
+---
+
+#### ✅ CHART OF ACCOUNTS - FULLY WORKING
+
+**Status:** ✅ WORKING (Uses hardcoded DEFAULT_ACCOUNTS)
+
+**Features Verified:**
+- ✅ Page loads without errors
+- ✅ Displays 35+ account codes and names
+- ✅ Shows account hierarchy (Assets, Liabilities, Equity, Revenue, Expenses)
+- ✅ Account balances displayed correctly
+- ✅ Search functionality present
+- ✅ Add Account button functional
+- ✅ Summary cards show totals:
+  - الأصول (Assets): ٤٥٣٬٥٠٠٫٠٠ ر.س
+  - الالتزامات (Liabilities): ١٤٧٬٥٠٠٫٠٠ ر.س
+  - حقوق الملكية (Equity): ٣٠٦٬٠٠٠٫٠٠ ر.س
+  - الإيرادات (Revenue): ٤٧٥٬٠٠٠٫٠٠ ر.س
+  - المصروفات (Expenses): ٣٤٥٬٠٠٠٫٠٠ ر.س
+
+**Note:** This page works because it uses `DEFAULT_ACCOUNTS` constant defined in the component, not API calls.
+
+---
+
+#### ⚠️ BALANCE SHEET PAGE - UI WORKING, DATA NOT LOADING
+
+**Status:** ⚠️ PARTIAL - Page structure correct, but no data displayed
+
+**What's Working:**
+- ✅ Page loads without 404 error
+- ✅ Title: "الميزانية العمومية" displays correctly
+- ✅ Date picker functional (default: 2026-01-23)
+- ✅ Summary cards render:
+  - إجمالي الأصول (Total Assets): ٠٫٠٠ ر.س
+  - إجمالي الالتزامات (Total Liabilities): ٠٫٠٠ ر.س
+  - حقوق الملكية (Equity): ٠٫٠٠ ر.س
+- ✅ Balance check indicator shows "الميزانية متوازنة ✓" (balanced)
+- ✅ Three sections render: الأصول, الالتزامات, حقوق الملكية
+
+**What's NOT Working:**
+- ❌ All sections show: "لا توجد حسابات متاحة لهذا القسم" (No accounts available for this section)
+- ❌ All totals show 0.00 SAR
+- ❌ API call fails with 404 error
+- ❌ No account details displayed
+
+**Console Errors:**
+```
+Failed to load resource: the server responded with a status of 404 ()
+Error fetching balance sheet: AxiosError
+```
+
+---
+
+#### ⚠️ INCOME STATEMENT PAGE - UI WORKING, DATA NOT LOADING
+
+**Status:** ⚠️ PARTIAL - Page structure correct, but no data displayed
+
+**What's Working:**
+- ✅ Page loads without 404 error
+- ✅ Title: "قائمة الدخل" displays correctly
+- ✅ Date range picker functional (default: last month to today)
+- ✅ Summary cards render:
+  - إجمالي الإيرادات (Total Revenue): ٠٫٠٠ ر.س
+  - إجمالي المصروفات (Total Expenses): ٠٫٠٠ ر.س
+  - صافي الربح (Net Income): ٠٫٠٠ ر.س
+  - هامش صافي الربح (Net Profit Margin): 0.0%
+- ✅ Two sections render: الإيرادات, المصروفات
+
+**What's NOT Working:**
+- ❌ Revenue section shows: "لا توجد بيانات إيرادات متاحة" (No revenue data available)
+- ❌ Expenses section shows: "لا توجد بيانات مصروفات متاحة" (No expense data available)
+- ❌ All totals show 0.00 SAR
+- ❌ API call fails with 404 error
+- ❌ No account details displayed
+
+**Console Errors:**
+```
+Failed to load resource: the server responded with a status of 404 ()
+Error fetching income statement: AxiosError
+```
+
+---
+
+### 📊 DETAILED FINDINGS
+
+#### Backend API Status: ✅ ALL WORKING
+
+| Endpoint | Status | Response |
+|----------|--------|----------|
+| GET /api/finance/reports/balance-sheet | ✅ 200 OK | Complete data structure |
+| GET /api/finance/reports/income-statement | ✅ 200 OK | Complete data structure |
+| GET /api/finance/chart-of-accounts | ✅ 200 OK | 11 accounts returned |
+
+#### Frontend API Configuration: ✅ CORRECT
+
+File: `/app/frontend/src/services/api.js`
+```javascript
+const financeAPI = {
+  getBalanceSheet: (params) => api.get('/finance/reports/balance-sheet', { params }),
+  getIncomeStatement: (params) => api.get('/finance/reports/income-statement', { params }),
+  getChartOfAccounts: () => api.get('/finance/chart-of-accounts', { params: {...} }),
+}
+```
+
+#### Frontend Pages: ✅ IMPLEMENTED CORRECTLY
+
+- `/app/frontend/src/pages/BalanceSheet.jsx` - Uses financeAPI.getBalanceSheet()
+- `/app/frontend/src/pages/IncomeStatement.jsx` - Uses financeAPI.getIncomeStatement()
+- `/app/frontend/src/pages/ChartOfAccounts.jsx` - Uses DEFAULT_ACCOUNTS (hardcoded)
+
+---
+
+### 🔴 CRITICAL ISSUES REQUIRING IMMEDIATE FIX
+
+#### **ISSUE #1: API Endpoint Mismatch (HIGHEST PRIORITY)**
+
+**Problem:** Frontend is somehow calling `/api/v1/accounting/reports/*` instead of `/api/finance/reports/*`
+
+**Evidence:**
+- Code in `api.js` uses correct path: `/finance/reports/balance-sheet`
+- Console shows failed requests to: `/api/v1/accounting/reports/balance-sheet`
+- Backend only serves: `/api/finance/reports/balance-sheet`
+
+**Possible Causes:**
+1. Browser caching old JavaScript bundle
+2. Service worker caching old API configuration
+3. Proxy or rewrite rule in nginx/ingress
+4. Multiple versions of api.js being bundled
+5. External monitoring script (emergent-main.js) intercepting calls
+
+**Recommended Fix:**
+1. Clear browser cache and rebuild frontend
+2. Check for service workers: `navigator.serviceWorker.getRegistrations()`
+3. Verify no proxy rewrites in nginx/ingress configuration
+4. Check if there are multiple api.js files in the build
+5. Add console.log in api.js to verify which path is being called
+
+---
+
+#### **ISSUE #2: Data Structure Mismatch (HIGH PRIORITY)**
+
+**Problem:** Frontend expects different data structure than backend provides
+
+**Balance Sheet Mismatch:**
+
+Frontend expects flat account arrays:
+```javascript
+sections: {
+  assets: [{code: "101", name: "النقدية", balance: 150000}],
+  liabilities: [{code: "211", name: "ذمم دائنة", balance: 320000}],
+  equity: [{code: "301", name: "رأس المال", balance: 1000000}]
+}
+```
+
+Backend returns nested structure:
+```javascript
+assets: {
+  current: {cash: 150000, receivables: 250000, inventory: 180000},
+  fixed: {equipment: 500000, vehicles: 300000},
+  total: 1380000
+}
+```
+
+**Income Statement Mismatch:**
+
+Frontend expects account-level details:
+```javascript
+details: {
+  revenue_by_account: {"411": 475000, "412": 125000},
+  expenses_by_account: {"514": 120000, "521": 150000}
+}
+```
+
+Backend returns category-level summary:
+```javascript
+revenue: {service_sales: 475000, parts_sales: 125000, total: 600000},
+expenses: {salaries: 150000, rent: 50000, parts_cost: 120000, utilities: 25000, total: 345000}
+```
+
+**Recommended Fix:**
+Choose one of two approaches:
+
+**Option A: Update Backend to Match Frontend**
+- Modify `/app/backend/routes_finance.py` to return data in the format frontend expects
+- Add account-level details with codes and names
+- Flatten nested structures into arrays
+
+**Option B: Update Frontend to Match Backend**
+- Modify `/app/frontend/src/pages/BalanceSheet.jsx` to parse nested structure
+- Modify `/app/frontend/src/pages/IncomeStatement.jsx` to display category summaries
+- Transform backend data into display format
+
+**Recommendation:** Option A is preferred as it provides more detailed financial data.
+
+---
+
+### 📸 SCREENSHOTS CAPTURED
+
+1. **02_balance_sheet.png** - Shows page structure with "No accounts available" messages
+2. **03_income_statement.png** - Shows page structure with "No data available" messages
+3. **04_chart_of_accounts.png** - Shows fully working page with account hierarchy
+
+---
+
+### 🎯 TESTING SUMMARY
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Page Accessibility** | ✅ PASS | All 3 pages load without 404 errors |
+| **UI Components** | ✅ PASS | Titles, buttons, filters all render correctly |
+| **Backend APIs** | ✅ PASS | All endpoints return 200 OK with data |
+| **Frontend API Config** | ✅ PASS | api.js has correct endpoint paths |
+| **Data Display (Balance Sheet)** | ❌ FAIL | No data displayed, API call fails |
+| **Data Display (Income Statement)** | ❌ FAIL | No data displayed, API call fails |
+| **Data Display (Chart of Accounts)** | ✅ PASS | Hardcoded data displays correctly |
+| **Arabic Text Support** | ✅ PASS | All Arabic labels render correctly |
+| **RTL Layout** | ✅ PASS | Right-to-left layout working |
+
+---
+
+### 🔧 RECOMMENDATIONS FOR MAIN AGENT
+
+**IMMEDIATE ACTIONS (CRITICAL):**
+
+1. **Fix API Endpoint Mismatch:**
+   - Investigate why frontend calls `/api/v1/accounting/reports/*` instead of `/api/finance/reports/*`
+   - Clear frontend build cache: `cd /app/frontend && rm -rf build/ node_modules/.cache/`
+   - Rebuild frontend: `cd /app/frontend && yarn build`
+   - Restart frontend service: `sudo supervisorctl restart frontend`
+   - Verify no nginx/ingress rewrites changing the API path
+
+2. **Fix Data Structure Mismatch:**
+   - Update backend `/app/backend/routes_finance.py` to return data in format frontend expects
+   - OR update frontend pages to parse backend's current data structure
+   - Ensure `totals` and `sections` objects match expected format
+
+3. **Test After Fixes:**
+   - Verify Balance Sheet displays account details
+   - Verify Income Statement displays revenue/expense details
+   - Confirm no console errors
+   - Ensure all totals calculate correctly
+
+**MEDIUM PRIORITY:**
+
+4. **Chart of Accounts API Integration:**
+   - Currently uses hardcoded DEFAULT_ACCOUNTS
+   - Consider integrating with backend API for dynamic data
+   - Or keep hardcoded if this is intentional for demo purposes
+
+5. **Add Error Handling:**
+   - Display more user-friendly error messages
+   - Add retry mechanism for failed API calls
+   - Show loading states during data fetch
+
+**LOW PRIORITY:**
+
+6. **UI Enhancements:**
+   - Add export to PDF/Excel functionality
+   - Add print button implementation
+   - Consider adding charts/graphs for visual representation
+
+---
+
+### ✅ WHAT'S WORKING PERFECTLY
+
+1. **Page Routing:** All three finance pages accessible via correct URLs
+2. **UI Layout:** Professional Arabic RTL layout with proper styling
+3. **Navigation:** Sidebar navigation to all finance pages working
+4. **Backend APIs:** All finance endpoints returning correct data
+5. **Chart of Accounts:** Fully functional with account hierarchy display
+6. **Date Pickers:** Date selection working on Balance Sheet and Income Statement
+7. **Summary Cards:** All summary cards render with correct styling
+8. **Arabic Support:** All Arabic text displays correctly
+
+---
+
+### ❌ WHAT'S NOT WORKING
+
+1. **Balance Sheet Data:** API call fails, no accounts displayed
+2. **Income Statement Data:** API call fails, no revenue/expense details shown
+3. **API Endpoint Resolution:** Frontend calling wrong API path (v1/accounting vs finance)
+4. **Data Structure:** Mismatch between frontend expectations and backend response
+
+---
+
+### 📋 USER REQUEST STATUS
+
+**Original Request:**
+> اختبار الصفحات المالية الجديدة:
+> 1. صفحة الميزانية العمومية - التأكد من ظهور الأصول والالتزامات وحقوق الملكية
+> 2. صفحة قائمة الدخل - التأكد من ظهور الإيرادات والمصروفات وصافي الربح
+> 3. صفحة دليل الحسابات - التأكد من ظهور قائمة الحسابات مع الأكواد والأسماء والأرصدة
+> 4. التأكد من عدم وجود رسالة خطأ 404
+
+**Status:**
+- ✅ No 404 errors on any page
+- ❌ Balance Sheet: Assets/Liabilities/Equity sections present but NO DATA displayed
+- ❌ Income Statement: Revenue/Expenses/Net Income sections present but NO DATA displayed
+- ✅ Chart of Accounts: Account codes, names, and balances ALL DISPLAYED correctly
+
+**Conclusion:** 
+Pages are accessible and UI is correct, but Balance Sheet and Income Statement are not displaying data due to API endpoint mismatch and data structure issues. Chart of Accounts works perfectly.
+
+---
+
+**Test Completed:** 2026-01-23 15:42 UTC
+**Tested By:** Testing Agent (Automated Playwright Tests)
+**Status:** ⚠️ PARTIAL SUCCESS - Critical issues found requiring main agent intervention
+

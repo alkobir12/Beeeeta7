@@ -337,6 +337,51 @@ const VehicleDetails = () => {
     }
   };
 
+  const createOrUpdateInvoice = async (vehicleId, parts) => {
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      
+      // حساب المجموع
+      const subtotal = parts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+      const tax = subtotal * 0.15; // 15% VAT
+      const total = subtotal + tax;
+      
+      // البحث عن فاتورة موجودة لهذه المركبة
+      const invoicesRes = await axios.get(`${API_URL}/invoices?vehicleId=${vehicleId}`);
+      const existingInvoice = invoicesRes.data?.find(inv => inv.vehicleId === vehicleId && inv.status !== 'paid');
+      
+      const invoiceData = {
+        vehicleId: vehicleId,
+        customerId: vehicle.customerId,
+        customerName: vehicle.customerName,
+        plateNumber: vehicle.plateNumber,
+        items: parts.map(p => ({
+          name: p.name,
+          quantity: p.quantity,
+          price: p.price,
+          total: p.price * p.quantity
+        })),
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        status: 'pending',
+        date: new Date().toISOString()
+      };
+      
+      if (existingInvoice) {
+        // تحديث الفاتورة الموجودة
+        await axios.put(`${API_URL}/invoices/${existingInvoice.id}`, invoiceData);
+        console.log('✅ تم تحديث الفاتورة:', existingInvoice.id);
+      } else {
+        // إنشاء فاتورة جديدة
+        const newInvoice = await axios.post(`${API_URL}/invoices`, invoiceData);
+        console.log('✅ تم إنشاء فاتورة جديدة:', newInvoice.data.id);
+      }
+    } catch (error) {
+      console.error('خطأ في إنشاء/تحديث الفاتورة:', error);
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div>;
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 

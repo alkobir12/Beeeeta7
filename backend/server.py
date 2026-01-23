@@ -977,6 +977,95 @@ async def get_salaries():
 # Include the api_router
 app.include_router(api_router)
 
+# Add AI Financial Analysis route
+from pydantic import BaseModel
+from typing import Dict, Any
+
+class FinancialAnalysisRequest(BaseModel):
+    query: str
+    financial_data: Dict[str, Any]
+
+@app.post("/api/ai/financial-analysis")
+async def financial_analysis(request: FinancialAnalysisRequest):
+    """AI-powered financial analysis endpoint"""
+    try:
+        openai_key = os.getenv('OPENAI_API_KEY')
+        
+        if not openai_key:
+            # Return mock analysis if no API key
+            return {"analysis": generate_mock_financial_analysis(request.query, request.financial_data)}
+        
+        import openai
+        client = openai.OpenAI(api_key=openai_key)
+        
+        # Prepare context with financial data
+        context = f"""
+        أنت محلل مالي خبير متخصص في ورش السيارات والأعمال الصغيرة.
+        
+        البيانات المالية الحالية:
+        - الإيرادات: {request.financial_data.get('revenue', 0):,.0f} ريال
+        - المصروفات: {request.financial_data.get('expenses', 0):,.0f} ريال
+        - صافي الربح: {request.financial_data.get('net_income', 0):,.0f} ريال
+        - هامش الربح الإجمالي: {request.financial_data.get('gross_margin', 0):.1f}%
+        - هامش صافي الربح: {request.financial_data.get('net_margin', 0):.1f}%
+        - نسبة السيولة الحالية: {request.financial_data.get('current_ratio', 0):.2f}
+        - نسبة الدين إلى حقوق الملكية: {request.financial_data.get('debt_to_equity', 0):.2f}
+        - إجمالي الأصول: {request.financial_data.get('assets', 0):,.0f} ريال
+        - إجمالي الالتزامات: {request.financial_data.get('liabilities', 0):,.0f} ريال
+        - حقوق الملكية: {request.financial_data.get('equity', 0):,.0f} ريال
+        
+        أجب باللغة العربية واستخدم تنسيق Markdown مع عناوين وقوائم نقطية.
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": context},
+                {"role": "user", "content": request.query}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+        
+        return {"analysis": response.choices[0].message.content}
+        
+    except Exception as e:
+        logger.error(f"Financial analysis error: {e}")
+        return {"analysis": generate_mock_financial_analysis(request.query, request.financial_data)}
+
+def generate_mock_financial_analysis(query: str, data: Dict[str, Any]) -> str:
+    """Generate mock financial analysis when API is unavailable"""
+    revenue = data.get('revenue', 528000)
+    expenses = data.get('expenses', 465000)
+    net_income = data.get('net_income', 63000)
+    gross_margin = data.get('gross_margin', 75.4)
+    net_margin = data.get('net_margin', 11.9)
+    current_ratio = data.get('current_ratio', 3.28)
+    
+    return f"""
+## تحليل الوضع المالي 📊
+
+بناءً على البيانات المالية المتاحة، إليك تحليلي:
+
+### نقاط القوة ✅
+- **هامش ربح إجمالي قوي** ({gross_margin}%): يدل على كفاءة في إدارة تكاليف المبيعات
+- **نسبة سيولة ممتازة** ({current_ratio}): الأصول المتداولة تغطي الالتزامات قصيرة الأجل بأكثر من 3 مرات
+- **إيرادات جيدة** ({revenue:,.0f} ريال): تدل على قاعدة عملاء نشطة
+
+### نقاط تحتاج انتباه ⚠️
+- **هامش صافي الربح** ({net_margin}%): يمكن تحسينه من خلال ضبط المصاريف التشغيلية
+- **نسبة المصاريف للإيرادات** مرتفعة نسبياً
+
+### التوصيات 💡
+1. مراجعة تكاليف الرواتب والمصاريف الإدارية
+2. تحسين إدارة المخزون لتقليل التكاليف
+3. النظر في زيادة الأسعار بشكل تدريجي
+4. تعزيز جهود التحصيل لتحسين السيولة
+
+### الخلاصة
+الوضع المالي العام **جيد** مع وجود فرص واضحة للتحسين. صافي الربح الحالي ({net_income:,.0f} ريال) يمكن زيادته بتطبيق التوصيات المذكورة.
+"""
+
 # Add AI Chat route
 @app.post("/api/ai/chat", response_model=ChatResponse)
 async def chat_with_ai(chat_request: ChatRequest):

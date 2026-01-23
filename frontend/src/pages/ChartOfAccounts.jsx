@@ -328,22 +328,46 @@ export default function ChartOfAccounts() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[
-          { label: 'الأصول', value: totals.assets, type: 'asset' },
-          { label: 'الالتزامات', value: totals.liabilities, type: 'liability' },
-          { label: 'حقوق الملكية', value: totals.equity, type: 'equity' },
-          { label: 'الإيرادات', value: totals.revenue, type: 'revenue' },
-          { label: 'المصروفات', value: totals.expenses, type: 'expense' },
-        ].map((item) => {
-          const typeInfo = getAccountTypeInfo(item.type);
-          return (
-            <div key={item.type} className={`${typeInfo.bgColor} rounded-xl p-4 border border-gray-700`}>
-              <p className={`text-sm ${typeInfo.color}`}>{item.label}</p>
-              <p className="text-lg font-bold text-white mt-1">{formatCurrency(item.value)}</p>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between mb-2">
+            <Wallet className="text-blue-600" size={20} />
+            <span className="text-xs font-semibold text-blue-800">الأصول</span>
+          </div>
+          <div className="text-2xl font-bold text-blue-900">{formatCurrency(totals.assets)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingDown className="text-red-600" size={20} />
+            <span className="text-xs font-semibold text-red-800">الالتزامات</span>
+          </div>
+          <div className="text-2xl font-bold text-red-900">{formatCurrency(totals.liabilities)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+          <div className="flex items-center justify-between mb-2">
+            <DollarSign className="text-purple-600" size={20} />
+            <span className="text-xs font-semibold text-purple-800">حقوق الملكية</span>
+          </div>
+          <div className="text-2xl font-bold text-purple-900">{formatCurrency(totals.equity)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingUp className="text-green-600" size={20} />
+            <span className="text-xs font-semibold text-green-800">الإيرادات</span>
+          </div>
+          <div className="text-2xl font-bold text-green-900">{formatCurrency(totals.revenues)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingDown className="text-orange-600" size={20} />
+            <span className="text-xs font-semibold text-orange-800">المصروفات</span>
+          </div>
+          <div className="text-2xl font-bold text-orange-900">{formatCurrency(totals.expenses)}</div>
+        </div>
       </div>
 
       {/* Search */}

@@ -2626,3 +2626,170 @@ Pages are accessible and UI is correct, but Balance Sheet and Income Statement a
 **Tested By:** Testing Agent (Automated Playwright Tests)
 **Status:** ⚠️ PARTIAL SUCCESS - Critical issues found requiring main agent intervention
 
+
+---
+
+## Operations Page accounts.map Error Fix Verification (2026-01-23)
+
+### Test Objective:
+اختبار سريع لصفحة Operations بعد إصلاح accounts.map error
+Quick test for Operations page after fixing accounts.map error
+
+### Test Environment:
+- Frontend: `/app/frontend/src/pages/Operations.jsx`
+- Backend: `/api/accounts-chart` (via financeAPI.getChartOfAccounts())
+- Testing Date: 2026-01-23 17:44:16
+
+### Test Results Summary: ✅ FULLY WORKING - ALL TESTS PASSED
+
+#### ✅ FIX VERIFICATION - SUCCESSFUL
+
+**Fix Applied (Lines 66-92 in Operations.jsx):**
+```javascript
+// 🔧 الإصلاح: استخراج البيانات بشكل آمن
+let accountsData = [];
+
+if (chartAccRes?.data) {
+  // الحالة 1: {success: true, data: [...]}
+  if (chartAccRes.data.success && Array.isArray(chartAccRes.data.data)) {
+    accountsData = chartAccRes.data.data;
+  }
+  // الحالة 2: المصفوفة مباشرة {data: [...]}
+  else if (Array.isArray(chartAccRes.data.data)) {
+    accountsData = chartAccRes.data.data;
+  }
+  // الحالة 3: مصفوفة مباشرة
+  else if (Array.isArray(chartAccRes.data)) {
+    accountsData = chartAccRes.data;
+  }
+  // الحالة 4: {accounts: [...]}
+  else if (chartAccRes.data.accounts && Array.isArray(chartAccRes.data.accounts)) {
+    accountsData = chartAccRes.data.accounts;
+  }
+}
+
+setAccounts(accountsData || []);
+```
+
+**Fix Applied (Lines 239-252 in Operations.jsx):**
+```javascript
+{/* 🔧 الإصلاح: تحقق من أن accounts مصفوفة قبل استخدام .map() */}
+{Array.isArray(accounts) ? (
+  accounts.length > 0 ? (
+    accounts.map(a => (
+      <option key={a.id || a.code} value={a.id || a.code}>
+        {a.name_ar || a.name || a.code}
+      </option>
+    ))
+  ) : (
+    <option value="">لا توجد حسابات</option>
+  )
+) : (
+  <option value="">جاري التحميل...</option>
+)}
+```
+
+#### ✅ TEST RESULTS:
+
+**1. ✅ Page Load - SUCCESSFUL**
+- Status: ✅ Page loaded without crashes
+- URL: `/operations`
+- No JavaScript errors detected
+- No "accounts.map is not a function" errors
+
+**2. ✅ Accounts Dropdown - WORKING**
+- Status: ✅ Dropdown found and populated
+- Total Options: 31 options
+- Sample Accounts Displayed:
+  - "Select Account" (placeholder)
+  - "النقدية" (Cash)
+  - "إيرادات خدمات" (Service Revenue)
+- Verification: Array.isArray() check prevents map error
+
+**3. ✅ Console Logs - CLEAN**
+- Status: ✅ No JavaScript errors
+- No "map is not a function" errors
+- No console.error messages
+- Backend API response handled correctly
+
+**4. ✅ UI Rendering - CORRECT**
+- Page Title: "Operations" ✅
+- Subtitle: "Manage purchase and sales operations" ✅
+- Form Fields: All rendered correctly ✅
+- Accounts dropdown: Populated with 31 options ✅
+- Recent Operations: Displayed correctly ✅
+
+#### 📊 COMPREHENSIVE TEST RESULTS:
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Page Load** | ✅ WORKING | No crashes or errors |
+| **Accounts Dropdown** | ✅ WORKING | 31 options populated |
+| **Array.isArray() Check** | ✅ WORKING | Prevents map error |
+| **Backend API** | ✅ WORKING | Returns correct data structure |
+| **Console Logs** | ✅ CLEAN | No JavaScript errors |
+| **UI Rendering** | ✅ WORKING | All elements display correctly |
+
+#### 🎯 KEY FINDINGS:
+
+**✅ CRITICAL FIX SUCCESSFUL:**
+1. **Array.isArray() check added** - Prevents "accounts.map is not a function" error
+2. **Safe data extraction** - Handles multiple API response formats
+3. **Fallback handling** - Shows appropriate messages when no accounts available
+4. **No breaking changes** - Existing functionality preserved
+
+**✅ BACKEND INTEGRATION:**
+- financeAPI.getChartOfAccounts() returns correct data
+- Multiple response format handling implemented
+- Console logs show successful data extraction
+
+**✅ USER EXPERIENCE:**
+- Dropdown displays 31 account options
+- No error messages visible to user
+- Page loads smoothly without crashes
+- All form fields functional
+
+#### 🔧 TECHNICAL DETAILS:
+
+**Fix Strategy:**
+1. Added comprehensive null/undefined checks
+2. Implemented Array.isArray() validation before .map()
+3. Added fallback for different API response structures
+4. Ensured graceful degradation with empty state messages
+
+**API Response Handling:**
+- Handles: `{success: true, data: [...]}`
+- Handles: `{data: [...]}`
+- Handles: `[...]` (direct array)
+- Handles: `{accounts: [...]}`
+
+**Error Prevention:**
+- Array.isArray() check before .map()
+- Fallback to empty array if data is invalid
+- Conditional rendering based on array state
+
+### 📸 SCREENSHOT:
+- `operations_page_test.png` - Shows Operations page with populated accounts dropdown (31 options)
+
+### 🎉 CONCLUSION:
+
+**Status: ✅ FIX VERIFIED - PRODUCTION READY**
+
+The accounts.map error has been successfully fixed in Operations.jsx. The page now:
+- ✅ Loads without JavaScript errors
+- ✅ Displays accounts dropdown with 31 options
+- ✅ Handles API responses safely with Array.isArray() checks
+- ✅ Shows appropriate fallback messages
+- ✅ No "accounts.map is not a function" errors
+
+**User Request Fulfilled**: The quick test confirms the fix is working correctly. The accounts dropdown is populated and no JavaScript errors are present.
+
+**Next Steps**: The Operations page is ready for production use. No further fixes needed for this issue.
+
+---
+
+**Test Completed:** 2026-01-23 17:44:16
+**Status:** ✅ PASSED (All tests successful)
+**Critical Issues:** 0
+**Minor Issues:** 0
+

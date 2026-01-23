@@ -64,7 +64,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
     {
       group: true,
-      label: i18n.language === 'ar' ? '📊 المحاسبة' : '📊 Accounting',
+      label: i18n.language === 'ar' ? '💰 المالية والمحاسبة' : '💰 Finance & Accounting',
       icon: BarChart3,
       enabled: true,
       permission: 'canManageSettings',
@@ -75,15 +75,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/accounting/income-statement', label: i18n.language === 'ar' ? 'قائمة الدخل' : 'Income Statement', enabled: true },
         { path: '/accounting/cash-flow', label: i18n.language === 'ar' ? 'التدفقات النقدية' : 'Cash Flow', enabled: true },
         { path: '/accounting/trial-balance', label: i18n.language === 'ar' ? 'ميزان المراجعة' : 'Trial Balance', enabled: true },
-      ]
-    },
-    {
-      group: true,
-      label: i18n.language === 'ar' ? '💰 المالية' : '💰 Finance',
-      icon: DollarSign,
-      enabled: true,
-      permission: 'canManageSettings',
-      children: [
         { path: '/finance/invoices', label: i18n.language === 'ar' ? 'الفواتير' : 'Invoices', enabled: true },
         { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
         { path: '/ai-financial', label: i18n.language === 'ar' ? '🤖 التحليل الذكي' : '🤖 AI Analysis', enabled: true },

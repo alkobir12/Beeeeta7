@@ -108,7 +108,7 @@ const financeAPI = {
   getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
   getJournalEntries: (params) => api.get('/finance/journal-entries', { params }),
   createJournalEntry: (data) =>
-    api.post('/v1/accounting/journal-entries', data, {
+    api.post('/finance/journal-entries', data, {
       params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
     }),
   getChartOfAccounts: () =>

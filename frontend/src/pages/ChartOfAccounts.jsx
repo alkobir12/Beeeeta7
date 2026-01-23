@@ -63,12 +63,120 @@ const DEFAULT_ACCOUNTS = [
 ];
 
 export default function ChartOfAccounts() {
-  const [accounts, setAccounts] = useState(DEFAULT_ACCOUNTS);
-  const [loading, setLoading] = useState(false);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState(['1', '2', '3', '4', '5']);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedParent, setSelectedParent] = useState(null);
+
+  // جلب الحسابات من الـ API عند تحميل الصفحة
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  const fetchAccounts = async () => {
+    setLoading(true);
+    try {
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // تحويل البيانات من الـ API إلى format الصفحة
+        const transformedAccounts = [];
+        const accountsByType = {
+          asset: [],
+          liability: [],
+          equity: [],
+          revenue: [],
+          expense: []
+        };
+        
+        // تصنيف الحسابات حسب النوع
+        data.data.forEach(acc => {
+          const type = acc.type || 'asset';
+          if (accountsByType[type]) {
+            accountsByType[type].push({
+              id: acc.id || acc.code,
+              code: acc.code,
+              name_ar: acc.name_ar || acc.name,
+              type: type,
+              category: acc.category,
+              parent_id: null,
+              current_balance: acc.balance || 0
+            });
+          }
+        });
+        
+        // بناء شجرة الحسابات مع headers
+        if (accountsByType.asset.length > 0) {
+          transformedAccounts.push({
+            id: '1', code: '1', name_ar: 'الأصول', type: 'asset', 
+            category: null, parent_id: null, current_balance: 0, isExpanded: true
+          });
+          accountsByType.asset.forEach(acc => {
+            acc.parent_id = '1';
+            transformedAccounts.push(acc);
+          });
+        }
+        
+        if (accountsByType.liability.length > 0) {
+          transformedAccounts.push({
+            id: '2', code: '2', name_ar: 'الالتزامات', type: 'liability',
+            category: null, parent_id: null, current_balance: 0, isExpanded: true
+          });
+          accountsByType.liability.forEach(acc => {
+            acc.parent_id = '2';
+            transformedAccounts.push(acc);
+          });
+        }
+        
+        if (accountsByType.equity.length > 0) {
+          transformedAccounts.push({
+            id: '3', code: '3', name_ar: 'حقوق الملكية', type: 'equity',
+            category: null, parent_id: null, current_balance: 0, isExpanded: true
+          });
+          accountsByType.equity.forEach(acc => {
+            acc.parent_id = '3';
+            transformedAccounts.push(acc);
+          });
+        }
+        
+        if (accountsByType.revenue.length > 0) {
+          transformedAccounts.push({
+            id: '4', code: '4', name_ar: 'الإيرادات', type: 'revenue',
+            category: null, parent_id: null, current_balance: 0, isExpanded: true
+          });
+          accountsByType.revenue.forEach(acc => {
+            acc.parent_id = '4';
+            transformedAccounts.push(acc);
+          });
+        }
+        
+        if (accountsByType.expense.length > 0) {
+          transformedAccounts.push({
+            id: '5', code: '5', name_ar: 'المصروفات', type: 'expense',
+            category: null, parent_id: null, current_balance: 0, isExpanded: true
+          });
+          accountsByType.expense.forEach(acc => {
+            acc.parent_id = '5';
+            transformedAccounts.push(acc);
+          });
+        }
+        
+        setAccounts(transformedAccounts.length > 0 ? transformedAccounts : DEFAULT_ACCOUNTS);
+      } else {
+        // استخدام البيانات الافتراضية
+        setAccounts(DEFAULT_ACCOUNTS);
+      }
+    } catch (error) {
+      console.error('Error fetching chart of accounts:', error);
+      setAccounts(DEFAULT_ACCOUNTS);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getAccountTypeInfo = (type) => {
     const types = {

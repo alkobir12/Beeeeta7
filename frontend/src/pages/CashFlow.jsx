@@ -86,8 +86,8 @@ const CashFlow = () => {
             قائمة التدفقات النقدية
           </h1>
           <p className="text-gray-600 mt-1">
-            تتبع حركة النقد الداخل والخارج عن الفترة من {formatDate(period.start_date)} إلى{' '}
-            {formatDate(period.end_date)}
+            تتبع حركة النقد الداخل والخارج عن الفترة من {new Date(startDate).toLocaleDateString('ar-SA')} إلى{' '}
+            {new Date(endDate).toLocaleDateString('ar-SA')}
           </p>
         </div>
 

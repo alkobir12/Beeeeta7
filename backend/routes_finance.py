@@ -516,6 +516,36 @@ async def get_journal_entries(
         
         return {"success": True, "data": entries, "total": len(entries)}
 
+@router.post("/journal-entries")
+async def create_journal_entry(
+    entry: dict,
+    workshop_id: str = Query(...)
+):
+    """
+    إنشاء قيد محاسبي جديد
+    """
+    try:
+        # إضافة معلومات إضافية
+        entry['workshop_id'] = workshop_id
+        entry['created_at'] = datetime.now()
+        entry['id'] = entry.get('id', str(uuid.uuid4()))
+        
+        # حفظ في MongoDB
+        result = await db.journal_entries.insert_one(entry)
+        
+        return {
+            "success": True,
+            "message": "تم إنشاء القيد المحاسبي بنجاح",
+            "id": entry['id']
+        }
+        
+    except Exception as e:
+        print(f"Error in create_journal_entry: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @router.get("/operations")
 async def get_financial_operations(
     workshop_id: str = Query(...),

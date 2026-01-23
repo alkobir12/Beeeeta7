@@ -322,32 +322,77 @@ async def get_cash_flow(
     end_date: str = Query(...)
 ):
     """
-    قائمة التدفقات النقدية
+    قائمة التدفقات النقدية من بيانات العمليات الحقيقية في Supabase
     """
-    return {
-        "success": True,
-        "data": {
-            "period": f"{start_date} إلى {end_date}",
-            "operating_activities": {
-                "cash_from_customers": 520000,
-                "cash_to_suppliers": -280000,
-                "cash_to_employees": -150000,
-                "net_operating_cash": 90000
-            },
-            "investing_activities": {
-                "equipment_purchase": -120000,
-                "net_investing_cash": -120000
-            },
-            "financing_activities": {
-                "loan_proceeds": 200000,
-                "loan_payments": -50000,
-                "net_financing_cash": 150000
-            },
-            "net_change_in_cash": 120000,
-            "beginning_cash": 30000,
-            "ending_cash": 150000
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        # جلب العمليات من Supabase
+        response = supabase.table("operations") \
+            .select("*") \
+            .gte("op_date", start_date) \
+            .lte("op_date", end_date) \
+            .execute()
+        
+        operations = response.data
+        
+        # حساب التدفقات النقدية
+        cash_from_operations = 0
+        cash_to_suppliers = 0
+        
+        for op in operations:
+            op_type = op.get('type', '')
+            total = float(op.get('total', 0) or 0)
+            payment_method = op.get('payment_method', 'cash')
+            
+            if payment_method == 'cash':
+                if op_type == 'sale':
+                    cash_from_operations += total
+                elif op_type == 'purchase' or op_type == 'expense':
+                    cash_to_suppliers += total
+        
+        net_operating_cash = cash_from_operations - cash_to_suppliers
+        
+        return {
+            "success": True,
+            "data": {
+                "period": f"{start_date} إلى {end_date}",
+                "operating_activities": {
+                    "cash_from_customers": round(cash_from_operations, 2),
+                    "cash_to_suppliers": round(-cash_to_suppliers, 2),
+                    "net_operating_cash": round(net_operating_cash, 2)
+                },
+                "investing_activities": {
+                    "equipment_purchase": 0,
+                    "net_investing_cash": 0
+                },
+                "financing_activities": {
+                    "loan_proceeds": 0,
+                    "loan_payments": 0,
+                    "net_financing_cash": 0
+                },
+                "net_change_in_cash": round(net_operating_cash, 2),
+                "beginning_cash": 0,
+                "ending_cash": round(net_operating_cash, 2)
+            }
         }
-    }
+        
+    except Exception as e:
+        print(f"Error in get_cash_flow: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": f"{start_date} إلى {end_date}",
+                "operating_activities": {"cash_from_customers": 0, "cash_to_suppliers": 0, "net_operating_cash": 0},
+                "investing_activities": {"equipment_purchase": 0, "net_investing_cash": 0},
+                "financing_activities": {"loan_proceeds": 0, "loan_payments": 0, "net_financing_cash": 0},
+                "net_change_in_cash": 0,
+                "beginning_cash": 0,
+                "ending_cash": 0
+            }
+        }
 
 @router.get("/reports/trial-balance")
 async def get_trial_balance(
@@ -355,28 +400,119 @@ async def get_trial_balance(
     date: Optional[str] = Query(None)
 ):
     """
-    ميزان المراجعة
+    ميزان المراجعة من البيانات الحقيقية في Supabase
     """
-    return {
-        "success": True,
-        "data": {
-            "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",
-            "accounts": [
-                {"code": "101", "name": "النقدية", "debit": 150000, "credit": 0},
-                {"code": "113", "name": "ذمم مدينة", "debit": 250000, "credit": 0},
-                {"code": "121", "name": "مخزون قطع الغيار", "debit": 180000, "credit": 0},
-                {"code": "211", "name": "ذمم دائنة", "debit": 0, "credit": 320000},
-                {"code": "301", "name": "رأس المال", "debit": 0, "credit": 1000000},
-                {"code": "411", "name": "إيرادات الخدمات", "debit": 0, "credit": 600000},
-                {"code": "514", "name": "مصاريف قطع الغيار", "debit": 120000, "credit": 0},
-                {"code": "521", "name": "مصاريف رواتب", "debit": 150000, "credit": 0},
-            ],
-            "totals": {
-                "total_debit": 850000,
-                "total_credit": 1920000
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        target_date = date or datetime.now().strftime('%Y-%m-%d')
+        
+        # جلب جميع العمليات
+        response = supabase.table("operations") \
+            .select("*") \
+            .lte("op_date", target_date) \
+            .execute()
+        
+        operations = response.data
+        
+        # حساب الأرصدة لكل حساب
+        accounts_balances = {}
+        
+        for op in operations:
+            op_type = op.get('type', '')
+            total = float(op.get('total', 0) or 0)
+            payment_method = op.get('payment_method', 'cash')
+            
+            if op_type == 'sale':
+                # دائن: إيرادات
+                if '411' not in accounts_balances:
+                    accounts_balances['411'] = {"name": "إيرادات خدمات الصيانة", "debit": 0, "credit": 0}
+                accounts_balances['411']['credit'] += total
+                
+                # مدين: نقدية أو ذمم
+                if payment_method == 'cash':
+                    if '101' not in accounts_balances:
+                        accounts_balances['101'] = {"name": "النقدية", "debit": 0, "credit": 0}
+                    accounts_balances['101']['debit'] += total
+                else:
+                    if '113' not in accounts_balances:
+                        accounts_balances['113'] = {"name": "ذمم مدينة", "debit": 0, "credit": 0}
+                    accounts_balances['113']['debit'] += total
+                    
+            elif op_type == 'purchase':
+                # مدين: مصروفات
+                if '514' not in accounts_balances:
+                    accounts_balances['514'] = {"name": "مصاريف قطع الغيار", "debit": 0, "credit": 0}
+                accounts_balances['514']['debit'] += total
+                
+                # دائن: نقدية أو ذمم
+                if payment_method == 'cash':
+                    if '101' not in accounts_balances:
+                        accounts_balances['101'] = {"name": "النقدية", "debit": 0, "credit": 0}
+                    accounts_balances['101']['credit'] += total
+                else:
+                    if '211' not in accounts_balances:
+                        accounts_balances['211'] = {"name": "ذمم دائنة", "debit": 0, "credit": 0}
+                    accounts_balances['211']['credit'] += total
+        
+        # بناء قائمة الحسابات
+        accounts_list = []
+        total_debit = 0
+        total_credit = 0
+        
+        for code in sorted(accounts_balances.keys()):
+            acc = accounts_balances[code]
+            debit = round(acc['debit'], 2)
+            credit = round(acc['credit'], 2)
+            
+            accounts_list.append({
+                "code": code,
+                "name": acc['name'],
+                "debit": debit,
+                "credit": credit
+            })
+            
+            total_debit += debit
+            total_credit += credit
+        
+        # إضافة حساب الأرباح المحتجزة
+        net_income = total_credit - total_debit
+        if net_income != 0:
+            accounts_list.append({
+                "code": "302",
+                "name": "الأرباح المحتجزة",
+                "debit": 0 if net_income > 0 else abs(net_income),
+                "credit": net_income if net_income > 0 else 0
+            })
+            if net_income > 0:
+                total_credit += net_income
+            else:
+                total_debit += abs(net_income)
+        
+        return {
+            "success": True,
+            "data": {
+                "period": f"حتى {target_date}",
+                "accounts": accounts_list,
+                "totals": {
+                    "total_debit": round(total_debit, 2),
+                    "total_credit": round(total_credit, 2)
+                }
             }
         }
-    }
+        
+    except Exception as e:
+        print(f"Error in get_trial_balance: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",
+                "accounts": [],
+                "totals": {"total_debit": 0, "total_credit": 0}
+            }
+        }
 
 @router.get("/chart-of-accounts")
 async def get_chart_of_accounts(

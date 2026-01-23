@@ -199,6 +199,7 @@ const Operations = () => {
         items: [],
         paymentMethod: 'cash',
         notes: '',
+        paymentReceipt: null
       });
       await load();
     } catch (e) {
@@ -381,6 +382,27 @@ const Operations = () => {
                     <option value="credit">{"Credit"}</option>
                   </select>
                 </div>
+              </div>
+
+              {/* رفع إيصال الدفع */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  📎 إيصال الدفع (اختياري)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setForm({ ...form, paymentReceipt: file });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {form.paymentReceipt && (
+                  <p className="text-xs text-green-600">✓ {form.paymentReceipt.name}</p>
+                )}
               </div>
             </div>
 

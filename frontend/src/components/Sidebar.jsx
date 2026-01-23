@@ -86,6 +86,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       children: [
         { path: '/finance/invoices', label: i18n.language === 'ar' ? 'الفواتير' : 'Invoices', enabled: true },
         { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
+        { path: '/ai-financial', label: i18n.language === 'ar' ? '🤖 التحليل الذكي' : '🤖 AI Analysis', enabled: true },
       ]
     },
     { path: '/fault-knowledge', label: '📚 قاعدة المعرفة', icon: Archive, enabled: true, permission: 'canManageVehicles' },

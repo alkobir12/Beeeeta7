@@ -266,21 +266,20 @@ async def get_income_statement(
     end_date: str = Query(...)
 ):
     """
-    قائمة الدخل من بيانات العمليات الحقيقية في MongoDB
+    قائمة الدخل من بيانات العمليات الحقيقية في Supabase
     """
     try:
-        # تحويل التواريخ إلى datetime objects
-        start_dt = datetime.fromisoformat(start_date)
-        end_dt = datetime.fromisoformat(end_date)
-        end_dt = end_dt.replace(hour=23, minute=59, second=59)
+        if not supabase:
+            raise Exception("Supabase not connected")
         
-        # جلب جميع العمليات في الفترة الزمنية
-        operations = await db.operations.find({
-            "date": {
-                "$gte": start_dt,
-                "$lte": end_dt
-            }
-        }).to_list(1000)
+        # جلب جميع العمليات في الفترة الزمنية من Supabase
+        response = supabase.table("operations") \
+            .select("*") \
+            .gte("op_date", start_date) \
+            .lte("op_date", end_date) \
+            .execute()
+        
+        operations = response.data
         
         # تصنيف العمليات حسب النوع
         revenue_accounts = {}
@@ -288,7 +287,7 @@ async def get_income_statement(
         
         for op in operations:
             op_type = op.get('type', '')
-            total = op.get('total', 0) or 0
+            total = float(op.get('total', 0) or 0)
             
             if op_type == 'sale':
                 # عمليات البيع = إيرادات

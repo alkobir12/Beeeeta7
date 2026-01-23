@@ -36,7 +36,7 @@ const CashFlow = () => {
       return;
     }
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint disabled
   }, [startDate, endDate, workshopId]);
 
   const fetchData = async () => {

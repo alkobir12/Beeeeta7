@@ -31,7 +31,7 @@ const Invoices = () => {
       return;
     }
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint disabled
   }, [statusFilter, typeFilter, workshopId]);
 
   const fetchData = async () => {

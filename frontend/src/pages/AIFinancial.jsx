@@ -52,7 +52,7 @@ const AIFinancial = () => {
       setError('لم يتم ضبط معرف الورشة REACT_APP_WORKSHOP_ID');
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint disabled
   }, [workshopId, timeRange]);
 
   const getStartDate = (range) => {

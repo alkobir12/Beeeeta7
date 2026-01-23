@@ -21,7 +21,7 @@ const TrialBalance = () => {
       return;
     }
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint disabled
   }, [asOfDate, workshopId]);
 
   const fetchData = async () => {

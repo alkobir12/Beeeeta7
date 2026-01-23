@@ -30,7 +30,8 @@ const Operations = () => {
     partnerName: '', 
     items: [], 
     paymentMethod: 'cash', 
-    notes: '' 
+    notes: '',
+    paymentReceipt: null
   });
   const [item, setItem] = useState({ 
     itemType: 'part', 

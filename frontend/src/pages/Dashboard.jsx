@@ -108,7 +108,9 @@ const Dashboard = () => {
       vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || vehicle.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || 
+                         vehicle.status === filterStatus ||
+                         (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
     return matchesSearch && matchesStatus;
   });
 

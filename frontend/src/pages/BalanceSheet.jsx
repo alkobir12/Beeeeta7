@@ -49,7 +49,7 @@ const BalanceSheet = () => {
     totals.liabilities_plus_equity !== undefined &&
     Math.abs(totals.assets - totals.liabilities_plus_equity) < 0.01;
 
-  const renderAccountsSection = (title, accounts, total, icon: any, headerBg: string, accentText: string) => {
+  const renderAccountsSection = (title, accounts, total, Icon, headerBg, accentText) => {
     const Icon = icon;
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">

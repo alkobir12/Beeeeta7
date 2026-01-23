@@ -67,6 +67,9 @@ const aiAPI = {
   workshopSearchTechnical: (payload) => axios.post(`${API_BASE}/ai/workshop/search-technical`, payload),
   workshopAppointment: (payload) => axios.post(`${API_BASE}/ai/workshop/appointment`, payload),
   workshopServiceReport: (payload) => axios.post(`${API_BASE}/ai/workshop/service-report`, payload),
+
+  // التحليل المالي بالذكاء الاصطناعي
+  financialAnalysis: (payload) => api.post('/ai/financial-analysis', payload),
 };
 
 const partAPI = {

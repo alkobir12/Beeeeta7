@@ -444,102 +444,91 @@ async def get_journal_entries(
     end_date: Optional[str] = Query(None)
 ):
     """
-    القيود المحاسبية المُنشأة من العمليات في MongoDB
+    القيود المحاسبية من Supabase و MongoDB operations
     """
     try:
-        # بناء query للتصفية حسب التاريخ
-        query = {}
-        if start_date and end_date:
-            start_dt = datetime.fromisoformat(start_date)
-            end_dt = datetime.fromisoformat(end_date)
-            end_dt = end_dt.replace(hour=23, minute=59, second=59)
-            query["date"] = {"$gte": start_dt, "$lte": end_dt}
-        
-        # جلب العمليات
-        operations = await db.operations.find(query).skip(skip).limit(limit).to_list(limit)
-        
-        # تحويل العمليات إلى قيود محاسبية
         entries = []
-        for op in operations:
-            op_type = op.get('type', '')
-            total = op.get('total', 0) or 0
-            date = op.get('date', datetime.now())
-            payment_method = op.get('paymentMethod', 'cash')
+        
+        # 1. جلب القيود المحاسبية اليدوية من Supabase
+        try:
+            query = supabase.table("journal_entries").select("*").eq("workshop_id", workshop_id)
             
-            if total == 0:
-                continue
+            if start_date:
+                query = query.gte("date", start_date)
+            if end_date:
+                query = query.lte("date", end_date)
             
-            lines = []
+            query = query.range(skip, skip + limit - 1)
+            response = query.execute()
             
-            if op_type == 'sale':
-                # قيد البيع
-                if payment_method == 'cash':
-                    # من ح/ النقدية
-                    lines.append({
-                        "account": "101",
-                        "account_name": "النقدية",
-                        "debit": total,
-                        "credit": 0
-                    })
-                else:
-                    # من ح/ الذمم المدينة
-                    lines.append({
-                        "account": "113",
-                        "account_name": "ذمم مدينة عملاء",
-                        "debit": total,
-                        "credit": 0
-                    })
-                
-                # إلى ح/ الإيرادات
-                lines.append({
-                    "account": "411",
-                    "account_name": "إيرادات خدمات الصيانة",
-                    "debit": 0,
-                    "credit": total
-                })
-                
+            for entry in response.data:
                 entries.append({
-                    "id": op.get('id', ''),
-                    "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
-                    "description": f"قيد بيع {payment_method}",
-                    "lines": lines,
-                    "total": total
+                    "id": entry.get("id"),
+                    "date": entry.get("date", ""),
+                    "description": entry.get("description", "قيد يدوي"),
+                    "lines": entry.get("lines", []),
+                    "total": entry.get("total", 0),
+                    "source": "manual"
                 })
+        except Exception as e:
+            print(f"Supabase journal_entries error: {e}")
+        
+        # 2. جلب القيود من operations (إذا كان MongoDB متاح)
+        if finance_db:
+            try:
+                query = {}
+                if start_date and end_date:
+                    start_dt = datetime.fromisoformat(start_date)
+                    end_dt = datetime.fromisoformat(end_date)
+                    end_dt = end_dt.replace(hour=23, minute=59, second=59)
+                    query["date"] = {"$gte": start_dt, "$lte": end_dt}
                 
-            elif op_type == 'purchase':
-                # قيد الشراء
-                # من ح/ مصاريف قطع الغيار
-                lines.append({
-                    "account": "514",
-                    "account_name": "مصاريف قطع الغيار",
-                    "debit": total,
-                    "credit": 0
-                })
+                operations = await finance_db.operations.find(query).skip(skip).limit(limit).to_list(limit)
                 
-                if payment_method == 'cash':
-                    # إلى ح/ النقدية
-                    lines.append({
-                        "account": "101",
-                        "account_name": "النقدية",
-                        "debit": 0,
-                        "credit": total
-                    })
-                else:
-                    # إلى ح/ الذمم الدائنة
-                    lines.append({
-                        "account": "211",
-                        "account_name": "ذمم دائنة موردين",
-                        "debit": 0,
-                        "credit": total
-                    })
-                
-                entries.append({
-                    "id": op.get('id', ''),
-                    "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
-                    "description": f"قيد شراء {payment_method}",
-                    "lines": lines,
-                    "total": total
-                })
+                for op in operations:
+                    op_type = op.get('type', '')
+                    total = op.get('total', 0) or 0
+                    date = op.get('date', datetime.now())
+                    payment_method = op.get('paymentMethod', 'cash')
+                    
+                    if total == 0:
+                        continue
+                    
+                    lines = []
+                    
+                    if op_type == 'sale':
+                        if payment_method == 'cash':
+                            lines.append({"account": "101", "account_name": "النقدية", "debit": total, "credit": 0})
+                        else:
+                            lines.append({"account": "113", "account_name": "ذمم مدينة عملاء", "debit": total, "credit": 0})
+                        lines.append({"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": total})
+                        
+                        entries.append({
+                            "id": op.get('id', ''),
+                            "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
+                            "description": f"قيد بيع {payment_method}",
+                            "lines": lines,
+                            "total": total,
+                            "source": "operation"
+                        })
+                        
+                    elif op_type == 'purchase':
+                        lines.append({"account": "514", "account_name": "مصاريف قطع الغيار", "debit": total, "credit": 0})
+                        if payment_method == 'cash':
+                            lines.append({"account": "101", "account_name": "النقدية", "debit": 0, "credit": total})
+                        else:
+                            lines.append({"account": "211", "account_name": "ذمم دائنة موردين", "debit": 0, "credit": total})
+                        
+                        entries.append({
+                            "id": op.get('id', ''),
+                            "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
+                            "description": f"قيد شراء {payment_method}",
+                            "lines": lines,
+                            "total": total,
+                            "source": "operation"
+                        })
+            except Exception as e:
+                print(f"MongoDB operations error: {e}")
         
         return {
             "success": True,
@@ -549,31 +538,24 @@ async def get_journal_entries(
         
     except Exception as e:
         print(f"Error in get_journal_entries: {str(e)}")
-        # بيانات تجريبية
-        entries = [
-            {
-                "id": "entry-001",
-                "date": "2025-01-20",
-                "description": "قيد بيع خدمة صيانة",
-                "lines": [
-                    {"account": "113", "account_name": "ذمم مدينة", "debit": 5000, "credit": 0},
-                    {"account": "411", "account_name": "إيرادات خدمات", "debit": 0, "credit": 5000}
-                ],
-                "total": 5000
-            },
-            {
-                "id": "entry-002",
-                "date": "2025-01-21",
-                "description": "قيد شراء قطع غيار",
-                "lines": [
-                    {"account": "514", "account_name": "مصاريف قطع الغيار", "debit": 3000, "credit": 0},
-                    {"account": "211", "account_name": "ذمم دائنة", "debit": 0, "credit": 3000}
-                ],
-                "total": 3000
-            }
-        ]
-        
-        return {"success": True, "data": entries, "total": len(entries)}
+        # بيانات تجريبية في حالة الخطأ
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": "entry-001",
+                    "date": "2025-01-20",
+                    "description": "قيد بيع خدمة صيانة",
+                    "lines": [
+                        {"account": "113", "account_name": "ذمم مدينة", "debit": 5000, "credit": 0},
+                        {"account": "411", "account_name": "إيرادات خدمات", "debit": 0, "credit": 5000}
+                    ],
+                    "total": 5000,
+                    "source": "demo"
+                }
+            ],
+            "total": 1
+        }
 
 @router.post("/journal-entries")
 async def create_journal_entry(

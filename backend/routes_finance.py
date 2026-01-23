@@ -72,13 +72,17 @@ async def get_balance_sheet(
         
         operations = response.data
         
-        # جلب القيود المحاسبية اليدوية من Supabase
-        journal_response = supabase.table("journal_entries") \
-            .select("*") \
-            .lte("date", target_date) \
-            .execute()
-        
-        journal_entries = journal_response.data if journal_response.data else []
+        # جلب القيود المحاسبية اليدوية من Supabase (إن وجدت)
+        journal_entries = []
+        try:
+            journal_response = supabase.table("journal_entries") \
+                .select("*") \
+                .lte("date", target_date) \
+                .execute()
+            journal_entries = journal_response.data if journal_response.data else []
+        except Exception as je_error:
+            print(f"Journal entries table not found (will be created later): {je_error}")
+            journal_entries = []
         
         # تصنيف العمليات
         cash = 0

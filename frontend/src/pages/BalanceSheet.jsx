@@ -1,278 +1,233 @@
-import React, { useState } from 'react';
-import { 
-  Scale, 
-  Download, 
-  RefreshCw, 
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  Building2,
-  PiggyBank
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Scale, Download, RefreshCw, Calendar, Wallet, Building2, PiggyBank, AlertCircle, Loader2 } from 'lucide-react';
+import { financeAPI } from '../services/api';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('ar-SA', {
-    style: 'currency',
-    currency: 'SAR',
-    minimumFractionDigits: 0,
-  }).format(amount || 0);
-};
-
-// Sample Balance Sheet Data
-const BALANCE_SHEET_DATA = {
-  as_of_date: '2024-12-31',
-  assets: {
-    current_assets: {
-      label: 'الأصول المتداولة',
-      items: [
-        { code: '111', name: 'النقدية والبنوك', amount: 125000 },
-        { code: '112', name: 'الذمم المدينة', amount: 45000 },
-        { code: '113', name: 'المخزون', amount: 78500 },
-        { code: '114', name: 'مصروفات مدفوعة مقدماً', amount: 12000 },
-      ],
-      total: 260500,
-    },
-    fixed_assets: {
-      label: 'الأصول الثابتة',
-      items: [
-        { code: '121', name: 'المعدات والأجهزة', amount: 250000 },
-        { code: '122', name: 'الأثاث والتجهيزات', amount: 35000 },
-        { code: '123', name: 'مجمع الإهلاك', amount: -45000 },
-      ],
-      total: 240000,
-    },
-    total_assets: 500500,
-  },
-  liabilities: {
-    current_liabilities: {
-      label: 'الالتزامات المتداولة',
-      items: [
-        { code: '211', name: 'الذمم الدائنة', amount: 35000 },
-        { code: '212', name: 'ضريبة القيمة المضافة المستحقة', amount: 12500 },
-        { code: '213', name: 'مصروفات مستحقة', amount: 8000 },
-        { code: '214', name: 'القسط الحالي من القروض', amount: 24000 },
-      ],
-      total: 79500,
-    },
-    long_term_liabilities: {
-      label: 'الالتزامات طويلة الأجل',
-      items: [
-        { code: '221', name: 'القروض طويلة الأجل', amount: 76000 },
-        { code: '222', name: 'التزامات الإيجار', amount: 18000 },
-      ],
-      total: 94000,
-    },
-    total_liabilities: 173500,
-  },
-  equity: {
-    label: 'حقوق الملكية',
-    items: [
-      { code: '31', name: 'رأس المال', amount: 200000 },
-      { code: '32', name: 'احتياطي نظامي', amount: 20000 },
-      { code: '33', name: 'الأرباح المحتجزة', amount: 82000 },
-      { code: '34', name: 'صافي ربح الفترة الحالية', amount: 25000 },
-    ],
-    total: 327000,
-  },
-  total_liabilities_and_equity: 500500,
-};
-
-export default function BalanceSheet() {
-  const [data] = useState(BALANCE_SHEET_DATA);
-  const [loading, setLoading] = useState(false);
+const BalanceSheet = () => {
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const isBalanced = data.assets.total_assets === data.total_liabilities_and_equity;
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
-  const renderSection = (section, title, icon, bgColor, textColor) => {
+  useEffect(() => {
+    if (!workshopId) {
+      setError('لم يتم ضبط معرف الورشة REACT_APP_WORKSHOP_ID');
+      setLoading(false);
+      return;
+    }
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asOfDate, workshopId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await financeAPI.getBalanceSheet({
+        workshop_id: workshopId,
+        as_of_date: asOfDate,
+      });
+
+      const data = response.data?.data;
+      setReport(data || null);
+    } catch (err) {
+      console.error('Error fetching balance sheet:', err);
+      setError('تعذر جلب الميزانية العمومية. يرجى المحاولة مرة أخرى.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totals = report?.totals || { assets: 0, liabilities: 0, equity: 0, liabilities_plus_equity: 0 };
+  const sections = report?.sections || { assets: [], liabilities: [], equity: [] };
+
+  const isBalanced =
+    totals.assets !== undefined &&
+    totals.liabilities_plus_equity !== undefined &&
+    Math.abs(totals.assets - totals.liabilities_plus_equity) < 0.01;
+
+  const renderAccountsSection = (title, accounts, total, icon: any, headerBg: string, accentText: string) => {
     const Icon = icon;
     return (
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        <div className={`${bgColor} px-4 py-3 flex items-center gap-2`}>
-          <Icon className={textColor} size={20} />
-          <h3 className={`font-bold ${textColor}`}>{title}</h3>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className={`${headerBg} px-4 py-3 flex items-center gap-2`}>
+          <Icon className={accentText} size={20} />
+          <h3 className={`font-bold ${accentText}`}>{title}</h3>
         </div>
-        
-        <div className="p-4 space-y-4">
-          {Object.entries(section).map(([key, category]) => {
-            if (key === 'total_assets' || key === 'total_liabilities') return null;
-            if (typeof category !== 'object' || !category.items) return null;
-            
-            return (
-              <div key={key}>
-                <h4 className="text-gray-300 font-medium mb-2 text-sm">{category.label}</h4>
-                <div className="space-y-1">
-                  {category.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-700/30 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-500 text-xs">{item.code}</span>
-                        <span className="text-white text-sm">{item.name}</span>
-                      </div>
-                      <span className={`font-mono text-sm ${item.amount >= 0 ? 'text-white' : 'text-red-400'}`}>
-                        {formatCurrency(item.amount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700">
-                  <span className="text-gray-400 text-sm">إجمالي {category.label}</span>
-                  <span className={`font-bold ${textColor}`}>{formatCurrency(category.total)}</span>
-                </div>
+        <div className="p-4 space-y-2">
+          {accounts && accounts.length > 0 ? (
+            <>
+              <div className="grid grid-cols-12 text-xs font-medium text-gray-500 border-b border-gray-100 pb-2">
+                <div className="col-span-3">كود الحساب</div>
+                <div className="col-span-5">اسم الحساب</div>
+                <div className="col-span-4 text-left">الرصيد</div>
               </div>
-            );
-          })}
+              {accounts.map((acc, idx) => (
+                <div
+                  key={acc.id || idx}
+                  className="grid grid-cols-12 items-center text-sm py-1.5 px-1 rounded hover:bg-gray-50"
+                >
+                  <div className="col-span-3 font-mono text-gray-500 text-xs">{acc.code}</div>
+                  <div className="col-span-5 text-gray-800">{acc.name}</div>
+                  <div className="col-span-4 text-left font-mono text-gray-900">
+                    {formatCurrency(acc.balance)}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-4">لا توجد حسابات متاحة لهذا القسم.</p>
+          )}
+
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+            <span className="text-gray-500 text-sm">إجمالي {title}</span>
+            <span className={`font-bold ${accentText}`}>{formatCurrency(total || 0)}</span>
+          </div>
         </div>
       </div>
     );
   };
 
+  if (loading && !report) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96" dir="rtl">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+        <p className="text-lg text-gray-600">جاري تحميل الميزانية العمومية...</p>
+        <p className="text-sm text-gray-500">قد يستغرق هذا بضع لحظات</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6" data-testid="balance-sheet-page">
+    <div className="container mx-auto p-6" dir="rtl" data-testid="balance-sheet-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Scale className="text-blue-500" />
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Scale className="text-blue-600" />
             الميزانية العمومية
           </h1>
-          <p className="text-gray-400">قائمة المركز المالي</p>
+          <p className="text-gray-600 mt-1">
+            قائمة المركز المالي حتى تاريخ {report?.as_of ? formatDate(report.as_of) : formatDate(asOfDate)}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 mt-4 sm:mt-0">
-          <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 border border-gray-700">
-            <Calendar size={18} className="text-gray-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-200">
+            <Calendar size={18} className="text-gray-500" />
             <input
               type="date"
               value={asOfDate}
               onChange={(e) => setAsOfDate(e.target.value)}
-              className="bg-transparent text-white border-0 outline-none"
+              className="bg-transparent text-gray-800 border-0 outline-none text-sm"
             />
           </div>
-          <button className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-colors">
-            <Download size={20} className="text-gray-400" />
-          </button>
-          <button 
-            onClick={() => setLoading(true)}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-colors"
-          >
-            <RefreshCw size={20} className={`text-gray-400 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchData}
+              className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center gap-1 text-sm text-gray-700"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              ) : (
+                <RefreshCw size={18} className="text-gray-500" />
+              )}
+              <span>تحديث</span>
+            </button>
+            <button className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+              <Download size={18} className="text-gray-500" />
+            </button>
+          </div>
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 mt-0.5" />
+          <p>{error}</p>
+        </div>
+      )}
+
       {/* Balance Check */}
-      <div className={`rounded-xl p-4 flex items-center justify-between ${isBalanced ? 'bg-green-900/20 border border-green-800' : 'bg-red-900/20 border border-red-800'}`}>
+      <div
+        className={`rounded-xl p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border ${
+          isBalanced ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+        }`}
+      >
         <div className="flex items-center gap-3">
-          {isBalanced ? (
-            <>
-              <div className="p-2 bg-green-900/50 rounded-full">
-                <Scale className="text-green-400" size={24} />
-              </div>
-              <div>
-                <p className="font-bold text-green-400">الميزانية متوازنة ✓</p>
-                <p className="text-sm text-green-300/70">الأصول = الالتزامات + حقوق الملكية</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="p-2 bg-red-900/50 rounded-full">
-                <Scale className="text-red-400" size={24} />
-              </div>
-              <div>
-                <p className="font-bold text-red-400">الميزانية غير متوازنة!</p>
-                <p className="text-sm text-red-300/70">يرجى مراجعة القيود المحاسبية</p>
-              </div>
-            </>
-          )}
+          <div
+            className={`p-2 rounded-full ${
+              isBalanced ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }`}
+          >
+            <Scale size={24} />
+          </div>
+          <div>
+            <p className={`font-bold ${isBalanced ? 'text-green-700' : 'text-red-700'}`}>
+              {isBalanced ? 'الميزانية متوازنة ✓' : 'الميزانية غير متوازنة'}
+            </p>
+            <p className={`${isBalanced ? 'text-green-600/80' : 'text-red-600/80'} text-sm`}>
+              الأصول = الالتزامات + حقوق الملكية
+            </p>
+          </div>
         </div>
         <div className="text-left">
-          <p className="text-sm text-gray-400">الفرق</p>
-          <p className={`font-bold text-lg ${isBalanced ? 'text-green-400' : 'text-red-400'}`}>
-            {formatCurrency(Math.abs(data.assets.total_assets - data.total_liabilities_and_equity))}
+          <p className="text-sm text-gray-500">الفرق</p>
+          <p className={`font-bold text-lg ${isBalanced ? 'text-green-700' : 'text-red-700'}`}>
+            {formatCurrency(Math.abs((totals.assets || 0) - (totals.liabilities_plus_equity || 0)))}
           </p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5 text-white">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <Wallet size={24} />
             <span className="font-medium">إجمالي الأصول</span>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.assets.total_assets)}</p>
+          <p className="text-3xl font-bold">{formatCurrency(totals.assets || 0)}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-xl p-5 text-white">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-5 text-white shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <Building2 size={24} />
             <span className="font-medium">إجمالي الالتزامات</span>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.liabilities.total_liabilities)}</p>
+          <p className="text-3xl font-bold">{formatCurrency(totals.liabilities || 0)}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-5 text-white">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 text-white shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <PiggyBank size={24} />
             <span className="font-medium">حقوق الملكية</span>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.equity.total)}</p>
+          <p className="text-3xl font-bold">{formatCurrency(totals.equity || 0)}</p>
         </div>
       </div>
 
       {/* Balance Sheet Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Assets */}
-        {renderSection(data.assets, 'الأصول', Wallet, 'bg-blue-900/30', 'text-blue-400')}
+        {renderAccountsSection('الأصول', sections.assets, totals.assets, Wallet, 'bg-blue-50', 'text-blue-600')}
 
-        {/* Liabilities & Equity */}
         <div className="space-y-6">
-          {renderSection(data.liabilities, 'الالتزامات', TrendingDown, 'bg-red-900/30', 'text-red-400')}
-          
-          {/* Equity */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-            <div className="bg-purple-900/30 px-4 py-3 flex items-center gap-2">
-              <PiggyBank className="text-purple-400" size={20} />
-              <h3 className="font-bold text-purple-400">{data.equity.label}</h3>
-            </div>
-            
-            <div className="p-4">
-              <div className="space-y-1">
-                {data.equity.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-700/30 rounded">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-gray-500 text-xs">{item.code}</span>
-                      <span className="text-white text-sm">{item.name}</span>
-                    </div>
-                    <span className="font-mono text-sm text-white">
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700">
-                <span className="text-gray-400 text-sm">إجمالي حقوق الملكية</span>
-                <span className="font-bold text-purple-400">{formatCurrency(data.equity.total)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+          {renderAccountsSection(
+            'الالتزامات',
+            sections.liabilities,
+            totals.liabilities,
+            Building2,
+            'bg-red-50',
+            'text-red-600',
+          )}
 
-      {/* Grand Totals */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex justify-between items-center p-4 bg-blue-900/20 rounded-lg border border-blue-800">
-            <span className="font-bold text-blue-400">إجمالي الأصول</span>
-            <span className="text-2xl font-bold text-blue-400">{formatCurrency(data.assets.total_assets)}</span>
-          </div>
-          <div className="flex justify-between items-center p-4 bg-purple-900/20 rounded-lg border border-purple-800">
-            <span className="font-bold text-purple-400">الالتزامات + حقوق الملكية</span>
-            <span className="text-2xl font-bold text-purple-400">{formatCurrency(data.total_liabilities_and_equity)}</span>
-          </div>
+          {renderAccountsSection('حقوق الملكية', sections.equity, totals.equity, PiggyBank, 'bg-purple-50', 'text-purple-600')}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default BalanceSheet;

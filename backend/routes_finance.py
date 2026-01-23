@@ -9,10 +9,19 @@ from motor.motor_asyncio import AsyncIOMotorClient
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
 # Supabase connection for writing data
-supabase = create_client(
-    os.getenv("SUPABASE_URL", ""),
-    os.getenv("SUPABASE_KEY", "")
-)
+try:
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    
+    if supabase_url and supabase_key:
+        supabase = create_client(supabase_url, supabase_key)
+        print("✅ Supabase connected for Finance API")
+    else:
+        supabase = None
+        print("⚠️ Supabase credentials missing")
+except Exception as e:
+    supabase = None
+    print(f"⚠️ Supabase connection failed: {e}")
 
 # MongoDB connection for reading operations (financial reports)
 mongo_client = None

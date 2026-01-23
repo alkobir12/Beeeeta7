@@ -97,7 +97,7 @@ const Dashboard = () => {
   const stats = {
     totalVehicles: vehicles.length,
     inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check', 'repair', 'quotation', 'approved'].includes(v.status)).length,
-    ready: vehicles.filter(v => v.status === 'ready').length,
+    ready: vehicles.filter(v => v.status === 'ready' || v.status === 'delivered').length,
     technicians: technicians.length
   };
 

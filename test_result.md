@@ -1126,7 +1126,7 @@ const Layout = ({ children, pageTitle }) => {
 اختبار سريع للواجهات الخلفية المرتبطة بنظام AutoProfit Pro بعد التأكد من استقرار واجهة Operations وإزالة مفاتيح Google الصريحة.
 
 ### Test Environment:
-- Backend URL: https://workshopbooks.preview.emergentagent.com/api
+- Backend URL: https://autopro-migrate.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 18:01:26
 - Test Focus: GET endpoints only (as requested)
 
@@ -1283,7 +1283,7 @@ All AutoProfit Pro backend endpoints are working perfectly:
 5) لا حاجة لاختبارات واجهة أمامية، التركيز على أن الربط بين APIs يعمل بشكل صحيح
 
 ### Test Environment:
-- Backend URL: https://workshopbooks.preview.emergentagent.com/api
+- Backend URL: https://autopro-migrate.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 20:06:22
 - Test Focus: AutoProfit Pro financial integration after operations creation
 
@@ -1711,7 +1711,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://workshopbooks.preview.emergentagent.com/api`
+**Backend URL**: `https://autopro-migrate.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional

@@ -176,7 +176,7 @@ EMERGENT_LLM_KEY=sk-emergent-...
 ### Frontend (.env.local)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WORKSHOP_ID=00000000-0000-0000-0000-000000000001
+NEXT_PUBLIC_WORKSHOP_ID=autopro-migrate
 ```
 
 ## المهام المستقبلية (Backlog)

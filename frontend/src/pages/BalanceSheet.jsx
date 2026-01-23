@@ -183,7 +183,38 @@ const BalanceSheet = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - بطاقات ملخص محسّنة */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-blue-200 rounded-xl">
+              <Wallet className="text-blue-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-blue-900">إجمالي الأصول</span>
+          </div>
+          <div className="text-3xl font-black text-blue-950">{formatCurrency(totals.assets)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 border-2 border-red-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-red-200 rounded-xl">
+              <Building2 className="text-red-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-red-900">إجمالي الالتزامات</span>
+          </div>
+          <div className="text-3xl font-black text-red-950">{formatCurrency(totals.liabilities)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-purple-200 rounded-xl">
+              <PiggyBank className="text-purple-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-purple-900">حقوق الملكية</span>
+          </div>
+          <div className="text-3xl font-black text-purple-950">{formatCurrency(totals.equity)}</div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-sm">
           <div className="flex items-center gap-3 mb-3">

@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { customerAPI } from '../services/api';
-import { ArrowRight, User, Phone, Mail, Car, Calendar, DollarSign, Star, History } from 'lucide-react';
+import { ArrowRight, User, Phone, Mail, Car, Calendar, DollarSign, Star, History, Edit2, Save, X } from 'lucide-react';
 import Layout from '../components/Layout';
 import AIHelper from '../components/AIHelper';
 import { useTranslation } from 'react-i18next';
@@ -18,8 +18,14 @@ const CustomerDetails = () => {
   const [customer, setCustomer] = useState(null);
   const [history, setHistory] = useState({ vehicles: [], invoices: [] });
   const [approvals, setApprovals] = useState([]);
-
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
 
   useEffect(() => {
     loadCustomerData();

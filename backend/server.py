@@ -129,15 +129,6 @@ client = AsyncIOMotorClient(mongo_url) if mongo_url else None
 db_name = os.environ.get('DB_NAME') if client is not None else None
 db = client[db_name] if (client is not None and db_name) else None
 
-# ALWAYS create MongoDB connection for finance routes even if DB_PROVIDER is different
-if db is None:
-    mongo_url_fallback = os.environ.get('MONGO_URL')
-    if mongo_url_fallback:
-        client_fallback = AsyncIOMotorClient(mongo_url_fallback)
-        db_name_fallback = os.environ.get('DB_NAME', 'workshop_db')
-        db = client_fallback[db_name_fallback]
-        print(f"✅ MongoDB connected for finance routes (fallback): {db_name_fallback}")
-
 # Set database for extended and advanced routes (FIXED ORDER)
 set_db_users(db)
 set_db_import(db)

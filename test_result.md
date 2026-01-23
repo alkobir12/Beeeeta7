@@ -2935,3 +2935,219 @@ The accounts.map error has been successfully fixed in Operations.jsx. The page n
 **Critical Issues:** 0
 **Minor Issues:** 0
 
+
+---
+
+## Journal Entries Page - Supabase Integration Testing (2026-01-23)
+
+### Test Objective:
+اختبار نهائي شامل لصفحة Journal Entries بعد إزالة البيانات الوهمية
+Final comprehensive test for Journal Entries page after removing mock data
+
+### Test Environment:
+- Frontend: `/app/frontend/src/pages/JournalEntries.jsx`
+- Backend: `/api/finance/journal-entries`
+- Testing Date: 2026-01-23 18:42:00
+- Test User: "مدير" (Manager)
+
+### Test Results Summary: ✅ FULLY WORKING - ALL TESTS PASSED
+
+#### ✅ BACKEND API - FULLY WORKING
+
+**1. ✅ Journal Entries API Endpoint**
+- **Endpoint**: GET `/api/finance/journal-entries?workshop_id=finmodule-sync&limit=50`
+- **Status**: ✅ WORKING (200 OK)
+- **Data Source**: Supabase operations table (NO MOCK DATA)
+- **Total Entries Returned**: 10 entries
+- **Entry Breakdown**:
+  - 9 sale entries (قيد بيع cash)
+  - 1 purchase entry (قيد شراء cash)
+
+**2. ✅ Entry Amounts Verification**
+All amounts match expected values:
+1. 588 SAR (sale) ✅
+2. 250 SAR (sale) ✅
+3. 770 SAR (sale) ✅
+4. 1600 SAR (sale) ✅
+5. 2000 SAR (sale) ✅
+6. 250 SAR (sale) ✅
+7. 2500 SAR (sale) ✅
+8. 1600 SAR (sale) ✅
+9. 6000 SAR (sale) ✅
+10. 80 SAR (purchase) ✅
+
+**Total Amount**: 15,638 SAR ✅
+
+#### ✅ FRONTEND INTEGRATION - FULLY WORKING
+
+**3. ✅ Frontend Data Fetching**
+- **Status**: ✅ WORKING
+- **Implementation**: Updated JournalEntries.jsx to fetch from backend API
+- **Previous Issue**: Frontend was using hardcoded SAMPLE_ENTRIES
+- **Fix Applied**: Added useEffect hook to fetch data from `/api/finance/journal-entries`
+- **Data Transformation**: Backend data correctly transformed to frontend format
+
+**4. ✅ Journal Entries Display**
+- **Status**: ✅ FULLY WORKING
+- **Total Entries Displayed**: 10 entries
+- **Entry Numbers**: JE-20260123-001 through JE-20260111-010
+- **Date Format**: Arabic date format (٢٣‏/١‏/٢٠٢٦)
+- **Currency Format**: Arabic currency format (‏٥٨٨٫٠٠ ر.س.‏)
+- **All Columns Displayed**:
+  - رقم القيد (Entry Number) ✅
+  - التاريخ (Date) ✅
+  - الوصف (Description) ✅
+  - النوع (Type: فاتورة/مشتريات) ✅
+  - مدين (Debit) ✅
+  - دائن (Credit) ✅
+  - الحالة (Status: مرحّل) ✅
+  - إجراءات (Actions) ✅
+
+**5. ✅ Stats Cards**
+- **إجمالي القيود (Total Entries)**: 10 ✅
+- **المرحّلة (Posted)**: 10 ✅
+- **المسودات (Drafts)**: 0 ✅
+- **إجمالي الحركات (Total Amount)**: ‏١٥٬٦٣٨٫٠٠ ر.س.‏ (15,638 SAR) ✅
+
+**6. ✅ Entry Details Modal**
+- **Status**: ✅ WORKING
+- **Functionality**: Click on eye icon opens detail modal
+- **Modal Content**:
+  - Entry number and description ✅
+  - Entry date and status ✅
+  - Reference number ✅
+  - Created by user ✅
+  - Account lines with debit/credit ✅
+  - Total debit and credit ✅
+  - Balance check (القيد متوازن ✓) ✅
+- **Tested Entries**:
+  - Entry #1 (588 SAR): Shows النقدية (debit) and إيرادات خدمات الصيانة (credit) ✅
+  - Entry #10 (80 SAR): Shows مصاريف قطع الغيار (debit) and النقدية (credit) ✅
+
+#### ✅ MOCK DATA REMOVAL VERIFICATION
+
+**7. ✅ No Mock Data Present**
+- **Status**: ✅ VERIFIED
+- **Checked For**:
+  - ❌ entry-001 (NOT FOUND) ✅
+  - ❌ entry-002 (NOT FOUND) ✅
+  - ❌ JE-2024-001 (NOT FOUND) ✅
+  - ❌ JE-2024-002 (NOT FOUND) ✅
+  - ❌ "تسجيل فاتورة مبيعات INV-2024-001" (NOT FOUND) ✅
+  - ❌ "استلام دفعة من العميل" (NOT FOUND) ✅
+- **Conclusion**: All mock data successfully removed ✅
+
+**8. ✅ Data Source Verification**
+- **All entries from**: Supabase operations table ✅
+- **Entry source field**: "operation" ✅
+- **No manual entries**: Correct (only operations-based entries) ✅
+
+#### 📊 COMPREHENSIVE TEST RESULTS:
+
+| Component | Status | Expected | Actual | Match |
+|-----------|--------|----------|--------|-------|
+| **Total Entries** | ✅ WORKING | 10 | 10 | ✅ |
+| **Sale Entries** | ✅ WORKING | 9 | 9 | ✅ |
+| **Purchase Entries** | ✅ WORKING | 1 | 1 | ✅ |
+| **Total Amount** | ✅ WORKING | 15,638 SAR | 15,638 SAR | ✅ |
+| **Mock Data** | ✅ REMOVED | 0 | 0 | ✅ |
+| **Entry Details** | ✅ WORKING | Functional | Functional | ✅ |
+| **Stats Cards** | ✅ WORKING | Correct | Correct | ✅ |
+| **Backend API** | ✅ WORKING | 200 OK | 200 OK | ✅ |
+
+### 🎯 KEY ACHIEVEMENTS:
+
+**✅ SUPABASE INTEGRATION COMPLETE:**
+1. Backend API successfully reads from Supabase operations table
+2. Frontend successfully fetches and displays data from backend API
+3. All mock data (SAMPLE_ENTRIES) removed from frontend
+4. Data transformation working correctly (backend → frontend format)
+
+**✅ DATA ACCURACY:**
+- All 10 entries displayed correctly
+- All amounts match expected values (588, 250, 770, 1600, 2000, 250, 2500, 1600, 6000, 80)
+- Total amount calculation correct (15,638 SAR)
+- Entry types correctly identified (9 sales + 1 purchase)
+
+**✅ UI/UX:**
+- Arabic date formatting working
+- Arabic currency formatting working
+- Entry details modal functional
+- Stats cards showing correct totals
+- All table columns displaying correctly
+- Status badges showing correctly (مرحّل)
+
+### 🔧 TECHNICAL IMPLEMENTATION:
+
+**Frontend Changes Applied:**
+```javascript
+// Before: Using hardcoded SAMPLE_ENTRIES
+const [entries, setEntries] = useState(SAMPLE_ENTRIES);
+
+// After: Fetching from backend API
+const [entries, setEntries] = useState([]);
+useEffect(() => {
+  fetchJournalEntries();
+}, []);
+
+const fetchJournalEntries = async () => {
+  const response = await fetch(`${API_URL}/finance/journal-entries?workshop_id=${workshopId}&limit=50`);
+  const data = await response.json();
+  // Transform and set entries
+};
+```
+
+**Backend API Response Format:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "ce9e9795-8520-46ec-bde3-3132d46abfb4",
+      "date": "2026-01-23",
+      "description": "قيد بيع cash",
+      "lines": [
+        {"account": "101", "account_name": "النقدية", "debit": 588.0, "credit": 0},
+        {"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": 588.0}
+      ],
+      "total": 588.0,
+      "source": "operation"
+    }
+  ],
+  "total": 10
+}
+```
+
+### 📸 SCREENSHOTS:
+- `02_journal_entries_loaded.png` - Journal Entries page with 10 entries from Supabase
+- `03_journal_entry_details.png` - Entry details modal showing account lines
+- `04_journal_entries_full.png` - Full page view with all 10 entries
+
+### 🎉 CONCLUSION:
+
+**Status: ✅ PRODUCTION READY**
+
+The Journal Entries page Supabase integration is **FULLY SUCCESSFUL**. All requirements met:
+
+✅ **Backend API**: Returns 10 real entries from Supabase operations (no mock data)
+✅ **Frontend Integration**: Successfully fetches and displays data from backend
+✅ **Mock Data Removal**: All hardcoded SAMPLE_ENTRIES removed
+✅ **Data Accuracy**: All amounts and entry types match expected values
+✅ **UI Functionality**: Entry details modal, stats cards, and table display working correctly
+✅ **Arabic Support**: Date and currency formatting working correctly
+
+**Expected vs Actual:**
+- Expected: 10 entries (9 sales + 1 purchase) → ✅ Actual: 10 entries (9 sales + 1 purchase)
+- Expected: Amounts (588, 250, 770, 1600, 2000, 250, 2500, 1600, 6000, 80) → ✅ Actual: Exact match
+- Expected: No mock data → ✅ Actual: No mock data found
+- Expected: Total 15,638 SAR → ✅ Actual: 15,638 SAR
+
+**No issues found. System ready for production use.**
+
+---
+
+**Test Completed:** 2026-01-23 18:42:00
+**Status:** ✅ PASSED (All tests successful)
+**Critical Issues:** 0
+**Minor Issues:** 0
+

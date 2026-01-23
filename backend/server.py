@@ -235,6 +235,7 @@ app.include_router(language_router)
 app.include_router(workshop_bot_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
+app.include_router(finance_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

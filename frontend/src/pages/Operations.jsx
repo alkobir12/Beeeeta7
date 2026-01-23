@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FloatingAIAssistant from '../components/FloatingAIAssistant';
+import { financeAPI } from '../services/api';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -54,15 +55,14 @@ const Operations = () => {
         ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
         : `${API_URL}/operations`;
 
-      const [accRes, chartAccRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
-        axios.get(`${API_URL}/business-accounts`),
-        axios.get(`${API_URL}/accounts`),
+      const [chartAccRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
+        financeAPI.getChartOfAccounts(),
         axios.get(`${API_URL}/parts`),
         axios.get(`${API_URL}/services`),
         axios.get(operationsUrl),
         axios.get(`${API_URL}/vehicles`)
       ]);
-      setAccounts(chartAccRes.data || []); // Use chart of accounts
+      setAccounts(chartAccRes.data || []);
       setParts(partsRes.data || []);
       setServices(servicesRes.data || []);
       setOps(opsRes.data || []);

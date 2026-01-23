@@ -57,6 +57,8 @@ from routes_accounts_chart import router as accounts_chart_router
 from routes_analytics_advanced import router as analytics_advanced_router
 # Import AI Recommendations Routes
 from routes_ai_recommendations import router as ai_recommendations_router
+# Import Finance Routes
+from routes_finance import router as finance_router
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router

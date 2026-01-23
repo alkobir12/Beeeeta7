@@ -110,57 +110,58 @@ export default function ChartOfAccounts() {
         });
         
         // بناء شجرة الحسابات مع headers
+        // استخدام IDs فريدة للـ headers لتجنب التعارض مع IDs الحسابات من الـ API
         if (accountsByType.asset.length > 0) {
           transformedAccounts.push({
-            id: '1', code: '1', name_ar: 'الأصول', type: 'asset', 
+            id: 'header-asset', code: '1', name_ar: 'الأصول', type: 'asset', 
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.asset.forEach(acc => {
-            acc.parent_id = '1';
+            acc.parent_id = 'header-asset';
             transformedAccounts.push(acc);
           });
         }
         
         if (accountsByType.liability.length > 0) {
           transformedAccounts.push({
-            id: '2', code: '2', name_ar: 'الالتزامات', type: 'liability',
+            id: 'header-liability', code: '2', name_ar: 'الالتزامات', type: 'liability',
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.liability.forEach(acc => {
-            acc.parent_id = '2';
+            acc.parent_id = 'header-liability';
             transformedAccounts.push(acc);
           });
         }
         
         if (accountsByType.equity.length > 0) {
           transformedAccounts.push({
-            id: '3', code: '3', name_ar: 'حقوق الملكية', type: 'equity',
+            id: 'header-equity', code: '3', name_ar: 'حقوق الملكية', type: 'equity',
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.equity.forEach(acc => {
-            acc.parent_id = '3';
+            acc.parent_id = 'header-equity';
             transformedAccounts.push(acc);
           });
         }
         
         if (accountsByType.revenue.length > 0) {
           transformedAccounts.push({
-            id: '4', code: '4', name_ar: 'الإيرادات', type: 'revenue',
+            id: 'header-revenue', code: '4', name_ar: 'الإيرادات', type: 'revenue',
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.revenue.forEach(acc => {
-            acc.parent_id = '4';
+            acc.parent_id = 'header-revenue';
             transformedAccounts.push(acc);
           });
         }
         
         if (accountsByType.expense.length > 0) {
           transformedAccounts.push({
-            id: '5', code: '5', name_ar: 'المصروفات', type: 'expense',
+            id: 'header-expense', code: '5', name_ar: 'المصروفات', type: 'expense',
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.expense.forEach(acc => {
-            acc.parent_id = '5';
+            acc.parent_id = 'header-expense';
             transformedAccounts.push(acc);
           });
         }

@@ -62,7 +62,34 @@ const Operations = () => {
         axios.get(operationsUrl),
         axios.get(`${API_URL}/vehicles`)
       ]);
-      setAccounts(chartAccRes.data?.data || []);
+      
+      // 🔧 الإصلاح: استخراج البيانات بشكل آمن
+      let accountsData = [];
+      
+      console.log('Chart Accounts API Response:', chartAccRes);
+      
+      if (chartAccRes?.data) {
+        // الحالة 1: {success: true, data: [...]}
+        if (chartAccRes.data.success && Array.isArray(chartAccRes.data.data)) {
+          accountsData = chartAccRes.data.data;
+        }
+        // الحالة 2: المصفوفة مباشرة {data: [...]}
+        else if (Array.isArray(chartAccRes.data.data)) {
+          accountsData = chartAccRes.data.data;
+        }
+        // الحالة 3: مصفوفة مباشرة
+        else if (Array.isArray(chartAccRes.data)) {
+          accountsData = chartAccRes.data;
+        }
+        // الحالة 4: {accounts: [...]}
+        else if (chartAccRes.data.accounts && Array.isArray(chartAccRes.data.accounts)) {
+          accountsData = chartAccRes.data.accounts;
+        }
+      }
+      
+      console.log('Extracted Accounts:', accountsData);
+      
+      setAccounts(accountsData || []);
       setParts(partsRes.data || []);
       setServices(servicesRes.data || []);
       setOps(opsRes.data || []);

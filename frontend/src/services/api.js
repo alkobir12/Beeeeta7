@@ -104,6 +104,7 @@ const financeAPI = {
   getIncomeStatement: (params) => api.get('/v1/accounting/reports/income-statement', { params }),
   getBalanceSheet: (params) => api.get('/v1/accounting/reports/balance-sheet', { params }),
   getCashFlow: (params) => api.get('/v1/accounting/reports/cash-flow', { params }),
+  getTrialBalance: (params) => api.get('/v1/accounting/reports/trial-balance', { params }),
   getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
   getJournalEntries: (params) => api.get('/v1/accounting/journal-entries', { params }),
 };

@@ -66,7 +66,7 @@ export default function ChartOfAccounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedAccounts, setExpandedAccounts] = useState(['1', '2', '3', '4', '5']);
+  const [expandedAccounts, setExpandedAccounts] = useState(['header-asset', 'header-liability', 'header-equity', 'header-revenue', 'header-expense']);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedParent, setSelectedParent] = useState(null);
 

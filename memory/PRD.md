@@ -139,7 +139,7 @@
 - **اسم المستخدم**: `مدير`
 
 ### API URL
-- **Production**: `https://reacttofastapi.preview.emergentagent.com`
+- **Production**: `https://finmodule-sync.preview.emergentagent.com`
 - **Local**: `http://localhost:8001`
 
 ---

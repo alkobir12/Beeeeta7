@@ -346,7 +346,15 @@ export default function JournalEntries() {
                 {filteredEntries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-gray-700/30 transition-colors">
                     <td className="px-4 py-4">
-                      <span className="font-medium text-blue-400">{entry.entry_number}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-blue-400">{entry.entry_number}</span>
+                        {entry.vehicle_plate && (
+                          <span className="text-xs text-gray-400 mt-1">🚗 {entry.vehicle_plate}</span>
+                        )}
+                        {entry.customer_name && (
+                          <span className="text-xs text-gray-500 mt-0.5">👤 {entry.customer_name}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-gray-400 text-sm">
                       {new Date(entry.entry_date).toLocaleDateString('ar-SA')}

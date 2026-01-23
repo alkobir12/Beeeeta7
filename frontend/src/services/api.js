@@ -101,20 +101,21 @@ const operationsAPI = {
 };
 
 const financeAPI = {
-  getIncomeStatement: (params) => api.get('/v1/accounting/reports/income-statement', { params }),
-  getBalanceSheet: (params) => api.get('/v1/accounting/reports/balance-sheet', { params }),
-  getCashFlow: (params) => api.get('/v1/accounting/reports/cash-flow', { params }),
-  getTrialBalance: (params) => api.get('/v1/accounting/reports/trial-balance', { params }),
+  getIncomeStatement: (params) => api.get('/finance/reports/income-statement', { params }),
+  getBalanceSheet: (params) => api.get('/finance/reports/balance-sheet', { params }),
+  getCashFlow: (params) => api.get('/finance/reports/cash-flow', { params }),
+  getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
   getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
-  getJournalEntries: (params) => api.get('/v1/accounting/journal-entries', { params }),
+  getJournalEntries: (params) => api.get('/finance/journal-entries', { params }),
   createJournalEntry: (data) =>
     api.post('/v1/accounting/journal-entries', data, {
       params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
     }),
   getChartOfAccounts: () =>
-    api.get('/v1/accounting/chart-of-accounts', {
+    api.get('/finance/chart-of-accounts', {
       params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
     }),
+  getOperations: (params) => api.get('/finance/operations', { params }),
 };
 
 export { 

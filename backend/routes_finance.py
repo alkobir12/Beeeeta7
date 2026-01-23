@@ -425,24 +425,60 @@ async def get_chart_of_accounts(
     workshop_id: str = Query(...)
 ):
     """
-    دليل الحسابات المستخلص من العمليات
+    دليل الحسابات من Supabase
     """
-    # إنشاء دليل حسابات ديناميكي من أنواع العمليات
-    accounts = [
-        {"code": "101", "name": "النقدية", "type": "asset", "balance": 150000},
-        {"code": "113", "name": "ذمم مدينة عملاء", "type": "asset", "balance": 250000},
-        {"code": "121", "name": "مخزون قطع الغيار", "type": "asset", "balance": 180000},
-        {"code": "211", "name": "ذمم دائنة موردين", "type": "liability", "balance": 320000},
-        {"code": "301", "name": "رأس المال", "type": "equity", "balance": 1000000},
-        {"code": "411", "name": "إيرادات خدمات الصيانة", "type": "revenue", "balance": 475000},
-        {"code": "412", "name": "إيرادات بيع قطع الغيار", "type": "revenue", "balance": 125000},
-        {"code": "514", "name": "مصاريف قطع الغيار", "type": "expense", "balance": 120000},
-        {"code": "521", "name": "مصاريف رواتب", "type": "expense", "balance": 150000},
-        {"code": "522", "name": "مصاريف إيجار", "type": "expense", "balance": 50000},
-        {"code": "523", "name": "مصاريف كهرباء وماء", "type": "expense", "balance": 25000},
-    ]
-    
-    return {"success": True, "data": accounts}
+    try:
+        # جلب الحسابات من Supabase
+        if supabase:
+            response = supabase.table("chart_of_accounts") \
+                .select("*") \
+                .or_(f"workshop_id.eq.{workshop_id},workshop_id.eq.default") \
+                .eq("is_active", True) \
+                .order("code") \
+                .execute()
+            
+            if response.data:
+                accounts = []
+                for acc in response.data:
+                    accounts.append({
+                        "id": acc.get("id"),
+                        "code": acc.get("code"),
+                        "name": acc.get("name_ar"),
+                        "name_ar": acc.get("name_ar"),
+                        "name_en": acc.get("name_en"),
+                        "type": acc.get("type"),
+                        "balance": float(acc.get("balance", 0))
+                    })
+                
+                return {"success": True, "data": accounts}
+        
+        # Fallback: بيانات افتراضية
+        accounts = [
+            {"id": "1", "code": "101", "name": "النقدية", "name_ar": "النقدية", "type": "asset", "balance": 0},
+            {"id": "2", "code": "113", "name": "ذمم مدينة عملاء", "name_ar": "ذمم مدينة عملاء", "type": "asset", "balance": 0},
+            {"id": "3", "code": "121", "name": "مخزون قطع الغيار", "name_ar": "مخزون قطع الغيار", "type": "asset", "balance": 0},
+            {"id": "4", "code": "211", "name": "ذمم دائنة موردين", "name_ar": "ذمم دائنة موردين", "type": "liability", "balance": 0},
+            {"id": "5", "code": "301", "name": "رأس المال", "name_ar": "رأس المال", "type": "equity", "balance": 0},
+            {"id": "6", "code": "411", "name": "إيرادات خدمات الصيانة", "name_ar": "إيرادات خدمات الصيانة", "type": "revenue", "balance": 0},
+            {"id": "7", "code": "412", "name": "إيرادات بيع قطع الغيار", "name_ar": "إيرادات بيع قطع الغيار", "type": "revenue", "balance": 0},
+            {"id": "8", "code": "514", "name": "مصاريف قطع الغيار", "name_ar": "مصاريف قطع الغيار", "type": "expense", "balance": 0},
+            {"id": "9", "code": "521", "name": "مصاريف رواتب", "name_ar": "مصاريف رواتب", "type": "expense", "balance": 0},
+            {"id": "10", "code": "522", "name": "مصاريف إيجار", "name_ar": "مصاريف إيجار", "type": "expense", "balance": 0},
+            {"id": "11", "code": "523", "name": "مصاريف كهرباء وماء", "name_ar": "مصاريف كهرباء وماء", "type": "expense", "balance": 0},
+        ]
+        
+        return {"success": True, "data": accounts}
+        
+    except Exception as e:
+        print(f"Error in get_chart_of_accounts: {str(e)}")
+        # بيانات افتراضية في حالة الخطأ
+        return {
+            "success": True,
+            "data": [
+                {"id": "1", "code": "101", "name": "النقدية", "name_ar": "النقدية", "type": "asset", "balance": 0},
+                {"id": "6", "code": "411", "name": "إيرادات خدمات", "name_ar": "إيرادات خدمات", "type": "revenue", "balance": 0},
+            ]
+        }
 
 @router.get("/journal-entries")
 async def get_journal_entries(

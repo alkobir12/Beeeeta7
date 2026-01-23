@@ -7,47 +7,53 @@ router = APIRouter(prefix="/api/finance", tags=["finance"])
 @router.get("/reports/balance-sheet")
 async def get_balance_sheet(
     workshop_id: str = Query(..., description="معرف الورشة"),
-    date: Optional[str] = Query(None, description="تاريخ التقرير (YYYY-MM-DD)")
+    as_of_date: Optional[str] = Query(None, description="تاريخ التقرير (YYYY-MM-DD)")
 ):
     """
     إرجاع الميزانية العمومية بناءً على العمليات في MongoDB
     """
-    # 1. جلب جميع العمليات للورشة
-    # 2. حساب الأصول (المبيعات المدفوعة، الذمم المدينة)
-    # 3. حساب الالتزامات (المشتريات غير المدفوعة)
-    # 4. حساب حقوق الملكية
-    # 5. إرجاع الهيكل المناسب
+    # TODO: جلب البيانات الحقيقية من MongoDB
+    # حالياً: بيانات تجريبية
+    
+    # بناء قائمة الحسابات للأصول
+    assets_accounts = [
+        {"id": "1", "code": "101", "name": "النقدية", "balance": 150000},
+        {"id": "2", "code": "113", "name": "ذمم مدينة عملاء", "balance": 250000},
+        {"id": "3", "code": "121", "name": "مخزون قطع الغيار", "balance": 180000},
+        {"id": "4", "code": "151", "name": "معدات", "balance": 500000},
+        {"id": "5", "code": "152", "name": "سيارات", "balance": 300000},
+    ]
+    
+    liabilities_accounts = [
+        {"id": "6", "code": "211", "name": "ذمم دائنة موردين", "balance": 320000},
+        {"id": "7", "code": "221", "name": "قروض قصيرة الأجل", "balance": 150000},
+        {"id": "8", "code": "231", "name": "قروض طويلة الأجل", "balance": 400000},
+    ]
+    
+    equity_accounts = [
+        {"id": "9", "code": "301", "name": "رأس المال", "balance": 1000000},
+        {"id": "10", "code": "302", "name": "الأرباح المحتجزة", "balance": 510000},
+    ]
+    
+    # حساب الإجماليات
+    total_assets = sum(acc["balance"] for acc in assets_accounts)
+    total_liabilities = sum(acc["balance"] for acc in liabilities_accounts)
+    total_equity = sum(acc["balance"] for acc in equity_accounts)
     
     return {
         "success": True,
         "data": {
-            "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",
-            "assets": {
-                "current": {
-                    "cash": 150000,        # نقدية
-                    "receivables": 250000, # ذمم مدينة
-                    "inventory": 180000    # مخزون
-                },
-                "fixed": {
-                    "equipment": 500000,
-                    "vehicles": 300000
-                },
-                "total": 1380000
+            "as_of": as_of_date or datetime.now().strftime('%Y-%m-%d'),
+            "totals": {
+                "assets": total_assets,
+                "liabilities": total_liabilities,
+                "equity": total_equity,
+                "liabilities_plus_equity": total_liabilities + total_equity
             },
-            "liabilities": {
-                "current": {
-                    "payables": 320000,    # ذمم دائنة
-                    "loans": 150000        # قروض قصيرة
-                },
-                "long_term": {
-                    "loans": 400000        # قروض طويلة
-                },
-                "total": 870000
-            },
-            "equity": {
-                "capital": 1000000,
-                "retained_earnings": 510000,
-                "total": 1510000
+            "sections": {
+                "assets": assets_accounts,
+                "liabilities": liabilities_accounts,
+                "equity": equity_accounts
             }
         }
     }

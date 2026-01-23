@@ -1,454 +1,732 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Brain, 
-  Send, 
-  RefreshCw, 
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  Lightbulb,
-  BarChart3,
-  DollarSign,
-  Target,
-  CheckCircle
+  Card, CardContent, CardDescription, CardHeader, CardTitle 
+} from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { 
+  Brain, TrendingUp, TrendingDown, DollarSign, AlertCircle,
+  RefreshCw, Download, PieChart, BarChart3, Lightbulb, Loader2, Send
 } from 'lucide-react';
-import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+import { financeAPI, aiAPI } from '../services/api';
+import { formatCurrency } from '../utils/formatters';
 
-// Sample financial data for AI analysis
-const FINANCIAL_DATA = {
-  revenue: 528000,
-  expenses: 465000,
-  net_income: 63000,
-  gross_margin: 75.4,
-  net_margin: 11.9,
-  current_ratio: 3.28,
-  quick_ratio: 2.29,
-  debt_to_equity: 0.53,
-  inventory_turnover: 1.66,
-  receivables_turnover: 11.73,
-  assets: 500500,
-  liabilities: 173500,
-  equity: 327000,
-  cash: 125000,
-  receivables: 45000,
-  inventory: 78500,
-  payables: 35000,
-};
+const AIFinancial = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('month');
+  const [activeTab, setActiveTab] = useState('overview');
 
-export default function AIFinancial() {
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
+  const [financialData, setFinancialData] = useState({
+    revenue: 0,
+    expenses: 0,
+    netProfit: 0,
+    profitMargin: 0,
+    assets: 0,
+    liabilities: 0,
+    equity: 0,
+  });
+
+  const [aiAnalysis, setAiAnalysis] = useState({
+    overview: '',
+    recommendations: [],
+    predictions: {},
+    riskFactors: [],
+  });
+
+  // حالة الدردشة
+  const [chatQuery, setChatQuery] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState('chat');
 
-  const sampleQueries = [
-    'ما هي أهم نقاط القوة والضعف في الوضع المالي؟',
-    'كيف يمكن تحسين هامش الربح؟',
-    'هل هناك مخاطر مالية يجب الانتباه لها؟',
-    'قارن أدائنا المالي بالمعايير الصناعية',
-    'ما هي التوصيات لزيادة التدفق النقدي؟',
-  ];
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
-  const handleSubmit = async (e) => {
-    e?.preventDefault();
-    if (!query.trim()) return;
+  useEffect(() => {
+    if (workshopId) {
+      fetchFinancialData();
+    } else {
+      setError('لم يتم ضبط معرف الورشة REACT_APP_WORKSHOP_ID');
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workshopId, timeRange]);
 
-    setLoading(true);
-    const userMessage = { role: 'user', content: query };
-    setChatHistory(prev => [...prev, userMessage]);
+  const getStartDate = (range) => {
+    const now = new Date();
+    const d = new Date(now); // نسخ حتى لا نعدل الأصل
+    switch (range) {
+      case 'week':
+        d.setDate(d.getDate() - 7);
+        break;
+      case 'month':
+        d.setMonth(d.getMonth() - 1);
+        break;
+      case 'quarter':
+        d.setMonth(d.getMonth() - 3);
+        break;
+      case 'year':
+        d.setFullYear(d.getFullYear() - 1);
+        break;
+      default:
+        d.setMonth(d.getMonth() - 1);
+    }
+    return d.toISOString().split('T')[0];
+  };
+
+  const fetchFinancialData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = getStartDate(timeRange);
+
+      const [incomeRes, balanceRes] = await Promise.all([
+        financeAPI.getIncomeStatement({
+          workshop_id: workshopId,
+          start_date: startDate,
+          end_date: endDate,
+        }),
+        financeAPI.getBalanceSheet({
+          workshop_id: workshopId,
+        }),
+      ]);
+
+      const incomeData = incomeRes.data?.data;
+      const balanceData = balanceRes.data?.data;
+
+      const revenue = incomeData?.totals?.revenue || 0;
+      const expenses = incomeData?.totals?.expenses || 0;
+      const netProfit = incomeData?.totals?.net_income || revenue - expenses;
+      const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+
+      setFinancialData({
+        revenue,
+        expenses,
+        netProfit,
+        profitMargin,
+        assets: balanceData?.totals?.assets || 0,
+        liabilities: balanceData?.totals?.liabilities || 0,
+        equity: balanceData?.totals?.equity || 0,
+      });
+
+      await fetchAiAnalysis({
+        revenue,
+        expenses,
+        netProfit,
+        profitMargin,
+        assets: balanceData?.totals?.assets || 0,
+        liabilities: balanceData?.totals?.liabilities || 0,
+        equity: balanceData?.totals?.equity || 0,
+      });
+
+      toast.success('تم تحليل البيانات المالية بنجاح!');
+    } catch (err) {
+      console.error('Error fetching financial data:', err);
+      setError('تعذر جلب البيانات المالية. يرجى المحاولة مرة أخرى.');
+      toast.error('فشل في تحليل البيانات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAiAnalysis = async (data) => {
+    try {
+      const response = await aiAPI.financialAnalysis({
+        query: 'حلل الوضع المالي بناءً على البيانات الحقيقية',
+        financial_data: data,
+      });
+
+      const analysisText = response.data?.analysis || 'لا يوجد تحليل متاح حالياً';
+
+      const recommendations = generateRecommendations(data);
+      const predictions = generatePredictions(data);
+      const riskFactors = identifyRiskFactors(data);
+
+      setAiAnalysis({
+        overview: analysisText,
+        recommendations,
+        predictions,
+        riskFactors,
+      });
+    } catch (err) {
+      console.error('AI Analysis error:', err);
+      setAiAnalysis((prev) => ({
+        ...prev,
+        overview: prev.overview || 'تعذر الاتصال بخدمة الذكاء الاصطناعي. تحقق من اتصال الشبكة.',
+      }));
+    }
+  };
+
+  const generateRecommendations = (data) => {
+    const recs = [];
+
+    if (data.profitMargin < 20) {
+      recs.push({
+        title: 'تحسين هامش الربح',
+        description: `هامش الربح الحالي ${data.profitMargin.toFixed(1)}% منخفض. فكر في زيادة الأسعار أو خفض التكاليف.`,
+        priority: 'high',
+        impact: 'زيادة الربحية بنسبة 5-10%',
+      });
+    }
+
+    if (data.expenses > data.revenue * 0.7) {
+      recs.push({
+        title: 'مراقبة المصروفات',
+        description: 'المصروفات تشكل نسبة كبيرة من الإيرادات. راجع المصروفات غير الضرورية.',
+        priority: 'high',
+        impact: 'تخفيض التكاليف بنسبة 10-15%',
+      });
+    }
+
+    if (data.revenue < 100000) {
+      recs.push({
+        title: 'زيادة الإيرادات',
+        description: 'الإيرادات الحالية منخفضة. فكر في تقديم خدمات جديدة أو تحسين التسويق.',
+        priority: 'medium',
+        impact: 'زيادة المبيعات بنسبة 20-30%',
+      });
+    }
+
+    return recs;
+  };
+
+  const generatePredictions = (data) => ({
+    nextMonth: Math.round(data.revenue * 1.1),
+    nextQuarter: Math.round(data.revenue * 1.3),
+    nextYear: Math.round(data.revenue * 1.5),
+  });
+
+  const identifyRiskFactors = (data) => {
+    const risks = [];
+
+    if (data.liabilities > data.assets * 0.5) {
+      risks.push('نسبة الديون إلى الأصول مرتفعة');
+    }
+
+    if (data.profitMargin < 10) {
+      risks.push('هامش الربح منخفض جداً');
+    }
+
+    if (data.expenses > data.revenue * 0.8) {
+      risks.push('التكاليف تشكل خطراً على الربحية');
+    }
+
+    return risks;
+  };
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!chatQuery.trim()) return;
+
+    const userMessage = { role: 'user', content: chatQuery };
+    setChatHistory((prev) => [...prev, userMessage]);
+    setChatQuery('');
+    setChatLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/ai/financial-analysis`, {
-        query,
-        financial_data: FINANCIAL_DATA,
+      const response = await aiAPI.financialAnalysis({
+        query: chatQuery,
+        financial_data: financialData,
       });
 
       const aiMessage = {
         role: 'assistant',
-        content: response.data.analysis || generateMockAnalysis(query),
+        content: response.data?.analysis || 'تعذر الحصول على رد من المساعد المالي حالياً.',
       };
-      setChatHistory(prev => [...prev, aiMessage]);
-    } catch (error) {
-      // Fallback to mock analysis if API fails
-      const mockResponse = {
-        role: 'assistant',
-        content: generateMockAnalysis(query),
-      };
-      setChatHistory(prev => [...prev, mockResponse]);
+      setChatHistory((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      console.error('Chat AI error:', err);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'تعذر الاتصال بالمساعد المالي. حاول مرة أخرى لاحقاً.',
+        },
+      ]);
     } finally {
-      setLoading(false);
-      setQuery('');
+      setChatLoading(false);
     }
   };
 
-  const generateMockAnalysis = (question) => {
-    const analyses = {
-      default: `
-## تحليل الوضع المالي 📊
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+        <p className="text-lg text-gray-600">جاري تحليل البيانات المالية...</p>
+        <p className="text-sm text-gray-500">قد يستغرق هذا بضع لحظات</p>
+      </div>
+    );
+  }
 
-بناءً على البيانات المالية المتاحة، إليك تحليلي:
-
-### نقاط القوة ✅
-- **هامش ربح إجمالي قوي** (${FINANCIAL_DATA.gross_margin}%): يدل على كفاءة في إدارة تكاليف المبيعات
-- **نسبة سيولة ممتازة** (${FINANCIAL_DATA.current_ratio}): الأصول المتداولة تغطي الالتزامات قصيرة الأجل بأكثر من 3 مرات
-- **مستوى ديون منخفض** (نسبة الدين إلى حقوق الملكية ${FINANCIAL_DATA.debt_to_equity}): استقرار مالي جيد
-
-### نقاط تحتاج انتباه ⚠️
-- **هامش صافي الربح** (${FINANCIAL_DATA.net_margin}%): يمكن تحسينه من خلال ضبط المصاريف التشغيلية
-- **معدل دوران المخزون** (${FINANCIAL_DATA.inventory_turnover}): يُنصح بمراجعة مستويات المخزون
-
-### التوصيات 💡
-1. مراجعة تكاليف الرواتب والمصاريف الإدارية
-2. تحسين إدارة المخزون لتقليل التكاليف
-3. النظر في زيادة الأسعار بشكل تدريجي
-4. تعزيز جهود التحصيل لتحسين السيولة
-      `,
-      profit: `
-## تحليل الربحية 💰
-
-### الوضع الحالي
-- الإيرادات: ${new Intl.NumberFormat('ar-SA').format(FINANCIAL_DATA.revenue)} ريال
-- المصروفات: ${new Intl.NumberFormat('ar-SA').format(FINANCIAL_DATA.expenses)} ريال
-- صافي الربح: ${new Intl.NumberFormat('ar-SA').format(FINANCIAL_DATA.net_income)} ريال
-
-### فرص التحسين 🎯
-1. **تخفيض تكاليف المشتريات**: التفاوض مع الموردين للحصول على أسعار أفضل
-2. **زيادة كفاءة العمالة**: تدريب الفنيين لزيادة الإنتاجية
-3. **تحسين التسعير**: مراجعة أسعار الخدمات مقارنة بالمنافسين
-4. **تقليل الهدر**: تطبيق نظام صارم لإدارة المخزون
-
-### التوقعات 📈
-بتطبيق هذه التوصيات، يمكن زيادة هامش الربح بنسبة 3-5% خلال 6 أشهر.
-      `,
-      risk: `
-## تحليل المخاطر المالية ⚠️
-
-### المخاطر المحددة
-
-#### 1. مخاطر السيولة 🔵 (منخفضة)
-- نسبة السيولة الحالية ممتازة (${FINANCIAL_DATA.current_ratio})
-- النقدية المتاحة كافية للعمليات اليومية
-
-#### 2. مخاطر الائتمان 🟡 (متوسطة)
-- الذمم المدينة: ${new Intl.NumberFormat('ar-SA').format(FINANCIAL_DATA.receivables)} ريال
-- يُنصح بمتابعة التحصيل بشكل دوري
-
-#### 3. مخاطر التشغيل 🟡 (متوسطة)
-- الاعتماد الكبير على الرواتب (34% من المصروفات)
-- تركز الإيرادات في خدمات الصيانة
-
-#### 4. مخاطر السوق 🟢 (منخفضة)
-- التنوع في مصادر الإيرادات جيد
-- قاعدة عملاء متنوعة
-
-### التوصيات للحد من المخاطر 🛡️
-1. إنشاء صندوق طوارئ (3-6 أشهر من المصروفات)
-2. تنويع قاعدة العملاء
-3. تطوير خدمات جديدة لزيادة مصادر الدخل
-      `,
-    };
-
-    if (question.includes('ربح') || question.includes('هامش')) {
-      return analyses.profit;
-    } else if (question.includes('مخاطر') || question.includes('خطر')) {
-      return analyses.risk;
-    }
-    return analyses.default;
-  };
-
-  const runQuickAnalysis = async () => {
-    setLoading(true);
-    setActiveTab('analysis');
-    
-    try {
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setAnalysis({
-        overall_score: 78,
-        summary: 'الوضع المالي للورشة جيد مع وجود فرص للتحسين',
-        strengths: [
-          'نسبة سيولة عالية تضمن استمرارية العمليات',
-          'هامش ربح إجمالي يفوق المتوسط الصناعي',
-          'مستوى ديون منخفض يوفر مرونة مالية',
-          'تنوع في مصادر الإيرادات',
-        ],
-        weaknesses: [
-          'هامش صافي الربح يمكن تحسينه',
-          'معدل دوران المخزون أقل من المثالي',
-          'نسبة المصاريف الإدارية مرتفعة نسبياً',
-        ],
-        recommendations: [
-          { priority: 'high', text: 'تحسين إدارة المخزون لتقليل التكاليف' },
-          { priority: 'high', text: 'مراجعة وتخفيض المصاريف الإدارية' },
-          { priority: 'medium', text: 'زيادة جهود التسويق لتنمية الإيرادات' },
-          { priority: 'medium', text: 'تطوير برنامج ولاء العملاء' },
-          { priority: 'low', text: 'استكشاف فرص التوسع الجغرافي' },
-        ],
-        kpis: [
-          { name: 'هامش الربح الإجمالي', value: '75.4%', status: 'good', benchmark: '60-70%' },
-          { name: 'هامش صافي الربح', value: '11.9%', status: 'average', benchmark: '15-20%' },
-          { name: 'نسبة السيولة', value: '3.28', status: 'excellent', benchmark: '1.5-2.0' },
-          { name: 'نسبة الدين', value: '0.53', status: 'good', benchmark: '< 1.0' },
-        ],
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (error) {
+    return (
+      <Card className="border-red-200 max-w-2xl mx-auto mt-8" dir="rtl">
+        <CardHeader>
+          <div className="flex items-center">
+            <AlertCircle className="h-8 w-8 text-red-600 ml-2" />
+            <CardTitle className="text-red-700">حدث خطأ</CardTitle>
+          </div>
+          <CardDescription>تعذر تحليل البيانات المالية</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-600 mb-4">{error}</p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <Button onClick={fetchFinancialData} className="bg-blue-600 hover:bg-blue-700">
+              <RefreshCw className="h-4 w-4 ml-2" />
+              إعادة المحاولة
+            </Button>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="px-3 py-2 border rounded-lg"
+            >
+              <option value="week">أسبوع</option>
+              <option value="month">شهر</option>
+              <option value="quarter">ربع سنة</option>
+              <option value="year">سنة</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6" data-testid="ai-financial-page">
+    <div className="container mx-auto p-6" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Brain className="text-purple-500" />
-            التحليل المالي الذكي
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <Brain className="h-10 w-10 ml-3 text-blue-600" />
+            التحليل المالي بالذكاء الاصطناعي
           </h1>
-          <p className="text-gray-400">احصل على رؤى وتوصيات مدعومة بالذكاء الاصطناعي</p>
+          <p className="text-gray-600 mt-2">
+            تحليل متقدم للأداء المالي وتوقعات ذكية لورشتك
+          </p>
         </div>
 
-        <button
-          onClick={runQuickAnalysis}
-          disabled={loading}
-          className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {loading ? (
-            <RefreshCw className="animate-spin" size={20} />
-          ) : (
-            <Sparkles size={20} />
-          )}
-          <span>تحليل شامل</span>
-        </button>
-      </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg"
+          >
+            <option value="week">آخر أسبوع</option>
+            <option value="month">آخر شهر</option>
+            <option value="quarter">آخر ربع سنة</option>
+            <option value="year">آخر سنة</option>
+          </select>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-700 pb-2">
-        <button
-          onClick={() => setActiveTab('chat')}
-          className={`px-4 py-2 rounded-t-lg transition-colors ${
-            activeTab === 'chat'
-              ? 'bg-gray-800 text-white border-b-2 border-purple-500'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          💬 محادثة ذكية
-        </button>
-        <button
-          onClick={() => setActiveTab('analysis')}
-          className={`px-4 py-2 rounded-t-lg transition-colors ${
-            activeTab === 'analysis'
-              ? 'bg-gray-800 text-white border-b-2 border-purple-500'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          📊 تقرير التحليل
-        </button>
-      </div>
-
-      {activeTab === 'chat' && (
-        <div className="space-y-4">
-          {/* Quick Questions */}
-          <div className="flex flex-wrap gap-2">
-            {sampleQueries.map((q, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setQuery(q);
-                }}
-                className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700 transition-colors border border-gray-700"
-              >
-                {q}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <Button onClick={fetchFinancialData} variant="outline">
+              <RefreshCw className="h-4 w-4 ml-2" />
+              تحديث
+            </Button>
+            <Button variant="outline">
+              <Download className="h-4 w-4 ml-2" />
+              تصدير
+            </Button>
           </div>
+        </div>
+      </div>
 
-          {/* Chat History */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[400px] max-h-[500px] overflow-y-auto p-4">
-            {chatHistory.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <Brain className="text-purple-500 mb-4" size={48} />
-                <p className="text-gray-400 mb-2">مرحباً! أنا مساعدك المالي الذكي</p>
-                <p className="text-gray-500 text-sm">اسألني عن أي شيء يتعلق بالوضع المالي للورشة</p>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center">
+              <DollarSign className="h-4 w-4 ml-2" />
+              إجمالي الإيرادات
+            </CardDescription>
+            <CardTitle className="text-2xl">
+              {formatCurrency(financialData.revenue)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">
+              عن آخر {
+                timeRange === 'week'
+                  ? 'أسبوع'
+                  : timeRange === 'month'
+                  ? 'شهر'
+                  : timeRange === 'quarter'
+                  ? 'ربع سنة'
+                  : 'سنة'
+              }
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center">
+              <TrendingUp className="h-4 w-4 ml-2" />
+              صافي الربح
+            </CardDescription>
+            <CardTitle
+              className={`text-2xl ${
+                financialData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {formatCurrency(financialData.netProfit)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">
+              هامش ربح: {financialData.profitMargin.toFixed(1)}%
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center">
+              <PieChart className="h-4 w-4 ml-2" />
+              متوسط يومي
+            </CardDescription>
+            <CardTitle className="text-2xl">
+              {formatCurrency(financialData.revenue / 30 || 0)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">
+              تقدير بناءً على الفترة المحددة
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center">
+              <Lightbulb className="h-4 w-4 ml-2" />
+              التقييم
+            </CardDescription>
+            <CardTitle className="text-2xl">
+              {financialData.profitMargin > 20
+                ? 'ممتاز'
+                : financialData.profitMargin > 10
+                ? 'جيد'
+                : 'يحتاج تحسين'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">بناءً على هامش الربح</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs: نظرة عامة / توصيات / توقعات / مخاطر / دردشة */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview" className="flex items-center">
+            <Brain className="h-4 w-4 ml-2" />
+            نظرة عامة
+          </TabsTrigger>
+          <TabsTrigger value="recommendations" className="flex items-center">
+            <Lightbulb className="h-4 w-4 ml-2" />
+            التوصيات
+          </TabsTrigger>
+          <TabsTrigger value="predictions" className="flex items-center">
+            <TrendingUp className="h-4 w-4 ml-2" />
+            التوقعات
+          </TabsTrigger>
+          <TabsTrigger value="risks" className="flex items-center">
+            <AlertCircle className="h-4 w-4 ml-2" />
+            المخاطر
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="flex items-center">
+            💬
+            <span className="mr-1">الدردشة</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>تحليل الذكاء الاصطناعي</CardTitle>
+              <CardDescription>
+                تحليل متعمق للأداء المالي بناءً على البيانات الحقيقية
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose max-w-none">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {aiAnalysis.overview || 'جاري تحليل البيانات...'}
+                </p>
               </div>
-            ) : (
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recommendations" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>توصيات التحسين</CardTitle>
+              <CardDescription>اقتراحات لتحسين أدائك المالي</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
-                {chatHistory.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-xl p-4 ${
-                        msg.role === 'user'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-100'
-                      }`}
+                {aiAnalysis.recommendations.length > 0 ? (
+                  aiAnalysis.recommendations.map((rec, index) => (
+                    <Card
+                      key={index}
+                      className={
+                        rec.priority === 'high'
+                          ? 'border-red-200'
+                          : rec.priority === 'medium'
+                          ? 'border-yellow-200'
+                          : 'border-green-200'
+                      }
                     >
-                      {msg.role === 'assistant' ? (
-                        <div className="prose prose-invert prose-sm max-w-none">
-                          <div dangerouslySetInnerHTML={{ 
-                            __html: msg.content
-                              .replace(/^## /gm, '<h3 class="text-lg font-bold text-white mt-4 mb-2">')
-                              .replace(/^### /gm, '<h4 class="text-base font-semibold text-gray-200 mt-3 mb-1">')
-                              .replace(/^#### /gm, '<h5 class="text-sm font-medium text-gray-300 mt-2">')
-                              .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
-                              .replace(/^- /gm, '• ')
-                              .replace(/\n/g, '<br/>')
-                          }} />
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-center">
+                          <CardTitle className="text-lg">{rec.title}</CardTitle>
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${
+                              rec.priority === 'high'
+                                ? 'bg-red-100 text-red-800'
+                                : rec.priority === 'medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {rec.priority === 'high'
+                              ? 'عالي'
+                              : rec.priority === 'medium'
+                              ? 'متوسط'
+                              : 'منخفض'}
+                          </span>
                         </div>
-                      ) : (
-                        msg.content
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {loading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-700 rounded-xl p-4 flex items-center gap-2">
-                      <RefreshCw className="animate-spin text-purple-400" size={16} />
-                      <span className="text-gray-300">جارٍ التحليل...</span>
-                    </div>
-                  </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-700 mb-2">{rec.description}</p>
+                        <p className="text-sm text-gray-600">
+                          التأثير المتوقع: {rec.impact}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">
+                    لا توجد توصيات حالياً
+                  </p>
                 )}
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="flex gap-3">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="اسأل عن الوضع المالي، التوصيات، المخاطر..."
-              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
-            >
-              <Send size={20} />
-            </button>
-          </form>
-        </div>
-      )}
-
-      {activeTab === 'analysis' && (
-        <div className="space-y-6">
-          {analysis ? (
-            <>
-              {/* Score */}
-              <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-xl p-6 border border-purple-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-2">التقييم العام</h3>
-                    <p className="text-gray-300">{analysis.summary}</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-5xl font-bold text-white">{analysis.overall_score}</div>
-                    <div className="text-sm text-gray-400">من 100</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* KPIs */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {analysis.kpis.map((kpi, idx) => (
-                  <div key={idx} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">{kpi.name}</p>
-                    <p className="text-2xl font-bold text-white">{kpi.value}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        kpi.status === 'excellent' ? 'bg-green-900/50 text-green-400' :
-                        kpi.status === 'good' ? 'bg-blue-900/50 text-blue-400' :
-                        'bg-yellow-900/50 text-yellow-400'
-                      }`}>
-                        {kpi.status === 'excellent' ? 'ممتاز' : kpi.status === 'good' ? 'جيد' : 'متوسط'}
-                      </span>
-                      <span className="text-xs text-gray-500">المعيار: {kpi.benchmark}</span>
+        <TabsContent value="predictions" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>التوقعات المستقبلية</CardTitle>
+              <CardDescription>
+                توقعات الإيرادات بناءً على الأداء الحالي
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>الشهر القادم</CardDescription>
+                    <CardTitle className="text-xl">
+                      {formatCurrency(aiAnalysis.predictions.nextMonth || 0)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center text-green-600">
+                      <TrendingUp className="h-4 w-4 ml-1" />
+                      <span className="text-sm">+10% عن الحالي</span>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </CardContent>
+                </Card>
 
-              {/* Strengths & Weaknesses */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                  <div className="bg-green-900/30 px-4 py-3 flex items-center gap-2">
-                    <TrendingUp className="text-green-400" size={20} />
-                    <h3 className="font-bold text-green-400">نقاط القوة</h3>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {analysis.strengths.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="text-green-400 mt-0.5 flex-shrink-0" size={16} />
-                        <span className="text-gray-300 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                  <div className="bg-orange-900/30 px-4 py-3 flex items-center gap-2">
-                    <AlertTriangle className="text-orange-400" size={20} />
-                    <h3 className="font-bold text-orange-400">نقاط الضعف</h3>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {analysis.weaknesses.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <TrendingDown className="text-orange-400 mt-0.5 flex-shrink-0" size={16} />
-                        <span className="text-gray-300 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Recommendations */}
-              <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                <div className="bg-blue-900/30 px-4 py-3 flex items-center gap-2">
-                  <Lightbulb className="text-blue-400" size={20} />
-                  <h3 className="font-bold text-blue-400">التوصيات</h3>
-                </div>
-                <div className="p-4 space-y-3">
-                  {analysis.recommendations.map((rec, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 bg-gray-700/30 rounded-lg">
-                      <span className={`text-xs px-2 py-1 rounded font-medium ${
-                        rec.priority === 'high' ? 'bg-red-900/50 text-red-400' :
-                        rec.priority === 'medium' ? 'bg-yellow-900/50 text-yellow-400' :
-                        'bg-gray-700 text-gray-400'
-                      }`}>
-                        {rec.priority === 'high' ? 'عالية' : rec.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
-                      </span>
-                      <span className="text-white">{rec.text}</span>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>الربع القادم</CardDescription>
+                    <CardTitle className="text-xl">
+                      {formatCurrency(aiAnalysis.predictions.nextQuarter || 0)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center text-green-600">
+                      <TrendingUp className="h-4 w-4 ml-1" />
+                      <span className="text-sm">+30% عن الحالي</span>
                     </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>العام القادم</CardDescription>
+                    <CardTitle className="text-xl">
+                      {formatCurrency(aiAnalysis.predictions.nextYear || 0)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center text-green-600">
+                      <TrendingUp className="h-4 w-4 ml-1" />
+                      <span className="text-sm">+50% عن الحالي</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="risks" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>عوامل الخطر المحتملة</CardTitle>
+              <CardDescription>نقاط تحتاج إلى مراجعة واهتمام</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {aiAnalysis.riskFactors.length > 0 ? (
+                <ul className="space-y-3">
+                  {aiAnalysis.riskFactors.map((risk, index) => (
+                    <li key={index} className="flex items-start">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 ml-2 mt-0.5" />
+                      <span className="text-gray-700">{risk}</span>
+                    </li>
                   ))}
+                </ul>
+              ) : (
+                <p className="text-green-600 text-center py-8">
+                  ✅ لا توجد مخاطر مالية كبيرة حالياً
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chat" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>دردشة مع المساعد المالي</CardTitle>
+              <CardDescription>
+                اسأل عن وضعك المالي، التوصيات، والمخاطر لتحصل على إجابات فورية
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                {/* تاريخ المحادثة */}
+                <div className="border border-gray-200 rounded-lg p-4 max-h-[350px] overflow-y-auto bg-gray-50">
+                  {chatHistory.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      ابدأ بطرح سؤال مالي للحصول على مساعدة ذكية.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {chatHistory.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex ${
+                            msg.role === 'user' ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-line ${
+                              msg.role === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white border border-gray-200 text-gray-800'
+                            }`}
+                          >
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div className="flex justify-start">
+                          <div className="flex items-center gap-2 text-gray-500 text-sm">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>جاري التفكير...</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* إدخال السؤال */}
+                <form onSubmit={handleChatSubmit} className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={chatQuery}
+                    onChange={(e) => setChatQuery(e.target.value)}
+                    placeholder="اكتب سؤالك المالي هنا..."
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={chatLoading}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={chatLoading || !chatQuery.trim()}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    {chatLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    <span>إرسال</span>
+                  </Button>
+                </form>
               </div>
-            </>
-          ) : (
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-12 text-center">
-              <BarChart3 className="text-gray-600 mx-auto mb-4" size={48} />
-              <p className="text-gray-400 mb-4">اضغط على "تحليل شامل" للحصول على تقرير مفصل</p>
-              <button
-                onClick={runQuickAnalysis}
-                disabled={loading}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'جارٍ التحليل...' : 'بدء التحليل'}
-              </button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* المؤشرات المالية الأساسية */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>المؤشرات المالية الأساسية</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">نسبة السيولة</p>
+              <p className="text-2xl font-semibold">
+                {financialData.liabilities > 0
+                  ? (financialData.assets / financialData.liabilities).toFixed(2)
+                  : '∞'}
+              </p>
             </div>
-          )}
-        </div>
-      )}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">نسبة الدين</p>
+              <p className="text-2xl font-semibold">
+                {financialData.equity > 0
+                  ? ((financialData.liabilities / financialData.equity) * 100).toFixed(1)
+                  : 0}
+                %
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">العائد على الأصول</p>
+              <p className="text-2xl font-semibold">
+                {financialData.assets > 0
+                  ? ((financialData.netProfit / financialData.assets) * 100).toFixed(1)
+                  : 0}
+                %
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">العائد على حقوق الملكية</p>
+              <p className="text-2xl font-semibold">
+                {financialData.equity > 0
+                  ? ((financialData.netProfit / financialData.equity) * 100).toFixed(1)
+                  : 0}
+                %
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default AIFinancial;

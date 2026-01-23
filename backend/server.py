@@ -59,6 +59,8 @@ from routes_analytics_advanced import router as analytics_advanced_router
 from routes_ai_recommendations import router as ai_recommendations_router
 # Import Finance Routes
 from routes_finance import router as finance_router, set_db as set_db_finance
+# Import Invoices Routes
+from routes_invoices import router as invoices_router, set_db as set_db_invoices
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -138,6 +140,7 @@ set_db_payroll(db)
 set_db_extended(db)
 set_db_advanced(db)
 set_db_finance(db)
+set_db_invoices(db)
 
 # Initialize WhatsApp service (optional)
 try:
@@ -237,6 +240,7 @@ app.include_router(workshop_bot_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
+app.include_router(invoices_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

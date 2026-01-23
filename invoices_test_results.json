@@ -1,0 +1,121 @@
+{
+  "passed": [
+    "GET /api/invoices",
+    "Supabase table structure",
+    "createOrUpdateInvoice function exists",
+    "createOrUpdateInvoice is called",
+    "Uses /invoices endpoint",
+    "api.js has invoices endpoints",
+    "api.js uses correct endpoint",
+    "Create test vehicle",
+    "Get non-existent invoice returns 404"
+  ],
+  "failed": [
+    "POST /api/invoices",
+    "GET /api/invoices?vehicleId",
+    "PUT /api/invoices/:id",
+    "GET /api/invoices/:id",
+    "Create invoice for vehicle",
+    "Invoice linked to vehicle",
+    "Handle missing fields"
+  ],
+  "total": 16,
+  "details": [
+    {
+      "name": "GET /api/invoices",
+      "passed": true,
+      "details": "Status: 200, Retrieved 0 invoices",
+      "timestamp": "2026-01-23T22:59:24.181423"
+    },
+    {
+      "name": "POST /api/invoices",
+      "passed": false,
+      "details": "Status: 520, Response: {\"detail\":\"{'message': \\\"Could not find the table 'public.invoices' in the schema cache\\\", 'code': 'PGRST205', 'hint': \\\"Perhaps you meant the table 'public.services'\\\", 'details': None}\"}",
+      "timestamp": "2026-01-23T22:59:24.558572"
+    },
+    {
+      "name": "GET /api/invoices?vehicleId",
+      "passed": false,
+      "details": "Status: 200, but no invoices found for test-vehicle-1",
+      "timestamp": "2026-01-23T22:59:24.953856"
+    },
+    {
+      "name": "PUT /api/invoices/:id",
+      "passed": false,
+      "details": "Skipped - no invoice created",
+      "timestamp": "2026-01-23T22:59:24.953886"
+    },
+    {
+      "name": "GET /api/invoices/:id",
+      "passed": false,
+      "details": "Skipped - no invoice created",
+      "timestamp": "2026-01-23T22:59:24.953893"
+    },
+    {
+      "name": "Supabase table structure",
+      "passed": true,
+      "details": "Table exists but empty - cannot verify column structure",
+      "timestamp": "2026-01-23T22:59:25.340202"
+    },
+    {
+      "name": "createOrUpdateInvoice function exists",
+      "passed": true,
+      "details": "Function found in VehicleDetails.jsx",
+      "timestamp": "2026-01-23T22:59:25.341300"
+    },
+    {
+      "name": "createOrUpdateInvoice is called",
+      "passed": true,
+      "details": "Function is being invoked in the code",
+      "timestamp": "2026-01-23T22:59:25.341334"
+    },
+    {
+      "name": "Uses /invoices endpoint",
+      "passed": true,
+      "details": "Code uses correct API endpoint",
+      "timestamp": "2026-01-23T22:59:25.341349"
+    },
+    {
+      "name": "api.js has invoices endpoints",
+      "passed": true,
+      "details": "Invoices endpoints found in api.js",
+      "timestamp": "2026-01-23T22:59:25.341439"
+    },
+    {
+      "name": "api.js uses correct endpoint",
+      "passed": true,
+      "details": "Using correct /invoices endpoint",
+      "timestamp": "2026-01-23T22:59:25.341451"
+    },
+    {
+      "name": "Create test vehicle",
+      "passed": true,
+      "details": "Vehicle ID: 100d2f1d-07bb-4d75-a8c3-b83bf7a3aa6e",
+      "timestamp": "2026-01-23T22:59:26.367541"
+    },
+    {
+      "name": "Create invoice for vehicle",
+      "passed": false,
+      "details": "Status: 520, Response: {\"detail\":\"{'message': \\\"Could not find the table 'public.invoices' in the schema cache\\\", 'code': 'PGRST205', 'hint': \\\"Perhaps you meant the table 'public.services'\\\", 'details': None}\"}",
+      "timestamp": "2026-01-23T22:59:26.837283"
+    },
+    {
+      "name": "Invoice linked to vehicle",
+      "passed": false,
+      "details": "No invoice found for vehicle 100d2f1d-07bb-4d75-a8c3-b83bf7a3aa6e",
+      "timestamp": "2026-01-23T22:59:27.248283"
+    },
+    {
+      "name": "Get non-existent invoice returns 404",
+      "passed": true,
+      "details": "Correctly returns 404 for non-existent invoice",
+      "timestamp": "2026-01-23T22:59:28.517127"
+    },
+    {
+      "name": "Handle missing fields",
+      "passed": false,
+      "details": "Unexpected status: 520",
+      "timestamp": "2026-01-23T22:59:28.907003"
+    }
+  ]
+}

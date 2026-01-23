@@ -60,11 +60,17 @@ const CashFlow = () => {
     }
   };
 
-  const period = report?.period || { start_date: startDate, end_date: endDate };
-  const operating = report?.operating_activities || { net_cash_flow: 0 };
-  const investing = report?.investing_activities || { net_cash_flow: 0 };
-  const financing = report?.financing_activities || { net_cash_flow: 0 };
-  const summary = report?.cash_summary || { net_cash_flow: 0 };
+  const period = report?.period || `${startDate} إلى ${endDate}`;
+  const operating = report?.operating_activities || {};
+  const investing = report?.investing_activities || {};
+  const financing = report?.financing_activities || {};
+  
+  const netOperatingCash = operating.net_operating_cash || 0;
+  const netInvestingCash = investing.net_investing_cash || 0;
+  const netFinancingCash = financing.net_financing_cash || 0;
+  const netChangeInCash = report?.net_change_in_cash || 0;
+  const beginningCash = report?.beginning_cash || 0;
+  const endingCash = report?.ending_cash || 0;
 
   if (loading && !report) {
     return (
@@ -135,6 +141,37 @@ const CashFlow = () => {
       )}
 
       {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-green-200 rounded-xl">
+              <TrendingUp className="text-green-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-green-900">صافي التدفق من التشغيل</span>
+          </div>
+          <div className="text-3xl font-black text-green-950">{formatCurrency(netOperatingCash)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-blue-200 rounded-xl">
+              <ArrowDownRight className="text-blue-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-blue-900">صافي التدفق من الاستثمار</span>
+          </div>
+          <div className="text-3xl font-black text-blue-950">{formatCurrency(netInvestingCash)}</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-purple-200 rounded-xl">
+              <Wallet className="text-purple-700" size={24} />
+            </div>
+            <span className="text-base font-bold text-purple-900">صافي التدفق من التمويل</span>
+          </div>
+          <div className="text-3xl font-black text-purple-950">{formatCurrency(netFinancingCash)}</div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">

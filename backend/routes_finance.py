@@ -1,8 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
+
+# MongoDB connection
+def get_db():
+    mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
+    db_name = os.getenv('DB_NAME', 'workshop_db')
+    client = AsyncIOMotorClient(mongo_url)
+    return client[db_name]
 
 @router.get("/reports/balance-sheet")
 async def get_balance_sheet(

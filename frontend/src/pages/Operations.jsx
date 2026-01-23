@@ -99,11 +99,82 @@ const Operations = () => {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/operations`, { ...form });
-      setForm({ accountId: '', vehicleId: vehicleIdFromUrl || '', type: 'purchase', partnerType: 'supplier', partnerName: '', items: [], paymentMethod: 'cash', notes: '' });
+      // 1) إنشاء العملية التشغيلية
+      const opRes = await axios.post(`${API_URL}/operations`, { ...form });
+      const op = opRes.data;
+
+      // 2) حساب إجمالي العملية من العناصر
+      const total = subtotal;
+
+      // 3) إيجاد الحسابات المحاسبية من دليل الحسابات السعودي
+      const findAccountByCode = (code) => accounts.find((a) => a.code === code);
+
+      const customerAccount = findAccountByCode('113'); // العملاء
+      const supplierAccount = findAccountByCode('211'); // الموردين
+      const serviceRevenueAccount = findAccountByCode('411'); // إيرادات صيانة السيارات
+      const partsPurchaseAccount = findAccountByCode('514'); // شراء قطع الغيار
+
+      // 4) بناء القيد المحاسبي وفقًا لنوع العملية
+      const journalPayload = {
+        entry_date: new Date().toISOString(),
+        description:
+          form.type === 'sale'
+            ? `عملية بيع - ${form.partnerName || ''}`
+            : `عملية شراء - ${form.partnerName || ''}`,
+        reference: op?.id || null,
+        lines: [],
+      };
+
+      if (form.type === 'sale' && customerAccount && serviceRevenueAccount) {
+        journalPayload.lines = [
+          {
+            account_id: customerAccount.id,
+            debit_amount: total,
+            credit_amount: 0,
+          },
+          {
+            account_id: serviceRevenueAccount.id,
+            debit_amount: 0,
+            credit_amount: total,
+          },
+        ];
+      } else if (form.type === 'purchase' && partsPurchaseAccount && supplierAccount) {
+        journalPayload.lines = [
+          {
+            account_id: partsPurchaseAccount.id,
+            debit_amount: total,
+            credit_amount: 0,
+          },
+          {
+            account_id: supplierAccount.id,
+            debit_amount: 0,
+            credit_amount: total,
+          },
+        ];
+      }
+
+      // 5) إرسال القيد إلى نظام المحاسبة إذا تم تجهيز السطور
+      if (journalPayload.lines.length === 2) {
+        await financeAPI.createJournalEntry(journalPayload);
+      } else {
+        console.warn('لم يتم العثور على الحسابات المناسبة لإنشاء القيد المحاسبي');
+      }
+
+      // 6) إعادة ضبط النموذج وتحديث القائمة
+      setForm({
+        accountId: '',
+        vehicleId: vehicleIdFromUrl || '',
+        visitId: '',
+        type: 'purchase',
+        partnerType: 'supplier',
+        partnerName: '',
+        items: [],
+        paymentMethod: 'cash',
+        notes: '',
+      });
       await load();
     } catch (e) {
-      console.error(e);
+      console.error('Failed to save operation and journal entry:', e);
     }
   };
 

@@ -138,7 +138,11 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                   >
                     <option value="">{t('operations.select_account')}</option>
-                    {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    {accounts.map(a => (
+                      <option key={a.id} value={a.id}>
+                        {a.name_ar || a.code}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

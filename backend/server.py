@@ -58,7 +58,7 @@ from routes_analytics_advanced import router as analytics_advanced_router
 # Import AI Recommendations Routes
 from routes_ai_recommendations import router as ai_recommendations_router
 # Import Finance Routes
-from routes_finance import router as finance_router
+from routes_finance import router as finance_router, set_db as set_db_finance
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -137,6 +137,7 @@ set_db_gemini_chat(db)
 set_db_payroll(db)
 set_db_extended(db)
 set_db_advanced(db)
+set_db_finance(db)
 
 # Initialize WhatsApp service (optional)
 try:

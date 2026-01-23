@@ -231,10 +231,10 @@ const CashFlow = () => {
             <span className="text-gray-600">صافي التدفق من الأنشطة التشغيلية</span>
             <span
               className={`font-bold ${
-                (operating.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+                netOperatingCash >= 0 ? 'text-green-700' : 'text-red-700'
               }`}
             >
-              {formatCurrency(operating.net_cash_flow || 0)}
+              {formatCurrency(netOperatingCash)}
             </span>
           </div>
 
@@ -242,10 +242,10 @@ const CashFlow = () => {
             <span className="text-gray-600">صافي التدفق من الأنشطة الاستثمارية</span>
             <span
               className={`font-bold ${
-                (investing.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+                netInvestingCash >= 0 ? 'text-green-700' : 'text-red-700'
               }`}
             >
-              {formatCurrency(investing.net_cash_flow || 0)}
+              {formatCurrency(netInvestingCash)}
             </span>
           </div>
 
@@ -253,10 +253,10 @@ const CashFlow = () => {
             <span className="text-gray-600">صافي التدفق من الأنشطة التمويلية</span>
             <span
               className={`font-bold ${
-                (financing.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+                netFinancingCash >= 0 ? 'text-green-700' : 'text-red-700'
               }`}
             >
-              {formatCurrency(financing.net_cash_flow || 0)}
+              {formatCurrency(netFinancingCash)}
             </span>
           </div>
 
@@ -264,10 +264,10 @@ const CashFlow = () => {
             <span className="font-bold text-blue-700">صافي التغير في النقد</span>
             <span
               className={`text-xl font-bold ${
-                (summary.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+                netChangeInCash >= 0 ? 'text-green-700' : 'text-red-700'
               }`}
             >
-              {formatCurrency(summary.net_cash_flow || 0)}
+              {formatCurrency(netChangeInCash)}
             </span>
           </div>
         </div>

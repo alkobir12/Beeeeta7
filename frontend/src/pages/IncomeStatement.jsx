@@ -240,7 +240,7 @@ const IncomeStatement = () => {
                     className="grid grid-cols-12 items-center text-sm py-1.5 px-1 rounded hover:bg-gray-50"
                   >
                     <div className="col-span-3 font-mono text-gray-500 text-xs">{acc.code}</div>
-                    <div className="col-span-6 text-gray-800">حساب مصروف {acc.code}</div>
+                    <div className="col-span-6 text-gray-800">{acc.name}</div>
                     <div className="col-span-3 text-left font-mono text-red-700">
                       {formatCurrency(acc.amount)}
                     </div>

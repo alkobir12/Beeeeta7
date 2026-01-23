@@ -3151,3 +3151,165 @@ The Journal Entries page Supabase integration is **FULLY SUCCESSFUL**. All requi
 **Critical Issues:** 0
 **Minor Issues:** 0
 
+
+---
+
+## Chart of Accounts Real Balances Testing (2026-01-24)
+
+### Test Objective:
+اختبار صفحة Chart of Accounts مع الأرصدة الحقيقية المحسوبة من operations
+Test Chart of Accounts page with real calculated balances from operations
+
+### Test Environment:
+- Frontend Page: `/accounting/chart-of-accounts`
+- Backend API: `/api/finance/chart-of-accounts`
+- Testing Date: 2026-01-24 19:30:25
+- Expected Balances: Cash (101): 15,478 SAR, Revenue (411): 15,558 SAR, Expenses (514): 80 SAR, Retained Earnings (302): 15,478 SAR
+
+### Test Results Summary: ❌ CRITICAL BUG FOUND - PAGE NOT WORKING
+
+#### ✅ BACKEND API - FULLY WORKING
+
+**API Endpoint Test:**
+```bash
+GET /api/finance/chart-of-accounts?workshop_id=finmodule-sync
+```
+
+**Response Status:** ✅ 200 OK
+
+**Data Returned:** ✅ 11 accounts with real calculated balances
+
+**Verified Balances:**
+- ✅ Account 101 (النقدية): 15,478 SAR
+- ✅ Account 411 (إيرادات خدمات الصيانة): 15,558 SAR
+- ✅ Account 514 (مصاريف قطع الغيار): 80 SAR
+- ✅ Account 302 (الأرباح المحتجزة): 15,478 SAR
+- ✅ Account 113 (ذمم مدينة عملاء): 0 SAR
+- ✅ Account 121 (مخزون قطع الغيار): 0 SAR
+- ✅ Account 211 (ذمم دائنة موردين): 0 SAR
+- ✅ Account 301 (رأس المال): 0 SAR
+- ✅ Account 412 (إيرادات بيع قطع الغيار): 0 SAR
+- ✅ Account 521 (مصاريف رواتب): 0 SAR
+- ✅ Account 522 (مصاريف إيجار): 0 SAR
+
+**Key Findings:**
+- Backend correctly calculates balances from operations in Supabase
+- No fake large balances (453,500 or 475,000) in API response
+- All expected accounts present with correct values
+- API response format is correct: `{success: true, data: [...]}`
+
+#### ❌ FRONTEND PAGE - CRITICAL BUG
+
+**Page Status:** ❌ NOT WORKING - Infinite Recursion Error
+
+**Error Details:**
+```
+ERROR: Maximum call stack size exceeded
+RangeError: Maximum call stack size exceeded
+  at getChildren (ChartOfAccounts.jsx)
+  at renderAccount (ChartOfAccounts.jsx)
+  at Array.map (<anonymous>)
+  at renderAccount (ChartOfAccounts.jsx)
+  ... (infinite loop)
+```
+
+**Root Cause:**
+The `renderAccount` function in `/app/frontend/src/pages/ChartOfAccounts.jsx` has an infinite recursion bug:
+- Line 200: `const children = getChildren(account.id);`
+- Line 286: `{isExpanded && children.map(child => renderAccount(child, level + 1))}`
+- The recursion never terminates, causing a stack overflow
+
+**Impact:**
+- Page crashes with "Uncaught runtime errors" red screen
+- No accounts are displayed (only 1 row found instead of 11)
+- Summary cards show 0.00 SAR for all categories
+- Users cannot view the chart of accounts at all
+
+**What Should Be Displayed:**
+- 11 accounts with real balances from API
+- Cash: 15,478 SAR
+- Revenue: 15,558 SAR
+- Expenses: 80 SAR
+- Retained Earnings: 15,478 SAR
+
+**What Is Actually Displayed:**
+- Red error screen: "Uncaught runtime errors"
+- Empty page with 0.00 SAR in all summary cards
+- No account rows visible
+
+### 📊 COMPREHENSIVE TEST RESULTS:
+
+| Component | Status | Expected | Actual | Match |
+|-----------|--------|----------|--------|-------|
+| **Backend API** | ✅ WORKING | 11 accounts | 11 accounts | ✅ |
+| **API - Cash (101)** | ✅ WORKING | 15,478 SAR | 15,478 SAR | ✅ |
+| **API - Revenue (411)** | ✅ WORKING | 15,558 SAR | 15,558 SAR | ✅ |
+| **API - Expenses (514)** | ✅ WORKING | 80 SAR | 80 SAR | ✅ |
+| **API - Retained Earnings (302)** | ✅ WORKING | 15,478 SAR | 15,478 SAR | ✅ |
+| **Frontend Page** | ❌ NOT WORKING | Display accounts | Crash with error | ❌ |
+| **Frontend - Accounts Displayed** | ❌ NOT WORKING | 11 accounts | 0 accounts | ❌ |
+| **Frontend - Summary Cards** | ❌ NOT WORKING | Real balances | 0.00 SAR | ❌ |
+
+### 🔴 CRITICAL ISSUES REQUIRING IMMEDIATE FIX:
+
+**HIGHEST PRIORITY:**
+
+1. **Infinite Recursion Bug in ChartOfAccounts.jsx**
+   - **File:** `/app/frontend/src/pages/ChartOfAccounts.jsx`
+   - **Functions:** `getChildren` (line 200) and `renderAccount` (line 214-289)
+   - **Problem:** The recursion logic creates an infinite loop when rendering account hierarchy
+   - **Error:** "Maximum call stack size exceeded"
+   - **Impact:** Page completely broken, users cannot access chart of accounts
+   - **Solution Needed:** Fix the recursion logic to properly handle parent-child relationships
+   
+   **Possible Fix:**
+   - Add a depth limit to prevent infinite recursion
+   - Check if `child.id === account.id` to prevent self-referencing
+   - Verify that `parent_id` relationships are correct in the transformed data
+   - Add error boundary to catch and display recursion errors gracefully
+
+2. **Data Transformation Issue**
+   - **Problem:** API returns accounts with codes like 101, 411, 514, but frontend expects hierarchical structure with parent-child relationships
+   - **Current Behavior:** Frontend tries to build a tree structure but fails due to recursion bug
+   - **Solution Needed:** Simplify the rendering logic or fix the parent-child relationship assignment
+
+### 🎯 VERIFICATION:
+
+**Backend API:** ✅ PRODUCTION READY
+- All calculations correct
+- Real balances from operations
+- No fake data
+- API response format correct
+
+**Frontend Page:** ❌ NOT PRODUCTION READY
+- Critical bug prevents page from loading
+- Infinite recursion error
+- No data displayed
+- Red error screen shown to users
+
+### 📸 SCREENSHOTS:
+- `chart_of_accounts_real_balances.png` - Shows DEFAULT_ACCOUNTS with fake balances (before restart)
+- `chart_of_accounts_after_restart.png` - Shows red error screen with "Maximum call stack size exceeded"
+
+### 🎉 CONCLUSION:
+
+**Status: ❌ CRITICAL BUG - NOT PRODUCTION READY**
+
+The backend API is working perfectly and returns real calculated balances from operations. However, the frontend Chart of Accounts page has a **CRITICAL BUG** that causes an infinite recursion error, preventing the page from displaying any data.
+
+**User Impact:**
+- Users cannot view the chart of accounts
+- Page crashes with red error screen
+- No financial data is accessible through this page
+
+**Next Steps for Main Agent:**
+1. **URGENT:** Fix the infinite recursion bug in `renderAccount` function
+2. Simplify the account hierarchy rendering logic
+3. Test the page after fix to ensure accounts display correctly
+4. Verify that real balances (15,478, 15,558, 80) are shown instead of fake balances (453,500, 475,000)
+
+**Backend Status:** ✅ Ready for production
+**Frontend Status:** ❌ Requires immediate fix before deployment
+
+---
+

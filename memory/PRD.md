@@ -1,191 +1,152 @@
-# AutoProfit Pro - نظام إدارة ورش السيارات المالي
+# AutoPro Workshop Management System PRD
 
-## نظرة عامة
-نظام مالي متكامل لإدارة ورش السيارات، يشمل المحاسبة المتقدمة والفواتير والتقارير المالية والذكاء الاصطناعي.
+## مستند متطلبات المنتج
 
-## البنية التقنية
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
-- **Backend**: FastAPI + SQLAlchemy + PostgreSQL
-- **AI**: OpenAI GPT-5.2 via Emergent LLM Key
-- **Background Tasks**: Celery + Redis
-- **Infrastructure**: Docker Compose, Nginx
-
-## الميزات المنجزة (100%)
-
-### المحاسبة
-- ✅ دليل الحسابات (Chart of Accounts) - مع دعم الدليل السعودي
-- ✅ القيود اليومية (Journal Entries) - مع القيد المزدوج
-- ✅ الميزانية العمومية (Balance Sheet)
-- ✅ قائمة الدخل (Income Statement)
-- ✅ قائمة التدفقات النقدية (Cash Flow Statement)
-- ✅ ميزان المراجعة (Trial Balance)
-
-### الفواتير
-- ✅ إنشاء فواتير المبيعات والمشتريات
-- ✅ إصدار الفواتير وإنشاء القيود تلقائياً
-- ✅ تسجيل المدفوعات
-- ✅ تتبع حالة الدفع
-
-### الضرائب السعودية
-- ✅ حاسبة ضريبة القيمة المضافة (15%)
-- ✅ حساب الزكاة على الوعاء الزكوي (2.5%)
-- ✅ إعداد إقرار ضريبة القيمة المضافة
-- ✅ ضريبة الاستقطاع على المدفوعات للخارج
-- ✅ التحقق من صحة الرقم الضريبي
-
-### الذكاء الاصطناعي
-- ✅ تحليل الميزانية العمومية
-- ✅ تحليل قائمة الدخل
-- ✅ توصيات مالية ذكية
-- ✅ الإجابة على الأسئلة المالية
-
-### المهام الخلفية (Celery)
-- ✅ فحص الفواتير المتأخرة يومياً
-- ✅ إرسال تذكيرات الدفع أسبوعياً
-- ✅ توليد التقارير اليومية
-- ✅ توليد التقارير الشهرية
-- ✅ حساب مؤشرات الأداء KPIs
-
-### نظام المصادقة
-- ✅ صفحة تسجيل الدخول
-- ✅ صفحة إنشاء حساب جديد
-- ✅ تخزين التوكن في localStorage
-
-### الواجهة الأمامية (Frontend)
-- ✅ صفحة الميزانية العمومية
-- ✅ صفحة قائمة الدخل
-- ✅ صفحة التدفقات النقدية
-- ✅ صفحة ميزان المراجعة
-- ✅ صفحة دليل الحسابات
-- ✅ صفحة القيود اليومية
-- ✅ صفحة الفواتير
-- ✅ صفحة إدارة الضرائب
-- ✅ صفحة إدارة المخزون
-- ✅ صفحة إدارة العملاء
-- ✅ Sidebar متكامل
-
-## API Endpoints
-
-### المحاسبة
-- `GET /api/v1/accounting/reports/balance-sheet`
-- `GET /api/v1/accounting/reports/income-statement`
-- `GET /api/v1/accounting/reports/cash-flow`
-- `GET /api/v1/accounting/reports/trial-balance`
-- `GET /api/v1/accounting/accounts`
-- `POST /api/v1/accounting/accounts/seed`
-- `GET /api/v1/accounting/journal-entries`
-- `POST /api/v1/accounting/journal-entries`
-
-### الفواتير
-- `GET /api/v1/accounting/invoices`
-- `POST /api/v1/accounting/invoices`
-- `POST /api/v1/accounting/invoices/{id}/issue`
-- `POST /api/v1/accounting/invoices/{id}/payments`
-
-### الضرائب
-- `POST /api/v1/taxes/vat/calculate`
-- `POST /api/v1/taxes/vat/invoice`
-- `POST /api/v1/taxes/zakat/calculate`
-- `POST /api/v1/taxes/withholding/calculate`
-- `POST /api/v1/taxes/vat/return`
-- `GET /api/v1/taxes/vat/validate-number`
-- `GET /api/v1/taxes/rates`
-
-### الذكاء الاصطناعي
-- `POST /api/v1/ai/analyze`
-- `GET /api/v1/ai/insights`
-- `POST /api/v1/ai/ask`
-- `POST /api/v1/ai/recommendations`
-
-## هيكل الملفات
-
-```
-/app/autoprofit-pro/
-├── apps/
-│   ├── api/                          # FastAPI Backend
-│   │   ├── src/
-│   │   │   ├── api/v1/endpoints/
-│   │   │   │   ├── accounting/       # APIs المحاسبة
-│   │   │   │   ├── ai.py             # API الذكاء الاصطناعي
-│   │   │   │   └── taxes.py          # API الضرائب
-│   │   │   ├── core/
-│   │   │   │   └── celery_app.py     # إعدادات Celery
-│   │   │   ├── services/
-│   │   │   │   ├── accounting/       # خدمات المحاسبة
-│   │   │   │   ├── ai/               # خدمات الذكاء الاصطناعي
-│   │   │   │   └── tax/              # خدمات الضرائب
-│   │   │   ├── tasks/                # مهام Celery
-│   │   │   │   ├── invoice_tasks.py
-│   │   │   │   ├── report_tasks.py
-│   │   │   │   └── notification_tasks.py
-│   │   │   └── main.py
-│   │   └── requirements.txt
-│   │
-│   └── web/                          # Next.js Frontend
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── (auth)/           # صفحات المصادقة
-│       │   │   │   ├── login/
-│       │   │   │   └── register/
-│       │   │   └── (dashboard)/      # صفحات التطبيق
-│       │   │       ├── accounting/
-│       │   │       │   ├── balance-sheet/
-│       │   │       │   ├── income-statement/
-│       │   │       │   ├── cash-flow/
-│       │   │       │   ├── trial-balance/
-│       │   │       │   ├── chart-of-accounts/
-│       │   │       │   └── journal-entries/
-│       │   │       ├── finance/
-│       │   │       │   ├── invoices/
-│       │   │       │   └── taxes/
-│       │   │       ├── inventory/
-│       │   │       └── customers/
-│       │   ├── components/
-│       │   └── lib/
-│       │       └── api.ts            # API Client
-│       └── package.json
-│
-└── infrastructure/
-    └── docker-compose.yml
-```
-
-## إعدادات التشغيل
-
-```bash
-# تشغيل المشروع
-cd /app/autoprofit-pro/infrastructure
-docker-compose up -d
-
-# تشغيل Celery Worker
-celery -A src.core.celery_app worker --loglevel=info
-
-# تشغيل Celery Beat (المهام المجدولة)
-celery -A src.core.celery_app beat --loglevel=info
-```
-
-## متغيرات البيئة المطلوبة
-
-### Backend (.env)
-```
-DATABASE_URL=postgresql://user:pass@localhost:5432/autoprofit_db
-REDIS_URL=redis://localhost:6379/0
-SECRET_KEY=your-secret-key
-EMERGENT_LLM_KEY=sk-emergent-...
-```
-
-### Frontend (.env.local)
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WORKSHOP_ID=autopro-migrate
-```
-
-## المهام المستقبلية (Backlog)
-- [ ] إدارة المواعيد
-- [ ] تصدير PDF للتقارير
-- [ ] إرسال الإشعارات عبر البريد/SMS
-- [ ] تكامل مع نظام فاتورة الإلكترونية (ZATCA)
-- [ ] محرك الذكاء الاصطناعي Z.ai
-- [ ] تطبيق موبايل
+### نظرة عامة
+نظام إدارة ورشة سيارات متكامل يدعم اللغة العربية، مع وحدات محاسبية ومالية شاملة.
 
 ---
-آخر تحديث: ديسمبر 2025
+
+## ما تم إنجازه ✅
+
+### الإصدار الأول (الأساسي)
+- ✅ نظام تسجيل الدخول والمصادقة
+- ✅ لوحة تحكم رئيسية مع إحصائيات
+- ✅ إدارة المركبات والعملاء
+- ✅ إدارة الفنيين والخدمات
+- ✅ إدارة قطع الغيار والمخزون
+- ✅ نظام التقارير
+- ✅ إدارة الموردين
+
+### وحدات المحاسبة والمالية (تم اليوم: 23 يناير 2025)
+- ✅ **دليل الحسابات** (`/accounting/chart-of-accounts`)
+  - شجرة حسابات متوافقة مع النظام السعودي
+  - 5 أنواع: أصول، التزامات، حقوق ملكية، إيرادات، مصروفات
+  - إمكانية إضافة حسابات فرعية
+
+- ✅ **القيود اليومية** (`/accounting/journal-entries`)
+  - تسجيل القيود المحاسبية (مدين/دائن)
+  - فلترة حسب الحالة (مسودة/مرحّل)
+  - التحقق من توازن القيد
+
+- ✅ **الميزانية العمومية** (`/accounting/balance-sheet`)
+  - عرض الأصول والالتزامات وحقوق الملكية
+  - التحقق من توازن الميزانية
+  - ملخص بصري للأرقام الرئيسية
+
+- ✅ **قائمة الدخل** (`/accounting/income-statement`)
+  - الإيرادات والمصروفات مفصّلة
+  - حساب مجمل الربح وصافي الربح
+  - هامش الربح الإجمالي والصافي
+
+- ✅ **قائمة التدفقات النقدية** (`/accounting/cash-flow`)
+  - الأنشطة التشغيلية
+  - الأنشطة الاستثمارية
+  - الأنشطة التمويلية
+  - صافي التغير في النقد
+
+- ✅ **ميزان المراجعة** (`/accounting/trial-balance`)
+  - جميع الحسابات مع أرصدة مدين/دائن
+  - التحقق من التوازن
+  - بحث وفلترة حسب النوع
+
+- ✅ **الفواتير** (`/finance/invoices`)
+  - إنشاء وإدارة الفواتير
+  - تتبع حالة الدفع
+  - احتساب ضريبة القيمة المضافة
+
+- ✅ **الضرائب** (`/finance/taxes`)
+  - حاسبة ضريبة القيمة المضافة (15%)
+  - حساب الزكاة (2.5%)
+  - معلومات هيئة الزكاة والضريبة والجمارك
+
+- ✅ **التحليل المالي الذكي** (`/ai-financial`)
+  - محادثة ذكية مع AI (OpenAI GPT-4o-mini)
+  - تحليل شامل للوضع المالي
+  - توصيات ونقاط القوة والضعف
+
+---
+
+## البنية التقنية
+
+### Frontend
+- **إطار العمل**: React 18
+- **التوجيه**: React Router v6
+- **التنسيق**: TailwindCSS
+- **الأيقونات**: Lucide React
+- **اللغة**: دعم كامل للعربية (RTL)
+
+### Backend
+- **إطار العمل**: FastAPI
+- **قاعدة البيانات**: MongoDB
+- **AI**: OpenAI GPT-4o-mini
+
+### المسارات (Routes)
+```
+/login                          - تسجيل الدخول
+/                              - لوحة التحكم
+/accounting/chart-of-accounts   - دليل الحسابات
+/accounting/journal-entries     - القيود اليومية
+/accounting/balance-sheet       - الميزانية العمومية
+/accounting/income-statement    - قائمة الدخل
+/accounting/cash-flow           - التدفقات النقدية
+/accounting/trial-balance       - ميزان المراجعة
+/finance/invoices               - الفواتير
+/finance/taxes                  - الضرائب
+/ai-financial                   - التحليل المالي الذكي
+```
+
+---
+
+## ملاحظات تقنية ⚠️
+
+### البيانات الوهمية (MOCKED)
+جميع صفحات المحاسبة والمالية تستخدم بيانات وهمية (Mock Data) للعرض:
+- دليل الحسابات: `DEFAULT_ACCOUNTS`
+- القيود اليومية: `SAMPLE_ENTRIES`
+- الميزانية: `BALANCE_SHEET_DATA`
+- قائمة الدخل: `INCOME_STATEMENT_DATA`
+- التدفقات النقدية: `CASH_FLOW_DATA`
+- ميزان المراجعة: `TRIAL_BALANCE_DATA`
+
+### OpenAI API
+- المفتاح محفوظ في `/app/backend/.env`
+- Fallback تلقائي لبيانات وهمية عند فشل الاتصال
+
+---
+
+## المهام القادمة (Backlog)
+
+### P0 - أولوية عالية
+- [ ] ربط الصفحات المحاسبية بقاعدة البيانات (MongoDB/PostgreSQL)
+- [ ] إنشاء Backend APIs للمحاسبة
+
+### P1 - أولوية متوسطة
+- [ ] نظام إشعارات للفواتير المستحقة
+- [ ] تقارير PDF قابلة للطباعة
+- [ ] تصدير للـ Excel
+
+### P2 - أولوية منخفضة
+- [ ] لوحة تحكم CEO مع مؤشرات KPI
+- [ ] تكامل مع أنظمة الدفع الإلكتروني
+- [ ] تطبيق جوال
+
+---
+
+## بيانات الاختبار
+
+### تسجيل الدخول
+- **اسم المستخدم**: `مدير`
+
+### API URL
+- **Production**: `https://autopro-migrate.preview.emergentagent.com`
+- **Local**: `http://localhost:8001`
+
+---
+
+## تاريخ التحديثات
+
+| التاريخ | الوصف |
+|---------|-------|
+| 23 يناير 2025 | إضافة جميع وحدات المحاسبة والمالية |
+| 23 يناير 2025 | دمج OpenAI للتحليل المالي الذكي |

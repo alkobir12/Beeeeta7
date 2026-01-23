@@ -180,10 +180,10 @@ const CashFlow = () => {
           </div>
           <p
             className={`text-2xl font-bold ${
-              (operating.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+              netOperatingCash >= 0 ? 'text-green-700' : 'text-red-700'
             }`}
           >
-            {formatCurrency(operating.net_cash_flow || 0)}
+            {formatCurrency(netOperatingCash)}
           </p>
         </div>
 
@@ -194,10 +194,10 @@ const CashFlow = () => {
           </div>
           <p
             className={`text-2xl font-bold ${
-              (investing.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+              netInvestingCash >= 0 ? 'text-green-700' : 'text-red-700'
             }`}
           >
-            {formatCurrency(investing.net_cash_flow || 0)}
+            {formatCurrency(netInvestingCash)}
           </p>
         </div>
 
@@ -208,10 +208,10 @@ const CashFlow = () => {
           </div>
           <p
             className={`text-2xl font-bold ${
-              (financing.net_cash_flow || 0) >= 0 ? 'text-green-700' : 'text-red-700'
+              netFinancingCash >= 0 ? 'text-green-700' : 'text-red-700'
             }`}
           >
-            {formatCurrency(financing.net_cash_flow || 0)}
+            {formatCurrency(netFinancingCash)}
           </p>
         </div>
       </div>

@@ -105,7 +105,9 @@ const financeAPI = {
   getBalanceSheet: (params) => api.get('/finance/reports/balance-sheet', { params }),
   getCashFlow: (params) => api.get('/finance/reports/cash-flow', { params }),
   getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
-  getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
+  getInvoices: (params) => api.get('/invoices', { params }),
+  createInvoice: (data) => api.post('/invoices', data),
+  updateInvoice: (id, data) => api.put(`/invoices/${id}`, data),
   getJournalEntries: (params) => api.get('/finance/journal-entries', { params }),
   createJournalEntry: (data) =>
     api.post('/finance/journal-entries', data, {

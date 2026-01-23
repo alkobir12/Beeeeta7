@@ -33,6 +33,15 @@ async def get_balance_sheet(
             "date": {"$lte": target_date}
         }).to_list(5000)
         
+        # جلب القيود المحاسبية اليدوية (إن وجدت)
+        journal_entries = []
+        try:
+            journal_entries = await db.journal_entries.find({
+                "date": {"$lte": target_date}
+            }).to_list(1000)
+        except:
+            pass  # collection قد لا يكون موجود بعد
+        
         # تصنيف العمليات
         cash = 0
         receivables = 0  # ذمم مدينة
@@ -40,6 +49,7 @@ async def get_balance_sheet(
         total_revenue = 0
         total_expenses = 0
         
+        # معالجة العمليات
         for op in operations:
             op_type = op.get('type', '')
             total = op.get('total', 0) or 0
@@ -67,6 +77,26 @@ async def get_balance_sheet(
                 # مصروفات أخرى
                 total_expenses += total
                 cash -= total
+        
+        # معالجة القيود المحاسبية اليدوية
+        for entry in journal_entries:
+            lines = entry.get('lines', [])
+            for line in lines:
+                account_code = line.get('account', '')
+                debit = line.get('debit', 0) or 0
+                credit = line.get('credit', 0) or 0
+                
+                # تحديث الأرصدة بناءً على رمز الحساب
+                if account_code == '101':  # النقدية
+                    cash += (debit - credit)
+                elif account_code == '113':  # ذمم مدينة
+                    receivables += (debit - credit)
+                elif account_code == '211':  # ذمم دائنة
+                    payables += (credit - debit)
+                elif account_code.startswith('4'):  # إيرادات
+                    total_revenue += credit
+                elif account_code.startswith('5'):  # مصروفات
+                    total_expenses += debit
         
         # حساب الأرباح المحتجزة
         retained_earnings = total_revenue - total_expenses

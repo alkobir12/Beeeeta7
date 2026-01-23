@@ -67,29 +67,43 @@ async def get_income_statement(
     """
     قائمة الدخل لفترة محددة
     """
-    # 1. فلترة العمليات حسب التاريخ
-    # 2. جمع الإيرادات (عمليات البيع)
-    # 3. جمع المصروفات (عمليات الشراء + المصاريف)
-    # 4. حساب صافي الربح
+    # TODO: فلترة العمليات حسب التاريخ من MongoDB
+    # حالياً: بيانات تجريبية
+    
+    # بناء حسابات الإيرادات
+    revenue_accounts = {
+        "411": {"name": "إيرادات خدمات الصيانة", "amount": 475000},
+        "412": {"name": "إيرادات بيع قطع الغيار", "amount": 125000},
+    }
+    
+    # بناء حسابات المصروفات
+    expense_accounts = {
+        "521": {"name": "مصاريف رواتب", "amount": 150000},
+        "522": {"name": "مصاريف إيجار", "amount": 50000},
+        "514": {"name": "مصاريف قطع الغيار", "amount": 120000},
+        "523": {"name": "مصاريف كهرباء وماء", "amount": 25000},
+    }
+    
+    total_revenue = sum(acc["amount"] for acc in revenue_accounts.values())
+    total_expenses = sum(acc["amount"] for acc in expense_accounts.values())
+    net_income = total_revenue - total_expenses
     
     return {
         "success": True,
         "data": {
-            "period": f"{start_date} إلى {end_date}",
-            "revenue": {
-                "service_sales": 475000,
-                "parts_sales": 125000,
-                "total": 600000
+            "period": {
+                "start_date": start_date,
+                "end_date": end_date
             },
-            "expenses": {
-                "salaries": 150000,
-                "rent": 50000,
-                "parts_cost": 120000,
-                "utilities": 25000,
-                "total": 345000
+            "totals": {
+                "revenue": total_revenue,
+                "expenses": total_expenses,
+                "net_income": net_income
             },
-            "net_income": 255000,
-            "profit_margin": 42.5
+            "details": {
+                "revenue_by_account": revenue_accounts,
+                "expenses_by_account": expense_accounts
+            }
         }
     }
 

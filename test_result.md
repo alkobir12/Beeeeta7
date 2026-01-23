@@ -116,8 +116,8 @@ Quick test of financial pages after fixing data structure
 | **Balance Sheet - Assets** | ✅ WORKING | 5 | 5 | All accounts with correct names and balances |
 | **Balance Sheet - Liabilities** | ✅ WORKING | 3 | 3 | All accounts with correct names and balances |
 | **Balance Sheet - Equity** | ✅ WORKING | 2 | 2 | All accounts with correct names and balances |
-| **Income Statement - Revenue** | ⚠️ MINOR ISSUE | 2 | 2 | Accounts display but with generic names |
-| **Income Statement - Expenses** | ⚠️ MINOR ISSUE | 4 | 4 | Accounts display but with generic names |
+| **Income Statement - Revenue** | ✅ FULLY WORKING | 2 | 2 | All accounts display with real names (FIXED) |
+| **Income Statement - Expenses** | ✅ FULLY WORKING | 4 | 4 | All accounts display with real names (FIXED) |
 
 ### 🎯 SUMMARY:
 
@@ -125,21 +125,27 @@ Quick test of financial pages after fixing data structure
 - Backend APIs return correct data structure ✅
 - Balance Sheet displays all 10 accounts correctly ✅
 - Income Statement displays all 6 accounts with correct amounts ✅
+- Income Statement displays all account names correctly ✅ (FIXED)
 - All totals and calculations are accurate ✅
 
-**⚠️ MINOR IMPROVEMENT NEEDED:**
-- Income Statement should display actual account names instead of generic "حساب إيراد 411"
-- Fix: Update IncomeStatement.jsx lines 200 and 239 to use actual account names from backend
+**✅ ALL ISSUES RESOLVED:**
+- Income Statement now displays actual account names instead of generic "حساب إيراد 411" ✅
+- Fix: Updated IncomeStatement.jsx to properly extract account names from backend data
+- Frontend service restart applied the changes successfully
 
 **🔧 RESOLUTION STEPS TAKEN:**
 1. Identified frontend cache issue causing 404 errors
 2. Restarted frontend service to clear cache
 3. Verified both pages now load and display data correctly
 4. Identified minor display issue with account names in Income Statement
+5. **Fixed account name extraction in IncomeStatement.jsx (lines 69-74)**
+6. **Restarted frontend service to apply changes**
+7. **Verified all account names now display correctly**
 
 ### 📸 SCREENSHOTS:
 - `balance_sheet_after_restart.png` - Shows all 10 accounts displaying correctly
-- `income_statement_after_restart.png` - Shows all 6 accounts with amounts (generic names)
+- `income_statement_after_restart.png` - Shows all 6 accounts with amounts (generic names - OLD)
+- `income_statement_final.png` - Shows all 6 accounts with real names (FIXED - NEW)
 
 ---
 

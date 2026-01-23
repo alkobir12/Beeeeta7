@@ -212,6 +212,10 @@ export default function ChartOfAccounts() {
   });
 
   const renderAccount = (account, level = 0) => {
+    // منع infinite recursion
+    if (level > 5) return null;
+    if (!account || !account.id) return null;
+    
     const children = getChildren(account.id);
     const isExpanded = expandedAccounts.includes(account.id);
     const typeInfo = getAccountTypeInfo(account.type);

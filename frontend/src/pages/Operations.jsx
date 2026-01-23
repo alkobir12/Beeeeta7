@@ -62,7 +62,7 @@ const Operations = () => {
         axios.get(operationsUrl),
         axios.get(`${API_URL}/vehicles`)
       ]);
-      setAccounts(chartAccRes.data || []);
+      setAccounts(chartAccRes.data?.data || []);
       setParts(partsRes.data || []);
       setServices(servicesRes.data || []);
       setOps(opsRes.data || []);

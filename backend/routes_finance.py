@@ -75,6 +75,11 @@ async def get_income_statement(
     قائمة الدخل من بيانات العمليات الحقيقية في MongoDB
     """
     try:
+        # تحويل التواريخ إلى datetime objects
+        start_dt = datetime.fromisoformat(start_date)
+        end_dt = datetime.fromisoformat(end_date)
+        end_dt = end_dt.replace(hour=23, minute=59, second=59)
+        
         # جلب جميع العمليات في الفترة الزمنية
         operations = await db.operations.find({
             "date": {

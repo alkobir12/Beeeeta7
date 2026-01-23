@@ -98,13 +98,57 @@ const SAMPLE_ENTRIES = [
 ];
 
 export default function JournalEntries() {
-  const [entries, setEntries] = useState(SAMPLE_ENTRIES);
-  const [loading, setLoading] = useState(false);
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Fetch journal entries from backend
+  useEffect(() => {
+    fetchJournalEntries();
+  }, []);
+
+  const fetchJournalEntries = async () => {
+    setLoading(true);
+    try {
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const response = await fetch(`${API_URL}/finance/journal-entries?workshop_id=${workshopId}&limit=50`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Transform backend data to match frontend format
+        const transformedEntries = data.data.map((entry, index) => ({
+          id: entry.id || String(index),
+          entry_number: `JE-${entry.date.replace(/-/g, '')}-${String(index + 1).padStart(3, '0')}`,
+          entry_date: entry.date,
+          description: entry.description,
+          reference_type: entry.source === 'operation' ? (entry.description.includes('بيع') ? 'invoice' : 'purchase') : 'manual',
+          reference_number: entry.source === 'operation' ? entry.id.substring(0, 8) : null,
+          status: 'posted',
+          total_debit: entry.total,
+          total_credit: entry.total,
+          lines: entry.lines.map(line => ({
+            account_code: line.account,
+            account_name: line.account_name,
+            debit: line.debit,
+            credit: line.credit
+          })),
+          created_by: 'النظام',
+          posted_at: entry.date,
+        }));
+        setEntries(transformedEntries);
+      }
+    } catch (error) {
+      console.error('Error fetching journal entries:', error);
+      // Fallback to sample data on error
+      setEntries(SAMPLE_ENTRIES);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const badges = {

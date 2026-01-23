@@ -583,6 +583,118 @@ async def get_journal_entries(
     end_date: Optional[str] = Query(None)
 ):
     """
+    القيود المحاسبية من Supabase operations (فقط البيانات الحقيقية)
+    """
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        entries = []
+        
+        # 1. جلب القيود المحاسبية اليدوية من Supabase (إن وجدت)
+        try:
+            query = supabase.table("journal_entries").select("*")
+            
+            if start_date:
+                query = query.gte("date", start_date)
+            if end_date:
+                query = query.lte("date", end_date)
+            
+            query = query.range(skip, skip + limit - 1).order("date", desc=True)
+            response = query.execute()
+            
+            for entry in response.data:
+                entries.append({
+                    "id": entry.get("id"),
+                    "date": entry.get("date", ""),
+                    "description": entry.get("description", "قيد يدوي"),
+                    "lines": entry.get("lines", []),
+                    "total": entry.get("total", 0),
+                    "source": "manual"
+                })
+        except Exception as e:
+            print(f"Supabase journal_entries table not found: {e}")
+        
+        # 2. جلب القيود التلقائية من operations في Supabase
+        try:
+            ops_query = supabase.table("operations").select("*")
+            
+            if start_date:
+                ops_query = ops_query.gte("op_date", start_date)
+            if end_date:
+                ops_query = ops_query.lte("op_date", end_date)
+            
+            ops_query = ops_query.range(skip, skip + limit - 1).order("op_date", desc=True)
+            ops_response = ops_query.execute()
+            
+            for op in ops_response.data:
+                op_type = op.get('type', '')
+                total = float(op.get('total', 0) or 0)
+                date = op.get('op_date', '')
+                payment_method = op.get('payment_method', 'cash')
+                
+                if total == 0:
+                    continue
+                
+                lines = []
+                
+                if op_type == 'sale':
+                    if payment_method == 'cash':
+                        lines.append({"account": "101", "account_name": "النقدية", "debit": total, "credit": 0})
+                    else:
+                        lines.append({"account": "113", "account_name": "ذمم مدينة عملاء", "debit": total, "credit": 0})
+                    lines.append({"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": total})
+                    
+                    entries.append({
+                        "id": op.get('id', ''),
+                        "date": date[:10] if date else "",
+                        "description": f"قيد بيع {payment_method}",
+                        "lines": lines,
+                        "total": total,
+                        "source": "operation"
+                    })
+                    
+                elif op_type == 'purchase':
+                    lines.append({"account": "514", "account_name": "مصاريف قطع الغيار", "debit": total, "credit": 0})
+                    if payment_method == 'cash':
+                        lines.append({"account": "101", "account_name": "النقدية", "debit": 0, "credit": total})
+                    else:
+                        lines.append({"account": "211", "account_name": "ذمم دائنة موردين", "debit": 0, "credit": total})
+                    
+                    entries.append({
+                        "id": op.get('id', ''),
+                        "date": date[:10] if date else "",
+                        "description": f"قيد شراء {payment_method}",
+                        "lines": lines,
+                        "total": total,
+                        "source": "operation"
+                    })
+        except Exception as e:
+            print(f"Supabase operations error: {e}")
+        
+        return {
+            "success": True,
+            "data": entries,
+            "total": len(entries)
+        }
+        
+    except Exception as e:
+        print(f"Error in get_journal_entries: {str(e)}")
+        # إرجاع قائمة فارغة بدلاً من بيانات وهمية
+        return {
+            "success": False,
+            "error": str(e),
+            "data": [],
+            "total": 0
+        }
+async def get_journal_entries(
+    workshop_id: str = Query(...),
+    skip: int = Query(0),
+    limit: int = Query(50),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None)
+):
+    """
     القيود المحاسبية من Supabase و MongoDB operations
     """
     try:

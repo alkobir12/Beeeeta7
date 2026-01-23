@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_BASE = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
+const api = axios.create({
+  baseURL: API_BASE,
+});
+
+
+
 const authAPI = {
   requestOtp: (phone) => axios.post(`${API_BASE}/auth/request-otp`, { phone }),
   verifyOtp: (payload) => axios.post(`${API_BASE}/auth/verify-otp`, payload),
@@ -91,6 +97,14 @@ const operationsAPI = {
   create: (data) => axios.post(`${API_BASE}/operations`, data),
 };
 
+const financeAPI = {
+  getIncomeStatement: (params) => api.get('/v1/accounting/reports/income-statement', { params }),
+  getBalanceSheet: (params) => api.get('/v1/accounting/reports/balance-sheet', { params }),
+  getCashFlow: (params) => api.get('/v1/accounting/reports/cash-flow', { params }),
+  getInvoices: (params) => api.get('/v1/accounting/invoices', { params }),
+  getJournalEntries: (params) => api.get('/v1/accounting/journal-entries', { params }),
+};
+
 export { 
   authAPI, 
   userAPI, 
@@ -104,6 +118,8 @@ export {
   statsAPI, 
   transactionAPI,
   operationsAPI,
+  financeAPI,
+  api,
 };
 
 export default { 

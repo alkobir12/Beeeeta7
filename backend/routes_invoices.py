@@ -118,26 +118,59 @@ async def create_invoice(invoice: dict):
 
 @router.put("/{invoice_id}")
 async def update_invoice(invoice_id: str, invoice: dict):
-    """تحديث فاتورة (تقبل تحديث الحالة أيضًا)"""
+    """تحديث فاتورة في Supabase (المجاميع / الحالة)"""
     try:
-        invoices = load_invoices()
-        
-        for inv in invoices:
-            if inv['id'] == invoice_id:
-                inv.update({
-                    "items": invoice.get("items", inv.get("items")),
-                    "subtotal": invoice.get("subtotal", inv.get("subtotal")),
-                    "tax": invoice.get("tax", inv.get("tax")),
-                    "total": invoice.get("total", inv.get("total")),
-                    # تحديث حالة الفاتورة إذا أُرسلت (مثلاً عند التسليم أو الدفع)
-                    "status": invoice.get("status", inv.get("status", "pending")),
-                    "updated_at": datetime.now().isoformat()
-                })
-                save_invoice(inv)
-                return {"success": True, "data": inv}
-        
-        raise HTTPException(status_code=404, detail="Invoice not found")
-        
+        if supabase_service.mock_mode:
+            raise HTTPException(status_code=500, detail="Supabase not configured")
+
+        # جلب الفاتورة الحالية
+        existing = supabase_service.invoices_get(invoice_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+
+        # نبني Payload للتحديث (نرسل فقط الحقول المطلوبة)
+        update_payload = {
+            "id": invoice_id,
+            "invoiceNumber": invoice.get("invoiceNumber", existing.get("invoiceNumber")),
+            "customerId": invoice.get("customerId", existing.get("customerId")),
+            "vehicleId": invoice.get("vehicleId", existing.get("vehicleId")),
+            "customerName": invoice.get("customerName", existing.get("customerName")),
+            "plateNumber": invoice.get("plateNumber", getattr(existing, "plateNumber", None)),
+            "items": invoice.get("items", existing.get("items")),
+            "subtotal": invoice.get("subtotal", existing.get("subtotal")),
+            "discount": invoice.get("discount", existing.get("discount")),
+            "tax": invoice.get("tax", existing.get("tax")),
+            "total": invoice.get("total", existing.get("total")),
+            "status": invoice.get("status", existing.get("status")),
+            "type": invoice.get("type", existing.get("type")),
+            "paymentMethod": invoice.get("paymentMethod", existing.get("paymentMethod")),
+            "notes": invoice.get("notes", existing.get("notes")),
+        }
+
+        # نستخدم invoices_create مع id لتعمل كـ upsert بسيط
+        updated = supabase_service.invoices_create(update_payload)
+
+        response_data = {
+            "id": updated.get("id"),
+            "invoice_number": updated.get("invoiceNumber") or str(updated.get("id"))[:8],
+            "customer_id": updated.get("customerId"),
+            "customer_name": updated.get("customerName") or "",
+            "vehicle_id": updated.get("vehicleId"),
+            "plate_number": updated.get("plateNumber", ""),
+            "items": updated.get("items") or [],
+            "subtotal": float(updated.get("subtotal") or 0),
+            "tax": float(updated.get("tax") or 0),
+            "total": float(updated.get("total") or 0),
+            "status": updated.get("status") or "pending",
+            "type": updated.get("type") or "sale",
+            "date": updated.get("date") or updated.get("createdAt"),
+            "created_at": updated.get("createdAt"),
+        }
+
+        return {"success": True, "data": response_data}
+
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error updating invoice: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -621,6 +621,7 @@ async def get_journal_entries(
 ):
     """
     القيود المحاسبية من Supabase operations مع معلومات المركبة والعميل
+    (قيود يدوية + قيود ناتجة عن العمليات)
     """
     try:
         if not supabase:
@@ -667,7 +668,7 @@ async def get_journal_entries(
             ops_response = ops_query.execute()
             
             for op in ops_response.data:
-                op_type = op.get('type', '')
+                op_type = op.get('type', ''),
                 total = float(op.get('total', 0) or 0)
                 date = op.get('op_date', '')
                 payment_method = op.get('payment_method', 'cash')
@@ -741,7 +742,6 @@ async def get_journal_entries(
             "data": [],
             "total": 0
         }
-async def get_journal_entries(
     workshop_id: str = Query(...),
     skip: int = Query(0),
     limit: int = Query(50),

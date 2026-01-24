@@ -215,9 +215,9 @@ export default function JournalEntries() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <BookOpen className="text-blue-500" />
-            القيود اليومية
+            القيود اليومية والفواتير
           </h1>
-          <p className="text-gray-400">تسجيل ومتابعة القيود المحاسبية</p>
+          <p className="text-gray-400">تسجيل ومتابعة القيود المحاسبية والفواتير المرتبطة بها</p>
         </div>
 
         <button

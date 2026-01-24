@@ -16,7 +16,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxacct-hub.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ledgerlink-12.preview.emergentagent.com')
 
 class TestHealthAndStats:
     """Basic health and stats endpoint tests"""

@@ -107,7 +107,7 @@ POST /api/whatsapp-bot/webhook/infobip   - Webhook الرسائل الواردة
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://taxacct-hub.preview.emergentagent.com`
+- **API URL**: `https://ledgerlink-12.preview.emergentagent.com`
 
 ---
 

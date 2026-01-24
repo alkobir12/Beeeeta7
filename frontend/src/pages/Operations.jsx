@@ -234,17 +234,23 @@ const Operations = () => {
     >
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('operations.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('operations.subtitle')}</p>
+          <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('operations.title')}</h1>
+          <p className="mt-1" style={{ color: styles.textSecondary }}>{t('operations.subtitle')}</p>
         </div>
 
         {/* Create Operation Card */}
-        <div className="apple-card p-6">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+        <div 
+          className="rounded-2xl p-6"
+          style={{ 
+            backgroundColor: styles.cardBg,
+            border: `1px solid ${styles.cardBorder}`
+          }}
+        >
+          <div className="flex items-center gap-3 mb-6 pb-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
               <Plus size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('operations.new_operation')}</h2>
+            <h2 className="text-lg font-semibold" style={{ color: styles.textPrimary }}>{t('operations.new_operation')}</h2>
           </div>
 
           <form onSubmit={submit} className="space-y-6">

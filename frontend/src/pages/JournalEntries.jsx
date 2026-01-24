@@ -516,6 +516,14 @@ export default function JournalEntries() {
                           <Eye size={16} className="text-gray-400" />
                         </button>
                         
+                        <button
+                          onClick={() => handlePrintInvoice(entry)}
+                          className="p-1.5 rounded hover:bg-blue-900/30 transition-colors"
+                          title="طباعة الفاتورة"
+                        >
+                          <FileText size={16} className="text-blue-400" />
+                        </button>
+                        
                         {entry.status === 'draft' && (
                           <button 
                             onClick={() => postEntry(entry.id)}

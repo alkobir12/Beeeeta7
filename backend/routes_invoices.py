@@ -30,20 +30,37 @@ async def get_invoices(
     customerId: Optional[str] = Query(None),
     status: Optional[str] = Query(None)
 ):
-    """جلب الفواتير"""
+    """جلب الفواتير من جدول Supabase"""
     try:
-        invoices = load_invoices()
-        
-        # فلترة
-        if vehicleId:
-            invoices = [inv for inv in invoices if inv.get('vehicleId') == vehicleId or inv.get('vehicle_id') == vehicleId]
-        if customerId:
-            invoices = [inv for inv in invoices if inv.get('customerId') == customerId]
+        if supabase_service.mock_mode:
+            return []
+
+        invoices = supabase_service.invoices_list(vehicle_id=vehicleId, customer_id=customerId)
+
+        # فلترة بالحالة على مستوى التطبيق
         if status:
             invoices = [inv for inv in invoices if inv.get('status') == status]
-        
-        return invoices
-        
+
+        # توحيد الحقول لتناسب الواجهة الأمامية
+        normalized = []
+        for inv in invoices:
+            normalized.append({
+                "id": inv.get("id"),
+                "invoice_number": inv.get("invoiceNumber") or str(inv.get("id"))[:8],
+                "customer_id": inv.get("customerId"),
+                "customer_name": inv.get("customerName") or "",
+                "vehicle_id": inv.get("vehicleId"),
+                "plate_number": inv.get("plateNumber", ""),
+                "items": inv.get("items") or [],
+                "subtotal": float(inv.get("subtotal") or 0),
+                "tax": float(inv.get("tax") or 0),
+                "total": float(inv.get("total") or 0),
+                "status": inv.get("status") or "pending",
+                "type": inv.get("type") or "sale",
+                "date": inv.get("date") or inv.get("createdAt"),
+                "created_at": inv.get("createdAt"),
+            })
+        return normalized
     except Exception as e:
         print(f"Error fetching invoices: {e}")
         return []

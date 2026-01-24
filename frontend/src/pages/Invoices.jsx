@@ -39,8 +39,10 @@ const Invoices = () => {
       setLoading(true);
       setError(null);
 
+      // إضافة باراميتر زمني بسيط لتفادي أي كاش محتمل من المتصفح أو البروكسي
       const response = await financeAPI.getInvoices({
         status: statusFilter || undefined,
+        _ts: Date.now(),
       });
 
       // تحويل البيانات للتأكد من توافق الحقول

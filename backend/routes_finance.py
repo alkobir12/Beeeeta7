@@ -844,3 +844,137 @@ async def get_financial_operations(
         "data": [],
         "total": 0
     }
+
+
+@router.put("/journal-entries/{entry_id}")
+async def update_journal_entry(
+    entry_id: str,
+    entry: dict,
+    workshop_id: str = Query(...)
+):
+    """
+    تعديل قيد محاسبي يدوي في Supabase
+    """
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        # التحقق من وجود القيد وأنه يدوي
+        existing = supabase.table("journal_entries").select("*").eq("id", entry_id).eq("workshop_id", workshop_id).execute()
+        
+        if not existing.data or len(existing.data) == 0:
+            return {
+                "success": False,
+                "error": "القيد غير موجود",
+                "message": "لم يتم العثور على القيد المطلوب"
+            }
+        
+        # تحديث البيانات
+        update_data = {
+            "date": entry.get("date"),
+            "description": entry.get("description", ""),
+            "lines": entry.get("lines", []),
+            "total": entry.get("total", 0),
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        # حذف القيم الفارغة
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+        
+        response = supabase.table("journal_entries").update(update_data).eq("id", entry_id).execute()
+        
+        return {
+            "success": True,
+            "message": "تم تحديث القيد المحاسبي بنجاح",
+            "data": response.data
+        }
+        
+    except Exception as e:
+        print(f"Error in update_journal_entry: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "فشل في تحديث القيد المحاسبي"
+        }
+
+
+@router.delete("/journal-entries/{entry_id}")
+async def delete_journal_entry(
+    entry_id: str,
+    workshop_id: str = Query(...)
+):
+    """
+    حذف قيد محاسبي يدوي من Supabase
+    """
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        # التحقق من وجود القيد
+        existing = supabase.table("journal_entries").select("*").eq("id", entry_id).eq("workshop_id", workshop_id).execute()
+        
+        if not existing.data or len(existing.data) == 0:
+            return {
+                "success": False,
+                "error": "القيد غير موجود",
+                "message": "لم يتم العثور على القيد المطلوب"
+            }
+        
+        # حذف القيد
+        response = supabase.table("journal_entries").delete().eq("id", entry_id).execute()
+        
+        return {
+            "success": True,
+            "message": "تم حذف القيد المحاسبي بنجاح"
+        }
+        
+    except Exception as e:
+        print(f"Error in delete_journal_entry: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "فشل في حذف القيد المحاسبي"
+        }
+
+
+@router.get("/journal-entries/{entry_id}")
+async def get_journal_entry(
+    entry_id: str,
+    workshop_id: str = Query(...)
+):
+    """
+    جلب قيد محاسبي واحد
+    """
+    try:
+        if not supabase:
+            raise Exception("Supabase not connected")
+        
+        response = supabase.table("journal_entries").select("*").eq("id", entry_id).eq("workshop_id", workshop_id).execute()
+        
+        if not response.data or len(response.data) == 0:
+            return {
+                "success": False,
+                "error": "القيد غير موجود",
+                "message": "لم يتم العثور على القيد المطلوب"
+            }
+        
+        entry = response.data[0]
+        return {
+            "success": True,
+            "data": {
+                "id": entry.get("id"),
+                "date": entry.get("date", ""),
+                "description": entry.get("description", "قيد يدوي"),
+                "lines": entry.get("lines", []),
+                "total": entry.get("total", 0),
+                "source": "manual"
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error in get_journal_entry: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "فشل في جلب القيد المحاسبي"
+        }

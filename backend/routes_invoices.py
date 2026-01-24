@@ -82,7 +82,7 @@ async def create_invoice(invoice: dict):
 
 @router.put("/{invoice_id}")
 async def update_invoice(invoice_id: str, invoice: dict):
-    """تحديث فاتورة"""
+    """تحديث فاتورة (تقبل تحديث الحالة أيضًا)"""
     try:
         invoices = load_invoices()
         
@@ -93,6 +93,8 @@ async def update_invoice(invoice_id: str, invoice: dict):
                     "subtotal": invoice.get("subtotal", inv.get("subtotal")),
                     "tax": invoice.get("tax", inv.get("tax")),
                     "total": invoice.get("total", inv.get("total")),
+                    # تحديث حالة الفاتورة إذا أُرسلت (مثلاً عند التسليم أو الدفع)
+                    "status": invoice.get("status", inv.get("status", "pending")),
                     "updated_at": datetime.now().isoformat()
                 })
                 save_invoice(inv)

@@ -89,13 +89,16 @@ const getEntryTypeConfig = (type) => {
 };
 
 export default function JournalEntries() {
-  const { isDark, theme } = useTheme();
+  const { isDark, theme, themeName } = useTheme();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  
+  // For DashPro and Light themes, content should be light
+  const isLightContent = themeName === 'light' || themeName === 'dashPro';
 
   useEffect(() => {
     fetchJournalEntries();

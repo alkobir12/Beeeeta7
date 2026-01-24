@@ -178,6 +178,131 @@ export default function JournalEntries() {
     return (
       <span className={`text-xs px-2 py-0.5 rounded ${badge.color}`}>
         {badge.label}
+  const handlePrintInvoice = (entry) => {
+    // صفحة طباعة مبنية على بيانات القيد نفسه
+    const printWindow = window.open('', '_blank', 'width=800,height=1000');
+    if (!printWindow) return;
+
+    const doc = printWindow.document;
+    const total = entry.total_debit || entry.total_credit || 0;
+
+    doc.write(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>فاتورة - ${entry.entry_number}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 24px; background: #f5f5f5; color: #111827; }
+    .invoice-container { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .workshop-name { font-size: 20px; font-weight: 700; color: #111827; }
+    .invoice-title { font-size: 18px; font-weight: 600; color: #111827; }
+    .meta { font-size: 13px; color: #4b5563; margin-top: 4px; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .badge-posted { background: #ecfdf3; color: #166534; }
+    .section-title { font-size: 14px; font-weight: 600; color: #4b5563; margin-bottom: 8px; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; font-size: 13px; margin-bottom: 20px; }
+    .info-label { color: #6b7280; }
+    .info-value { color: #111827; font-weight: 500; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; text-align: right; font-weight: 600; color: #4b5563; }
+    tfoot td { border-top: 1px solid #e5e7eb; font-weight: 600; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .totals { margin-top: 16px; width: 260px; margin-left: auto; font-size: 13px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .totals-label { color: #4b5563; }
+    .totals-value { color: #111827; font-weight: 600; }
+    .footer { margin-top: 32px; font-size: 11px; color: #9ca3af; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div>
+        <div class="workshop-name">${document.title || 'ورشة الصيانة'}</div>
+        <div class="meta">سند فاتورة مبني على القيد: ${entry.entry_number}</div>
+      </div>
+      <div style="text-align: left;">
+        <div class="invoice-title">فاتورة</div>
+        <div class="meta">رقم الفاتورة: ${entry.entry_number}</div>
+        <div class="meta">التاريخ: ${entry.entry_date}</div>
+        <div style="margin-top: 6px;">
+          <span class="badge badge-posted">${entry.status === 'posted' ? 'مرحّلة' : 'مسودة'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <div class="info-label">العميل</div>
+        <div class="info-value">${entry.customer_name || '-'}</div>
+      </div>
+      <div>
+        <div class="info-label">رقم اللوحة</div>
+        <div class="info-value">${entry.vehicle_plate || '-'}</div>
+      </div>
+      <div>
+        <div class="info-label">الوصف</div>
+        <div class="info-value">${entry.description || '-'}</div>
+      </div>
+      <div>
+        <div class="info-label">المرجع</div>
+        <div class="info-value">${entry.reference_number || '-'}</div>
+      </div>
+    </div>
+
+    <div class="section-title">تفاصيل القيد / البنود</div>
+    <table>
+      <thead>
+        <tr>
+          <th>الحساب</th>
+          <th class="text-right">مدين</th>
+          <th class="text-right">دائن</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entry.lines.map(line => `
+          <tr>
+            <td>${line.account_code || ''} - ${line.account_name || ''}</td>
+            <td class="text-right">${line.debit ? line.debit.toFixed(2) : '0.00'}</td>
+            <td class="text-right">${line.credit ? line.credit.toFixed(2) : '0.00'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-row">
+        <span class="totals-label">إجمالي المدين</span>
+        <span class="totals-value">${(entry.total_debit || 0).toFixed(2)} ريال</span>
+      </div>
+      <div class="totals-row">
+        <span class="totals-label">إجمالي الدائن</span>
+        <span class="totals-value">${(entry.total_credit || 0).toFixed(2)} ريال</span>
+      </div>
+      <div class="totals-row" style="border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 6px;">
+        <span class="totals-label">إجمالي الفاتورة</span>
+        <span class="totals-value">${total.toFixed(2)} ريال</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      تم توليد هذه الفاتورة من نظام القيود المحاسبية. للاستخدام الداخلي فقط.
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      window.print();
+    };
+  </script>
+</body>
+</html>`);
+    doc.close();
+  };
+
       </span>
     );
   };

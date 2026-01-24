@@ -9,7 +9,6 @@ import {
   Clock, 
   XCircle,
   Eye,
-  Send,
   FileText,
   ArrowLeftRight,
   Printer,
@@ -21,12 +20,8 @@ import {
   CreditCard,
   TrendingUp,
   DollarSign,
-  ChevronLeft,
-  MoreVertical,
-  Wrench,
-  Building2
+  Wrench
 } from 'lucide-react';
-import '../styles/dash-theme.css';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 
@@ -46,50 +41,19 @@ const formatDate = (date) => {
   });
 };
 
-// Entry type configurations matching the reference images
 const getEntryTypeConfig = (type) => {
   const configs = {
-    invoice: { 
-      icon: Receipt, 
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
-      label: 'فاتورة',
-      labelEn: 'Invoice'
-    },
-    payment: { 
-      icon: CreditCard, 
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-600',
-      label: 'محصلة',
-      labelEn: 'Collected'
-    },
-    purchase: { 
-      icon: ShoppingCart, 
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600',
-      label: 'مشتريات',
-      labelEn: 'Purchase'
-    },
-    salary: { 
-      icon: Briefcase, 
-      bgColor: 'bg-orange-50',
-      textColor: 'text-orange-600',
-      label: 'رواتب',
-      labelEn: 'Salary'
-    },
-    manual: { 
-      icon: FileText, 
-      bgColor: 'bg-slate-50',
-      textColor: 'text-slate-600',
-      label: 'يدوي',
-      labelEn: 'Manual'
-    },
+    invoice: { icon: Receipt, bgColor: 'bg-blue-50', textColor: 'text-blue-600', label: 'فاتورة' },
+    payment: { icon: CreditCard, bgColor: 'bg-emerald-50', textColor: 'text-emerald-600', label: 'محصلة' },
+    purchase: { icon: ShoppingCart, bgColor: 'bg-purple-50', textColor: 'text-purple-600', label: 'مشتريات' },
+    salary: { icon: Briefcase, bgColor: 'bg-orange-50', textColor: 'text-orange-600', label: 'رواتب' },
+    manual: { icon: FileText, bgColor: 'bg-slate-50', textColor: 'text-slate-600', label: 'يدوي' },
   };
   return configs[type] || configs.manual;
 };
 
 export default function JournalEntries() {
-  const { isDark, theme, themeName } = useTheme();
+  const { themeName } = useTheme();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,12 +61,10 @@ export default function JournalEntries() {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   
-  // For DashPro and Light themes, content should be light
-  const isLightContent = themeName === 'light' || themeName === 'dashPro';
+  // Light content for light & dashPro themes, dark for dark theme
+  const isLight = themeName === 'light' || themeName === 'dashPro';
 
-  useEffect(() => {
-    fetchJournalEntries();
-  }, []);
+  useEffect(() => { fetchJournalEntries(); }, []);
 
   const fetchJournalEntries = async () => {
     setLoading(true);
@@ -151,7 +113,6 @@ export default function JournalEntries() {
     );
   });
 
-  // Stats calculation
   const stats = {
     total: entries.length,
     posted: entries.filter(e => e.status === 'posted').length,
@@ -162,29 +123,74 @@ export default function JournalEntries() {
   const handlePrintInvoice = (entry) => {
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) return;
-    // ... (keep existing print logic)
+    const total = entry.total_debit || 0;
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>فاتورة - ${entry.entry_number}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #f5f5f5; color: #111827; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+    .title { font-size: 22px; font-weight: 700; color: #1e40af; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th { background: #1e40af; color: white; padding: 12px; text-align: right; }
+    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+    .totals { margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 8px; color: white; }
+    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">ورشة الصيانة</div>
+      <div>فاتورة: ${entry.entry_number}<br/>التاريخ: ${entry.entry_date || '-'}</div>
+    </div>
+    <p><strong>العميل:</strong> ${entry.customer_name || '-'} | <strong>اللوحة:</strong> ${entry.vehicle_plate || '-'}</p>
+    <table>
+      <thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead>
+      <tbody>
+        ${entry.lines.map(l => `<tr><td>${l.account_code} - ${l.account_name}</td><td>${l.debit ? l.debit.toFixed(2) : '-'}</td><td>${l.credit ? l.credit.toFixed(2) : '-'}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="totals">
+      <div class="totals-row"><span>الإجمالي</span><span>${total.toFixed(2)} ر.س</span></div>
+    </div>
+  </div>
+  <script>window.onload = function() { window.print(); };</script>
+</body>
+</html>`);
+    printWindow.document.close();
   };
 
-  // Dynamic styles based on theme
-  const cardBg = isLightContent ? 'bg-white' : 'bg-gray-800';
-  const cardBorder = isLightContent ? 'border-gray-200' : 'border-gray-700';
-  const textPrimary = isLightContent ? 'text-gray-900' : 'text-white';
-  const textSecondary = isLightContent ? 'text-gray-600' : 'text-gray-400';
-  const textMuted = isLightContent ? 'text-gray-400' : 'text-gray-500';
+  // Theme-based styles
+  const styles = {
+    bg: isLight ? '#f8fafc' : '#0f172a',
+    cardBg: isLight ? '#ffffff' : '#1e293b',
+    cardBorder: isLight ? '#e2e8f0' : '#334155',
+    cardShadow: isLight ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
+    textSecondary: isLight ? '#64748b' : '#94a3b8',
+    textMuted: isLight ? '#94a3b8' : '#64748b',
+    inputBg: isLight ? '#f8fafc' : '#334155',
+    inputBorder: isLight ? '#e2e8f0' : '#475569',
+    hoverBg: isLight ? '#f1f5f9' : '#334155',
+  };
 
   return (
     <div 
-      className={`p-4 md:p-6 min-h-screen transition-colors duration-300`}
-      style={{ backgroundColor: isLightContent ? '#f8fafc' : '#0f172a' }}
+      className="p-4 md:p-6 min-h-screen transition-colors duration-300"
+      style={{ backgroundColor: styles.bg }}
       data-testid="journal-entries-page"
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className={`text-2xl font-bold ${textPrimary}`}>
+          <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>
             القيود المحاسبية والفواتير
           </h1>
-          <p className={`text-sm mt-1 ${textSecondary}`}>
+          <p className="text-sm mt-1" style={{ color: styles.textSecondary }}>
             إدارة السيولة، الضرائب، وتحليلات النظام المالي
           </p>
         </div>
@@ -192,10 +198,13 @@ export default function JournalEntries() {
         <div className="flex gap-2">
           <button
             onClick={fetchJournalEntries}
-            className={`p-2.5 rounded-xl transition-all ${
-              !isLightContent ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
-            }`}
-            style={{ boxShadow: isLightContent ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}
+            className="p-2.5 rounded-xl transition-all"
+            style={{ 
+              backgroundColor: styles.cardBg,
+              border: `1px solid ${styles.cardBorder}`,
+              boxShadow: styles.cardShadow,
+              color: styles.textSecondary
+            }}
           >
             <RefreshCw size={18} />
           </button>
@@ -212,9 +221,9 @@ export default function JournalEntries() {
         </div>
       </div>
 
-      {/* Stats Cards - Matching IMG_0084 style */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* AI Assistant Card - Dark Navy */}
+        {/* AI Assistant Card - Always Dark Navy */}
         <div 
           className="col-span-2 lg:col-span-1 rounded-2xl p-5"
           style={{ 
@@ -241,121 +250,95 @@ export default function JournalEntries() {
           </div>
         </div>
 
-        {/* Total Entries */}
-        <div 
-          className={`rounded-2xl p-5 ${cardBg}`}
-          style={{ 
-            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-              <FileText size={22} className="text-blue-600" />
-            </div>
-            <div>
-              <p className={`text-xs ${textMuted}`}>إجمالي القيود</p>
-              <p className={`text-2xl font-bold ${textPrimary}`}>{stats.total}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Posted Entries */}
-        <div 
-          className={`rounded-2xl p-5 ${cardBg}`}
-          style={{ 
-            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <CheckCircle size={22} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className={`text-xs ${textMuted}`}>المرحّلة</p>
-              <p className={`text-2xl font-bold ${textPrimary}`}>{stats.posted}</p>
+        {/* Stat Cards */}
+        {[
+          { label: 'إجمالي القيود', value: stats.total, icon: FileText, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+          { label: 'المرحّلة', value: stats.posted, icon: CheckCircle, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { label: 'إجمالي الحركات', value: formatCurrency(stats.totalAmount), icon: DollarSign, iconBg: 'bg-purple-50', iconColor: 'text-purple-600', small: true },
+        ].map((stat, i) => (
+          <div 
+            key={i}
+            className="rounded-2xl p-5"
+            style={{ 
+              backgroundColor: styles.cardBg,
+              border: `1px solid ${styles.cardBorder}`,
+              boxShadow: styles.cardShadow
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
+                <stat.icon size={22} className={stat.iconColor} />
+              </div>
+              <div>
+                <p className="text-xs" style={{ color: styles.textMuted }}>{stat.label}</p>
+                <p className={`font-bold ${stat.small ? 'text-lg' : 'text-2xl'}`} style={{ color: styles.textPrimary }}>
+                  {stat.value}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Total Amount */}
-        <div 
-          className={`rounded-2xl p-5 ${cardBg}`}
-          style={{ 
-            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
-              <DollarSign size={22} className="text-purple-600" />
-            </div>
-            <div>
-              <p className={`text-xs ${textMuted}`}>إجمالي الحركات</p>
-              <p className={`text-lg font-bold ${textPrimary}`}>{formatCurrency(stats.totalAmount)}</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Search and Filters */}
       <div 
-        className={`rounded-2xl p-4 mb-6 ${cardBg}`}
+        className="rounded-2xl p-4 mb-6"
         style={{ 
-          boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-          border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
+          backgroundColor: styles.cardBg,
+          border: `1px solid ${styles.cardBorder}`,
+          boxShadow: styles.cardShadow
         }}
       >
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           <div className="relative flex-1">
-            <Search className={`absolute right-3 top-1/2 -translate-y-1/2 ${textMuted}`} size={18} />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: styles.textMuted }} size={18} />
             <input
               type="text"
               placeholder="بحث برقم القيد أو الوصف أو العميل..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pr-10 pl-4 py-2.5 rounded-xl text-sm transition-all ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
-              } border focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+              className="w-full pr-10 pl-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              style={{ 
+                backgroundColor: styles.inputBg,
+                border: `1px solid ${styles.inputBorder}`,
+                color: styles.textPrimary
+              }}
             />
           </div>
 
-          <div className={`flex gap-1.5 p-1 rounded-xl ${isLightContent ? 'bg-gray-700' : 'bg-gray-100'}`}>
+          <div 
+            className="flex gap-1.5 p-1 rounded-xl"
+            style={{ backgroundColor: styles.inputBg }}
+          >
             {['all', 'posted', 'draft'].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  statusFilter === filter
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : isLightContent ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                  statusFilter === filter ? 'bg-blue-600 text-white shadow-md' : ''
                 }`}
+                style={statusFilter !== filter ? { color: styles.textSecondary } : {}}
               >
-                {filter === 'all' && 'الكل'}
-                {filter === 'posted' && 'مرحّل'}
-                {filter === 'draft' && 'مسودة'}
+                {filter === 'all' ? 'الكل' : filter === 'posted' ? 'مرحّل' : 'مسودة'}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Journal Entries Table - Matching IMG_0084 style */}
+      {/* Journal Entries Table */}
       <div 
-        className={`rounded-2xl overflow-hidden ${cardBg}`}
+        className="rounded-2xl overflow-hidden"
         style={{ 
-          boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-          border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
+          backgroundColor: styles.cardBg,
+          border: `1px solid ${styles.cardBorder}`,
+          boxShadow: styles.cardShadow
         }}
       >
-        {/* Table Header */}
-        <div className={`px-6 py-4 border-b ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="px-6 py-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-blue-600" />
-            <h2 className={`font-semibold ${textPrimary}`}>سجل الفواتير والعمليات</h2>
+            <h2 className="font-semibold" style={{ color: styles.textPrimary }}>سجل الفواتير والعمليات</h2>
           </div>
         </div>
 
@@ -363,23 +346,27 @@ export default function JournalEntries() {
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-              <span className={textSecondary}>جاري التحميل...</span>
+              <span style={{ color: styles.textSecondary }}>جاري التحميل...</span>
             </div>
           </div>
         ) : filteredEntries.length === 0 ? (
           <div className="p-12 text-center">
-            <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${isLightContent ? 'bg-gray-700' : 'bg-gray-100'}`}>
-              <BookOpen className={textMuted} size={32} />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: styles.inputBg }}>
+              <BookOpen size={32} style={{ color: styles.textMuted }} />
             </div>
-            <h3 className={`text-lg font-semibold ${textPrimary} mb-2`}>لا توجد قيود</h3>
-            <p className={textSecondary}>أضف قيداً جديداً أو قم بإضافة بنود لملف مركبة</p>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: styles.textPrimary }}>لا توجد قيود</h3>
+            <p style={{ color: styles.textSecondary }}>أضف قيداً جديداً أو قم بإضافة بنود لملف مركبة</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {/* Table Header Row */}
-            <div className={`grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider ${
-              isLightContent ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'
-            }`}>
+          <div>
+            {/* Table Header */}
+            <div 
+              className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider"
+              style={{ 
+                color: styles.textSecondary,
+                backgroundColor: isLight ? '#f8fafc' : '#1e293b'
+              }}
+            >
               <div className="col-span-4">الوصف</div>
               <div className="col-span-2">التاريخ</div>
               <div className="col-span-2">العميل</div>
@@ -397,52 +384,48 @@ export default function JournalEntries() {
               return (
                 <div 
                   key={entry.id}
-                  className={`grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors ${
-                    isLightContent ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
-                  }`}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors cursor-pointer"
+                  style={{ borderBottom: `1px solid ${isLight ? '#f1f5f9' : '#334155'}` }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.hoverBg}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  {/* Description & Icon */}
                   <div className="col-span-4 flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${typeConfig.bgColor}`}>
                       <TypeIcon size={18} className={typeConfig.textColor} />
                     </div>
                     <div>
-                      <p className={`font-medium ${textPrimary} text-sm`}>
+                      <p className="font-medium text-sm" style={{ color: styles.textPrimary }}>
                         {entry.description || 'قيد محاسبي'}
                       </p>
-                      <p className={`text-xs ${textMuted}`}>
+                      <p className="text-xs" style={{ color: styles.textMuted }}>
                         {entry.entry_number}
                       </p>
                     </div>
                   </div>
 
-                  {/* Date */}
                   <div className="col-span-2">
-                    <p className={`text-sm ${textSecondary}`}>
+                    <p className="text-sm" style={{ color: styles.textSecondary }}>
                       {formatDate(entry.entry_date)}
                     </p>
                   </div>
 
-                  {/* Customer */}
                   <div className="col-span-2">
-                    <p className={`text-sm ${textPrimary} truncate`}>
+                    <p className="text-sm truncate" style={{ color: styles.textPrimary }}>
                       {entry.customer_name || '-'}
                     </p>
                     {entry.vehicle_plate && (
-                      <p className={`text-xs ${textMuted} font-mono`}>
+                      <p className="text-xs font-mono" style={{ color: styles.textMuted }}>
                         {entry.vehicle_plate}
                       </p>
                     )}
                   </div>
 
-                  {/* Amount */}
                   <div className="col-span-2">
-                    <p className={`font-semibold ${textPrimary}`}>
+                    <p className="font-semibold" style={{ color: styles.textPrimary }}>
                       {formatCurrency(total)}
                     </p>
                   </div>
 
-                  {/* Status Badge */}
                   <div className="col-span-1">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                       entry.status === 'posted' 
@@ -456,28 +439,23 @@ export default function JournalEntries() {
                     </span>
                   </div>
 
-                  {/* Actions */}
                   <div className="col-span-1 flex justify-end gap-1">
                     <button
                       onClick={() => {
                         setSelectedEntry(entry);
                         setShowDetailModal(true);
                       }}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isLightContent ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
-                      }`}
+                      className="p-2 rounded-lg transition-colors hover:bg-blue-50"
                       title="عرض التفاصيل"
                     >
-                      <Eye size={16} className={textSecondary} />
+                      <Eye size={16} style={{ color: styles.textSecondary }} />
                     </button>
                     <button
                       onClick={() => handlePrintInvoice(entry)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isLightContent ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
-                      }`}
+                      className="p-2 rounded-lg transition-colors hover:bg-blue-50"
                       title="طباعة"
                     >
-                      <Printer size={16} className={textSecondary} />
+                      <Printer size={16} style={{ color: styles.textSecondary }} />
                     </button>
                   </div>
                 </div>
@@ -496,32 +474,30 @@ export default function JournalEntries() {
             setSelectedEntry(null);
           }}
           onPrint={handlePrintInvoice}
-          isDark={isDark}
+          isLight={isLight}
+          styles={styles}
         />
       )}
     </div>
   );
 }
 
-// Entry Detail Modal - Matching reference style
-function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
-  const typeConfig = getEntryTypeConfig(entry.reference_type);
-  const cardBg = isLightContent ? 'bg-gray-800' : 'bg-white';
-  const textPrimary = isLightContent ? 'text-white' : 'text-gray-900';
-  const textSecondary = isLightContent ? 'text-gray-400' : 'text-gray-600';
-  
+function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
-        className={`${cardBg} rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}
-        style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+        className="rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        style={{ 
+          backgroundColor: styles.cardBg,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' 
+        }}
       >
         {/* Header */}
         <div 
-          className="p-6 border-b"
+          className="p-6"
           style={{ 
-            borderColor: isLightContent ? '#334155' : '#e2e8f0',
-            background: isLightContent ? 'linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%)' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+            borderBottom: `1px solid ${styles.cardBorder}`,
+            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
           }}
         >
           <div className="flex items-center justify-between">
@@ -544,86 +520,56 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Entry Info Grid */}
+          {/* Entry Info */}
           <div className="grid grid-cols-2 gap-4">
-            <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Calendar size={18} className="text-blue-600" />
-                </div>
-                <div>
-                  <p className={`text-xs ${textSecondary}`}>التاريخ</p>
-                  <p className={`font-semibold ${textPrimary}`}>
-                    {formatDate(entry.entry_date)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <CheckCircle size={18} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className={`text-xs ${textSecondary}`}>الحالة</p>
-                  <p className={`font-semibold ${entry.status === 'posted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {entry.status === 'posted' ? 'مرحّل ✓' : 'مسودة'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {entry.customer_name && (
-              <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+            {[
+              { label: 'التاريخ', value: formatDate(entry.entry_date), icon: Calendar, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+              { label: 'الحالة', value: entry.status === 'posted' ? 'مرحّل ✓' : 'مسودة', icon: CheckCircle, iconBg: 'bg-emerald-50', iconColor: entry.status === 'posted' ? 'text-emerald-600' : 'text-amber-600' },
+              entry.customer_name && { label: 'العميل', value: entry.customer_name, icon: User, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+              entry.vehicle_plate && { label: 'رقم اللوحة', value: entry.vehicle_plate, icon: Wrench, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+            ].filter(Boolean).map((item, i) => (
+              <div 
+                key={i}
+                className="rounded-xl p-4"
+                style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <User size={18} className="text-purple-600" />
+                  <div className={`w-10 h-10 rounded-lg ${item.iconBg} flex items-center justify-center`}>
+                    <item.icon size={18} className={item.iconColor} />
                   </div>
                   <div>
-                    <p className={`text-xs ${textSecondary}`}>العميل</p>
-                    <p className={`font-semibold ${textPrimary}`}>{entry.customer_name}</p>
+                    <p className="text-xs" style={{ color: styles.textSecondary }}>{item.label}</p>
+                    <p className="font-semibold" style={{ color: item.label === 'الحالة' ? undefined : styles.textPrimary, color: item.iconColor?.includes('emerald') ? '#059669' : item.iconColor?.includes('amber') ? '#d97706' : styles.textPrimary }}>
+                      {item.value}
+                    </p>
                   </div>
                 </div>
               </div>
-            )}
-
-            {entry.vehicle_plate && (
-              <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
-                    <Wrench size={18} className="text-orange-600" />
-                  </div>
-                  <div>
-                    <p className={`text-xs ${textSecondary}`}>رقم اللوحة</p>
-                    <p className={`font-semibold font-mono ${textPrimary}`}>{entry.vehicle_plate}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* Entry Lines Table */}
+          {/* Entry Lines */}
           <div>
-            <h3 className={`font-semibold ${textPrimary} mb-3 flex items-center gap-2`}>
+            <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: styles.textPrimary }}>
               <ArrowLeftRight size={16} className="text-blue-600" />
               تفاصيل القيد
             </h3>
             <div 
-              className={`rounded-xl overflow-hidden border ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}
+              className="rounded-xl overflow-hidden"
+              style={{ border: `1px solid ${styles.cardBorder}` }}
             >
               <table className="w-full">
-                <thead className={isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                <thead style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
                   <tr>
-                    <th className={`px-4 py-3 text-right text-xs font-semibold ${textSecondary}`}>الحساب</th>
-                    <th className={`px-4 py-3 text-left text-xs font-semibold ${textSecondary}`}>مدين</th>
-                    <th className={`px-4 py-3 text-left text-xs font-semibold ${textSecondary}`}>دائن</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold" style={{ color: styles.textSecondary }}>الحساب</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold" style={{ color: styles.textSecondary }}>مدين</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold" style={{ color: styles.textSecondary }}>دائن</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${isLightContent ? 'divide-gray-700' : 'divide-gray-100'}`}>
+                <tbody>
                   {entry.lines.map((line, idx) => (
-                    <tr key={idx}>
-                      <td className={`px-4 py-3 ${textPrimary}`}>
+                    <tr key={idx} style={{ borderBottom: `1px solid ${isLight ? '#f1f5f9' : '#334155'}` }}>
+                      <td className="px-4 py-3" style={{ color: styles.textPrimary }}>
                         <span className="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded ml-2">
                           {line.account_code}
                         </span>
@@ -632,19 +578,19 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
                       <td className="px-4 py-3 text-left font-mono">
                         {line.debit > 0 ? (
                           <span className="text-emerald-600 font-semibold">{formatCurrency(line.debit)}</span>
-                        ) : <span className={textSecondary}>-</span>}
+                        ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                       <td className="px-4 py-3 text-left font-mono">
                         {line.credit > 0 ? (
                           <span className="text-rose-600 font-semibold">{formatCurrency(line.credit)}</span>
-                        ) : <span className={textSecondary}>-</span>}
+                        ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className={isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                <tfoot style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
                   <tr className="font-bold">
-                    <td className={`px-4 py-3 ${textPrimary}`}>الإجمالي</td>
+                    <td className="px-4 py-3" style={{ color: styles.textPrimary }}>الإجمالي</td>
                     <td className="px-4 py-3 text-left text-emerald-600">{formatCurrency(entry.total_debit)}</td>
                     <td className="px-4 py-3 text-left text-rose-600">{formatCurrency(entry.total_credit)}</td>
                   </tr>
@@ -677,8 +623,8 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className={`p-6 border-t flex gap-3 ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}>
+        {/* Footer */}
+        <div className="p-6 flex gap-3" style={{ borderTop: `1px solid ${styles.cardBorder}` }}>
           <button
             onClick={() => onPrint(entry)}
             className="flex-1 py-3 rounded-xl font-medium text-white transition-all flex items-center justify-center gap-2"
@@ -692,11 +638,11 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
           </button>
           <button
             onClick={onClose}
-            className={`flex-1 py-3 rounded-xl font-medium transition-all ${
-              isDark 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className="flex-1 py-3 rounded-xl font-medium transition-all"
+            style={{ 
+              backgroundColor: isLight ? '#f1f5f9' : '#334155',
+              color: styles.textSecondary
+            }}
           >
             إغلاق
           </button>

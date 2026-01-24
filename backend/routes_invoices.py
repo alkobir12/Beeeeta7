@@ -1,53 +1,28 @@
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 import uuid
-import json
-from pathlib import Path
+
+from supabase_service import SupabaseService
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
-# مسار تخزين الفواتير محلياً (مؤقت)
-INVOICES_DIR = Path("/app/backend/uploads/invoices")
-INVOICES_DIR.mkdir(exist_ok=True, parents=True)
-
-def save_invoice(invoice):
-    """حفظ فاتورة في ملف JSON"""
-    file_path = INVOICES_DIR / f"{invoice['id']}.json"
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(invoice, f, ensure_ascii=False, indent=2, default=str)
-    return invoice
-
-def load_invoices():
-    """تحميل جميع الفواتير"""
-    invoices = []
-    for file_path in INVOICES_DIR.glob("*.json"):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            invoices.append(json.load(f))
-    return invoices
-
+# نعتمد الآن على جدول Supabase للفواتير بدلاً من نظام الملفات
+supabase_service = SupabaseService()
 
 def delete_invoices_by_vehicle_id(vehicle_id: str):
-    """حذف جميع الفواتير المرتبطة بمركبة معيّنة (للاستخدام عند حذف المركبة)."""
+    """حذف جميع الفواتير المرتبطة بمركبة معيّنة من جدول Supabase (يُستخدم عند حذف المركبة)."""
     try:
-      if not vehicle_id:
-          return 0
-      deleted = 0
-      for file_path in list(INVOICES_DIR.glob("*.json")):
-          try:
-              with open(file_path, 'r', encoding='utf-8') as f:
-                  data = json.load(f)
-              if data.get('vehicleId') == vehicle_id or data.get('vehicle_id') == vehicle_id:
-                  file_path.unlink(missing_ok=True)
-                  deleted += 1
-          except Exception:
-              # نتجاهل أي ملف تالف ولا نمنع بقية العملية
-              continue
-      print(f"🧹 Deleted {deleted} invoice file(s) for vehicle {vehicle_id}")
-      return deleted
+        if not vehicle_id:
+            return 0
+        if supabase_service.mock_mode:
+            return 0
+        supabase_service.invoices_delete_by_vehicle(vehicle_id)
+        print(f"🧹 Deleted invoices in Supabase for vehicle {vehicle_id}")
+        return 1
     except Exception as e:
-      print(f"Error deleting invoices for vehicle {vehicle_id}: {e}")
-      return 0
+        print(f"Error deleting invoices for vehicle {vehicle_id}: {e}")
+        return 0
 
 @router.get("")
 async def get_invoices(

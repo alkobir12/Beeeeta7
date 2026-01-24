@@ -193,9 +193,9 @@ export default function JournalEntries() {
           <button
             onClick={fetchJournalEntries}
             className={`p-2.5 rounded-xl transition-all ${
-              isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
+              isLightContent ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
             }`}
-            style={{ boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)' }}
+            style={{ boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)' }}
           >
             <RefreshCw size={18} />
           </button>
@@ -245,8 +245,8 @@ export default function JournalEntries() {
         <div 
           className={`rounded-2xl p-5 ${cardBg}`}
           style={{ 
-            boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
           }}
         >
           <div className="flex items-center gap-3">
@@ -264,8 +264,8 @@ export default function JournalEntries() {
         <div 
           className={`rounded-2xl p-5 ${cardBg}`}
           style={{ 
-            boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
           }}
         >
           <div className="flex items-center gap-3">
@@ -283,8 +283,8 @@ export default function JournalEntries() {
         <div 
           className={`rounded-2xl p-5 ${cardBg}`}
           style={{ 
-            boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-            border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+            boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+            border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
           }}
         >
           <div className="flex items-center gap-3">
@@ -303,8 +303,8 @@ export default function JournalEntries() {
       <div 
         className={`rounded-2xl p-4 mb-6 ${cardBg}`}
         style={{ 
-          boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+          boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+          border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
         }}
       >
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -323,7 +323,7 @@ export default function JournalEntries() {
             />
           </div>
 
-          <div className={`flex gap-1.5 p-1 rounded-xl ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+          <div className={`flex gap-1.5 p-1 rounded-xl ${isLightContent ? 'bg-gray-700' : 'bg-gray-100'}`}>
             {['all', 'posted', 'draft'].map((filter) => (
               <button
                 key={filter}
@@ -331,7 +331,7 @@ export default function JournalEntries() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === filter
                     ? 'bg-blue-600 text-white shadow-md'
-                    : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                    : isLightContent ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {filter === 'all' && 'الكل'}
@@ -347,12 +347,12 @@ export default function JournalEntries() {
       <div 
         className={`rounded-2xl overflow-hidden ${cardBg}`}
         style={{ 
-          boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+          boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+          border: isLightContent ? '1px solid #334155' : '1px solid #e2e8f0'
         }}
       >
         {/* Table Header */}
-        <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`px-6 py-4 border-b ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-blue-600" />
             <h2 className={`font-semibold ${textPrimary}`}>سجل الفواتير والعمليات</h2>
@@ -368,7 +368,7 @@ export default function JournalEntries() {
           </div>
         ) : filteredEntries.length === 0 ? (
           <div className="p-12 text-center">
-            <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+            <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${isLightContent ? 'bg-gray-700' : 'bg-gray-100'}`}>
               <BookOpen className={textMuted} size={32} />
             </div>
             <h3 className={`text-lg font-semibold ${textPrimary} mb-2`}>لا توجد قيود</h3>
@@ -378,7 +378,7 @@ export default function JournalEntries() {
           <div className="divide-y divide-gray-100">
             {/* Table Header Row */}
             <div className={`grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider ${
-              isDark ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'
+              isLightContent ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'
             }`}>
               <div className="col-span-4">الوصف</div>
               <div className="col-span-2">التاريخ</div>
@@ -398,7 +398,7 @@ export default function JournalEntries() {
                 <div 
                   key={entry.id}
                   className={`grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors ${
-                    isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
+                    isLightContent ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
                   }`}
                 >
                   {/* Description & Icon */}
@@ -464,7 +464,7 @@ export default function JournalEntries() {
                         setShowDetailModal(true);
                       }}
                       className={`p-2 rounded-lg transition-colors ${
-                        isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                        isLightContent ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
                       }`}
                       title="عرض التفاصيل"
                     >
@@ -473,7 +473,7 @@ export default function JournalEntries() {
                     <button
                       onClick={() => handlePrintInvoice(entry)}
                       className={`p-2 rounded-lg transition-colors ${
-                        isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                        isLightContent ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
                       }`}
                       title="طباعة"
                     >
@@ -506,9 +506,9 @@ export default function JournalEntries() {
 // Entry Detail Modal - Matching reference style
 function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
   const typeConfig = getEntryTypeConfig(entry.reference_type);
-  const cardBg = isDark ? 'bg-gray-800' : 'bg-white';
-  const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-  const textSecondary = isDark ? 'text-gray-400' : 'text-gray-600';
+  const cardBg = isLightContent ? 'bg-gray-800' : 'bg-white';
+  const textPrimary = isLightContent ? 'text-white' : 'text-gray-900';
+  const textSecondary = isLightContent ? 'text-gray-400' : 'text-gray-600';
   
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -520,8 +520,8 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
         <div 
           className="p-6 border-b"
           style={{ 
-            borderColor: isDark ? '#334155' : '#e2e8f0',
-            background: isDark ? 'linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%)' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+            borderColor: isLightContent ? '#334155' : '#e2e8f0',
+            background: isLightContent ? 'linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%)' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
           }}
         >
           <div className="flex items-center justify-between">
@@ -546,7 +546,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
         <div className="p-6 space-y-6">
           {/* Entry Info Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className={`rounded-xl p-4 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+            <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
                   <Calendar size={18} className="text-blue-600" />
@@ -560,7 +560,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
               </div>
             </div>
 
-            <div className={`rounded-xl p-4 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+            <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
                   <CheckCircle size={18} className="text-emerald-600" />
@@ -575,7 +575,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
             </div>
 
             {entry.customer_name && (
-              <div className={`rounded-xl p-4 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+              <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
                     <User size={18} className="text-purple-600" />
@@ -589,7 +589,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
             )}
 
             {entry.vehicle_plate && (
-              <div className={`rounded-xl p-4 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+              <div className={`rounded-xl p-4 ${isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
                     <Wrench size={18} className="text-orange-600" />
@@ -610,17 +610,17 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
               تفاصيل القيد
             </h3>
             <div 
-              className={`rounded-xl overflow-hidden border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+              className={`rounded-xl overflow-hidden border ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}
             >
               <table className="w-full">
-                <thead className={isDark ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                <thead className={isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}>
                   <tr>
                     <th className={`px-4 py-3 text-right text-xs font-semibold ${textSecondary}`}>الحساب</th>
                     <th className={`px-4 py-3 text-left text-xs font-semibold ${textSecondary}`}>مدين</th>
                     <th className={`px-4 py-3 text-left text-xs font-semibold ${textSecondary}`}>دائن</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-100'}`}>
+                <tbody className={`divide-y ${isLightContent ? 'divide-gray-700' : 'divide-gray-100'}`}>
                   {entry.lines.map((line, idx) => (
                     <tr key={idx}>
                       <td className={`px-4 py-3 ${textPrimary}`}>
@@ -642,7 +642,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className={isDark ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                <tfoot className={isLightContent ? 'bg-gray-700/50' : 'bg-gray-50'}>
                   <tr className="font-bold">
                     <td className={`px-4 py-3 ${textPrimary}`}>الإجمالي</td>
                     <td className="px-4 py-3 text-left text-emerald-600">{formatCurrency(entry.total_debit)}</td>
@@ -678,7 +678,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isDark }) {
         </div>
 
         {/* Footer Actions */}
-        <div className={`p-6 border-t flex gap-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`p-6 border-t flex gap-3 ${isLightContent ? 'border-gray-700' : 'border-gray-200'}`}>
           <button
             onClick={() => onPrint(entry)}
             className="flex-1 py-3 rounded-xl font-medium text-white transition-all flex items-center justify-center gap-2"

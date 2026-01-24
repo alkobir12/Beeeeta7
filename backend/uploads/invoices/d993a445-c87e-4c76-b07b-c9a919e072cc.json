@@ -1,0 +1,29 @@
+{
+  "id": "d993a445-c87e-4c76-b07b-c9a919e072cc",
+  "vehicleId": "4fa84fca-daef-476f-8a2a-d071a215e886",
+  "vehicle_id": "4fa84fca-daef-476f-8a2a-d071a215e886",
+  "customerId": "a09210e0-2c6d-4ad0-93b8-9fc9a37d9d5d",
+  "customerName": "محمد الجهني  ابو خالد",
+  "plateNumber": "ن ح ر   717",
+  "items": [
+    {
+      "name": "ع",
+      "quantity": 1,
+      "price": 0,
+      "total": 0
+    },
+    {
+      "name": "Hh",
+      "quantity": 1,
+      "price": 77,
+      "total": 77
+    }
+  ],
+  "subtotal": 77,
+  "tax": 11.549999999999999,
+  "total": 88.55,
+  "status": "pending",
+  "date": "2026-01-24T12:23:37.405Z",
+  "created_at": "2026-01-24T12:23:37.624848",
+  "updated_at": "2026-01-24T12:23:53.790955"
+}

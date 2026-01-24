@@ -184,6 +184,44 @@ def test_invoice_supabase_workflow():
                     response.status_code,
                     response.text
                 )
+                print("⚠️  CRITICAL ISSUE: Supabase 'invoices' table does not exist")
+                print("   The system is configured to use Supabase but the invoices table is missing")
+                print("   This indicates incomplete migration from file-based to Supabase system")
+                return
+        elif response.status_code == 500:
+            # Check if this is the expected Supabase table missing error
+            try:
+                error_response = response.json()
+                if "Could not find the table 'public.invoices'" in str(error_response):
+                    log_test(
+                        "Create Invoice via Supabase", 
+                        False, 
+                        "EXPECTED ERROR: Supabase 'invoices' table does not exist - migration incomplete", 
+                        response.status_code,
+                        response.text
+                    )
+                    print("⚠️  MIGRATION STATUS: INCOMPLETE")
+                    print("   📋 Issue: The 'invoices' table does not exist in Supabase")
+                    print("   🔧 Required Action: Create the 'invoices' table in Supabase with proper schema")
+                    print("   📝 Current State: System falls back to empty responses for GET, but POST fails")
+                    return
+                else:
+                    log_test(
+                        "Create Invoice via Supabase", 
+                        False, 
+                        f"Unexpected 500 error: {error_response}", 
+                        response.status_code,
+                        response.text
+                    )
+                    return
+            except:
+                log_test(
+                    "Create Invoice via Supabase", 
+                    False, 
+                    f"500 error with non-JSON response", 
+                    response.status_code,
+                    response.text
+                )
                 return
         else:
             log_test(
@@ -200,7 +238,8 @@ def test_invoice_supabase_workflow():
         return
     
     if not invoice_id:
-        print("❌ Cannot continue without invoice ID")
+        print("❌ Cannot continue with remaining tests - invoice creation failed")
+        print("📋 Remaining tests will be skipped due to missing Supabase table")
         return
     
     # ============================================================================

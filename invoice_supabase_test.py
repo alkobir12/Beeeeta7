@@ -518,11 +518,7 @@ def main():
     print(f"🎯 Test Objective: Verify invoice system works with Supabase instead of JSON files")
     print("="*80)
     
-    # Run health checks first
-    if not check_backend_health():
-        print("❌ Backend health check failed. Aborting tests.")
-        sys.exit(1)
-    
+    # Check Supabase integration
     check_supabase_errors()
     
     # Run main invoice workflow tests

@@ -453,88 +453,114 @@ export default function JournalEntries() {
             <p className="text-gray-400 mt-4">لا توجد قيود</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700/50">
-                <tr>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">رقم القيد</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">التاريخ</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">الوصف</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">النوع</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">مدين</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">دائن</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">الحالة</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-4 py-4">
+          <div className="p-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredEntries.map((entry) => {
+              const total = entry.total_debit || entry.total_credit || 0;
+              return (
+                <article
+                  key={entry.id}
+                  className="relative bg-gray-900/70 rounded-xl border border-gray-700 p-4 flex flex-col justify-between shadow-lg shadow-black/30"
+                >
+                  {/* شريط جانبي ملون حسب نوع القيد */}
+                  <span
+                    className={`absolute inset-y-3 right-0 w-1 rounded-l-full ${{
+                      invoice: 'bg-gradient-to-b from-blue-400 to-emerald-400',
+                      purchase: 'bg-gradient-to-b from-purple-400 to-amber-400',
+                      salary: 'bg-gradient-to-b from-orange-400 to-rose-400',
+                      payment: 'bg-gradient-to-b from-green-400 to-sky-400',
+                      manual: 'bg-gradient-to-b from-slate-400 to-slate-600',
+                    }[entry.reference_type || 'manual']}`}
+                  />
+
+                  {/* رأس الكرت */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-gray-800/80 border border-gray-700 text-lg">
+                        {entry.reference_type === 'invoice' && '🧾'}
+                        {entry.reference_type === 'purchase' && '📦'}
+                        {entry.reference_type === 'payment' && '💰'}
+                        {entry.reference_type === 'salary' && '💼'}
+                        {!entry.reference_type && '✏️'}
+                      </div>
                       <div className="flex flex-col">
-                        <span className="font-medium text-blue-400">{entry.entry_number}</span>
-                        {entry.vehicle_plate && (
-                          <span className="text-xs text-gray-400 mt-1">🚗 {entry.vehicle_plate}</span>
-                        )}
-                        {entry.customer_name && (
-                          <span className="text-xs text-gray-500 mt-0.5">👤 {entry.customer_name}</span>
+                        <span className="text-xs text-gray-400">رقم القيد</span>
+                        <span className="font-semibold text-blue-400">{entry.entry_number}</span>
+                        {entry.entry_date && (
+                          <span className="text-[11px] text-gray-500 mt-0.5">
+                            {new Date(entry.entry_date).toLocaleDateString('ar-SA')}
+                          </span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-4 py-4 text-gray-400 text-sm">
-                      {new Date(entry.entry_date).toLocaleDateString('ar-SA')}
-                    </td>
-                    <td className="px-4 py-4 text-white max-w-xs truncate">
-                      {entry.description}
-                    </td>
-                    <td className="px-4 py-4">
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1">
                       {getReferenceTypeBadge(entry.reference_type)}
-                    </td>
-                    <td className="px-4 py-4 text-left font-mono text-green-400">
-                      {formatCurrency(entry.total_debit)}
-                    </td>
-                    <td className="px-4 py-4 text-left font-mono text-red-400">
-                      {formatCurrency(entry.total_credit)}
-                    </td>
-                    <td className="px-4 py-4">
                       {getStatusBadge(entry.status)}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => {
-                            setSelectedEntry(entry);
-                            setShowDetailModal(true);
-                          }}
-                          className="p-1.5 rounded hover:bg-gray-700 transition-colors" 
-                          title="عرض التفاصيل"
-                        >
-                          <Eye size={16} className="text-gray-400" />
-                        </button>
-                        
-                        <button
-                          onClick={() => handlePrintInvoice(entry)}
-                          className="p-1.5 rounded hover:bg-blue-900/30 transition-colors"
-                          title="طباعة الفاتورة"
-                        >
-                          <FileText size={16} className="text-blue-400" />
-                        </button>
-                        
-                        {entry.status === 'draft' && (
-                          <button 
-                            onClick={() => postEntry(entry.id)}
-                            className="p-1.5 rounded hover:bg-green-900/30 transition-colors" 
-                            title="ترحيل القيد"
-                          >
-                            <Send size={16} className="text-green-400" />
-                          </button>
-                        )}
+                    </div>
+                  </div>
+
+                  {/* معلومات العميل/المركبة والوصف */}
+                  <div className="space-y-1 mb-4 text-xs text-gray-300">
+                    {entry.customer_name && (
+                      <div className="flex items-center gap-1">
+                        <span>👤</span>
+                        <span className="truncate">{entry.customer_name}</span>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                    {entry.vehicle_plate && (
+                      <div className="flex items-center gap-1">
+                        <span>🚗</span>
+                        <span>{entry.vehicle_plate}</span>
+                      </div>
+                    )}
+                    <div className="text-[11px] text-gray-400 line-clamp-2">
+                      {entry.description}
+                    </div>
+                  </div>
+
+                  {/* أسفل الكرت: الإجمالي + أزرار الإجراءات */}
+                  <div className="flex items-center justify-between gap-3 mt-auto pt-3 border-t border-gray-700/60">
+                    <div>
+                      <div className="text-[11px] text-gray-400">إجمالي القيد</div>
+                      <div className="font-semibold text-emerald-400 text-sm">
+                        {formatCurrency(total)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedEntry(entry);
+                          setShowDetailModal(true);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-gray-700/80 transition-colors"
+                        title="عرض التفاصيل"
+                      >
+                        <Eye size={16} className="text-gray-300" />
+                      </button>
+
+                      <button
+                        onClick={() => handlePrintInvoice(entry)}
+                        className="p-1.5 rounded-lg hover:bg-blue-900/40 transition-colors"
+                        title="طباعة الفاتورة"
+                      >
+                        <FileText size={16} className="text-blue-400" />
+                      </button>
+
+                      {entry.status === 'draft' && (
+                        <button
+                          onClick={() => postEntry(entry.id)}
+                          className="p-1.5 rounded-lg hover:bg-green-900/40 transition-colors"
+                          title="ترحيل القيد"
+                        >
+                          <Send size={16} className="text-green-400" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>

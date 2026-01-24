@@ -192,7 +192,8 @@ def test_invoice_supabase_workflow():
             # Check if this is the expected Supabase table missing error
             try:
                 error_response = response.json()
-                if "Could not find the table 'public.invoices'" in str(error_response):
+                error_detail = str(error_response.get('detail', ''))
+                if "Could not find the table 'public.invoices'" in error_detail:
                     log_test(
                         "Create Invoice via Supabase", 
                         False, 

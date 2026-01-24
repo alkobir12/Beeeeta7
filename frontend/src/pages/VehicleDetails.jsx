@@ -363,9 +363,15 @@ const VehicleDetails = () => {
   const createOrUpdateInvoice = async (vehicleId, parts) => {
     try {
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+      const safeParts = (parts || []).filter(Boolean).map((p) => ({
+        ...p,
+        quantity: Number(p.quantity || 0),
+        price: Number(p.price || 0),
+      }));
       
-      // حساب المجموع
-      const subtotal = parts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+      // حساب المجموع بشكل آمن حتى لو كانت هناك قيم فارغة
+      const subtotal = safeParts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
       const tax = subtotal * 0.15; // 15% VAT
       const total = subtotal + tax;
       
@@ -373,24 +379,27 @@ const VehicleDetails = () => {
       
       // البحث عن فاتورة موجودة لهذه المركبة
       const invoicesRes = await axios.get(`${API_URL}/invoices?vehicleId=${vehicleId}`);
-      const existingInvoice = invoicesRes.data?.find(inv => inv.vehicle_id === vehicleId && inv.status !== 'paid');
+      const invoicesList = invoicesRes.data || [];
+      const existingInvoice = invoicesList.find(
+        (inv) => (inv.vehicle_id === vehicleId || inv.vehicleId === vehicleId) && inv.status !== 'paid'
+      );
       
       const invoiceData = {
         vehicleId: vehicleId,
         customerId: vehicle.customerId,
         customerName: vehicle.customerName,
         plateNumber: vehicle.plateNumber,
-        items: parts.map(p => ({
+        items: safeParts.map((p) => ({
           name: p.name,
           quantity: p.quantity,
           price: p.price,
-          total: p.price * p.quantity
+          total: p.price * p.quantity,
         })),
-        subtotal: subtotal,
-        tax: tax,
-        total: total,
-        status: 'pending',
-        date: new Date().toISOString()
+        subtotal,
+        tax,
+        total,
+        status: existingInvoice?.status || 'pending',
+        date: existingInvoice?.date || new Date().toISOString(),
       };
       
       console.log('📄 Invoice data:', invoiceData);

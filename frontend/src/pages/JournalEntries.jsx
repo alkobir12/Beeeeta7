@@ -307,10 +307,6 @@ export default function JournalEntries() {
     doc.close();
   };
 
-      </span>
-    );
-  };
-
   const filteredEntries = entries.filter((entry) => {
     if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
     if (!searchQuery) return true;

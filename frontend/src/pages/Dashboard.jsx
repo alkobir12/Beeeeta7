@@ -326,11 +326,14 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {filteredVehicles.length === 0 ? (
             <div className="col-span-full py-12 text-center">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Car className="text-gray-400" size={40} />
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: isLight ? '#f1f5f9' : '#334155' }}
+              >
+                <Car size={40} style={{ color: styles.textMuted }} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">{t('common.no_data')}</h3>
-              <p className="text-gray-500 mt-1">{t('dashboard.search')}</p>
+              <h3 className="text-lg font-medium" style={{ color: styles.textPrimary }}>{t('common.no_data')}</h3>
+              <p className="mt-1" style={{ color: styles.textSecondary }}>{t('dashboard.search')}</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {
@@ -338,17 +341,27 @@ const Dashboard = () => {
               return (
                 <div 
                   key={`vehicle-${vehicle.id}`} 
-                  className="apple-card p-3 sm:p-4 md:p-5 cursor-pointer hover:shadow-md transition-shadow group relative overflow-hidden"
+                  className="rounded-2xl p-3 sm:p-4 md:p-5 cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden"
+                  style={{ 
+                    backgroundColor: styles.cardBg,
+                    border: `1px solid ${styles.cardBorder}`
+                  }}
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}
                 >
                   <div className="flex justify-between items-start mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 font-bold text-base sm:text-lg flex-shrink-0">
+                      <div 
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0"
+                        style={{ 
+                          backgroundColor: isLight ? '#f1f5f9' : '#334155',
+                          color: styles.textPrimary
+                        }}
+                      >
                         {vehicle.brand?.[0]}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">{vehicle.brand} {vehicle.model}</h3>
-                        <p className="text-xs sm:text-sm text-gray-500 font-mono">{vehicle.plateNumber}</p>
+                        <h3 className="font-bold text-sm sm:text-base truncate" style={{ color: styles.textPrimary }}>{vehicle.brand} {vehicle.model}</h3>
+                        <p className="text-xs sm:text-sm font-mono" style={{ color: styles.textSecondary }}>{vehicle.plateNumber}</p>
                       </div>
                     </div>
                     <button
@@ -357,7 +370,8 @@ const Dashboard = () => {
                         setSelectedVehicle(vehicle);
                         setShowQuickActions(true);
                       }}
-                      className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                      className="p-1.5 sm:p-2 rounded-full transition-colors flex-shrink-0"
+                      style={{ color: styles.textMuted }}
                       aria-label="Quick Actions"
                     >
                       <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -365,17 +379,17 @@ const Dashboard = () => {
                   </div>
 
                   <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-                      <Users size={14} className="text-gray-400 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: styles.textSecondary }}>
+                      <Users size={14} style={{ color: styles.textMuted }} className="flex-shrink-0" />
                       <span className="truncate">{vehicle.customerName}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-                      <Clock size={14} className="text-gray-400 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: styles.textSecondary }}>
+                      <Clock size={14} style={{ color: styles.textMuted }} className="flex-shrink-0" />
                       <span>{vehicle.createdAt ? new Date(vehicle.createdAt).toLocaleDateString('ar-SA') : '-'}</span>
                     </div>
                   </div>
 
-                  <div className="pt-3 sm:pt-4 border-t border-gray-100 flex justify-between items-center">
+                  <div className="pt-3 sm:pt-4 flex justify-between items-center" style={{ borderTop: `1px solid ${styles.cardBorder}` }}>
                     <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.color}`}>
                       {statusConfig.label}
                     </span>

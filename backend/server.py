@@ -65,6 +65,7 @@ from routes_invoices import router as invoices_router, set_db as set_db_invoices
 from supabase_service import SupabaseService
 from routes_language import router as language_router
 from routes_workshop_bot import router as workshop_bot_router
+from routes_whatsapp_bot import router as whatsapp_bot_router
 
 # Provider mode
 DB_PROVIDER = os.environ.get('DB_PROVIDER', 'mongo').lower()

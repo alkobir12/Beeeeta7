@@ -1,0 +1,17 @@
+FROM node:18-alpine as build
+
+WORKDIR /app
+
+# تثبيت المتطلبات
+COPY frontend/package.json frontend/yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+# نسخ الكود وبناء
+COPY frontend/ .
+RUN yarn build
+
+# Nginx للإنتاج
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

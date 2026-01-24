@@ -178,6 +178,10 @@ export default function JournalEntries() {
     return (
       <span className={`text-xs px-2 py-0.5 rounded ${badge.color}`}>
         {badge.label}
+      </span>
+    );
+  };
+
   const handlePrintInvoice = (entry) => {
     // صفحة طباعة مبنية على بيانات القيد نفسه
     const printWindow = window.open('', '_blank', 'width=800,height=1000');

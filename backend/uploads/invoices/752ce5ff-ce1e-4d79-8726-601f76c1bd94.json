@@ -1,0 +1,22 @@
+{
+  "id": "752ce5ff-ce1e-4d79-8726-601f76c1bd94",
+  "vehicleId": "72035b1d-591c-4977-9213-d6385bddfbd7",
+  "vehicle_id": "72035b1d-591c-4977-9213-d6385bddfbd7",
+  "customerId": "f82d430c-421c-4adb-99e4-d9e730978538",
+  "customerName": "ابو علي العياف",
+  "plateNumber": "ا ي ط 3690",
+  "items": [
+    {
+      "name": "توضيب",
+      "quantity": 1,
+      "price": 4500,
+      "total": 4500
+    }
+  ],
+  "subtotal": 4500,
+  "tax": 675,
+  "total": 5175,
+  "status": "pending",
+  "date": "2026-01-24T11:42:42.403Z",
+  "created_at": "2026-01-24T11:42:42.654346"
+}

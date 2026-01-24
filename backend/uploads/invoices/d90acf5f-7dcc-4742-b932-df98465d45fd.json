@@ -9,8 +9,8 @@
     {
       "name": "Bb",
       "quantity": 1,
-      "price": 770,
-      "total": 770
+      "price": 1,
+      "total": 1
     },
     {
       "name": "Hj",
@@ -27,21 +27,27 @@
     {
       "name": "H",
       "quantity": 1,
-      "price": 8,
-      "total": 8
+      "price": 0,
+      "total": 0
     },
     {
       "name": "غغ",
       "quantity": 1,
-      "price": 8,
-      "total": 8
+      "price": 0,
+      "total": 0
+    },
+    {
+      "name": "غ",
+      "quantity": 1,
+      "price": 33,
+      "total": 33
     }
   ],
-  "subtotal": 794,
-  "tax": 119.1,
-  "total": 913.1,
+  "subtotal": 42,
+  "tax": 6.3,
+  "total": 48.3,
   "status": "pending",
   "date": "2026-01-24T06:51:41.470Z",
   "created_at": "2026-01-24T06:51:41.709862",
-  "updated_at": "2026-01-24T09:30:55.910752"
+  "updated_at": "2026-01-24T11:40:28.876444"
 }

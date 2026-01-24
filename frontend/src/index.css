@@ -106,20 +106,70 @@ body.light-mode {
 body.light-mode .bg-gray-900 { background-color: var(--bg-surface) !important; }
 body.light-mode .bg-gray-800 { background-color: var(--bg-card) !important; }
 body.light-mode .bg-gray-800\/80 { background-color: var(--bg-card) !important; }
+body.light-mode .bg-gray-800\/90 { background-color: var(--bg-card) !important; }
 body.light-mode .bg-gray-800\/50 { background-color: rgba(255,255,255,0.8) !important; }
 body.light-mode .bg-gray-900\/50 { background-color: rgba(248,250,252,0.8) !important; }
-body.light-mode .from-gray-800 { --tw-gradient-from: var(--bg-surface) !important; }
-body.light-mode .to-gray-900 { --tw-gradient-to: var(--bg-card) !important; }
+body.light-mode .bg-gray-900\/80 { background-color: rgba(248,250,252,0.9) !important; }
+body.light-mode .bg-gray-900\/90 { background-color: rgba(248,250,252,0.95) !important; }
+body.light-mode .from-gray-800 { --tw-gradient-from: #ffffff !important; }
+body.light-mode .from-gray-800\/80 { --tw-gradient-from: #ffffff !important; }
+body.light-mode .from-gray-800\/90 { --tw-gradient-from: #ffffff !important; }
+body.light-mode .to-gray-900 { --tw-gradient-to: #f8fafc !important; }
+body.light-mode .to-gray-900\/80 { --tw-gradient-to: #f8fafc !important; }
+body.light-mode .to-gray-900\/90 { --tw-gradient-to: #f8fafc !important; }
 body.light-mode .border-gray-700 { border-color: var(--border-color) !important; }
 body.light-mode .border-gray-700\/50 { border-color: var(--border-color) !important; }
+body.light-mode .border-gray-700\/30 { border-color: var(--border-color) !important; }
 body.light-mode .border-gray-600 { border-color: var(--border-color) !important; }
+body.light-mode .border-gray-600\/50 { border-color: var(--border-color) !important; }
 body.light-mode .text-white { color: var(--text-primary) !important; }
 body.light-mode .text-gray-100 { color: var(--text-primary) !important; }
 body.light-mode .text-gray-200 { color: var(--text-primary) !important; }
 body.light-mode .text-gray-300 { color: var(--text-secondary) !important; }
 body.light-mode .text-gray-400 { color: var(--text-secondary) !important; }
 body.light-mode .text-gray-500 { color: var(--text-muted) !important; }
+body.light-mode .text-gray-600 { color: var(--text-muted) !important; }
 body.light-mode .placeholder-gray-500::placeholder { color: var(--text-muted) !important; }
+body.light-mode .bg-gradient-to-br { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; }
+
+/* Light mode journal entry cards */
+body.light-mode article[class*="bg-gradient-to-br"] {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode article h1, body.light-mode article h2, body.light-mode article h3,
+body.light-mode article h4, body.light-mode article h5, body.light-mode article h6,
+body.light-mode article .font-bold {
+  color: #1e293b !important;
+}
+
+body.light-mode article p, body.light-mode article span, body.light-mode article div {
+  color: #475569 !important;
+}
+
+/* Keep colored text in light mode */
+body.light-mode .text-blue-400, body.light-mode .text-blue-500 { color: #2563eb !important; }
+body.light-mode .text-emerald-400, body.light-mode .text-emerald-500 { color: #059669 !important; }
+body.light-mode .text-amber-400, body.light-mode .text-amber-500 { color: #d97706 !important; }
+body.light-mode .text-rose-400, body.light-mode .text-rose-500 { color: #e11d48 !important; }
+body.light-mode .text-purple-400, body.light-mode .text-purple-500 { color: #7c3aed !important; }
+
+/* Light mode badges keep their colors */
+body.light-mode [class*="bg-emerald-900"] { background-color: rgba(16, 185, 129, 0.15) !important; }
+body.light-mode [class*="bg-amber-900"] { background-color: rgba(245, 158, 11, 0.15) !important; }
+body.light-mode [class*="bg-red-900"] { background-color: rgba(239, 68, 68, 0.15) !important; }
+body.light-mode [class*="bg-blue-500\/10"] { background-color: rgba(37, 99, 235, 0.1) !important; }
+body.light-mode [class*="bg-emerald-500\/10"] { background-color: rgba(16, 185, 129, 0.1) !important; }
+body.light-mode [class*="bg-purple-500\/10"] { background-color: rgba(124, 58, 237, 0.1) !important; }
+body.light-mode [class*="bg-amber-500\/10"] { background-color: rgba(245, 158, 11, 0.1) !important; }
+body.light-mode [class*="bg-slate-500\/10"] { background-color: rgba(100, 116, 139, 0.1) !important; }
+
+/* Stats cards in light mode */
+body.light-mode [class*="bg-gray-800\/80"][class*="rounded-2xl"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
 
 /* Light mode cards shadow */
 body.light-mode .apple-card,

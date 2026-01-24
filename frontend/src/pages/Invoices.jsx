@@ -221,7 +221,6 @@ const Invoices = () => {
                   </tr>
                 ))
               ) : (
-                filteredInvoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-2 text-gray-800 font-medium">{inv.invoice_number}</td>
                     <td className="px-4 py-2 text-gray-700">

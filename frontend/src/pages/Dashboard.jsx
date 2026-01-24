@@ -200,12 +200,19 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid - Responsive 2x2 on mobile, 4 on desktop */}
-        <div className="grid-stats mb-4 sm:mb-8">
-          <div onClick={() => setFilterStatus('all')} className="stat-card group">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
+          <div 
+            onClick={() => setFilterStatus('all')} 
+            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
+            style={{ 
+              backgroundColor: styles.statCardBg,
+              border: `1px solid ${styles.cardBorder}`
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.total_vehicles')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.totalVehicles}</h3>
+                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
                 <Car size={20} className="sm:w-6 sm:h-6" />
@@ -213,11 +220,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div onClick={() => setFilterStatus('in_progress')} className="stat-card group">
+          <div 
+            onClick={() => setFilterStatus('in_progress')} 
+            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
+            style={{ 
+              backgroundColor: styles.statCardBg,
+              border: `1px solid ${styles.cardBorder}`
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.in_progress')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.inProgress}</h3>
+                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
                 <Wrench size={20} className="sm:w-6 sm:h-6" />
@@ -225,11 +239,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div onClick={() => setFilterStatus('ready')} className="stat-card group">
+          <div 
+            onClick={() => setFilterStatus('ready')} 
+            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
+            style={{ 
+              backgroundColor: styles.statCardBg,
+              border: `1px solid ${styles.cardBorder}`
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.ready')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.ready}</h3>
+                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
                 <CheckCircle size={20} className="sm:w-6 sm:h-6" />
@@ -237,11 +258,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div onClick={() => navigate('/technicians')} className="stat-card group">
+          <div 
+            onClick={() => navigate('/technicians')} 
+            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
+            style={{ 
+              backgroundColor: styles.statCardBg,
+              border: `1px solid ${styles.cardBorder}`
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1">{t('dashboard.technicians')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.technicians}</h3>
+                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</h3>
               </div>
               <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
                 <Users size={20} className="sm:w-6 sm:h-6" />

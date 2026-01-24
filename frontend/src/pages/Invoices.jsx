@@ -198,6 +198,29 @@ const Invoices = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredInvoices.length > 0 ? (
+                filteredInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-900">{invoice.invoice_number || '-'}</td>
+                    <td className="px-4 py-3 text-gray-600">{formatDate(invoice.date)}</td>
+                    <td className="px-4 py-3 text-gray-900 font-medium">{invoice.customer_name}</td>
+                    <td className="px-4 py-3 text-left text-gray-900 font-bold">{formatCurrency(invoice.total)}</td>
+                    <td className="px-4 py-3 text-left text-green-600">{formatCurrency(0)}</td>
+                    <td className="px-4 py-3 text-left text-red-600">{formatCurrency(invoice.total)}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                        صادرة
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
+                        invoice.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {invoice.status === 'paid' ? 'مدفوعة' : 'معلقة'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 filteredInvoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-2 text-gray-800 font-medium">{inv.invoice_number}</td>

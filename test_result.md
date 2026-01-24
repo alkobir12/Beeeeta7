@@ -1417,7 +1417,7 @@ const Layout = ({ children, pageTitle }) => {
 اختبار سريع للواجهات الخلفية المرتبطة بنظام AutoProfit Pro بعد التأكد من استقرار واجهة Operations وإزالة مفاتيح Google الصريحة.
 
 ### Test Environment:
-- Backend URL: https://finmodule-sync.preview.emergentagent.com/api
+- Backend URL: https://accountiq-1.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 18:01:26
 - Test Focus: GET endpoints only (as requested)
 
@@ -1574,7 +1574,7 @@ All AutoProfit Pro backend endpoints are working perfectly:
 5) لا حاجة لاختبارات واجهة أمامية، التركيز على أن الربط بين APIs يعمل بشكل صحيح
 
 ### Test Environment:
-- Backend URL: https://finmodule-sync.preview.emergentagent.com/api
+- Backend URL: https://accountiq-1.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 20:06:22
 - Test Focus: AutoProfit Pro financial integration after operations creation
 
@@ -2002,7 +2002,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://finmodule-sync.preview.emergentagent.com/api`
+**Backend URL**: `https://accountiq-1.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional
@@ -2352,7 +2352,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) to ensure no 404 errors and proper data display.
 
 ### Test Environment:
-- Frontend URL: https://finmodule-sync.preview.emergentagent.com
+- Frontend URL: https://accountiq-1.preview.emergentagent.com
 - Backend API: /api/finance/reports/*
 - Workshop ID: finmodule-sync (from REACT_APP_WORKSHOP_ID)
 - Test Date: 2026-01-23
@@ -2384,9 +2384,9 @@ Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) t
 **Evidence from Console Logs:**
 ```
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://finmodule-sync.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
+at https://accountiq-1.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://finmodule-sync.preview.emergentagent.com/api/v1/accounting/reports/income-statement
+at https://accountiq-1.preview.emergentagent.com/api/v1/accounting/reports/income-statement
 ```
 
 **Root Cause Analysis:**
@@ -2400,15 +2400,15 @@ at https://finmodule-sync.preview.emergentagent.com/api/v1/accounting/reports/in
 2. **Backend API Verification (Working Correctly):**
    ```bash
    # Balance Sheet API - ✅ WORKING
-   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
+   curl "https://accountiq-1.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
    Response: {"success": true, "data": {...}}
    
    # Income Statement API - ✅ WORKING
-   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
+   curl "https://accountiq-1.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
    Response: {"success": true, "data": {...}}
    
    # Chart of Accounts API - ✅ WORKING
-   curl "https://finmodule-sync.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
+   curl "https://accountiq-1.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
    Response: {"success": true, "data": [11 accounts]}
    ```
 

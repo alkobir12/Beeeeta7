@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://finmodule-sync.preview.emergentagent.com/api"
+BASE_URL = "https://accountiq-1.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

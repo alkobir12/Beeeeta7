@@ -151,8 +151,8 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
-            <p className="text-gray-500 text-sm sm:text-base mt-1 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('dashboard.title')}</h1>
+            <p className="text-sm sm:text-base mt-1 flex items-center gap-2" style={{ color: styles.textSecondary }}>
               {t('dashboard.overview')}
               {isRefreshing && (
                 <RefreshCw size={14} className="animate-spin text-primary" />
@@ -162,10 +162,14 @@ const Dashboard = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => fetchData(false)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ 
+                backgroundColor: styles.cardBg,
+                border: `1px solid ${styles.cardBorder}`
+              }}
               title={isRTL ? 'تحديث' : 'Refresh'}
             >
-              <RefreshCw size={18} className={isRefreshing ? 'animate-spin text-primary' : 'text-gray-600'} />
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin text-blue-500' : ''} style={{ color: isRefreshing ? undefined : styles.textSecondary }} />
             </button>
             <button
               onClick={() => {
@@ -173,13 +177,21 @@ const Dashboard = () => {
                 console.log('🔄 Changing language to:', newLang);
                 i18n.changeLanguage(newLang);
               }}
-              className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{ 
+                backgroundColor: isLight ? '#1e293b' : '#3b82f6',
+                color: '#ffffff'
+              }}
             >
               {i18n.language === 'ar' ? 'EN' : 'عربي'}
             </button>
             <button 
               onClick={() => navigate('/new-vehicle')}
-              className="apple-button flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-white transition-all"
+              style={{ 
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+              }}
             >
               <Plus size={18} />
               <span>{t('dashboard.new_vehicle')}</span>

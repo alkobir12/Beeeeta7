@@ -60,7 +60,7 @@ from routes_ai_recommendations import router as ai_recommendations_router
 # Import Finance Routes
 from routes_finance import router as finance_router, set_db as set_db_finance
 # Import Invoices Routes
-from routes_invoices import router as invoices_router, set_db as set_db_invoices
+from routes_invoices import router as invoices_router, set_db as set_db_invoices, delete_invoices_by_vehicle_id
 
 from supabase_service import SupabaseService
 from routes_language import router as language_router
@@ -451,6 +451,13 @@ async def delete_vehicle(vehicle_id: str):
                 except Exception as ops_error:
                     print(f"⚠️ Could not delete operations for vehicle {vehicle_id}: {ops_error}")
             supabase_service.vehicles_delete(vehicle_id)
+
+            # تنظيف فواتير الملفات المرتبطة بهذه المركبة (نظام الفواتير القائم على الملفات)
+            try:
+                delete_invoices_by_vehicle_id(vehicle_id)
+            except Exception as cleanup_err:
+                print(f"⚠️ File-based invoice cleanup failed for vehicle {vehicle_id}: {cleanup_err}")
+
             return {"success": True}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -469,9 +476,27 @@ async def delete_vehicle(vehicle_id: str):
         return {"success": True}
 
     # MongoDB mode (legacy)
-    await db.invoices.delete_many({"vehicleId": vehicle_id})
-    await db.operations.delete_many({"vehicleId": vehicle_id})
+    # حذف الفواتير من مجموعة MongoDB (إن وجدت)
+    try:
+        await db.invoices.delete_many({"vehicleId": vehicle_id})
+    except Exception:
+        pass
+
+    # حذف العمليات المرتبطة
+    try:
+        await db.operations.delete_many({"vehicleId": vehicle_id})
+    except Exception:
+        pass
+
+    # حذف سجل المركبة
     await db.vehicles.delete_one({"id": vehicle_id})
+
+    # تنظيف فواتير الملفات لنفس المركبة في أي وضع غير Supabase
+    try:
+        delete_invoices_by_vehicle_id(vehicle_id)
+    except Exception as cleanup_err:
+        print(f"⚠️ File-based invoice cleanup failed for vehicle {vehicle_id}: {cleanup_err}")
+
     return {"success": True}
 
 

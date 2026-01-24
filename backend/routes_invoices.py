@@ -26,6 +26,29 @@ def load_invoices():
             invoices.append(json.load(f))
     return invoices
 
+
+def delete_invoices_by_vehicle_id(vehicle_id: str):
+    """حذف جميع الفواتير المرتبطة بمركبة معيّنة (للاستخدام عند حذف المركبة)."""
+    try:
+      if not vehicle_id:
+          return 0
+      deleted = 0
+      for file_path in list(INVOICES_DIR.glob("*.json")):
+          try:
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  data = json.load(f)
+              if data.get('vehicleId') == vehicle_id or data.get('vehicle_id') == vehicle_id:
+                  file_path.unlink(missing_ok=True)
+                  deleted += 1
+          except Exception:
+              # نتجاهل أي ملف تالف ولا نمنع بقية العملية
+              continue
+      print(f"🧹 Deleted {deleted} invoice file(s) for vehicle {vehicle_id}")
+      return deleted
+    except Exception as e:
+      print(f"Error deleting invoices for vehicle {vehicle_id}: {e}")
+      return 0
+
 @router.get("")
 async def get_invoices(
     vehicleId: Optional[str] = Query(None),

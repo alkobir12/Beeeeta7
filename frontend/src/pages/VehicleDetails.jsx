@@ -104,6 +104,9 @@ const VehicleDetails = () => {
         services: vehicle.services
       });
 
+      // إشعار بقية الصفحات (مثل صفحة الفواتير) بأنه تم تحديث هذه المركبة
+      window.dispatchEvent(new CustomEvent('vehicleUpdated', { detail: { vehicleId: id, status, timestamp: Date.now() } }));
+
       // إذا تم تغيير الحالة إلى تم التسليم، أغلق الفاتورة المفتوحة إن وجدت
       if (status === 'delivered') {
         try {

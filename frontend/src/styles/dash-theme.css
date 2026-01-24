@@ -1,0 +1,554 @@
+/* ==========================================
+   DASH PRO THEME - Matching Reference Images
+   ========================================== */
+
+/* ===== COLOR PALETTE ===== */
+:root {
+  /* Background Colors */
+  --dash-bg-main: #f8fafc;
+  --dash-bg-card: #ffffff;
+  --dash-bg-dark: #1e293b;
+  --dash-bg-navy: #1e3a5f;
+  
+  /* Text Colors */
+  --dash-text-primary: #1e293b;
+  --dash-text-secondary: #64748b;
+  --dash-text-muted: #94a3b8;
+  --dash-text-light: #ffffff;
+  
+  /* Accent Colors */
+  --dash-blue: #2563eb;
+  --dash-blue-light: #3b82f6;
+  --dash-blue-bg: #e0e7ff;
+  --dash-green: #10b981;
+  --dash-green-bg: #d1fae5;
+  --dash-orange: #f59e0b;
+  --dash-orange-bg: #fef3c7;
+  --dash-red: #ef4444;
+  --dash-red-bg: #fee2e2;
+  
+  /* Border & Shadow */
+  --dash-border: #e2e8f0;
+  --dash-border-light: #f1f5f9;
+  --dash-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --dash-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --dash-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  
+  /* Border Radius */
+  --dash-radius-sm: 8px;
+  --dash-radius-md: 12px;
+  --dash-radius-lg: 16px;
+  --dash-radius-xl: 20px;
+  --dash-radius-full: 9999px;
+}
+
+/* ===== BASE STYLES FOR DASH THEME ===== */
+body[data-theme="light"],
+body[data-theme="dashPro"],
+body.light-mode {
+  background-color: var(--dash-bg-main) !important;
+}
+
+/* ===== DASH CARD STYLES ===== */
+.dash-card {
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-xl);
+  box-shadow: var(--dash-shadow);
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.dash-card:hover {
+  box-shadow: var(--dash-shadow-md);
+}
+
+/* Dark Navy Card (like مساعد أبو فهد) */
+.dash-card-dark {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-radius: var(--dash-radius-xl);
+  box-shadow: var(--dash-shadow-lg);
+  padding: 24px;
+  color: var(--dash-text-light);
+}
+
+.dash-card-dark h1, .dash-card-dark h2, .dash-card-dark h3,
+.dash-card-dark h4, .dash-card-dark p, .dash-card-dark span {
+  color: var(--dash-text-light) !important;
+}
+
+/* Active/Selected Card (Blue) */
+.dash-card-active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-radius: var(--dash-radius-xl);
+  box-shadow: var(--dash-shadow-lg);
+  color: var(--dash-text-light);
+}
+
+.dash-card-active h1, .dash-card-active h2, .dash-card-active h3,
+.dash-card-active h4, .dash-card-active p, .dash-card-active span {
+  color: var(--dash-text-light) !important;
+}
+
+/* ===== BADGE/TAG STYLES ===== */
+.dash-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--dash-radius-full);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dash-badge-blue {
+  background: var(--dash-blue-bg);
+  color: var(--dash-blue);
+}
+
+.dash-badge-green {
+  background: var(--dash-green-bg);
+  color: var(--dash-green);
+}
+
+.dash-badge-orange {
+  background: var(--dash-orange-bg);
+  color: var(--dash-orange);
+}
+
+.dash-badge-red {
+  background: var(--dash-red-bg);
+  color: var(--dash-red);
+}
+
+/* Pill badge with dot */
+.dash-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--dash-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dash-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ===== ICON CIRCLE STYLES ===== */
+.dash-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--dash-radius-md);
+  background: #f0f5ff;
+}
+
+.dash-icon-circle-lg {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--dash-radius-lg);
+}
+
+/* ===== PROGRESS BAR ===== */
+.dash-progress {
+  height: 8px;
+  background: var(--dash-blue-bg);
+  border-radius: var(--dash-radius-full);
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dash-blue) 0%, var(--dash-blue-light) 100%);
+  border-radius: var(--dash-radius-full);
+  transition: width 0.3s ease;
+}
+
+/* ===== TABLE STYLES ===== */
+.dash-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dash-table th {
+  padding: 12px 16px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text-secondary);
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.dash-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--dash-text-primary);
+  border-bottom: 1px solid var(--dash-border-light);
+}
+
+.dash-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===== BUTTON STYLES ===== */
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--dash-radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.dash-btn-primary {
+  background: linear-gradient(135deg, var(--dash-blue) 0%, #1d4ed8 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
+.dash-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+.dash-btn-secondary {
+  background: var(--dash-bg-card);
+  color: var(--dash-text-primary);
+  border: 1px solid var(--dash-border);
+}
+
+.dash-btn-dark {
+  background: var(--dash-bg-dark);
+  color: white;
+}
+
+/* ===== STAT CARD ===== */
+.dash-stat-card {
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-xl);
+  padding: 20px;
+  box-shadow: var(--dash-shadow);
+}
+
+.dash-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--dash-text-primary);
+  line-height: 1.2;
+}
+
+.dash-stat-label {
+  font-size: 13px;
+  color: var(--dash-text-secondary);
+  margin-top: 4px;
+}
+
+/* ===== VEHICLE CARD (from IMG_0086) ===== */
+.dash-vehicle-card {
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-xl);
+  padding: 24px;
+  box-shadow: var(--dash-shadow);
+}
+
+.dash-vehicle-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.dash-vehicle-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dash-text-primary);
+}
+
+.dash-vehicle-plate {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--dash-bg-dark);
+  color: white;
+  border-radius: var(--dash-radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.dash-vehicle-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.dash-vehicle-info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-vehicle-info-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f5ff;
+  border-radius: var(--dash-radius-md);
+  color: var(--dash-text-secondary);
+}
+
+.dash-vehicle-info-label {
+  font-size: 12px;
+  color: var(--dash-text-muted);
+}
+
+.dash-vehicle-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dash-text-primary);
+}
+
+/* ===== FINANCIAL REPORT CARD (from IMG_0085) ===== */
+.dash-report-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-lg);
+  box-shadow: var(--dash-shadow);
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.dash-report-card:hover {
+  border-color: var(--dash-blue-bg);
+}
+
+.dash-report-card-active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: transparent;
+}
+
+.dash-report-card-active * {
+  color: white !important;
+}
+
+.dash-report-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f5ff;
+  border-radius: var(--dash-radius-md);
+  flex-shrink: 0;
+}
+
+.dash-report-card-active .dash-report-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dash-report-content {
+  flex: 1;
+}
+
+.dash-report-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dash-text-primary);
+  margin-bottom: 4px;
+}
+
+.dash-report-desc {
+  font-size: 13px;
+  color: var(--dash-text-secondary);
+}
+
+/* ===== INVOICE TABLE (from IMG_0084) ===== */
+.dash-invoice-row {
+  display: grid;
+  grid-template-columns: 1fr 100px 100px 120px 100px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--dash-border-light);
+}
+
+.dash-invoice-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text-secondary);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+/* ===== AI ASSISTANT CARD (from IMG_0084) ===== */
+.dash-ai-card {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-radius: var(--dash-radius-xl);
+  padding: 24px;
+  color: white;
+}
+
+.dash-ai-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dash-ai-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: var(--dash-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dash-ai-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: white !important;
+}
+
+.dash-ai-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-ai-message {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--dash-radius-md);
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: white !important;
+}
+
+/* ===== METRIC CARD (VAT, Invoices, etc from IMG_0084) ===== */
+.dash-metric-card {
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-xl);
+  padding: 20px;
+  box-shadow: var(--dash-shadow);
+}
+
+.dash-metric-card-dark {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  color: white;
+}
+
+.dash-metric-value {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.dash-metric-label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.dash-metric-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.dash-metric-positive {
+  color: var(--dash-green);
+}
+
+.dash-metric-negative {
+  color: var(--dash-red);
+}
+
+/* ===== PERIOD SELECTOR (from IMG_0085) ===== */
+.dash-period-card {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-radius: var(--dash-radius-xl);
+  padding: 24px;
+  color: white;
+}
+
+.dash-period-label {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.dash-period-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dash-period-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+/* ===== COMPANY HEADER (from IMG_0085) ===== */
+.dash-company-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--dash-bg-card);
+  border-radius: var(--dash-radius-xl);
+  box-shadow: var(--dash-shadow);
+  margin-bottom: 24px;
+}
+
+.dash-company-logo {
+  width: 48px;
+  height: 48px;
+  background: var(--dash-bg-dark);
+  border-radius: var(--dash-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dash-company-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dash-text-primary);
+}
+
+.dash-company-subtitle {
+  font-size: 12px;
+  color: var(--dash-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

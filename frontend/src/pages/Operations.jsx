@@ -212,8 +212,26 @@ const Operations = () => {
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || 0), 0);
 
+  // Theme-based styles
+  const styles = {
+    bg: isLight ? '#f8fafc' : '#0f172a',
+    cardBg: isLight ? '#ffffff' : '#1e293b',
+    cardBorder: isLight ? '#e2e8f0' : '#334155',
+    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
+    textSecondary: isLight ? '#64748b' : '#94a3b8',
+    textMuted: isLight ? '#94a3b8' : '#64748b',
+    inputBg: isLight ? '#ffffff' : '#1e293b',
+    inputBorder: isLight ? '#e2e8f0' : '#334155',
+    hoverBg: isLight ? '#f1f5f9' : '#334155',
+    tableBg: isLight ? '#f8fafc' : '#1e293b',
+  };
+
   return (
-    <div className={`max-w-7xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div 
+      className={`max-w-7xl mx-auto space-y-8 p-4 min-h-screen ${isRTL ? 'rtl' : 'ltr'}`} 
+      dir={isRTL ? 'rtl' : 'ltr'}
+      style={{ backgroundColor: styles.bg }}
+    >
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('operations.title')}</h1>

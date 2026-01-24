@@ -1,0 +1,52 @@
+{
+  "id": "ff59dcd8-0b85-4497-b78f-a4b6881cce0e",
+  "vehicleId": "c0644c02-5a39-408a-a3c3-561927bdc9a1",
+  "vehicle_id": "c0644c02-5a39-408a-a3c3-561927bdc9a1",
+  "customerId": "b00ae384-a4b3-4ae8-bc8e-c7f66da5452e",
+  "customerName": "أحمد محمد العميل",
+  "plateNumber": "ABC-1234",
+  "items": [
+    {
+      "name": "تت",
+      "quantity": 1,
+      "price": 555,
+      "total": 555
+    },
+    {
+      "name": "تن",
+      "quantity": 1,
+      "price": 33,
+      "total": 33
+    },
+    {
+      "name": "N",
+      "quantity": 1,
+      "price": 10000,
+      "total": 10000
+    },
+    {
+      "name": "H",
+      "quantity": 1,
+      "price": 0,
+      "total": 0
+    },
+    {
+      "name": "Jj",
+      "quantity": 1,
+      "price": 990,
+      "total": 990
+    },
+    {
+      "name": "عع",
+      "quantity": 1,
+      "price": 70,
+      "total": 70
+    }
+  ],
+  "subtotal": 11648,
+  "tax": 1747.2,
+  "total": 13395.2,
+  "status": "pending",
+  "date": "2026-01-24T06:50:00.096Z",
+  "created_at": "2026-01-24T06:50:00.340674"
+}

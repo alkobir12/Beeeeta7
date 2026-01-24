@@ -1,0 +1,41 @@
+{
+  "id": "d90acf5f-7dcc-4742-b932-df98465d45fd",
+  "vehicleId": "fce58c70-0e99-49ba-9489-d1063b150333",
+  "vehicle_id": "fce58c70-0e99-49ba-9489-d1063b150333",
+  "customerId": "00fd5458-7373-4697-9a22-8c59cac44888",
+  "customerName": "صالح",
+  "plateNumber": "ب ر ع 4186",
+  "items": [
+    {
+      "name": "Bb",
+      "quantity": 1,
+      "price": 770,
+      "total": 770
+    },
+    {
+      "name": "Hj",
+      "quantity": 1,
+      "price": 8,
+      "total": 8
+    },
+    {
+      "name": "H",
+      "quantity": 1,
+      "price": 0,
+      "total": 0
+    },
+    {
+      "name": "H",
+      "quantity": 1,
+      "price": 8,
+      "total": 8
+    }
+  ],
+  "subtotal": 786,
+  "tax": 117.89999999999999,
+  "total": 903.9,
+  "status": "pending",
+  "date": "2026-01-24T06:51:41.470Z",
+  "created_at": "2026-01-24T06:51:41.709862",
+  "updated_at": "2026-01-24T06:52:08.649163"
+}

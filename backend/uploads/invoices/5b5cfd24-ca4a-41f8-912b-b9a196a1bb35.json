@@ -1,0 +1,22 @@
+{
+  "id": "5b5cfd24-ca4a-41f8-912b-b9a196a1bb35",
+  "vehicleId": "test-123",
+  "vehicle_id": "test-123",
+  "customerId": null,
+  "customerName": "تست",
+  "plateNumber": "ABC-123",
+  "items": [
+    {
+      "name": "تغيير زيت",
+      "quantity": 1,
+      "price": 150,
+      "total": 150
+    }
+  ],
+  "subtotal": 150,
+  "tax": 22.5,
+  "total": 172.5,
+  "status": "pending",
+  "date": "2026-01-24T06:25:19.843529",
+  "created_at": "2026-01-24T06:25:19.843534"
+}

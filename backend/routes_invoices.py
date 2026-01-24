@@ -2,15 +2,29 @@ from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime
 from typing import List, Optional
 import uuid
+import json
+from pathlib import Path
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
-# DB will be set from server.py
-db = None
+# مسار تخزين الفواتير محلياً (مؤقت)
+INVOICES_DIR = Path("/app/backend/uploads/invoices")
+INVOICES_DIR.mkdir(exist_ok=True, parents=True)
 
-def set_db(database):
-    global db
-    db = database
+def save_invoice(invoice):
+    """حفظ فاتورة في ملف JSON"""
+    file_path = INVOICES_DIR / f"{invoice['id']}.json"
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(invoice, f, ensure_ascii=False, indent=2, default=str)
+    return invoice
+
+def load_invoices():
+    """تحميل جميع الفواتير"""
+    invoices = []
+    for file_path in INVOICES_DIR.glob("*.json"):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            invoices.append(json.load(f))
+    return invoices
 
 @router.get("")
 async def get_invoices(
@@ -18,31 +32,19 @@ async def get_invoices(
     customerId: Optional[str] = Query(None),
     status: Optional[str] = Query(None)
 ):
-    """
-    جلب الفواتير مع فلترة اختيارية
-    """
+    """جلب الفواتير"""
     try:
-        # استخدام Supabase
-        from supabase import create_client
-        import os
+        invoices = load_invoices()
         
-        supabase = create_client(
-            os.getenv("SUPABASE_URL", ""),
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-        )
-        
-        query = supabase.table("invoices").select("*")
-        
+        # فلترة
         if vehicleId:
-            query = query.eq("vehicle_id", vehicleId)
+            invoices = [inv for inv in invoices if inv.get('vehicleId') == vehicleId or inv.get('vehicle_id') == vehicleId]
         if customerId:
-            query = query.eq("customer_id", customerId)
+            invoices = [inv for inv in invoices if inv.get('customerId') == customerId]
         if status:
-            query = query.eq("status", status)
+            invoices = [inv for inv in invoices if inv.get('status') == status]
         
-        response = query.order("created_at", desc=True).execute()
-        
-        return response.data
+        return invoices
         
     except Exception as e:
         print(f"Error fetching invoices: {e}")
@@ -50,24 +52,15 @@ async def get_invoices(
 
 @router.post("")
 async def create_invoice(invoice: dict):
-    """
-    إنشاء فاتورة جديدة
-    """
+    """إنشاء فاتورة جديدة"""
     try:
-        from supabase import create_client
-        import os
-        
-        supabase = create_client(
-            os.getenv("SUPABASE_URL", ""),
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-        )
-        
         invoice_data = {
             "id": str(uuid.uuid4()),
+            "vehicleId": invoice.get("vehicleId"),
             "vehicle_id": invoice.get("vehicleId"),
-            "customer_id": invoice.get("customerId"),
-            "customer_name": invoice.get("customerName"),
-            "plate_number": invoice.get("plateNumber"),
+            "customerId": invoice.get("customerId"),
+            "customerName": invoice.get("customerName"),
+            "plateNumber": invoice.get("plateNumber"),
             "items": invoice.get("items", []),
             "subtotal": invoice.get("subtotal", 0),
             "tax": invoice.get("tax", 0),
@@ -77,9 +70,11 @@ async def create_invoice(invoice: dict):
             "created_at": datetime.now().isoformat()
         }
         
-        response = supabase.table("invoices").insert(invoice_data).execute()
+        save_invoice(invoice_data)
         
-        return {"success": True, "id": invoice_data["id"], "data": response.data}
+        print(f"✅ تم إنشاء فاتورة: {invoice_data['id']}")
+        
+        return {"success": True, "id": invoice_data["id"], "data": invoice_data}
         
     except Exception as e:
         print(f"Error creating invoice: {e}")
@@ -87,32 +82,23 @@ async def create_invoice(invoice: dict):
 
 @router.put("/{invoice_id}")
 async def update_invoice(invoice_id: str, invoice: dict):
-    """
-    تحديث فاتورة موجودة
-    """
+    """تحديث فاتورة"""
     try:
-        from supabase import create_client
-        import os
+        invoices = load_invoices()
         
-        supabase = create_client(
-            os.getenv("SUPABASE_URL", ""),
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-        )
+        for inv in invoices:
+            if inv['id'] == invoice_id:
+                inv.update({
+                    "items": invoice.get("items", inv.get("items")),
+                    "subtotal": invoice.get("subtotal", inv.get("subtotal")),
+                    "tax": invoice.get("tax", inv.get("tax")),
+                    "total": invoice.get("total", inv.get("total")),
+                    "updated_at": datetime.now().isoformat()
+                })
+                save_invoice(inv)
+                return {"success": True, "data": inv}
         
-        invoice_data = {
-            "items": invoice.get("items", []),
-            "subtotal": invoice.get("subtotal", 0),
-            "tax": invoice.get("tax", 0),
-            "total": invoice.get("total", 0),
-            "updated_at": datetime.now().isoformat()
-        }
-        
-        response = supabase.table("invoices") \
-            .update(invoice_data) \
-            .eq("id", invoice_id) \
-            .execute()
-        
-        return {"success": True, "data": response.data}
+        raise HTTPException(status_code=404, detail="Invoice not found")
         
     except Exception as e:
         print(f"Error updating invoice: {e}")
@@ -120,22 +106,22 @@ async def update_invoice(invoice_id: str, invoice: dict):
 
 @router.get("/{invoice_id}")
 async def get_invoice(invoice_id: str):
-    """
-    جلب فاتورة واحدة
-    """
+    """جلب فاتورة واحدة"""
     try:
-        from supabase import create_client
-        import os
+        invoices = load_invoices()
         
-        supabase = create_client(
-            os.getenv("SUPABASE_URL", ""),
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-        )
+        for inv in invoices:
+            if inv['id'] == invoice_id:
+                return inv
         
-        response = supabase.table("invoices").select("*").eq("id", invoice_id).single().execute()
-        
-        return response.data
+        raise HTTPException(status_code=404, detail="Invoice not found")
         
     except Exception as e:
         print(f"Error fetching invoice: {e}")
         raise HTTPException(status_code=404, detail="Invoice not found")
+
+# DB compatibility (not used)
+db = None
+def set_db(database):
+    global db
+    db = database

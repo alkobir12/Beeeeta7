@@ -1,0 +1,126 @@
+{
+  "passed": [
+    "Invoice API Availability",
+    "Vehicle Creation",
+    "Vehicle Deletion",
+    "Vehicle List",
+    "Customer List",
+    "Service List",
+    "Technician List",
+    "Invoice List (fallback)"
+  ],
+  "failed": [
+    "Invoice Creation"
+  ],
+  "total": 9,
+  "details": [
+    {
+      "name": "Invoice API Availability",
+      "passed": true,
+      "details": "API responds with 0 invoices (fallback working)",
+      "status_code": 200,
+      "response_body": "[]",
+      "timestamp": "2026-01-24T13:12:21.690455"
+    },
+    {
+      "name": "Vehicle Creation",
+      "passed": true,
+      "details": "Vehicle ID: 51257b6c-ed7d-4071-956d-df7333fca72e",
+      "status_code": 200,
+      "response_body": "{\"plateNumber\":\"DIAG-001\",\"brand\":\"تويوتا\",\"model\":\"كامري\",\"year\":2020,\"color\":\"أبيض\",\"vin\":null,\"fileNumber\":null,\"customerName\":\"عميل تشخيص\",\"customerPhone\":\"0500000001\",\"customerEmail\":\"\",\"services\":[],\"technicianId\":null,\"technicianName\":null,\"notes\":null,\"id\":\"51257b6c-ed7d-4071-956d-df7333fca72e\",\"customerId\":\"6c84be21-7a6c-479d-a749-ffa484ddaf87\",\"status\":\"diagnosis\",\"entryDate\":\"2026-01-24T13:12:22.341485+00:00\",\"estimatedCompletion\":\"2026-01-26T13:12:22.341477+00:00\",\"completionDate\":nu",
+      "timestamp": "2026-01-24T13:12:22.619432"
+    },
+    {
+      "name": "Invoice Creation",
+      "passed": false,
+      "details": "EXPECTED: Supabase 'invoices' table missing",
+      "status_code": 520,
+      "response_body": "{\"detail\":\"{'message': \\\"Could not find the table 'public.invoices' in the schema cache\\\", 'code': 'PGRST205', 'hint': \\\"Perhaps you meant the table 'public.services'\\\", 'details': None}\"}",
+      "timestamp": "2026-01-24T13:12:23.002908"
+    },
+    {
+      "name": "Vehicle Deletion",
+      "passed": true,
+      "details": "Vehicle deleted successfully",
+      "status_code": 200,
+      "response_body": "{\"success\":true}",
+      "timestamp": "2026-01-24T13:12:24.103003"
+    },
+    {
+      "name": "Vehicle List",
+      "passed": true,
+      "details": "Returns 11 items",
+      "status_code": 200,
+      "response_body": "Data type: <class 'list'>",
+      "timestamp": "2026-01-24T13:12:24.417624"
+    },
+    {
+      "name": "Customer List",
+      "passed": true,
+      "details": "Returns 36 items",
+      "status_code": 200,
+      "response_body": "Data type: <class 'list'>",
+      "timestamp": "2026-01-24T13:12:24.726001"
+    },
+    {
+      "name": "Service List",
+      "passed": true,
+      "details": "Returns 169 items",
+      "status_code": 200,
+      "response_body": "Data type: <class 'list'>",
+      "timestamp": "2026-01-24T13:12:25.058310"
+    },
+    {
+      "name": "Technician List",
+      "passed": true,
+      "details": "Returns 3 items",
+      "status_code": 200,
+      "response_body": "Data type: <class 'list'>",
+      "timestamp": "2026-01-24T13:12:25.365514"
+    },
+    {
+      "name": "Invoice List (fallback)",
+      "passed": true,
+      "details": "Returns 0 items",
+      "status_code": 200,
+      "response_body": "Data type: <class 'list'>",
+      "timestamp": "2026-01-24T13:12:25.664353"
+    }
+  ],
+  "diagnosis": {
+    "supabase_tables_missing": [
+      "invoices"
+    ],
+    "working_features": [
+      "Invoice GET API (with fallback)",
+      "Vehicle creation (Supabase)",
+      "Vehicle deletion with cleanup",
+      "Vehicle List API",
+      "Customer List API",
+      "Service List API",
+      "Technician List API",
+      "Invoice List (fallback) API"
+    ],
+    "broken_features": [
+      "Invoice creation (missing Supabase table)"
+    ],
+    "recommendations": [
+      {
+        "priority": "HIGH",
+        "action": "Create 'invoices' table in Supabase",
+        "details": "The invoice system is configured to use Supabase but the table doesn't exist",
+        "sql_example": "\nCREATE TABLE public.invoices (\n    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,\n    invoice_number TEXT,\n    customer_id TEXT,\n    vehicle_id TEXT,\n    items JSONB,\n    subtotal DECIMAL(10,2),\n    discount DECIMAL(10,2) DEFAULT 0,\n    tax DECIMAL(10,2),\n    total DECIMAL(10,2),\n    status TEXT DEFAULT 'pending',\n    type TEXT DEFAULT 'sale',\n    payment_method TEXT,\n    notes TEXT,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);\n            "
+      },
+      {
+        "priority": "MEDIUM",
+        "action": "System is mostly functional",
+        "details": "Most core features are working. Focus on fixing the invoice table issue."
+      },
+      {
+        "priority": "LOW",
+        "action": "Supabase integration is working",
+        "details": "The Supabase connection is functional for other tables."
+      }
+    ]
+  }
+}

@@ -104,8 +104,6 @@ const VehicleDetails = () => {
         services: vehicle.services
       });
 
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
       // إذا تم تغيير الحالة إلى تم التسليم، أغلق الفاتورة المفتوحة إن وجدت
       if (status === 'delivered') {
         try {

@@ -310,26 +310,147 @@ body[data-theme="dashPro"] .sidebar-item {
     background-color: var(--sidebar-bg, rgba(30, 41, 59, 0.95));
   }
   
-  /* Light mode sidebar */
-  body.light-mode .sidebar-modern {
-    background-color: #ffffff !important;
-    border-color: #e2e8f0 !important;
-  }
-  
-  body.light-mode .sidebar-item {
-    color: #475569 !important;
-  }
-  
-  body.light-mode .sidebar-item:hover {
-    background-color: #f1f5f9 !important;
-    color: #1e293b !important;
-  }
-  
-  body.light-mode .sidebar-item.active,
-  body.light-mode .sidebar-item-active {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-  }
+/* Light mode - complete override */
+body.light-mode {
+  background-color: #f8fafc !important;
+}
+
+/* Light mode main content area */
+body.light-mode .content-area,
+body.light-mode .layout-main,
+body.light-mode main {
+  background-color: #f8fafc !important;
+}
+
+/* Light mode text colors */
+body.light-mode h1, body.light-mode h2, body.light-mode h3, 
+body.light-mode h4, body.light-mode h5, body.light-mode h6 {
+  color: #1e293b !important;
+}
+
+body.light-mode p, body.light-mode span, body.light-mode div, 
+body.light-mode label {
+  color: #475569 !important;
+}
+
+body.light-mode a {
+  color: #2563eb !important;
+}
+
+/* Light mode sidebar */
+body.light-mode .sidebar-modern {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .sidebar-modern h2,
+body.light-mode .sidebar-modern p {
+  color: #1e293b !important;
+}
+
+body.light-mode .sidebar-item {
+  color: #475569 !important;
+}
+
+body.light-mode .sidebar-item:hover {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-mode .sidebar-item.active,
+body.light-mode .sidebar-item-active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Light mode cards and surfaces */
+body.light-mode .bg-gray-900,
+body.light-mode .bg-gray-800,
+body.light-mode [class*="bg-gray-900"],
+body.light-mode [class*="bg-gray-800"] {
+  background-color: #ffffff !important;
+}
+
+body.light-mode .border-gray-700,
+body.light-mode .border-gray-600,
+body.light-mode [class*="border-gray-700"],
+body.light-mode [class*="border-gray-600"] {
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .text-white,
+body.light-mode .text-gray-100,
+body.light-mode .text-gray-200 {
+  color: #1e293b !important;
+}
+
+body.light-mode .text-gray-300,
+body.light-mode .text-gray-400 {
+  color: #475569 !important;
+}
+
+body.light-mode .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Light mode inputs */
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Light mode buttons */
+body.light-mode .apple-button {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Light mode apple cards */
+body.light-mode .apple-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .apple-card * {
+  color: #475569 !important;
+}
+
+body.light-mode .apple-card h1, 
+body.light-mode .apple-card h2, 
+body.light-mode .apple-card h3,
+body.light-mode .apple-card h4, 
+body.light-mode .apple-card h5, 
+body.light-mode .apple-card h6 {
+  color: #1e293b !important;
+}
+
+/* Dash Pro Theme - sidebar only dark */
+body[data-theme="dashPro"] .sidebar-modern {
+  background-color: #1e293b !important;
+}
+
+body[data-theme="dashPro"] .sidebar-modern h2,
+body[data-theme="dashPro"] .sidebar-modern p,
+body[data-theme="dashPro"] .sidebar-item {
+  color: #cbd5e1 !important;
+}
+
+body[data-theme="dashPro"] .sidebar-item:hover {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+body[data-theme="dashPro"] .sidebar-item.active {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
   
   .sidebar-item {
     @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground mb-1;

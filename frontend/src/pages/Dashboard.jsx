@@ -6,9 +6,12 @@ import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
+  const { themeName } = useTheme();
+  const isLight = themeName === 'light' || themeName === 'dashPro';
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -260,21 +260,41 @@ body[data-theme="dashPro"] .sidebar-item {
   /* Emergent-style Card */
   .apple-card {
     @apply bg-card rounded-2xl shadow-sm border border-border text-card-foreground;
+    background-color: var(--bg-card, #1a1a1a);
   }
   
   .apple-card:hover {
     @apply border-primary/30 shadow-glow-sm;
   }
   
-  .apple-card * {
-    color: #C8C8C8 !important; /* Body text color */
+  /* Dark mode cards */
+  body.dark-mode .apple-card * {
+    color: #C8C8C8 !important;
     font-size: 16px;
     font-weight: 500;
   }
   
-  .apple-card h1, .apple-card h2, .apple-card h3, 
-  .apple-card h4, .apple-card h5, .apple-card h6 {
-    color: #F0F0F0 !important; /* Title color */
+  body.dark-mode .apple-card h1, body.dark-mode .apple-card h2, body.dark-mode .apple-card h3, 
+  body.dark-mode .apple-card h4, body.dark-mode .apple-card h5, body.dark-mode .apple-card h6 {
+    color: #F0F0F0 !important;
+  }
+
+  /* Light mode cards */
+  body.light-mode .apple-card {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  
+  body.light-mode .apple-card * {
+    color: #475569 !important;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  body.light-mode .apple-card h1, body.light-mode .apple-card h2, body.light-mode .apple-card h3, 
+  body.light-mode .apple-card h4, body.light-mode .apple-card h5, body.light-mode .apple-card h6 {
+    color: #1e293b !important;
+  }
   }
   
   .apple-card h1 { font-size: 28px !important; font-weight: 600 !important; }

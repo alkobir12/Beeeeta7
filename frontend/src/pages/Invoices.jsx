@@ -189,6 +189,7 @@ const Invoices = () => {
                 <th className="px-4 py-3 text-right font-semibold text-gray-500">رقم الفاتورة</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-500">التاريخ</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-500">العميل</th>
+                <th className="px-4 py-3 text-right font-semibold text-gray-500">لوحة المركبة</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-500">إجمالي الفاتورة</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-500">المدفوع</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-500">المتبقي</th>
@@ -203,6 +204,7 @@ const Invoices = () => {
                     <td className="px-4 py-3 text-gray-900">{invoice.invoice_number || '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(invoice.date)}</td>
                     <td className="px-4 py-3 text-gray-900 font-medium">{invoice.customer_name}</td>
+                    <td className="px-4 py-3 text-gray-700">{invoice.plate_number || '-'}</td>
                     <td className="px-4 py-3 text-left text-gray-900 font-bold">{formatCurrency(invoice.total)}</td>
                     <td className="px-4 py-3 text-left text-green-600">{formatCurrency(0)}</td>
                     <td className="px-4 py-3 text-left text-red-600">{formatCurrency(invoice.total)}</td>
@@ -222,7 +224,7 @@ const Invoices = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-6 text-center text-gray-500">
                     لا توجد فواتير مطابقة لخيارات التصفية الحالية.
                   </td>
                 </tr>

@@ -194,6 +194,15 @@ const VehicleDetails = () => {
           console.error('فشل في إنشاء القيد المحاسبي لعملية ملف المركبة:', jeError);
         }
       }
+
+      // تحديث/إنشاء الفاتورة بناءً على البنود الحالية
+      if (vehicle.parts && vehicle.parts.length > 0) {
+        try {
+          await createOrUpdateInvoice(id, vehicle.parts);
+        } catch (invErr) {
+          console.error('فشل في تحديث الفاتورة بعد حفظ التعديلات:', invErr);
+        }
+      }
       
       toast({ title: t('common.success'), description: t('messages.success_saved') });
       // Refresh data from server

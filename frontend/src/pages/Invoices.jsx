@@ -221,64 +221,6 @@ const Invoices = () => {
                   </tr>
                 ))
               ) : (
-                  <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-2 text-gray-800 font-medium">{inv.invoice_number}</td>
-                    <td className="px-4 py-2 text-gray-700">
-                      {inv.invoice_date ? formatDate(inv.invoice_date) : '-'}
-                    </td>
-                    <td className="px-4 py-2 text-gray-800">{inv.customer_name || '-'}</td>
-                    <td className="px-4 py-2 text-left font-mono text-gray-900">
-                      {formatCurrency(inv.total_amount || 0)}
-                    </td>
-                    <td className="px-4 py-2 text-left font-mono text-gray-900">
-                      {formatCurrency(inv.amount_paid || 0)}
-                    </td>
-                    <td className="px-4 py-2 text-left font-mono text-gray-900">
-                      {formatCurrency(inv.balance_due || 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          inv.status === 'issued'
-                            ? 'bg-green-50 text-green-700'
-                            : inv.status === 'draft'
-                            ? 'bg-yellow-50 text-yellow-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {inv.status === 'issued'
-                          ? 'صادرة'
-                          : inv.status === 'draft'
-                          ? 'مسودة'
-                          : inv.status === 'cancelled'
-                          ? 'ملغاة'
-                          : inv.status || 'غير معروف'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          inv.payment_status === 'paid'
-                            ? 'bg-green-50 text-green-700'
-                            : inv.payment_status === 'partial'
-                            ? 'bg-blue-50 text-blue-700'
-                            : inv.payment_status === 'unpaid'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {inv.payment_status === 'paid'
-                          ? 'مدفوعة'
-                          : inv.payment_status === 'partial'
-                          ? 'مدفوعة جزئياً'
-                          : inv.payment_status === 'unpaid'
-                          ? 'غير مدفوعة'
-                          : inv.payment_status || 'غير معروف'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
                 <tr>
                   <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
                     لا توجد فواتير مطابقة لخيارات التصفية الحالية.

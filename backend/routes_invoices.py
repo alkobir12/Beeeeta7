@@ -177,19 +177,37 @@ async def update_invoice(invoice_id: str, invoice: dict):
 
 @router.get("/{invoice_id}")
 async def get_invoice(invoice_id: str):
-    """جلب فاتورة واحدة"""
+    """جلب فاتورة واحدة من Supabase"""
     try:
-        invoices = load_invoices()
-        
-        for inv in invoices:
-            if inv['id'] == invoice_id:
-                return inv
-        
-        raise HTTPException(status_code=404, detail="Invoice not found")
-        
+        if supabase_service.mock_mode:
+            raise HTTPException(status_code=500, detail="Supabase not configured")
+
+        inv = supabase_service.invoices_get(invoice_id)
+        if not inv:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+
+        return {
+            "id": inv.get("id"),
+            "invoice_number": inv.get("invoiceNumber") or str(inv.get("id"))[:8],
+            "customer_id": inv.get("customerId"),
+            "customer_name": inv.get("customerName") or "",
+            "vehicle_id": inv.get("vehicleId"),
+            "plate_number": inv.get("plateNumber", ""),
+            "items": inv.get("items") or [],
+            "subtotal": float(inv.get("subtotal") or 0),
+            "tax": float(inv.get("tax") or 0),
+            "total": float(inv.get("total") or 0),
+            "status": inv.get("status") or "pending",
+            "type": inv.get("type") or "sale",
+            "date": inv.get("date") or inv.get("createdAt"),
+            "created_at": inv.get("createdAt"),
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching invoice: {e}")
-        raise HTTPException(status_code=404, detail="Invoice not found")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # DB compatibility (not used)
 db = None

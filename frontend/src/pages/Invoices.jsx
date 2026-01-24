@@ -40,15 +40,31 @@ const Invoices = () => {
       setError(null);
 
       const response = await financeAPI.getInvoices({
-        workshop_id: workshopId,
-        invoice_type: typeFilter || undefined,
         status: statusFilter || undefined,
       });
 
-      setInvoices(response.data || []);
+      // تحويل البيانات للتأكد من توافق الحقول
+      const invoicesData = (response.data || response || []).map(inv => ({
+        id: inv.id,
+        invoice_number: inv.invoice_number || inv.id?.substring(0, 8) || 'N/A',
+        customer_name: inv.customerName || inv.customer_name || 'غير محدد',
+        plate_number: inv.plateNumber || inv.plate_number || '',
+        vehicle_id: inv.vehicleId || inv.vehicle_id,
+        items: inv.items || [],
+        subtotal: inv.subtotal || 0,
+        tax: inv.tax || 0,
+        total: inv.total || 0,
+        status: inv.status || 'pending',
+        date: inv.date || inv.created_at,
+        created_at: inv.created_at
+      }));
+      
+      setInvoices(invoicesData);
+      console.log('✅ تم جلب', invoicesData.length, 'فاتورة');
     } catch (err) {
       console.error('Error fetching invoices:', err);
       setError('تعذر جلب الفواتير. يرجى المحاولة مرة أخرى.');
+      setInvoices([]);
     } finally {
       setLoading(false);
     }

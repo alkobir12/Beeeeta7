@@ -653,7 +653,61 @@ async def get_journal_entries(
         except Exception as e:
             print(f"Supabase journal_entries error: {e}")
         
-        # 2. جلب القيود من operations (إذا كان MongoDB متاح)
+        # 2. القيود الناتجة عن العمليات من Supabase (operations جدول)
+        try:
+            if supabase:
+                ops_query = supabase.table("operations").select("*, vehicles(plate_number, customer_name)")
+                if start_date:
+                    ops_query = ops_query.gte("op_date", start_date)
+                if end_date:
+                    ops_query = ops_query.lte("op_date", end_date)
+                ops_query = ops_query.range(skip, skip + limit - 1).order("op_date", desc=True)
+                ops_response = ops_query.execute()
+
+                for op in ops_response.data:
+                    op_type = op.get('type', '')
+                    total = float(op.get('total', 0) or 0)
+                    date = op.get('op_date', '')
+                    payment_method = op.get('payment_method', 'cash')
+
+                    if total == 0:
+                        continue
+
+                    vehicle_data = op.get('vehicles', {}) if isinstance(op.get('vehicles'), dict) else {}
+                    vehicle_plate = vehicle_data.get('plate_number', '')
+                    customer_name = vehicle_data.get('customer_name', op.get('partner_name', ''))
+
+                    lines = []
+
+                    if op_type == 'sale':
+                        if payment_method == 'cash':
+                            lines.append({"account": "101", "account_name": "النقدية", "debit": total, "credit": 0})
+                        else:
+                            lines.append({"account": "113", "account_name": "ذمم مدينة عملاء", "debit": total, "credit": 0})
+                        lines.append({"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": total})
+                    elif op_type == 'purchase':
+                        lines.append({"account": "514", "account_name": "مصاريف قطع الغيار", "debit": total, "credit": 0})
+                        if payment_method == 'cash':
+                            lines.append({"account": "101", "account_name": "النقدية", "debit": 0, "credit": total})
+                        else:
+                            lines.append({"account": "211", "account_name": "ذمم دائنة موردين", "debit": 0, "credit": total})
+                    else:
+                        continue
+
+                    entries.append({
+                        "id": op.get('id', ''),
+                        "date": date[:10] if date else "",
+                        "description": f"قيد {op_type} {payment_method}",
+                        "lines": lines,
+                        "total": total,
+                        "source": "operation",
+                        "vehicle_plate": vehicle_plate,
+                        "customer_name": customer_name,
+                    })
+        except Exception as e:
+            print(f"Supabase operations error: {e}")
+
+        # 3. قيود من MongoDB (للوضع القديم إن وُجد finance_db)
         if finance_db:
             try:
                 query = {}
@@ -662,27 +716,27 @@ async def get_journal_entries(
                     end_dt = datetime.fromisoformat(end_date)
                     end_dt = end_dt.replace(hour=23, minute=59, second=59)
                     query["date"] = {"$gte": start_dt, "$lte": end_dt}
-                
+
                 operations = await finance_db.operations.find(query).skip(skip).limit(limit).to_list(limit)
-                
+
                 for op in operations:
                     op_type = op.get('type', '')
                     total = op.get('total', 0) or 0
                     date = op.get('date', datetime.now())
                     payment_method = op.get('paymentMethod', 'cash')
-                    
+
                     if total == 0:
                         continue
-                    
+
                     lines = []
-                    
+
                     if op_type == 'sale':
                         if payment_method == 'cash':
                             lines.append({"account": "101", "account_name": "النقدية", "debit": total, "credit": 0})
                         else:
                             lines.append({"account": "113", "account_name": "ذمم مدينة عملاء", "debit": total, "credit": 0})
                         lines.append({"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": total})
-                        
+
                         entries.append({
                             "id": op.get('id', ''),
                             "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
@@ -691,14 +745,14 @@ async def get_journal_entries(
                             "total": total,
                             "source": "operation"
                         })
-                        
+
                     elif op_type == 'purchase':
                         lines.append({"account": "514", "account_name": "مصاريف قطع الغيار", "debit": total, "credit": 0})
                         if payment_method == 'cash':
                             lines.append({"account": "101", "account_name": "النقدية", "debit": 0, "credit": total})
                         else:
                             lines.append({"account": "211", "account_name": "ذمم دائنة موردين", "debit": 0, "credit": total})
-                        
+
                         entries.append({
                             "id": op.get('id', ''),
                             "date": date.strftime('%Y-%m-%d') if isinstance(date, datetime) else str(date),
@@ -709,7 +763,7 @@ async def get_journal_entries(
                         })
             except Exception as e:
                 print(f"MongoDB operations error: {e}")
-        
+
         return {
             "success": True,
             "data": entries,

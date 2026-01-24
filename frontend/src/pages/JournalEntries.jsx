@@ -193,9 +193,9 @@ export default function JournalEntries() {
           <button
             onClick={fetchJournalEntries}
             className={`p-2.5 rounded-xl transition-all ${
-              isLightContent ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
+              !isLightContent ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
             }`}
-            style={{ boxShadow: isLightContent ? 'none' : '0 1px 3px rgba(0,0,0,0.08)' }}
+            style={{ boxShadow: isLightContent ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}
           >
             <RefreshCw size={18} />
           </button>

@@ -321,6 +321,22 @@ const Dashboard = () => {
             onStatusUpdate={async (newStatus) => {
               try {
                 await vehicleAPI.update(selectedVehicle.id, { status: newStatus });
+
+                // إذا تم التسليم، أغلق أي فاتورة مفتوحة مرتبطة بهذه المركبة
+                if (newStatus === 'delivered') {
+                  try {
+                    const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+                    const invRes = await axios.get(`${API_URL}/invoices`, { params: { vehicleId: selectedVehicle.id } });
+                    const invoices = invRes.data || [];
+                    const openInvoice = invoices.find(inv => inv.status !== 'paid' && inv.status !== 'cancelled');
+                    if (openInvoice) {
+                      await axios.put(`${API_URL}/invoices/${openInvoice.id}`, { status: 'issued' });
+                    }
+                  } catch (invErr) {
+                    console.error('Failed to close invoice on delivery:', invErr);
+                  }
+                }
+
                 await fetchData();
               } catch (error) {
                 console.error('Failed to update vehicle status', error);

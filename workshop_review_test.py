@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://accountiq-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxacct-hub.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_USERNAME = "مدير"

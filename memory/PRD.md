@@ -139,7 +139,7 @@
 - **اسم المستخدم**: `مدير`
 
 ### API URL
-- **Production**: `https://accountiq-1.preview.emergentagent.com`
+- **Production**: `https://taxacct-hub.preview.emergentagent.com`
 - **Local**: `http://localhost:8001`
 
 ---

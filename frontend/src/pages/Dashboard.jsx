@@ -279,15 +279,26 @@ const Dashboard = () => {
         </div>
 
         {/* Search & Filter - Stack on mobile */}
-        <div className="apple-card p-3 sm:p-4 mb-4 sm:mb-6 space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4 sm:items-center">
+        <div 
+          className="rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4 sm:items-center"
+          style={{ 
+            backgroundColor: styles.cardBg,
+            border: `1px solid ${styles.cardBorder}`
+          }}
+        >
           <div className="relative flex-1 w-full">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2" size={18} style={{ color: styles.textMuted }} />
             <input
               type="text"
               placeholder={t('dashboard.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="apple-input pr-10 text-sm sm:text-base"
+              className="w-full pr-10 pl-4 py-2.5 rounded-xl text-sm sm:text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              style={{ 
+                backgroundColor: styles.inputBg,
+                border: `1px solid ${styles.inputBorder}`,
+                color: styles.textPrimary
+              }}
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
@@ -297,9 +308,13 @@ const Dashboard = () => {
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                   filterStatus === status 
-                    ? 'bg-gray-900 text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : ''
                 }`}
+                style={filterStatus !== status ? { 
+                  backgroundColor: isLight ? '#f1f5f9' : '#334155',
+                  color: styles.textSecondary
+                } : {}}
               >
                 {status === 'all' ? t('common.all') : getStatusConfigForVehicle(status).label}
               </button>

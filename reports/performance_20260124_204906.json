@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-01-24T20:49:05.890274",
+  "backend": {
+    "total_size": 686001712,
+    "total_size_readable": "654.22 MB",
+    "python_files": 67,
+    "large_files": [
+      [
+        "backend/routes_extended.py",
+        159095
+      ],
+      [
+        "backend/arabic_quotation.py",
+        53690
+      ],
+      [
+        "backend/server.py",
+        45916
+      ],
+      [
+        "backend/routes_finance.py",
+        44749
+      ],
+      [
+        "backend/denso_system_v7.py",
+        34734
+      ]
+    ]
+  },
+  "frontend": {
+    "total_size": 2012039,
+    "total_size_readable": "1.92 MB",
+    "js_files": 154,
+    "large_files": [
+      [
+        "frontend/src/pages/VehicleDetails.jsx",
+        58730
+      ],
+      [
+        "frontend/src/pages/InvoiceTemplateStudio.jsx",
+        58307
+      ],
+      [
+        "frontend/src/pages/JournalEntries.jsx",
+        48890
+      ],
+      [
+        "frontend/src/pages/Settings_broken.jsx",
+        39127
+      ],
+      [
+        "frontend/src/pages/InjectorDiagnosticsV7.jsx",
+        38035
+      ]
+    ]
+  },
+  "recommendations": [
+    "🔴 Backend كبير جداً - راجع الملفات الكبيرة",
+    "🟡 node_modules كبير - راجع المكتبات غير المستخدمة"
+  ]
+}

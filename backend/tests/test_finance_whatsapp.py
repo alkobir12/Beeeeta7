@@ -210,7 +210,7 @@ class TestHealthAndBasicAPIs:
                 print(f"✅ Health endpoint - Status: {data.get('status')}")
             except:
                 # Frontend HTML response is also acceptable
-                print(f"✅ Health endpoint returns frontend HTML (status 200)")
+                print("✅ Health endpoint returns frontend HTML (status 200)")
 
     def test_stats_endpoint(self):
         """Test GET /api/stats"""

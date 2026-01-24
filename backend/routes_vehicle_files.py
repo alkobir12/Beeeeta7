@@ -84,8 +84,8 @@ async def compare_vehicle_diagnostics(payload: Dict[str, Any]):
 
         vehicle1_id = payload.get("vehicle1_id")
         vehicle2_id = payload.get("vehicle2_id")
-        file1_id = payload.get("file1_id")
-        file2_id = payload.get("file2_id")
+        payload.get("file1_id")
+        payload.get("file2_id")
 
         # Get vehicles
         v1 = await db.vehicles.find_one({"id": vehicle1_id})

@@ -159,8 +159,8 @@ def main():
     with open(OUTPUT_DIR / "content_batch_1.json", "w", encoding="utf-8") as f:
         json.dump(batch_results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ Extraction complete!")
-    print(f"📊 Stats:")
+    print("\n✅ Extraction complete!")
+    print("📊 Stats:")
     print(f"   - Sections: {len(sections)}")
     print(f"   - Files processed: {len(batch_results)}")
     print(f"   - Total files: {len(html_files)}")
@@ -177,9 +177,9 @@ def main():
 
 if __name__ == "__main__":
     stats = main()
-    print(f"\n📝 Next steps:")
+    print("\n📝 Next steps:")
     print(f"   1. Review extracted content in {OUTPUT_DIR}")
-    print(f"   2. Build React components with Apple design")
+    print("   2. Build React components with Apple design")
     print(
         f"   3. Process remaining {stats['total'] - stats['processed']} files in background"
     )

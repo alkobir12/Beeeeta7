@@ -161,12 +161,12 @@ class ArabicQuotationBuilder:
             <p>الاسم والتوقيع والتاريخ</p>
             """
 
-        name = info.get("responder_name") or "العميل"
-        phone = info.get("responder_phone") or "-"
-        responded_at = info.get("responded_at") or ""
+        info.get("responder_name") or "العميل"
+        info.get("responder_phone") or "-"
+        info.get("responded_at") or ""
         client_ip = info.get("client_ip") or ""  # يبقى للاستخدام داخل ال QR فقط
-        customer_name = info.get("customer_name") or ""
-        plate_number = info.get("plate_number") or ""
+        info.get("customer_name") or ""
+        info.get("plate_number") or ""
         user_agent = info.get("user_agent") or ""  # يبقى للاستخدام داخل ال QR فقط
 
         qr_html = (
@@ -1212,14 +1212,14 @@ class ArabicQuotationBuilder:
 
     def _get_luxury_style(self, colors: Dict) -> str:
         """نمط فاخر"""
-        return f"""
-        * {{
+        return """
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }}
+        }
         
-        body {{
+        body {
             font-family: 'Noto Sans Arabic', 'Times New Roman', serif;
             direction: rtl;
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
@@ -1228,9 +1228,9 @@ class ArabicQuotationBuilder:
             font-size: 14px;
             min-height: 100vh;
             padding: 20px 0;
-        }}
+        }
         
-        .container {{
+        .container {
             max-width: 900px;
             margin: 0 auto;
             background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
@@ -1238,17 +1238,17 @@ class ArabicQuotationBuilder:
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
             border: 1px solid rgba(212,175,55,0.3);
-        }}
+        }
         
-        .header {{
+        .header {
             background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%);
             color: #d4af37;
             padding: 3rem 2rem;
             position: relative;
             overflow: hidden;
-        }}
+        }
         
-        .header::before {{
+        .header::before {
             content: '';
             position: absolute;
             top: -50%;
@@ -1257,28 +1257,28 @@ class ArabicQuotationBuilder:
             height: 200%;
             background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
             animation: shimmer 15s infinite linear;
-        }}
+        }
         
-        @keyframes shimmer {{
-            0% {{ transform: rotate(0deg); }}
-            100% {{ transform: rotate(360deg); }}
-        }}
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         
-        .header-content {{
+        .header-content {
             position: relative;
             z-index: 2;
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }}
+        }
         
-        .company-section {{
+        .company-section {
             display: flex;
             align-items: center;
             gap: 2rem;
-        }}
+        }
         
-        .logo {{
+        .logo {
             width: 100px;
             height: 100px;
             background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
@@ -1288,15 +1288,15 @@ class ArabicQuotationBuilder:
             justify-content: center;
             border: 3px solid #ffd700;
             box-shadow: 0 10px 30px rgba(212,175,55,0.4);
-        }}
+        }
         
-        .logo-text {{
+        .logo-text {
             font-weight: bold;
             font-size: 1.2rem;
             color: #1f2937;
-        }}
+        }
         
-        .company-info h1 {{
+        .company-info h1 {
             font-size: 2.2rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
@@ -1304,76 +1304,76 @@ class ArabicQuotationBuilder:
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }}
+        }
         
-        .company-name-en {{
+        .company-name-en {
             font-size: 1.1rem;
             opacity: 0.9;
-        }}
+        }
         
-        .company-address {{
+        .company-address {
             font-size: 0.95rem;
             opacity: 0.8;
-        }}
+        }
         
-        .quote-section {{
+        .quote-section {
             text-align: left;
             background: rgba(212,175,55,0.1);
             padding: 2rem;
             border-radius: 15px;
             border: 1px solid rgba(212,175,55,0.3);
-        }}
+        }
         
-        .quote-title {{
+        .quote-title {
             font-size: 3.5rem;
             font-weight: 900;
             background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }}
+        }
         
-        .quote-number {{
+        .quote-number {
             font-size: 1.3rem;
             opacity: 0.9;
-        }}
+        }
         
-        .content {{
+        .content {
             padding: 3rem;
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        }}
+        }
         
-        .section-title {{
+        .section-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: #1f2937;
             margin-bottom: 2rem;
             padding: 1rem 0;
             border-bottom: 3px solid #d4af37;
-        }}
+        }
         
-        .details-section {{
+        .details-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2.5rem;
             margin-bottom: 3rem;
-        }}
+        }
         
-        .client-info, .quote-info {{
+        .client-info, .quote-info {
             background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
             padding: 2.5rem;
             border-radius: 15px;
             border: 1px solid rgba(212,175,55,0.2);
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }}
+        }
         
-        .info-grid {{
+        .info-grid {
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-        }}
+        }
         
-        .info-item {{
+        .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1381,85 +1381,85 @@ class ArabicQuotationBuilder:
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }}
+        }
         
-        .label {{
+        .label {
             font-weight: 700;
             color: #1f2937;
-        }}
+        }
         
-        .value {{
+        .value {
             font-weight: 600;
             color: #374151;
-        }}
+        }
         
-        .project-section {{
+        .project-section {
             margin-bottom: 3rem;
-        }}
+        }
         
-        .project-description {{
+        .project-description {
             background: linear-gradient(135deg, #fef7cd 0%, #fef3c7 100%);
             padding: 2.5rem;
             border-radius: 15px;
             border-right: 6px solid #d97706;
             font-size: 1.15rem;
             line-height: 1.9;
-        }}
+        }
         
-        .items-section {{
+        .items-section {
             margin-bottom: 3rem;
-        }}
+        }
         
-        .table-container {{
+        .table-container {
             background: white;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-        }}
+        }
         
-        .items-table {{
+        .items-table {
             width: 100%;
             border-collapse: collapse;
-        }}
+        }
         
-        .items-table th {{
+        .items-table th {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             color: #d4af37;
             padding: 1.5rem;
             text-align: center;
             font-weight: 700;
-        }}
+        }
         
-        .items-table td {{
+        .items-table td {
             padding: 1.5rem;
             text-align: center;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-        }}
+        }
         
-        .items-table tr:nth-child(even) {{
+        .items-table tr:nth-child(even) {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        }}
+        }
         
-        .items-table tr:hover {{
+        .items-table tr:hover {
             background: linear-gradient(135deg, #fef7cd 0%, #fef3c7 100%);
-        }}
+        }
         
-        .text-right {{
+        .text-right {
             text-align: right !important;
-        }}
+        }
         
-        .summary-section {{
+        .summary-section {
             margin-bottom: 3rem;
-        }}
+        }
         
-        .summary-box {{
+        .summary-box {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             padding: 2.5rem;
             border-radius: 15px;
             border: 1px solid #0ea5e9;
-        }}
+        }
         
-        .summary-row {{
+        .summary-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1467,9 +1467,9 @@ class ArabicQuotationBuilder:
             border-bottom: 1px solid rgba(14,165,233,0.2);
             font-size: 1.15rem;
             font-weight: 600;
-        }}
+        }
         
-        .total-row {{
+        .total-row {
             border-bottom: none;
             border-top: 3px solid #d4af37;
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
@@ -1479,123 +1479,123 @@ class ArabicQuotationBuilder:
             font-weight: 900;
             font-size: 1.6rem;
             border-radius: 0 0 15px 15px;
-        }}
+        }
         
-        .terms-section {{
+        .terms-section {
             margin-bottom: 3rem;
-        }}
+        }
         
-        .terms-list {{
+        .terms-list {
             background: linear-gradient(135deg, #fef3c7 0%, #fef7cd 100%);
             padding: 2.5rem;
             border-radius: 15px;
             border-right: 6px solid #d97706;
             list-style: none;
-        }}
+        }
         
-        .terms-list li {{
+        .terms-list li {
             margin-bottom: 1.25rem;
             padding-right: 2rem;
             position: relative;
             line-height: 1.8;
-        }}
+        }
         
-        .terms-list li::before {{
+        .terms-list li::before {
             content: '◆';
             position: absolute;
             right: 0;
             color: #d97706;
-        }}
+        }
         
-        .signatures-section {{
+        .signatures-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2.5rem;
             margin-bottom: 2rem;
-        }}
+        }
         
-        .signature-box {{
+        .signature-box {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
             padding: 2.5rem;
             border-radius: 15px;
             text-align: center;
             border: 2px solid #d4af37;
-        }}
+        }
         
-        .signature-box h4 {{
+        .signature-box h4 {
             font-size: 1.3rem;
             font-weight: 700;
             color: #1f2937;
             margin-bottom: 2.5rem;
-        }}
+        }
         
-        .signature-line {{
+        .signature-line {
             width: 100%;
             height: 3px;
             background: linear-gradient(90deg, #d4af37, #ffd700);
             margin: 3rem 0 1.5rem;
-        }}
+        }
         
-        .footer {{
+        .footer {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             color: #d4af37;
             padding: 2.5rem;
             text-align: center;
-        }}
+        }
         
-        .footer-content {{
+        .footer-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1.5rem;
-        }}
+        }
         
-        .contact-info {{
+        .contact-info {
             display: flex;
             gap: 2.5rem;
             flex-wrap: wrap;
-        }}
+        }
         
-        @media (max-width: 768px) {{
-            .container {{
+        @media (max-width: 768px) {
+            .container {
                 margin: 10px;
-            }}
+            }
             
-            .header-content {{
+            .header-content {
                 flex-direction: column;
                 text-align: center;
                 gap: 2rem;
-            }}
+            }
             
-            .details-section {{
+            .details-section {
                 grid-template-columns: 1fr;
-            }}
+            }
             
-            .signatures-section {{
+            .signatures-section {
                 grid-template-columns: 1fr;
-            }}
+            }
             
-            .footer-content {{
+            .footer-content {
                 flex-direction: column;
-            }}
+            }
             
-            .contact-info {{
+            .contact-info {
                 flex-direction: column;
                 gap: 1rem;
-            }}
-        }}
+            }
+        }
         
-        @media print {{
-            body {{
+        @media print {
+            body {
                 background: white;
-            }}
+            }
             
-            .container {{
+            .container {
                 box-shadow: none;
                 margin: 0;
-            }}
-        }}
+            }
+        }
         """
 
     def save_and_open(

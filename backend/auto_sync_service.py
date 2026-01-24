@@ -114,7 +114,7 @@ class AutoSyncService:
                         "customer_name": vehicle_data.get("customerName", ""),
                         "services": vehicle_data.get("services", []),
                     }
-                    supabase_result = self.supabase.create_vehicle(supabase_data)
+                    self.supabase.create_vehicle(supabase_data)
                     results["supabase"] = "saved"
                 except Exception as e:
                     results["supabase"] = f"failed: {str(e)}"

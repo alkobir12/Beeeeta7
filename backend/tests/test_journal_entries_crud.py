@@ -86,7 +86,7 @@ class TestJournalEntriesCRUD:
         assert get_data.get("success") == True
         assert get_data["data"]["description"] == payload["description"]
         assert get_data["data"]["total"] == payload["total"]
-        print(f"✅ Verified entry persisted correctly")
+        print("✅ Verified entry persisted correctly")
 
     def test_get_single_journal_entry(self):
         """Test GET /api/finance/journal-entries/{id} - Get single entry"""
@@ -158,7 +158,7 @@ class TestJournalEntriesCRUD:
         assert data.get("success") == False, "Response should have success=False"
         assert "error" in data or "message" in data, "Should have error message"
 
-        print(f"✅ GET non-existent entry returns proper error")
+        print("✅ GET non-existent entry returns proper error")
 
     def test_update_journal_entry(self):
         """Test PUT /api/finance/journal-entries/{id} - Update manual entry"""
@@ -260,7 +260,7 @@ class TestJournalEntriesCRUD:
         data = response.json()
         assert data.get("success") == False, "Response should have success=False"
 
-        print(f"✅ PUT non-existent entry returns proper error")
+        print("✅ PUT non-existent entry returns proper error")
 
     def test_delete_journal_entry(self):
         """Test DELETE /api/finance/journal-entries/{id} - Delete manual entry"""
@@ -334,7 +334,7 @@ class TestJournalEntriesCRUD:
         data = response.json()
         assert data.get("success") == False, "Response should have success=False"
 
-        print(f"✅ DELETE non-existent entry returns proper error")
+        print("✅ DELETE non-existent entry returns proper error")
 
     def test_list_journal_entries(self):
         """Test GET /api/finance/journal-entries - List all entries"""
@@ -401,7 +401,7 @@ class TestJournalEntryValidation:
                 params={"workshop_id": WORKSHOP_ID},
             )
 
-        print(f"✅ Balanced entry accepted")
+        print("✅ Balanced entry accepted")
 
 
 if __name__ == "__main__":

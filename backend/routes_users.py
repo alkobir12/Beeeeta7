@@ -74,7 +74,7 @@ async def get_users():
             u.pop("_id", None)
             out.append(User(**u))
         return out
-    except Exception as e:
+    except Exception:
         # Fallback to memory on any error (e.g., Mongo down)
         rows = _read_users()
         return [User(**r) for r in rows]
@@ -121,7 +121,7 @@ async def create_user(user_data: UserCreate):
         return User(**user_dict)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         # fallback to memory
         users = _read_users()
         doc = user_data.dict()
@@ -169,7 +169,7 @@ async def update_user(user_id: str, update_data: UserUpdate):
         return User(**user)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         # fallback to memory
         users = _read_users()
         idx = next((i for i, u in enumerate(users) if u.get("id") == user_id), -1)
@@ -201,7 +201,7 @@ async def delete_user(user_id: str):
         return {"status": "ok", "message": "تم حذف المستخدم"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         # fallback to memory
         users = _read_users()
         nusers = [u for u in users if u.get("id") != user_id]

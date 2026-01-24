@@ -122,7 +122,7 @@ def parse_content_file(html_path):
 
         return None
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -264,14 +264,14 @@ def main():
     print("\n" + "=" * 70)
     print("✅ EXTRACTION COMPLETE!")
     print("=" * 70)
-    print(f"📊 Statistics:")
+    print("📊 Statistics:")
     print(f"   - Sections: {len(sections)}")
     print(f"   - Content files processed: {len(all_content)}")
     print(f"   - Search index entries: {len(index)}")
     print(f"   - Images found: {sum(len(d.get('images', [])) for d in all_content)}")
     print(f"   - Time taken: {elapsed:.1f} seconds ({elapsed/60:.1f} minutes)")
     print(f"\n📁 Output directory: {OUTPUT_DIR}")
-    print(f"\n🎯 Ready for Apple Design UI!")
+    print("\n🎯 Ready for Apple Design UI!")
 
 
 if __name__ == "__main__":

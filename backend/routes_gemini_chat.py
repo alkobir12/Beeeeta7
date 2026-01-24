@@ -18,7 +18,7 @@ GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        print(f"✅ Gemini API configured successfully")
+        print("✅ Gemini API configured successfully")
     except Exception as e:
         print(f"⚠️ Failed to configure Gemini API: {e}")
 else:

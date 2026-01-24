@@ -47,7 +47,7 @@ async def technician_complete_work(order_id: str, payload: Dict[str, Any]):
     try:
         work_details = payload.get("workDetails", "")
         actual_cost = float(payload.get("actualCost", 0))
-        images = payload.get("images", [])
+        payload.get("images", [])
 
         update = {
             "technicianStatus": "completed",

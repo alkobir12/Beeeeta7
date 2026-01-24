@@ -327,7 +327,7 @@ def import_services():
             print(f"❌ Error adding '{service['name']}': {e}")
 
     print(f"\n{'='*70}")
-    print(f"📊 Import Summary:")
+    print("📊 Import Summary:")
     print(f"   ✅ Successfully imported: {success_count} services")
     print(f"   ❌ Errors: {error_count}")
     print(f"   📦 Total: {len(SERVICES)} services")

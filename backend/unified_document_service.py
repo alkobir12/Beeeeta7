@@ -44,7 +44,7 @@ class UnifiedDocumentGenerator:
 
         # استخراج معلومات الموافقة إن وجدت
         approval_info = settings.get("approval_info") or {}
-        approval_token = approval_info.get("token") or settings.get("approval_token")
+        approval_info.get("token") or settings.get("approval_token")
         approval_meta = None
         approval_qr_data_uri = None
 

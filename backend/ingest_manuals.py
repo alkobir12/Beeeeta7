@@ -37,7 +37,7 @@ async def ingest_manuals():
 
         # Check if already ingested (simple check by filename in existing docs)
         if any(d.get("filename") == fname for d in existing_docs):
-            print(f"   ⚠️ Already ingested. Skipping.")
+            print("   ⚠️ Already ingested. Skipping.")
             continue
 
         try:

@@ -197,7 +197,7 @@ try:
     from whatsapp_service import WhatsAppService
 
     whatsapp_svc = WhatsAppService(db)
-    print(f"✅ WhatsApp Service initialized")
+    print("✅ WhatsApp Service initialized")
 except Exception as e:
     print(f"⚠️  WhatsApp Service initialization warning: {e}")
 
@@ -1235,7 +1235,7 @@ async def financial_analysis(request: FinancialAnalysisRequest):
 def generate_mock_financial_analysis(query: str, data: Dict[str, Any]) -> str:
     """Generate mock financial analysis when API is unavailable"""
     revenue = data.get("revenue", 528000)
-    expenses = data.get("expenses", 465000)
+    data.get("expenses", 465000)
     net_income = data.get("net_income", 63000)
     gross_margin = data.get("gross_margin", 75.4)
     net_margin = data.get("net_margin", 11.9)

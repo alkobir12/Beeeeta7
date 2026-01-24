@@ -217,7 +217,7 @@ async def get_employees(active_only: bool = False):
             }
             for t in techs
         ]
-    except Exception as e:
+    except Exception:
         return []
 
 

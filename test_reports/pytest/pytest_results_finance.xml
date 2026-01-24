@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="3.797" timestamp="2026-01-24T19:22:44.971675+00:00" hostname="agent-env-c7cdb256-693f-49ca-979f-d576e2c94da7"><testcase classname="backend.tests.test_finance_whatsapp.TestFinanceAPIs" name="test_journal_entries_api" time="0.968" /><testcase classname="backend.tests.test_finance_whatsapp.TestFinanceAPIs" name="test_chart_of_accounts_api" time="0.627" /><testcase classname="backend.tests.test_finance_whatsapp.TestFinanceAPIs" name="test_balance_sheet_api" time="0.630" /><testcase classname="backend.tests.test_finance_whatsapp.TestFinanceAPIs" name="test_trial_balance_api" time="0.323" /><testcase classname="backend.tests.test_finance_whatsapp.TestWhatsAppBotAPIs" name="test_whatsapp_bot_stats" time="0.043" /><testcase classname="backend.tests.test_finance_whatsapp.TestWhatsAppBotAPIs" name="test_whatsapp_bot_workshop_info" time="0.036" /><testcase classname="backend.tests.test_finance_whatsapp.TestHealthAndBasicAPIs" name="test_health_endpoint" time="0.043"><failure message="requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">/root/.venv/lib/python3.11/site-packages/requests/models.py:976: in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:355: in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+backend/tests/test_finance_whatsapp.py:183: in test_health_endpoint
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E   requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="backend.tests.test_finance_whatsapp.TestHealthAndBasicAPIs" name="test_stats_endpoint" time="0.999" /></testsuite></testsuites>

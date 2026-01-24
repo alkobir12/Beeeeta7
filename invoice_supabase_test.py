@@ -188,7 +188,7 @@ def test_invoice_supabase_workflow():
                 print("   The system is configured to use Supabase but the invoices table is missing")
                 print("   This indicates incomplete migration from file-based to Supabase system")
                 return
-        elif response.status_code == 500:
+        elif response.status_code in [500, 520]:
             # Check if this is the expected Supabase table missing error
             try:
                 error_response = response.json()
@@ -209,7 +209,7 @@ def test_invoice_supabase_workflow():
                     log_test(
                         "Create Invoice via Supabase", 
                         False, 
-                        f"Unexpected 500 error: {error_response}", 
+                        f"Unexpected {response.status_code} error: {error_response}", 
                         response.status_code,
                         response.text
                     )
@@ -218,7 +218,7 @@ def test_invoice_supabase_workflow():
                 log_test(
                     "Create Invoice via Supabase", 
                     False, 
-                    f"500 error with non-JSON response", 
+                    f"{response.status_code} error with non-JSON response", 
                     response.status_code,
                     response.text
                 )

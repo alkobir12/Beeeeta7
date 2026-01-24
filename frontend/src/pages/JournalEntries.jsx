@@ -10,7 +10,15 @@ import {
   Eye,
   Send,
   FileText,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Printer,
+  Edit3,
+  Trash2,
+  Receipt,
+  ShoppingCart,
+  Briefcase,
+  CreditCard,
+  User
 } from 'lucide-react';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
@@ -23,85 +31,59 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
-// Sample journal entries
-const SAMPLE_ENTRIES = [
-  {
-    id: '1',
-    entry_number: 'JE-2024-001',
-    entry_date: '2024-12-15',
-    description: 'تسجيل فاتورة مبيعات INV-2024-001',
-    reference_type: 'invoice',
-    reference_number: 'INV-2024-001',
-    status: 'posted',
-    total_debit: 5750,
-    total_credit: 5750,
-    lines: [
-      { account_code: '112', account_name: 'الذمم المدينة', debit: 5750, credit: 0 },
-      { account_code: '41', account_name: 'إيرادات الخدمات', debit: 0, credit: 5000 },
-      { account_code: '212', account_name: 'ضريبة القيمة المضافة المستحقة', debit: 0, credit: 750 },
-    ],
-    created_by: 'أحمد محمد',
-    posted_at: '2024-12-15T10:30:00',
-  },
-  {
-    id: '2',
-    entry_number: 'JE-2024-002',
-    entry_date: '2024-12-16',
-    description: 'استلام دفعة من العميل',
-    reference_type: 'payment',
-    reference_number: 'PAY-2024-001',
-    status: 'posted',
-    total_debit: 5750,
-    total_credit: 5750,
-    lines: [
-      { account_code: '111', account_name: 'النقدية والبنوك', debit: 5750, credit: 0 },
-      { account_code: '112', account_name: 'الذمم المدينة', debit: 0, credit: 5750 },
-    ],
-    created_by: 'أحمد محمد',
-    posted_at: '2024-12-16T14:00:00',
-  },
-  {
-    id: '3',
-    entry_number: 'JE-2024-003',
-    entry_date: '2024-12-18',
-    description: 'شراء قطع غيار من المورد',
-    reference_type: 'purchase',
-    reference_number: 'PO-2024-005',
-    status: 'posted',
-    total_debit: 11500,
-    total_credit: 11500,
-    lines: [
-      { account_code: '113', account_name: 'المخزون', debit: 10000, credit: 0 },
-      { account_code: '212', account_name: 'ضريبة القيمة المضافة المستحقة', debit: 1500, credit: 0 },
-      { account_code: '211', account_name: 'الذمم الدائنة', debit: 0, credit: 11500 },
-    ],
-    created_by: 'سعد العتيبي',
-    posted_at: '2024-12-18T09:15:00',
-  },
-  {
-    id: '4',
-    entry_number: 'JE-2024-004',
-    entry_date: '2024-12-20',
-    description: 'دفع رواتب الموظفين لشهر ديسمبر',
-    reference_type: 'salary',
-    reference_number: null,
-    status: 'draft',
-    total_debit: 25000,
-    total_credit: 25000,
-    lines: [
-      { account_code: '52', account_name: 'الرواتب والأجور', debit: 25000, credit: 0 },
-      { account_code: '111', account_name: 'النقدية والبنوك', debit: 0, credit: 25000 },
-    ],
-    created_by: 'محمد الشهري',
-    posted_at: null,
-  },
-];
+// Helper for entry type icons and colors
+const getEntryTypeConfig = (type) => {
+  const configs = {
+    invoice: { 
+      icon: Receipt, 
+      color: 'from-blue-500 to-cyan-400', 
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30',
+      label: 'فاتورة',
+      emoji: '🧾'
+    },
+    payment: { 
+      icon: CreditCard, 
+      color: 'from-emerald-500 to-teal-400', 
+      bgColor: 'bg-emerald-500/10',
+      borderColor: 'border-emerald-500/30',
+      label: 'دفعة',
+      emoji: '💰'
+    },
+    purchase: { 
+      icon: ShoppingCart, 
+      color: 'from-purple-500 to-violet-400', 
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/30',
+      label: 'مشتريات',
+      emoji: '📦'
+    },
+    salary: { 
+      icon: Briefcase, 
+      color: 'from-orange-500 to-amber-400', 
+      bgColor: 'bg-orange-500/10',
+      borderColor: 'border-orange-500/30',
+      label: 'رواتب',
+      emoji: '💼'
+    },
+    manual: { 
+      icon: Edit3, 
+      color: 'from-slate-500 to-gray-400', 
+      bgColor: 'bg-slate-500/10',
+      borderColor: 'border-slate-500/30',
+      label: 'يدوي',
+      emoji: '✏️'
+    },
+  };
+  return configs[type] || configs.manual;
+};
 
 export default function JournalEntries() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -122,20 +104,20 @@ export default function JournalEntries() {
         // Transform backend data to match frontend format
         const transformedEntries = data.data.map((entry, index) => ({
           id: entry.id || String(index),
-          entry_number: `JE-${entry.date.replace(/-/g, '')}-${String(index + 1).padStart(3, '0')}`,
+          entry_number: `JE-${entry.date?.replace(/-/g, '') || 'XXXX'}-${String(index + 1).padStart(3, '0')}`,
           entry_date: entry.date,
           description: entry.description,
-          reference_type: entry.source === 'operation' ? (entry.description.includes('بيع') ? 'invoice' : 'purchase') : 'manual',
-          reference_number: entry.source === 'operation' ? entry.id.substring(0, 8) : null,
+          reference_type: entry.source === 'operation' ? (entry.description?.includes('بيع') ? 'invoice' : 'purchase') : 'manual',
+          reference_number: entry.source === 'operation' ? entry.id?.substring(0, 8) : null,
           status: 'posted',
           total_debit: entry.total,
           total_credit: entry.total,
-          lines: entry.lines.map(line => ({
+          lines: entry.lines?.map(line => ({
             account_code: line.account,
             account_name: line.account_name,
             debit: line.debit,
             credit: line.credit
-          })),
+          })) || [],
           created_by: 'النظام',
           posted_at: entry.date,
           vehicle_plate: entry.vehicle_plate,
@@ -145,7 +127,7 @@ export default function JournalEntries() {
       }
     } catch (error) {
       console.error('Error fetching journal entries:', error);
-      setEntries(SAMPLE_ENTRIES);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -153,37 +135,20 @@ export default function JournalEntries() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      draft: { color: 'bg-gray-700 text-gray-300', icon: <Clock size={14} />, label: 'مسودة' },
-      posted: { color: 'bg-green-900/50 text-green-300', icon: <CheckCircle size={14} />, label: 'مرحّل' },
-      cancelled: { color: 'bg-red-900/50 text-red-300', icon: <XCircle size={14} />, label: 'ملغى' },
+      draft: { color: 'bg-amber-900/50 text-amber-300 border border-amber-600/30', icon: <Clock size={12} />, label: 'مسودة' },
+      posted: { color: 'bg-emerald-900/50 text-emerald-300 border border-emerald-600/30', icon: <CheckCircle size={12} />, label: 'مرحّل' },
+      cancelled: { color: 'bg-red-900/50 text-red-300 border border-red-600/30', icon: <XCircle size={12} />, label: 'ملغى' },
     };
     const badge = badges[status] || badges.draft;
     return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${badge.color}`}>
         {badge.icon}
         {badge.label}
       </span>
     );
   };
 
-  const getReferenceTypeBadge = (type) => {
-    const types = {
-      invoice: { label: 'فاتورة', color: 'bg-blue-900/30 text-blue-300' },
-      payment: { label: 'دفعة', color: 'bg-green-900/30 text-green-300' },
-      purchase: { label: 'مشتريات', color: 'bg-purple-900/30 text-purple-300' },
-      salary: { label: 'رواتب', color: 'bg-orange-900/30 text-orange-300' },
-      manual: { label: 'يدوي', color: 'bg-gray-700 text-gray-300' },
-    };
-    const badge = types[type] || types.manual;
-    return (
-      <span className={`text-xs px-2 py-0.5 rounded ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
   const handlePrintInvoice = (entry) => {
-    // صفحة طباعة مبنية على بيانات القيد نفسه
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) return;
 
@@ -198,43 +163,36 @@ export default function JournalEntries() {
   <style>
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 24px; background: #f5f5f5; color: #111827; }
     .invoice-container { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .workshop-name { font-size: 20px; font-weight: 700; color: #111827; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; }
+    .workshop-name { font-size: 22px; font-weight: 700; color: #1e40af; }
     .invoice-title { font-size: 18px; font-weight: 600; color: #111827; }
     .meta { font-size: 13px; color: #4b5563; margin-top: 4px; }
-    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-    .badge-posted { background: #ecfdf3; color: #166534; }
-    .section-title { font-size: 14px; font-weight: 600; color: #4b5563; margin-bottom: 8px; }
-    .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; font-size: 13px; margin-bottom: 20px; }
-    .info-label { color: #6b7280; }
-    .info-value { color: #111827; font-weight: 500; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-    th, td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
-    th { background: #f9fafb; text-align: right; font-weight: 600; color: #4b5563; }
-    tfoot td { border-top: 1px solid #e5e7eb; font-weight: 600; }
-    .text-right { text-align: right; }
-    .text-left { text-align: left; }
-    .totals { margin-top: 16px; width: 260px; margin-left: auto; font-size: 13px; }
-    .totals-row { display: flex; justify-content: space-between; padding: 4px 0; }
-    .totals-label { color: #4b5563; }
-    .totals-value { color: #111827; font-weight: 600; }
-    .footer { margin-top: 32px; font-size: 11px; color: #9ca3af; text-align: center; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #dcfce7; color: #166534; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; }
+    .info-label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+    .info-value { font-size: 14px; color: #111827; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th { background: #1e40af; color: white; padding: 12px 16px; text-align: right; font-size: 13px; }
+    td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .totals { margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 8px; color: white; }
+    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .totals-row.final { border-top: 1px solid rgba(255,255,255,0.3); margin-top: 8px; padding-top: 16px; font-size: 18px; font-weight: 700; }
+    .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #9ca3af; }
   </style>
 </head>
 <body>
   <div class="invoice-container">
     <div class="header">
       <div>
-        <div class="workshop-name">${document.title || 'ورشة الصيانة'}</div>
-        <div class="meta">سند فاتورة مبني على القيد: ${entry.entry_number}</div>
+        <div class="workshop-name">ورشة الصيانة</div>
+        <div class="meta">سند قيد محاسبي</div>
       </div>
       <div style="text-align: left;">
-        <div class="invoice-title">فاتورة</div>
-        <div class="meta">رقم الفاتورة: ${entry.entry_number}</div>
-        <div class="meta">التاريخ: ${entry.entry_date}</div>
-        <div style="margin-top: 6px;">
-          <span class="badge badge-posted">${entry.status === 'posted' ? 'مرحّلة' : 'مسودة'}</span>
-        </div>
+        <div class="invoice-title">فاتورة / قيد</div>
+        <div class="meta">رقم: ${entry.entry_number}</div>
+        <div class="meta">التاريخ: ${entry.entry_date || '-'}</div>
+        <div style="margin-top: 8px;"><span class="badge">${entry.status === 'posted' ? '✓ مرحّل' : 'مسودة'}</span></div>
       </div>
     </div>
 
@@ -257,21 +215,20 @@ export default function JournalEntries() {
       </div>
     </div>
 
-    <div class="section-title">تفاصيل القيد / البنود</div>
     <table>
       <thead>
         <tr>
-          <th>الحساب</th>
-          <th class="text-right">مدين</th>
-          <th class="text-right">دائن</th>
+          <th style="width: 50%;">الحساب</th>
+          <th style="width: 25%;">مدين</th>
+          <th style="width: 25%;">دائن</th>
         </tr>
       </thead>
       <tbody>
         ${entry.lines.map(line => `
           <tr>
-            <td>${line.account_code || ''} - ${line.account_name || ''}</td>
-            <td class="text-right">${line.debit ? line.debit.toFixed(2) : '0.00'}</td>
-            <td class="text-right">${line.credit ? line.credit.toFixed(2) : '0.00'}</td>
+            <td><strong>${line.account_code || ''}</strong> - ${line.account_name || ''}</td>
+            <td style="color: #059669; font-weight: 600;">${line.debit ? line.debit.toFixed(2) + ' ر.س' : '-'}</td>
+            <td style="color: #dc2626; font-weight: 600;">${line.credit ? line.credit.toFixed(2) + ' ر.س' : '-'}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -279,29 +236,24 @@ export default function JournalEntries() {
 
     <div class="totals">
       <div class="totals-row">
-        <span class="totals-label">إجمالي المدين</span>
-        <span class="totals-value">${(entry.total_debit || 0).toFixed(2)} ريال</span>
+        <span>إجمالي المدين</span>
+        <span>${(entry.total_debit || 0).toFixed(2)} ر.س</span>
       </div>
       <div class="totals-row">
-        <span class="totals-label">إجمالي الدائن</span>
-        <span class="totals-value">${(entry.total_credit || 0).toFixed(2)} ريال</span>
+        <span>إجمالي الدائن</span>
+        <span>${(entry.total_credit || 0).toFixed(2)} ر.س</span>
       </div>
-      <div class="totals-row" style="border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 6px;">
-        <span class="totals-label">إجمالي الفاتورة</span>
-        <span class="totals-value">${total.toFixed(2)} ريال</span>
+      <div class="totals-row final">
+        <span>الإجمالي</span>
+        <span>${total.toFixed(2)} ر.س</span>
       </div>
     </div>
 
     <div class="footer">
-      تم توليد هذه الفاتورة من نظام القيود المحاسبية. للاستخدام الداخلي فقط.
+      تم إنشاء هذا المستند من نظام القيود المحاسبية | ${new Date().toLocaleDateString('ar-SA')}
     </div>
   </div>
-
-  <script>
-    window.onload = function() {
-      window.print();
-    };
-  </script>
+  <script>window.onload = function() { window.print(); };</script>
 </body>
 </html>`);
     doc.close();
@@ -309,11 +261,14 @@ export default function JournalEntries() {
 
   const filteredEntries = entries.filter((entry) => {
     if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
+    if (typeFilter !== 'all' && entry.reference_type !== typeFilter) return false;
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      entry.entry_number.toLowerCase().includes(query) ||
-      entry.description.toLowerCase().includes(query)
+      entry.entry_number?.toLowerCase().includes(query) ||
+      entry.description?.toLowerCase().includes(query) ||
+      entry.customer_name?.toLowerCase().includes(query) ||
+      entry.vehicle_plate?.toLowerCase().includes(query)
     );
   });
 
@@ -330,240 +285,271 @@ export default function JournalEntries() {
     total: entries.length,
     posted: entries.filter(e => e.status === 'posted').length,
     draft: entries.filter(e => e.status === 'draft').length,
-    totalAmount: entries.filter(e => e.status === 'posted').reduce((sum, e) => sum + e.total_debit, 0),
+    totalAmount: entries.filter(e => e.status === 'posted').reduce((sum, e) => sum + (e.total_debit || 0), 0),
   };
 
   return (
-    <div className="p-6 space-y-6" data-testid="journal-entries-page">
+    <div className="p-4 md:p-6 space-y-6 min-h-screen" data-testid="journal-entries-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <BookOpen className="text-blue-500" />
-            القيود اليومية والفواتير
+          <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl">
+              <BookOpen className="text-white" size={24} />
+            </div>
+            القيود المحاسبية والفواتير
           </h1>
-          <p className="text-gray-400">تسجيل ومتابعة القيود المحاسبية والفواتير المرتبطة بها</p>
+          <p className="text-gray-400 text-sm mt-1">تسجيل ومتابعة القيود المحاسبية وطباعتها كفواتير</p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          data-testid="add-entry-btn"
-        >
-          <Plus size={20} />
-          <span>قيد جديد</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchJournalEntries}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all border border-gray-600/50"
+            data-testid="refresh-entries-btn"
+          >
+            <RefreshCw size={18} />
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg shadow-blue-500/20"
+            data-testid="add-entry-btn"
+          >
+            <Plus size={18} />
+            <span className="hidden sm:inline">قيد جديد</span>
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-900/30 rounded-lg">
-              <FileText className="text-blue-400" size={24} />
+            <div className="p-2.5 bg-blue-500/20 rounded-xl">
+              <FileText className="text-blue-400" size={20} />
             </div>
             <div>
-              <p className="text-sm text-gray-400">إجمالي القيود</p>
-              <p className="text-2xl font-bold text-white">{stats.total}</p>
+              <p className="text-xs text-gray-400">إجمالي القيود</p>
+              <p className="text-xl font-bold text-white">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-900/30 rounded-lg">
-              <CheckCircle className="text-green-400" size={24} />
+            <div className="p-2.5 bg-emerald-500/20 rounded-xl">
+              <CheckCircle className="text-emerald-400" size={20} />
             </div>
             <div>
-              <p className="text-sm text-gray-400">المرحّلة</p>
-              <p className="text-2xl font-bold text-green-400">{stats.posted}</p>
+              <p className="text-xs text-gray-400">المرحّلة</p>
+              <p className="text-xl font-bold text-emerald-400">{stats.posted}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-900/30 rounded-lg">
-              <Clock className="text-yellow-400" size={24} />
+            <div className="p-2.5 bg-amber-500/20 rounded-xl">
+              <Clock className="text-amber-400" size={20} />
             </div>
             <div>
-              <p className="text-sm text-gray-400">المسودات</p>
-              <p className="text-2xl font-bold text-yellow-400">{stats.draft}</p>
+              <p className="text-xs text-gray-400">المسودات</p>
+              <p className="text-xl font-bold text-amber-400">{stats.draft}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-900/30 rounded-lg">
-              <ArrowLeftRight className="text-purple-400" size={24} />
+            <div className="p-2.5 bg-purple-500/20 rounded-xl">
+              <ArrowLeftRight className="text-purple-400" size={20} />
             </div>
             <div>
-              <p className="text-sm text-gray-400">إجمالي الحركات</p>
-              <p className="text-lg font-bold text-white">{formatCurrency(stats.totalAmount)}</p>
+              <p className="text-xs text-gray-400">إجمالي الحركات</p>
+              <p className="text-base font-bold text-white">{formatCurrency(stats.totalAmount)}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
+      <div className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input
               type="text"
-              placeholder="بحث برقم القيد أو الوصف..."
+              placeholder="بحث برقم القيد أو الوصف أو العميل أو اللوحة..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10 pl-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              className="w-full pr-10 pl-4 py-2.5 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
               data-testid="search-entries"
             />
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {['all', 'draft', 'posted'].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setStatusFilter(filter)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === filter
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {filter === 'all' && 'الكل'}
-                {filter === 'draft' && 'مسودة'}
-                {filter === 'posted' && 'مرحّل'}
-              </button>
-            ))}
+            <div className="flex gap-1 p-1 bg-gray-900/50 rounded-xl border border-gray-700/50">
+              {['all', 'draft', 'posted'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setStatusFilter(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    statusFilter === filter
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  {filter === 'all' && 'الكل'}
+                  {filter === 'draft' && 'مسودة'}
+                  {filter === 'posted' && 'مرحّل'}
+                </button>
+              ))}
+            </div>
+            
+            <div className="flex gap-1 p-1 bg-gray-900/50 rounded-xl border border-gray-700/50">
+              {['all', 'invoice', 'purchase', 'payment', 'manual'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setTypeFilter(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    typeFilter === filter
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  {filter === 'all' && 'كل الأنواع'}
+                  {filter === 'invoice' && '🧾 فاتورة'}
+                  {filter === 'purchase' && '📦 مشتريات'}
+                  {filter === 'payment' && '💰 دفعة'}
+                  {filter === 'manual' && '✏️ يدوي'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Entries Table */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      {/* Entries Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+            <span className="text-gray-400 text-sm">جاري التحميل...</span>
           </div>
-        ) : filteredEntries.length === 0 ? (
-          <div className="text-center py-12">
-            <BookOpen className="mx-auto h-12 w-12 text-gray-600" />
-            <p className="text-gray-400 mt-4">لا توجد قيود</p>
+        </div>
+      ) : filteredEntries.length === 0 ? (
+        <div className="bg-gray-800/30 rounded-2xl border border-gray-700/50 p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-700/50 flex items-center justify-center">
+            <BookOpen className="text-gray-500" size={32} />
           </div>
-        ) : (
-          <div className="p-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredEntries.map((entry) => {
-              const total = entry.total_debit || entry.total_credit || 0;
-              return (
-                <article
-                  key={entry.id}
-                  className="relative bg-gray-900/70 rounded-xl border border-gray-700 p-4 flex flex-col justify-between shadow-lg shadow-black/30"
-                >
-                  {/* شريط جانبي ملون حسب نوع القيد */}
-                  <span
-                    className={`absolute inset-y-3 right-0 w-1 rounded-l-full ${{
-                      invoice: 'bg-gradient-to-b from-blue-400 to-emerald-400',
-                      purchase: 'bg-gradient-to-b from-purple-400 to-amber-400',
-                      salary: 'bg-gradient-to-b from-orange-400 to-rose-400',
-                      payment: 'bg-gradient-to-b from-green-400 to-sky-400',
-                      manual: 'bg-gradient-to-b from-slate-400 to-slate-600',
-                    }[entry.reference_type || 'manual']}`}
-                  />
-
-                  {/* رأس الكرت */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-gray-800/80 border border-gray-700 text-lg">
-                        {entry.reference_type === 'invoice' && '🧾'}
-                        {entry.reference_type === 'purchase' && '📦'}
-                        {entry.reference_type === 'payment' && '💰'}
-                        {entry.reference_type === 'salary' && '💼'}
-                        {!entry.reference_type && '✏️'}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">رقم القيد</span>
-                        <span className="font-semibold text-blue-400">{entry.entry_number}</span>
-                        {entry.entry_date && (
-                          <span className="text-[11px] text-gray-500 mt-0.5">
-                            {new Date(entry.entry_date).toLocaleDateString('ar-SA')}
-                          </span>
-                        )}
-                      </div>
+          <h3 className="text-lg font-semibold text-gray-300 mb-2">لا توجد قيود</h3>
+          <p className="text-gray-500 text-sm">أضف قيداً جديداً أو قم بإضافة بنود لملف مركبة</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredEntries.map((entry) => {
+            const total = entry.total_debit || entry.total_credit || 0;
+            const typeConfig = getEntryTypeConfig(entry.reference_type);
+            const TypeIcon = typeConfig.icon;
+            
+            return (
+              <article
+                key={entry.id}
+                className={`group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl border ${typeConfig.borderColor} p-4 flex flex-col backdrop-blur-sm hover:shadow-xl hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1`}
+                data-testid={`entry-card-${entry.id}`}
+              >
+                {/* Gradient accent bar */}
+                <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r ${typeConfig.color}`}></div>
+                
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-xl ${typeConfig.bgColor} flex items-center justify-center text-xl`}>
+                      {typeConfig.emoji}
                     </div>
-
-                    <div className="flex flex-col items-end gap-1">
-                      {getReferenceTypeBadge(entry.reference_type)}
-                      {getStatusBadge(entry.status)}
-                    </div>
-                  </div>
-
-                  {/* معلومات العميل/المركبة والوصف */}
-                  <div className="space-y-1 mb-4 text-xs text-gray-300">
-                    {entry.customer_name && (
-                      <div className="flex items-center gap-1">
-                        <span>👤</span>
-                        <span className="truncate">{entry.customer_name}</span>
-                      </div>
-                    )}
-                    {entry.vehicle_plate && (
-                      <div className="flex items-center gap-1">
-                        <span>🚗</span>
-                        <span>{entry.vehicle_plate}</span>
-                      </div>
-                    )}
-                    <div className="text-[11px] text-gray-400 line-clamp-2">
-                      {entry.description}
-                    </div>
-                  </div>
-
-                  {/* أسفل الكرت: الإجمالي + أزرار الإجراءات */}
-                  <div className="flex items-center justify-between gap-3 mt-auto pt-3 border-t border-gray-700/60">
                     <div>
-                      <div className="text-[11px] text-gray-400">إجمالي القيد</div>
-                      <div className="font-semibold text-emerald-400 text-sm">
-                        {formatCurrency(total)}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedEntry(entry);
-                          setShowDetailModal(true);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-gray-700/80 transition-colors"
-                        title="عرض التفاصيل"
-                      >
-                        <Eye size={16} className="text-gray-300" />
-                      </button>
-
-                      <button
-                        onClick={() => handlePrintInvoice(entry)}
-                        className="p-1.5 rounded-lg hover:bg-blue-900/40 transition-colors"
-                        title="طباعة الفاتورة"
-                      >
-                        <FileText size={16} className="text-blue-400" />
-                      </button>
-
-                      {entry.status === 'draft' && (
-                        <button
-                          onClick={() => postEntry(entry.id)}
-                          className="p-1.5 rounded-lg hover:bg-green-900/40 transition-colors"
-                          title="ترحيل القيد"
-                        >
-                          <Send size={16} className="text-green-400" />
-                        </button>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider">رقم القيد</div>
+                      <div className="font-bold text-blue-400 text-sm">{entry.entry_number}</div>
+                      {entry.entry_date && (
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          {new Date(entry.entry_date).toLocaleDateString('ar-SA')}
+                        </div>
                       )}
                     </div>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                  
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-lg ${typeConfig.bgColor} ${typeConfig.borderColor} border font-medium`}>
+                      {typeConfig.label}
+                    </span>
+                    {getStatusBadge(entry.status)}
+                  </div>
+                </div>
+
+                {/* Customer & Vehicle Info */}
+                <div className="space-y-1.5 mb-3 flex-1">
+                  {entry.customer_name && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <User size={12} className="text-gray-500" />
+                      <span className="text-gray-300 truncate">{entry.customer_name}</span>
+                    </div>
+                  )}
+                  {entry.vehicle_plate && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-500">🚗</span>
+                      <span className="text-gray-300 font-mono">{entry.vehicle_plate}</span>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                    {entry.description}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-700/50">
+                  <div>
+                    <div className="text-[10px] text-gray-500">إجمالي القيد</div>
+                    <div className={`font-bold text-base bg-gradient-to-r ${typeConfig.color} bg-clip-text text-transparent`}>
+                      {formatCurrency(total)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        setSelectedEntry(entry);
+                        setShowDetailModal(true);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
+                      title="عرض التفاصيل"
+                    >
+                      <Eye size={16} className="text-gray-400 hover:text-white" />
+                    </button>
+
+                    <button
+                      onClick={() => handlePrintInvoice(entry)}
+                      className="p-2 rounded-lg hover:bg-blue-500/20 transition-colors"
+                      title="طباعة الفاتورة"
+                    >
+                      <Printer size={16} className="text-blue-400 hover:text-blue-300" />
+                    </button>
+
+                    {entry.status === 'draft' && (
+                      <button
+                        onClick={() => postEntry(entry.id)}
+                        className="p-2 rounded-lg hover:bg-emerald-500/20 transition-colors"
+                        title="ترحيل القيد"
+                      >
+                        <Send size={16} className="text-emerald-400 hover:text-emerald-300" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       {/* Detail Modal */}
       {showDetailModal && selectedEntry && (
@@ -573,6 +559,7 @@ export default function JournalEntries() {
             setShowDetailModal(false);
             setSelectedEntry(null);
           }}
+          onPrint={handlePrintInvoice}
         />
       )}
 
@@ -581,7 +568,7 @@ export default function JournalEntries() {
         <CreateEntryModal
           onClose={() => setShowCreateModal(false)}
           onCreate={(newEntry) => {
-            setEntries([...entries, { ...newEntry, id: String(Date.now()), entry_number: `JE-2024-${String(entries.length + 1).padStart(3, '0')}` }]);
+            setEntries([...entries, { ...newEntry, id: String(Date.now()), entry_number: `JE-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(entries.length + 1).padStart(3, '0')}` }]);
             setShowCreateModal(false);
           }}
         />
@@ -591,80 +578,95 @@ export default function JournalEntries() {
 }
 
 // Entry Detail Modal
-function EntryDetailModal({ entry, onClose }) {
+function EntryDetailModal({ entry, onClose, onPrint }) {
+  const typeConfig = getEntryTypeConfig(entry.reference_type);
+  
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700">
-        <div className="p-6 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700/50 shadow-2xl">
+        {/* Header */}
+        <div className={`p-6 border-b border-gray-700/50 bg-gradient-to-r ${typeConfig.color} bg-opacity-10`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">{entry.entry_number}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl ${typeConfig.bgColor} flex items-center justify-center text-2xl`}>
+                {typeConfig.emoji}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">{entry.entry_number}</h2>
+                <p className="text-gray-400 text-sm">{entry.description}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors">
               <XCircle size={24} />
             </button>
           </div>
-          <p className="text-gray-400 mt-1">{entry.description}</p>
         </div>
 
         <div className="p-6 space-y-6">
           {/* Entry Info */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-400">التاريخ:</span>
-              <span className="text-white mr-2">{new Date(entry.entry_date).toLocaleDateString('ar-SA')}</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+              <span className="text-xs text-gray-500">التاريخ</span>
+              <p className="text-white font-medium">{new Date(entry.entry_date).toLocaleDateString('ar-SA')}</p>
             </div>
-            <div>
-              <span className="text-gray-400">الحالة:</span>
-              <span className="mr-2">{entry.status === 'posted' ? '✓ مرحّل' : '⏳ مسودة'}</span>
+            <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+              <span className="text-xs text-gray-500">الحالة</span>
+              <p className="mt-1">{entry.status === 'posted' ? <span className="text-emerald-400">✓ مرحّل</span> : <span className="text-amber-400">⏳ مسودة</span>}</p>
             </div>
-            {entry.reference_number && (
-              <div>
-                <span className="text-gray-400">المرجع:</span>
-                <span className="text-blue-400 mr-2">{entry.reference_number}</span>
+            {entry.customer_name && (
+              <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+                <span className="text-xs text-gray-500">العميل</span>
+                <p className="text-white font-medium">{entry.customer_name}</p>
               </div>
             )}
-            <div>
-              <span className="text-gray-400">بواسطة:</span>
-              <span className="text-white mr-2">{entry.created_by}</span>
-            </div>
+            {entry.vehicle_plate && (
+              <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+                <span className="text-xs text-gray-500">رقم اللوحة</span>
+                <p className="text-white font-medium font-mono">{entry.vehicle_plate}</p>
+              </div>
+            )}
           </div>
 
           {/* Entry Lines */}
           <div>
-            <h3 className="font-semibold text-white mb-3">تفاصيل القيد</h3>
-            <div className="bg-gray-700/50 rounded-lg overflow-hidden">
+            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+              <ArrowLeftRight size={16} className="text-blue-400" />
+              تفاصيل القيد
+            </h3>
+            <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-700/30">
               <table className="w-full">
-                <thead className="bg-gray-700">
+                <thead className="bg-gray-800/50">
                   <tr>
-                    <th className="px-4 py-2 text-right text-sm text-gray-300">الحساب</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-300">مدين</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-300">دائن</th>
+                    <th className="px-4 py-3 text-right text-xs text-gray-400 font-medium">الحساب</th>
+                    <th className="px-4 py-3 text-left text-xs text-gray-400 font-medium">مدين</th>
+                    <th className="px-4 py-3 text-left text-xs text-gray-400 font-medium">دائن</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-600">
+                <tbody className="divide-y divide-gray-700/30">
                   {entry.lines.map((line, idx) => (
-                    <tr key={idx}>
+                    <tr key={idx} className="hover:bg-gray-800/30 transition-colors">
                       <td className="px-4 py-3">
-                        <span className="font-mono text-gray-500 text-sm ml-2">{line.account_code}</span>
-                        <span className="text-white">{line.account_name}</span>
+                        <span className="font-mono text-blue-400 text-xs ml-2 bg-blue-500/10 px-1.5 py-0.5 rounded">{line.account_code}</span>
+                        <span className="text-white text-sm">{line.account_name}</span>
                       </td>
-                      <td className="px-4 py-3 text-left font-mono">
+                      <td className="px-4 py-3 text-left font-mono text-sm">
                         {line.debit > 0 ? (
-                          <span className="text-green-400">{formatCurrency(line.debit)}</span>
-                        ) : '-'}
+                          <span className="text-emerald-400 font-semibold">{formatCurrency(line.debit)}</span>
+                        ) : <span className="text-gray-600">-</span>}
                       </td>
-                      <td className="px-4 py-3 text-left font-mono">
+                      <td className="px-4 py-3 text-left font-mono text-sm">
                         {line.credit > 0 ? (
-                          <span className="text-red-400">{formatCurrency(line.credit)}</span>
-                        ) : '-'}
+                          <span className="text-rose-400 font-semibold">{formatCurrency(line.credit)}</span>
+                        ) : <span className="text-gray-600">-</span>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-700">
+                <tfoot className="bg-gray-800/50">
                   <tr className="font-bold">
                     <td className="px-4 py-3 text-white">الإجمالي</td>
-                    <td className="px-4 py-3 text-left text-green-400">{formatCurrency(entry.total_debit)}</td>
-                    <td className="px-4 py-3 text-left text-red-400">{formatCurrency(entry.total_credit)}</td>
+                    <td className="px-4 py-3 text-left text-emerald-400">{formatCurrency(entry.total_debit)}</td>
+                    <td className="px-4 py-3 text-left text-rose-400">{formatCurrency(entry.total_credit)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -672,27 +674,37 @@ function EntryDetailModal({ entry, onClose }) {
           </div>
 
           {/* Balance Check */}
-          <div className={`rounded-lg p-4 ${entry.total_debit === entry.total_credit ? 'bg-green-900/20 border border-green-800' : 'bg-red-900/20 border border-red-800'}`}>
-            <div className="flex items-center gap-2">
-              {entry.total_debit === entry.total_credit ? (
-                <>
-                  <CheckCircle className="text-green-400" size={20} />
-                  <span className="text-green-400">القيد متوازن ✓</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="text-red-400" size={20} />
-                  <span className="text-red-400">القيد غير متوازن!</span>
-                </>
-              )}
-            </div>
+          <div className={`rounded-xl p-4 flex items-center gap-3 ${entry.total_debit === entry.total_credit ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'}`}>
+            {entry.total_debit === entry.total_credit ? (
+              <>
+                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                  <CheckCircle className="text-emerald-400" size={20} />
+                </div>
+                <span className="text-emerald-400 font-medium">القيد متوازن ✓</span>
+              </>
+            ) : (
+              <>
+                <div className="p-2 bg-rose-500/20 rounded-lg">
+                  <XCircle className="text-rose-400" size={20} />
+                </div>
+                <span className="text-rose-400 font-medium">القيد غير متوازن!</span>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-700">
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-gray-700/50 flex gap-3">
+          <button
+            onClick={() => onPrint(entry)}
+            className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all font-medium flex items-center justify-center gap-2"
+          >
+            <Printer size={18} />
+            طباعة كفاتورة
+          </button>
           <button
             onClick={onClose}
-            className="w-full py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex-1 py-2.5 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium border border-gray-600/50"
           >
             إغلاق
           </button>
@@ -750,48 +762,53 @@ function CreateEntryModal({ onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700">
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-xl font-bold text-white">إنشاء قيد يومي جديد</h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700/50 shadow-2xl">
+        <div className="p-6 border-b border-gray-700/50">
+          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl">
+              <Plus className="text-white" size={20} />
+            </div>
+            إنشاء قيد يومي جديد
+          </h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">التاريخ</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">التاريخ</label>
               <input
                 type="date"
                 value={formData.entry_date}
                 onChange={(e) => setFormData({ ...formData, entry_date: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">نوع المرجع</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">نوع المرجع</label>
               <select
                 value={formData.reference_type}
                 onChange={(e) => setFormData({ ...formData, reference_type: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               >
-                <option value="manual">يدوي</option>
-                <option value="invoice">فاتورة</option>
-                <option value="payment">دفعة</option>
-                <option value="purchase">مشتريات</option>
-                <option value="salary">رواتب</option>
+                <option value="manual">✏️ يدوي</option>
+                <option value="invoice">🧾 فاتورة</option>
+                <option value="payment">💰 دفعة</option>
+                <option value="purchase">📦 مشتريات</option>
+                <option value="salary">💼 رواتب</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">الوصف</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">الوصف</label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-500"
               placeholder="وصف القيد..."
               required
             />
@@ -799,30 +816,30 @@ function CreateEntryModal({ onClose, onCreate }) {
 
           {/* Entry Lines */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">بنود القيد</label>
+            <label className="block text-sm font-medium text-gray-300 mb-3">بنود القيد</label>
             <div className="space-y-3">
               {lines.map((line, index) => (
-                <div key={index} className="flex gap-3 items-center">
+                <div key={index} className="flex gap-2 items-center bg-gray-900/30 p-3 rounded-xl border border-gray-700/30">
                   <input
                     type="text"
-                    placeholder="رمز الحساب"
+                    placeholder="رمز"
                     value={line.account_code}
                     onChange={(e) => updateLine(index, 'account_code', e.target.value)}
-                    className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono"
+                    className="w-20 px-3 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   />
                   <input
                     type="text"
                     placeholder="اسم الحساب"
                     value={line.account_name}
                     onChange={(e) => updateLine(index, 'account_name', e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   />
                   <input
                     type="number"
                     placeholder="مدين"
                     value={line.debit || ''}
                     onChange={(e) => updateLine(index, 'debit', parseFloat(e.target.value) || 0)}
-                    className="w-28 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-green-400"
+                    className="w-28 px-3 py-2 bg-emerald-900/20 border border-emerald-700/30 rounded-lg text-emerald-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                     min="0"
                     step="0.01"
                   />
@@ -831,7 +848,7 @@ function CreateEntryModal({ onClose, onCreate }) {
                     placeholder="دائن"
                     value={line.credit || ''}
                     onChange={(e) => updateLine(index, 'credit', parseFloat(e.target.value) || 0)}
-                    className="w-28 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-red-400"
+                    className="w-28 px-3 py-2 bg-rose-900/20 border border-rose-700/30 rounded-lg text-rose-400 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50"
                     min="0"
                     step="0.01"
                   />
@@ -839,9 +856,9 @@ function CreateEntryModal({ onClose, onCreate }) {
                     <button
                       type="button"
                       onClick={() => removeLine(index)}
-                      className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg"
+                      className="p-2 text-rose-400 hover:bg-rose-900/30 rounded-lg transition-colors"
                     >
-                      <XCircle size={20} />
+                      <Trash2 size={18} />
                     </button>
                   )}
                 </div>
@@ -850,36 +867,36 @@ function CreateEntryModal({ onClose, onCreate }) {
             <button
               type="button"
               onClick={addLine}
-              className="mt-3 flex items-center gap-2 text-blue-400 hover:text-blue-300"
+              className="mt-3 flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium"
             >
-              <Plus size={18} />
-              <span>إضافة سطر</span>
+              <Plus size={16} />
+              إضافة سطر
             </button>
           </div>
 
           {/* Totals */}
-          <div className={`rounded-lg p-4 ${isBalanced ? 'bg-green-900/20 border border-green-800' : 'bg-yellow-900/20 border border-yellow-800'}`}>
+          <div className={`rounded-xl p-4 ${isBalanced ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-amber-500/10 border border-amber-500/30'}`}>
             <div className="flex justify-between items-center">
               <div className="flex gap-8">
                 <div>
-                  <span className="text-gray-400 text-sm">إجمالي المدين:</span>
-                  <span className="text-green-400 font-bold mr-2">{formatCurrency(totalDebit)}</span>
+                  <span className="text-gray-400 text-xs">إجمالي المدين</span>
+                  <p className="text-emerald-400 font-bold text-lg">{formatCurrency(totalDebit)}</p>
                 </div>
                 <div>
-                  <span className="text-gray-400 text-sm">إجمالي الدائن:</span>
-                  <span className="text-red-400 font-bold mr-2">{formatCurrency(totalCredit)}</span>
+                  <span className="text-gray-400 text-xs">إجمالي الدائن</span>
+                  <p className="text-rose-400 font-bold text-lg">{formatCurrency(totalCredit)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {isBalanced ? (
                   <>
-                    <CheckCircle className="text-green-400" size={18} />
-                    <span className="text-green-400 text-sm">متوازن</span>
+                    <CheckCircle className="text-emerald-400" size={20} />
+                    <span className="text-emerald-400 font-medium">متوازن ✓</span>
                   </>
                 ) : (
                   <>
-                    <Clock className="text-yellow-400" size={18} />
-                    <span className="text-yellow-400 text-sm">غير متوازن</span>
+                    <Clock className="text-amber-400" size={20} />
+                    <span className="text-amber-400 font-medium">غير متوازن</span>
                   </>
                 )}
               </div>
@@ -887,18 +904,18 @@ function CreateEntryModal({ onClose, onCreate }) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 text-white transition-colors"
+              className="flex-1 py-2.5 bg-gray-700/50 border border-gray-600/50 rounded-xl hover:bg-gray-700 text-gray-300 transition-all font-medium"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={!isBalanced}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               إنشاء القيد
             </button>

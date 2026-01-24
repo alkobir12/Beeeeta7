@@ -67,30 +67,51 @@ async def get_invoices(
 
 @router.post("")
 async def create_invoice(invoice: dict):
-    """إنشاء فاتورة جديدة"""
+    """إنشاء فاتورة جديدة في Supabase"""
     try:
-        invoice_data = {
-            "id": str(uuid.uuid4()),
-            "vehicleId": invoice.get("vehicleId"),
-            "vehicle_id": invoice.get("vehicleId"),
+        if supabase_service.mock_mode:
+            raise HTTPException(status_code=500, detail="Supabase not configured")
+
+        payload = {
+            "invoiceNumber": invoice.get("invoiceNumber"),
             "customerId": invoice.get("customerId"),
+            "vehicleId": invoice.get("vehicleId"),
             "customerName": invoice.get("customerName"),
             "plateNumber": invoice.get("plateNumber"),
             "items": invoice.get("items", []),
             "subtotal": invoice.get("subtotal", 0),
+            "discount": invoice.get("discount", 0),
             "tax": invoice.get("tax", 0),
             "total": invoice.get("total", 0),
             "status": invoice.get("status", "pending"),
-            "date": invoice.get("date", datetime.now().isoformat()),
-            "created_at": datetime.now().isoformat()
+            "type": invoice.get("type", "sale"),
+            "paymentMethod": invoice.get("paymentMethod"),
+            "notes": invoice.get("notes"),
         }
-        
-        save_invoice(invoice_data)
-        
-        print(f"✅ تم إنشاء فاتورة: {invoice_data['id']}")
-        
-        return {"success": True, "id": invoice_data["id"], "data": invoice_data}
-        
+
+        created = supabase_service.invoices_create(payload)
+        print(f"✅ تم إنشاء فاتورة في Supabase: {created.get('id')}")
+
+        # توحيد الشكل للواجهة الأمامية
+        response_data = {
+            "id": created.get("id"),
+            "invoice_number": created.get("invoiceNumber") or str(created.get("id"))[:8],
+            "customer_id": created.get("customerId"),
+            "customer_name": created.get("customerName") or "",
+            "vehicle_id": created.get("vehicleId"),
+            "plate_number": created.get("plateNumber", ""),
+            "items": created.get("items") or [],
+            "subtotal": float(created.get("subtotal") or 0),
+            "tax": float(created.get("tax") or 0),
+            "total": float(created.get("total") or 0),
+            "status": created.get("status") or "pending",
+            "type": created.get("type") or "sale",
+            "date": created.get("date") or created.get("createdAt"),
+            "created_at": created.get("createdAt"),
+        }
+
+        return {"success": True, "id": response_data["id"], "data": response_data}
+
     except Exception as e:
         print(f"Error creating invoice: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FloatingAIAssistant from '../components/FloatingAIAssistant';
 import { financeAPI } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Operations = () => {
   const { t, i18n } = useTranslation();
+  const { themeName } = useTheme();
+  const isLight = themeName === 'light' || themeName === 'dashPro';
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);

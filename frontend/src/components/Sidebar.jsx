@@ -70,12 +70,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       permission: 'canManageSettings',
       children: [
         { path: '/accounting/chart-of-accounts', label: i18n.language === 'ar' ? 'دليل الحسابات' : 'Chart of Accounts', enabled: true },
-        { path: '/accounting/journal-entries', label: i18n.language === 'ar' ? 'القيود اليومية' : 'Journal Entries', enabled: true },
+        { path: '/accounting/journal-entries', label: i18n.language === 'ar' ? 'القيود اليومية والفواتير' : 'Journal Entries & Invoices', enabled: true },
         { path: '/accounting/balance-sheet', label: i18n.language === 'ar' ? 'الميزانية العمومية' : 'Balance Sheet', enabled: true },
         { path: '/accounting/income-statement', label: i18n.language === 'ar' ? 'قائمة الدخل' : 'Income Statement', enabled: true },
         { path: '/accounting/cash-flow', label: i18n.language === 'ar' ? 'التدفقات النقدية' : 'Cash Flow', enabled: true },
         { path: '/accounting/trial-balance', label: i18n.language === 'ar' ? 'ميزان المراجعة' : 'Trial Balance', enabled: true },
-        { path: '/finance/invoices', label: i18n.language === 'ar' ? 'الفواتير' : 'Invoices', enabled: true },
         { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
         { path: '/ai-financial', label: i18n.language === 'ar' ? '🤖 التحليل الذكي' : '🤖 AI Analysis', enabled: true },
       ]

@@ -128,8 +128,26 @@ const Dashboard = () => {
     );
   }
 
+  // Theme-based styles
+  const styles = {
+    bg: isLight ? '#f8fafc' : '#0f172a',
+    cardBg: isLight ? '#ffffff' : '#1e293b',
+    cardBorder: isLight ? '#e2e8f0' : '#334155',
+    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
+    textSecondary: isLight ? '#64748b' : '#94a3b8',
+    textMuted: isLight ? '#94a3b8' : '#64748b',
+    inputBg: isLight ? '#ffffff' : '#1e293b',
+    inputBorder: isLight ? '#e2e8f0' : '#334155',
+    hoverBg: isLight ? '#f1f5f9' : '#334155',
+    statCardBg: isLight ? '#ffffff' : 'rgba(30, 41, 59, 0.8)',
+  };
+
   return (
-    <div className={`max-w-7xl mx-auto bg-emergent-black min-h-screen px-1 sm:px-0 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div 
+      className={`max-w-7xl mx-auto min-h-screen px-1 sm:px-4 py-4 ${isRTL ? 'rtl' : 'ltr'}`} 
+      dir={isRTL ? 'rtl' : 'ltr'}
+      style={{ backgroundColor: styles.bg }}
+    >
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>

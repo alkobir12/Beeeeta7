@@ -103,6 +103,22 @@ const VehicleDetails = () => {
         parts: vehicle.parts,
         services: vehicle.services
       });
+
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+      // إذا تم تغيير الحالة إلى تم التسليم، أغلق الفاتورة المفتوحة إن وجدت
+      if (status === 'delivered') {
+        try {
+          const invRes = await axios.get(`${API_URL}/invoices`, { params: { vehicleId: id } });
+          const invoices = invRes.data || [];
+          const openInvoice = invoices.find(inv => inv.status !== 'paid' && inv.status !== 'cancelled');
+          if (openInvoice) {
+            await axios.put(`${API_URL}/invoices/${openInvoice.id}`, { status: 'issued' });
+          }
+        } catch (invErr) {
+          console.error('فشل إغلاق الفاتورة عند التسليم:', invErr);
+        }
+      }
       
       // إنشاء أو تحديث عملية تلقائية إذا كان هناك بنود
       if (vehicle.parts && vehicle.parts.length > 0) {

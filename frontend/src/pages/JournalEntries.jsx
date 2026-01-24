@@ -166,16 +166,16 @@ export default function JournalEntries() {
   };
 
   // Dynamic styles based on theme
-  const cardBg = isDark ? 'bg-gray-800' : 'bg-white';
-  const cardBorder = isDark ? 'border-gray-700' : 'border-gray-200';
-  const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-  const textSecondary = isDark ? 'text-gray-400' : 'text-gray-600';
-  const textMuted = isDark ? 'text-gray-500' : 'text-gray-400';
+  const cardBg = isLightContent ? 'bg-white' : 'bg-gray-800';
+  const cardBorder = isLightContent ? 'border-gray-200' : 'border-gray-700';
+  const textPrimary = isLightContent ? 'text-gray-900' : 'text-white';
+  const textSecondary = isLightContent ? 'text-gray-600' : 'text-gray-400';
+  const textMuted = isLightContent ? 'text-gray-400' : 'text-gray-500';
 
   return (
     <div 
       className={`p-4 md:p-6 min-h-screen transition-colors duration-300`}
-      style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
+      style={{ backgroundColor: isLightContent ? '#f8fafc' : '#0f172a' }}
       data-testid="journal-entries-page"
     >
       {/* Header */}

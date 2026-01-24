@@ -205,19 +205,36 @@ body[data-theme="dashPro"] .sidebar-item {
 
   body {
     @apply bg-background text-foreground;
-    background-color: #121314;
+    background-color: var(--bg-primary, #121314);
     font-size: 1rem;
     line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
-  h1, h2, h3, h4, h5, h6 {
+  /* Dark mode text colors */
+  body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
+  body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
     letter-spacing: -0.02em;
     font-weight: 600;
     color: #F5F5F5 !important;
   }
   
-  p, span, div, label, a {
+  body.dark-mode p, body.dark-mode span, body.dark-mode div, 
+  body.dark-mode label, body.dark-mode a {
     color: #919597 !important;
+  }
+
+  /* Light mode text colors */
+  body.light-mode h1, body.light-mode h2, body.light-mode h3, 
+  body.light-mode h4, body.light-mode h5, body.light-mode h6 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: #1e293b !important;
+  }
+  
+  body.light-mode p, body.light-mode span, body.light-mode div, 
+  body.light-mode label, body.light-mode a {
+    color: #475569 !important;
   }
 }
 

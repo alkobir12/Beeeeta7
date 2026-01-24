@@ -33,6 +33,16 @@ const Invoices = () => {
     fetchData();
     // eslint disabled
   }, [statusFilter, typeFilter, workshopId]);
+  // الاستماع لأي تحديث على المركبات (من صفحة VehicleDetails أو QuickActions)
+  useEffect(() => {
+    const handler = (e) => {
+      // عند تحديث مركبة، نقوم بإعادة تحميل الفواتير فوراً
+      fetchData();
+    };
+    window.addEventListener('vehicleUpdated', handler);
+    return () => window.removeEventListener('vehicleUpdated', handler);
+  }, []);
+
 
   const fetchData = async () => {
     try {

@@ -14,23 +14,23 @@
       "details": "Invoice API responding (Supabase backend active)",
       "status_code": 200,
       "response_body": "API accessible",
-      "timestamp": "2026-01-24T13:10:40.191128"
+      "timestamp": "2026-01-24T13:10:59.897233"
     },
     {
       "name": "Create Test Vehicle",
       "passed": true,
-      "details": "Vehicle ID: aa273a9f-1ade-499e-91e2-5c693b6ff49a, Plate: TEST-INV-001, Customer: عميل فاتورة تجريبي",
+      "details": "Vehicle ID: 0fad10e3-3025-4f50-adf8-cd651049ddc1, Plate: TEST-INV-001, Customer: عميل فاتورة تجريبي",
       "status_code": 200,
-      "response_body": "{\"plateNumber\":\"TEST-INV-001\",\"brand\":\"تويوتا\",\"model\":\"يارس\",\"year\":2020,\"color\":\"أبيض\",\"vin\":null,\"fileNumber\":null,\"customerName\":\"عميل فاتورة تجريبي\",\"customerPhone\":\"0500000000\",\"customerEmail\":\"test.invoice@example.com\",\"services\":[],\"technicianId\":null,\"technicianName\":null,\"notes\":null,\"id\":\"aa273a9f-1ade-499e-91e2-5c693b6ff49a\",\"customerId\":\"6d2c8e7c-6e02-4adb-8714-db8d057bfdbe\",\"status\":\"diagnosis\",\"entryDate\":\"2026-01-24T13:10:41.009485+00:00\",\"estimatedCompletion\":\"2026-01-26T13:10:4",
-      "timestamp": "2026-01-24T13:10:41.286342"
+      "response_body": "{\"plateNumber\":\"TEST-INV-001\",\"brand\":\"تويوتا\",\"model\":\"يارس\",\"year\":2020,\"color\":\"أبيض\",\"vin\":null,\"fileNumber\":null,\"customerName\":\"عميل فاتورة تجريبي\",\"customerPhone\":\"0500000000\",\"customerEmail\":\"test.invoice@example.com\",\"services\":[],\"technicianId\":null,\"technicianName\":null,\"notes\":null,\"id\":\"0fad10e3-3025-4f50-adf8-cd651049ddc1\",\"customerId\":\"6d2c8e7c-6e02-4adb-8714-db8d057bfdbe\",\"status\":\"diagnosis\",\"entryDate\":\"2026-01-24T13:11:00.261047+00:00\",\"estimatedCompletion\":\"2026-01-26T13:11:0",
+      "timestamp": "2026-01-24T13:11:00.545255"
     },
     {
       "name": "Create Invoice via Supabase",
       "passed": false,
-      "details": "Failed to create invoice",
+      "details": "Unexpected 520 error: {'detail': '{\\'message\\': \"Could not find the table \\'public.invoices\\' in the schema cache\", \\'code\\': \\'PGRST205\\', \\'hint\\': \"Perhaps you meant the table \\'public.services\\'\", \\'details\\': None}'}",
       "status_code": 520,
       "response_body": "{\"detail\":\"{'message': \\\"Could not find the table 'public.invoices' in the schema cache\\\", 'code': 'PGRST205', 'hint': \\\"Perhaps you meant the table 'public.services'\\\", 'details': None}\"}",
-      "timestamp": "2026-01-24T13:10:41.592071"
+      "timestamp": "2026-01-24T13:11:00.904057"
     }
   ]
 }

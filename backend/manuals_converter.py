@@ -72,7 +72,9 @@ def copy_asset(asset_path: Path, src_root: Path, out_assets_root: Path) -> str |
     return web_path
 
 
-def process_file(html_file: Path, src_root: Path, out_root: Path, out_assets_root: Path) -> None:
+def process_file(
+    html_file: Path, src_root: Path, out_root: Path, out_assets_root: Path
+) -> None:
     print(f"[manuals_converter] Processing: {html_file}")
     text = html_file.read_text(encoding="utf-8", errors="ignore")
     soup = BeautifulSoup(text, "html.parser")

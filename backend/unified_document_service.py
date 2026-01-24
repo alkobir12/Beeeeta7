@@ -4,13 +4,12 @@ Unified Document Generation Service
 
 تدمج:
 - فواتير المبيعات
-- تقارير التشخيص  
+- تقارير التشخيص
 - عروض الأسعار
 """
 
-import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 import io
 import base64
 import json
@@ -20,16 +19,16 @@ from arabic_quotation import ArabicQuotationBuilder
 
 class UnifiedDocumentGenerator:
     """مولد المستندات الموحد"""
-    
+
     def __init__(self):
         self.builder = ArabicQuotationBuilder()
         self.document_types = {
-            'invoice': 'فاتورة مبيعات',
-            'diagnosis': 'تقرير تشخيص',
-            'quote': 'عرض سعر',
-            'receipt': 'إيصال استلام'
+            "invoice": "فاتورة مبيعات",
+            "diagnosis": "تقرير تشخيص",
+            "quote": "عرض سعر",
+            "receipt": "إيصال استلام",
         }
-    
+
     def generate_document(
         self,
         doc_type: str,
@@ -37,63 +36,75 @@ class UnifiedDocumentGenerator:
         customer_data: Dict,
         vehicle_data: Optional[Dict],
         items: List[Dict],
-        settings: Optional[Dict] = None
+        settings: Optional[Dict] = None,
     ) -> str:
         """توليد مستند HTML مع دعم توقيع الموافقة الإلكترونية"""
-        
+
         settings = settings or {}
-        
+
         # استخراج معلومات الموافقة إن وجدت
-        approval_info = settings.get('approval_info') or {}
-        approval_token = approval_info.get('token') or settings.get('approval_token')
+        approval_info = settings.get("approval_info") or {}
+        approval_token = approval_info.get("token") or settings.get("approval_token")
         approval_meta = None
         approval_qr_data_uri = None
 
         # إذا توفّر approval_info جاهز، نبنيه مباشرة
-        if approval_info and approval_info.get('status') == 'approved':
+        if approval_info and approval_info.get("status") == "approved":
             approval_meta = {
-                'token': approval_info.get('token'),
-                'status': approval_info.get('status'),
-                'responder_name': approval_info.get('responderName') or approval_info.get('responder_name'),
-                'responder_phone': approval_info.get('responderPhone') or approval_info.get('responder_phone'),
-                'responded_at': approval_info.get('respondedAt') or approval_info.get('responded_at'),
-                'client_ip': approval_info.get('clientIp') or approval_info.get('client_ip'),
-                'user_agent': approval_info.get('userAgent') or approval_info.get('user_agent'),
+                "token": approval_info.get("token"),
+                "status": approval_info.get("status"),
+                "responder_name": approval_info.get("responderName")
+                or approval_info.get("responder_name"),
+                "responder_phone": approval_info.get("responderPhone")
+                or approval_info.get("responder_phone"),
+                "responded_at": approval_info.get("respondedAt")
+                or approval_info.get("responded_at"),
+                "client_ip": approval_info.get("clientIp")
+                or approval_info.get("client_ip"),
+                "user_agent": approval_info.get("userAgent")
+                or approval_info.get("user_agent"),
             }
 
             # enrich approval metadata with customer and vehicle info for better signature details
             if customer_data:
-                approval_meta['customer_name'] = customer_data.get('name') or customer_data.get('customerName')
+                approval_meta["customer_name"] = customer_data.get(
+                    "name"
+                ) or customer_data.get("customerName")
             if vehicle_data:
-                approval_meta['plate_number'] = vehicle_data.get('plateNumber') or vehicle_data.get('plate')
+                approval_meta["plate_number"] = vehicle_data.get(
+                    "plateNumber"
+                ) or vehicle_data.get("plate")
 
         # TODO (مرحلة لاحقة): يمكن ربط approval_token باستعلام حقيقي من Supabase
         # في هذه المرحلة، نستخدم فقط approval_info إذا تم تمريره من الواجهة
 
         # توليد QR من بيانات الموافقة إن وجدت
-        if approval_meta and approval_meta.get('token'):
+        if approval_meta and approval_meta.get("token"):
             try:
-                qr_payload = json.dumps({
-                    'type': 'approval',
-                    'token': approval_meta['token'],
-                    'status': approval_meta.get('status'),
-                    'name': approval_meta.get('responder_name'),
-                    'phone': approval_meta.get('responder_phone'),
-                    'responded_at': approval_meta.get('responded_at'),
-                    'client_ip': approval_meta.get('client_ip'),
-                    'customer_name': approval_meta.get('customer_name'),
-                    'plate_number': approval_meta.get('plate_number'),
-                    'user_agent': approval_meta.get('user_agent'),
-                    'display_text': f"موافقة العميل\nتمت الموافقة إلكترونياً من: {approval_meta.get('responder_name') or 'العميل'} – جوال: {approval_meta.get('responder_phone') or '-'}\nصاحب المركبة: {approval_meta.get('customer_name') or ''}\nرقم اللوحة: {approval_meta.get('plate_number') or ''}\nوقت الموافقة: {approval_meta.get('responded_at') or ''}",
-                }, ensure_ascii=False)
+                qr_payload = json.dumps(
+                    {
+                        "type": "approval",
+                        "token": approval_meta["token"],
+                        "status": approval_meta.get("status"),
+                        "name": approval_meta.get("responder_name"),
+                        "phone": approval_meta.get("responder_phone"),
+                        "responded_at": approval_meta.get("responded_at"),
+                        "client_ip": approval_meta.get("client_ip"),
+                        "customer_name": approval_meta.get("customer_name"),
+                        "plate_number": approval_meta.get("plate_number"),
+                        "user_agent": approval_meta.get("user_agent"),
+                        "display_text": f"موافقة العميل\nتمت الموافقة إلكترونياً من: {approval_meta.get('responder_name') or 'العميل'} – جوال: {approval_meta.get('responder_phone') or '-'}\nصاحب المركبة: {approval_meta.get('customer_name') or ''}\nرقم اللوحة: {approval_meta.get('plate_number') or ''}\nوقت الموافقة: {approval_meta.get('responded_at') or ''}",
+                    },
+                    ensure_ascii=False,
+                )
 
                 qr = qrcode.QRCode(box_size=4, border=1)
                 qr.add_data(qr_payload)
                 qr.make(fit=True)
                 img = qr.make_image(fill_color="black", back_color="white")
                 buf = io.BytesIO()
-                img.save(buf, format='PNG')
-                qr_b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+                img.save(buf, format="PNG")
+                qr_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
                 approval_qr_data_uri = f"data:image/png;base64,{qr_b64}"
             except Exception:
                 approval_qr_data_uri = None
@@ -102,93 +113,103 @@ class UnifiedDocumentGenerator:
         # ملاحظة: سيتم تعيين هذه البيانات بعد إعادة تعيين البيانات
 
         """توليد مستند موحد"""
-        
+
         settings = settings or {}
-        theme = settings.get('theme', 'أزرق')
-        style = settings.get('style', 'حديث')
-        tax_rate = settings.get('tax_rate', 15)
-        
+        theme = settings.get("theme", "أزرق")
+        style = settings.get("style", "حديث")
+        tax_rate = settings.get("tax_rate", 15)
+
         # إعادة تعيين البيانات
         self.builder.reset_quotation()
-        
+
         # تمرير معلومات الموافقة لمُولد الـ HTML بعد إعادة التعيين
         if approval_meta:
-            self.builder.quotation['approval_info'] = approval_meta
+            self.builder.quotation["approval_info"] = approval_meta
         if approval_qr_data_uri:
-            self.builder.quotation['approval_qr'] = approval_qr_data_uri
-        
+            self.builder.quotation["approval_qr"] = approval_qr_data_uri
+
         # تعيين بيانات الورشة/الشركة
         self.builder.set_company(
-            name=workshop_data.get('name', 'ورشة الصيانة'),
-            name_en=workshop_data.get('name_en', 'Maintenance Workshop'),
-            address=workshop_data.get('address', ''),
-            phone=workshop_data.get('phone', ''),
-            email=workshop_data.get('email', ''),
-            website=workshop_data.get('website', ''),
-            tax_number=workshop_data.get('tax_number', workshop_data.get('taxNumber', '')),
-            logo=workshop_data.get('logo', '')
+            name=workshop_data.get("name", "ورشة الصيانة"),
+            name_en=workshop_data.get("name_en", "Maintenance Workshop"),
+            address=workshop_data.get("address", ""),
+            phone=workshop_data.get("phone", ""),
+            email=workshop_data.get("email", ""),
+            website=workshop_data.get("website", ""),
+            tax_number=workshop_data.get(
+                "tax_number", workshop_data.get("taxNumber", "")
+            ),
+            logo=workshop_data.get("logo", ""),
         )
-        
+
         # تعيين بيانات العميل
         self.builder.set_client(
-            name=customer_data.get('name', customer_data.get('customerName', '')),
-            company=customer_data.get('company', ''),
-            address=customer_data.get('address', ''),
-            phone=customer_data.get('phone', customer_data.get('customerPhone', '')),
-            email=customer_data.get('email', '')
+            name=customer_data.get("name", customer_data.get("customerName", "")),
+            company=customer_data.get("company", ""),
+            address=customer_data.get("address", ""),
+            phone=customer_data.get("phone", customer_data.get("customerPhone", "")),
+            email=customer_data.get("email", ""),
         )
-        
+
         # تعيين وصف المشروع/المركبة
         project_desc = self._build_project_description(doc_type, vehicle_data, settings)
         self.builder.set_project(project_desc)
-        
+
         # تعيين التاريخ إذا كان موجوداً في الإعدادات
-        if settings.get('date'):
+        if settings.get("date"):
             # تحويل التاريخ من YYYY-MM-DD إلى YYYY/MM/DD
-            date_str = settings['date'].replace('-', '/')
-            self.builder.quotation['date'] = date_str
-        
+            date_str = settings["date"].replace("-", "/")
+            self.builder.quotation["date"] = date_str
+
         # تعيين نسبة الضريبة
-        self.builder.quotation['tax_rate'] = tax_rate
-        
+        self.builder.quotation["tax_rate"] = tax_rate
+
         # إضافة البنود
         for item in items:
             self.builder.add_item(
-                description=item.get('description', item.get('name', '')),
-                quantity=float(item.get('quantity', item.get('qty', 1))),
-                unit_price=float(item.get('unit_price', item.get('price', 0))),
-                discount=float(item.get('discount', 0))
+                description=item.get("description", item.get("name", "")),
+                quantity=float(item.get("quantity", item.get("qty", 1))),
+                unit_price=float(item.get("unit_price", item.get("price", 0))),
+                discount=float(item.get("discount", 0)),
             )
-        
+
         # تعيين الشروط حسب نوع المستند
         # إذا كان المستخدم قد أدخل شروط مخصصة، استخدمها
-        if settings.get('terms') and isinstance(settings['terms'], list) and len(settings['terms']) > 0:
-            self.builder.quotation['terms'] = settings['terms']
+        if (
+            settings.get("terms")
+            and isinstance(settings["terms"], list)
+            and len(settings["terms"]) > 0
+        ):
+            self.builder.quotation["terms"] = settings["terms"]
         else:
-            self.builder.quotation['terms'] = self._get_terms_for_type(doc_type, settings)
-        
+            self.builder.quotation["terms"] = self._get_terms_for_type(
+                doc_type, settings
+            )
+
         # تعديل العنوان حسب النوع
         self._customize_for_type(doc_type, settings)
-        
+
         # توليد HTML
         return self.builder.generate_html(theme=theme, style=style)
-    
-    def _build_project_description(self, doc_type: str, vehicle_data: Optional[Dict], settings: Dict) -> str:
+
+    def _build_project_description(
+        self, doc_type: str, vehicle_data: Optional[Dict], settings: Dict
+    ) -> str:
         """بناء وصف المشروع/المركبة"""
         if not vehicle_data:
-            return settings.get('description', '')
-        
+            return settings.get("description", "")
+
         parts = []
-        
+
         # معلومات المركبة
-        brand = vehicle_data.get('brand', '')
-        model = vehicle_data.get('model', '')
-        year = vehicle_data.get('year', '')
-        plate = vehicle_data.get('plateNumber', vehicle_data.get('plate', ''))
-        vin = vehicle_data.get('vin', '')
-        color = vehicle_data.get('color', '')
-        mileage = vehicle_data.get('mileage', '')
-        
+        brand = vehicle_data.get("brand", "")
+        model = vehicle_data.get("model", "")
+        year = vehicle_data.get("year", "")
+        plate = vehicle_data.get("plateNumber", vehicle_data.get("plate", ""))
+        vin = vehicle_data.get("vin", "")
+        color = vehicle_data.get("color", "")
+        mileage = vehicle_data.get("mileage", "")
+
         if brand or model:
             parts.append(f"المركبة: {brand} {model} {year}".strip())
         if plate:
@@ -199,83 +220,87 @@ class UnifiedDocumentGenerator:
             parts.append(f"اللون: {color}")
         if mileage:
             parts.append(f"العداد: {mileage} كم")
-        
+
         # ملاحظات إضافية
-        notes = vehicle_data.get('notes', settings.get('notes', ''))
+        notes = vehicle_data.get("notes", settings.get("notes", ""))
         if notes:
             parts.append(f"\nملاحظات: {notes}")
-        
-        return ' | '.join(parts) if parts else 'خدمات صيانة وإصلاح'
-    
+
+        return " | ".join(parts) if parts else "خدمات صيانة وإصلاح"
+
     def _get_terms_for_type(self, doc_type: str, settings: Dict) -> List[str]:
         """الحصول على الشروط حسب نوع المستند"""
-        
-        custom_terms = settings.get('terms', [])
+
+        custom_terms = settings.get("terms", [])
         if custom_terms:
             return custom_terms
-        
-        if doc_type == 'invoice':
+
+        if doc_type == "invoice":
             return [
-                'الأسعار شاملة ضريبة القيمة المضافة',
-                'يرجى التحقق من البنود قبل مغادرة الورشة',
-                'ضمان الإصلاح حسب نوع الخدمة',
-                'لا يتم استرداد المبلغ بعد الخروج'
+                "الأسعار شاملة ضريبة القيمة المضافة",
+                "يرجى التحقق من البنود قبل مغادرة الورشة",
+                "ضمان الإصلاح حسب نوع الخدمة",
+                "لا يتم استرداد المبلغ بعد الخروج",
             ]
-        elif doc_type == 'diagnosis':
+        elif doc_type == "diagnosis":
             return [
-                'هذا تقرير تشخيصي فقط وليس أمر إصلاح',
-                'الأسعار تقديرية وقابلة للتغيير',
-                'يتطلب موافقة العميل قبل البدء بالإصلاح',
-                'صلاحية التقرير 7 أيام من تاريخ الإصدار'
+                "هذا تقرير تشخيصي فقط وليس أمر إصلاح",
+                "الأسعار تقديرية وقابلة للتغيير",
+                "يتطلب موافقة العميل قبل البدء بالإصلاح",
+                "صلاحية التقرير 7 أيام من تاريخ الإصدار",
             ]
-        elif doc_type == 'quote':
+        elif doc_type == "quote":
             return [
-                'هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار',
-                'يتطلب دفع 50% مقدماً لبدء العمل',
-                'الأسعار لا تشمل التعديلات الإضافية غير المذكورة',
-                'جميع الأسعار بالريال السعودي شاملة ضريبة القيمة المضافة'
+                "هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار",
+                "يتطلب دفع 50% مقدماً لبدء العمل",
+                "الأسعار لا تشمل التعديلات الإضافية غير المذكورة",
+                "جميع الأسعار بالريال السعودي شاملة ضريبة القيمة المضافة",
             ]
-        elif doc_type == 'receipt':
+        elif doc_type == "receipt":
             return [
-                'تم استلام المركبة بحالتها الحالية',
-                'يرجى الاحتفاظ بهذا الإيصال',
-                'سيتم التواصل معكم عند جاهزية المركبة'
+                "تم استلام المركبة بحالتها الحالية",
+                "يرجى الاحتفاظ بهذا الإيصال",
+                "سيتم التواصل معكم عند جاهزية المركبة",
             ]
-        
+
         return []
-    
+
     def _customize_for_type(self, doc_type: str, settings: Dict):
         """تخصيص المستند حسب النوع"""
-        
+
         # تعديل عنوان المستند حسب النوع
         title_map = {
-            'invoice': 'فاتورة مبيعات',
-            'diagnosis': 'تقرير تشخيص',
-            'quote': 'عرض سعر',
-            'receipt': 'إيصال استلام'
+            "invoice": "فاتورة مبيعات",
+            "diagnosis": "تقرير تشخيص",
+            "quote": "عرض سعر",
+            "receipt": "إيصال استلام",
         }
-        self.builder.quotation['doc_title'] = title_map.get(doc_type, 'مستند')
-        self.builder.quotation['doc_type'] = doc_type
-        
+        self.builder.quotation["doc_title"] = title_map.get(doc_type, "مستند")
+        self.builder.quotation["doc_type"] = doc_type
+
         # تعديل رقم المستند
-        doc_number = settings.get('document_number')
+        doc_number = settings.get("document_number")
         if doc_number:
-            self.builder.quotation['number'] = doc_number
+            self.builder.quotation["number"] = doc_number
         else:
             prefix_map = {
-                'invoice': 'INV',
-                'diagnosis': 'DIG',
-                'quote': 'QT',
-                'receipt': 'RCP'
+                "invoice": "INV",
+                "diagnosis": "DIG",
+                "quote": "QT",
+                "receipt": "RCP",
             }
-            prefix = prefix_map.get(doc_type, 'DOC')
+            prefix = prefix_map.get(doc_type, "DOC")
             now = datetime.now()
-            self.builder.quotation['number'] = f"{prefix}-{now.year}-{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}"
-        
+            self.builder.quotation["number"] = (
+                f"{prefix}-{now.year}-{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}"
+            )
+
         # تعديل صلاحية العرض
-        validity_days = settings.get('validity_days', 30 if doc_type == 'quote' else 7)
-        self.builder.quotation['valid_until'] = (datetime.now() + timedelta(days=validity_days)).strftime('%Y/%m/%d')
-    
+        validity_days = settings.get("validity_days", 30 if doc_type == "quote" else 7)
+        self.builder.quotation["valid_until"] = (
+            datetime.now() + timedelta(days=validity_days)
+        ).strftime("%Y/%m/%d")
+
     def get_document_data(self) -> Dict:
         """الحصول على بيانات المستند"""
         return self.builder.to_dict()
@@ -287,92 +312,95 @@ def create_unified_document_routes(router):
     from fastapi import HTTPException
     from fastapi.responses import HTMLResponse
     from pydantic import BaseModel
-    from typing import List, Optional, Dict, Any
-    
+    from typing import List, Optional, Any
+
     class DocumentItem(BaseModel):
-        description: Optional[str] = ''
-        name: Optional[str] = ''
+        description: Optional[str] = ""
+        name: Optional[str] = ""
         quantity: Optional[float] = 1
         qty: Optional[float] = 1
         unit_price: Optional[float] = 0
         price: Optional[float] = 0
         discount: Optional[float] = 0
-        
+
         class Config:
-            extra = 'allow'
-    
+            extra = "allow"
+
     class DocumentCustomer(BaseModel):
-        name: Optional[str] = ''
-        customerName: Optional[str] = ''
-        company: Optional[str] = ''
-        address: Optional[str] = ''
-        phone: Optional[str] = ''
-        customerPhone: Optional[str] = ''
-        email: Optional[str] = ''
-        
+        name: Optional[str] = ""
+        customerName: Optional[str] = ""
+        company: Optional[str] = ""
+        address: Optional[str] = ""
+        phone: Optional[str] = ""
+        customerPhone: Optional[str] = ""
+        email: Optional[str] = ""
+
         class Config:
-            extra = 'allow'
-    
+            extra = "allow"
+
     class DocumentWorkshop(BaseModel):
-        name: Optional[str] = ''
-        name_en: Optional[str] = ''
-        address: Optional[str] = ''
-        phone: Optional[str] = ''
-        email: Optional[str] = ''
-        website: Optional[str] = ''
-        tax_number: Optional[str] = ''
-        taxNumber: Optional[str] = ''
-        
+        name: Optional[str] = ""
+        name_en: Optional[str] = ""
+        address: Optional[str] = ""
+        phone: Optional[str] = ""
+        email: Optional[str] = ""
+        website: Optional[str] = ""
+        tax_number: Optional[str] = ""
+        taxNumber: Optional[str] = ""
+
         class Config:
-            extra = 'allow'
-    
+            extra = "allow"
+
     class DocumentVehicle(BaseModel):
-        brand: Optional[str] = ''
-        model: Optional[str] = ''
-        year: Optional[Any] = ''
-        plateNumber: Optional[str] = ''
-        plate: Optional[str] = ''
-        vin: Optional[str] = ''
-        color: Optional[str] = ''
-        mileage: Optional[Any] = ''
-        notes: Optional[str] = ''
-        
+        brand: Optional[str] = ""
+        model: Optional[str] = ""
+        year: Optional[Any] = ""
+        plateNumber: Optional[str] = ""
+        plate: Optional[str] = ""
+        vin: Optional[str] = ""
+        color: Optional[str] = ""
+        mileage: Optional[Any] = ""
+        notes: Optional[str] = ""
+
         class Config:
-            extra = 'allow'
-    
+            extra = "allow"
+
     class DocumentSettings(BaseModel):
-        theme: Optional[str] = 'أزرق'
-        style: Optional[str] = 'حديث'
+        theme: Optional[str] = "أزرق"
+        style: Optional[str] = "حديث"
         tax_rate: Optional[float] = 15
         document_number: Optional[str] = None
         validity_days: Optional[int] = 30
-        description: Optional[str] = ''
-        notes: Optional[str] = ''
+        description: Optional[str] = ""
+        notes: Optional[str] = ""
         terms: Optional[List[str]] = None
-        
+
         class Config:
-            extra = 'allow'
-    
+            extra = "allow"
+
     class GenerateDocumentRequest(BaseModel):
-        doc_type: str = 'invoice'  # invoice, diagnosis, quote, receipt
+        doc_type: str = "invoice"  # invoice, diagnosis, quote, receipt
         workshop: DocumentWorkshop
         customer: DocumentCustomer
         vehicle: Optional[DocumentVehicle] = None
         items: List[DocumentItem]
         settings: Optional[DocumentSettings] = None
-    
+
     @router.post("/documents/generate")
     async def generate_document(request: GenerateDocumentRequest):
         """توليد مستند (فاتورة/تشخيص/عرض سعر)"""
         try:
             import logging
-            logging.info(f"Document generation request received: doc_type={request.doc_type}")
+
+            logging.info(
+                f"Document generation request received: doc_type={request.doc_type}"
+            )
             logging.info(f"Workshop: {request.workshop}")
             logging.info(f"Customer: {request.customer}")
             logging.info(f"Items count: {len(request.items)}")
-            
+
             generator = UnifiedDocumentGenerator()
-            
+
             # تحويل البيانات
             workshop_data = request.workshop.dict()
             customer_data = request.customer.dict()
@@ -381,76 +409,89 @@ def create_unified_document_routes(router):
             settings = request.settings.dict() if request.settings else {}
 
             # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase
-            raw_token = settings.get('approval_token')
-            token = str(raw_token).strip() if raw_token is not None else ''
+            raw_token = settings.get("approval_token")
+            token = str(raw_token).strip() if raw_token is not None else ""
             if token:
                 try:
                     # نحاول دائماً جلب بيانات الموافقة من Supabase بغض النظر عن نوع مزود قاعدة البيانات
                     from supabase_service import SupabaseService
+
                     supa = SupabaseService()
                     # رموز الموافقة تحفظ حالياً بصيغة APR-XXXX كبيرة، لذلك نحوّل الإدخال إلى حروف كبيرة
                     token_norm = token.upper()
-                    res = supa.client.table('approval_requests').select('*').eq('token', token_norm).execute()
+                    res = (
+                        supa.client.table("approval_requests")
+                        .select("*")
+                        .eq("token", token_norm)
+                        .execute()
+                    )
                     rows = res.data or []
                     if rows:
                         r = rows[0]
                         meta = {}
-                        text = r.get('service_items_text') or ''
-                        for part in text.split('|'):
-                            if '=' in part:
-                                k, v = part.split('=', 1)
+                        text = r.get("service_items_text") or ""
+                        for part in text.split("|"):
+                            if "=" in part:
+                                k, v = part.split("=", 1)
                                 meta[k.strip()] = v.strip()
                         # نملأ بيانات الموافقة حتى لو كانت الحالة مختلفة، وسيتم عرضها كما هي في الفاتورة
-                        settings['approval_info'] = {
-                            'token': r.get('token'),
-                            'status': r.get('status'),
-                            'responderName': r.get('responder_name'),
-                            'responderPhone': r.get('responder_phone'),
-                            'respondedAt': r.get('responded_at'),
-                            'clientIp': meta.get('ip'),
-                            'userAgent': meta.get('ua'),
+                        settings["approval_info"] = {
+                            "token": r.get("token"),
+                            "status": r.get("status"),
+                            "responderName": r.get("responder_name"),
+                            "responderPhone": r.get("responder_phone"),
+                            "respondedAt": r.get("responded_at"),
+                            "clientIp": meta.get("ip"),
+                            "userAgent": meta.get("ua"),
                         }
                 except Exception:
                     # في حال فشل جلب الموافقة، نستمر بدون تعطيل توليد المستند
                     pass
 
             # في حال لم يتم تمرير approval_info لكن لدينا معرف مركبة، نحاول جلب أحدث موافقة تلقائياً حسب رقم المركبة
-            if not settings.get('approval_info'):
+            if not settings.get("approval_info"):
                 # نأخذ vehicle_id إما من الإعدادات أو من بيانات المركبة
-                approval_vehicle_id = settings.get('approval_vehicle_id') or (vehicle_data or {}).get('id') or (vehicle_data or {}).get('vehicleId')
+                approval_vehicle_id = (
+                    settings.get("approval_vehicle_id")
+                    or (vehicle_data or {}).get("id")
+                    or (vehicle_data or {}).get("vehicleId")
+                )
                 if approval_vehicle_id:
                     try:
                         from supabase_service import SupabaseService
+
                         supa = SupabaseService()
                         # نجلب أحدث موافقة لهذه المركبة (الأحدث حسب responded_at أو created_at)
-                        res2 = supa.client.table('approval_requests') \
-                            .select('*') \
-                            .eq('vehicle_id', approval_vehicle_id) \
-                            .order('responded_at', desc=True) \
-                            .limit(1) \
+                        res2 = (
+                            supa.client.table("approval_requests")
+                            .select("*")
+                            .eq("vehicle_id", approval_vehicle_id)
+                            .order("responded_at", desc=True)
+                            .limit(1)
                             .execute()
+                        )
                         rows2 = res2.data or []
                         if rows2:
                             r2 = rows2[0]
                             meta2 = {}
-                            text2 = r2.get('service_items_text') or ''
-                            for part in text2.split('|'):
-                                if '=' in part:
-                                    k, v = part.split('=', 1)
+                            text2 = r2.get("service_items_text") or ""
+                            for part in text2.split("|"):
+                                if "=" in part:
+                                    k, v = part.split("=", 1)
                                     meta2[k.strip()] = v.strip()
-                            settings['approval_info'] = {
-                                'token': r2.get('token'),
-                                'status': r2.get('status'),
-                                'responderName': r2.get('responder_name'),
-                                'responderPhone': r2.get('responder_phone'),
-                                'respondedAt': r2.get('responded_at'),
-                                'clientIp': meta2.get('ip'),
-                                'userAgent': meta2.get('ua'),
+                            settings["approval_info"] = {
+                                "token": r2.get("token"),
+                                "status": r2.get("status"),
+                                "responderName": r2.get("responder_name"),
+                                "responderPhone": r2.get("responder_phone"),
+                                "respondedAt": r2.get("responded_at"),
+                                "clientIp": meta2.get("ip"),
+                                "userAgent": meta2.get("ua"),
                             }
                     except Exception:
                         # إذا فشلنا في الجلب التلقائي لا نكسر توليد المستند
                         pass
-            
+
             # توليد HTML
             html_content = generator.generate_document(
                 doc_type=request.doc_type,
@@ -458,87 +499,84 @@ def create_unified_document_routes(router):
                 customer_data=customer_data,
                 vehicle_data=vehicle_data,
                 items=items,
-                settings=settings
+                settings=settings,
             )
-            
+
             return {
-                'success': True,
-                'doc_type': request.doc_type,
-                'document_number': generator.builder.quotation['number'],
-                'html': html_content,
-                'data': generator.get_document_data()
+                "success": True,
+                "doc_type": request.doc_type,
+                "document_number": generator.builder.quotation["number"],
+                "html": html_content,
+                "data": generator.get_document_data(),
             }
-            
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     @router.post("/documents/generate-html", response_class=HTMLResponse)
     async def generate_document_html(request: GenerateDocumentRequest):
         """توليد مستند وإرجاع HTML مباشرة"""
         try:
             generator = UnifiedDocumentGenerator()
-            
+
             workshop_data = request.workshop.dict()
             customer_data = request.customer.dict()
             vehicle_data = request.vehicle.dict() if request.vehicle else None
             items = [item.dict() for item in request.items]
             settings = request.settings.dict() if request.settings else {}
-            
+
             html_content = generator.generate_document(
                 doc_type=request.doc_type,
                 workshop_data=workshop_data,
                 customer_data=customer_data,
                 vehicle_data=vehicle_data,
                 items=items,
-                settings=settings
+                settings=settings,
             )
-            
+
             return HTMLResponse(content=html_content)
-            
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     @router.get("/documents/types")
     async def get_document_types():
         """الحصول على أنواع المستندات المتاحة"""
         generator = UnifiedDocumentGenerator()
         return {
-            'types': generator.document_types,
-            'themes': list(generator.builder.themes.keys()),
-            'styles': ['حديث', 'كلاسيكي', 'فاخر']
+            "types": generator.document_types,
+            "themes": list(generator.builder.themes.keys()),
+            "styles": ["حديث", "كلاسيكي", "فاخر"],
         }
-    
+
     return router
 
 
 if __name__ == "__main__":
     # اختبار سريع
     generator = UnifiedDocumentGenerator()
-    
+
     html = generator.generate_document(
-        doc_type='invoice',
+        doc_type="invoice",
         workshop_data={
-            'name': 'ورشة الخليج للصيانة',
-            'phone': '+966 11 123 4567',
-            'tax_number': '300012345600003'
+            "name": "ورشة الخليج للصيانة",
+            "phone": "+966 11 123 4567",
+            "tax_number": "300012345600003",
         },
-        customer_data={
-            'name': 'أحمد محمد',
-            'phone': '+966 50 123 4567'
-        },
+        customer_data={"name": "أحمد محمد", "phone": "+966 50 123 4567"},
         vehicle_data={
-            'brand': 'تويوتا',
-            'model': 'كامري',
-            'year': '2022',
-            'plateNumber': 'أ ب ج 1234'
+            "brand": "تويوتا",
+            "model": "كامري",
+            "year": "2022",
+            "plateNumber": "أ ب ج 1234",
         },
         items=[
-            {'description': 'تغيير زيت', 'quantity': 1, 'unit_price': 150},
-            {'description': 'فلتر زيت', 'quantity': 1, 'unit_price': 50},
-            {'description': 'فحص شامل', 'quantity': 1, 'unit_price': 200}
+            {"description": "تغيير زيت", "quantity": 1, "unit_price": 150},
+            {"description": "فلتر زيت", "quantity": 1, "unit_price": 50},
+            {"description": "فحص شامل", "quantity": 1, "unit_price": 200},
         ],
-        settings={'theme': 'أزرق', 'style': 'حديث'}
+        settings={"theme": "أزرق", "style": "حديث"},
     )
-    
+
     print(f"✅ تم توليد المستند: {generator.builder.quotation['number']}")
     print(f"المجموع: {generator.builder.quotation['total']:,.2f} ر.س")

@@ -3,6 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 import uuid
 
+
 # ============ Store/Shop Models (المتجر المصغر) ============
 class Product(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -20,11 +21,10 @@ class Product(BaseModel):
     rating: float = 5.0
     isActive: bool = True
     createdAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class ShopOrder(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -38,7 +38,9 @@ class ShopOrder(BaseModel):
     tax: float
     deliveryFee: float = 0
     total: float
-    status: str = "pending"  # pending, confirmed, preparing, ready, delivered, cancelled
+    status: str = (
+        "pending"  # pending, confirmed, preparing, ready, delivered, cancelled
+    )
     paymentMethod: str  # cash, card, online
     paymentStatus: str = "pending"  # pending, paid, refunded
     deliveryType: str  # pickup, delivery
@@ -46,11 +48,10 @@ class ShopOrder(BaseModel):
     orderDate: datetime = Field(default_factory=datetime.utcnow)
     deliveryDate: Optional[datetime] = None
     notes: Optional[str] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ AI Bots Models (بوتات AI متخصصة) ============
 class AIBot(BaseModel):
@@ -64,7 +65,8 @@ class AIBot(BaseModel):
     isActive: bool = True
     usageCount: int = 0
     rating: float = 5.0
-    
+
+
 class BotConversation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     botId: str
@@ -75,11 +77,10 @@ class BotConversation(BaseModel):
     lastActivity: datetime = Field(default_factory=datetime.utcnow)
     rating: Optional[int] = None
     feedback: Optional[str] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ CEO Dashboard Models (لوحة المدير التنفيذي) ============
 class CEOAlert(BaseModel):
@@ -91,11 +92,10 @@ class CEOAlert(BaseModel):
     action: Optional[str] = None
     resolved: bool = False
     createdAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class BusinessMetrics(BaseModel):
     date: str
@@ -108,6 +108,7 @@ class BusinessMetrics(BaseModel):
     employeeProductivity: float
     inventoryValue: float
     cashFlow: float
+
 
 # ============ Workshop Services Models (خدمات الورشة) ============
 class WorkshopService(BaseModel):
@@ -125,7 +126,8 @@ class WorkshopService(BaseModel):
     featured: bool = False
     image: Optional[str] = None
     disclaimer: Optional[str] = None
-    
+
+
 class ServicePackage(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -136,6 +138,7 @@ class ServicePackage(BaseModel):
     discount: float
     isActive: bool = True
     featured: bool = False
+
 
 # ============ Customer Service & Complaints (خدمة العملاء والشكاوى) ============
 class Ticket(BaseModel):
@@ -161,11 +164,10 @@ class Ticket(BaseModel):
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
     resolvedAt: Optional[datetime] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class TicketResponse(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -177,11 +179,10 @@ class TicketResponse(BaseModel):
     attachments: List[str] = []
     isInternal: bool = False
     createdAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class CustomerFeedback(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -197,11 +198,10 @@ class CustomerFeedback(BaseModel):
     comments: Optional[str] = None
     wouldRecommend: bool = True
     createdAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ FAQ Models ============
 class FAQ(BaseModel):

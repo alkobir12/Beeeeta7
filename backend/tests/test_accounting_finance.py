@@ -16,11 +16,14 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ledgerlink-12.preview.emergentagent.com')
+BASE_URL = os.environ.get(
+    "REACT_APP_BACKEND_URL", "https://ledgerlink-12.preview.emergentagent.com"
+)
+
 
 class TestHealthAndStats:
     """Basic health and stats endpoint tests"""
-    
+
     def test_stats_endpoint(self):
         """Test /api/stats endpoint returns valid data"""
         response = requests.get(f"{BASE_URL}/api/stats")
@@ -29,12 +32,14 @@ class TestHealthAndStats:
         assert "totalCustomers" in data
         assert "activeVehicles" in data
         assert "thisMonth" in data
-        print(f"Stats: {data['totalCustomers']} customers, {data['activeVehicles']} active vehicles")
+        print(
+            f"Stats: {data['totalCustomers']} customers, {data['activeVehicles']} active vehicles"
+        )
 
 
 class TestAIFinancialAnalysis:
     """AI Financial Analysis endpoint tests"""
-    
+
     def test_financial_analysis_endpoint(self):
         """Test /api/ai/financial-analysis endpoint"""
         payload = {
@@ -49,33 +54,30 @@ class TestAIFinancialAnalysis:
                 "debt_to_equity": 0.5,
                 "assets": 500000,
                 "liabilities": 173500,
-                "equity": 327000
-            }
+                "equity": 327000,
+            },
         }
         response = requests.post(
             f"{BASE_URL}/api/ai/financial-analysis",
             json=payload,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         data = response.json()
         assert "analysis" in data
         assert len(data["analysis"]) > 100  # Should have substantial analysis
         print(f"AI Analysis response length: {len(data['analysis'])} characters")
-    
+
     def test_financial_analysis_with_empty_query(self):
         """Test financial analysis with minimal query"""
         payload = {
             "query": "تحليل",
-            "financial_data": {
-                "revenue": 100000,
-                "expenses": 80000
-            }
+            "financial_data": {"revenue": 100000, "expenses": 80000},
         }
         response = requests.post(
             f"{BASE_URL}/api/ai/financial-analysis",
             json=payload,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -84,7 +86,7 @@ class TestAIFinancialAnalysis:
 
 class TestVehiclesAPI:
     """Vehicle API tests"""
-    
+
     def test_get_vehicles(self):
         """Test /api/vehicles endpoint"""
         response = requests.get(f"{BASE_URL}/api/vehicles")
@@ -96,7 +98,7 @@ class TestVehiclesAPI:
 
 class TestCustomersAPI:
     """Customer API tests"""
-    
+
     def test_get_customers(self):
         """Test /api/customers endpoint"""
         response = requests.get(f"{BASE_URL}/api/customers")
@@ -108,7 +110,7 @@ class TestCustomersAPI:
 
 class TestServicesAPI:
     """Services API tests"""
-    
+
     def test_get_services(self):
         """Test /api/services endpoint"""
         response = requests.get(f"{BASE_URL}/api/services")
@@ -120,7 +122,7 @@ class TestServicesAPI:
 
 class TestTechniciansAPI:
     """Technicians API tests"""
-    
+
     def test_get_technicians(self):
         """Test /api/technicians endpoint"""
         response = requests.get(f"{BASE_URL}/api/technicians")
@@ -132,7 +134,7 @@ class TestTechniciansAPI:
 
 class TestPartsAPI:
     """Parts API tests"""
-    
+
     def test_get_parts(self):
         """Test /api/parts endpoint"""
         response = requests.get(f"{BASE_URL}/api/parts")
@@ -144,7 +146,7 @@ class TestPartsAPI:
 
 class TestSettingsAPI:
     """Settings API tests"""
-    
+
     def test_get_settings(self):
         """Test /api/settings endpoint"""
         response = requests.get(f"{BASE_URL}/api/settings")
@@ -157,7 +159,7 @@ class TestSettingsAPI:
 
 class TestProfileAPI:
     """Profile API tests"""
-    
+
     def test_get_profile(self):
         """Test /api/profile endpoint"""
         response = requests.get(f"{BASE_URL}/api/profile")
@@ -168,7 +170,7 @@ class TestProfileAPI:
 
 class TestUsersAPI:
     """Users API tests"""
-    
+
     def test_get_users(self):
         """Test /api/users endpoint"""
         response = requests.get(f"{BASE_URL}/api/users")

@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 import uuid
 
+
 # ============ Account Models (دليل الحسابات) ============
 class AccountBase(BaseModel):
     code: str  # رمز الحساب مثل 1001
@@ -15,16 +16,16 @@ class AccountBase(BaseModel):
     type: str  # asset, liability, revenue, expense, equity
     parentAccount: Optional[str] = None  # الحساب الأب
 
+
 class Account(AccountBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     balance: float = 0  # الرصيد الحالي
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     active: bool = True
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ Journal Entry (القيد المحاسبي) ============
 class JournalEntryLine(BaseModel):
@@ -34,6 +35,7 @@ class JournalEntryLine(BaseModel):
     debit: float = 0  # مدين
     credit: float = 0  # دائن
     description: Optional[str] = None
+
 
 class JournalEntry(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -46,11 +48,10 @@ class JournalEntry(BaseModel):
     totalCredit: float = 0
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     createdBy: Optional[str] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ Financial Analytics ============
 class FinancialRatios(BaseModel):
@@ -60,6 +61,7 @@ class FinancialRatios(BaseModel):
     netMargin: Optional[float] = 0  # هامش الربح الصافي
     inventoryTurnover: Optional[float] = 0  # معدل دوران المخزون
     debtRatio: Optional[float] = 0  # نسبة الدين
+
 
 class AnalyticsReport(BaseModel):
     dateRange: str
@@ -74,6 +76,7 @@ class AnalyticsReport(BaseModel):
     topParts: List[dict] = []
     financialRatios: Optional[FinancialRatios] = None
 
+
 # ============ AI Recommendation ============
 class AIRecommendation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -86,11 +89,10 @@ class AIRecommendation(BaseModel):
     expectedImpact: str
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     status: str = "pending"  # pending, accepted, rejected
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ Enhanced Operation Model ============
 class OperationItem(BaseModel):
@@ -101,12 +103,14 @@ class OperationItem(BaseModel):
     unitPrice: float
     total: float
 
+
 class LinkedAccount(BaseModel):
     accountId: str
     accountName: str
     accountCode: Optional[str] = None
     debit: float = 0
     credit: float = 0
+
 
 class EnhancedOperation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -127,8 +131,6 @@ class EnhancedOperation(BaseModel):
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     createdBy: Optional[str] = None
     notes: Optional[str] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}

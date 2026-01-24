@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 # Existing models are above ... (file truncated in this view)
 
+
 class UserAccount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     phone: str
@@ -17,6 +18,7 @@ class UserAccount(BaseModel):
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
+
 class OTPRequest(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     phone: str
@@ -24,12 +26,15 @@ class OTPRequest(BaseModel):
     token: str = Field(default_factory=lambda: str(uuid.uuid4()))
     purpose: str = "login"  # login, register
     createdAt: datetime = Field(default_factory=datetime.utcnow)
-    expiresAt: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(minutes=5))
+    expiresAt: datetime = Field(
+        default_factory=lambda: datetime.utcnow() + timedelta(minutes=5)
+    )
     attempts: int = 0
     consumed: bool = False
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # Business Models
 class BusinessAccount(BaseModel):
@@ -41,6 +46,7 @@ class BusinessAccount(BaseModel):
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 class Budget(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     accountId: str
@@ -51,12 +57,14 @@ class Budget(BaseModel):
     notes: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 class OperationItem(BaseModel):
     itemId: Optional[str] = None
     itemType: str = "part"  # part, service
     name: str
     quantity: float
     price: float
+
 
 class Operation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -72,6 +80,7 @@ class Operation(BaseModel):
     notes: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
 
+
 class CustomerReceipt(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     customerId: str
@@ -81,6 +90,7 @@ class CustomerReceipt(BaseModel):
     reference: Optional[str] = None
     notes: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
+
 
 class WorkshopProfile(BaseModel):
     id: str = "workshop_profile"
@@ -94,6 +104,7 @@ class WorkshopProfile(BaseModel):
     logoUrl: Optional[str] = None
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 class TemplateDoc(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -102,6 +113,7 @@ class TemplateDoc(BaseModel):
     html: str = ""
     isActive: bool = True
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
+
 
 class DiagnosisReport(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -115,6 +127,7 @@ class DiagnosisReport(BaseModel):
     total: float = 0.0
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 class ApprovalRequest(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     token: str
@@ -123,13 +136,16 @@ class ApprovalRequest(BaseModel):
     title: str
     amount: float = 0.0
     status: str = "pending"
-    expiresAt: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=7))
+    expiresAt: datetime = Field(
+        default_factory=lambda: datetime.utcnow() + timedelta(days=7)
+    )
     respondedAt: Optional[datetime] = None
     responderName: Optional[str] = None
     responderPhone: Optional[str] = None
     notes: Optional[str] = None
     revoked: bool = False
     createdAt: datetime = Field(default_factory=datetime.utcnow)
+
 
 class AppSettings(BaseModel):
     id: str = "app_settings"
@@ -139,10 +155,12 @@ class AppSettings(BaseModel):
     timezone: str = "Asia/Riyadh"
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 # Document Management Models
 class DocumentRef(BaseModel):
     docType: str
     docId: str
+
 
 class DocumentDependency(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -150,6 +168,7 @@ class DocumentDependency(BaseModel):
     toDoc: DocumentRef
     relation: str  # derived_from, fulfills, etc.
     createdAt: datetime = Field(default_factory=datetime.utcnow)
+
 
 class DocumentActivity(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -159,15 +178,18 @@ class DocumentActivity(BaseModel):
     meta: Optional[dict] = None
     date: datetime = Field(default_factory=datetime.utcnow)
 
+
 class QuoteItem(BaseModel):
     name: str
     quantity: float
     price: float
 
+
 class BillItem(BaseModel):
     name: str
     quantity: float
     price: float
+
 
 class DiagnosisCase(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -175,6 +197,7 @@ class DiagnosisCase(BaseModel):
     customerId: str
     status: str = "draft"
     createdAt: datetime = Field(default_factory=datetime.utcnow)
+
 
 class PricingQuote(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -191,6 +214,7 @@ class PricingQuote(BaseModel):
     reference: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
+
 class SalesOrder(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     vehicleId: Optional[str] = None
@@ -203,6 +227,7 @@ class SalesOrder(BaseModel):
     status: str = "draft"
     notes: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
+
 
 class VendorBill(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -217,6 +242,7 @@ class VendorBill(BaseModel):
     status: str = "draft"
     reference: Optional[str] = None
     date: datetime = Field(default_factory=datetime.utcnow)
+
 
 class PurchaseOrder(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

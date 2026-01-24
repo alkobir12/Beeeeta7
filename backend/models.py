@@ -3,6 +3,7 @@ from typing import List, Optional, Any
 from datetime import datetime
 import uuid
 
+
 # ============ Vehicle Models ============
 class VehicleBase(BaseModel):
     plateNumber: str
@@ -20,8 +21,10 @@ class VehicleBase(BaseModel):
     technicianName: Optional[str] = None
     notes: Optional[str] = None
 
+
 class VehicleCreate(VehicleBase):
     pass
+
 
 class Vehicle(VehicleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -33,11 +36,10 @@ class Vehicle(VehicleBase):
     trackingLink: str
     images: List[str] = []  # URLs للصور
     parts: List[Any] = []  # بنود مرتبطة (خدمات/قطع) أو IDs
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class VehicleUpdate(BaseModel):
     status: Optional[str] = None
@@ -49,6 +51,7 @@ class VehicleUpdate(BaseModel):
     services: Optional[List[str]] = None
     parts: Optional[List[Any]] = None
 
+
 # ============ Customer Models ============
 class CustomerBase(BaseModel):
     name: str
@@ -59,6 +62,7 @@ class CustomerBase(BaseModel):
     vehiclePlate: Optional[str] = None  # رقم اللوحة
     vehicleKm: Optional[int] = None  # الكيلومتر
 
+
 class Customer(CustomerBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     vehicles: List[str] = []  # رقم اللوحات
@@ -67,11 +71,10 @@ class Customer(CustomerBase):
     createdAt: Optional[datetime] = None
     creditLimit: Optional[float] = 10000  # حد الائتمان
     balance: Optional[float] = 0  # الرصيد المستحق
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ Technician Models ============
 class Technician(BaseModel):
@@ -83,6 +86,7 @@ class Technician(BaseModel):
     completedJobs: int = 0
     rating: float = 5.0
 
+
 # ============ Service Models ============
 class Service(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -92,6 +96,7 @@ class Service(BaseModel):
     duration: int  # بالدقائق
     laborCost: Optional[float] = 0  # تكلفة العمالة
     active: Optional[bool] = True
+
 
 # ============ Parts (قطع الغيار) Models ============
 class PartBase(BaseModel):
@@ -105,18 +110,19 @@ class PartBase(BaseModel):
     supplier: Optional[str] = None
     image: Optional[str] = None
 
+
 class PartCreate(PartBase):
     pass
+
 
 class Part(PartBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class PartUpdate(BaseModel):
     name: Optional[str] = None
@@ -127,6 +133,7 @@ class PartUpdate(BaseModel):
     supplier: Optional[str] = None
     image: Optional[str] = None
 
+
 # ============ Invoice Models ============
 class InvoiceItem(BaseModel):
     type: str  # "service" or "part"
@@ -135,6 +142,7 @@ class InvoiceItem(BaseModel):
     quantity: int = 1
     price: float
     total: float
+
 
 class InvoiceBase(BaseModel):
     vehicleId: str
@@ -149,19 +157,20 @@ class InvoiceBase(BaseModel):
     paymentMethod: str  # "cash" (كاش) or "card" (شبكة)
     notes: Optional[str] = None
 
+
 class InvoiceCreate(InvoiceBase):
     pass
+
 
 class Invoice(InvoiceBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     invoiceNumber: str  # رقم الفاتورة
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     status: str = "pending"  # pending, paid, cancelled
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ Transaction Models (المبيعات والمصروفات) ============
 class TransactionBase(BaseModel):
@@ -175,18 +184,19 @@ class TransactionBase(BaseModel):
     paymentStatus: Optional[str] = "paid"  # paid, unpaid, pending
     linkedAccounts: Optional[List[dict]] = []  # القيود المحاسبية
 
+
 class TransactionCreate(TransactionBase):
     pass
+
 
 class Transaction(TransactionBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     date: datetime = Field(default_factory=datetime.utcnow)
     createdBy: Optional[str] = None
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # ============ AI Chat Models ============
 class ChatMessage(BaseModel):
@@ -194,20 +204,21 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
+
 class ChatSession(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     messages: List[ChatMessage] = []
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 class ChatRequest(BaseModel):
     message: str
     sessionId: Optional[str] = None
+
 
 class ChatResponse(BaseModel):
     response: str

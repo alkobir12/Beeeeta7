@@ -3,6 +3,7 @@ Workshop AI Bot - Saudi Dialect Expert
 Engines: 1KD / 2KD / 1GD / 1VD-FTV / FJA300 (LC300)
 Modes: client / tech / admin
 """
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -11,17 +12,28 @@ router = APIRouter(prefix="/api/workshop-bot")
 
 # Dialect Normalization
 DIALECT_MAP = {
-    "ينتّع": "تردد", "ينتع": "تردد", "نتعه": "تردد",
-    "ما تشد": "ضعف عزم", "ماتشد": "ضعف عزم",
+    "ينتّع": "تردد",
+    "ينتع": "تردد",
+    "نتعه": "تردد",
+    "ما تشد": "ضعف عزم",
+    "ماتشد": "ضعف عزم",
     "تقطيع": "تقطيع",
-    "تصك": "صوت ضرب", "تصق": "صوت ضرب",
-    "طقه": "طقطقة", "طقطقه": "طقطقة",
-    "أشيك": "افحص", "اشيك": "افحص",
-    "أعاين": "افحص", "اعاين": "افحص",
-    "يصفّر": "صفير", "صفاره": "صفير",
-    "يدخّن": "دخان", "يدخن": "دخان",
-    "تحمى": "حرارة", "يحمو": "حرارة"
+    "تصك": "صوت ضرب",
+    "تصق": "صوت ضرب",
+    "طقه": "طقطقة",
+    "طقطقه": "طقطقة",
+    "أشيك": "افحص",
+    "اشيك": "افحص",
+    "أعاين": "افحص",
+    "اعاين": "افحص",
+    "يصفّر": "صفير",
+    "صفاره": "صفير",
+    "يدخّن": "دخان",
+    "يدخن": "دخان",
+    "تحمى": "حرارة",
+    "يحمو": "حرارة",
 }
+
 
 def normalize(text: str) -> str:
     t = (text or "").strip()
@@ -29,14 +41,16 @@ def normalize(text: str) -> str:
         t = t.replace(k, v)
     return t
 
+
 # Engine Aliases
 ENGINE_ALIASES = {
     "1vd-ftv": ["1vd", "1vd-ftv", "v8 ديزل", "v8 diesel", "v8"],
     "fja300": ["fja300", "lc300", "land cruiser 300", "كروزر 300", "300"],
     "1kd": ["1kd", "1kd-ftv"],
     "2kd": ["2kd", "2kd-ftv"],
-    "1gd": ["1gd", "1gd-ftv"]
+    "1gd": ["1gd", "1gd-ftv"],
 }
+
 
 def normalize_engine(engine: Optional[str]) -> Optional[str]:
     if not engine:
@@ -48,6 +62,7 @@ def normalize_engine(engine: Optional[str]) -> Optional[str]:
                 return canon
     return engine.lower()
 
+
 # Knowledge Base
 KB_RULES: List[Dict[str, Any]] = [
     {
@@ -56,11 +71,7 @@ KB_RULES: List[Dict[str, Any]] = [
         "triggers": ["تردد", "ضعف عزم", "دخان"],
         "smoke": "أسود",
         "causes": [("بخاخ", 60), ("EGR", 25), ("فلتر", 15)],
-        "steps": [
-            "افحص فلتر الهواء والوقود",
-            "نظف/افحص EGR",
-            "اختبر البخاخات"
-        ]
+        "steps": ["افحص فلتر الهواء والوقود", "نظف/افحص EGR", "اختبر البخاخات"],
     },
     {
         "id": "turbo_whistle",
@@ -71,8 +82,8 @@ KB_RULES: List[Dict[str, Any]] = [
         "steps": [
             "افحص ليّات التيربو والانتركولر",
             "شد أو بدّل التالف",
-            "افحص ضغط التيربو"
-        ]
+            "افحص ضغط التيربو",
+        ],
     },
     {
         "id": "1vd_power_loss",
@@ -82,14 +93,14 @@ KB_RULES: List[Dict[str, Any]] = [
             ("خلل بخاخات (1VD حساس)", 45),
             ("EGR/سناج", 25),
             ("تهريب بُوست", 20),
-            ("حساس MAP", 10)
+            ("حساس MAP", 10),
         ],
         "steps": [
             "ابدأ بالفلاتر والبوست",
             "عاين ليّات التيربو والانتركولر",
             "افحص EGR",
-            "اختبر توازن البخاخات"
-        ]
+            "اختبر توازن البخاخات",
+        ],
     },
     {
         "id": "fja300_cutting",
@@ -99,14 +110,14 @@ KB_RULES: List[Dict[str, Any]] = [
             ("عدم توافق MAF/MAP", 35),
             ("تذبذب بُوست", 30),
             ("ضغط وقود", 20),
-            ("تكيّف ECU", 15)
+            ("تكيّف ECU", 15),
         ],
         "steps": [
             "سجّل بيانات MAF/MAP/Boost",
             "افحص تهريب الهواء",
             "راجع ضغط الوقود",
-            "إعادة تعلم ECU حسب الإجراء"
-        ]
+            "إعادة تعلم ECU حسب الإجراء",
+        ],
     },
     {
         "id": "cooling_overheat",
@@ -116,14 +127,14 @@ KB_RULES: List[Dict[str, Any]] = [
             ("ثرموستات", 35),
             ("مروحة", 25),
             ("طرمبة ماء", 20),
-            ("رديتر مسدود", 20)
+            ("رديتر مسدود", 20),
         ],
         "steps": [
             "افحص مستوى الماء",
             "اختبر الثرموستات",
             "افحص عمل المروحة",
-            "نظف الرديتر"
-        ]
+            "نظف الرديتر",
+        ],
     },
     {
         "id": "hard_start",
@@ -133,16 +144,17 @@ KB_RULES: List[Dict[str, Any]] = [
             ("بطارية ضعيفة", 40),
             ("سلف", 25),
             ("بخاخات", 20),
-            ("فلتر ديزل", 15)
+            ("فلتر ديزل", 15),
         ],
         "steps": [
             "افحص البطارية (فولت وأمبير)",
             "اختبر السلف",
             "افحص ضغط البخاخات",
-            "بدل فلتر الديزل"
-        ]
-    }
+            "بدل فلتر الديزل",
+        ],
+    },
 ]
+
 
 # Models
 class BotRequest(BaseModel):
@@ -152,12 +164,14 @@ class BotRequest(BaseModel):
     smoke: Optional[str] = None
     engine: Optional[str] = None
 
+
 class BotResponse(BaseModel):
     status: str
     reply: str
     probable: Optional[List[Dict[str, Any]]] = None
     next_question: Optional[str] = None
     confidence: Optional[int] = None
+
 
 # Logic
 def score_rule(rule, text, engine):
@@ -172,13 +186,16 @@ def score_rule(rule, text, engine):
             score -= 2
     return score
 
+
 def choose_rule(text, engine):
     scored = [(score_rule(r, text, engine), r) for r in KB_RULES]
     scored.sort(key=lambda x: x[0], reverse=True)
     return scored[0][1] if scored and scored[0][0] >= 2 else None
 
+
 def ask_question():
     return "الصوت وش هو؟ أو علمني نوع المكينة لو تقدر."
+
 
 # Endpoints
 @router.post("/respond", response_model=BotResponse)
@@ -192,7 +209,7 @@ def respond(req: BotRequest):
             status="need_info",
             reply="خلنا نكمّل الصورة شوي. 🤔",
             next_question=ask_question(),
-            confidence=0
+            confidence=0,
         )
 
     # Calculate confidence
@@ -201,33 +218,34 @@ def respond(req: BotRequest):
     if req.mode == "tech":
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
         steps_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(rule["steps"])])
-        
+
         return BotResponse(
             status="ok",
             reply=f"🔧 تشخيص فني:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n**خطوات الفحص:**\n{steps_text}",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
-            confidence=confidence
+            confidence=confidence,
         )
 
     if req.mode == "admin":
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
-        
+
         return BotResponse(
             status="ok",
             reply=f"📊 ملخص إداري:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n💡 نقترح فحص مبدئي قبل أي اعتماد للعميل.",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
-            confidence=confidence
+            confidence=confidence,
         )
 
     # Client mode (default)
     top_cause = rule["causes"][0][0] if rule["causes"] else "غير محدد"
-    
+
     return BotResponse(
         status="ok",
         reply=f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍",
         probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"][:3]],
-        confidence=confidence
+        confidence=confidence,
     )
+
 
 @router.get("/engines")
 def get_engines():
@@ -238,9 +256,10 @@ def get_engines():
             {"id": "fja300", "name": "FJA300", "name_ar": "لاندكروزر 300"},
             {"id": "1kd", "name": "1KD-FTV", "name_ar": "4 سلندر ديزل"},
             {"id": "2kd", "name": "2KD-FTV", "name_ar": "4 سلندر ديزل"},
-            {"id": "1gd", "name": "1GD-FTV", "name_ar": "4 سلندر ديزل حديث"}
+            {"id": "1gd", "name": "1GD-FTV", "name_ar": "4 سلندر ديزل حديث"},
         ]
     }
+
 
 @router.get("/health")
 def health_check():
@@ -248,5 +267,5 @@ def health_check():
         "status": "running",
         "version": "1.2.0",
         "rules_count": len(KB_RULES),
-        "engines_supported": len(ENGINE_ALIASES)
+        "engines_supported": len(ENGINE_ALIASES),
     }

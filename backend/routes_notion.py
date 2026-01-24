@@ -3,15 +3,16 @@ Notion API Routes for Workshop Management
 Exposes Notion knowledge base through FastAPI
 """
 
-from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 from notion_service import NotionService
 
-router = APIRouter(prefix='/notion', tags=['notion'])
+router = APIRouter(prefix="/notion", tags=["notion"])
 
 # Initialize Notion service
 notion_service = NotionService()
+
 
 # Pydantic models
 class CustomerCreate(BaseModel):
@@ -21,6 +22,7 @@ class CustomerCreate(BaseModel):
     company: str = ""
     notes: str = ""
 
+
 class CustomerResponse(BaseModel):
     id: str
     name: str
@@ -29,8 +31,9 @@ class CustomerResponse(BaseModel):
     company: str = ""
     notes: str = ""
 
+
 # Endpoints
-@router.get('/customers')
+@router.get("/customers")
 async def get_customers():
     """Get all customers from Notion"""
     try:
@@ -38,12 +41,13 @@ async def get_customers():
         return {
             "customers": customers,
             "count": len(customers),
-            "mode": "mock" if notion_service.mock_mode else "live"
+            "mode": "mock" if notion_service.mock_mode else "live",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/customers')
+
+@router.post("/customers")
 async def create_customer(customer: CustomerCreate):
     """Create new customer in Notion"""
     try:
@@ -52,13 +56,14 @@ async def create_customer(customer: CustomerCreate):
             email=customer.email,
             phone=customer.phone,
             company=customer.company,
-            notes=customer.notes
+            notes=customer.notes,
         )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/procedures')
+
+@router.get("/procedures")
 async def get_procedures(category: Optional[str] = None):
     """Get workshop procedures from Notion"""
     try:
@@ -67,12 +72,13 @@ async def get_procedures(category: Optional[str] = None):
             "procedures": procedures,
             "count": len(procedures),
             "category": category,
-            "mode": "mock" if notion_service.mock_mode else "live"
+            "mode": "mock" if notion_service.mock_mode else "live",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/status')
+
+@router.get("/status")
 async def get_notion_status():
     """Get Notion integration status"""
     return {
@@ -81,11 +87,12 @@ async def get_notion_status():
         "databases": {
             "customers": bool(notion_service.customers_db),
             "procedures": bool(notion_service.procedures_db),
-            "appointments": bool(notion_service.appointments_db)
-        }
+            "appointments": bool(notion_service.appointments_db),
+        },
     }
 
-@router.get('/mcp/status')
+
+@router.get("/mcp/status")
 async def get_mcp_status():
     """Get MCP server status"""
     return {
@@ -95,8 +102,8 @@ async def get_mcp_status():
             "search_customer",
             "get_procedures",
             "create_customer",
-            "get_workshop_stats"
+            "get_workshop_stats",
         ],
         "description": "Workshop MCP Server exposes workshop knowledge to AI agents",
-        "command": "python workshop_mcp_server.py"
+        "command": "python workshop_mcp_server.py",
     }

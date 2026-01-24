@@ -16,136 +16,164 @@ python arabic_quotation.py
 """
 
 import os
-import json
 import webbrowser
 import tempfile
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
+from typing import Dict
+
 
 class ArabicQuotationBuilder:
     """بناء عروض الأسعار العربية"""
-    
+
     def __init__(self):
         self.reset_quotation()
         self.themes = {
-            'أزرق': {'primary': '#3b82f6', 'secondary': '#1e40af', 'accent': '#dbeafe'},
-            'أخضر': {'primary': '#10b981', 'secondary': '#059669', 'accent': '#d1fae5'},
-            'بنفسجي': {'primary': '#8b5cf6', 'secondary': '#7c3aed', 'accent': '#e9d5ff'},
-            'برتقالي': {'primary': '#f59e0b', 'secondary': '#d97706', 'accent': '#fef3c7'},
-            'أحمر': {'primary': '#ef4444', 'secondary': '#dc2626', 'accent': '#fee2e2'},
-            'تركوازي': {'primary': '#14b8a6', 'secondary': '#0d9488', 'accent': '#ccfbf1'},
-            'ذهبي': {'primary': '#d97706', 'secondary': '#92400e', 'accent': '#fef3c7'},
-            'رمادي': {'primary': '#6b7280', 'secondary': '#374151', 'accent': '#f3f4f6'}
+            "أزرق": {"primary": "#3b82f6", "secondary": "#1e40af", "accent": "#dbeafe"},
+            "أخضر": {"primary": "#10b981", "secondary": "#059669", "accent": "#d1fae5"},
+            "بنفسجي": {
+                "primary": "#8b5cf6",
+                "secondary": "#7c3aed",
+                "accent": "#e9d5ff",
+            },
+            "برتقالي": {
+                "primary": "#f59e0b",
+                "secondary": "#d97706",
+                "accent": "#fef3c7",
+            },
+            "أحمر": {"primary": "#ef4444", "secondary": "#dc2626", "accent": "#fee2e2"},
+            "تركوازي": {
+                "primary": "#14b8a6",
+                "secondary": "#0d9488",
+                "accent": "#ccfbf1",
+            },
+            "ذهبي": {"primary": "#d97706", "secondary": "#92400e", "accent": "#fef3c7"},
+            "رمادي": {
+                "primary": "#6b7280",
+                "secondary": "#374151",
+                "accent": "#f3f4f6",
+            },
         }
-    
+
     def reset_quotation(self):
         """إعادة تعيين بيانات العرض"""
         self.company = {
-            'name': 'شركة الإبداع التقني',
-            'name_en': 'Creative Tech Solutions',
-            'address': 'الرياض - المملكة العربية السعودية',
-            'phone': '+966 11 123 4567',
-            'email': 'info@company.sa',
-            'website': 'www.company.sa',
-            'tax_number': '300012345600003',
-            'logo': ''
+            "name": "شركة الإبداع التقني",
+            "name_en": "Creative Tech Solutions",
+            "address": "الرياض - المملكة العربية السعودية",
+            "phone": "+966 11 123 4567",
+            "email": "info@company.sa",
+            "website": "www.company.sa",
+            "tax_number": "300012345600003",
+            "logo": "",
         }
-        
+
         self.quotation = {
-            'number': self._generate_number(),
-            'date': datetime.now().strftime('%Y/%m/%d'),
-            'valid_until': (datetime.now() + timedelta(days=30)).strftime('%Y/%m/%d'),
-            'doc_type': 'quote',
-            'doc_title': 'عرض سعر',
-            'client': {
-                'name': 'العميل المحترم',
-                'company': 'الشركة المحترمة',
-                'address': 'العنوان',
-                'phone': '+966 XX XXX XXXX',
-                'email': 'client@email.com'
+            "number": self._generate_number(),
+            "date": datetime.now().strftime("%Y/%m/%d"),
+            "valid_until": (datetime.now() + timedelta(days=30)).strftime("%Y/%m/%d"),
+            "doc_type": "quote",
+            "doc_title": "عرض سعر",
+            "client": {
+                "name": "العميل المحترم",
+                "company": "الشركة المحترمة",
+                "address": "العنوان",
+                "phone": "+966 XX XXX XXXX",
+                "email": "client@email.com",
             },
-            'project_description': 'وصف مفصل للمشروع أو الخدمة المطلوبة',
-            'items': [],
-            'subtotal': 0,
-            'discount': 0,
-            'tax_rate': 15,
-            'tax_amount': 0,
-            'total': 0,
-            'terms': [
-                'هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار',
-                'يتطلب دفع 50% مقدماً لبدء العمل',
-                'المدة المتوقعة للتسليم حسب نطاق المشروع',
-                'الأسعار لا تشمل التعديلات الإضافية غير المذكورة',
-                'جميع الأسعار بالريال السعودي شاملة ضريبة القيمة المضافة'
-            ]
+            "project_description": "وصف مفصل للمشروع أو الخدمة المطلوبة",
+            "items": [],
+            "subtotal": 0,
+            "discount": 0,
+            "tax_rate": 15,
+            "tax_amount": 0,
+            "total": 0,
+            "terms": [
+                "هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار",
+                "يتطلب دفع 50% مقدماً لبدء العمل",
+                "المدة المتوقعة للتسليم حسب نطاق المشروع",
+                "الأسعار لا تشمل التعديلات الإضافية غير المذكورة",
+                "جميع الأسعار بالريال السعودي شاملة ضريبة القيمة المضافة",
+            ],
         }
-    
+
     def _generate_number(self) -> str:
         """توليد رقم عرض سعر"""
         now = datetime.now()
-        return f"Q-{now.year}-{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}"
-    
+        return (
+            f"Q-{now.year}-{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}"
+        )
+
     def set_company(self, **kwargs):
         """تحديث بيانات الشركة"""
         self.company.update(kwargs)
         return self
-    
+
     def set_client(self, **kwargs):
         """تحديث بيانات العميل"""
-        self.quotation['client'].update(kwargs)
+        self.quotation["client"].update(kwargs)
         return self
-    
+
     def set_project(self, description: str):
         """تحديد وصف المشروع"""
-        self.quotation['project_description'] = description
+        self.quotation["project_description"] = description
         return self
-    
-    def add_item(self, description: str, quantity: float, unit_price: float, discount: float = 0):
+
+    def add_item(
+        self, description: str, quantity: float, unit_price: float, discount: float = 0
+    ):
         """إضافة بند للعرض"""
         total = (quantity * unit_price) - discount
-        self.quotation['items'].append({
-            'description': description,
-            'quantity': quantity,
-            'unit_price': unit_price,
-            'discount': discount,
-            'total': total
-        })
+        self.quotation["items"].append(
+            {
+                "description": description,
+                "quantity": quantity,
+                "unit_price": unit_price,
+                "discount": discount,
+                "total": total,
+            }
+        )
         self._calculate_totals()
         return self
-    
+
     def _calculate_totals(self):
         """حساب المجاميع"""
-        subtotal = sum(item['total'] for item in self.quotation['items'])
-        total_discount = sum(item['discount'] for item in self.quotation['items'])
-        
-        self.quotation['subtotal'] = subtotal + total_discount
-        self.quotation['discount'] = total_discount
-        
+        subtotal = sum(item["total"] for item in self.quotation["items"])
+        total_discount = sum(item["discount"] for item in self.quotation["items"])
+
+        self.quotation["subtotal"] = subtotal + total_discount
+        self.quotation["discount"] = total_discount
+
         taxable_amount = subtotal
-        self.quotation['tax_amount'] = taxable_amount * (self.quotation['tax_rate'] / 100)
-        self.quotation['total'] = subtotal + self.quotation['tax_amount']
-    
+        self.quotation["tax_amount"] = taxable_amount * (
+            self.quotation["tax_rate"] / 100
+        )
+        self.quotation["total"] = subtotal + self.quotation["tax_amount"]
+
     def _render_approval_block(self) -> str:
         """إنشاء جزء HTML لتوقيع الموافقة الإلكترونية إن توفّر"""
-        info = self.quotation.get('approval_info') or {}
-        qr = self.quotation.get('approval_qr')
-        status = (info.get('status') or '').lower()
-        
-        if not info or status != 'approved':
+        info = self.quotation.get("approval_info") or {}
+        qr = self.quotation.get("approval_qr")
+        status = (info.get("status") or "").lower()
+
+        if not info or status != "approved":
             return """
             <div class="signature-line"></div>
             <p>الاسم والتوقيع والتاريخ</p>
             """
 
-        name = info.get('responder_name') or 'العميل'
-        phone = info.get('responder_phone') or '-'
-        responded_at = info.get('responded_at') or ''
-        client_ip = info.get('client_ip') or ''  # يبقى للاستخدام داخل ال QR فقط
-        customer_name = info.get('customer_name') or ''
-        plate_number = info.get('plate_number') or ''
-        user_agent = info.get('user_agent') or ''  # يبقى للاستخدام داخل ال QR فقط
+        name = info.get("responder_name") or "العميل"
+        phone = info.get("responder_phone") or "-"
+        responded_at = info.get("responded_at") or ""
+        client_ip = info.get("client_ip") or ""  # يبقى للاستخدام داخل ال QR فقط
+        customer_name = info.get("customer_name") or ""
+        plate_number = info.get("plate_number") or ""
+        user_agent = info.get("user_agent") or ""  # يبقى للاستخدام داخل ال QR فقط
 
-        qr_html = f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>' if qr else ''
+        qr_html = (
+            f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>'
+            if qr
+            else ""
+        )
 
         # نعرض فقط جملة بسيطة على الفاتورة، بينما تبقى جميع التفاصيل (الاسم، الجوال، اللوحة، الوقت، IP، بصمة الجهاز) داخل ال QR
         return f"""
@@ -167,28 +195,28 @@ class ArabicQuotationBuilder:
 
     def _render_logo(self) -> str:
         """عرض الشعار إذا كان موجوداً"""
-        logo_url = self.company.get('logo', '')
+        logo_url = self.company.get("logo", "")
         if logo_url and str(logo_url).strip():
-            return f'''<div class="logo">
+            return f"""<div class="logo">
                         <img src="{logo_url}" alt="شعار الورشة" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
-                    </div>'''
+                    </div>"""
         else:
-            return '''<div class="logo">
+            return """<div class="logo">
                         <div class="logo-text">الشعار</div>
-                    </div>'''
+                    </div>"""
 
     def add_term(self, term: str):
         """إضافة شرط"""
-        self.quotation['terms'].append(term)
+        self.quotation["terms"].append(term)
         return self
-    
-    def generate_html(self, theme: str = 'أزرق', style: str = 'حديث') -> str:
+
+    def generate_html(self, theme: str = "أزرق", style: str = "حديث") -> str:
         """إنشاء HTML"""
-        colors = self.themes.get(theme, self.themes['أزرق'])
-        
+        colors = self.themes.get(theme, self.themes["أزرق"])
+
         # إنشاء صفوف البنود
         items_html = ""
-        for i, item in enumerate(self.quotation['items'], 1):
+        for i, item in enumerate(self.quotation["items"], 1):
             items_html += f"""
             <tr>
                 <td>{i}</td>
@@ -199,7 +227,7 @@ class ArabicQuotationBuilder:
                 <td>{item['total']:,.2f}</td>
             </tr>
             """
-        
+
         # إنشاء تذييل الجدول (الإجماليات)
         table_footer = f"""
         <tfoot>
@@ -220,17 +248,17 @@ class ArabicQuotationBuilder:
 
         # إنشاء قائمة الشروط
         terms_html = ""
-        for term in self.quotation['terms']:
+        for term in self.quotation["terms"]:
             terms_html += f"<li>{term}</li>"
-        
+
         # اختيار نمط CSS
-        if style == 'كلاسيكي':
+        if style == "كلاسيكي":
             css_style = self._get_classic_style(colors)
-        elif style == 'فاخر':
+        elif style == "فاخر":
             css_style = self._get_luxury_style(colors)
         else:
             css_style = self._get_modern_style(colors)
-        
+
         return f"""
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -408,7 +436,7 @@ class ArabicQuotationBuilder:
 </body>
 </html>
         """
-    
+
     def _get_modern_style(self, colors: Dict) -> str:
         """نمط حديث - محسّن لحجم A4"""
         return f"""
@@ -900,7 +928,7 @@ class ArabicQuotationBuilder:
             }}
         }}
         """
-    
+
     def _get_classic_style(self, colors: Dict) -> str:
         """نمط كلاسيكي"""
         return f"""
@@ -1181,7 +1209,7 @@ class ArabicQuotationBuilder:
             }}
         }}
         """
-    
+
     def _get_luxury_style(self, colors: Dict) -> str:
         """نمط فاخر"""
         return f"""
@@ -1570,37 +1598,36 @@ class ArabicQuotationBuilder:
         }}
         """
 
-    def save_and_open(self, filename: str = None, theme: str = 'أزرق', style: str = 'حديث') -> str:
+    def save_and_open(
+        self, filename: str = None, theme: str = "أزرق", style: str = "حديث"
+    ) -> str:
         """حفظ الملف وفتحه في المتصفح"""
         if filename is None:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"quotation_{self.quotation['number']}_{timestamp}.html"
-        
+
         temp_dir = tempfile.gettempdir()
         full_path = os.path.join(temp_dir, filename)
-        
+
         html_content = self.generate_html(theme=theme, style=style)
-        
-        with open(full_path, 'w', encoding='utf-8') as f:
+
+        with open(full_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
-        webbrowser.open(f'file://{full_path}')
-        
+
+        webbrowser.open(f"file://{full_path}")
+
         return full_path
 
     def to_dict(self) -> Dict:
         """تحويل العرض لقاموس"""
-        return {
-            'company': self.company,
-            'quotation': self.quotation
-        }
-    
+        return {"company": self.company, "quotation": self.quotation}
+
     def from_dict(self, data: Dict):
         """استيراد من قاموس"""
-        if 'company' in data:
-            self.company.update(data['company'])
-        if 'quotation' in data:
-            self.quotation.update(data['quotation'])
+        if "company" in data:
+            self.company.update(data["company"])
+        if "quotation" in data:
+            self.quotation.update(data["quotation"])
         return self
 
 
@@ -1610,20 +1637,20 @@ def create_quotation_routes(router):
     from fastapi import HTTPException
     from pydantic import BaseModel
     from typing import List, Optional
-    
+
     class QuotationItem(BaseModel):
         description: str
         quantity: float
         unit_price: float
         discount: float = 0
-    
+
     class QuotationClient(BaseModel):
         name: str
-        company: Optional[str] = ''
-        address: Optional[str] = ''
-        phone: Optional[str] = ''
-        email: Optional[str] = ''
-    
+        company: Optional[str] = ""
+        address: Optional[str] = ""
+        phone: Optional[str] = ""
+        email: Optional[str] = ""
+
     class QuotationCompany(BaseModel):
         name: Optional[str] = None
         name_en: Optional[str] = None
@@ -1632,75 +1659,76 @@ def create_quotation_routes(router):
         email: Optional[str] = None
         website: Optional[str] = None
         tax_number: Optional[str] = None
-    
+
     class QuotationRequest(BaseModel):
         company: Optional[QuotationCompany] = None
         client: QuotationClient
         project_description: str
         items: List[QuotationItem]
         terms: Optional[List[str]] = None
-        theme: Optional[str] = 'أزرق'
-        style: Optional[str] = 'حديث'
+        theme: Optional[str] = "أزرق"
+        style: Optional[str] = "حديث"
         tax_rate: Optional[float] = 15
-    
+
     @router.post("/quotations/generate")
     async def generate_quotation(request: QuotationRequest):
         """توليد عرض سعر جديد"""
         try:
             builder = ArabicQuotationBuilder()
-            
+
             # تعيين بيانات الشركة
             if request.company:
-                company_data = {k: v for k, v in request.company.dict().items() if v is not None}
+                company_data = {
+                    k: v for k, v in request.company.dict().items() if v is not None
+                }
                 builder.set_company(**company_data)
-            
+
             # تعيين بيانات العميل
             builder.set_client(**request.client.dict())
-            
+
             # تعيين وصف المشروع
             builder.set_project(request.project_description)
-            
+
             # تعيين نسبة الضريبة
-            builder.quotation['tax_rate'] = request.tax_rate
-            
+            builder.quotation["tax_rate"] = request.tax_rate
+
             # إضافة البنود
             for item in request.items:
                 builder.add_item(
                     description=item.description,
                     quantity=item.quantity,
                     unit_price=item.unit_price,
-                    discount=item.discount
+                    discount=item.discount,
                 )
-            
+
             # إضافة الشروط المخصصة
             if request.terms:
-                builder.quotation['terms'] = request.terms
-            
+                builder.quotation["terms"] = request.terms
+
             # توليد HTML
             html_content = builder.generate_html(
-                theme=request.theme or 'أزرق',
-                style=request.style or 'حديث'
+                theme=request.theme or "أزرق", style=request.style or "حديث"
             )
-            
+
             return {
-                'success': True,
-                'quotation_number': builder.quotation['number'],
-                'html': html_content,
-                'data': builder.to_dict()
+                "success": True,
+                "quotation_number": builder.quotation["number"],
+                "html": html_content,
+                "data": builder.to_dict(),
             }
-            
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     @router.get("/quotations/themes")
     async def get_themes():
         """الحصول على قائمة الألوان والأنماط المتاحة"""
         builder = ArabicQuotationBuilder()
         return {
-            'themes': list(builder.themes.keys()),
-            'styles': ['حديث', 'كلاسيكي', 'فاخر']
+            "themes": list(builder.themes.keys()),
+            "styles": ["حديث", "كلاسيكي", "فاخر"],
         }
-    
+
     return router
 
 
@@ -1708,15 +1736,13 @@ if __name__ == "__main__":
     # اختبار سريع
     builder = ArabicQuotationBuilder()
     builder.set_client(
-        name="أحمد محمد",
-        company="شركة التقنية",
-        phone="+966 50 123 4567"
+        name="أحمد محمد", company="شركة التقنية", phone="+966 50 123 4567"
     )
     builder.set_project("تطوير نظام إدارة الورش")
     builder.add_item("تصميم النظام", 1, 5000)
     builder.add_item("التطوير والبرمجة", 1, 15000, 1000)
     builder.add_item("الاختبار والتدريب", 1, 3000)
-    
-    html = builder.generate_html(theme='أزرق', style='حديث')
+
+    html = builder.generate_html(theme="أزرق", style="حديث")
     print(f"✅ تم توليد عرض سعر رقم: {builder.quotation['number']}")
     print(f"المجموع: {builder.quotation['total']:,.2f} ر.س")

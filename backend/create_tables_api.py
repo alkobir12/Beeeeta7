@@ -3,17 +3,16 @@
 Create tables via Supabase Management API
 """
 import os
-import sys
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 # Extract project ref from URL
-project_ref = SUPABASE_URL.replace('https://', '').split('.')[0]
+project_ref = SUPABASE_URL.replace("https://", "").split(".")[0]
 
 print(f"🔧 Project Ref: {project_ref}")
 print(f"📡 Supabase URL: {SUPABASE_URL}")
@@ -25,7 +24,6 @@ sql_commands = [
     create extension if not exists "uuid-ossp";
     create extension if not exists pgcrypto;
     """,
-    
     # Customers table
     """
     create table if not exists customers (
@@ -45,7 +43,6 @@ sql_commands = [
     create index if not exists idx_customers_phone on customers (phone);
     create index if not exists idx_customers_last_visit on customers (last_visit desc);
     """,
-    
     # Technicians table
     """
     create table if not exists technicians (
@@ -60,7 +57,6 @@ sql_commands = [
       updated_at timestamptz default now()
     );
     """,
-    
     # Services table
     """
     create table if not exists services (
@@ -78,7 +74,6 @@ sql_commands = [
     create index if not exists idx_services_name on services using gin (to_tsvector('simple', coalesce(name,'')));
     create index if not exists idx_services_category on services (category);
     """,
-    
     # Business Accounts table
     """
     create table if not exists business_accounts (
@@ -94,7 +89,6 @@ sql_commands = [
     create index if not exists idx_biz_accounts_active on business_accounts (active, archived);
     create index if not exists idx_biz_accounts_created on business_accounts (created_at desc);
     """,
-    
     # Vehicles table
     """
     create table if not exists vehicles (
@@ -125,7 +119,6 @@ sql_commands = [
     create index if not exists idx_vehicles_status on vehicles (status);
     create index if not exists idx_vehicles_entry on vehicles (entry_date desc);
     """,
-    
     # Operations table
     """
     create table if not exists operations (
@@ -148,7 +141,6 @@ sql_commands = [
     create index if not exists idx_operations_account on operations (account_id);
     create index if not exists idx_operations_vehicle on operations (vehicle_id);
     """,
-    
     # Transactions table
     """
     create table if not exists transactions (
@@ -168,7 +160,6 @@ sql_commands = [
     create index if not exists idx_transactions_type on transactions (type);
     create index if not exists idx_transactions_account on transactions (account_id);
     """,
-    
     # Budgets table
     """
     create table if not exists budgets (
@@ -183,7 +174,6 @@ sql_commands = [
     );
     create index if not exists idx_budgets_period on budgets (period desc);
     """,
-    
     # Approval Requests table
     """
     create table if not exists approval_requests (
@@ -250,7 +240,6 @@ sql_commands = [
         END IF;
     END $$;
     """,
-    
     # i18n table
     """
     create table if not exists i18n (
@@ -259,7 +248,6 @@ sql_commands = [
       updated_at timestamptz default now()
     );
     """,
-    
     # Print Templates table
     """
     create table if not exists print_templates (
@@ -275,7 +263,6 @@ sql_commands = [
     create index if not exists idx_print_templates_type on print_templates (type);
     create index if not exists idx_print_templates_active on print_templates (is_active);
     """,
-    
     # Invoice Templates table
     """
     create table if not exists invoice_templates (
@@ -300,7 +287,6 @@ sql_commands = [
     create index if not exists idx_invoice_templates_default on invoice_templates (is_default);
     create index if not exists idx_invoice_templates_archived on invoice_templates (archived);
     """,
-    
     # RLS Enable
     """
     alter table customers enable row level security;
@@ -324,27 +310,24 @@ print("\n🔄 Attempting to create tables via Supabase REST API...")
 # Method 1: Try using postgREST rpc endpoint
 for i, sql in enumerate(sql_commands, 1):
     print(f"\n📝 Executing command batch {i}/{len(sql_commands)}...")
-    
+
     # Supabase allows SQL execution via the REST API query endpoint
     # We'll use the service role key which has full access
-    
+
     headers = {
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Authorization': f'Bearer {SUPABASE_SERVICE_ROLE_KEY}',
-        'Content-Type': 'application/json'
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
     }
-    
+
     # Try the query endpoint
     query_url = f"{SUPABASE_URL}/rest/v1/rpc/exec_sql"
-    
+
     try:
         response = requests.post(
-            query_url,
-            json={'query': sql},
-            headers=headers,
-            timeout=30
+            query_url, json={"query": sql}, headers=headers, timeout=30
         )
-        
+
         if response.status_code in [200, 201, 204]:
             print(f"✅ Batch {i} executed successfully")
         else:
@@ -353,9 +336,9 @@ for i, sql in enumerate(sql_commands, 1):
     except Exception as e:
         print(f"⚠️  Batch {i} failed: {str(e)[:100]}")
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("📋 Note: REST API method may not support DDL commands")
-print("="*60)
+print("=" * 60)
 print("\nPlease use Supabase Dashboard SQL Editor to execute:")
 print("  File: /app/backend/supabase_schema.sql")
 print("\nOr provide database password for direct psql connection")

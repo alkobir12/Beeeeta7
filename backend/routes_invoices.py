@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from datetime import datetime
 from typing import Optional
-import uuid
 
 from supabase_service import SupabaseService
 
@@ -9,6 +7,7 @@ router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
 # نعتمد الآن على جدول Supabase للفواتير بدلاً من نظام الملفات
 supabase_service = SupabaseService()
+
 
 def delete_invoices_by_vehicle_id(vehicle_id: str):
     """حذف جميع الفواتير المرتبطة بمركبة معيّنة من جدول Supabase (يُستخدم عند حذف المركبة)."""
@@ -24,46 +23,53 @@ def delete_invoices_by_vehicle_id(vehicle_id: str):
         print(f"Error deleting invoices for vehicle {vehicle_id}: {e}")
         return 0
 
+
 @router.get("")
 async def get_invoices(
     vehicleId: Optional[str] = Query(None),
     customerId: Optional[str] = Query(None),
-    status: Optional[str] = Query(None)
+    status: Optional[str] = Query(None),
 ):
     """جلب الفواتير من جدول Supabase"""
     try:
         if supabase_service.mock_mode:
             return []
 
-        invoices = supabase_service.invoices_list(vehicle_id=vehicleId, customer_id=customerId)
+        invoices = supabase_service.invoices_list(
+            vehicle_id=vehicleId, customer_id=customerId
+        )
 
         # فلترة بالحالة على مستوى التطبيق
         if status:
-            invoices = [inv for inv in invoices if inv.get('status') == status]
+            invoices = [inv for inv in invoices if inv.get("status") == status]
 
         # توحيد الحقول لتناسب الواجهة الأمامية
         normalized = []
         for inv in invoices:
-            normalized.append({
-                "id": inv.get("id"),
-                "invoice_number": inv.get("invoiceNumber") or str(inv.get("id"))[:8],
-                "customer_id": inv.get("customerId"),
-                "customer_name": inv.get("customerName") or "",
-                "vehicle_id": inv.get("vehicleId"),
-                "plate_number": inv.get("plateNumber", ""),
-                "items": inv.get("items") or [],
-                "subtotal": float(inv.get("subtotal") or 0),
-                "tax": float(inv.get("tax") or 0),
-                "total": float(inv.get("total") or 0),
-                "status": inv.get("status") or "pending",
-                "type": inv.get("type") or "sale",
-                "date": inv.get("date") or inv.get("createdAt"),
-                "created_at": inv.get("createdAt"),
-            })
+            normalized.append(
+                {
+                    "id": inv.get("id"),
+                    "invoice_number": inv.get("invoiceNumber")
+                    or str(inv.get("id"))[:8],
+                    "customer_id": inv.get("customerId"),
+                    "customer_name": inv.get("customerName") or "",
+                    "vehicle_id": inv.get("vehicleId"),
+                    "plate_number": inv.get("plateNumber", ""),
+                    "items": inv.get("items") or [],
+                    "subtotal": float(inv.get("subtotal") or 0),
+                    "tax": float(inv.get("tax") or 0),
+                    "total": float(inv.get("total") or 0),
+                    "status": inv.get("status") or "pending",
+                    "type": inv.get("type") or "sale",
+                    "date": inv.get("date") or inv.get("createdAt"),
+                    "created_at": inv.get("createdAt"),
+                }
+            )
         return normalized
     except Exception as e:
         print(f"Error fetching invoices: {e}")
         return []
+
 
 @router.post("")
 async def create_invoice(invoice: dict):
@@ -95,7 +101,8 @@ async def create_invoice(invoice: dict):
         # توحيد الشكل للواجهة الأمامية
         response_data = {
             "id": created.get("id"),
-            "invoice_number": created.get("invoiceNumber") or str(created.get("id"))[:8],
+            "invoice_number": created.get("invoiceNumber")
+            or str(created.get("id"))[:8],
             "customer_id": created.get("customerId"),
             "customer_name": created.get("customerName") or "",
             "vehicle_id": created.get("vehicleId"),
@@ -116,6 +123,7 @@ async def create_invoice(invoice: dict):
         print(f"Error creating invoice: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.put("/{invoice_id}")
 async def update_invoice(invoice_id: str, invoice: dict):
     """تحديث فاتورة في Supabase (المجاميع / الحالة)"""
@@ -131,11 +139,15 @@ async def update_invoice(invoice_id: str, invoice: dict):
         # نبني Payload للتحديث (نرسل فقط الحقول المطلوبة)
         update_payload = {
             "id": invoice_id,
-            "invoiceNumber": invoice.get("invoiceNumber", existing.get("invoiceNumber")),
+            "invoiceNumber": invoice.get(
+                "invoiceNumber", existing.get("invoiceNumber")
+            ),
             "customerId": invoice.get("customerId", existing.get("customerId")),
             "vehicleId": invoice.get("vehicleId", existing.get("vehicleId")),
             "customerName": invoice.get("customerName", existing.get("customerName")),
-            "plateNumber": invoice.get("plateNumber", getattr(existing, "plateNumber", None)),
+            "plateNumber": invoice.get(
+                "plateNumber", getattr(existing, "plateNumber", None)
+            ),
             "items": invoice.get("items", existing.get("items")),
             "subtotal": invoice.get("subtotal", existing.get("subtotal")),
             "discount": invoice.get("discount", existing.get("discount")),
@@ -143,7 +155,9 @@ async def update_invoice(invoice_id: str, invoice: dict):
             "total": invoice.get("total", existing.get("total")),
             "status": invoice.get("status", existing.get("status")),
             "type": invoice.get("type", existing.get("type")),
-            "paymentMethod": invoice.get("paymentMethod", existing.get("paymentMethod")),
+            "paymentMethod": invoice.get(
+                "paymentMethod", existing.get("paymentMethod")
+            ),
             "notes": invoice.get("notes", existing.get("notes")),
         }
 
@@ -152,7 +166,8 @@ async def update_invoice(invoice_id: str, invoice: dict):
 
         response_data = {
             "id": updated.get("id"),
-            "invoice_number": updated.get("invoiceNumber") or str(updated.get("id"))[:8],
+            "invoice_number": updated.get("invoiceNumber")
+            or str(updated.get("id"))[:8],
             "customer_id": updated.get("customerId"),
             "customer_name": updated.get("customerName") or "",
             "vehicle_id": updated.get("vehicleId"),
@@ -174,6 +189,7 @@ async def update_invoice(invoice_id: str, invoice: dict):
     except Exception as e:
         print(f"Error updating invoice: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/{invoice_id}")
 async def get_invoice(invoice_id: str):
@@ -209,8 +225,11 @@ async def get_invoice(invoice_id: str):
         print(f"Error fetching invoice: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # DB compatibility (not used)
 db = None
+
+
 def set_db(database):
     global db
     db = database

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
+
 
 class UserPermissions(BaseModel):
     canViewDashboard: bool = True
@@ -14,23 +15,26 @@ class UserPermissions(BaseModel):
     canAccessCEO: bool = False
     canManageSettings: bool = False
 
+
 class User(BaseModel):
     id: str
     name: str
     email: Optional[str] = None
     phone: str
-    role: str = 'employee'  # admin, manager, employee
+    role: str = "employee"  # admin, manager, employee
     permissions: UserPermissions = UserPermissions()
     isActive: bool = True
     createdAt: datetime
     lastLogin: Optional[datetime] = None
 
+
 class UserCreate(BaseModel):
     name: str
     email: Optional[str] = None
     phone: str
-    role: str = 'employee'
+    role: str = "employee"
     permissions: Optional[UserPermissions] = None
+
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None

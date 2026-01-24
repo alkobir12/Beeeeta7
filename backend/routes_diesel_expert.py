@@ -1,14 +1,15 @@
 """
 خبير الديزل المتكامل - مع قاعدة المعرفة وتحليل الوسائط
 """
+
 from fastapi import APIRouter, HTTPException, Body, UploadFile, File, Form
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import os
 import uuid
 import re
 import base64
-import json
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+
 # from emergentintegrations.llm.openai import OpenAISpeechToText  # Temporarily disabled due to import issues
 
 # Import fault knowledge database
@@ -88,21 +89,24 @@ async def search_fault_knowledge(query: str, dtc_code: str = None) -> List[Dict]
         fault_knowledge_db = get_fault_knowledge_db()
         results = []
         query_lower = query.lower() if query else ""
-        
+
         for fault in fault_knowledge_db:
             score = 0
-            if query_lower and query_lower in str(fault.get('symptom_description', '')).lower():
+            if (
+                query_lower
+                and query_lower in str(fault.get("symptom_description", "")).lower()
+            ):
                 score += 2
-            if query_lower and query_lower in str(fault.get('title', '')).lower():
+            if query_lower and query_lower in str(fault.get("title", "")).lower():
                 score += 2
-            if query_lower and query_lower in str(fault.get('solution', '')).lower():
+            if query_lower and query_lower in str(fault.get("solution", "")).lower():
                 score += 1
-            if dtc_code and dtc_code.upper() in (fault.get('dtc_codes') or []):
+            if dtc_code and dtc_code.upper() in (fault.get("dtc_codes") or []):
                 score += 3
             if score > 0:
-                results.append({**fault, 'score': score})
-        
-        results.sort(key=lambda x: x.get('score', 0), reverse=True)
+                results.append({**fault, "score": score})
+
+        results.sort(key=lambda x: x.get("score", 0), reverse=True)
         return results[:5]
     except Exception as e:
         print(f"Knowledge search error: {e}")
@@ -111,7 +115,7 @@ async def search_fault_knowledge(query: str, dtc_code: str = None) -> List[Dict]
 
 def extract_dtc_codes(text: str) -> List[str]:
     """استخراج أكواد الأعطال من النص"""
-    pattern = r'[PCBU][0-9]{4}'
+    pattern = r"[PCBU][0-9]{4}"
     codes = re.findall(pattern, text.upper())
     return list(set(codes))
 
@@ -120,37 +124,54 @@ def format_knowledge_context(faults: List[Dict]) -> str:
     """تنسيق نتائج قاعدة المعرفة للسياق"""
     if not faults:
         return ""
-    
+
     context = "\n\n📚 **معلومات من قاعدة المعرفة المحلية:**\n"
     for i, fault in enumerate(faults, 1):
         context += f"\n**{i}. {fault.get('title', 'عطل')}**\n"
         context += f"   - المركبة: {fault.get('vehicle_type', '')} {fault.get('vehicle_model', '')}\n"
-        if fault.get('dtc_codes'):
-            codes = fault.get('dtc_codes') if isinstance(fault.get('dtc_codes'), list) else []
+        if fault.get("dtc_codes"):
+            codes = (
+                fault.get("dtc_codes")
+                if isinstance(fault.get("dtc_codes"), list)
+                else []
+            )
             context += f"   - الأكواد: {', '.join(codes)}\n"
-        context += f"   - الأعراض: {str(fault.get('symptom_description', ''))[:200]}...\n"
+        context += (
+            f"   - الأعراض: {str(fault.get('symptom_description', ''))[:200]}...\n"
+        )
         context += f"   - الحل: {str(fault.get('solution', ''))[:300]}...\n"
-        parts = fault.get('parts_needed') if isinstance(fault.get('parts_needed'), list) else []
+        parts = (
+            fault.get("parts_needed")
+            if isinstance(fault.get("parts_needed"), list)
+            else []
+        )
         if parts:
             context += f"   - القطع: {', '.join(parts)}\n"
-    
+
     return context
+
 
 # ------------------------
 # Deterministic Scoring Engine (MVP)
 # ------------------------
+
 
 def build_evidence_from_text(text: str) -> Dict[str, Any]:
     """مساعدة: تحويل نص حر إلى مفاتيح أدلة بسيطة (MVP)."""
     text_lower = (text or "").lower()
     return {
         "raw_text": text,
-        "has_low_power": any(k in text_lower for k in ["ضعف", "ما يمشي", "ما يسحب", "no power", "low power"]),
+        "has_low_power": any(
+            k in text_lower
+            for k in ["ضعف", "ما يمشي", "ما يسحب", "no power", "low power"]
+        ),
         "has_smoke": any(k in text_lower for k in ["دخان", "smoke"]),
     }
 
 
-def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], kb_faults: List[Dict]) -> List[Dict[str, Any]]:
+def score_causes_from_knowledge(
+    evidence: Dict[str, Any], dtc_codes: List[str], kb_faults: List[Dict]
+) -> List[Dict[str, Any]]:
     """محرك نقاط بسيط يعتمد على fault_knowledge (MVP).
 
     - يجلب الأعطال التي تشترك في DTC أو في كلمات من النص.
@@ -173,8 +194,10 @@ def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], 
 
         # Vehicle type match
         if evidence.get("vehicle_type") and fault.get("vehicle_type"):
-            if evidence["vehicle_type"].lower() in fault["vehicle_type"].lower() or \
-               fault["vehicle_type"].lower() in evidence["vehicle_type"].lower():
+            if (
+                evidence["vehicle_type"].lower() in fault["vehicle_type"].lower()
+                or fault["vehicle_type"].lower() in evidence["vehicle_type"].lower()
+            ):
                 score += 0.2
                 reason_parts.append("Vehicle type match")
 
@@ -182,44 +205,49 @@ def score_causes_from_knowledge(evidence: Dict[str, Any], dtc_codes: List[str], 
         text = (evidence.get("raw_text") or "").lower()
         if text and fault.get("symptom_description"):
             symp = str(fault["symptom_description"]).lower()
-            if any(k in symp and k in text for k in ["smoke", "دخان", "boost", "ضغط", "fuel", "وقود"]):
+            if any(
+                k in symp and k in text
+                for k in ["smoke", "دخان", "boost", "ضغط", "fuel", "وقود"]
+            ):
                 score += 0.15
                 reason_parts.append("Similar symptom description")
 
         if score > 0:
-            ranked.append({
-                "fault_id": fault.get("id"),
-                "title": fault.get("title"),
-                "vehicle_type": fault.get("vehicle_type"),
-                "dtc_codes": list(fault_dtc),
-                "score": round(score, 3),
-                "evidence_notes": "; ".join(reason_parts) or "", 
-            })
+            ranked.append(
+                {
+                    "fault_id": fault.get("id"),
+                    "title": fault.get("title"),
+                    "vehicle_type": fault.get("vehicle_type"),
+                    "dtc_codes": list(fault_dtc),
+                    "score": round(score, 3),
+                    "evidence_notes": "; ".join(reason_parts) or "",
+                }
+            )
 
     ranked.sort(key=lambda x: x.get("score", 0), reverse=True)
     return ranked[:5]
 
 
-@router.post('/diesel-expert')
+@router.post("/diesel-expert")
 async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
     """خبير الديزل المتكامل مع قاعدة المعرفة"""
     try:
         api_key = EMERGENT_LLM_KEY or os.getenv("EMERGENT_LLM_KEY")
         if not api_key:
             raise HTTPException(status_code=500, detail="LLM configuration missing")
-        
-        user_messages = payload.get('messages', [])
+
+        user_messages = payload.get("messages", [])
         if not user_messages:
             raise HTTPException(status_code=400, detail="No messages provided")
-        
-        session_id = payload.get('sessionId') or str(uuid.uuid4())
+
+        session_id = payload.get("sessionId") or str(uuid.uuid4())
         last_msg = user_messages[-1]
-        text_content = last_msg.get('content', '')
-        attachments = last_msg.get('attachments', [])
-        
+        text_content = last_msg.get("content", "")
+        attachments = last_msg.get("attachments", [])
+
         # 1. استخراج أكواد الأعطال
         dtc_codes = extract_dtc_codes(text_content)
-        
+
         # 2. جلب قاعدة المعرفة كاملة ثم تطبيق محرك النقاط
         knowledge_db = get_fault_knowledge_db()
         evidence = build_evidence_from_text(text_content)
@@ -228,7 +256,9 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         # 3. تجهيز سياق نصي للـ LLM يتضمن النتائج المرتبة
         causes_block = ""
         if ranked_causes:
-            causes_block += "\n\n📊 Ranked suspected causes (from deterministic engine):\n"
+            causes_block += (
+                "\n\n📊 Ranked suspected causes (from deterministic engine):\n"
+            )
             for idx, c in enumerate(ranked_causes, 1):
                 causes_block += f"{idx}. {c.get('title')} (score={c.get('score')}) - DTC: {', '.join(c.get('dtc_codes') or [])}\n"
                 if c.get("evidence_notes"):
@@ -240,53 +270,60 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         # 5. معالجة المرفقات (صور، فيديو، صوت)
         file_contents = []
         media_notes = []
-        
+
         for att in attachments:
-            if att.get('base64'):
-                b64 = att['base64']
-                if ',' in b64:
-                    b64 = b64.split(',')[1]
-                
-                att_type = att.get('type', '')
-                att_name = att.get('name', 'file')
-                
-                if att_type.startswith('image/'):
+            if att.get("base64"):
+                b64 = att["base64"]
+                if "," in b64:
+                    b64 = b64.split(",")[1]
+
+                att_type = att.get("type", "")
+                att_name = att.get("name", "file")
+
+                if att_type.startswith("image/"):
                     file_contents.append(ImageContent(image_base64=b64))
                     media_notes.append(f"📷 تم إرفاق صورة: {att_name}")
-                elif att_type.startswith('video/'):
+                elif att_type.startswith("video/"):
                     # For video, extract first frame or note it
-                    media_notes.append(f"🎥 تم إرفاق فيديو: {att_name} - سأحلل الإطارات المرئية")
+                    media_notes.append(
+                        f"🎥 تم إرفاق فيديو: {att_name} - سأحلل الإطارات المرئية"
+                    )
                     # GPT-4o can analyze video frames
                     file_contents.append(ImageContent(image_base64=b64))
-                elif att_type.startswith('audio/'):
-                    media_notes.append(f"🔊 تم إرفاق صوت: {att_name} - يرجى وصف الصوت الذي تسمعه")
-        
+                elif att_type.startswith("audio/"):
+                    media_notes.append(
+                        f"🔊 تم إرفاق صوت: {att_name} - يرجى وصف الصوت الذي تسمعه"
+                    )
+
         if media_notes:
             enhanced_content += "\n\n" + "\n".join(media_notes)
-        
+
         # 6. إرسال للـ LLM
         chat = LlmChat(
             api_key=api_key,
             session_id=session_id,
-            system_message=DIESEL_EXPERT_SYSTEM_PROMPT
+            system_message=DIESEL_EXPERT_SYSTEM_PROMPT,
         ).with_model("openai", "gpt-4o-mini")
-        
+
         user_message_obj = UserMessage(
             text=enhanced_content,
-            file_contents=file_contents if file_contents else None
+            file_contents=file_contents if file_contents else None,
         )
-        
+
         response = await chat.send_message(user_message_obj)
 
         # 7. بناء قائمة المصادر من الأسباب المرتبة
         sources = []
         if ranked_causes:
-            sources = [{
-                "type": "knowledge_base",
-                "title": c.get("title"),
-                "id": c.get("fault_id"),
-                "score": c.get("score"),
-            } for c in ranked_causes]
+            sources = [
+                {
+                    "type": "knowledge_base",
+                    "title": c.get("title"),
+                    "id": c.get("fault_id"),
+                    "score": c.get("score"),
+                }
+                for c in ranked_causes
+            ]
 
         return {
             "response": response,
@@ -297,9 +334,9 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
             "ranked_causes": ranked_causes,
             "knowledge_used": len(ranked_causes) > 0,
             "dtc_codes_found": dtc_codes,
-            "media_analyzed": len(file_contents) > 0
+            "media_analyzed": len(file_contents) > 0,
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -307,13 +344,13 @@ async def diesel_expert_chat(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post('/diesel-expert/analyze-media')
+@router.post("/diesel-expert/analyze-media")
 async def analyze_media(
     description: str = Form(None),
     vehicle_type: str = Form(None),
     vehicle_id: str = Form(None),
     vehicle_plate: str = Form(None),
-    media_file: UploadFile = File(...)
+    media_file: UploadFile = File(...),
 ):
     """تحليل صورة/فيديو/صوت للعطل باستخدام محرك نقاط + LLM (مع قيود حجم)."""
     try:
@@ -326,27 +363,27 @@ async def analyze_media(
         if media_file.size and media_file.size > max_bytes:
             raise HTTPException(
                 status_code=413,
-                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة."
+                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة.",
             )
 
         file_content = await media_file.read()
         if len(file_content) > max_bytes:
             raise HTTPException(
                 status_code=413,
-                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة."
+                detail="الملف أكبر من الحد المسموح به لتحليل الذكاء الاصطناعي (25MB). يمكنك تقصير المقطع أو ضغطه أو حفظه فقط في قاعدة المعرفة.",
             )
 
-        file_ext = media_file.filename.split('.')[-1].lower()
+        file_ext = media_file.filename.split(".")[-1].lower()
         b64 = base64.b64encode(file_content).decode()
 
         # Determine media type
-        if file_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
+        if file_ext in ["jpg", "jpeg", "png", "webp", "gif"]:
             media_type = "image"
             transcription_text = None
-        elif file_ext in ['mp4', 'mov', 'avi', 'webm']:
+        elif file_ext in ["mp4", "mov", "avi", "webm"]:
             media_type = "video"
             transcription_text = None
-        elif file_ext in ['mp3', 'wav', 'ogg', 'm4a']:
+        elif file_ext in ["mp3", "wav", "ogg", "m4a"]:
             media_type = "audio"
             # استخدام Whisper لتحويل الصوت إلى نص - TEMPORARILY DISABLED
             # stt = OpenAISpeechToText(api_key=api_key)
@@ -387,7 +424,9 @@ The deterministic engine has already produced ranked suspected causes based on l
 """
 
         if ranked_causes:
-            analysis_prompt += "\n\nRanked suspected causes (from deterministic engine):\n"
+            analysis_prompt += (
+                "\n\nRanked suspected causes (from deterministic engine):\n"
+            )
             for idx, c in enumerate(ranked_causes, 1):
                 analysis_prompt += f"{idx}. {c.get('title')} (score={c.get('score')}) - DTC: {', '.join(c.get('dtc_codes') or [])}\n"
                 if c.get("evidence_notes"):
@@ -399,14 +438,17 @@ The deterministic engine has already produced ranked suspected causes based on l
         chat = LlmChat(
             api_key=api_key,
             session_id=str(uuid.uuid4()),
-            system_message=DIESEL_EXPERT_SYSTEM_PROMPT
-        ).with_model("openai", "gpt-4o")  # Use GPT-4o for better vision/audio reasoning
+            system_message=DIESEL_EXPERT_SYSTEM_PROMPT,
+        ).with_model(
+            "openai", "gpt-4o"
+        )  # Use GPT-4o for better vision/audio reasoning
 
-        file_contents = [ImageContent(image_base64=b64)] if media_type in ["image", "video"] else []
+        file_contents = (
+            [ImageContent(image_base64=b64)] if media_type in ["image", "video"] else []
+        )
 
         user_message_obj = UserMessage(
-            text=analysis_prompt,
-            file_contents=file_contents if file_contents else None
+            text=analysis_prompt, file_contents=file_contents if file_contents else None
         )
 
         response = await chat.send_message(user_message_obj)
@@ -420,9 +462,9 @@ The deterministic engine has already produced ranked suspected causes based on l
             "dtc_codes_found": dtc_codes,
             "vehicle_id": vehicle_id,
             "vehicle_plate": vehicle_plate,
-            "suggestion": "يمكنك حفظ هذا العطل في قاعدة المعرفة وربطه بالمركبة للاستفادة منه في المستقبل"
+            "suggestion": "يمكنك حفظ هذا العطل في قاعدة المعرفة وربطه بالمركبة للاستفادة منه في المستقبل",
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -430,35 +472,47 @@ The deterministic engine has already produced ranked suspected causes based on l
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get('/diesel-expert/quick-search')
+@router.get("/diesel-expert/quick-search")
 async def quick_search(q: str, vehicle: str = None):
     """بحث سريع في قاعدة المعرفة"""
     try:
         dtc_codes = extract_dtc_codes(q)
         results = await search_fault_knowledge(q, dtc_codes[0] if dtc_codes else None)
-        
+
         return {
             "success": True,
-            "results": [{
-                'id': f.get('id'),
-                'title': f.get('title'),
-                'vehicle_type': f.get('vehicle_type'),
-                'symptom': str(f.get('symptom_description', ''))[:150],
-                'dtc_codes': f.get('dtc_codes') if isinstance(f.get('dtc_codes'), list) else [],
-                'difficulty': f.get('difficulty_level')
-            } for f in results],
+            "results": [
+                {
+                    "id": f.get("id"),
+                    "title": f.get("title"),
+                    "vehicle_type": f.get("vehicle_type"),
+                    "symptom": str(f.get("symptom_description", ""))[:150],
+                    "dtc_codes": (
+                        f.get("dtc_codes")
+                        if isinstance(f.get("dtc_codes"), list)
+                        else []
+                    ),
+                    "difficulty": f.get("difficulty_level"),
+                }
+                for f in results
+            ],
             "count": len(results),
-            "dtc_codes_found": dtc_codes
+            "dtc_codes_found": dtc_codes,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get('/diesel-expert/health')
+@router.get("/diesel-expert/health")
 async def health_check():
     return {
         "status": "ok",
         "llm_configured": bool(EMERGENT_LLM_KEY),
         "model": "gpt-4o-mini (chat) / gpt-4o (media analysis)",
-        "features": ["knowledge_base", "dtc_detection", "image_analysis", "video_analysis"]
+        "features": [
+            "knowledge_base",
+            "dtc_detection",
+            "image_analysis",
+            "video_analysis",
+        ],
     }

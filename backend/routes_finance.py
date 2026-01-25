@@ -143,11 +143,73 @@ async def get_income_statement(
     end_date: str = Query(...),
 ):
     """
-    قائمة الدخل من بيانات العمليات الحقيقية في Supabase
+    قائمة الدخل محسوبة من دليل الحسابات
     """
     try:
-        if not supabase:
-            raise Exception("Supabase not connected")
+        # جلب دليل الحسابات
+        coa_response = await get_chart_of_accounts(workshop_id)
+        
+        if not coa_response.get('success'):
+            raise Exception("Failed to get chart of accounts")
+        
+        accounts = coa_response.get('data', [])
+        
+        # حساب الإيرادات والمصروفات من الحسابات
+        total_revenue = 0
+        total_expenses = 0
+        revenue_accounts = {}
+        expense_accounts = {}
+        
+        for acc in accounts:
+            balance = float(acc.get('balance', 0))
+            acc_type = acc.get('type', '')
+            code = acc.get('code', '')
+            name = acc.get('name') or acc.get('name_ar', '')
+            
+            if acc_type == 'revenue' and balance != 0:
+                total_revenue += abs(balance)
+                revenue_accounts[code] = {
+                    "name": name,
+                    "amount": abs(balance)
+                }
+            
+            elif acc_type == 'expense' and balance != 0:
+                total_expenses += abs(balance)
+                expense_accounts[code] = {
+                    "name": name,
+                    "amount": abs(balance)
+                }
+        
+        net_income = total_revenue - total_expenses
+        
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "totals": {
+                    "revenue": round(total_revenue, 2),
+                    "expenses": round(total_expenses, 2),
+                    "net_income": round(net_income, 2),
+                },
+                "details": {
+                    "revenue_by_account": revenue_accounts,
+                    "expenses_by_account": expense_accounts,
+                },
+            },
+        }
+    
+    except Exception as e:
+        print(f"Income statement error: {e}")
+        return {
+            "success": False,
+            "message": f"خطأ في حساب قائمة الدخل: {str(e)}",
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "totals": {"revenue": 0, "expenses": 0, "net_income": 0},
+                "details": {"revenue_by_account": {}, "expenses_by_account": {}},
+            },
+        }
+
 
         # جلب جميع العمليات في الفترة الزمنية من Supabase
         response = (

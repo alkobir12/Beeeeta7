@@ -543,3 +543,5 @@ const AIFinancial = () => {
     </div>
   );
 };
+
+export default AIFinancial;

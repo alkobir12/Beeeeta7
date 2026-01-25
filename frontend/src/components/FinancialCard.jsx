@@ -103,7 +103,7 @@ const FinancialCard = ({
         {/* السطر الثاني: القيمة الرئيسية + اتجاه الحركة */}
         <div className="flex items-baseline justify-between gap-3 mb-1">
           <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl font-bold text-slate-50 tabular-nums">
+            <span className="financial-main-value text-xl sm:text-2xl font-extrabold tabular-nums">
               {mainValue}
             </span>
           </div>

@@ -521,9 +521,9 @@ const Dashboard = () => {
                   <div className="mb-4 space-y-3">
                     {/* رقم اللوحة بشكل واضح في المنتصف */}
                     <div className="flex justify-center">
-                      <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/85 text-slate-50 text-base sm:text-lg font-bold border border-slate-700 shadow-inner">
+                      <span className="vehicle-plate-pill inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/85 text-slate-50 text-base sm:text-lg font-bold border border-slate-700 shadow-inner">
                         <Car size={16} className="opacity-80" />
-                        <span className="font-mono tracking-[0.25em]">
+                        <span className="font-mono tracking-[0.35em] uppercase">
                           {vehicle.plateNumber || 'غير معروف'}
                         </span>
                       </span>
@@ -533,7 +533,7 @@ const Dashboard = () => {
                     <div className="flex flex-wrap items-center justify-center gap-2 text-center">
                       <div className="flex items-baseline gap-2 flex-wrap justify-center">
                         <span
-                          className="text-base sm:text-lg font-semibold tracking-tight"
+                          className="vehicle-title-main text-base sm:text-xl font-semibold tracking-tight"
                           style={{ color: vehicleText.primary }}
                         >
                           {vehicle.brand || ''} {vehicle.model || ''}

@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://ledgerlink-12.preview.emergentagent.com/api"
+BASE_URL = "https://finman-react.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

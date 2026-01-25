@@ -205,10 +205,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       <button
         key={index}
         onClick={() => handleNavigate(item.path)}
-        className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
+        className={`sidebar-item w-full rounded-2xl px-3 py-2 text-[0.9rem] flex items-center gap-3 transition-colors ${
+          isActive
+            ? 'bg-sky-500/10 text-sky-100'
+            : 'text-slate-300 hover:bg-slate-800/60 hover:text-slate-50'
+        }`}
       >
-        <Icon size={18} className={`icon ${isActive ? 'text-white' : 'text-gray-500'}`} />
-        <span>{item.label}</span>
+        <Icon
+          size={18}
+          className={isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-100'}
+        />
+        <span className="truncate">{item.label}</span>
       </button>
     );
   };

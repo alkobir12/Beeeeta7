@@ -243,9 +243,6 @@ const Dashboard = () => {
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
               </div>
-              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.in_workshop')}</span>
-              </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
@@ -290,10 +287,6 @@ const Dashboard = () => {
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
-                <Wrench size={14} className="text-sky-400" />
-                <span>{t('dashboard.under_repair') || 'قيد الإصلاح'}</span>
               </div>
             </div>
             <div className="dash-widget-main">
@@ -340,10 +333,6 @@ const Dashboard = () => {
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
-              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
-                <CheckCircle size={14} className="text-emerald-400" />
-                <span>{t('dashboard.can_deliver') || 'جاهزة للتسليم'}</span>
-              </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
@@ -388,10 +377,6 @@ const Dashboard = () => {
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
-                <Users size={14} className="text-purple-400" />
-                <span>{t('dashboard.active_now') || 'نشط الآن'}</span>
               </div>
             </div>
             <div className="dash-widget-main">

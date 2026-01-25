@@ -364,7 +364,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-xs sm:text-sm">
                       <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-[11px] font-medium">
-                        {t('vehicle_card.repair_entry') || 'قيد الإصلاح'}
+                        قيد الإصلاح
                       </span>
                       <span className="w-2 h-2 rounded-full bg-blue-500" />
                     </div>
@@ -407,7 +407,7 @@ const Dashboard = () => {
                         <Calendar size={16} />
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-400">{t('vehicle_card.entry_date') || 'الدخول'}</p>
+                        <p className="text-[11px] text-gray-400">الدخول</p>
                         <p className="font-semibold" style={{ color: styles.textPrimary }}>
                           {vehicle.entryDate || vehicle.createdAt
                             ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')

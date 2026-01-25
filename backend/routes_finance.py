@@ -1167,17 +1167,6 @@ async def update_journal_entry(
         print(f"Error in update_journal_entry: {str(e)}")
         return {
             "success": False,
-
-        return {
-            "success": True,
-            "message": "تم تحديث القيد المحاسبي بنجاح",
-            "data": response.data,
-        }
-
-    except Exception as e:
-        print(f"Error in update_journal_entry: {str(e)}")
-        return {
-            "success": False,
             "error": str(e),
             "message": "فشل في تحديث القيد المحاسبي",
         }

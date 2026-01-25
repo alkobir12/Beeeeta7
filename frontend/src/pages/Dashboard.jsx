@@ -376,8 +376,22 @@ const Dashboard = () => {
           {/* الفنيين */}
           <div
             className="dash-widget-shell"
-            style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}
-            onClick={() => navigate('/technicians')}
+            style={{ 
+              backgroundColor: styles.cardBg, 
+              border: `1px solid ${styles.cardBorder}`,
+              maxHeight: expandedStatWidget === 'technicians' ? '280px' : '150px',
+              transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
+              boxShadow: expandedStatWidget === 'technicians' 
+                ? '0 20px 50px rgba(0,0,0,0.15)' 
+                : '0 4px 12px rgba(0,0,0,0.05)'
+            }}
+            data-expanded={expandedStatWidget === 'technicians'}
+            onClick={() => {
+              setExpandedStatWidget(prev => prev === 'technicians' ? null : 'technicians');
+              navigate('/technicians');
+            }}
+            onMouseEnter={() => setExpandedStatWidget('technicians')}
+            onMouseLeave={() => setExpandedStatWidget(null)}
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">

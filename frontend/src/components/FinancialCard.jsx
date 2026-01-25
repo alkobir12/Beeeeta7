@@ -85,8 +85,8 @@ const FinancialCard = ({
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <p className="text-sm text-slate-400 mb-1">{subtitle}</p>
-            <h3 className="text-2xl font-bold text-slate-50">{title}</h3>
+            <p className="text-xs text-slate-400 mb-2 font-medium">{subtitle}</p>
+            <h3 className="text-3xl font-bold text-slate-50 leading-tight">{title}</h3>
           </div>
           <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-lg`}>
             <Icon size={24} className="text-white" />
@@ -95,13 +95,12 @@ const FinancialCard = ({
 
         {/* القيمة الرئيسية */}
         <div className="flex items-baseline gap-3 mb-3">
-          <span className="text-4xl font-extrabold text-slate-50">{value}</span>
           {trend && (
-            <div className={`flex items-center gap-1 text-sm ${
+            <div className={`flex items-center gap-1 text-sm font-semibold ${
               trend === 'up' ? 'text-emerald-400' : 'text-red-400'
             }`}>
               {trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              <span className="font-semibold">{trendValue}</span>
+              <span>{trendValue}</span>
             </div>
           )}
         </div>
@@ -113,11 +112,11 @@ const FinancialCard = ({
           <div className="bg-slate-950/60 rounded-2xl px-4 py-3 border border-slate-800/80 space-y-3">
             {details.map((detail, index) => (
               <div key={index} className="flex items-center justify-between text-sm">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-slate-300 flex items-center gap-2 font-medium">
                   {detail.icon && <detail.icon size={14} />}
                   {detail.label}
                 </span>
-                <span className={`font-semibold ${detail.valueColor || 'text-slate-100'}`}>
+                <span className={`font-bold text-base ${detail.valueColor || 'text-slate-100'}`}>
                   {detail.value}
                 </span>
               </div>

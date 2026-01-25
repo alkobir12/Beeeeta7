@@ -421,7 +421,7 @@ const Dashboard = () => {
                         <User size={16} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] text-gray-400">{t('vehicles_page.customer_name')}</p>
+                        <p className="text-[11px] text-gray-400">العميل</p>
                         <p className="font-semibold truncate" style={{ color: styles.textPrimary }}>
                           {vehicle.customerName || '-'}
                         </p>

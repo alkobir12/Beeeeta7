@@ -105,7 +105,7 @@ POST /api/operations                             - إنشاء عملية جدي�
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://finman-react.preview.emergentagent.com`
+- **API URL**: `https://card-ui-overhaul-1.preview.emergentagent.com`
 
 ---
 

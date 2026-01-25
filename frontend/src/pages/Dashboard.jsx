@@ -485,21 +485,8 @@ const Dashboard = () => {
                     if (e.target.closest('button') || e.target.closest('.navigate-btn')) {
                       return;
                     }
-                    // Toggle expansion on click
+                    // التوسيع/الطي يكون بالضغط فقط لتجنب التعليق
                     setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
-                  }}
-                  onMouseEnter={() => {
-                    setIsHovering(true);
-                    setExpandedVehicleId(vehicle.id);
-                  }}
-                  onMouseLeave={() => {
-                    setIsHovering(false);
-                    // Only collapse if not clicked
-                    setTimeout(() => {
-                      if (!isHovering) {
-                        setExpandedVehicleId(prev => prev === vehicle.id ? null : prev);
-                      }
-                    }, 100);
                   }}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}

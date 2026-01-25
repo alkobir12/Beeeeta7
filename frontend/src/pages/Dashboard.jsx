@@ -626,7 +626,12 @@ const Dashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/vehicle/${vehicle.id}`);
+                        }}
+                      >
                         <ArrowRight size={14} />
                       </div>
                     </div>

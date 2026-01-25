@@ -506,7 +506,7 @@ const Dashboard = () => {
                     overflow: 'hidden',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
-                  onClick={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : vehicle.id))}
+                  onClick={() => navigate(`/vehicle/${vehicle.id}`)}
                   onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
                   onMouseLeave={() => setExpandedVehicleId(null)}
                 >

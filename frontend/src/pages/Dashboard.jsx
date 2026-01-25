@@ -434,15 +434,18 @@ const Dashboard = () => {
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}
-                  className="relative rounded-[32px] p-4 sm:p-5 cursor-pointer transition-all group overflow-hidden"
+                  className="dash-widget-shell"
                   style={{
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
                     boxShadow: isBlueCardTheme
                       ? '0 24px 70px rgba(15,23,42,0.75)'
-                      : '0 18px 45px rgba(15, 23, 42, 0.6)'
+                      : '0 18px 45px rgba(15, 23, 42, 0.6)',
+                    maxHeight: expandedVehicleId === vehicle.id ? 420 : 260,
+                    transition: 'max-height 0.35s ease, box-shadow 0.35s ease',
                   }}
-                  onClick={() => navigate(`/vehicle/${vehicle.id}`)}
+                  data-expanded={expandedVehicleId === vehicle.id}
+                  onClick={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : vehicle.id))}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}
                   <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">

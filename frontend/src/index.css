@@ -157,12 +157,14 @@ body[data-theme="dark"] .financial-main-value {
 }
 
 .vehicle-title-main {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  color: #f9fafb !important; /* أبيض صافي */
+  text-shadow: 0 0 10px rgba(15, 23, 42, 0.9);
 }
 
 @media (min-width: 768px) {
   .vehicle-title-main {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
   }
 }
 

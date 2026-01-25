@@ -471,9 +471,9 @@ const Dashboard = () => {
                     boxShadow: expandedVehicleId === vehicle.id
                       ? '0 32px 100px rgba(15,23,42,0.9), 0 0 0 1px rgba(59,130,246,0.3)'
                       : (isBlueCardTheme ? '0 24px 70px rgba(15,23,42,0.75)' : '0 18px 45px rgba(15, 23, 42, 0.6)'),
-                    height: expandedVehicleId === vehicle.id ? 'auto' : '240px',
-                    minHeight: '240px',
-                    maxHeight: expandedVehicleId === vehicle.id ? 'none' : '240px',
+                    height: expandedVehicleId === vehicle.id ? 'auto' : '260px',
+                    minHeight: '260px',
+                    maxHeight: expandedVehicleId === vehicle.id ? 'none' : '260px',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: expandedVehicleId === vehicle.id ? 'scale(1.02)' : 'scale(1)',
                     overflow: 'hidden',
@@ -518,34 +518,42 @@ const Dashboard = () => {
                   </div>
 
                   {/* العنوان الرئيسي + البادجات */}
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <h3
-                      className="text-base sm:text-lg font-bold tracking-tight"
+                      className="text-lg sm:text-xl font-bold tracking-tight"
                       style={{ color: vehicleText.primary }}
                     >
-                      {vehicle.brand} {vehicle.model} {vehicle.year || ''}
+                      {vehicle.brand} {vehicle.model}
                     </h3>
-                    {isUrgent && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-red-500 text-[11px] font-semibold">
-                        عاجل
+                    {vehicle.year && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-800/60 text-slate-200 text-xs font-semibold">
+                        {vehicle.year}
                       </span>
                     )}
-                    <span className="px-3 py-1 rounded-full bg-gray-900 text-white text-[11px] font-semibold flex items-center gap-1">
-                      <span className="font-mono text-xs tracking-[0.18em]">
-                        {vehicle.plateNumber}
+                    {isUrgent && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30">
+                        ⚡ عاجل
                       </span>
+                    )}
+                  </div>
+                  
+                  {/* رقم اللوحة */}
+                  <div className="mb-4">
+                    <span className="px-3 py-1.5 rounded-full bg-slate-900/80 text-white text-sm font-bold inline-flex items-center gap-2 border border-slate-700">
+                      <Car size={14} />
+                      <span className="font-mono tracking-wider">{vehicle.plateNumber}</span>
                     </span>
                   </div>
 
                   {/* صف الدخول / العميل - المنطقة الأساسية */}
-                  <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <Calendar size={14} />
+                      <div className="w-8 h-8 rounded-full bg-slate-800/60 flex items-center justify-center">
+                        <Calendar size={15} className="text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-[10px]" style={{ color: vehicleText.muted }}>الدخول</p>
-                        <p className="font-semibold text-xs" style={{ color: vehicleText.primary }}>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">تاريخ الدخول</p>
+                        <p className="font-bold text-sm" style={{ color: vehicleText.primary }}>
                           {vehicle.entryDate || vehicle.createdAt
                             ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')
                             : '-'}
@@ -553,28 +561,28 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <User size={14} />
+                      <div className="w-8 h-8 rounded-full bg-slate-800/60 flex items-center justify-center">
+                        <User size={15} className="text-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px]" style={{ color: vehicleText.muted }}>العميل</p>
-                        <p className="font-semibold text-xs truncate" style={{ color: vehicleText.primary }}>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">العميل</p>
+                        <p className="font-bold text-sm truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* شريط نسبة الإنجاز - يمكن اعتباره جزء من التوسّع */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px]" style={{ color: vehicleText.muted }}>نسبة الإنجاز</span>
-                        <Clock size={11} className="text-sky-300" />
+                  {/* شريط نسبة الإنجاز */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-sky-400" />
+                        <span className="text-xs text-slate-300 font-medium">نسبة الإنجاز</span>
                       </div>
-                      <span className="font-semibold text-xs text-sky-100">{progress}%</span>
+                      <span className="font-bold text-base text-sky-100">{progress}%</span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-900/40 overflow-hidden">
+                    <div className="w-full h-2.5 rounded-full bg-slate-900/40 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-l from-blue-500 to-indigo-500 transition-all duration-500"
                         style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
@@ -582,60 +590,58 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* الشريط السفلي: المسؤول + تفاصيل إضافية عند التوسّع */}
-                  <div
-                    className="mt-2 flex flex-col gap-2"
-                  >
+                  {/* الشريط السفلي: المسؤول */}
+                  <div className="mt-2 flex flex-col gap-2">
                     <div
-                      className="flex items-center justify-between rounded-[20px] px-3 py-2"
+                      className="flex items-center justify-between rounded-[20px] px-4 py-2.5"
                       style={{
-                        backgroundColor: isBlueCardTheme ? '#020617' : '#020617',
-                        color: '#f9fafb',
+                        backgroundColor: '#020617',
+                        border: '1px solid rgba(100,116,139,0.2)'
                       }}
                     >
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center">
-                          <Wrench size={13} />
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                          <Wrench size={15} className="text-white" />
                         </div>
                         <div>
-                          <p className="text-[9px] text-gray-300 mb-0">المسؤول</p>
-                          <p className="font-semibold text-xs">
-                            {vehicle.technicianName || vehicle.technician || 'م. سامي'}
+                          <p className="text-xs text-slate-400 mb-0.5">الفني المسؤول</p>
+                          <p className="font-bold text-sm text-slate-100">
+                            {vehicle.technicianName || vehicle.technician || 'غير محدد'}
                           </p>
                         </div>
                       </div>
-                      <div className="navigate-btn flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-blue-500/80 transition-colors cursor-pointer"
+                      <div className="navigate-btn flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all cursor-pointer border border-blue-500/30"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/vehicle/${vehicle.id}`);
                         }}
                         title="فتح تفاصيل المركبة"
                       >
-                        <ArrowRight size={14} />
+                        <ArrowRight size={16} />
                       </div>
                     </div>
 
                     {/* جزء إضافي يظهر عند التوسّع */}
                     {expandedVehicleId === vehicle.id && (
-                      <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-950/60 rounded-2xl px-3 py-2 border border-slate-800/80 mt-2 overflow-hidden">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-slate-400">رقم الهيكل (VIN)</span>
-                          <span className="font-mono text-slate-100 text-[10px] truncate">{vehicle.vin || '-'}</span>
+                      <div className="grid grid-cols-2 gap-3 bg-slate-950/60 rounded-2xl px-4 py-3 border border-slate-800/80 mt-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-400 font-medium">رقم الهيكل (VIN)</span>
+                          <span className="font-mono text-slate-100 text-sm font-semibold truncate">{vehicle.vin || 'غير محدد'}</span>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-slate-400">عدد الزيارات</span>
-                          <span className="font-semibold text-slate-100 text-[10px]">{vehicle.visitsCount || 0}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-400 font-medium">عدد الزيارات</span>
+                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} زيارة</span>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-slate-400">آخر تحديث</span>
-                          <span className="text-slate-100 text-[10px]">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-400 font-medium">آخر تحديث</span>
+                          <span className="text-slate-100 text-sm font-semibold">
                             {vehicle.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString('ar-SA') : '-'}
                           </span>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-slate-400">التكلفة التقديرية</span>
-                          <span className="text-emerald-300 text-[10px]">
-                            {vehicle.estimatedTotal ? vehicle.estimatedTotal.toLocaleString('ar-SA') + ' ر.س' : '-'}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-400 font-medium">التكلفة التقديرية</span>
+                          <span className="text-emerald-400 text-sm font-bold">
+                            {vehicle.estimatedTotal ? vehicle.estimatedTotal.toLocaleString('ar-SA') + ' ر.س' : '0 ر.س'}
                           </span>
                         </div>
                       </div>

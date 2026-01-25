@@ -446,6 +446,8 @@ const Dashboard = () => {
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
                   onClick={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : vehicle.id))}
+                  onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
+                  onMouseLeave={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : prev))}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}
                   <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">
@@ -573,10 +575,12 @@ const Dashboard = () => {
                         e.stopPropagation();
                         navigate(`/vehicle/${vehicle.id}`);
                       }}
-                      className="mt-1 inline-flex items-center justify-center gap-1 rounded-full px-3 py-1 text-[11px] bg-white/5 text-slate-100 hover:bg-white/10 transition-colors self-start"
+                      className="mt-1 inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] bg-white/5 text-slate-100 hover:bg-white/10 transition-colors self-start"
                     >
-                      <span>فتح التفاصيل</span>
-                      <ArrowRight size={12} />
+                      <span className="inline-flex items-center gap-1">
+                        <ArrowRight size={12} />
+                        <span>فتح</span>
+                      </span>
                     </button>
 
                     {/* جزء إضافي يظهر عند التوسّع */}

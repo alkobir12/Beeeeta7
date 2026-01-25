@@ -398,8 +398,8 @@ const Dashboard = () => {
                   {/* العنوان الرئيسي + البادجات */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     <h3
-                      className="text-lg sm:text-xl font-extrabold tracking-tight text-gray-900"
-                      style={{ color: styles.textPrimary }}
+                      className="text-[1.35rem] sm:text-[1.5rem] font-extrabold tracking-tight"
+                      style={{ color: vehicleText.primary }}
                     >
                       {vehicle.brand} {vehicle.model} {vehicle.year || ''}
                     </h3>

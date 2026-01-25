@@ -630,20 +630,6 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    {/* زر فتح صفحة تفاصيل المركبة */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/vehicle/${vehicle.id}`);
-                      }}
-                      className="mt-1 inline-flex items-center justify-center rounded-full px-3 py-1 text-[10px] bg-white/5 text-slate-100 hover:bg-white/10 transition-colors self-start"
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        <ArrowRight size={11} />
-                        <span>فتح</span>
-                      </span>
-                    </button>
-
                     {/* جزء إضافي يظهر عند التوسّع */}
                     {expandedVehicleId === vehicle.id && (
                       <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-950/60 rounded-2xl px-3 py-2 border border-slate-800/80 mt-2 overflow-hidden">

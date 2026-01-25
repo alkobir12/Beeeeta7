@@ -1685,6 +1685,188 @@ The request to test transaction_type support revealed that the backend is ready 
 
 ---
 
+## Journal Entries Transaction Type Re-Testing (2026-01-25)
+
+### Test Objective:
+إعادة اختبار حقل transaction_type في جدول journal_entries بعد إضافة العمود في Supabase
+Re-testing transaction_type field in journal_entries table after adding the column in Supabase
+
+### Test Environment:
+- Backend APIs: `/api/finance/journal-entries` (GET, POST, PUT)
+- Testing Date: 2026-01-25 21:55:56
+- Backend URL: https://carshopfinance.preview.emergentagent.com/api
+- Database: Supabase
+- Workshop ID: finmodule-sync
+
+### Test Results Summary: ❌ DATABASE SCHEMA ISSUE CONFIRMED (2/4 TESTS PASSED)
+
+#### ✅ WORKING FEATURES (2/4)
+
+**1. ✅ Journal Entry Creation API - WORKING**
+- **Status**: ✅ WORKING (200 OK)
+- **POST**: `/api/finance/journal-entries?workshop_id=finmodule-sync`
+- **Test Data**: 
+  ```json
+  {
+    "date": "2026-01-25",
+    "description": "اختبار قيد شراء يدوي بعد إضافة العمود",
+    "transaction_type": "purchase",
+    "lines": [
+      {"account": "514", "account_name": "مصروفات قطع غيار", "debit": 500, "credit": 0},
+      {"account": "101", "account_name": "النقدية", "debit": 0, "credit": 500}
+    ],
+    "total": 500
+  }
+  ```
+- **Result**: Entry created successfully with ID: c1e3f5e3-3dbe-4933-aa37-b485b915a044
+- **Backend Response**: Success=True
+
+**2. ✅ Journal Entry Update API - WORKING**
+- **Status**: ✅ WORKING (200 OK)
+- **PUT**: `/api/finance/journal-entries/{id}?workshop_id=finmodule-sync`
+- **Update Data**:
+  ```json
+  {
+    "date": "2026-01-26",
+    "description": "تعديل نوع الحركة إلى بيع",
+    "transaction_type": "sale",
+    "lines": [
+      {"account": "411", "account_name": "إيرادات خدمات الصيانة", "debit": 0, "credit": 800},
+      {"account": "113", "account_name": "ذمم مدينة عملاء", "debit": 800, "credit": 0}
+    ],
+    "total": 800
+  }
+  ```
+- **Result**: Update accepted successfully
+- **Backend Response**: Success=True
+
+#### ❌ CRITICAL ISSUES: DATABASE SCHEMA MISSING COLUMNS (2/4)
+
+**1. ❌ Transaction Type Field Storage - NOT WORKING**
+- **Problem**: Supabase `journal_entries` table missing `transaction_type` column
+- **Evidence**: Retrieved entry shows `"transaction_type": null` instead of "purchase"
+- **Expected**: `"transaction_type": "purchase"`, `"source": "manual"`
+- **Actual**: `"transaction_type": null`, `"source": "manual"`
+- **Backend Log**: "Could not find the 'transaction_type' column of 'journal_entries' in the schema cache"
+
+**2. ❌ Transaction Type Field Updates - NOT WORKING**
+- **Problem**: Updates to transaction_type are not persisted in database
+- **Evidence**: After update, entry still shows `"transaction_type": null` instead of "sale"
+- **Expected**: `"transaction_type": "sale"`
+- **Actual**: `"transaction_type": null`
+- **Backend Log**: "Schema error with transaction_type, trying without"
+
+#### 🔧 TECHNICAL DIAGNOSIS
+
+**Backend Implementation**: ✅ **FULLY READY**
+- Code correctly handles transaction_type field in requests
+- Graceful error handling for missing database columns
+- Fallback mechanism prevents system crashes
+- API endpoints respond correctly with success=true
+- Error messages clearly indicate schema issues
+
+**Database Schema**: ❌ **MISSING REQUIRED COLUMN**
+- Supabase `journal_entries` table lacks `transaction_type` column
+- Backend attempts to insert/update with transaction_type field
+- Supabase returns schema error: "Could not find the 'transaction_type' column"
+- Backend falls back to basic fields without transaction_type
+- All other fields (id, date, description, lines, total, source) work correctly
+
+**Error Handling Flow**:
+1. Backend tries to insert with transaction_type ❌
+2. Supabase returns schema error ⚠️
+3. Backend catches error and retries without transaction_type ✅
+4. Entry is saved successfully but without transaction_type ⚠️
+5. API returns success=true (misleading for transaction_type functionality) ❌
+
+#### 💡 ROOT CAUSE ANALYSIS
+
+**Issue**: The `transaction_type` column does not exist in the Supabase `journal_entries` table schema.
+
+**Evidence from Backend Logs**:
+```
+Error in create_journal_entry: Could not find the 'transaction_type' column of 'journal_entries' in the schema cache
+Schema error with transaction_type, trying without: Could not find the 'transaction_type' column of 'journal_entries' in the schema cache
+```
+
+**Current Table Schema** (Working columns):
+- ✅ id, workshop_id, date, description, lines, total, created_at, updated_at, source
+
+**Missing Column**:
+- ❌ transaction_type
+
+#### 🎯 SOLUTION REQUIRED
+
+**CRITICAL ACTION: Add Missing Database Column**
+
+The Supabase `journal_entries` table needs the `transaction_type` column added:
+
+```sql
+-- Add transaction_type column to journal_entries table
+ALTER TABLE public.journal_entries 
+ADD COLUMN transaction_type VARCHAR(50);
+
+-- Optional: Set default value for existing records
+UPDATE public.journal_entries 
+SET transaction_type = 'manual' 
+WHERE source = 'manual' AND transaction_type IS NULL;
+
+-- Optional: Add index for better query performance
+CREATE INDEX idx_journal_entries_transaction_type 
+ON public.journal_entries(transaction_type);
+```
+
+**Expected Values**:
+- "purchase" - for purchase transactions
+- "sale" - for sales transactions  
+- "expense" - for expense transactions
+- "other" - for other transaction types
+- "manual" - for manually created entries
+
+#### 📊 DETAILED TEST EXECUTION
+
+**Test Procedure Executed:**
+1. ✅ Created manual journal entry with transaction_type: "purchase"
+2. ✅ Retrieved journal entries and found the created entry
+3. ❌ Verified transaction_type field - Expected: "purchase", Got: null
+4. ✅ Updated journal entry to change transaction_type to "sale"  
+5. ❌ Verified updated transaction_type - Expected: "sale", Got: null
+
+**API Response Analysis**:
+- GET `/api/finance/journal-entries` returns response with `data` array (not `entries`)
+- All entries show `"transaction_type": null` regardless of input
+- Source field works correctly: `"source": "manual"` for manual entries
+- All other fields (date, description, lines, total) work perfectly
+
+#### 🎉 CONCLUSION
+
+**Status: ❌ DATABASE SCHEMA UPDATE REQUIRED**
+
+**Summary**: 
+The journal entries transaction_type functionality is **50% complete**:
+
+- ✅ **Backend Code**: Fully implemented and ready
+- ✅ **API Endpoints**: Working correctly with proper error handling
+- ✅ **Data Validation**: Request/response handling works
+- ✅ **Graceful Degradation**: System continues to function without crashes
+- ❌ **Database Schema**: Missing transaction_type column prevents storage
+- ❌ **Feature Functionality**: Cannot store or retrieve transaction_type values
+
+**User Request Status**: 
+The request to test transaction_type field after "adding the column in Supabase" revealed that **the column has NOT been added yet**. The backend is ready and will work immediately once the database schema is updated.
+
+**Next Action Required**: 
+Execute the SQL ALTER TABLE command to add the `transaction_type` column to the Supabase `journal_entries` table. Once this is done, all tests will pass and the feature will be fully functional.
+
+**Testing Recommendation**:
+After adding the database column, re-run this test to verify that:
+1. ✅ transaction_type values are stored correctly
+2. ✅ transaction_type values are retrieved correctly  
+3. ✅ transaction_type values can be updated successfully
+4. ✅ All CRUD operations work with the new field
+
+---
+
 ## Dashboard Vehicle Card Redesign Testing (2026-01-25)
 
 ### Test Objective:

@@ -447,8 +447,8 @@ const Dashboard = () => {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2 text-xs">
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-500">نسبة الإنجاز</span>
-                        <Clock size={12} className="text-gray-400" />
+                        <span className="text-[11px]" style={{ color: vehicleText.muted }}>نسبة الإنجاز</span>
+                        <Clock size={12} className="text-sky-300" />
                       </div>
                       <span className="font-semibold text-blue-600">{progress}%</span>
                     </div>

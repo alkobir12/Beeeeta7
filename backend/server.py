@@ -592,8 +592,12 @@ async def save_vehicle_parts_and_create_journal(
             except Exception as e:
                 print(f"Failed to save journal entry to Supabase: {e}")
         
-        if finance_db:
-            await finance_db.journal_entries.insert_one(journal_entry)
+        # حفظ في MongoDB إذا كان متاحاً
+        if db:
+            try:
+                await db.journal_entries.insert_one(journal_entry)
+            except Exception as e:
+                print(f"Failed to save journal entry to MongoDB: {e}")
         
         # 4. إنشاء فاتورة مفتوحة أو تحديث الموجودة
         invoice_id = None

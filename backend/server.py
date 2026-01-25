@@ -446,10 +446,23 @@ async def get_vehicles():
         .limit(200)
         .to_list(200)
     )
-    # Ensure status has a default value if None
+    # Ensure status has a default value if None and calculate estimatedTotal
     for v in vehicles:
         if v.get("status") is None:
             v["status"] = "diagnosis"
+        
+        # Calculate estimatedTotal from parts/services
+        estimated_total = 0
+        if v.get("parts") and isinstance(v.get("parts"), list):
+            for part in v["parts"]:
+                if isinstance(part, dict):
+                    # Sum up price * quantity for each part
+                    price = part.get("price", 0) or 0
+                    quantity = part.get("quantity", 1) or 1
+                    estimated_total += price * quantity
+        
+        v["estimatedTotal"] = estimated_total
+    
     return [Vehicle(**v) for v in vehicles]
 
 

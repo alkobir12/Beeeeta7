@@ -450,9 +450,9 @@ const Dashboard = () => {
                         <span className="text-[11px]" style={{ color: vehicleText.muted }}>نسبة الإنجاز</span>
                         <Clock size={12} className="text-sky-300" />
                       </div>
-                      <span className="font-semibold text-blue-600">{progress}%</span>
+                      <span className="font-semibold text-[0.9rem] text-sky-100">{progress}%</span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-900/40 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-l from-blue-500 to-indigo-500 transition-all duration-500"
                         style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}

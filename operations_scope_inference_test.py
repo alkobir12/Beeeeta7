@@ -61,10 +61,35 @@ def test_operations_scope_inference():
     print(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
     
+    # Setup: Create a test vehicle first
+    print("\n[Setup] Creating test vehicle for operations testing")
+    test_vehicle = {
+        "plateNumber": "TEST-OP-001",
+        "brand": "تويوتا",
+        "model": "كامري",
+        "year": 2020,
+        "color": "أبيض",
+        "customerName": "عميل اختبار العمليات",
+        "customerPhone": "0501234567",
+        "customerEmail": "test@example.com",
+        "status": "diagnosis"
+    }
+    
+    created_vehicle_id = None
+    try:
+        response = requests.post(f"{BACKEND_URL}/vehicles", json=test_vehicle, timeout=15)
+        if response.status_code == 200:
+            created_vehicle_id = response.json().get('id')
+            print(f"   ✓ Created test vehicle: {created_vehicle_id}")
+        else:
+            print(f"   ⚠ Failed to create test vehicle: {response.status_code}")
+    except Exception as e:
+        print(f"   ⚠ Error creating test vehicle: {str(e)}")
+    
     # Test 1: Create vehicle operation (with vehicleId, scope should be inferred as "vehicle")
     print("\n[1] Testing POST /api/operations (Vehicle Operation - scope inferred)")
     vehicle_operation = {
-        "vehicleId": None,  # Test with null vehicleId to see scope inference
+        "vehicleId": created_vehicle_id,
         "type": "purchase",
         "partnerType": "supplier",
         "partnerName": "مورد اختبار المركبة",

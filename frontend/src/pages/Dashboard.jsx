@@ -504,16 +504,9 @@ const Dashboard = () => {
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: expandedVehicleId === vehicle.id ? 'scale(1.02)' : 'scale(1)',
                     overflow: 'hidden',
-                    cursor: 'pointer',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
-                  onClick={(e) => {
-                    // Only navigate if not clicking on the menu button
-                    if (!e.target.closest('button')) {
-                      console.log('Navigating to vehicle:', vehicle.id);
-                      navigate(`/vehicle/${vehicle.id}`);
-                    }
-                  }}
+                  onClick={() => setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id)}
                   onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
                   onMouseLeave={() => setExpandedVehicleId(null)}
                 >
@@ -632,11 +625,12 @@ const Dashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-blue-500/80 transition-colors cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/vehicle/${vehicle.id}`);
                         }}
+                        title="فتح تفاصيل المركبة"
                       >
                         <ArrowRight size={14} />
                       </div>

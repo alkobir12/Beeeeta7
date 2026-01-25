@@ -28,6 +28,8 @@ const Operations = () => {
     accountId: '', 
     vehicleId: '',
     visitId: '',
+    // scope: يحدد هل العملية مرتبطة بمركبة أم عملية عامة للورشة
+    scope: 'vehicle', // 'vehicle' | 'workshop'
     type: 'purchase', 
     partnerType: 'supplier', 
     partnerName: '', 

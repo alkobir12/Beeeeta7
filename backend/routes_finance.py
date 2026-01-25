@@ -1070,14 +1070,11 @@ async def get_financial_operations(
 async def update_journal_entry(
     entry_id: str, entry: dict, workshop_id: str = Query(...)
 ):
-    """
-    تعديل قيد محاسبي يدوي في Supabase
-    """
+    """تعديل قيد محاسبي يدوي في Supabase مع إمكانية تعديل نوع الحركة."""
     try:
         if not supabase:
             raise Exception("Supabase not connected")
 
-        # التحقق من وجود القيد وأنه يدوي
         existing = (
             supabase.table("journal_entries")
             .select("*")
@@ -1093,16 +1090,15 @@ async def update_journal_entry(
                 "message": "لم يتم العثور على القيد المطلوب",
             }
 
-        # تحديث البيانات
         update_data = {
             "date": entry.get("date"),
             "description": entry.get("description", ""),
             "lines": entry.get("lines", []),
             "total": entry.get("total", 0),
+            "transaction_type": entry.get("transaction_type"),
             "updated_at": datetime.now().isoformat(),
         }
 
-        # حذف القيم الفارغة
         update_data = {k: v for k, v in update_data.items() if v is not None}
 
         response = (

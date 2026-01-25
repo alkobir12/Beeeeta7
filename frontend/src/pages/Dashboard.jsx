@@ -523,8 +523,8 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* شريط نسبة الإنجاز */}
-                  <div className="mb-4">
+                  {/* شريط نسبة الإنجاز - يمكن اعتباره جزء من التوسّع */}
+                  <div className="mb-3">
                     <div className="flex items-center justify-between mb-2 text-xs">
                       <div className="flex items-center gap-1">
                         <span className="text-[11px]" style={{ color: vehicleText.muted }}>نسبة الإنجاز</span>

@@ -1,22 +1,14 @@
 /* eslint-disable */
 
 import React, { useEffect, useState } from 'react';
-import {
-  Banknote,
-  Download,
-  RefreshCw,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  TrendingUp,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Banknote, Download, RefreshCw, Calendar, ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import { financeAPI } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import FinancialCard from '../components/FinancialCard';
+import { useTheme } from '../contexts/ThemeContext';
 
 const CashFlow = () => {
+  const { themeName } = useTheme();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,7 +28,6 @@ const CashFlow = () => {
       return;
     }
     fetchData();
-    // eslint disabled
   }, [startDate, endDate, workshopId]);
 
   const fetchData = async () => {
@@ -60,7 +51,6 @@ const CashFlow = () => {
     }
   };
 
-  const period = report?.period || `${startDate} إلى ${endDate}`;
   const operating = report?.operating_activities || {};
   const investing = report?.investing_activities || {};
   const financing = report?.financing_activities || {};
@@ -76,290 +66,146 @@ const CashFlow = () => {
     return (
       <div className="flex flex-col items-center justify-center h-96" dir="rtl">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-        <p className="text-lg text-gray-600">جاري تحميل قائمة التدفقات النقدية...</p>
-        <p className="text-sm text-gray-500">قد يستغرق هذا بضع لحظات</p>
+        <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>جاري تحميل قائمة التدفقات النقدية...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6" dir="rtl" data-testid="cash-flow-page">
+    <div className="container mx-auto p-6 max-w-7xl" dir="rtl" style={{
+      backgroundColor: 'var(--bg-primary)',
+      minHeight: '100vh'
+    }}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <Banknote className="text-green-600" />
             قائمة التدفقات النقدية
           </h1>
-          <p className="text-gray-600 mt-1">
-            تتبع حركة النقد الداخل والخارج عن الفترة من {new Date(startDate).toLocaleDateString('ar-SA')} إلى{' '}
-            {new Date(endDate).toLocaleDateString('ar-SA')}
+          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
+            من {formatDate(startDate)} إلى {formatDate(endDate)}
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-200">
-            <Calendar size={18} className="text-gray-500" />
+          <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-color)'
+          }}>
+            <Calendar size={18} style={{ color: 'var(--text-secondary)' }} />
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="bg-transparent text-gray-800 border-0 outline-none text-sm"
+              className="bg-transparent border-0 outline-none text-sm w-32"
+              style={{ color: 'var(--text-primary)' }}
             />
-            <span className="text-gray-400">-</span>
+            <span style={{ color: 'var(--text-secondary)' }}>-</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="bg-transparent text-gray-800 border-0 outline-none text-sm"
+              className="bg-transparent border-0 outline-none text-sm w-32"
+              style={{ color: 'var(--text-primary)' }}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchData}
-              className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center gap-1 text-sm text-gray-700"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              ) : (
-                <RefreshCw size={18} className="text-gray-500" />
-              )}
-              <span>تحديث</span>
-            </button>
-            <button className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-              <Download size={18} className="text-gray-500" />
-            </button>
-          </div>
+          <button
+            onClick={fetchData}
+            className="p-2 rounded-lg transition-colors flex items-center gap-1 text-sm"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin text-blue-600" /> : <RefreshCw size={18} />}
+            <span>تحديث</span>
+          </button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-sm"
+          style={{
+            backgroundColor: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            color: '#ef4444'
+          }}
+        >
           <AlertCircle className="h-4 w-4 mt-0.5" />
           <p>{error}</p>
         </div>
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-green-200 rounded-xl">
-              <TrendingUp className="text-green-700" size={24} />
-            </div>
-            <span className="text-base font-bold text-green-900">صافي التدفق من التشغيل</span>
-          </div>
-          <div className="text-3xl font-black text-green-950">{formatCurrency(netOperatingCash)}</div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <FinancialCard
+          title={formatCurrency(netOperatingCash)}
+          subtitle="الأنشطة التشغيلية"
+          icon={Wallet}
+          trend={netOperatingCash >= 0 ? 'up' : 'down'}
+          trendValue={netOperatingCash >= 0 ? 'تدفق نقدي داخل' : 'تدفق نقدي خارج'}
+          variant={netOperatingCash >= 0 ? 'success' : 'danger'}
+          details={[
+            { label: 'النقد من العملاء', value: formatCurrency(operating.cash_from_customers || 0) },
+            { label: 'النقد للموردين', value: formatCurrency(operating.cash_to_suppliers || 0), valueColor: 'text-red-400' },
+            { label: 'النقد للرواتب', value: formatCurrency(operating.cash_for_salaries || 0), valueColor: 'text-red-400' }
+          ]}
+        />
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-blue-200 rounded-xl">
-              <ArrowDownRight className="text-blue-700" size={24} />
-            </div>
-            <span className="text-base font-bold text-blue-900">صافي التدفق من الاستثمار</span>
-          </div>
-          <div className="text-3xl font-black text-blue-950">{formatCurrency(netInvestingCash)}</div>
-        </div>
+        <FinancialCard
+          title={formatCurrency(netInvestingCash)}
+          subtitle="الأنشطة الاستثمارية"
+          icon={TrendingUp}
+          trend={netInvestingCash >= 0 ? 'up' : 'down'}
+          variant="default"
+          details={[
+            { label: 'شراء معدات', value: formatCurrency(investing.equipment_purchases || 0), valueColor: 'text-red-400' },
+            { label: 'بيع أصول', value: formatCurrency(investing.asset_sales || 0), valueColor: 'text-emerald-400' }
+          ]}
+        />
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-purple-200 rounded-xl">
-              <Wallet className="text-purple-700" size={24} />
-            </div>
-            <span className="text-base font-bold text-purple-900">صافي التدفق من التمويل</span>
-          </div>
-          <div className="text-3xl font-black text-purple-950">{formatCurrency(netFinancingCash)}</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet className="text-gray-500" size={20} />
-            <span className="text-sm text-gray-500">صافي التدفق من التشغيل</span>
-          </div>
-          <p
-            className={`text-2xl font-bold ${
-              netOperatingCash >= 0 ? 'text-green-700' : 'text-red-700'
-            }`}
-          >
-            {formatCurrency(netOperatingCash)}
-          </p>
-        </div>
+        <FinancialCard
+          title={formatCurrency(netFinancingCash)}
+          subtitle="الأنشطة التمويلية"
+          icon={Banknote}
+          trend={netFinancingCash >= 0 ? 'up' : 'down'}
+          variant="warning"
+          details={[
+            { label: 'قروض جديدة', value: formatCurrency(financing.new_loans || 0), valueColor: 'text-emerald-400' },
+            { label: 'سداد قروض', value: formatCurrency(financing.loan_payments || 0), valueColor: 'text-red-400' }
+          ]}
+        />
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="text-purple-500" size={20} />
-            <span className="text-sm text-gray-500">صافي التدفق من الاستثمار</span>
-          </div>
-          <p
-            className={`text-2xl font-bold ${
-              netInvestingCash >= 0 ? 'text-green-700' : 'text-red-700'
-            }`}
-          >
-            {formatCurrency(netInvestingCash)}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="text-blue-500" size={20} />
-            <span className="text-sm text-gray-500">صافي التدفق من التمويل</span>
-          </div>
-          <p
-            className={`text-2xl font-bold ${
-              netFinancingCash >= 0 ? 'text-green-700' : 'text-red-700'
-            }`}
-          >
-            {formatCurrency(netFinancingCash)}
-          </p>
-        </div>
+        <FinancialCard
+          title={formatCurrency(endingCash)}
+          subtitle="رصيد النقد النهائي"
+          icon={Wallet}
+          variant="success"
+          details={[
+            { label: 'رصيد البداية', value: formatCurrency(beginningCash) },
+            { label: 'صافي التغير', value: formatCurrency(netChangeInCash), valueColor: netChangeInCash >= 0 ? 'text-emerald-400' : 'text-red-400' },
+            { label: 'رصيد النهاية', value: formatCurrency(endingCash), valueColor: 'text-emerald-400' }
+          ]}
+        />
       </div>
 
-      {/* Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {renderActivitySection('الأنشطة التشغيلية', operating, 'bg-blue-50', 'text-blue-600')}
-        {renderActivitySection('الأنشطة الاستثمارية', investing, 'bg-purple-50', 'text-purple-600')}
-        {renderActivitySection('الأنشطة التمويلية', financing, 'bg-orange-50', 'text-orange-600')}
-      </div>
-
-      {/* Summary */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4 shadow-sm">
-        <h3 className="font-bold text-gray-800 text-lg mb-2">ملخص التدفقات النقدية</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">صافي التدفق من الأنشطة التشغيلية</span>
-            <span
-              className={`font-bold ${
-                netOperatingCash >= 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {formatCurrency(netOperatingCash)}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600">صافي التدفق من الأنشطة الاستثمارية</span>
-            <span
-              className={`font-bold ${
-                netInvestingCash >= 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {formatCurrency(netInvestingCash)}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600">صافي التدفق من الأنشطة التمويلية</span>
-            <span
-              className={`font-bold ${
-                netFinancingCash >= 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {formatCurrency(netFinancingCash)}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center p-3 mt-2 bg-blue-50 border border-blue-100 rounded-lg">
-            <span className="font-bold text-blue-700">صافي التغير في النقد</span>
-            <span
-              className={`text-xl font-bold ${
-                netChangeInCash >= 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {formatCurrency(netChangeInCash)}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const renderActivitySection = (title, activity, headerBg, accentText) => {
-  const inflows = activity?.inflows || [];
-  const outflows = activity?.outflows || [];
-  const net = activity?.net_cash_flow || 0;
-
-  const totalInflows = inflows.reduce((sum, item) => sum + item.amount, 0);
-  const totalOutflows = outflows.reduce((sum, item) => sum + item.amount, 0);
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-      <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
-        <div className="flex items-center gap-2">
-          <Banknote className={accentText} size={20} />
-          <h3 className={`font-bold ${accentText}`}>{title}</h3>
-        </div>
-        <span
-          className={`font-bold ${net >= 0 ? 'text-green-700' : 'text-red-700'}`}
-        >
-          {formatCurrency(net)}
-        </span>
-      </div>
-
-      <div className="p-4 space-y-4 text-sm">
-        {/* Inflows */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowUpRight className="text-green-600" size={16} />
-            <h4 className="text-green-700 font-medium">التدفقات الداخلة</h4>
-          </div>
-          {inflows.length > 0 ? (
-            <>
-              <div className="space-y-1">
-                {inflows.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center py-1.5 px-2 rounded hover:bg-gray-50"
-                  >
-                    <span className="text-gray-800">{item.name}</span>
-                    <span className="font-mono text-green-700">
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                <span className="text-gray-500">إجمالي التدفقات الداخلة</span>
-                <span className="font-bold text-green-700">{formatCurrency(totalInflows)}</span>
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-500 text-center">لا توجد تدفقات داخلة.</p>
-          )}
-        </div>
-
-        {/* Outflows */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowDownRight className="text-red-600" size={16} />
-            <h4 className="text-red-700 font-medium">التدفقات الخارجة</h4>
-          </div>
-          {outflows.length > 0 ? (
-            <>
-              <div className="space-y-1">
-                {outflows.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center py-1.5 px-2 rounded hover:bg-gray-50"
-                  >
-                    <span className="text-gray-800">{item.name}</span>
-                    <span className="font-mono text-red-700">
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                <span className="text-gray-500">إجمالي التدفقات الخارجة</span>
-                <span className="font-bold text-red-700">{formatCurrency(totalOutflows)}</span>
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-500 text-center">لا توجد تدفقات خارجة.</p>
-          )}
-        </div>
+      {/* Net Change Card */}
+      <div className="mb-6">
+        <FinancialCard
+          title={formatCurrency(netChangeInCash)}
+          subtitle="صافي التغير في النقد"
+          icon={ArrowUpRight}
+          trend={netChangeInCash >= 0 ? 'up' : 'down'}
+          variant={netChangeInCash >= 0 ? 'success' : 'danger'}
+          expandable={false}
+          details={[
+            { label: 'الأنشطة التشغيلية', value: formatCurrency(netOperatingCash), valueColor: netOperatingCash >= 0 ? 'text-emerald-400' : 'text-red-400' },
+            { label: 'الأنشطة الاستثمارية', value: formatCurrency(netInvestingCash), valueColor: netInvestingCash >= 0 ? 'text-emerald-400' : 'text-red-400' },
+            { label: 'الأنشطة التمويلية', value: formatCurrency(netFinancingCash), valueColor: netFinancingCash >= 0 ? 'text-emerald-400' : 'text-red-400' }
+          ]}
+        />
       </div>
     </div>
   );

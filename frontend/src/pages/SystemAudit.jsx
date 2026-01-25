@@ -81,24 +81,96 @@ const SystemAudit = () => {
       </div>
 
       {!auditReport && !loading && (
-        <div className="text-center py-20">
-          <Shield size={64} className="mx-auto mb-4 text-slate-400" />
-          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-            ابدأ التدقيق الشامل
-          </h2>
-          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-            سيتم فحص معادلة المحاسبة، اتساق القوائم المالية، واكتشاف المشكلات المحتملة
-          </p>
-          <button
-            onClick={runAudit}
-            className="px-8 py-3 rounded-xl font-semibold text-white"
-            style={{ 
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
-            }}
-          >
-            تشغيل التدقيق الآن
-          </button>
+        <div className="space-y-8">
+          {/* معلومات التدقيق */}
+          <div className="text-center py-12">
+            <Shield size={64} className="mx-auto mb-4 text-slate-400" />
+            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+              ابدأ التدقيق الشامل للنظام المحاسبي
+            </h2>
+            <p className="mb-6 max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+              سيتم فحص معادلة المحاسبة، اتساق القوائم المالية، واكتشاف المشكلات المحتملة تلقائياً
+            </p>
+            <button
+              onClick={runAudit}
+              className="px-8 py-3 rounded-xl font-semibold text-white"
+              style={{ 
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+              }}
+            >
+              🔍 تشغيل التدقيق الآن
+            </button>
+          </div>
+
+          {/* شرح ما سيتم فحصه */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-2xl p-6"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)'
+              }}
+            >
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <CheckCircle size={24} className="text-emerald-500" />
+                ماذا سيتم فحصه؟
+              </h3>
+              <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">✓</span>
+                  <span><strong>معادلة المحاسبة:</strong> التأكد من أن الأصول = الالتزامات + حقوق الملكية</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">✓</span>
+                  <span><strong>اتساق القوائم:</strong> التحقق من تطابق البيانات بين القوائم المالية</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">✓</span>
+                  <span><strong>الأنماط غير العادية:</strong> اكتشاف هامش ربح غير واقعي، مصروفات ناقصة</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">✓</span>
+                  <span><strong>توازن القيود:</strong> التأكد من أن كل قيد محاسبي متوازن</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-2xl p-6"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)'
+              }}
+            >
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <FileText size={24} className="text-blue-500" />
+                مثال على البيانات المطلوبة
+              </h3>
+              <div className="text-xs font-mono p-4 rounded-lg overflow-auto max-h-64"
+                style={{
+                  backgroundColor: 'rgba(15,23,42,0.5)',
+                  border: '1px solid rgba(100,116,139,0.2)'
+                }}
+              >
+                <pre className="text-slate-300">{`{
+  "balance_sheet": {
+    "assets": 350000,
+    "liabilities": 120000,
+    "equity": 230000
+  },
+  "income_statement": {
+    "revenue": 67800,
+    "expenses": 18000,
+    "net_profit": 49800
+  },
+  "cash_flow": {
+    "operating": 45000,
+    "investing": -10000,
+    "financing": 5000
+  }
+}`}</pre>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

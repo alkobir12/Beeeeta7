@@ -655,34 +655,49 @@ const Operations = () => {
                     <td className="p-4 text-gray-500">{op.items?.length || 0}</td>
                     <td className="p-4 font-bold text-gray-900">{Number(op.total).toFixed(2)}</td>
                     <td className="p-4">
-                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => {
-                            if (op.vehicleId) {
-                              navigate(`/vehicle/${op.vehicleId}`);
-                            }
-                          }}
-                          className="apple-button-secondary text-xs h-8 px-3"
-                          disabled={!op.vehicleId}
-                          title={t('quick_actions.details')}
+                      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                        {/* شارة نوع العملية: مركبة / ورشة عامة */}
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                            op.scope === 'vehicle'
+                              ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                              : 'bg-slate-50 text-slate-700 border border-slate-100'
+                          }`}
                         >
-                          {t('buttons.view')}
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!window.confirm(t('common.confirm_delete'))) return;
-                            try {
-                              await axios.delete(`${API_URL}/operations/${op.id}`);
-                              await load();
-                            } catch (e) {
-                              console.error('Failed to delete operation:', e);
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 p-2"
-                          title={t('buttons.delete')}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                          {op.scope === 'workshop' || (!op.scope && !op.vehicleId)
+                            ? 'عملية ورشة عامة'
+                            : 'عملية مركبة'}
+                        </span>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (op.vehicleId) {
+                                navigate(`/vehicle/${op.vehicleId}`);
+                              }
+                            }}
+                            className="apple-button-secondary text-xs h-8 px-3"
+                            disabled={!op.vehicleId}
+                            title={t('quick_actions.details')}
+                          >
+                            {t('buttons.view')}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(t('common.confirm_delete'))) return;
+                              try {
+                                await axios.delete(`${API_URL}/operations/${op.id}`);
+                                await load();
+                              } catch (e) {
+                                console.error('Failed to delete operation:', e);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700 p-2"
+                            title={t('buttons.delete')}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>

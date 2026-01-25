@@ -127,11 +127,7 @@ function App() {
                       <Route path="/finance/invoices" element={<Invoices />} />
                       <Route path="/finance/taxes" element={<Taxes />} />
                       <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
-                      <Route path="/accounting/journal-entries" element={<JournalEntries />} />
-                      <Route path="/accounting/balance-sheet" element={<BalanceSheet />} />
-                      <Route path="/accounting/income-statement" element={<IncomeStatement />} />
-                      <Route path="/accounting/cash-flow" element={<CashFlow />} />
-                      <Route path="/accounting/trial-balance" element={<TrialBalance />} />
+                      <Route path="/accounting/comprehensive" element={<ComprehensiveFinancial />} />
                       <Route path="/accounting/journal-entries" element={<JournalEntries />} />
                       <Route path="/ai-financial" element={<AIFinancial />} />
                       <Route path="/system-audit" element={<SystemAudit />} />

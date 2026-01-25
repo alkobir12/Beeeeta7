@@ -1308,3 +1308,73 @@ async def reset_all_financial_data(
             "message": f"حدث خطأ أثناء الحذف: {str(e)}"
         }
 
+
+
+@router.post("/audit-system")
+async def audit_accounting_system(
+    workshop_id: str = Query(..., description="معرف الورشة")
+):
+    """
+    تدقيق شامل للنظام المحاسبي
+    يفحص: معادلة المحاسبة، اتساق القوائم، القيود اليومية، الأنماط غير العادية
+    """
+    try:
+        # جمع البيانات المالية
+        financial_data = {}
+        
+        # 1. جلب الميزانية العمومية
+        try:
+            balance_sheet_data = await get_balance_sheet(workshop_id)
+            if balance_sheet_data and balance_sheet_data.get('success'):
+                bs = balance_sheet_data['data']
+                financial_data['balance_sheet'] = {
+                    'assets': bs['totals']['assets'],
+                    'liabilities': bs['totals']['liabilities'],
+                    'equity': bs['totals']['equity']
+                }
+        except:
+            pass
+        
+        # 2. جلب قائمة الدخل
+        try:
+            end_date = datetime.now().strftime("%Y-%m-%d")
+            start_date = (datetime.now().replace(month=datetime.now().month - 1)).strftime("%Y-%m-%d")
+            income_data = await get_income_statement(workshop_id, start_date, end_date)
+            if income_data and income_data.get('success'):
+                ins = income_data['data']
+                financial_data['income_statement'] = {
+                    'revenue': ins['totals']['revenue'],
+                    'expenses': ins['totals']['expenses'],
+                    'net_profit': ins['totals']['net_income']
+                }
+        except:
+            pass
+        
+        # 3. جلب التدفقات النقدية
+        try:
+            cashflow_data = await get_cash_flow(workshop_id, start_date, end_date)
+            if cashflow_data and cashflow_data.get('success'):
+                cf = cashflow_data['data']
+                financial_data['cash_flow'] = {
+                    'operating': cf['operating_activities'].get('net_operating_cash', 0),
+                    'investing': cf['investing_activities'].get('net_investing_cash', 0),
+                    'financing': cf['financing_activities'].get('net_financing_cash', 0)
+                }
+        except:
+            pass
+        
+        # تشغيل التدقيق
+        auditor = AccountingSystemAuditor("نظام الخدمات المحاسبي")
+        audit_report = auditor.run_comprehensive_audit(financial_data)
+        
+        return {
+            "success": True,
+            "data": audit_report
+        }
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"خطأ في التدقيق: {str(e)}"
+        }
+

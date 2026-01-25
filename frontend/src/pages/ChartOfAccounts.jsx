@@ -281,17 +281,61 @@ export default function ChartOfAccounts() {
           <p className="text-gray-400">إدارة الحسابات المحاسبية وفقاً للنظام السعودي</p>
         </div>
 
-        <button
-          onClick={() => {
-            setSelectedParent(null);
-            setShowAddModal(true);
-          }}
-          className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          data-testid="add-account-btn"
-        >
-          <Plus size={20} />
-          <span>حساب جديد</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setSelectedParent(null);
+              setShowAddModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            data-testid="add-account-btn"
+          >
+            <Plus size={20} />
+            <span>حساب جديد</span>
+          </button>
+          
+          <button
+            onClick={async () => {
+              if (!window.confirm('⚠️ تحذير: هل أنت متأكد من حذف جميع البيانات المالية؟\n\nسيتم حذف:\n• جميع الحسابات\n• جميع العمليات المالية\n• جميع القيود\n\nلا يمكن التراجع عن هذا الإجراء!')) {
+                return;
+              }
+              
+              const finalConfirm = window.prompt('اكتب "حذف كل شيء" للتأكيد النهائي:', '');
+              if (finalConfirm !== 'حذف كل شيء') {
+                alert('تم إلغاء العملية');
+                return;
+              }
+              
+              try {
+                const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+                const response = await fetch(
+                  `${API_URL}/finance/reset-all-data?workshop_id=${workshopId}&confirm=DELETE_ALL`,
+                  { method: 'DELETE' }
+                );
+                const data = await response.json();
+                
+                if (data.success) {
+                  alert('✅ تم حذف جميع البيانات المالية بنجاح!\n\nتم حذف:\n' + 
+                    `• الحسابات: ${data.deleted_counts?.chart_of_accounts || 'all'}\n` +
+                    `• العمليات: ${data.deleted_counts?.operations || 'all'}\n` +
+                    `• القيود: ${data.deleted_counts?.journal_entries || 'all'}`
+                  );
+                  window.location.reload();
+                } else {
+                  alert('❌ فشل الحذف: ' + data.message);
+                }
+              } catch (error) {
+                console.error('Error deleting data:', error);
+                alert('❌ حدث خطأ أثناء الحذف');
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            title="حذف جميع البيانات المالية والبدء من الصفر"
+          >
+            <Trash2 size={20} />
+            <span>إعادة تعيين الكل</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}

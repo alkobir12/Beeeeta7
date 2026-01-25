@@ -190,11 +190,11 @@ def test_operations_scope_inference():
     # Test 4: GET /api/operations?vehicle_id=veh-test-1 (verify filtering still works)
     print("\n[4] Testing GET /api/operations?vehicle_id=veh-test-1 (Filter by vehicle)")
     try:
-        response = requests.get(f"{BACKEND_URL}/operations?vehicle_id=veh-test-1", timeout=15)
+        response = requests.get(f"{BACKEND_URL}/operations?vehicle_id=12345678-1234-1234-1234-123456789001", timeout=15)
         if response.status_code == 200:
             filtered_operations = response.json()
             log_test("Filter operations by vehicle_id", True, 
-                    f"Retrieved {len(filtered_operations)} operations for vehicle 'veh-test-1'")
+                    f"Retrieved {len(filtered_operations)} operations for vehicle '12345678-1234-1234-1234-123456789001'")
             
             # Should only contain the vehicle operation, not the workshop operation
             vehicle_op_in_filter = None

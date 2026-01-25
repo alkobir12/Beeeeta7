@@ -1025,6 +1025,7 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
     try:
         transaction_type = entry.get("transaction_type", "manual")
 
+        # Base entry data with required fields
         entry_data = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
@@ -1032,19 +1033,38 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             "description": entry.get("description", ""),
             "lines": entry.get("lines", []),
             "total": entry.get("total", 0),
-            "transaction_type": transaction_type,
-            "source": "manual",
             "created_at": datetime.now().isoformat(),
         }
 
-        response = supabase.table("journal_entries").insert(entry_data).execute()
-
-        return {
-            "success": True,
-            "message": "تم إنشاء القيد المحاسبي بنجاح",
-            "id": entry_data["id"],
-            "data": response.data,
-        }
+        # Try to add transaction_type and source if columns exist
+        try:
+            # First attempt with all fields
+            full_entry_data = {
+                **entry_data,
+                "transaction_type": transaction_type,
+                "source": "manual",
+            }
+            response = supabase.table("journal_entries").insert(full_entry_data).execute()
+            
+            return {
+                "success": True,
+                "message": "تم إنشاء القيد المحاسبي بنجاح",
+                "id": entry_data["id"],
+                "data": response.data,
+            }
+            
+        except Exception as schema_error:
+            # If columns don't exist, try with basic fields only
+            print(f"Schema error, trying with basic fields: {schema_error}")
+            response = supabase.table("journal_entries").insert(entry_data).execute()
+            
+            return {
+                "success": True,
+                "message": "تم إنشاء القيد المحاسبي بنجاح (بدون حقول إضافية)",
+                "id": entry_data["id"],
+                "data": response.data,
+                "note": "تم الحفظ بدون حقول transaction_type و source - يحتاج تحديث قاعدة البيانات"
+            }
 
     except Exception as e:
         print(f"Error in create_journal_entry: {str(e)}")

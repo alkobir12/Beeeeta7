@@ -495,8 +495,8 @@ const Dashboard = () => {
                     </span>
                   </div>
 
-                  {/* صف الدخول / العميل */}
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-xs sm:text-sm">
+                  {/* صف الدخول / العميل - المنطقة الأساسية */}
+                  <div className="grid grid-cols-2 gap-4 mb-3 text-xs sm:text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
                         <Calendar size={16} />

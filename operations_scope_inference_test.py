@@ -208,14 +208,14 @@ def test_operations_scope_inference():
             
             if vehicle_op_in_filter:
                 print("   ✅ Vehicle operation correctly included in filter")
-                if vehicle_op_in_filter.get('vehicleId') == 'veh-test-1':
+                if vehicle_op_in_filter.get('vehicleId') == '12345678-1234-1234-1234-123456789001':
                     print("   ✓ Filtered operation has correct vehicleId")
                     if vehicle_op_in_filter.get('scope') == 'vehicle':
                         print("   ✓ Filtered operation has correct scope: 'vehicle'")
                     else:
                         print(f"   ⚠ Filtered operation scope issue: expected 'vehicle', got '{vehicle_op_in_filter.get('scope')}'")
                 else:
-                    print(f"   ❌ Filtered operation vehicleId issue: expected 'veh-test-1', got '{vehicle_op_in_filter.get('vehicleId')}'")
+                    print(f"   ❌ Filtered operation vehicleId issue: expected '12345678-1234-1234-1234-123456789001', got '{vehicle_op_in_filter.get('vehicleId')}'")
             else:
                 print("   ❌ Vehicle operation missing from filtered results")
             

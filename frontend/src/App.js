@@ -136,6 +136,7 @@ function App() {
                       <Route path="/accounting/cash-flow" element={<CashFlow />} />
                       <Route path="/accounting/trial-balance" element={<TrialBalance />} />
                       <Route path="/ai-financial" element={<AIFinancial />} />
+                      <Route path="/system-audit" element={<SystemAudit />} />
                     </Routes>
                     </Suspense>
                   </Layout>

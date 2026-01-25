@@ -204,8 +204,8 @@ def test_journal_entries_transaction_type():
             )
             
             if response.status_code == 200:
-                data = response.json()
-                entries = data.get('entries', [])
+                response_data = response.json()
+                entries = response_data.get('data', [])  # Use 'data' instead of 'entries'
                 
                 # Find our updated entry
                 found_entry = None

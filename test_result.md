@@ -1371,6 +1371,11 @@ Once these fixes are applied, the translation system will be fully functional an
 
 ---
 
+## Dashboard Vehicle Card Redesign Testing (2026-01-25)
+- الهدف: مطابقة كروت المركبات لتصميم الصورة (شارة قيد الإصلاح، لوحة الأرقام، تاريخ الدخول، العميل، نسبة الإنجاز، المسؤول)
+- الحالة الحالية: تم تعديل كود Dashboard.jsx و ThemeContext لاكتشاف ثيم النظام تلقائيًا، بانتظار اختبار واجهة شامل.
+
+
 **Test Results:**
 
 **1. Language Toggle Button**

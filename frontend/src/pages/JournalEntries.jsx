@@ -163,6 +163,7 @@ export default function JournalEntries() {
         body: JSON.stringify({
           date: formData.date,
           description: formData.description,
+          transaction_type: formData.transaction_type,
           lines: formData.lines,
           total: formData.lines.reduce((sum, l) => sum + (l.debit || 0), 0)
         })

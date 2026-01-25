@@ -586,9 +586,11 @@ async def save_vehicle_parts_and_create_journal(
         }
         
         # حفظ القيد
+        # حفظ في Supabase
         if DB_PROVIDER == "supabase":
             try:
                 supabase_service.supabase.table("journal_entries").insert(journal_entry).execute()
+                print(f"✅ Journal entry saved to Supabase")
             except Exception as e:
                 print(f"Failed to save journal entry to Supabase: {e}")
         
@@ -596,6 +598,7 @@ async def save_vehicle_parts_and_create_journal(
         if db:
             try:
                 await db.journal_entries.insert_one(journal_entry)
+                print(f"✅ Journal entry saved to MongoDB")
             except Exception as e:
                 print(f"Failed to save journal entry to MongoDB: {e}")
         
@@ -626,6 +629,8 @@ async def save_vehicle_parts_and_create_journal(
                         "tax": new_total * 0.15,
                         "total": new_total * 1.15
                     }).eq("id", invoice_id).execute()
+                    
+                    print(f"✅ Updated existing invoice: {invoice_id}")
                 else:
                     # إنشاء فاتورة جديدة
                     invoice_id = str(uuid.uuid4())
@@ -643,8 +648,10 @@ async def save_vehicle_parts_and_create_journal(
                         "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
                     }
                     supabase_service.supabase.table("invoices").insert(new_invoice).execute()
+                    print(f"✅ Created new invoice: {invoice_id}")
             except Exception as e:
                 print(f"Invoice creation/update in Supabase failed: {e}")
+                invoice_id = None
         
         return {
             "success": True,

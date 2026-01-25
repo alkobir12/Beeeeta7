@@ -240,31 +240,31 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</span>
-                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
               </div>
-              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
+              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.in_workshop')}</span>
               </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
-                  <Car size={24} className="text-white" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
+                  <Car size={20} className="text-white" />
                 </div>
-                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
                   <div>{t('dashboard.vehicles_hint') || 'كل المركبات المسجلة في النظام'}</div>
                 </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.active_today') || 'نشطة اليوم'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.delivered_today') || 'تم التسليم'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
             </div>
           </div>
@@ -291,32 +291,32 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</span>
-                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
-              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
-                <Wrench size={16} className="text-sky-400" />
+              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
+                <Wrench size={14} className="text-sky-400" />
                 <span>{t('dashboard.under_repair') || 'قيد الإصلاح'}</span>
               </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
-                  <Clock size={22} className="text-white" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
+                  <Clock size={18} className="text-white" />
                 </div>
-                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
                   <div>{t('dashboard.in_progress_hint') || 'مركبات داخل الورشة بانتظار الإنهاء'}</div>
                 </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.waiting_parts') || 'بانتظار قطع الغيار'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.waitingParts || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingParts || 0}</span>
               </div>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.in_diagnosis') || 'قيد التشخيص'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.diagnosis || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.diagnosis || 0}</span>
               </div>
             </div>
           </div>
@@ -343,32 +343,32 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
-                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
-              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
-                <CheckCircle size={16} className="text-emerald-400" />
+              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
+                <CheckCircle size={14} className="text-emerald-400" />
                 <span>{t('dashboard.can_deliver') || 'جاهزة للتسليم'}</span>
               </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-md">
-                  <CheckCircle size={22} className="text-white" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-md">
+                  <CheckCircle size={18} className="text-white" />
                 </div>
-                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
                   <div>{t('dashboard.ready_hint') || 'مركبات منتهية بانتظار استلام العميل'}</div>
                 </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.waiting_payment') || 'بانتظار السداد'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.waitingPayment || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingPayment || 0}</span>
               </div>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.in_delivery') || 'قيد التسليم'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.delivering || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.delivering || 0}</span>
               </div>
             </div>
           </div>
@@ -395,32 +395,32 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
-                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
               </div>
-              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
-                <Users size={16} className="text-purple-400" />
+              <div className="flex items-center gap-1 text-[10px]" style={{ color: styles.textSecondary }}>
+                <Users size={14} className="text-purple-400" />
                 <span>{t('dashboard.active_now') || 'نشط الآن'}</span>
               </div>
             </div>
             <div className="dash-widget-main">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
-                  <Users size={22} className="text-white" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
+                  <Users size={18} className="text-white" />
                 </div>
-                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
                   <div>{t('dashboard.technicians_hint') || 'توزيع الأحمال على الفنيين في الورشة'}</div>
                 </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.busy_techs') || 'مشغولون'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.busyTechnicians || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.busyTechnicians || 0}</span>
               </div>
-              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+              <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.free_techs') || 'متاحون'}</span>
-                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.freeTechnicians || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.freeTechnicians || 0}</span>
               </div>
             </div>
           </div>

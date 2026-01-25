@@ -540,28 +540,58 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* الشريط السفلي: المسؤول */}
+                  {/* الشريط السفلي: المسؤول + تفاصيل إضافية عند التوسّع */}
                   <div
-                    className="mt-3 flex items-center justify-between rounded-[20px] px-3 py-2"
-                    style={{
-                      backgroundColor: isBlueCardTheme ? '#020617' : '#020617',
-                      color: '#f9fafb',
-                    }}
+                    className="mt-2 flex flex-col gap-2"
                   >
-                    <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px]">
-                        <Wrench size={14} />
+                    <div
+                      className="flex items-center justify-between rounded-[20px] px-3 py-2"
+                      style={{
+                        backgroundColor: isBlueCardTheme ? '#020617' : '#020617',
+                        color: '#f9fafb',
+                      }}
+                    >
+                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                        <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px]">
+                          <Wrench size={14} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-300 mb-0">المسؤول</p>
+                          <p className="font-semibold text-sm">
+                            {vehicle.technicianName || vehicle.technician || 'م. سامي'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] text-gray-300 mb-0">المسؤول</p>
-                        <p className="font-semibold text-sm">
-                          {vehicle.technicianName || vehicle.technician || 'م. سامي'}
-                        </p>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white">
+                        <ArrowRight size={14} />
                       </div>
                     </div>
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white">
-                      <ArrowRight size={14} />
-                    </div>
+
+                    {/* جزء إضافي يظهر عند التوسّع */}
+                    {expandedVehicleId === vehicle.id && (
+                      <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-950/60 rounded-2xl px-3 py-2 border border-slate-800/80 mt-1">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-slate-400">رقم الهيكل (VIN)</span>
+                          <span className="font-mono text-slate-100 text-xs">{vehicle.vin || '-'}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-slate-400">عدد الزيارات</span>
+                          <span className="font-semibold text-slate-100 text-xs">{vehicle.visitsCount || 0}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-slate-400">آخر تحديث</span>
+                          <span className="text-slate-100 text-xs">
+                            {vehicle.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString('ar-SA') : '-'}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-slate-400">إجمالي التكلفة التقديرية</span>
+                          <span className="text-emerald-300 text-xs">
+                            {vehicle.estimatedTotal ? vehicle.estimatedTotal.toLocaleString('ar-SA') + ' ر.س' : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

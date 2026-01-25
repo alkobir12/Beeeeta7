@@ -1254,7 +1254,7 @@ async def reset_all_financial_data(
 ):
     """
     حذف جميع البيانات المالية والعمليات للبدء من الصفر
-    يحذف: Chart of Accounts، Operations، Journal Entries
+    يحذف: Chart of Accounts، Operations، Journal Entries، Invoices
     """
     if confirm != "DELETE_ALL":
         return {
@@ -1266,39 +1266,71 @@ async def reset_all_financial_data(
         deleted_counts = {
             "chart_of_accounts": 0,
             "operations": 0,
-            "journal_entries": 0
+            "journal_entries": 0,
+            "invoices": 0
         }
         
         # حذف من Supabase إذا كان متصلاً
         if supabase:
             try:
                 # حذف جميع العمليات
-                supabase.table("operations").delete().eq("workshop_id", workshop_id).execute()
-                deleted_counts["operations"] = "all"
+                ops_del = supabase.table("operations").delete().execute()
+                deleted_counts["operations"] = len(ops_del.data) if ops_del.data else "all"
                 
                 # حذف Chart of Accounts
-                supabase.table("chart_of_accounts").delete().eq("workshop_id", workshop_id).execute()
-                deleted_counts["chart_of_accounts"] = "all"
+                coa_del = supabase.table("chart_of_accounts").delete().execute()
+                deleted_counts["chart_of_accounts"] = len(coa_del.data) if coa_del.data else "all"
+                
+                # حذف Journal Entries
+                try:
+                    je_del = supabase.table("journal_entries").delete().execute()
+                    deleted_counts["journal_entries"] = len(je_del.data) if je_del.data else "all"
+                except Exception as e:
+                    print(f"Journal entries table not found: {e}")
+                
+                # حذف الفواتير
+                try:
+                    inv_del = supabase.table("invoices").delete().execute()
+                    deleted_counts["invoices"] = len(inv_del.data) if inv_del.data else "all"
+                except Exception as e:
+                    print(f"Invoices table not found: {e}")
+                    
+                print(f"✅ Supabase: Deleted all data")
             except Exception as e:
-                print(f"Supabase deletion warning: {e}")
+                print(f"Supabase deletion error: {e}")
         
         # حذف من MongoDB
         if finance_db:
-            # حذف العمليات
-            ops_result = await finance_db.operations.delete_many({"workshop_id": workshop_id})
-            deleted_counts["operations"] = ops_result.deleted_count
-            
-            # حذف Chart of Accounts
-            coa_result = await finance_db.chart_of_accounts.delete_many({"workshop_id": workshop_id})
-            deleted_counts["chart_of_accounts"] = coa_result.deleted_count
-            
-            # حذف Journal Entries
-            je_result = await finance_db.journal_entries.delete_many({"workshop_id": workshop_id})
-            deleted_counts["journal_entries"] = je_result.deleted_count
+            try:
+                # حذف العمليات
+                ops_result = await finance_db.operations.delete_many({})
+                deleted_counts["operations"] = ops_result.deleted_count
+                
+                # حذف Chart of Accounts
+                coa_result = await finance_db.chart_of_accounts.delete_many({})
+                deleted_counts["chart_of_accounts"] = coa_result.deleted_count
+                
+                # حذف Journal Entries
+                je_result = await finance_db.journal_entries.delete_many({})
+                deleted_counts["journal_entries"] = je_result.deleted_count
+                
+                print(f"✅ MongoDB: Deleted {deleted_counts}")
+            except Exception as e:
+                print(f"MongoDB deletion error: {e}")
+        
+        # حذف من الـ DB الرئيسي (إذا كان MongoDB)
+        if db and not finance_db:
+            try:
+                await db.operations.delete_many({})
+                await db.chart_of_accounts.delete_many({})
+                await db.journal_entries.delete_many({})
+                print("✅ Main DB: Deleted all financial data")
+            except Exception as e:
+                print(f"Main DB deletion error: {e}")
         
         return {
             "success": True,
-            "message": "تم حذف جميع البيانات المالية بنجاح",
+            "message": "تم حذف جميع البيانات المالية بنجاح من جميع الأنظمة",
             "deleted_counts": deleted_counts
         }
     

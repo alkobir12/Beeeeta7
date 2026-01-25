@@ -107,6 +107,7 @@ const Dashboard = () => {
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
+  const [isHovering, setIsHovering] = useState(false);
 
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = 
@@ -484,10 +485,22 @@ const Dashboard = () => {
                     if (e.target.closest('button') || e.target.closest('.navigate-btn')) {
                       return;
                     }
+                    // Toggle expansion on click
                     setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
                   }}
-                  onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
-                  onMouseLeave={() => setExpandedVehicleId(null)}
+                  onMouseEnter={() => {
+                    setIsHovering(true);
+                    setExpandedVehicleId(vehicle.id);
+                  }}
+                  onMouseLeave={() => {
+                    setIsHovering(false);
+                    // Only collapse if not clicked
+                    setTimeout(() => {
+                      if (!isHovering) {
+                        setExpandedVehicleId(prev => prev === vehicle.id ? null : prev);
+                      }
+                    }, 100);
+                  }}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}
                   <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">

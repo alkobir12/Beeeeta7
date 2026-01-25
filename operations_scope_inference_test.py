@@ -101,7 +101,7 @@ def test_operations_scope_inference():
     # Test 2: Create workshop operation (without vehicleId, scope should be inferred as "workshop")
     print("\n[2] Testing POST /api/operations (Workshop Operation - scope inferred)")
     workshop_operation = {
-        "accountId": "test-account-2",
+        "accountId": "12345678-1234-1234-1234-123456789002",
         "type": "purchase",
         "partnerType": "supplier",
         "partnerName": "مورد مواد تنظيف",

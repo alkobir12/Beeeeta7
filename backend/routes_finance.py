@@ -1011,11 +1011,20 @@ async def get_journal_entries(
 
 @router.post("/journal-entries")
 async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
-    """
-    إنشاء قيد محاسبي جديد في Supabase
+    """إنشاء قيد محاسبي يدوي جديد في Supabase مع نوع حركة واضح.
+
+    المثال المتوقع للـ payload من الواجهة:
+    {
+        "date": "2026-01-25",
+        "description": "شراء مواد تنظيف للورشة",
+        "transaction_type": "purchase",  # purchase | sale | expense | other
+        "lines": [...],
+        "total": 500
+    }
     """
     try:
-        # إضافة معلومات إضافية
+        transaction_type = entry.get("transaction_type", "manual")
+
         entry_data = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
@@ -1023,10 +1032,11 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             "description": entry.get("description", ""),
             "lines": entry.get("lines", []),
             "total": entry.get("total", 0),
+            "transaction_type": transaction_type,
+            "source": "manual",
             "created_at": datetime.now().isoformat(),
         }
 
-        # حفظ في Supabase
         response = supabase.table("journal_entries").insert(entry_data).execute()
 
         return {

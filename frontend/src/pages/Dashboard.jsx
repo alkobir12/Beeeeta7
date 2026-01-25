@@ -130,16 +130,30 @@ const Dashboard = () => {
 
   // Theme-based styles
   const styles = {
-    bg: isLight ? '#f8fafc' : '#0f172a',
+    bg: isLight ? '#f5f7fb' : '#0b1120',
     cardBg: isLight ? '#ffffff' : '#1e293b',
     cardBorder: isLight ? '#e2e8f0' : '#334155',
-    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
-    textSecondary: isLight ? '#64748b' : '#94a3b8',
+    textPrimary: isLight ? '#0f172a' : '#f9fafb',
+    textSecondary: isLight ? '#64748b' : '#cbd5f5',
     textMuted: isLight ? '#94a3b8' : '#64748b',
     inputBg: isLight ? '#ffffff' : '#1e293b',
     inputBorder: isLight ? '#e2e8f0' : '#334155',
     hoverBg: isLight ? '#f1f5f9' : '#334155',
     statCardBg: isLight ? '#ffffff' : 'rgba(30, 41, 59, 0.8)',
+  };
+
+  // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة
+  const isBlueCardTheme = isLight; // نستخدم الكرت الأزرق في الثيم الفاتح حالياً
+  const vehicleCardBackground = isBlueCardTheme
+    ? 'radial-gradient(circle at 0% 0%, rgba(59,130,246,0.28), transparent 55%), radial-gradient(circle at 100% 100%, rgba(56,189,248,0.22), transparent 55%), linear-gradient(145deg, #020617 0%, #020617 45%, #020617 100%)'
+    : styles.cardBg;
+  const vehicleCardBorder = isBlueCardTheme
+    ? 'rgba(15,23,42,0.55)'
+    : styles.cardBorder;
+  const vehicleText = {
+    primary: isBlueCardTheme ? '#f9fafb' : styles.textPrimary,
+    secondary: isBlueCardTheme ? 'rgba(226,232,240,0.86)' : styles.textSecondary,
+    muted: isBlueCardTheme ? 'rgba(148,163,184,0.9)' : styles.textMuted,
   };
 
   return (
@@ -345,10 +359,10 @@ const Dashboard = () => {
                   key={`vehicle-${vehicle.id}`}
                   className="relative rounded-[32px] p-4 sm:p-5 cursor-pointer transition-all group overflow-hidden"
                   style={{
-                    backgroundColor: styles.cardBg,
-                    border: `1px solid ${styles.cardBorder}`,
-                    boxShadow: isLight
-                      ? '0 18px 45px rgba(15, 23, 42, 0.08)'
+                    background: vehicleCardBackground,
+                    border: `1px solid ${vehicleCardBorder}`,
+                    boxShadow: isBlueCardTheme
+                      ? '0 24px 70px rgba(15,23,42,0.75)'
                       : '0 18px 45px rgba(15, 23, 42, 0.6)'
                   }}
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}

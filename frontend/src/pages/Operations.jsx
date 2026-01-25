@@ -396,6 +396,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
+                {/* TODO: يمكن لاحقًا توحيد هذا القسم أو إزالته إذا أصبح مكررًا مع حقل الحساب في الأعلى */}
                 <label className="text-sm font-medium text-gray-700">{"Account"}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />

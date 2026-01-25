@@ -64,7 +64,7 @@ def test_operations_scope_inference():
     # Test 1: Create vehicle operation (with vehicleId, scope should be inferred as "vehicle")
     print("\n[1] Testing POST /api/operations (Vehicle Operation - scope inferred)")
     vehicle_operation = {
-        "accountId": "test-account-1",
+        "accountId": "12345678-1234-1234-1234-123456789001",
         "vehicleId": "veh-test-1",
         "type": "purchase",
         "partnerType": "supplier",

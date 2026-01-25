@@ -355,6 +355,8 @@ class SupabaseService:
                     "notes": r.get("notes"),
                     "date": r.get("op_date"),
                     "createdAt": r.get("created_at"),
+                    # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicle_id
+                    "scope": "vehicle" if r.get("vehicle_id") else "workshop",
                 }
             )
         return out

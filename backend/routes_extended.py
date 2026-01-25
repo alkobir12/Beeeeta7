@@ -927,6 +927,7 @@ async def list_operations(
                     "total": 1,
                     "items": 1,
                     "date": 1,
+                    "vehicleId": 1,
                 },
             )
             .sort("date", -1)
@@ -936,6 +937,8 @@ async def list_operations(
             o.pop("_id", None)
             if o.get("date") and hasattr(o["date"], "isoformat"):
                 o["date"] = o["date"].isoformat()
+            # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicleId
+            o["scope"] = "vehicle" if o.get("vehicleId") else "workshop"
         return ops
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

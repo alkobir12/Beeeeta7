@@ -213,80 +213,155 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid - Responsive 2x2 on mobile, 4 on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
-          <div 
-            onClick={() => setFilterStatus('all')} 
-            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
-            style={{ 
-              backgroundColor: styles.statCardBg,
-              border: `1px solid ${styles.cardBorder}`
-            }}
+        {/* Stats Grid - Responsive expandable widgets */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
+          {/* إجمالي المركبات */}
+          <div
+            className="dash-widget-shell"
+            style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}
+            onClick={() => setFilterStatus('all')}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</h3>
+            <div className="dash-widget-top">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</span>
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
               </div>
-              <div className="p-2 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                <Car size={20} className="sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.in_workshop')}</span>
+              </div>
+            </div>
+            <div className="dash-widget-main">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
+                  <Car size={24} className="text-white" />
+                </div>
+                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                  <div>{t('dashboard.vehicles_hint') || 'كل المركبات المسجلة في النظام'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.active_today') || 'نشطة اليوم'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
+              </div>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.delivered_today') || 'تم التسليم'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
             </div>
           </div>
 
-          <div 
-            onClick={() => setFilterStatus('in_progress')} 
-            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
-            style={{ 
-              backgroundColor: styles.statCardBg,
-              border: `1px solid ${styles.cardBorder}`
-            }}
+          {/* مركبات قيد العمل */}
+          <div
+            className="dash-widget-shell"
+            style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}
+            onClick={() => setFilterStatus('in_progress')}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</h3>
+            <div className="dash-widget-top">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</span>
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
-              <div className="p-2 sm:p-3 rounded-full bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20 transition-colors">
-                <Wrench size={20} className="sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
+                <Wrench size={16} className="text-sky-400" />
+                <span>{t('dashboard.under_repair') || 'قيد الإصلاح'}</span>
+              </div>
+            </div>
+            <div className="dash-widget-main">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
+                  <Clock size={22} className="text-white" />
+                </div>
+                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                  <div>{t('dashboard.in_progress_hint') || 'مركبات داخل الورشة بانتظار الإنهاء'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.waiting_parts') || 'بانتظار قطع الغيار'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.waitingParts || 0}</span>
+              </div>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.in_diagnosis') || 'قيد التشخيص'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.diagnosis || 0}</span>
               </div>
             </div>
           </div>
 
-          <div 
-            onClick={() => setFilterStatus('ready')} 
-            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
-            style={{ 
-              backgroundColor: styles.statCardBg,
-              border: `1px solid ${styles.cardBorder}`
-            }}
+          {/* جاهزة للتسليم */}
+          <div
+            className="dash-widget-shell"
+            style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}
+            onClick={() => setFilterStatus('ready')}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</h3>
+            <div className="dash-widget-top">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
-              <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
-                <CheckCircle size={20} className="sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
+                <CheckCircle size={16} className="text-emerald-400" />
+                <span>{t('dashboard.can_deliver') || 'جاهزة للتسليم'}</span>
+              </div>
+            </div>
+            <div className="dash-widget-main">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-md">
+                  <CheckCircle size={22} className="text-white" />
+                </div>
+                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                  <div>{t('dashboard.ready_hint') || 'مركبات منتهية بانتظار استلام العميل'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.waiting_payment') || 'بانتظار السداد'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.waitingPayment || 0}</span>
+              </div>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.in_delivery') || 'قيد التسليم'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.delivering || 0}</span>
               </div>
             </div>
           </div>
 
-          <div 
-            onClick={() => navigate('/technicians')} 
-            className="rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg group"
-            style={{ 
-              backgroundColor: styles.statCardBg,
-              border: `1px solid ${styles.cardBorder}`
-            }}
+          {/* الفنيين */}
+          <div
+            className="dash-widget-shell"
+            style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}
+            onClick={() => navigate('/technicians')}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</h3>
+            <div className="dash-widget-top">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
               </div>
-              <div className="p-2 sm:p-3 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-                <Users size={20} className="sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1 text-xs" style={{ color: styles.textSecondary }}>
+                <Users size={16} className="text-purple-400" />
+                <span>{t('dashboard.active_now') || 'نشط الآن'}</span>
+              </div>
+            </div>
+            <div className="dash-widget-main">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
+                  <Users size={22} className="text-white" />
+                </div>
+                <div className="text-xs" style={{ color: styles.textSecondary }}>
+                  <div>{t('dashboard.technicians_hint') || 'توزيع الأحمال على الفنيين في الورشة'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.busy_techs') || 'مشغولون'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.busyTechnicians || 0}</span>
+              </div>
+              <div className="flex flex-col text-[11px]" style={{ color: styles.textSecondary }}>
+                <span>{t('dashboard.free_techs') || 'متاحون'}</span>
+                <span className="font-semibold" style={{ color: styles.textPrimary }}>{stats.freeTechnicians || 0}</span>
               </div>
             </div>
           </div>

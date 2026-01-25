@@ -61,11 +61,79 @@ async def get_balance_sheet(
     as_of_date: Optional[str] = Query(None, description="تاريخ التقرير (YYYY-MM-DD)"),
 ):
     """
-    الميزانية العمومية من بيانات العمليات الحقيقية في Supabase
+    الميزانية العمومية - محسوبة من دليل الحسابات
     """
     try:
-        if not supabase:
-            raise Exception("Supabase not connected")
+        target_date = as_of_date or datetime.now().strftime("%Y-%m-%d")
+        
+        # جلب دليل الحسابات (الذي يحتوي على الأرصدة الصحيحة)
+        coa_response = await get_chart_of_accounts(workshop_id)
+        
+        if not coa_response.get('success'):
+            raise Exception("Failed to get chart of accounts")
+        
+        accounts = coa_response.get('data', [])
+        
+        # تصنيف الحسابات
+        assets_accounts = []
+        liabilities_accounts = []
+        equity_accounts = []
+        
+        for acc in accounts:
+            balance = float(acc.get('balance', 0))
+            if balance == 0:
+                continue
+            
+            acc_type = acc.get('type', '')
+            account_data = {
+                "id": acc.get('id'),
+                "code": acc.get('code'),
+                "name": acc.get('name') or acc.get('name_ar'),
+                "balance": abs(balance)
+            }
+            
+            if acc_type == 'asset':
+                assets_accounts.append(account_data)
+            elif acc_type == 'liability':
+                liabilities_accounts.append(account_data)
+            elif acc_type == 'equity':
+                equity_accounts.append(account_data)
+        
+        # حساب الإجماليات
+        total_assets = sum(acc['balance'] for acc in assets_accounts)
+        total_liabilities = sum(acc['balance'] for acc in liabilities_accounts)
+        total_equity = sum(acc['balance'] for acc in equity_accounts)
+        
+        return {
+            "success": True,
+            "data": {
+                "as_of": target_date,
+                "totals": {
+                    "assets": round(total_assets, 2),
+                    "liabilities": round(total_liabilities, 2),
+                    "equity": round(total_equity, 2),
+                    "liabilities_plus_equity": round(total_liabilities + total_equity, 2),
+                },
+                "sections": {
+                    "assets": assets_accounts,
+                    "liabilities": liabilities_accounts,
+                    "equity": equity_accounts,
+                },
+            },
+        }
+    
+    except Exception as e:
+        print(f"Balance sheet error: {e}")
+        return {
+            "success": False,
+            "message": f"خطأ في حساب الميزانية: {str(e)}",
+            "data": {
+                "as_of": target_date if 'target_date' in locals() else datetime.now().strftime("%Y-%m-%d"),
+                "totals": {"assets": 0, "liabilities": 0, "equity": 0, "liabilities_plus_equity": 0},
+                "sections": {"assets": [], "liabilities": [], "equity": []},
+            },
+        }
+
 
         # تحديد التاريخ المستهدف
         target_date = as_of_date or datetime.now().strftime("%Y-%m-%d")

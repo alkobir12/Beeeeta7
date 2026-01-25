@@ -507,7 +507,13 @@ const Dashboard = () => {
                     cursor: 'pointer',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
-                  onClick={() => navigate(`/vehicle/${vehicle.id}`)}
+                  onClick={(e) => {
+                    // Only navigate if not clicking on the menu button
+                    if (!e.target.closest('button')) {
+                      console.log('Navigating to vehicle:', vehicle.id);
+                      navigate(`/vehicle/${vehicle.id}`);
+                    }
+                  }}
                   onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
                   onMouseLeave={() => setExpandedVehicleId(null)}
                 >

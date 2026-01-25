@@ -198,6 +198,7 @@ const Operations = () => {
         accountId: '',
         vehicleId: vehicleIdFromUrl || '',
         visitId: '',
+        scope: vehicleIdFromUrl ? 'vehicle' : 'workshop',
         type: 'purchase',
         partnerType: 'supplier',
         partnerName: '',

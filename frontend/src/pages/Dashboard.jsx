@@ -391,12 +391,13 @@ const Dashboard = () => {
                     </h3>
                     {isUrgent && (
                       <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-red-500 text-[11px] font-semibold">
-                        {t('vehicle_card.urgent') || 'عاجل'}
+                        عاجل
                       </span>
                     )}
                     <span className="px-3 py-1 rounded-full bg-gray-900 text-white text-[11px] font-semibold flex items-center gap-1">
-                      <span className="text-[10px]">{t('vehicles.plate_number')}</span>
-                      <span className="font-mono text-xs">{vehicle.plateNumber}</span>
+                      <span className="font-mono text-xs tracking-[0.18em]">
+                        {vehicle.plateNumber}
+                      </span>
                     </span>
                   </div>
 
@@ -445,22 +446,27 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* الشريط السفلي: المسؤول + الحالة */}
-                  <div className="mt-1 pt-3 flex items-center justify-between rounded-[20px] bg-gray-50 px-3 py-2">
+                  {/* الشريط السفلي: المسؤول */}
+                  <div
+                    className="mt-2 flex items-center justify-between rounded-[20px] px-3 py-2"
+                    style={{
+                      backgroundColor: isLight ? '#020617' : '#020617',
+                      color: '#f9fafb',
+                    }}
+                  >
                     <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <div className="w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center text-[11px]">
+                      <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px]">
                         <Wrench size={14} />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-400">{t('vehicle_card.responsible') || 'المسؤول'}</p>
-                        <p className="font-semibold" style={{ color: styles.textPrimary }}>
-                          {vehicle.technicianName || vehicle.technician || t('vehicle_card.default_responsible') || 'م. سامي'}
+                        <p className="text-[10px] text-gray-300 mb-0">المسؤول</p>
+                        <p className="font-semibold text-sm">
+                          {vehicle.technicianName || vehicle.technician || 'م. سامي'}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-blue-600">
-                      <span>{statusConfig.label}</span>
-                      <ArrowRight size={14} className="text-blue-500" />
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white">
+                      <ArrowRight size={14} />
                     </div>
                   </div>
                 </div>

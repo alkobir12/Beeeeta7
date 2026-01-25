@@ -479,7 +479,7 @@ const Dashboard = () => {
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}
-                  className="dash-widget-shell"
+                  className="dash-widget-shell vehicle-card"
                   style={{
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
@@ -494,7 +494,13 @@ const Dashboard = () => {
                     overflow: 'hidden',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
-                  onClick={() => setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id)}
+                  onClick={(e) => {
+                    // لا تفعل شيء إذا النقر على زر أو رابط
+                    if (e.target.closest('button') || e.target.closest('.navigate-btn')) {
+                      return;
+                    }
+                    setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
+                  }}
                   onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
                   onMouseLeave={() => setExpandedVehicleId(null)}
                 >
@@ -613,7 +619,7 @@ const Dashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-blue-500/80 transition-colors cursor-pointer"
+                      <div className="navigate-btn flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-white hover:bg-blue-500/80 transition-colors cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/vehicle/${vehicle.id}`);

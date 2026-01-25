@@ -258,6 +258,34 @@ const Operations = () => {
 
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* تصنيف العملية: مركبة / ورشة عامة */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">تصنيف العملية</label>
+                <div className="relative">
+                  <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select
+                    className="apple-input pr-10"
+                    value={form.scope}
+                    onChange={(e) => {
+                      const scope = e.target.value;
+                      setForm(prev => ({
+                        ...prev,
+                        scope,
+                        // إذا كانت عملية ورشة، نجعل المركبة والزيارة اختيارية
+                        vehicleId: scope === 'workshop' ? '' : prev.vehicleId,
+                        visitId: scope === 'workshop' ? '' : prev.visitId,
+                      }));
+                      if (scope === 'workshop') {
+                        setVisits([]);
+                      }
+                    }}
+                  >
+                    <option value="vehicle">عملية مركبة</option>
+                    <option value="workshop">عملية ورشة عامة</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
                 <div className="relative">
@@ -286,65 +314,71 @@ const Operations = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.vehicle')}</label>
-                <div className="relative">
-                  <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.vehicleId} 
-                    onChange={async (e) => {
-                      const vehicleId = e.target.value;
-                      setForm({ ...form, vehicleId, visitId: '' });
-                      
-                      // Load visits for selected vehicle
-                      if (vehicleId) {
-                        try {
-                          const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
-                          setVisits(res.data || []);
-                          // Auto-select current visit if exists
-                          const activeVisit = res.data?.find(v => v.status === 'in_progress');
-                          if (activeVisit) {
-                            setForm(prev => ({ ...prev, visitId: activeVisit.id }));
+              {/* اختيار المركبة (يظهر فقط عندما يكون التصنيف = مركبة) */}
+              {form.scope === 'vehicle' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">{t('operations.vehicle')}</label>
+                  <div className="relative">
+                    <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <select 
+                      className="apple-input pr-10"
+                      value={form.vehicleId} 
+                      onChange={async (e) => {
+                        const vehicleId = e.target.value;
+                        setForm({ ...form, vehicleId, visitId: '' });
+                        
+                        // Load visits for selected vehicle
+                        if (vehicleId) {
+                          try {
+                            const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
+                            setVisits(res.data || []);
+                            // Auto-select current visit if exists
+                            const activeVisit = res.data?.find(v => v.status === 'in_progress');
+                            if (activeVisit) {
+                              setForm(prev => ({ ...prev, visitId: activeVisit.id }));
+                            }
+                          } catch (err) {
+                            console.error(err);
                           }
-                        } catch (err) {
-                          console.error(err);
+                        } else {
+                          setVisits([]);
                         }
-                      } else {
-                        setVisits([]);
-                      }
-                    }}
-                  >
-                    <option value="">{t('operations.select_vehicle')}...</option>
-                    {vehicles.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.plateNumber} - {v.brand} {v.model}
-                      </option>
-                    ))}
-                  </select>
+                      }}
+                    >
+                      <option value="">{t('operations.select_vehicle')}...</option>
+                      {vehicles.map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.plateNumber} - {v.brand} {v.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.date')}</label>
-                <div className="relative">
-                  <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.visitId || ''} 
-                    onChange={e => setForm({ ...form, visitId: e.target.value })}
-                    disabled={!form.vehicleId}
-                  >
-                    <option value="">---</option>
-                    {visits.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
-                        {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
-                      </option>
-                    ))}
-                  </select>
+              {/* زيارة المركبة / التاريخ (أيضًا فقط في حالة مركبة) */}
+              {form.scope === 'vehicle' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">{t('operations.date')}</label>
+                  <div className="relative">
+                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <select 
+                      className="apple-input pr-10"
+                      value={form.visitId || ''} 
+                      onChange={e => setForm({ ...form, visitId: e.target.value })}
+                      disabled={!form.vehicleId}
+                    >
+                      <option value="">---</option>
+                      {visits.map(v => (
+                        <option key={v.id} value={v.id}>
+                          {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
+                          {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">{t('operations.operation_type')}</label>

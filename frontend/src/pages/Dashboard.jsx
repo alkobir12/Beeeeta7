@@ -517,32 +517,39 @@ const Dashboard = () => {
                     </button>
                   </div>
 
-                  {/* العنوان الرئيسي + البادجات */}
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <h3
-                      className="text-lg sm:text-xl font-bold tracking-tight"
-                      style={{ color: vehicleText.primary }}
-                    >
-                      {vehicle.brand} {vehicle.model}
-                    </h3>
-                    {vehicle.year && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-800/60 text-slate-200 text-xs font-semibold">
-                        {vehicle.year}
+                  {/* هوية المركبة: لوحة واضحة + اسم مركبة منظم */}
+                  <div className="mb-4 space-y-3">
+                    {/* رقم اللوحة بشكل واضح في المنتصف */}
+                    <div className="flex justify-center">
+                      <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/85 text-slate-50 text-base sm:text-lg font-bold border border-slate-700 shadow-inner">
+                        <Car size={16} className="opacity-80" />
+                        <span className="font-mono tracking-[0.25em]">
+                          {vehicle.plateNumber || 'غير معروف'}
+                        </span>
                       </span>
-                    )}
-                    {isUrgent && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30">
-                        ⚡ عاجل
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* رقم اللوحة */}
-                  <div className="mb-4">
-                    <span className="px-3 py-1.5 rounded-full bg-slate-900/80 text-white text-sm font-bold inline-flex items-center gap-2 border border-slate-700">
-                      <Car size={14} />
-                      <span className="font-mono tracking-wider">{vehicle.plateNumber}</span>
-                    </span>
+                    </div>
+
+                    {/* اسم المركبة + الموديل + حالة الاستعجال */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 text-center">
+                      <div className="flex items-baseline gap-2 flex-wrap justify-center">
+                        <span
+                          className="text-base sm:text-lg font-semibold tracking-tight"
+                          style={{ color: vehicleText.primary }}
+                        >
+                          {vehicle.brand || ''} {vehicle.model || ''}
+                        </span>
+                        {vehicle.year && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-800/60 text-slate-200 text-xs font-semibold">
+                            {vehicle.year}
+                          </span>
+                        )}
+                      </div>
+                      {isUrgent && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[11px] font-bold border border-red-500/30">
+                          ⚡ عاجل
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* صف الدخول / العميل - المنطقة الأساسية */}

@@ -138,6 +138,34 @@ body.light-mode article[class*="bg-gradient-to-br"] {
   border-color: #e2e8f0 !important;
 }
 
+/* تحسين وضوح المبالغ داخل الكروت المالية */
+.financial-main-value {
+  color: #0f172a !important; /* داكن جدًا في وضع النهار */
+  text-shadow: 0 0 1px rgba(15, 23, 42, 0.4);
+}
+
+body.dark-mode .financial-main-value,
+body[data-theme="dark"] .financial-main-value {
+  color: #f9fafb !important; /* أبيض صافي في الوضع الداكن */
+  text-shadow: 0 0 8px rgba(15, 23, 42, 0.8);
+}
+
+/* تحسين وضوح لوحة المركبة واسم المركبة */
+.vehicle-plate-pill {
+  font-size: 1.1rem;
+  letter-spacing: 0.35em;
+}
+
+.vehicle-title-main {
+  font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+  .vehicle-title-main {
+    font-size: 1.35rem;
+  }
+}
+
 body.light-mode article h1, body.light-mode article h2, body.light-mode article h3,
 body.light-mode article h4, body.light-mode article h5, body.light-mode article h6,
 body.light-mode article .font-bold {

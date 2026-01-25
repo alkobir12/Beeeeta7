@@ -338,31 +338,35 @@ const Dashboard = () => {
           ) : (
             filteredVehicles.map((vehicle) => {
               const statusConfig = getStatusConfigForVehicle(vehicle.status);
+              const progress = typeof vehicle.progress === 'number' ? vehicle.progress : 65;
+              const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               return (
-                <div 
-                  key={`vehicle-${vehicle.id}`} 
-                  className="rounded-2xl p-3 sm:p-4 md:p-5 cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden"
-                  style={{ 
+                <div
+                  key={`vehicle-${vehicle.id}`}
+                  className="relative rounded-[32px] p-4 sm:p-5 cursor-pointer transition-all group overflow-hidden"
+                  style={{
                     backgroundColor: styles.cardBg,
-                    border: `1px solid ${styles.cardBorder}`
+                    border: `1px solid ${styles.cardBorder}`,
+                    boxShadow: isLight
+                      ? '0 18px 45px rgba(15, 23, 42, 0.08)'
+                      : '0 18px 45px rgba(15, 23, 42, 0.6)'
                   }}
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}
                 >
-                  <div className="flex justify-between items-start mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                      <div 
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0"
-                        style={{ 
-                          backgroundColor: isLight ? '#f1f5f9' : '#334155',
-                          color: styles.textPrimary
-                        }}
-                      >
-                        {vehicle.brand?.[0]}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-sm sm:text-base truncate" style={{ color: styles.textPrimary }}>{vehicle.brand} {vehicle.model}</h3>
-                        <p className="text-xs sm:text-sm font-mono" style={{ color: styles.textSecondary }}>{vehicle.plateNumber}</p>
-                      </div>
+                  {/* النقاط الرأسية أعلى اليسار */}
+                  <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">
+                    <span className="w-1 h-1 rounded-full bg-gray-400" />
+                    <span className="w-1 h-1 rounded-full bg-gray-400" />
+                    <span className="w-1 h-1 rounded-full bg-gray-400" />
+                  </div>
+
+                  {/* شارة قيد الإصلاح */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-[11px] font-medium">
+                        {t('vehicle_card.repair_entry') || 'قيد الإصلاح'}
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
                     </div>
                     <button
                       onClick={(e) => {
@@ -370,29 +374,94 @@ const Dashboard = () => {
                         setSelectedVehicle(vehicle);
                         setShowQuickActions(true);
                       }}
-                      className="p-1.5 sm:p-2 rounded-full transition-colors flex-shrink-0"
-                      style={{ color: styles.textMuted }}
+                      className="p-2 rounded-full hover:bg-gray-100/60 text-gray-400 flex-shrink-0"
                       aria-label="Quick Actions"
                     >
-                      <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
+                      <MoreVertical size={16} />
                     </button>
                   </div>
 
-                  <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: styles.textSecondary }}>
-                      <Users size={14} style={{ color: styles.textMuted }} className="flex-shrink-0" />
-                      <span className="truncate">{vehicle.customerName}</span>
+                  {/* العنوان الرئيسي + البادجات */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <h3
+                      className="text-lg sm:text-xl font-extrabold tracking-tight text-gray-900"
+                      style={{ color: styles.textPrimary }}
+                    >
+                      {vehicle.brand} {vehicle.model} {vehicle.year || ''}
+                    </h3>
+                    {isUrgent && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-red-500 text-[11px] font-semibold">
+                        {t('vehicle_card.urgent') || 'عاجل'}
+                      </span>
+                    )}
+                    <span className="px-3 py-1 rounded-full bg-gray-900 text-white text-[11px] font-semibold flex items-center gap-1">
+                      <span className="text-[10px]">{t('vehicles.plate_number')}</span>
+                      <span className="font-mono text-xs">{vehicle.plateNumber}</span>
+                    </span>
+                  </div>
+
+                  {/* صف الدخول / العميل */}
+                  <div className="grid grid-cols-2 gap-4 mb-4 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                        <Calendar size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-400">{t('vehicle_card.entry_date') || 'الدخول'}</p>
+                        <p className="font-semibold" style={{ color: styles.textPrimary }}>
+                          {vehicle.entryDate || vehicle.createdAt
+                            ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')
+                            : '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: styles.textSecondary }}>
-                      <Clock size={14} style={{ color: styles.textMuted }} className="flex-shrink-0" />
-                      <span>{vehicle.createdAt ? new Date(vehicle.createdAt).toLocaleDateString('ar-SA') : '-'}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                        <User size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-gray-400">{t('vehicles_page.customer_name')}</p>
+                        <p className="font-semibold truncate" style={{ color: styles.textPrimary }}>
+                          {vehicle.customerName || '-'}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 sm:pt-4 flex justify-between items-center" style={{ borderTop: `1px solid ${styles.cardBorder}` }}>
-                    <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.color}`}>
-                      {statusConfig.label}
-                    </span>
+                  {/* شريط نسبة الإنجاز */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2 text-xs">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500">{t('vehicle_card.progress') || 'نسبة الإنجاز'}</span>
+                        <Clock size={12} className="text-gray-400" />
+                      </div>
+                      <span className="font-semibold text-blue-600">{progress}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-l from-blue-500 to-indigo-500 transition-all duration-500"
+                        style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* الشريط السفلي: المسؤول + الحالة */}
+                  <div className="mt-1 pt-3 flex items-center justify-between rounded-[20px] bg-gray-50 px-3 py-2">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <div className="w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center text-[11px]">
+                        <Wrench size={14} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-400">{t('vehicle_card.responsible') || 'المسؤول'}</p>
+                        <p className="font-semibold" style={{ color: styles.textPrimary }}>
+                          {vehicle.technicianName || vehicle.technician || t('vehicle_card.default_responsible') || 'م. سامي'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-blue-600">
+                      <span>{statusConfig.label}</span>
+                      <ArrowRight size={14} className="text-blue-500" />
+                    </div>
                   </div>
                 </div>
               );

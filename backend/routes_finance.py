@@ -745,7 +745,8 @@ async def get_journal_entries(
                         "description": entry.get("description", "قيد يدوي"),
                         "lines": entry.get("lines", []),
                         "total": entry.get("total", 0),
-                        "source": "manual",
+                        "source": entry.get("source", "manual"),
+                        "transaction_type": entry.get("transaction_type"),
                     }
                 )
         except Exception as e:

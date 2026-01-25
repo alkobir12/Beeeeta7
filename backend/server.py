@@ -559,7 +559,37 @@ async def save_vehicle_parts_and_create_journal(
             await db.vehicles.update_one({"id": vehicle_id}, {"$set": upd})
             vehicle = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0})
         
-        # 3. إنشاء قيد محاسبي تلقائي
+        # 3. إنشاء عملية (operation) في Supabase لتظهر في التقارير
+        operation_id = str(uuid.uuid4())
+        operation_data = {
+            "id": operation_id,
+            "workshop_id": workshop_id,
+            "type": "sale",
+            "vehicle_id": vehicle_id,
+            "partner_name": vehicle.get('customerName', ''),
+            "items": parts,
+            "total": total,
+            "payment_method": "credit",  # آجل لأنه لم يُدفع بعد
+            "op_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # حفظ العملية
+        if DB_PROVIDER == "supabase":
+            try:
+                supabase_service.supabase.table("operations").insert(operation_data).execute()
+                print(f"✅ Operation created in Supabase")
+            except Exception as e:
+                print(f"Failed to create operation in Supabase: {e}")
+        
+        if db:
+            try:
+                await db.operations.insert_one(operation_data)
+                print(f"✅ Operation created in MongoDB")
+            except Exception as e:
+                print(f"Failed to create operation in MongoDB: {e}")
+        
+        # 4. إنشاء قيد محاسبي تلقائي
         workshop_id = os.getenv("REACT_APP_WORKSHOP_ID", "workshop-1")
         journal_entry = {
             "id": str(uuid.uuid4()),
@@ -602,7 +632,7 @@ async def save_vehicle_parts_and_create_journal(
             except Exception as e:
                 print(f"Failed to save journal entry to MongoDB: {e}")
         
-        # 4. إنشاء فاتورة مفتوحة أو تحديث الموجودة
+        # 5. إنشاء فاتورة مفتوحة أو تحديث الموجودة
         invoice_id = None
         
         # التحقق من وجود فاتورة مفتوحة
@@ -655,8 +685,9 @@ async def save_vehicle_parts_and_create_journal(
         
         return {
             "success": True,
-            "message": "تم حفظ البنود وإنشاء القيد والفاتورة بنجاح",
+            "message": "تم حفظ البنود وإنشاء العملية والقيد والفاتورة بنجاح",
             "vehicle": vehicle,
+            "operation_id": operation_id,
             "journal_entry_id": journal_entry['id'],
             "invoice_id": invoice_id,
             "total": total

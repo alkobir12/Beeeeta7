@@ -1274,28 +1274,29 @@ async def reset_all_financial_data(
         if supabase:
             try:
                 # حذف جميع العمليات
-                ops_del = supabase.table("operations").delete().execute()
+                # استخدام neq مع قيمة غير موجودة لحذف كل السجلات
+                ops_del = supabase.table("operations").delete().neq("id", "impossible-id-to-delete-all").execute()
                 deleted_counts["operations"] = len(ops_del.data) if ops_del.data else "all"
                 
                 # حذف Chart of Accounts
-                coa_del = supabase.table("chart_of_accounts").delete().execute()
+                coa_del = supabase.table("chart_of_accounts").delete().neq("id", "impossible-id-to-delete-all").execute()
                 deleted_counts["chart_of_accounts"] = len(coa_del.data) if coa_del.data else "all"
                 
                 # حذف Journal Entries
                 try:
-                    je_del = supabase.table("journal_entries").delete().execute()
+                    je_del = supabase.table("journal_entries").delete().neq("id", "impossible-id-to-delete-all").execute()
                     deleted_counts["journal_entries"] = len(je_del.data) if je_del.data else "all"
                 except Exception as e:
                     print(f"Journal entries table not found: {e}")
                 
                 # حذف الفواتير
                 try:
-                    inv_del = supabase.table("invoices").delete().execute()
+                    inv_del = supabase.table("invoices").delete().neq("id", "impossible-id-to-delete-all").execute()
                     deleted_counts["invoices"] = len(inv_del.data) if inv_del.data else "all"
                 except Exception as e:
                     print(f"Invoices table not found: {e}")
                     
-                print(f"✅ Supabase: Deleted all data")
+                print(f"✅ Supabase: Deleted all financial data")
             except Exception as e:
                 print(f"Supabase deletion error: {e}")
         

@@ -252,9 +252,6 @@ const Dashboard = () => {
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
                   <Car size={20} className="text-white" />
                 </div>
-                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
-                  <div>{t('dashboard.vehicles_hint') || 'كل المركبات المسجلة في النظام'}</div>
-                </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
@@ -303,9 +300,6 @@ const Dashboard = () => {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
                   <Clock size={18} className="text-white" />
-                </div>
-                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
-                  <div>{t('dashboard.in_progress_hint') || 'مركبات داخل الورشة بانتظار الإنهاء'}</div>
                 </div>
               </div>
             </div>
@@ -356,9 +350,6 @@ const Dashboard = () => {
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-md">
                   <CheckCircle size={18} className="text-white" />
                 </div>
-                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
-                  <div>{t('dashboard.ready_hint') || 'مركبات منتهية بانتظار استلام العميل'}</div>
-                </div>
               </div>
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
@@ -407,9 +398,6 @@ const Dashboard = () => {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
                   <Users size={18} className="text-white" />
-                </div>
-                <div className="text-[10px]" style={{ color: styles.textSecondary }}>
-                  <div>{t('dashboard.technicians_hint') || 'توزيع الأحمال على الفنيين في الورشة'}</div>
                 </div>
               </div>
             </div>

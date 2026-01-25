@@ -11,7 +11,7 @@ from datetime import datetime
 import base64
 
 # Get backend URL from environment
-BACKEND_URL = "https://card-ui-overhaul-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://carshopfinance.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

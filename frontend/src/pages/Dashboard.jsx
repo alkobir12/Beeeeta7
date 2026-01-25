@@ -105,6 +105,8 @@ const Dashboard = () => {
     technicians: technicians.length
   };
 
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = 
       vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||

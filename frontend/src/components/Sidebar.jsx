@@ -247,7 +247,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         <nav className="px-3 pt-3 overflow-y-auto flex-1 min-h-0">
-          <div className="space-y-1 pb-4">
+          <div className="space-y-1.5 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>
         </nav>

@@ -621,8 +621,7 @@ class SupabaseService:
             "payment_method": payload.get("paymentMethod", "cash"),
             "notes": payload.get("notes"),
             "op_date": datetime.utcnow().isoformat(),
-            # حفظ نوع العملية: افتراضيًا من الـ payload أو مشتق لاحقًا في الواجهة
-            "scope": payload.get("scope"),
+            # Note: scope field is inferred dynamically in operations_list based on vehicle_id presence
         }
         res = self.client.table("operations").insert(row).execute()
         r = (res.data or [{}])[0]

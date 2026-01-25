@@ -454,8 +454,8 @@ const Dashboard = () => {
                     <span className="w-1 h-1 rounded-full bg-gray-400" />
                   </div>
 
-                  {/* شارة قيد الإصلاح */}
-                  <div className="flex items-center justify-between mb-4">
+                  {/* شارة قيد الإصلاح + ترويسة الكرت */}
+                  <div className="flex items-center justify-between mb-4 px-1 pt-1">
                     <div className="flex items-center gap-2 text-xs sm:text-sm">
                       <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-[11px] font-medium">
                         قيد الإصلاح

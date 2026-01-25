@@ -159,10 +159,10 @@ def test_operations_scope_inference():
                 else:
                     print(f"   ❌ Vehicle operation scope inference failed: expected 'vehicle', got '{vehicle_op_found.get('scope')}'")
                 
-                if vehicle_op_found.get('vehicleId') == 'veh-test-1':
+                if vehicle_op_found.get('vehicleId') == '12345678-1234-1234-1234-123456789001':
                     print("   ✓ Vehicle operation has correct vehicleId")
                 else:
-                    print(f"   ❌ Vehicle operation vehicleId issue: expected 'veh-test-1', got '{vehicle_op_found.get('vehicleId')}'")
+                    print(f"   ❌ Vehicle operation vehicleId issue: expected '12345678-1234-1234-1234-123456789001', got '{vehicle_op_found.get('vehicleId')}'")
             else:
                 print("   ❌ Vehicle operation not found in list")
             

@@ -176,14 +176,26 @@ export const ThemeProvider = ({ children }) => {
   const [layoutMode, setLayoutMode] = useState('comfortable');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    let initialTheme = localStorage.getItem('theme');
     const savedFontSize = localStorage.getItem('fontSize') || 'medium';
     const savedLayoutMode = localStorage.getItem('layoutMode') || 'comfortable';
-    
-    setCurrentTheme(savedTheme);
+
+    if (!initialTheme) {
+      try {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          initialTheme = 'dark';
+        } else {
+          initialTheme = 'light';
+        }
+      } catch (e) {
+        initialTheme = 'dark';
+      }
+    }
+
+    setCurrentTheme(initialTheme);
     setFontSize(savedFontSize);
     setLayoutMode(savedLayoutMode);
-    applyTheme(savedTheme);
+    applyTheme(initialTheme);
     applyFontSize(savedFontSize);
   }, []);
 

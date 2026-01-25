@@ -1111,23 +1111,62 @@ async def update_journal_entry(
                 "message": "لم يتم العثور على القيد المطلوب",
             }
 
+        # Base update data
         update_data = {
             "date": entry.get("date"),
             "description": entry.get("description", ""),
             "lines": entry.get("lines", []),
             "total": entry.get("total", 0),
-            "transaction_type": entry.get("transaction_type"),
             "updated_at": datetime.now().isoformat(),
         }
 
+        # Add transaction_type if provided
+        if entry.get("transaction_type") is not None:
+            update_data["transaction_type"] = entry.get("transaction_type")
+
+        # Remove None values
         update_data = {k: v for k, v in update_data.items() if v is not None}
 
-        response = (
-            supabase.table("journal_entries")
-            .update(update_data)
-            .eq("id", entry_id)
-            .execute()
-        )
+        try:
+            response = (
+                supabase.table("journal_entries")
+                .update(update_data)
+                .eq("id", entry_id)
+                .execute()
+            )
+            
+            return {
+                "success": True,
+                "message": "تم تحديث القيد المحاسبي بنجاح",
+                "data": response.data,
+            }
+            
+        except Exception as schema_error:
+            # If transaction_type column doesn't exist, try without it
+            if "transaction_type" in update_data:
+                print(f"Schema error with transaction_type, trying without: {schema_error}")
+                update_data_basic = {k: v for k, v in update_data.items() if k != "transaction_type"}
+                
+                response = (
+                    supabase.table("journal_entries")
+                    .update(update_data_basic)
+                    .eq("id", entry_id)
+                    .execute()
+                )
+                
+                return {
+                    "success": True,
+                    "message": "تم تحديث القيد المحاسبي بنجاح (بدون transaction_type)",
+                    "data": response.data,
+                    "note": "تم التحديث بدون حقل transaction_type - يحتاج تحديث قاعدة البيانات"
+                }
+            else:
+                raise schema_error
+
+    except Exception as e:
+        print(f"Error in update_journal_entry: {str(e)}")
+        return {
+            "success": False,
 
         return {
             "success": True,

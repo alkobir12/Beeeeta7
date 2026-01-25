@@ -83,25 +83,39 @@ const FinancialCard = ({
         <span className="w-1 h-1 rounded-full bg-gray-400" />
       </div>
 
-      {/* الترويسة */}
-      <div className="px-6 pt-6 pb-4">
+      {/* الترويسة وإعادة تنظيم المعلومات داخل الكرت المالي */}
+       <div className="px-6 pt-6 pb-4">
+        {/* السطر العلوي: العنوان + الأيقونة */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <p className="text-xs text-slate-400 mb-2 font-medium">{subtitle}</p>
-            <h3 className="text-3xl font-bold text-slate-50 leading-tight">{title}</h3>
+          <div className="flex-1 min-w-0">
+            {subtitle && (
+              <p className="text-[11px] text-slate-400 mb-1 font-medium truncate">{subtitle}</p>
+            )}
+            <h3 className="text-base sm:text-lg font-semibold text-slate-50 leading-snug truncate">
+              {title}
+            </h3>
           </div>
-          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-lg`}>
-            <Icon size={24} className="text-white" />
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-lg ml-3 flex-shrink-0`}>
+            <Icon size={22} className="text-white" />
           </div>
         </div>
 
-        {/* القيمة الرئيسية */}
-        <div className="flex items-baseline gap-3 mb-3">
+        {/* السطر الثاني: القيمة الرئيسية + اتجاه الحركة */}
+        <div className="flex items-baseline justify-between gap-3 mb-1">
+          <div className="flex flex-col">
+            <span className="text-xl sm:text-2xl font-bold text-slate-50 tabular-nums">
+              {mainValue}
+            </span>
+          </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-sm font-semibold ${
-              trend === 'up' ? 'text-emerald-400' : 'text-red-400'
-            }`}>
-              {trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            <div
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                trend === 'up'
+                  ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10'
+                  : 'text-red-400 border-red-500/40 bg-red-500/10'
+              }`}
+            >
+              {trend === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               <span>{trendValue}</span>
             </div>
           )}

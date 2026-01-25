@@ -438,16 +438,17 @@ const Dashboard = () => {
                   style={{
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
-                    boxShadow: isBlueCardTheme
-                      ? '0 24px 70px rgba(15,23,42,0.75)'
-                      : '0 18px 45px rgba(15, 23, 42, 0.6)',
-                    maxHeight: expandedVehicleId === vehicle.id ? 420 : 260,
-                    transition: 'max-height 0.35s ease, box-shadow 0.35s ease',
+                    boxShadow: expandedVehicleId === vehicle.id
+                      ? '0 32px 100px rgba(15,23,42,0.9), 0 0 0 1px rgba(59,130,246,0.3)'
+                      : (isBlueCardTheme ? '0 24px 70px rgba(15,23,42,0.75)' : '0 18px 45px rgba(15, 23, 42, 0.6)'),
+                    maxHeight: expandedVehicleId === vehicle.id ? '500px' : '260px',
+                    transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease',
+                    transform: expandedVehicleId === vehicle.id ? 'scale(1.02)' : 'scale(1)',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
                   onClick={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : vehicle.id))}
                   onMouseEnter={() => setExpandedVehicleId(vehicle.id)}
-                  onMouseLeave={() => setExpandedVehicleId(prev => (prev === vehicle.id ? null : prev))}
+                  onMouseLeave={() => setExpandedVehicleId(null)}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}
                   <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">

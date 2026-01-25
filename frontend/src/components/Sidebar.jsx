@@ -222,22 +222,24 @@ const Sidebar = ({ isOpen, onClose }) => {
       />
 
       <aside className={`sidebar-modern flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-6 flex items-center justify-between">
+        <div className="p-5 flex items-center justify-between border-b border-white/5 bg-gradient-to-br from-[#020617] via-[#020617] to-[#020617]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0071E3] to-[#00C7BE] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0ea5e9] to-[#6366f1] flex items-center justify-center text-white shadow-lg shadow-sky-500/30">
               <Car size={20} />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 text-lg leading-tight">{workshopName}</h2>
-              <p className="text-xs text-gray-500">Workshop Management System</p>
+              <h2 className="font-semibold text-sm text-slate-50 leading-tight truncate max-w-[180px]">
+                {workshopName}
+              </h2>
+              <p className="text-[11px] text-slate-400">Workshop Management System</p>
             </div>
           </div>
-          <button onClick={onClose} className="lg:hidden text-gray-500">
+          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white">
             <X size={20} />
           </button>
         </div>
 
-        <nav className="px-4 overflow-y-auto flex-1 min-h-0">
+        <nav className="px-3 pt-3 overflow-y-auto flex-1 min-h-0">
           <div className="space-y-1 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>

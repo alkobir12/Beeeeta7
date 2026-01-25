@@ -1243,3 +1243,66 @@ async def get_journal_entry(entry_id: str, workshop_id: str = Query(...)):
             "error": str(e),
             "message": "فشل في جلب القيد المحاسبي",
         }
+
+
+@router.delete("/reset-all-data")
+async def reset_all_financial_data(
+    workshop_id: str = Query(..., description="معرف الورشة"),
+    confirm: str = Query(..., description="يجب أن تكون 'DELETE_ALL' للتأكيد")
+):
+    """
+    حذف جميع البيانات المالية والعمليات للبدء من الصفر
+    يحذف: Chart of Accounts، Operations، Journal Entries
+    """
+    if confirm != "DELETE_ALL":
+        return {
+            "success": False,
+            "message": "يجب تأكيد الحذف عن طريق إرسال confirm=DELETE_ALL"
+        }
+    
+    try:
+        deleted_counts = {
+            "chart_of_accounts": 0,
+            "operations": 0,
+            "journal_entries": 0
+        }
+        
+        # حذف من Supabase إذا كان متصلاً
+        if supabase:
+            try:
+                # حذف جميع العمليات
+                supabase.table("operations").delete().eq("workshop_id", workshop_id).execute()
+                deleted_counts["operations"] = "all"
+                
+                # حذف Chart of Accounts
+                supabase.table("chart_of_accounts").delete().eq("workshop_id", workshop_id).execute()
+                deleted_counts["chart_of_accounts"] = "all"
+            except Exception as e:
+                print(f"Supabase deletion warning: {e}")
+        
+        # حذف من MongoDB
+        if finance_db:
+            # حذف العمليات
+            ops_result = await finance_db.operations.delete_many({"workshop_id": workshop_id})
+            deleted_counts["operations"] = ops_result.deleted_count
+            
+            # حذف Chart of Accounts
+            coa_result = await finance_db.chart_of_accounts.delete_many({"workshop_id": workshop_id})
+            deleted_counts["chart_of_accounts"] = coa_result.deleted_count
+            
+            # حذف Journal Entries
+            je_result = await finance_db.journal_entries.delete_many({"workshop_id": workshop_id})
+            deleted_counts["journal_entries"] = je_result.deleted_count
+        
+        return {
+            "success": True,
+            "message": "تم حذف جميع البيانات المالية بنجاح",
+            "deleted_counts": deleted_counts
+        }
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"حدث خطأ أثناء الحذف: {str(e)}"
+        }
+

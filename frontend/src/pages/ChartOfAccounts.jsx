@@ -24,42 +24,9 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
-// Default Saudi Chart of Accounts
+// Default Saudi Chart of Accounts - يُستخدم فقط إذا لم يكن هناك بيانات في API
 const DEFAULT_ACCOUNTS = [
-  // الأصول
-  { id: 'header-asset', code: '1', name_ar: 'الأصول', type: 'asset', category: null, parent_id: null, current_balance: 0, isExpanded: true },
-  { id: '11', code: '11', name_ar: 'الأصول المتداولة', type: 'asset', category: 'current', parent_id: 'header-asset', current_balance: 0 },
-  { id: '111', code: '111', name_ar: 'النقدية والبنوك', type: 'asset', category: 'cash', parent_id: '11', current_balance: 125000 },
-  { id: '112', code: '112', name_ar: 'الذمم المدينة', type: 'asset', category: 'receivable', parent_id: '11', current_balance: 45000 },
-  { id: '113', code: '113', name_ar: 'المخزون', type: 'asset', category: 'inventory', parent_id: '11', current_balance: 78500 },
-  { id: '12', code: '12', name_ar: 'الأصول الثابتة', type: 'asset', category: 'fixed', parent_id: 'header-asset', current_balance: 0 },
-  { id: '121', code: '121', name_ar: 'المعدات والأجهزة', type: 'asset', category: 'equipment', parent_id: '12', current_balance: 250000 },
-  { id: '122', code: '122', name_ar: 'مجمع الإهلاك', type: 'asset', category: 'depreciation', parent_id: '12', current_balance: -45000 },
-  
-  // الالتزامات
-  { id: 'header-liability', code: '2', name_ar: 'الالتزامات', type: 'liability', category: null, parent_id: null, current_balance: 0, isExpanded: true },
-  { id: '21', code: '21', name_ar: 'الالتزامات المتداولة', type: 'liability', category: 'current', parent_id: 'header-liability', current_balance: 0 },
-  { id: '211', code: '211', name_ar: 'الذمم الدائنة', type: 'liability', category: 'payable', parent_id: '21', current_balance: 35000 },
-  { id: '212', code: '212', name_ar: 'ضريبة القيمة المضافة المستحقة', type: 'liability', category: 'vat', parent_id: '21', current_balance: 12500 },
-  { id: '22', code: '22', name_ar: 'الالتزامات طويلة الأجل', type: 'liability', category: 'long_term', parent_id: 'header-liability', current_balance: 0 },
-  { id: '221', code: '221', name_ar: 'القروض طويلة الأجل', type: 'liability', category: 'loans', parent_id: '22', current_balance: 100000 },
-  
-  // حقوق الملكية
-  { id: 'header-equity', code: '3', name_ar: 'حقوق الملكية', type: 'equity', category: null, parent_id: null, current_balance: 0, isExpanded: true },
-  { id: '31', code: '31', name_ar: 'رأس المال', type: 'equity', category: 'capital', parent_id: 'header-equity', current_balance: 200000 },
-  { id: '32', code: '32', name_ar: 'الأرباح المحتجزة', type: 'equity', category: 'retained', parent_id: 'header-equity', current_balance: 106000 },
-  
-  // الإيرادات
-  { id: 'header-revenue', code: '4', name_ar: 'الإيرادات', type: 'revenue', category: null, parent_id: null, current_balance: 0, isExpanded: true },
-  { id: '41', code: '41', name_ar: 'إيرادات الخدمات', type: 'revenue', category: 'services', parent_id: 'header-revenue', current_balance: 350000 },
-  { id: '42', code: '42', name_ar: 'إيرادات قطع الغيار', type: 'revenue', category: 'parts', parent_id: 'header-revenue', current_balance: 125000 },
-  
-  // المصروفات
-  { id: 'header-expense', code: '5', name_ar: 'المصروفات', type: 'expense', category: null, parent_id: null, current_balance: 0, isExpanded: true },
-  { id: '51', code: '51', name_ar: 'تكلفة المبيعات', type: 'expense', category: 'cogs', parent_id: 'header-expense', current_balance: 180000 },
-  { id: '52', code: '52', name_ar: 'الرواتب والأجور', type: 'expense', category: 'salaries', parent_id: 'header-expense', current_balance: 95000 },
-  { id: '53', code: '53', name_ar: 'الإيجار', type: 'expense', category: 'rent', parent_id: 'header-expense', current_balance: 48000 },
-  { id: '54', code: '54', name_ar: 'المصاريف الإدارية', type: 'expense', category: 'admin', parent_id: 'header-expense', current_balance: 22000 },
+  // بيانات افتراضية فارغة
 ];
 
 export default function ChartOfAccounts() {

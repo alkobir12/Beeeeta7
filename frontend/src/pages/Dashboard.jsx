@@ -422,8 +422,8 @@ const Dashboard = () => {
                         <Calendar size={16} />
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-400">الدخول</p>
-                        <p className="font-semibold" style={{ color: styles.textPrimary }}>
+                        <p className="text-[11px]" style={{ color: vehicleText.muted }}>الدخول</p>
+                        <p className="font-semibold text-[0.9rem]" style={{ color: vehicleText.primary }}>
                           {vehicle.entryDate || vehicle.createdAt
                             ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')
                             : '-'}
@@ -435,8 +435,8 @@ const Dashboard = () => {
                         <User size={16} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] text-gray-400">العميل</p>
-                        <p className="font-semibold truncate" style={{ color: styles.textPrimary }}>
+                        <p className="text-[11px]" style={{ color: vehicleText.muted }}>العميل</p>
+                        <p className="font-semibold text-[0.9rem] truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>
                       </div>

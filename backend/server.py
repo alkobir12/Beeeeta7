@@ -531,6 +531,8 @@ async def save_vehicle_parts_and_create_journal(
     حفظ بنود المركبة + إنشاء قيد محاسبي + إنشاء فاتورة مفتوحة
     """
     try:
+        workshop_id = os.getenv("REACT_APP_WORKSHOP_ID", "workshop-1")
+        
         # 1. حساب المجموع
         total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parts)
         
@@ -590,7 +592,6 @@ async def save_vehicle_parts_and_create_journal(
                 print(f"Failed to create operation in MongoDB: {e}")
         
         # 4. إنشاء قيد محاسبي تلقائي
-        workshop_id = os.getenv("REACT_APP_WORKSHOP_ID", "workshop-1")
         journal_entry = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,

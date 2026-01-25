@@ -1273,28 +1273,35 @@ async def reset_all_financial_data(
         # حذف من Supabase إذا كان متصلاً
         if supabase:
             try:
-                # حذف جميع العمليات
-                # استخدام neq مع قيمة غير موجودة لحذف كل السجلات
-                ops_del = supabase.table("operations").delete().neq("id", "impossible-id-to-delete-all").execute()
-                deleted_counts["operations"] = len(ops_del.data) if ops_del.data else "all"
+                # حذف جميع العمليات - استخدام gte مع قيمة قديمة جداً لحذف كل شيء
+                ops_del = supabase.table("operations").delete().gte("created_at", "1900-01-01").execute()
+                ops_count = len(ops_del.data) if ops_del.data else 0
+                deleted_counts["operations"] = ops_count if ops_count > 0 else "all"
+                print(f"✅ Deleted {ops_count} operations from Supabase")
                 
                 # حذف Chart of Accounts
-                coa_del = supabase.table("chart_of_accounts").delete().neq("id", "impossible-id-to-delete-all").execute()
-                deleted_counts["chart_of_accounts"] = len(coa_del.data) if coa_del.data else "all"
+                coa_del = supabase.table("chart_of_accounts").delete().gte("created_at", "1900-01-01").execute()
+                coa_count = len(coa_del.data) if coa_del.data else 0
+                deleted_counts["chart_of_accounts"] = coa_count if coa_count > 0 else "all"
+                print(f"✅ Deleted {coa_count} chart of accounts from Supabase")
                 
                 # حذف Journal Entries
                 try:
-                    je_del = supabase.table("journal_entries").delete().neq("id", "impossible-id-to-delete-all").execute()
-                    deleted_counts["journal_entries"] = len(je_del.data) if je_del.data else "all"
+                    je_del = supabase.table("journal_entries").delete().gte("created_at", "1900-01-01").execute()
+                    je_count = len(je_del.data) if je_del.data else 0
+                    deleted_counts["journal_entries"] = je_count if je_count > 0 else "all"
+                    print(f"✅ Deleted {je_count} journal entries from Supabase")
                 except Exception as e:
-                    print(f"Journal entries table not found: {e}")
+                    print(f"Journal entries table deletion: {e}")
                 
                 # حذف الفواتير
                 try:
-                    inv_del = supabase.table("invoices").delete().neq("id", "impossible-id-to-delete-all").execute()
-                    deleted_counts["invoices"] = len(inv_del.data) if inv_del.data else "all"
+                    inv_del = supabase.table("invoices").delete().gte("created_at", "1900-01-01").execute()
+                    inv_count = len(inv_del.data) if inv_del.data else 0
+                    deleted_counts["invoices"] = inv_count if inv_count > 0 else "all"
+                    print(f"✅ Deleted {inv_count} invoices from Supabase")
                 except Exception as e:
-                    print(f"Invoices table not found: {e}")
+                    print(f"Invoices table deletion: {e}")
                     
                 print(f"✅ Supabase: Deleted all financial data")
             except Exception as e:

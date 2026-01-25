@@ -521,6 +521,143 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     return Vehicle(**vehicle)
 
 
+
+@api_router.post("/vehicles/{vehicle_id}/save-parts-and-create-journal")
+async def save_vehicle_parts_and_create_journal(
+    vehicle_id: str,
+    parts: List[dict]
+):
+    """
+    حفظ بنود المركبة + إنشاء قيد محاسبي + إنشاء فاتورة مفتوحة
+    """
+    try:
+        # 1. حساب المجموع
+        total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parts)
+        
+        if total <= 0:
+            raise HTTPException(status_code=400, detail="المجموع يجب أن يكون أكبر من صفر")
+        
+        # 2. تحديث بنود المركبة
+        upd = {"parts": parts}
+        
+        if DB_PROVIDER == "supabase":
+            vehicle = supabase_service.vehicles_update(vehicle_id, upd)
+            if not vehicle:
+                raise HTTPException(status_code=404, detail="Vehicle not found")
+        elif DB_PROVIDER == "memory":
+            rows = _mem_read("vehicles")
+            vehicle = None
+            for i, r in enumerate(rows):
+                if r.get("id") == vehicle_id:
+                    rows[i] = {**r, **upd}
+                    _mem_write("vehicles", rows)
+                    vehicle = rows[i]
+                    break
+            if not vehicle:
+                raise HTTPException(status_code=404, detail="Vehicle not found")
+        else:
+            await db.vehicles.update_one({"id": vehicle_id}, {"$set": upd})
+            vehicle = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0})
+        
+        # 3. إنشاء قيد محاسبي تلقائي
+        workshop_id = os.getenv("REACT_APP_WORKSHOP_ID", "workshop-1")
+        journal_entry = {
+            "id": str(uuid.uuid4()),
+            "workshop_id": workshop_id,
+            "date": datetime.now(timezone.utc).isoformat(),
+            "description": f"إضافة بنود للمركبة {vehicle.get('plateNumber', vehicle_id)}",
+            "lines": [
+                {
+                    "account": "113",
+                    "account_name": "ذمم مدينة عملاء",
+                    "debit": total,
+                    "credit": 0
+                },
+                {
+                    "account": "411",
+                    "account_name": "إيرادات الخدمات",
+                    "debit": 0,
+                    "credit": total
+                }
+            ],
+            "total": total,
+            "source": "vehicle_parts_update",
+            "reference_id": vehicle_id
+        }
+        
+        # حفظ القيد
+        if DB_PROVIDER == "supabase":
+            try:
+                supabase_service.supabase.table("journal_entries").insert(journal_entry).execute()
+            except Exception as e:
+                print(f"Failed to save journal entry to Supabase: {e}")
+        
+        if finance_db:
+            await finance_db.journal_entries.insert_one(journal_entry)
+        
+        # 4. إنشاء فاتورة مفتوحة أو تحديث الموجودة
+        invoice_id = None
+        
+        # التحقق من وجود فاتورة مفتوحة
+        if DB_PROVIDER == "supabase":
+            try:
+                existing_invoices = supabase_service.supabase.table("invoices")\
+                    .select("*")\
+                    .eq("vehicle_id", vehicle_id)\
+                    .neq("status", "paid")\
+                    .neq("status", "cancelled")\
+                    .execute()
+                
+                if existing_invoices.data and len(existing_invoices.data) > 0:
+                    # تحديث الفاتورة الموجودة
+                    invoice = existing_invoices.data[0]
+                    invoice_id = invoice['id']
+                    
+                    updated_items = invoice.get('items', []) + parts
+                    new_total = sum(item.get('price', 0) * item.get('quantity', 1) for item in updated_items)
+                    
+                    supabase_service.supabase.table("invoices").update({
+                        "items": updated_items,
+                        "subtotal": new_total,
+                        "tax": new_total * 0.15,
+                        "total": new_total * 1.15
+                    }).eq("id", invoice_id).execute()
+                else:
+                    # إنشاء فاتورة جديدة
+                    invoice_id = str(uuid.uuid4())
+                    new_invoice = {
+                        "id": invoice_id,
+                        "vehicle_id": vehicle_id,
+                        "customer_name": vehicle.get('customerName', ''),
+                        "customer_phone": vehicle.get('customerPhone', ''),
+                        "items": parts,
+                        "subtotal": total,
+                        "tax": total * 0.15,
+                        "total": total * 1.15,
+                        "status": "draft",
+                        "issue_date": datetime.now(timezone.utc).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+                    }
+                    supabase_service.supabase.table("invoices").insert(new_invoice).execute()
+            except Exception as e:
+                print(f"Invoice creation/update in Supabase failed: {e}")
+        
+        return {
+            "success": True,
+            "message": "تم حفظ البنود وإنشاء القيد والفاتورة بنجاح",
+            "vehicle": vehicle,
+            "journal_entry_id": journal_entry['id'],
+            "invoice_id": invoice_id,
+            "total": total
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في حفظ البنود: {str(e)}")
+
+
+
 # ============ Print & Quote Settings API ============
 
 

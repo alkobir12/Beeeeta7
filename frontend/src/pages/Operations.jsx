@@ -120,7 +120,9 @@ const Operations = () => {
     }
   }, [vehicleIdFromUrl]);
 
-  useEffect(() => { load(true); }, [load]);
+  useEffect(() => {
+    load(true);
+  }, []);
 
   const addItem = () => {
     if (!item.name && !item.itemId) return;

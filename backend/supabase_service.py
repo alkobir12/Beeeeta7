@@ -621,6 +621,8 @@ class SupabaseService:
             "payment_method": payload.get("paymentMethod", "cash"),
             "notes": payload.get("notes"),
             "op_date": datetime.utcnow().isoformat(),
+            # حفظ نوع العملية: افتراضيًا من الـ payload أو مشتق لاحقًا في الواجهة
+            "scope": payload.get("scope"),
         }
         res = self.client.table("operations").insert(row).execute()
         r = (res.data or [{}])[0]
@@ -638,6 +640,7 @@ class SupabaseService:
             "notes": r.get("notes"),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),
+            "scope": r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
         }
 
     def operations_update(self, op_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:

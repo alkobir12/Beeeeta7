@@ -36,6 +36,7 @@ class Vehicle(VehicleBase):
     trackingLink: str
     images: List[str] = []  # URLs للصور
     parts: List[Any] = []  # بنود مرتبطة (خدمات/قطع) أو IDs
+    estimatedTotal: Optional[float] = None  # المبلغ التقديري المحسوب من البنود
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

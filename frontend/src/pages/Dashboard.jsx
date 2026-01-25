@@ -504,6 +504,7 @@ const Dashboard = () => {
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: expandedVehicleId === vehicle.id ? 'scale(1.02)' : 'scale(1)',
                     overflow: 'hidden',
+                    cursor: 'pointer',
                   }}
                   data-expanded={expandedVehicleId === vehicle.id}
                   onClick={() => navigate(`/vehicle/${vehicle.id}`)}

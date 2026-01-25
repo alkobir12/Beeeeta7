@@ -41,10 +41,7 @@ const Taxes = lazy(() => import("./pages/Taxes"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
 const JournalEntries = lazy(() => import("./pages/JournalEntries"));
-const BalanceSheet = lazy(() => import("./pages/BalanceSheet"));
-const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
-const CashFlow = lazy(() => import("./pages/CashFlow"));
-const TrialBalance = lazy(() => import("./pages/TrialBalance"));
+const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial"));
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
 const SystemAudit = lazy(() => import("./pages/SystemAudit"));
 

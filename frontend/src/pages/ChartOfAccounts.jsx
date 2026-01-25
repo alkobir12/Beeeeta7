@@ -133,14 +133,14 @@ export default function ChartOfAccounts() {
           });
         }
         
-        setAccounts(transformedAccounts.length > 0 ? transformedAccounts : DEFAULT_ACCOUNTS);
+        setAccounts(transformedAccounts.length > 0 ? transformedAccounts : []);
       } else {
-        // استخدام البيانات الافتراضية
-        setAccounts(DEFAULT_ACCOUNTS);
+        // لا يوجد بيانات - عرض صفحة فارغة
+        setAccounts([]);
       }
     } catch (error) {
       console.error('Error fetching chart of accounts:', error);
-      setAccounts(DEFAULT_ACCOUNTS);
+      setAccounts([]);
     } finally {
       setLoading(false);
     }

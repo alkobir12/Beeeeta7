@@ -432,7 +432,7 @@ const Dashboard = () => {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2 text-xs">
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-500">{t('vehicle_card.progress') || 'نسبة الإنجاز'}</span>
+                        <span className="text-gray-500">نسبة الإنجاز</span>
                         <Clock size={12} className="text-gray-400" />
                       </div>
                       <span className="font-semibold text-blue-600">{progress}%</span>

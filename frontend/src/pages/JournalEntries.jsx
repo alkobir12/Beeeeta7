@@ -645,6 +645,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles }) {
   const [formData, setFormData] = useState({
     date: entry?.entry_date || new Date().toISOString().split('T')[0],
     description: entry?.description || '',
+    transaction_type: entry?.transaction_type || 'manual',
     lines: entry?.lines?.length > 0 ? entry.lines.map(l => ({
       account_code: l.account_code || l.account,
       account_name: l.account_name,

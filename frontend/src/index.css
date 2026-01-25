@@ -575,69 +575,8 @@ body[data-theme="dashPro"] .sidebar-item.active {
   }
 }
 
-/* Override any white/light backgrounds globally */
-input:not([type="checkbox"]):not([type="radio"]) {
-  background-color: #1E1E1E !important;
-  color: #F5F5F5 !important;
-  border-color: #323232 !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-}
-
-textarea {
-  background-color: #282828 !important;
-  color: #F0F0F0 !important;
-  border-color: #323232 !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-}
-
-select {
-  background-color: #282828 !important;
-  color: #F0F0F0 !important;
-  border-color: #323232 !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-}
-
-button:not(.bg-primary):not(.bg-emergent-green) {
-  background-color: #282828 !important;
-  color: #C8C8C8 !important;
-  border-color: #323232 !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-}
-
-/* Force card backgrounds */
-.bg-white {
-  background-color: #2D2D2D !important;
-}
-
-.text-gray-900, .text-gray-800, .text-gray-700 {
-  color: #F0F0F0 !important;
-  font-weight: 600 !important;
-}
-
-.text-gray-600, .text-gray-500 {
-  color: #C8C8C8 !important;
-  font-weight: 500 !important;
-}
-
-.text-gray-400 {
-  color: #B4B4B4 !important;
-}
-
-.bg-gray-50, .bg-gray-100 {
-  background-color: #282828 !important;
-}
-
-.bg-gray-200 {
-  background-color: #323232 !important;
-}
-
-.border-gray-200, .border-gray-300 {
-  border-color: #323232 !important;
-}
+/* ملاحظة: تم تعطيل الـ overrides القوية للألوان الداكنة لأنها تجعل الحقول والبطاقات سوداء وغير واضحة */
+/* إذا احتجنا ثيم داكن كامل يمكن بناؤه عبر ThemeContext بدلاً من !important هنا */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

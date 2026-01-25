@@ -2,18 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Card, CardContent, CardDescription, CardHeader, CardTitle 
-} from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { 
   Brain, TrendingUp, TrendingDown, DollarSign, AlertCircle,
-  RefreshCw, Download, PieChart, BarChart3, Lightbulb, Loader2, Send
+  RefreshCw, Download, PieChart, BarChart3, Lightbulb, Loader2, Send,
+  Wallet, CreditCard, Activity
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import FinancialCard from '../components/FinancialCard';
 
 import { financeAPI, aiAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
+import { useTheme } from '../contexts/ThemeContext';
 
 const AIFinancial = () => {
   const [loading, setLoading] = useState(true);

@@ -106,6 +106,7 @@ const Dashboard = () => {
   };
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [expandedStatWidget, setExpandedStatWidget] = useState(null);
 
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = 

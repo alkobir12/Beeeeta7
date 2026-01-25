@@ -46,6 +46,7 @@ const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
 const CashFlow = lazy(() => import("./pages/CashFlow"));
 const TrialBalance = lazy(() => import("./pages/TrialBalance"));
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
+const SystemAudit = lazy(() => import("./pages/SystemAudit"));
 
 // Loading component
 const PageLoader = () => (

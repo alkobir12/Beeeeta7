@@ -76,7 +76,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/accounting/cash-flow', label: i18n.language === 'ar' ? 'التدفقات النقدية' : 'Cash Flow', enabled: true },
         { path: '/accounting/trial-balance', label: i18n.language === 'ar' ? 'ميزان المراجعة' : 'Trial Balance', enabled: true },
         { path: '/accounting/journal-entries', label: i18n.language === 'ar' ? '📖 دفتر اليومية' : '📖 Journal', enabled: true },
-        { path: '/accounting/general-ledger', label: i18n.language === 'ar' ? '📚 دفتر الأستاذ' : '📚 Ledger', enabled: true },
         { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
         { path: '/ai-financial', label: i18n.language === 'ar' ? '🤖 التحليل الذكي' : '🤖 AI Analysis', enabled: true },
         { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },

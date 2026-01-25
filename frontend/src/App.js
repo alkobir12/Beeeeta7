@@ -41,7 +41,6 @@ const Taxes = lazy(() => import("./pages/Taxes"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
 const JournalEntries = lazy(() => import("./pages/JournalEntries"));
-const GeneralLedger = lazy(() => import("./pages/GeneralLedger"));
 const BalanceSheet = lazy(() => import("./pages/BalanceSheet"));
 const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
 const CashFlow = lazy(() => import("./pages/CashFlow"));
@@ -137,7 +136,6 @@ function App() {
                       <Route path="/accounting/cash-flow" element={<CashFlow />} />
                       <Route path="/accounting/trial-balance" element={<TrialBalance />} />
                       <Route path="/accounting/journal-entries" element={<JournalEntries />} />
-                      <Route path="/accounting/general-ledger" element={<GeneralLedger />} />
                       <Route path="/ai-financial" element={<AIFinancial />} />
                       <Route path="/system-audit" element={<SystemAudit />} />
                     </Routes>

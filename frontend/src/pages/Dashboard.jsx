@@ -462,9 +462,9 @@ const Dashboard = () => {
 
                   {/* الشريط السفلي: المسؤول */}
                   <div
-                    className="mt-2 flex items-center justify-between rounded-[20px] px-3 py-2"
+                    className="mt-3 flex items-center justify-between rounded-[20px] px-3 py-2"
                     style={{
-                      backgroundColor: isLight ? '#020617' : '#020617',
+                      backgroundColor: isBlueCardTheme ? '#020617' : '#020617',
                       color: '#f9fafb',
                     }}
                   >

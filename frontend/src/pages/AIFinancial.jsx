@@ -246,7 +246,6 @@ const AIFinancial = () => {
       const payload = {
         message: chatQuery,
         workshop_id: workshopId,
-        conversation_id: conversationId,
       };
 
       const response = await aiAPI.financeBotChat(payload);

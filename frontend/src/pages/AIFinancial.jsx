@@ -333,6 +333,14 @@ export default function AIFinancial() {
         workshop_id: workshopId,
         account_code: selectedAccountCode || undefined,
         conversation_id: conversationId || undefined,
+        // تزويد أبوفهد بملخص مالي صغير لتمكين التحليل القواعدي (P1)
+        financial_data: {
+          revenue: summary.revenue,
+          expenses: summary.expenses,
+          net_profit: summary.netProfit,
+          assets: summary.assets,
+          liabilities: summary.liabilities,
+        },
       };
 
       const res = await aiAPI.financeBotChat(payload);

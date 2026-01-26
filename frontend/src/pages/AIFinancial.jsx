@@ -254,7 +254,6 @@ const AIFinancial = () => {
         role: 'assistant',
         content: response.data?.response || 'تعذر الحصول على رد من المساعد المالي حالياً.',
       };
-      setConversationId(response.data?.conversation_id || conversationId);
       setChatHistory((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error('Chat AI error:', err);

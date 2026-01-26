@@ -322,6 +322,42 @@ const SystemAudit = () => {
               </div>
             </div>
           )}
+          {/* تحليل تقرير التدقيق بواسطة البوت المالي */}
+          <div className="mt-8 max-w-3xl mx-auto" dir="rtl">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg">
+              <h3 className="text-sm font-semibold mb-2 text-slate-100 flex items-center gap-2">
+                <Brain className="h-4 w-4 text-blue-400" />
+                تحليل تقرير التدقيق باستخدام المحاسب المالي الذكي
+              </h3>
+              <p className="text-xs text-slate-400 mb-3">
+                اضغط على الزر أدناه لإرسال ملخص تقرير التدقيق إلى البوت المالي والحصول على شرح وتوصيات.
+              </p>
+              <button
+                type="button"
+                onClick={handleAnalyzeWithFinanceBot}
+                disabled={financeBotLoading}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {financeBotLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {financeBotLoading ? 'جاري تحليل تقرير التدقيق...' : 'حلّل تقرير التدقيق الآن'}
+              </button>
+
+              {financeBotError && (
+                <p className="mt-3 text-xs text-red-400">{financeBotError}</p>
+              )}
+
+              {financeBotResponse && (
+                <div className="mt-3 p-3 rounded-lg bg-slate-900/70 border border-slate-800 text-xs text-slate-100 whitespace-pre-wrap">
+                  {financeBotResponse}
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
       )}
     </div>

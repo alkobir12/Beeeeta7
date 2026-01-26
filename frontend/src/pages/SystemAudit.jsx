@@ -30,6 +30,70 @@ const SystemAudit = () => {
       alert('❌ حدث خطأ أثناء التدقيق');
     } finally {
       setLoading(false);
+  const [financeBotLoading, setFinanceBotLoading] = useState(false);
+  const [financeBotResponse, setFinanceBotResponse] = useState('');
+  const [financeBotError, setFinanceBotError] = useState('');
+
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+
+  const handleAnalyzeWithFinanceBot = async () => {
+    if (!auditReport) return;
+
+    setFinanceBotError('');
+    setFinanceBotLoading(true);
+
+    try {
+      const summaryParts = [];
+
+      if (auditReport.summary) {
+        summaryParts.push(`ملخص التدقيق:\n${auditReport.summary}`);
+      }
+
+      if (auditReport.details?.balance_sheet_check) {
+        summaryParts.push(
+          `فحص معادلة المحاسبة: ${auditReport.details.balance_sheet_check.message}`
+        );
+      }
+
+      if (auditReport.details?.consistency_analysis) {
+        const issues = auditReport.details.consistency_analysis.issues || [];
+        const warnings = auditReport.details.consistency_analysis.warnings || [];
+        if (issues.length || warnings.length) {
+          summaryParts.push(
+            `قضايا الاتساق:\n- مشكلات: ${issues.join(' | ') || 'لا يوجد'}\n- تحذيرات: ${warnings.join(' | ') || 'لا يوجد'}`
+          );
+        }
+      }
+
+      if (auditReport.corrections_needed?.length) {
+        summaryParts.push(
+          'تصحيحات مطلوبة:\n' +
+          auditReport.corrections_needed
+            .map((c, idx) => `${idx + 1}- ${c.issue} | تصحيح مقترح: ${c.correction || '-'} | اقتراح: ${c.suggestion || '-'}`)
+            .join('\n')
+        );
+      }
+
+      const contextText = summaryParts.join('\n\n');
+      const message =
+        'أرغب في تفسير تقرير التدقيق أعلاه، وذكر الأخطاء المحاسبية المحتملة، مستوى خطورتها، والتوصيات العملية لتحسين دقة السجلات وتقليل المخاطر.';
+
+      const payload = {
+        message: `${contextText}\n\nسؤال المحاسب:\n${message}`,
+        workshop_id: workshopId,
+      };
+
+      const res = await aiAPI.financeBotChat(payload);
+      setFinanceBotResponse(res.data?.response || 'تعذر الحصول على تحليل من البوت المالي.');
+    } catch (err) {
+      console.error('Finance bot audit analysis error:', err);
+      setFinanceBotError('تعذر الاتصال بالمحاسب المالي لتحليل تقرير التدقيق.');
+    } finally {
+      setFinanceBotLoading(false);
+    }
+  };
+
+
     }
   };
 

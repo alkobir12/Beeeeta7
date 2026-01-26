@@ -236,11 +236,7 @@ const ChatWidget = () => {
             )}
 
             {/* تنبيه حالة مفتاح Genspark */}
-            {info && !info.has_genspark_key && (
-              <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2 text-[11px] leading-relaxed">
-                يعمل المساعد حالياً باستخدام الكتيبات المحلية فقط. لإتاحة ذكاء Genspark الكامل، قم بضبط GENSPARK_API_KEY في الخادم.
-              </div>
-            )}
+            {/* تم إزالة تنبيه Genspark – المساعد يعمل الآن بالاعتماد على مصادر الورشة الداخلية فقط */}
 
             {mode === 'diagnosis' && (
               <>

@@ -357,16 +357,11 @@ const ComprehensiveFinancial = () => {
                         <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>
                           {account.name || account.name_ar}
                         </td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {account.type === 'asset' ? 'أصول' : 
-                           account.type === 'liability' ? 'خصوم' :
-                           account.type === 'equity' ? 'حقوق ملكية' :
-                           account.type === 'revenue' ? 'إيرادات' : 'مصروفات'}
+                        <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--text-primary)' }}>
+                          {formatCurrency(account.debit || 0)}
                         </td>
-                        <td className="px-4 py-3 font-mono font-bold" style={{ 
-                          color: account.balance >= 0 ? 'var(--text-primary)' : '#ef4444'
-                        }}>
-                          {formatCurrency(Math.abs(account.balance || 0))}
+                        <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--text-primary)' }}>
+                          {formatCurrency(account.credit || 0)}
                         </td>
                       </tr>
                     ))}

@@ -298,6 +298,7 @@ app.include_router(whatsapp_bot_router)
 app.include_router(extended_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
+app.include_router(finance_bot_router)
 app.include_router(invoices_router)
 
 # Create a router with the /api prefix

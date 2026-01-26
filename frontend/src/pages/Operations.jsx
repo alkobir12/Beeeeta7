@@ -123,7 +123,6 @@ const Operations = () => {
   useEffect(() => {
     // استدعاء التحميل مرة واحدة عند فتح الصفحة
     load(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addItem = () => {

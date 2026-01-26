@@ -581,8 +581,6 @@ const AIFinancial = () => {
         </div>
       </div>
 
-      </div>
-
       {/* Recommendations Grid */}
       {aiAnalysis.recommendations && aiAnalysis.recommendations.length > 0 && (
         <div className="mb-8">

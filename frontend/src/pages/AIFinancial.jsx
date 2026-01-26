@@ -55,6 +55,20 @@ const AIFinancial = () => {
     // eslint disabled
   }, [workshopId, timeRange]);
 
+  // تحميل دليل الحسابات لاستخدامه مع البوت المالي
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const res = await financeAPI.getChartOfAccounts();
+        setAccounts(res.data?.accounts || res.data || []);
+      } catch (err) {
+        console.error('Failed to load chart of accounts for finance bot:', err);
+      }
+    };
+
+    loadAccounts();
+  }, []);
+
   const getStartDate = (range) => {
     const now = new Date();
     const d = new Date(now); // نسخ حتى لا نعدل الأصل

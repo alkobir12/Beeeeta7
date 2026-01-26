@@ -418,6 +418,82 @@ const AIFinancial = () => {
         />
 
         <FinancialCard
+      {/* قسم البوت المالي التفاعلي */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          {/* محتوى التحليل كما هو */}
+        </div>
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg" dir="rtl">
+            <h3 className="text-sm font-semibold mb-2 text-slate-100 flex items-center gap-2">
+              <Brain className="h-4 w-4 text-blue-400" />
+              المحاسب المالي الذكي
+            </h3>
+            <p className="text-xs text-slate-400 mb-3">
+              اختر حسابًا (اختياريًا) ثم اطرح سؤالك لتحصل على تحليل وتوصيات.
+            </p>
+
+            {/* اختيار الحساب للتدقيق */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                الحساب المراد تحليله (اختياري)
+              </label>
+              <select
+                value={selectedAccountCode}
+                onChange={(e) => setSelectedAccountCode(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">بدون تحديد حساب معيّن</option>
+                {accounts.map((acc) => (
+                  <option key={acc.id || acc.code} value={acc.code}>
+                    {acc.code} - {acc.name_ar || acc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* سجل الرسائل */}
+            <div className="h-40 overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-800 mb-3 p-2 space-y-2 text-xs">
+              {chatHistory.length === 0 && (
+                <p className="text-slate-500 text-center mt-6">
+                  ابدأ بطرح سؤالك المالي، مثل: "حلل وضع حساب الإيرادات" أو "ما هي مخاطر المصروفات الحالية؟".
+                </p>
+              )}
+              {chatHistory.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-lg px-2 py-1.5 whitespace-pre-wrap ${
+                    msg.role === 'user'
+                      ? 'bg-blue-500/10 text-blue-100 ml-6 text-right'
+                      : 'bg-slate-800/80 text-slate-100 mr-6 text-right'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              ))}
+            </div>
+
+            {/* إدخال الرسالة */}
+            <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={chatQuery}
+                onChange={(e) => setChatQuery(e.target.value)}
+                placeholder="اكتب سؤالك المالي هنا..."
+                className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="submit"
+                disabled={chatLoading}
+                className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white disabled:opacity-50"
+              >
+                {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
           title={financialData.profitMargin > 20 ? 'ممتاز' : financialData.profitMargin > 10 ? 'جيد' : 'يحتاج تحسين'}
           subtitle="التقييم العام"
           icon={Lightbulb}

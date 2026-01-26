@@ -683,6 +683,14 @@ class SupabaseService:
             "updatedAt": r.get("updated_at"),
         }
 
+    def operations_delete(self, op_id: str) -> bool:
+        """حذف عملية واحدة من جدول operations في Supabase"""
+        if self.mock_mode:
+            return True
+        self.client.table("operations").delete().eq("id", op_id).execute()
+        return True
+
+
     # -------------------- Transactions --------------------
     def transactions_list(
         self, type: Optional[str] = None, account_id: Optional[str] = None

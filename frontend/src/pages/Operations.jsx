@@ -140,7 +140,13 @@ const Operations = () => {
     e.preventDefault();
     try {
       // 1) إنشاء العملية التشغيلية
-      const opRes = await axios.post(`${API_URL}/operations`, { ...form });
+      // تنظيف الـ payload قبل الإرسال لتفادي أخطاء UUID في Supabase
+      const cleanPayload = {
+        ...form,
+        accountId: form.accountId || null,
+        vehicleId: form.vehicleId || null,
+      };
+      const opRes = await axios.post(`${API_URL}/operations`, cleanPayload);
       const op = opRes.data;
 
       // 2) حساب إجمالي العملية من العناصر

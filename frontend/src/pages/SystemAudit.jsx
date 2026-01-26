@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Shield, RefreshCw, CheckCircle, AlertTriangle, XCircle, FileText, Download, Activity, Brain, Send } from 'lucide-react';
+import { Shield, RefreshCw, CheckCircle, AlertTriangle, XCircle, FileText, Download, Activity, Brain, Send, Loader2 } from 'lucide-react';
 import FinancialCard from '../components/FinancialCard';
 import { useTheme } from '../contexts/ThemeContext';
+import { aiAPI } from '../services/api';
 
 const SystemAudit = () => {
   const { themeName } = useTheme();

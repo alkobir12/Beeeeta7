@@ -605,14 +605,37 @@ class SupabaseService:
     def operations_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:
             return payload
+
         items = payload.get("items") or []
-        subtotal = sum(
-            (float(it.get("price", 0)) * float(it.get("qty", 1))) for it in items
-        )
+        # قبول كلٍّ من quantity و qty لحساب الكميات
+        subtotal = 0.0
+        for it in items:
+            qty = float(it.get("quantity", it.get("qty", 1)))
+            price = float(it.get("price", 0))
+            it["total"] = qty * price
+            subtotal += it["total"]
+
+        # تنظيف الحقول التي يجب أن تكون UUID أو NULL
+        account_id = payload.get("accountId") or None
+        vehicle_id = payload.get("vehicleId") or None
+
+        # إذا لم يكن الشكل شكل UUID (طول 36 مع شرطات)، اعتبره None لتفادي أخطاء Supabase
+        def _sanitize_uuid(value):
+            if not value:
+                return None
+            if not isinstance(value, str):
+                return None
+            if len(value) != 36 or "-" not in value:
+                return None
+            return value
+
+        account_id = _sanitize_uuid(account_id)
+        vehicle_id = _sanitize_uuid(vehicle_id)
+
         row = {
             "type": payload.get("type", "service"),
-            "account_id": payload.get("accountId"),
-            "vehicle_id": payload.get("vehicleId"),
+            "account_id": account_id,
+            "vehicle_id": vehicle_id,
             "partner_type": payload.get("partnerType"),
             "partner_name": payload.get("partnerName"),
             "items": items,

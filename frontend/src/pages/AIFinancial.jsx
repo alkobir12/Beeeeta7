@@ -427,10 +427,10 @@ const AIFinancial = () => {
           <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg" dir="rtl">
             <h3 className="text-sm font-semibold mb-2 text-slate-100 flex items-center gap-2">
               <Brain className="h-4 w-4 text-blue-400" />
-              المحاسب المالي الذكي
+              أبوفهد – المحاسب المالي الذكي
             </h3>
             <p className="text-xs text-slate-400 mb-3">
-              اختر حسابًا (اختياريًا) ثم اطرح سؤالك لتحصل على تحليل وتوصيات.
+              يمكنك ترك الحساب فارغًا لتحليل الوضع المالي الكامل، أو اختيار حساب محدّد لتدقيقه بالتفصيل.
             </p>
 
             {/* اختيار الحساب للتدقيق */}

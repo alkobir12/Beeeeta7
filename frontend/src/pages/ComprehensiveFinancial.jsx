@@ -344,8 +344,8 @@ const ComprehensiveFinancial = () => {
                     <tr>
                       <th className="px-4 py-3 text-right text-white font-semibold">رمز الحساب</th>
                       <th className="px-4 py-3 text-right text-white font-semibold">اسم الحساب</th>
-                      <th className="px-4 py-3 text-right text-white font-semibold">النوع</th>
-                      <th className="px-4 py-3 text-right text-white font-semibold">الرصيد</th>
+                      <th className="px-4 py-3 text-right text-white font-semibold">مدين</th>
+                      <th className="px-4 py-3 text-right text-white font-semibold">دائن</th>
                     </tr>
                   </thead>
                   <tbody>

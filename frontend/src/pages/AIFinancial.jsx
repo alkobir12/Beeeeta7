@@ -588,7 +588,7 @@ export default function AIFinancial() {
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">بدون تحديد حساب</option>
-                {accounts.map((acc) => (
+                {(Array.isArray(accounts) ? accounts : []).map((acc) => (
                   <option key={acc.id || acc.code} value={acc.code}>
                     {acc.code} - {acc.name_ar || acc.name}
                   </option>

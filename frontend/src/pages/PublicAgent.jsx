@@ -27,10 +27,8 @@ const PublicAgent = () => {
     try {
       const res = await axios.post(`${API_URL}/public-agent/chat`, {
         message: input,
-        sessionId: localStorage.getItem('genspark_session_id') || undefined
       });
       const reply = res.data.response || (i18n.language === 'ar' ? 'عذراً، لم أتمكن من الرد.' : 'Sorry, I could not respond.');
-      if (res.data.session_id) localStorage.setItem('genspark_session_id', res.data.session_id);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: i18n.language === 'ar' ? 'خطأ في الاتصال' : 'Connection error' }]);

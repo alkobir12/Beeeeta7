@@ -54,6 +54,10 @@ class FinanceBotChatRequest(BaseModel):
 
 
 class FinanceBotChatResponse(BaseModel):
+    response: str
+    conversation_id: str
+    provider: str = "openai-gpt-5.1"
+    timestamp: str
 
 
 def abu_fahad_safe_analysis(financial_data: Dict[str, Any]) -> Dict[str, List[str]]:

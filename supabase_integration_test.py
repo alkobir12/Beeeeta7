@@ -254,11 +254,40 @@ def test_customer_approval_link_integration(vehicle_id):
         print("⚠️ Skipping approval tests - no vehicle ID provided")
         return None
     
+    # First, get a real customer ID from the system
+    print("\n[0] Getting existing customer ID for approval test")
+    customer_id = None
+    try:
+        response = requests.get(f"{BACKEND_URL}/customers", timeout=15)
+        if response.status_code == 200:
+            customers = response.json()
+            if customers:
+                customer_id = customers[0].get('id')
+                print(f"   ✅ Using customer ID: {customer_id}")
+            else:
+                print("   ⚠️ No customers found, creating new customer")
+                # Create a customer for testing
+                customer_data = {
+                    "name": "عميل اختبار الاعتماد",
+                    "phone": "0501234567",
+                    "email": "approval.test@example.com"
+                }
+                response = requests.post(f"{BACKEND_URL}/customers", json=customer_data, timeout=15)
+                if response.status_code == 200:
+                    customer_id = response.json().get('id')
+                    print(f"   ✅ Created customer ID: {customer_id}")
+    except Exception as e:
+        print(f"   ⚠️ Error getting customer: {str(e)}")
+    
+    if not customer_id:
+        print("⚠️ Skipping approval tests - no customer ID available")
+        return None
+    
     # Step 1: Create approval request
     print("\n[1] Creating approval request via POST /api/approvals")
     approval_data = {
         "vehicleId": vehicle_id,
-        "customerId": "test-customer-id",
+        "customerId": customer_id,
         "title": "طلب اعتماد إصلاح شامل",
         "amount": 2500.0,
         "serviceItems": [

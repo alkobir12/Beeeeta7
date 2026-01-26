@@ -259,14 +259,24 @@ const AIFinancial = () => {
         message: chatQuery,
         workshop_id: workshopId,
         account_code: selectedAccountCode || undefined,
+        conversation_id: conversationId || undefined,
       };
 
       const response = await aiAPI.financeBotChat(payload);
 
       const aiMessage = {
         role: 'assistant',
-        content: response.data?.response || 'تعذر الحصول على رد من المساعد المالي حالياً.',
+        content: response.data?.response || 'تعذر الحصول على رد من أبوفهد حالياً.',
       };
+      const newConversationId = response.data?.conversation_id || conversationId;
+      if (newConversationId && newConversationId !== conversationId) {
+        setConversationId(newConversationId);
+        try {
+          localStorage.setItem('finance_bot_session_id', newConversationId);
+        } catch (e) {
+          // تجاهل
+        }
+      }
       setChatHistory((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error('Chat AI error:', err);

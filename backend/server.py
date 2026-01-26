@@ -75,6 +75,7 @@ from routes_ai_recommendations import router as ai_recommendations_router
 
 # Import Finance Routes
 from routes_finance import router as finance_router, set_db as set_db_finance
+from routes_finance_bot import router as finance_bot_router
 
 # Import Invoices Routes
 from routes_invoices import (

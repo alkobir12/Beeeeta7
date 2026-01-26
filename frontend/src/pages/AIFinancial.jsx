@@ -323,10 +323,10 @@ const AIFinancial = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center" style={{ color: 'var(--text-primary)' }}>
             <Brain className="h-10 w-10 ml-3 text-blue-600" />
-            التحليل المالي بالذكاء الاصطناعي
+            أبوفهد – التحليل والتدقيق المالي الذكي
           </h1>
           <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>
-            تحليل متقدم للأداء المالي وتوقعات ذكية لورشتك
+            مساعد مالي تفاعلي يحلل الأرقام، يراقب المخاطر، ويدقق النظام المحاسبي لورشتك
           </p>
         </div>
 

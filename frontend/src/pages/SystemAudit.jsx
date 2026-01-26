@@ -8,11 +8,15 @@ const SystemAudit = () => {
   const { themeName } = useTheme();
   const [auditReport, setAuditReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [financeBotLoading, setFinanceBotLoading] = useState(false);
+  const [financeBotResponse, setFinanceBotResponse] = useState('');
+  const [financeBotError, setFinanceBotError] = useState('');
+
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
   const runAudit = async () => {
     try {
       setLoading(true);
-      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       
       const response = await fetch(`${API_URL}/finance/audit-system?workshop_id=${workshopId}`, {
@@ -31,11 +35,8 @@ const SystemAudit = () => {
       alert('❌ حدث خطأ أثناء التدقيق');
     } finally {
       setLoading(false);
-  const [financeBotLoading, setFinanceBotLoading] = useState(false);
-  const [financeBotResponse, setFinanceBotResponse] = useState('');
-  const [financeBotError, setFinanceBotError] = useState('');
-
-  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+    }
+  };
 
   const handleAnalyzeWithFinanceBot = async () => {
     if (!auditReport) return;

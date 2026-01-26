@@ -39,17 +39,17 @@ def test_p1_finance_bot_safe_analysis():
         url = f"{BACKEND_URL}/finance-bot/chat"
         print(f"📡 استدعاء: POST {url}")
         
-        # إعداد البيانات المالية للاختبار
+        # إعداد البيانات المالية للاختبار (بيانات تؤدي إلى تحليل قواعدي)
         payload = {
             "message": "حلل الوضع المالي للورشة",
             "workshop_id": WORKSHOP_ID,
             "financial_data": {
-                "revenue": 50000,
-                "expenses": 30000,
-                "assets": 100000,
-                "liabilities": 20000,
-                "cash_flow": 20000,
-                "profit_margin": 40
+                "revenue": 10000,
+                "expenses": 9500,  # هامش ربح منخفض لتفعيل التحليل القواعدي
+                "assets": 50000,
+                "liabilities": 30000,  # نسبة التزامات عالية لتفعيل التحليل
+                "cash_flow": 500,
+                "profit_margin": 5  # هامش ربح منخفض
             }
         }
         

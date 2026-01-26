@@ -193,7 +193,11 @@ def test_chart_of_accounts_availability():
         
         if response.status_code == 200:
             data = response.json()
-            accounts = data.get("data", {}).get("accounts", [])
+            # Handle both possible response formats
+            if isinstance(data.get("data"), list):
+                accounts = data.get("data", [])
+            else:
+                accounts = data.get("data", {}).get("accounts", [])
             
             if accounts:
                 print_result(True, f"تم العثور على {len(accounts)} حساب في دليل الحسابات")

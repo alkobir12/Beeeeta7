@@ -232,6 +232,20 @@ const AIFinancial = () => {
 
     if (data.liabilities > data.assets * 0.5) {
       risks.push('نسبة الديون إلى الأصول مرتفعة');
+  // رسالة ترحيبية من أبوفهد عند أول فتح للصفحة إذا لم توجد محادثة سابقة
+  useEffect(() => {
+    if (chatHistory.length === 0) {
+      setChatHistory([
+        {
+          role: 'assistant',
+          content:
+            'مرحبًا، أنا أبوفهد المحاسب المالي للورشة. هل تريد تحليل الوضع المالي الكامل للورشة، أم تدقيق حساب معيّن مثل 411 أو 514؟ يمكنك اختيار حساب من القائمة أو كتابة سؤالك مباشرة.',
+        },
+      ]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
     }
 
     if (data.profitMargin < 10) {

@@ -13,6 +13,27 @@ Comprehensive integration testing between Supabase and main pages
 
 ### Test Results Summary: ✅ ALL TESTS PASSED (13/13)
 
+---
+
+## AI Financial Page Rebuild Smoke Test (2026-01-26)
+
+### Test Objective:
+التأكد من أن صفحة /ai-financial الجديدة تعمل بدون أخطاء Runtime وأنها تتكامل مع:
+- تقارير المالية (Income/Balance/Trial Balance)
+- بوت أبوفهد /api/finance-bot/chat
+- تدقيق النظام /api/finance/audit-system
+
+### Test Results Summary: ✅ PASS
+- ✅ صفحة /ai-financial تُعرض بعد تسجيل الدخول بدون خطأ (accounts.map)
+- ✅ تحميل دليل الحسابات من /api/finance/chart-of-accounts يعمل بعد تصحيح شكل الاستجابة (success/data)
+- ✅ استدعاء /api/finance/reports/trial-balance يعيد بيانات صحيحة
+- ✅ استدعاء /api/finance/reports/income-statement يعمل عند تمرير start_date/end_date
+- ✅ استدعاء /api/finance-bot/chat يعمل ويرجع response + conversation_id
+
+### Artifacts:
+- /app/artifacts/ai_financial_after_restart.png
+
+
 #### ✅ VEHICLE RECEPTION PAGE INTEGRATION - FULLY WORKING
 
 **Test Procedure Executed:**

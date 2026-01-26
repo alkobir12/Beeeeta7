@@ -190,7 +190,14 @@ def test_p2_transaction_type_retrieval():
         print(f"📊 كود الاستجابة: {response.status_code}")
         
         if response.status_code == 200:
-            data = response.json()
+            response_data = response.json()
+            
+            # Handle both formats: direct array or {"success": true, "data": [...]}
+            if isinstance(response_data, dict) and "data" in response_data:
+                data = response_data["data"]
+            else:
+                data = response_data
+                
             print(f"📄 عدد القيود المستلمة: {len(data) if isinstance(data, list) else 'غير محدد'}")
             
             # البحث عن القيد الذي أنشأناه في الاختبار السابق

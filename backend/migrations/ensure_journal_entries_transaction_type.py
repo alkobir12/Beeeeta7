@@ -19,12 +19,29 @@ import psycopg2
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
-def main() -> int:
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        raise RuntimeError("DATABASE_URL is not set")
+def _connect():
+    """Connect using DATABASE_URL or DIRECT_URL.
 
-    conn = psycopg2.connect(database_url)
+    Supabase DATABASE_URL may include '?pgbouncer=true' which psycopg2 doesn't accept.
+    """
+    database_url = os.environ.get("DATABASE_URL")
+    direct_url = os.environ.get("DIRECT_URL")
+
+    if database_url:
+        clean = database_url.split("?")[0]
+        try:
+            return psycopg2.connect(clean)
+        except Exception as e:
+            print(f"⚠️ DATABASE_URL connect failed: {e}")
+
+    if direct_url:
+        return psycopg2.connect(direct_url)
+
+    raise RuntimeError("No valid database URL available (DATABASE_URL/DIRECT_URL)")
+
+
+def main() -> int:
+    conn = _connect()
     cur = conn.cursor()
 
     cur.execute(

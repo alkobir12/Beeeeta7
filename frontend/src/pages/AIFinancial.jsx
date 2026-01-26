@@ -181,9 +181,11 @@ export default function AIFinancial() {
   const fetchAccounts = async () => {
     try {
       const res = await financeAPI.getChartOfAccounts();
-      setAccounts(res.data?.accounts || res.data || []);
+      const data = res.data?.data ?? res.data?.accounts ?? res.data;
+      setAccounts(Array.isArray(data) ? data : []);
     } catch (e) {
       // non-blocking
+      setAccounts([]);
     }
   };
 

@@ -255,6 +255,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               <span>{t('quick_actions.title')}</span>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10"><X size={18} /></Button>
             </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {t('quick_actions.subtitle') || 'إجراءات سريعة للمركبة الحالية'}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 sm:space-y-6 pb-4">

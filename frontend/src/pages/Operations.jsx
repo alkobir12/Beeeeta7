@@ -123,6 +123,7 @@ const Operations = () => {
   useEffect(() => {
     // استدعاء التحميل مرة واحدة عند فتح الصفحة
     load(true);
+    // NOTE: تم تعطيل قاعدة React Hooks deps من خلال إعداد ESLint العام
   }, []);
 
   const addItem = () => {

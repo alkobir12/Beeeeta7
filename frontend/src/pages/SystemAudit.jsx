@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, RefreshCw, CheckCircle, AlertTriangle, XCircle, FileText, Download, Activity } from 'lucide-react';
+import { Shield, RefreshCw, CheckCircle, AlertTriangle, XCircle, FileText, Download, Activity, Brain, Send } from 'lucide-react';
 import FinancialCard from '../components/FinancialCard';
 import { useTheme } from '../contexts/ThemeContext';
 

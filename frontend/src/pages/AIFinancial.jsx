@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import FinancialCard from '../components/FinancialCard';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 
 import { financeAPI, aiAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';

@@ -1,27 +1,52 @@
 /* eslint-disable */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Brain, TrendingUp, TrendingDown, DollarSign, AlertCircle,
-  RefreshCw, Download, PieChart, BarChart3, Lightbulb, Loader2, Send,
-  Wallet, CreditCard, Activity
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import {
+  Brain,
+  RefreshCw,
+  Send,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+  Shield,
+  Car,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Receipt,
+  Scale,
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+
 import FinancialCard from '../components/FinancialCard';
+import QuickCard from '../components/QuickCard';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
-import { financeAPI, aiAPI } from '../services/api';
+import { aiAPI, financeAPI, vehicleAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { useTheme } from '../contexts/ThemeContext';
 
-const AIFinancial = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const STORAGE_KEYS = {
+  conversationId: 'finance_bot_session_id',
+  history: 'finance_bot_chat_history_v1',
+};
+
+function useQuery() {
+  const { search } = useLocation();
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
+
+export default function AIFinancial() {
+  const query = useQuery();
+  const vehicleId = query.get('vehicleId') || query.get('vehicle_id') || '';
+
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+
   const [timeRange, setTimeRange] = useState('month');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [financialData, setFinancialData] = useState({
+  const [summary, setSummary] = useState({
     revenue: 0,
     expenses: 0,
     netProfit: 0,
@@ -31,50 +56,29 @@ const AIFinancial = () => {
     equity: 0,
   });
 
-  const [aiAnalysis, setAiAnalysis] = useState({
-    overview: '',
-    recommendations: [],
-    predictions: {},
-    riskFactors: [],
-  });
+  const [trialBalance, setTrialBalance] = useState({ accounts: [], totals: null });
+  const [accounts, setAccounts] = useState([]);
 
-  // حالة الدردشة
+  // Chat (AbuFahad)
+  const [conversationId, setConversationId] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [selectedAccountCode, setSelectedAccountCode] = useState('');
   const [chatQuery, setChatQuery] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [selectedAccountCode, setSelectedAccountCode] = useState('');
-  const [conversationId, setConversationId] = useState('');
 
-  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+  // Audit
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditReport, setAuditReport] = useState(null);
+  const [auditBotLoading, setAuditBotLoading] = useState(false);
+  const [auditBotResponse, setAuditBotResponse] = useState('');
 
-  useEffect(() => {
-    if (workshopId) {
-      fetchFinancialData();
-    } else {
-      setError('لم يتم ضبط معرف الورشة REACT_APP_WORKSHOP_ID');
-      setLoading(false);
-    }
-    // eslint disabled
-  }, [workshopId, timeRange]);
-
-  // تحميل دليل الحسابات لاستخدامه مع البوت المالي
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        const res = await financeAPI.getChartOfAccounts();
-        setAccounts(res.data?.accounts || res.data || []);
-      } catch (err) {
-        console.error('Failed to load chart of accounts for finance bot:', err);
-      }
-    };
-
-    loadAccounts();
-  }, []);
+  // Vehicle
+  const [vehicle, setVehicle] = useState(null);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
 
   const getStartDate = (range) => {
     const now = new Date();
-    const d = new Date(now); // نسخ حتى لا نعدل الأصل
+    const d = new Date(now);
     switch (range) {
       case 'week':
         d.setDate(d.getDate() - 7);
@@ -94,226 +98,305 @@ const AIFinancial = () => {
     return d.toISOString().split('T')[0];
   };
 
-  const fetchFinancialData = async () => {
+  const loadChatFromStorage = () => {
     try {
-      setLoading(true);
-      setError(null);
+      const storedId = localStorage.getItem(STORAGE_KEYS.conversationId);
+      if (storedId) setConversationId(storedId);
+    } catch (e) {}
 
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.history);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) {
+          setChatHistory(parsed);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // default greeting
+    setChatHistory([
+      {
+        role: 'assistant',
+        content:
+          'مرحباً، أنا أبوفهد المحاسب المالي للورشة. ماذا تحب أن نحلّل اليوم؟ هل تريد نظرة عامة على الربحية والسيولة، أم تدقيق حساب محدد (مثل 411 أو 514)؟',
+      },
+    ]);
+  };
+
+  const persistChatToStorage = (nextHistory, nextConversationId) => {
+    try {
+      if (nextConversationId) localStorage.setItem(STORAGE_KEYS.conversationId, nextConversationId);
+    } catch (e) {}
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(nextHistory));
+    } catch (e) {}
+  };
+
+  const fetchCoreFinancials = async () => {
+    if (!workshopId) {
+      setError('لم يتم ضبط REACT_APP_WORKSHOP_ID. يرجى ضبط معرف الورشة.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
       const endDate = new Date().toISOString().split('T')[0];
       const startDate = getStartDate(timeRange);
 
-      const [incomeRes, balanceRes] = await Promise.all([
-        financeAPI.getIncomeStatement({
-          workshop_id: workshopId,
-          start_date: startDate,
-          end_date: endDate,
-        }),
-        financeAPI.getBalanceSheet({
-          workshop_id: workshopId,
-        }),
+      const [incomeRes, balanceRes, trialRes] = await Promise.all([
+        financeAPI.getIncomeStatement({ workshop_id: workshopId, start_date: startDate, end_date: endDate }),
+        financeAPI.getBalanceSheet({ workshop_id: workshopId }),
+        financeAPI.getTrialBalance({ workshop_id: workshopId }),
       ]);
 
       const incomeData = incomeRes.data?.data;
       const balanceData = balanceRes.data?.data;
+      const trialData = trialRes.data?.data;
 
       const revenue = incomeData?.totals?.revenue || 0;
       const expenses = incomeData?.totals?.expenses || 0;
-      const netProfit = incomeData?.totals?.net_income || revenue - expenses;
+      const netProfit = incomeData?.totals?.net_income ?? revenue - expenses;
       const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
 
-      setFinancialData({
-        revenue,
-        expenses,
-        netProfit,
-        profitMargin,
-        assets: balanceData?.totals?.assets || 0,
-        liabilities: balanceData?.totals?.liabilities || 0,
-        equity: balanceData?.totals?.equity || 0,
-      });
+      const assets = balanceData?.totals?.assets || 0;
+      const liabilities = balanceData?.totals?.liabilities || 0;
+      const equity = balanceData?.totals?.equity || 0;
 
-      await fetchAiAnalysis({
-        revenue,
-        expenses,
-        netProfit,
-        profitMargin,
-        assets: balanceData?.totals?.assets || 0,
-        liabilities: balanceData?.totals?.liabilities || 0,
-        equity: balanceData?.totals?.equity || 0,
-      });
-
-      toast.success('تم تحليل البيانات المالية بنجاح!');
-    } catch (err) {
-      console.error('Error fetching financial data:', err);
-      setError('تعذر جلب البيانات المالية. يرجى المحاولة مرة أخرى.');
-      toast.error('فشل في تحليل البيانات');
+      setSummary({ revenue, expenses, netProfit, profitMargin, assets, liabilities, equity });
+      setTrialBalance({ accounts: trialData?.accounts || [], totals: trialData?.totals || null });
+    } catch (e) {
+      console.error(e);
+      setError('تعذر جلب البيانات المالية.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAiAnalysis = async (data) => {
+  const fetchAccounts = async () => {
     try {
-      const response = await aiAPI.financialAnalysis({
-        query: 'حلل الوضع المالي بناءً على البيانات الحقيقية',
-        financial_data: data,
-      });
-
-      const analysisText = response.data?.analysis || 'لا يوجد تحليل متاح حالياً';
-
-      const recommendations = generateRecommendations(data);
-      const predictions = generatePredictions(data);
-      const riskFactors = identifyRiskFactors(data);
-
-      setAiAnalysis({
-        overview: analysisText,
-        recommendations,
-        predictions,
-        riskFactors,
-      });
-    } catch (err) {
-      console.error('AI Analysis error:', err);
-      setAiAnalysis((prev) => ({
-        ...prev,
-        overview: prev.overview || 'تعذر الاتصال بخدمة الذكاء الاصطناعي. تحقق من اتصال الشبكة.',
-      }));
+      const res = await financeAPI.getChartOfAccounts();
+      setAccounts(res.data?.accounts || res.data || []);
+    } catch (e) {
+      // non-blocking
     }
   };
 
-  const generateRecommendations = (data) => {
-    const recs = [];
-
-    if (data.profitMargin < 20) {
-      recs.push({
-        title: 'تحسين هامش الربح',
-        description: `هامش الربح الحالي ${data.profitMargin.toFixed(1)}% منخفض. فكر في زيادة الأسعار أو خفض التكاليف.`,
-        priority: 'high',
-        impact: 'زيادة الربحية بنسبة 5-10%',
-      });
-    }
-
-    if (data.expenses > data.revenue * 0.7) {
-      recs.push({
-        title: 'مراقبة المصروفات',
-        description: 'المصروفات تشكل نسبة كبيرة من الإيرادات. راجع المصروفات غير الضرورية.',
-        priority: 'high',
-        impact: 'تخفيض التكاليف بنسبة 10-15%',
-      });
-    }
-
-    if (data.revenue < 100000) {
-      recs.push({
-        title: 'زيادة الإيرادات',
-        description: 'الإيرادات الحالية منخفضة. فكر في تقديم خدمات جديدة أو تحسين التسويق.',
-        priority: 'medium',
-        impact: 'زيادة المبيعات بنسبة 20-30%',
-      });
-    }
-
-    return recs;
-  };
-  // تحميل جلسة أبوفهد من التخزين المحلي للاستمرار في نفس المحادثة
-  useEffect(() => {
+  const fetchVehicleIfNeeded = async () => {
+    if (!vehicleId) return;
+    setVehicleLoading(true);
     try {
-      const storedId = localStorage.getItem('finance_bot_session_id');
-      if (storedId) {
-        setConversationId(storedId);
+      const res = await vehicleAPI.getById(vehicleId);
+      setVehicle(res.data);
+    } catch (e) {
+      setVehicle(null);
+    } finally {
+      setVehicleLoading(false);
+    }
+  };
+
+  const runAudit = async () => {
+    if (!workshopId) return;
+    setAuditLoading(true);
+    setAuditBotResponse('');
+
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+      const resp = await fetch(`${API_URL}/finance/audit-system?workshop_id=${workshopId}`, { method: 'POST' });
+      const data = await resp.json();
+      if (data?.success) {
+        setAuditReport(data.data);
+      } else {
+        setAuditReport(null);
       }
     } catch (e) {
-      // تجاهل أي خطأ في JSON
+      setAuditReport(null);
+    } finally {
+      setAuditLoading(false);
     }
-  }, []);
-
-
-  const generatePredictions = (data) => ({
-    nextMonth: Math.round(data.revenue * 1.1),
-    nextQuarter: Math.round(data.revenue * 1.3),
-    nextYear: Math.round(data.revenue * 1.5),
-  });
-
-  const identifyRiskFactors = (data) => {
-    const risks = [];
-
-    if (data.liabilities > data.assets * 0.5) {
-      risks.push('نسبة الديون إلى الأصول مرتفعة');
-    }
-
-    if (data.profitMargin < 10) {
-      risks.push('هامش الربح منخفض جداً');
-    }
-
-    if (data.expenses > data.revenue * 0.8) {
-      risks.push('التكاليف تشكل خطراً على الربحية');
-    }
-
-    return risks;
   };
 
-  // رسالة ترحيبية من أبوفهد عند أول فتح للصفحة إذا لم توجد محادثة سابقة
-  useEffect(() => {
-    if (chatHistory.length === 0) {
-      setChatHistory([
-        {
-          role: 'assistant',
-          content:
-            'مرحبًا، أنا أبوفهد المحاسب المالي للورشة. هل تريد تحليل الوضع المالي الكامل للورشة، أم تدقيق حساب معيّن مثل 411 أو 514؟ يمكنك اختيار حساب من القائمة أو كتابة سؤالك مباشرة.',
-        },
-      ]);
+  const analyzeAuditWithAbuFahad = async () => {
+    if (!auditReport) return;
+
+    setAuditBotLoading(true);
+    try {
+      const summaryParts = [];
+      if (auditReport.summary) {
+        summaryParts.push(`ملخص التدقيق:\n${JSON.stringify(auditReport.summary, null, 2)}`);
+      }
+      if (auditReport.corrections_needed?.length) {
+        summaryParts.push(
+          'تصحيحات مطلوبة:\n' +
+            auditReport.corrections_needed
+              .map((c, idx) => `${idx + 1}- ${c.issue} | تصحيح مقترح: ${c.correction || '-'} | اقتراح: ${c.suggestion || '-'}`)
+              .join('\n')
+        );
+      }
+
+      const payload = {
+        message:
+          `${summaryParts.join('\n\n')}\n\n` +
+          'حلّل تقرير التدقيق أعلاه، واذكر الأخطاء المحاسبية المحتملة، مستوى خطورتها، وخطوات عملية للتصحيح.',
+        workshop_id: workshopId,
+      };
+
+      const res = await aiAPI.financeBotChat(payload);
+      setAuditBotResponse(res.data?.response || 'تعذر الحصول على تحليل من أبوفهد.');
+    } catch (e) {
+      setAuditBotResponse('تعذر الاتصال بأبوفهد لتحليل تقرير التدقيق.');
+    } finally {
+      setAuditBotLoading(false);
     }
-  }, []);
+  };
+
+  const getProfitVariant = () => {
+    if (summary.profitMargin >= 20) return 'success';
+    if (summary.profitMargin >= 10) return 'warning';
+    return 'danger';
+  };
+
+  const riskQuickCards = useMemo(() => {
+    const cards = [];
+
+    if (summary.profitMargin < 10) {
+      cards.push({
+        title: 'تنبيه الربحية',
+        value: 'هامش الربح منخفض جداً',
+        subtitle: `الهامش الحالي ${summary.profitMargin.toFixed(1)}%`,
+        icon: AlertTriangle,
+        variant: 'danger',
+      });
+    } else if (summary.profitMargin < 20) {
+      cards.push({
+        title: 'تحسين الربحية',
+        value: 'هامش الربح يحتاج رفع',
+        subtitle: `الهامش الحالي ${summary.profitMargin.toFixed(1)}%`,
+        icon: AlertTriangle,
+        variant: 'warning',
+      });
+    } else {
+      cards.push({
+        title: 'الربحية',
+        value: 'الأداء ممتاز',
+        subtitle: `الهامش الحالي ${summary.profitMargin.toFixed(1)}%`,
+        icon: CheckCircle,
+        variant: 'success',
+      });
+    }
+
+    if (summary.liabilities > summary.assets * 0.5 && summary.assets > 0) {
+      cards.push({
+        title: 'الديون',
+        value: 'نسبة التزامات مرتفعة',
+        subtitle: 'راجع جدول السداد والسيولة',
+        icon: AlertTriangle,
+        variant: 'warning',
+      });
+    }
+
+    if (trialBalance.accounts?.length === 0) {
+      cards.push({
+        title: 'الميزان',
+        value: 'لا توجد بيانات ميزان مراجعة',
+        subtitle: 'تحقق من القيود اليومية والعمليات',
+        icon: Scale,
+        variant: 'warning',
+      });
+    }
+
+    return cards.slice(0, 4);
+  }, [summary, trialBalance.accounts]);
 
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatQuery.trim()) return;
 
-    const userMessage = { role: 'user', content: chatQuery };
-    setChatHistory((prev) => [...prev, userMessage]);
+    const userText = chatQuery;
+    const userMsg = { role: 'user', content: userText };
+
+    const optimistic = [...chatHistory, userMsg];
+    setChatHistory(optimistic);
     setChatQuery('');
     setChatLoading(true);
 
     try {
       const payload = {
-        message: chatQuery,
+        message: userText,
         workshop_id: workshopId,
         account_code: selectedAccountCode || undefined,
         conversation_id: conversationId || undefined,
       };
 
-      const response = await aiAPI.financeBotChat(payload);
+      const res = await aiAPI.financeBotChat(payload);
 
-      const aiMessage = {
+      const botMsg = {
         role: 'assistant',
-        content: response.data?.response || 'تعذر الحصول على رد من أبوفهد حالياً.',
+        content: res.data?.response || 'تعذر الحصول على رد من أبوفهد حالياً.',
       };
-      const newConversationId = response.data?.conversation_id || conversationId;
-      if (newConversationId && newConversationId !== conversationId) {
-        setConversationId(newConversationId);
-        try {
-          localStorage.setItem('finance_bot_session_id', newConversationId);
-        } catch (e) {
-          // تجاهل
-        }
+
+      const newId = res.data?.conversation_id || conversationId;
+      const next = [...optimistic, botMsg];
+      setChatHistory(next);
+
+      if (newId && newId !== conversationId) {
+        setConversationId(newId);
       }
-      setChatHistory((prev) => [...prev, aiMessage]);
-    } catch (err) {
-      console.error('Chat AI error:', err);
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'تعذر الاتصال بالمساعد المالي. حاول مرة أخرى لاحقاً.',
-        },
-      ]);
+
+      persistChatToStorage(next, newId);
+    } catch (e) {
+      const next = [
+        ...optimistic,
+        { role: 'assistant', content: 'تعذر الاتصال بأبوفهد. حاول مرة أخرى.' },
+      ];
+      setChatHistory(next);
+      persistChatToStorage(next, conversationId);
     } finally {
       setChatLoading(false);
     }
   };
 
+  const clearChat = () => {
+    const next = [
+      {
+        role: 'assistant',
+        content:
+          'تم بدء محادثة جديدة. ما الذي تريد تحليله الآن؟ يمكنك طلب تحليل عام أو اختيار حساب للتدقيق.',
+      },
+    ];
+    setChatHistory(next);
+    setConversationId('');
+    setSelectedAccountCode('');
+    persistChatToStorage(next, '');
+  };
+
+  useEffect(() => {
+    loadChatFromStorage();
+    fetchAccounts();
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    fetchVehicleIfNeeded();
+    // eslint-disable-next-line
+  }, [vehicleId]);
+
+  useEffect(() => {
+    fetchCoreFinancials();
+    // eslint-disable-next-line
+  }, [workshopId, timeRange]);
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96">
+      <div className="flex flex-col items-center justify-center h-96" dir="rtl">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-        <p className="text-lg text-gray-600">جاري تحليل البيانات المالية...</p>
-        <p className="text-sm text-gray-500">قد يستغرق هذا بضع لحظات</p>
+        <p className="text-lg text-gray-600">جاري تحميل التحليل المالي...</p>
+        <p className="text-sm text-gray-500">قد يستغرق ذلك لحظات</p>
       </div>
     );
   }
@@ -322,49 +405,35 @@ const AIFinancial = () => {
     return (
       <Card className="border-red-200 max-w-2xl mx-auto mt-8" dir="rtl">
         <CardHeader>
-          <div className="flex items-center">
-            <AlertCircle className="h-8 w-8 text-red-600 ml-2" />
-            <CardTitle className="text-red-700">حدث خطأ</CardTitle>
-          </div>
-          <CardDescription>تعذر تحليل البيانات المالية</CardDescription>
+          <CardTitle className="text-red-700">حدث خطأ</CardTitle>
+          <CardDescription>تعذر تحميل بيانات التحليل المالي</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-red-600 mb-4">{error}</p>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <Button onClick={fetchFinancialData} className="bg-blue-600 hover:bg-blue-700">
-              <RefreshCw className="h-4 w-4 ml-2" />
-              إعادة المحاولة
-            </Button>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="px-3 py-2 border rounded-lg"
-            >
-              <option value="week">أسبوع</option>
-              <option value="month">شهر</option>
-              <option value="quarter">ربع سنة</option>
-              <option value="year">سنة</option>
-            </select>
-          </div>
+          <Button onClick={fetchCoreFinancials} className="bg-blue-600 hover:bg-blue-700">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            إعادة المحاولة
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl" dir="rtl" style={{
-      backgroundColor: 'var(--bg-primary)',
-      minHeight: '100vh'
-    }}>
+    <div
+      className="container mx-auto p-6 max-w-7xl"
+      dir="rtl"
+      style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center" style={{ color: 'var(--text-primary)' }}>
-            <Brain className="h-10 w-10 ml-3 text-blue-600" />
-            أبوفهد – التحليل والتدقيق المالي الذكي
+          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+            <Brain size={34} className="text-blue-500" />
+            أبوفهد – التحليل والتدقيق المالي
           </h1>
-          <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>
-            مساعد مالي تفاعلي يحلل الأرقام، يراقب المخاطر، ويدقق النظام المحاسبي لورشتك
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            صفحة موحدة تجمع نظرة مالية، ميزان المراجعة، تدقيق النظام، ومحادثة أبوفهد.
           </p>
         </div>
 
@@ -376,7 +445,7 @@ const AIFinancial = () => {
             style={{
               backgroundColor: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)'
+              color: 'var(--text-primary)',
             }}
           >
             <option value="week">آخر أسبوع</option>
@@ -385,154 +454,138 @@ const AIFinancial = () => {
             <option value="year">آخر سنة</option>
           </select>
 
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={fetchFinancialData}
-              className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)'
-              }}
-            >
-              <RefreshCw className="h-4 w-4" />
-              تحديث
-            </button>
-            <button 
-              className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)'
-              }}
-            >
-              <Download className="h-4 w-4" />
-              تصدير
-            </button>
-          </div>
+          <Button onClick={fetchCoreFinancials} className="bg-blue-600 hover:bg-blue-700">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            تحديث
+          </Button>
         </div>
       </div>
 
-      {/* Summary Cards - Using New Financial Card Component */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <FinancialCard
-          title={formatCurrency(financialData.revenue)}
-          subtitle="إجمالي الإيرادات"
-          icon={DollarSign}
-          trend={financialData.revenue > 0 ? 'up' : 'down'}
-          trendValue="+12%"
-          variant="default"
-          details={[
-            { label: 'الفترة', value: timeRange === 'week' ? 'أسبوع' : timeRange === 'month' ? 'شهر' : timeRange === 'quarter' ? 'ربع سنة' : 'سنة' },
-            { label: 'متوسط يومي', value: formatCurrency(financialData.revenue / 30 || 0) },
-            { label: 'أعلى قيمة', value: formatCurrency(financialData.revenue * 1.2) }
-          ]}
+      {/* Quick Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <QuickCard title="إجمالي الإيرادات" value={formatCurrency(summary.revenue)} icon={DollarSign} variant="default" />
+        <QuickCard
+          title="صافي الربح"
+          value={formatCurrency(summary.netProfit)}
+          subtitle={`هامش ${summary.profitMargin.toFixed(1)}%`}
+          icon={summary.netProfit >= 0 ? TrendingUp : TrendingDown}
+          variant={getProfitVariant()}
         />
-
-        <FinancialCard
-          title={formatCurrency(financialData.netProfit)}
-          subtitle="صافي الربح"
-          icon={TrendingUp}
-          trend={financialData.netProfit >= 0 ? 'up' : 'down'}
-          trendValue={`${financialData.profitMargin.toFixed(1)}%`}
-          variant={financialData.netProfit >= 0 ? 'success' : 'danger'}
-          details={[
-            { label: 'هامش الربح', value: `${financialData.profitMargin.toFixed(1)}%` },
-            { label: 'الإيرادات', value: formatCurrency(financialData.revenue) },
-            { label: 'المصروفات', value: formatCurrency(financialData.expenses), valueColor: 'text-red-400' }
-          ]}
-        />
-
-        <FinancialCard
-          title={formatCurrency(financialData.assets)}
-          subtitle="إجمالي الأصول"
-          icon={Wallet}
-          variant="default"
-          details={[
-            { label: 'الأصول المتداولة', value: formatCurrency(financialData.assets * 0.6) },
-            { label: 'الأصول الثابتة', value: formatCurrency(financialData.assets * 0.4) },
-            { label: 'صافي الأصول', value: formatCurrency(financialData.assets - financialData.liabilities), valueColor: 'text-emerald-400' }
-          ]}
-        />
-
-        <FinancialCard
-          title={financialData.profitMargin > 20 ? 'ممتاز' : financialData.profitMargin > 10 ? 'جيد' : 'يحتاج تحسين'}
-          subtitle="التقييم العام"
-          icon={Lightbulb}
-          variant={financialData.profitMargin > 20 ? 'success' : financialData.profitMargin > 10 ? 'warning' : 'danger'}
-          details={[
-            { label: 'هامش الربح', value: `${financialData.profitMargin.toFixed(1)}%` },
-            { label: 'نسبة المصروفات', value: `${((financialData.expenses / financialData.revenue) * 100).toFixed(1)}%` },
-            { label: 'العائد على الأصول', value: `${((financialData.netProfit / financialData.assets) * 100).toFixed(1)}%` }
-          ]}
+        <QuickCard title="إجمالي المصروفات" value={formatCurrency(summary.expenses)} icon={Receipt} variant="warning" />
+        <QuickCard
+          title="ميزان المراجعة"
+          value={trialBalance.accounts?.length ? `${trialBalance.accounts.length} حساب` : 'بدون بيانات'}
+          subtitle={trialBalance.totals ? `مدين ${formatCurrency(trialBalance.totals.total_debit)} | دائن ${formatCurrency(trialBalance.totals.total_credit)}` : ''}
+          icon={Scale}
+          variant={trialBalance.accounts?.length ? 'success' : 'warning'}
         />
       </div>
 
-      {/* قسم أبوفهد – التحليل + التدقيق */}
+      {/* Alerts */}
+      {riskQuickCards.length ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {riskQuickCards.map((c, idx) => (
+            <QuickCard
+              key={idx}
+              title={c.title}
+              value={c.value}
+              subtitle={c.subtitle}
+              icon={c.icon}
+              variant={c.variant}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {/* Vehicle status (optional) */}
+      {vehicleId ? (
+        <div className="mb-8">
+          <FinancialCard
+            title="حالة المركبة"
+            subtitle={vehicleLoading ? 'جاري التحميل...' : vehicle ? `${vehicle.plateNumber || '-'} | ${vehicle.brand || ''} ${vehicle.model || ''}` : 'تعذر جلب بيانات المركبة'}
+            icon={Car}
+            variant={vehicle ? 'default' : 'warning'}
+            expandable={false}
+            details={vehicle ? [{ label: 'معرّف المركبة', value: vehicleId }] : []}
+          />
+        </div>
+      ) : null}
+
+      {/* Main grid: Trial Balance + Chat */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* كروت التحليل الذكي */}
         <div className="lg:col-span-2">
           <FinancialCard
-            title="نظرة عامة من الذكاء الاصطناعي"
-            subtitle="التحليل المالي الشامل"
-            icon={Brain}
+            title="ميزان المراجعة"
+            subtitle="عرض مختصر لأرصدة المدين والدائن"
+            icon={Scale}
             variant="default"
             expandable={false}
-            className="h-full"
           >
-            <div 
-              className="bg-slate-950/40 rounded-xl p-4 text-slate-200 leading-relaxed"
-              style={{ maxHeight: '300px', overflowY: 'auto' }}
-            >
-              {aiAnalysis.overview || 'جاري تحليل بياناتك المالية...'}
+            <div className="rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden">
+              <div className="max-h-[320px] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-950/90">
+                    <tr className="text-slate-300">
+                      <th className="p-3 text-right">الكود</th>
+                      <th className="p-3 text-right">الاسم</th>
+                      <th className="p-3 text-right">مدين</th>
+                      <th className="p-3 text-right">دائن</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(trialBalance.accounts || []).map((a, idx) => (
+                      <tr key={idx} className="border-t border-slate-800 text-slate-200">
+                        <td className="p-3 whitespace-nowrap">{a.code}</td>
+                        <td className="p-3">{a.name_ar || a.name || '-'}</td>
+                        <td className="p-3 tabular-nums">{formatCurrency(a.debit || 0)}</td>
+                        <td className="p-3 tabular-nums">{formatCurrency(a.credit || 0)}</td>
+                      </tr>
+                    ))}
+                    {!trialBalance.accounts?.length ? (
+                      <tr>
+                        <td colSpan={4} className="p-4 text-center text-slate-400">
+                          لا توجد بيانات.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+
+              {trialBalance.totals ? (
+                <div className="border-t border-slate-800 p-3 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>إجمالي مدين: {formatCurrency(trialBalance.totals.total_debit || 0)}</div>
+                  <div>إجمالي دائن: {formatCurrency(trialBalance.totals.total_credit || 0)}</div>
+                </div>
+              ) : null}
             </div>
           </FinancialCard>
         </div>
 
-        {/* Quick Stats */}
-        <div className="space-y-4">
-          <FinancialCard
-            title={formatCurrency(financialData.expenses)}
-            subtitle="إجمالي المصروفات"
-            icon={CreditCard}
-            trend="down"
-            trendValue="-5%"
-            variant="warning"
-            details={[
-              { label: 'الرواتب', value: formatCurrency(financialData.expenses * 0.4) },
-              { label: 'التشغيل', value: formatCurrency(financialData.expenses * 0.35) },
-              { label: 'أخرى', value: formatCurrency(financialData.expenses * 0.25) }
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* قسم البوت المالي التفاعلي - أبوفهد */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          {/* يمكن لاحقًا وضع محتوى إضافي هنا لو أردت فصل التحليل عن الدردشة */}
-        </div>
-        <div className="space-y-3">
+        <div>
           <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg" dir="rtl">
-            <h3 className="text-sm font-semibold mb-2 text-slate-100 flex items-center gap-2">
-              <Brain className="h-4 w-4 text-blue-400" />
-              أبوفهد – المحاسب المالي الذكي
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+                <Brain className="h-4 w-4 text-blue-400" />
+                محادثة أبوفهد
+              </h3>
+              <Button variant="outline" className="h-8" onClick={clearChat}>
+                محادثة جديدة
+              </Button>
+            </div>
+
             <p className="text-xs text-slate-400 mb-3">
-              يمكنك ترك الحساب فارغًا لتحليل الوضع المالي الكامل، أو اختيار حساب محدّد لتدقيقه بالتفصيل.
+              يمكنك ترك الحقل بدون تحديد حساب لتحليل عام، أو اختيار حساب لتدقيقه.
             </p>
 
-            {/* اختيار الحساب للتدقيق */}
             <div className="mb-3">
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                الحساب المراد تحليله (اختياري)
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">الحساب (اختياري)</label>
               <select
                 value={selectedAccountCode}
                 onChange={(e) => setSelectedAccountCode(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="">بدون تحديد حساب معيّن</option>
+                <option value="">بدون تحديد حساب</option>
                 {accounts.map((acc) => (
                   <option key={acc.id || acc.code} value={acc.code}>
                     {acc.code} - {acc.name_ar || acc.name}
@@ -541,13 +594,7 @@ const AIFinancial = () => {
               </select>
             </div>
 
-            {/* سجل الرسائل */}
-            <div className="h-40 overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-800 mb-3 p-2 space-y-2 text-xs">
-              {chatHistory.length === 0 && (
-                <p className="text-slate-500 text-center mt-6">
-                  ابدأ بطرح سؤالك المالي، مثل: "حلل وضع حساب الإيرادات" أو "ما هي مخاطر المصروفات الحالية؟".
-                </p>
-              )}
+            <div className="h-52 overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-800 mb-3 p-2 space-y-2 text-xs">
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
@@ -562,7 +609,6 @@ const AIFinancial = () => {
               ))}
             </div>
 
-            {/* إدخال الرسالة */}
             <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
               <input
                 type="text"
@@ -583,100 +629,65 @@ const AIFinancial = () => {
         </div>
       </div>
 
-      {/* Recommendations Grid */}
-      {aiAnalysis.recommendations && aiAnalysis.recommendations.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            التوصيات الذكية
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {aiAnalysis.recommendations.map((rec, index) => (
-              <FinancialCard
-                key={index}
-                title={rec.title}
-                subtitle={rec.priority === 'high' ? '⚠️ عالية الأولوية' : '💡 توصية'}
-                icon={Lightbulb}
-                variant={rec.priority === 'high' ? 'warning' : 'default'}
-                expandable={false}
-              >
-                <div className="text-sm space-y-2">
-                  <p className="text-slate-300">{rec.description}</p>
-                  <div className="bg-slate-950/60 rounded-lg p-3 border border-slate-800">
-                    <span className="text-xs text-slate-400">التأثير المتوقع:</span>
-                    <p className="text-sm text-emerald-400 font-semibold mt-1">{rec.impact}</p>
+      {/* System Audit */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <FinancialCard
+            title="تدقيق النظام المحاسبي"
+            subtitle="فحص الاتساق والتوازن واكتشاف الأخطاء المحتملة"
+            icon={Shield}
+            variant="default"
+            expandable={false}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <Button onClick={runAudit} disabled={auditLoading} className="bg-blue-600 hover:bg-blue-700">
+                {auditLoading ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <RefreshCw className="h-4 w-4 ml-2" />}
+                تشغيل التدقيق
+              </Button>
+
+              {auditReport ? (
+                <Button variant="outline" onClick={analyzeAuditWithAbuFahad} disabled={auditBotLoading}>
+                  {auditBotLoading ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Brain className="h-4 w-4 ml-2" />}
+                  اطلب من أبوفهد تحليل التقرير
+                </Button>
+              ) : null}
+            </div>
+
+            {!auditReport ? (
+              <div className="text-sm text-slate-400">شغّل التدقيق لعرض النتائج هنا.</div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300">درجة صحة النظام</span>
+                    <span className="font-bold tabular-nums">{auditReport.health_score}/100</span>
                   </div>
                 </div>
-              </FinancialCard>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Risk Factors */}
-      {aiAnalysis.riskFactors && aiAnalysis.riskFactors.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            عوامل المخاطر
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {aiAnalysis.riskFactors.map((risk, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-4 rounded-xl"
-                style={{
-                  backgroundColor: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.3)'
-                }}
-              >
-                <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
-                <span className="text-slate-200">{risk}</span>
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200 whitespace-pre-wrap max-h-[220px] overflow-auto">
+                  {JSON.stringify(auditReport.summary || auditReport, null, 2)}
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </FinancialCard>
         </div>
-      )}
 
-      {/* Predictions */}
-      {aiAnalysis.predictions && (
         <div>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            التوقعات المستقبلية
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FinancialCard
-              title={formatCurrency(aiAnalysis.predictions.nextMonth)}
-              subtitle="الشهر القادم"
-              icon={Activity}
-              trend="up"
-              trendValue="+10%"
-              variant="success"
-              expandable={false}
-            />
-            <FinancialCard
-              title={formatCurrency(aiAnalysis.predictions.nextQuarter)}
-              subtitle="الربع القادم"
-              icon={Activity}
-              trend="up"
-              trendValue="+30%"
-              variant="success"
-              expandable={false}
-            />
-            <FinancialCard
-              title={formatCurrency(aiAnalysis.predictions.nextYear)}
-              subtitle="السنة القادمة"
-              icon={Activity}
-              trend="up"
-              trendValue="+50%"
-              variant="success"
-              expandable={false}
-            />
-          </div>
+          <FinancialCard
+            title="تحليل أبوفهد للتدقيق"
+            subtitle="شرح المخاطر وخطوات التصحيح"
+            icon={Brain}
+            variant="default"
+            expandable={false}
+          >
+            <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200 whitespace-pre-wrap min-h-[140px] max-h-[320px] overflow-auto">
+              {auditBotLoading
+                ? 'جاري التحليل...'
+                : auditBotResponse || 'بعد تشغيل التدقيق اضغط (اطلب من أبوفهد تحليل التقرير).'}
+            </div>
+          </FinancialCard>
         </div>
-      )}
-
-      {/* Duplicate section removed - chat bot is already present above */}
+      </div>
     </div>
   );
-};
-
-export default AIFinancial;
+}

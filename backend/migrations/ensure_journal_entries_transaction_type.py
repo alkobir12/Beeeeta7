@@ -10,8 +10,13 @@ Note: Uses IF NOT EXISTS, so it is safe to run multiple times.
 """
 
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 import psycopg2
+
+# Load backend/.env when running this migration as a module/script
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 def main() -> int:

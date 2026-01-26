@@ -505,6 +505,8 @@ const AIFinancial = () => {
             ]}
           />
         </div>
+      </div>
+
       {/* قسم البوت المالي التفاعلي - أبوفهد */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

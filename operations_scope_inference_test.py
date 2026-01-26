@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from frontend/.env
-BACKEND_URL = "https://carshopfinance.preview.emergentagent.com/api"
+BACKEND_URL = "https://finbot-insights-1.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {
@@ -212,10 +212,10 @@ def test_operations_scope_inference():
     except Exception as e:
         log_test("Get all operations with scope inference", False, f"Error: {str(e)}")
     
-    # Test 4: GET /api/operations?vehicle_id=12345678-1234-1234-1234-123456789001 (verify filtering still works)
-    print("\n[4] Testing GET /api/operations?vehicle_id=12345678-1234-1234-1234-123456789001 (Filter by vehicle)")
+    # Test 4: GET /api/operations?vehicle_id=finbot-insights-1 (verify filtering still works)
+    print("\n[4] Testing GET /api/operations?vehicle_id=finbot-insights-1 (Filter by vehicle)")
     try:
-        response = requests.get(f"{BACKEND_URL}/operations?vehicle_id=12345678-1234-1234-1234-123456789001", timeout=15)
+        response = requests.get(f"{BACKEND_URL}/operations?vehicle_id=finbot-insights-1", timeout=15)
         if response.status_code == 200:
             filtered_operations = response.json()
             log_test("Filter operations by vehicle_id", True, 

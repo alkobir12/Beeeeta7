@@ -105,7 +105,7 @@ POST /api/operations                             - إنشاء عملية جدي�
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://carshopfinance.preview.emergentagent.com`
+- **API URL**: `https://finbot-insights-1.preview.emergentagent.com`
 
 ---
 

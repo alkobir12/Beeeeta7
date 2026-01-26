@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from environment
-BACKEND_URL = "https://carshopfinance.preview.emergentagent.com/api"
+BACKEND_URL = "https://finbot-insights-1.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

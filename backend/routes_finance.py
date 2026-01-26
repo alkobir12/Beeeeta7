@@ -1037,34 +1037,32 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             "created_at": datetime.now().isoformat(),
         }
 
-        # Try to add transaction_type and source if columns exist
+        # Try to add transaction_type (source column may not exist in schema)
         try:
-            # First attempt with all fields
             full_entry_data = {
                 **entry_data,
                 "transaction_type": transaction_type,
-                "source": "manual",
             }
             response = supabase.table("journal_entries").insert(full_entry_data).execute()
-            
+
             return {
                 "success": True,
                 "message": "تم إنشاء القيد المحاسبي بنجاح",
                 "id": entry_data["id"],
                 "data": response.data,
             }
-            
+
         except Exception as schema_error:
-            # If columns don't exist, try with basic fields only
+            # If transaction_type column doesn't exist, try with basic fields only
             print(f"Schema error, trying with basic fields: {schema_error}")
             response = supabase.table("journal_entries").insert(entry_data).execute()
-            
+
             return {
                 "success": True,
-                "message": "تم إنشاء القيد المحاسبي بنجاح (بدون حقول إضافية)",
+                "message": "تم إنشاء القيد المحاسبي بنجاح (بدون transaction_type)",
                 "id": entry_data["id"],
                 "data": response.data,
-                "note": "تم الحفظ بدون حقول transaction_type و source - يحتاج تحديث قاعدة البيانات"
+                "note": "تم الحفظ بدون حقل transaction_type - يحتاج تحديث قاعدة البيانات",
             }
 
     except Exception as e:

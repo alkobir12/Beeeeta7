@@ -95,10 +95,6 @@ const SystemAudit = () => {
     }
   };
 
-
-    }
-  };
-
   const getHealthColor = (score) => {
     if (score >= 90) return 'success';
     if (score >= 70) return 'warning';

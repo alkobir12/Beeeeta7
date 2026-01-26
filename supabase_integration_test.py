@@ -548,7 +548,8 @@ def test_general_consistency_verification(vehicle_id):
         log_api_call("/api/finance/journal-entries", "GET", params, response_data, response.status_code)
         
         if response.status_code == 200:
-            journal_entries = response_data
+            journal_response = response_data
+            journal_entries = journal_response.get('data', []) if isinstance(journal_response, dict) else journal_response
             log_test("Journal Entries Cross-Verification", True, 
                     f"Found {len(journal_entries)} journal entries for cross-verification")
             
@@ -558,8 +559,10 @@ def test_general_consistency_verification(vehicle_id):
             for entry in journal_entries:
                 lines = entry.get('lines', [])
                 for line in lines:
-                    total_debits += line.get('debit', 0)
-                    total_credits += line.get('credit', 0)
+                    # Handle different line formats
+                    if isinstance(line, dict):
+                        total_debits += line.get('debit', line.get('debit_amount', 0))
+                        total_credits += line.get('credit', line.get('credit_amount', 0))
             
             print(f"   📊 Total Debits: {total_debits} ريال")
             print(f"   📊 Total Credits: {total_credits} ريال")

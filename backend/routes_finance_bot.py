@@ -101,11 +101,6 @@ def abu_fahad_safe_analysis(financial_data: Dict[str, Any]) -> Dict[str, List[st
 
     return {"notes": notes}
 
-    response: str
-    conversation_id: str
-    provider: str = "openai-gpt-5.1"
-    timestamp: str
-
 
 def _get_llm_chat(conversation_id: Optional[str]) -> LlmChat:
     api_key = os.environ.get("EMERGENT_LLM_KEY")

@@ -1526,6 +1526,234 @@ Once these fixes are applied, the translation system will be fully functional an
 
 ---
 
+## POST /api/operations Schema Mismatch Analysis (2026-01-26)
+
+### Test Objective:
+اختبار شامل لمسار POST /api/operations كما تستخدمه صفحة العمليات في الواجهة، مع توثيق الفروقات بين ما يتوقعه الباك إند وما ترسله الواجهة
+Comprehensive testing of POST /api/operations as used by Operations page frontend, documenting differences between backend expectations and frontend data
+
+### Test Environment:
+- Backend APIs: `/api/operations` (GET, POST)
+- Testing Date: 2026-01-26 10:04:01
+- Backend URL: https://carshopfinance.preview.emergentagent.com/api
+- Database: Supabase
+- Frontend: Operations.jsx form data structure
+
+### Test Results Summary: ⚠️ CRITICAL ISSUES FOUND (2/4 TESTS FAILED)
+
+#### 🔍 ROOT CAUSE ANALYSIS - SCHEMA MISMATCH ISSUES
+
+**Primary Issues Identified:**
+
+1. **❌ CRITICAL: Invalid accountId Format**
+   - **Problem**: Frontend sends `accountId: "113"` (string number)
+   - **Backend Expects**: Valid UUID format or null
+   - **Database Error**: `invalid input syntax for type uuid: "113"`
+   - **Impact**: 500/520 errors when frontend sends account codes instead of UUIDs
+
+2. **❌ CRITICAL: Empty String vs Null Handling**
+   - **Problem**: Frontend sends `vehicleId: ""` (empty string)
+   - **Backend Expects**: Valid UUID or null
+   - **Database Error**: `invalid input syntax for type uuid: ""`
+   - **Impact**: 500/520 errors when optional UUID fields are empty strings
+
+3. **✅ WORKING: Field Name Compatibility**
+   - **Frontend**: Uses `quantity` in items
+   - **Backend**: Accepts both `quantity` and `qty`
+   - **Status**: No issues - backend handles both formats correctly
+
+4. **✅ WORKING: Extra Fields Handling**
+   - **Frontend**: Sends `visitId`, `scope`, `paymentReceipt`
+   - **Backend**: Ignores unknown fields gracefully
+   - **Status**: No issues - extra fields don't cause errors
+
+#### 📊 DETAILED TEST RESULTS
+
+**Test A: Baseline (Simple Working Case)**
+- **Status**: ✅ WORKING (200 OK)
+- **Payload**: Basic operation without accountId/vehicleId
+- **Result**: Successfully created operation
+- **Items Field**: Uses `qty: 1` - works correctly
+
+**Test B: Frontend Style (quantity field)**
+- **Status**: ❌ FAILED (520 Error)
+- **Payload**: `accountId: "113"` (string number)
+- **Error**: `invalid input syntax for type uuid: "113"`
+- **Root Cause**: accountId must be valid UUID or null
+
+**Test C: With Scope & VisitId**
+- **Status**: ❌ FAILED (520 Error)
+- **Payload**: `accountId: "113"`, `vehicleId: "veh-test-2"`
+- **Error**: `invalid input syntax for type uuid: "113"`
+- **Root Cause**: Same accountId UUID issue
+
+**Test D: No Items (Edge Case)**
+- **Status**: ✅ WORKING (200 OK)
+- **Payload**: Empty items array
+- **Result**: Successfully created operation with 0 total
+
+#### 🔧 VALIDATION TESTS - CONFIRMING SOLUTIONS
+
+**UUID Format Test:**
+- **Valid UUID accountId**: ✅ WORKS (200 OK)
+- **But**: Foreign key constraint - accountId must exist in business_accounts table
+- **Solution**: Use existing business account UUIDs
+
+**Business Account Integration Test:**
+- **Valid Business Account**: ✅ WORKS (200 OK)
+- **accountId**: `40b024d7-260d-4b45-94fb-20c1c594c76f` (الفرع الرئيسي)
+- **Result**: Operation created successfully with proper accountId
+
+**Null vs Empty String Test:**
+- **Empty String**: ❌ FAILS (`vehicleId: ""`)
+- **Null Value**: ✅ WORKS (`vehicleId: null`)
+- **Solution**: Frontend should send null instead of empty strings
+
+**Field Name Compatibility Test:**
+- **qty field**: ✅ WORKS (200 OK)
+- **quantity field**: ✅ WORKS (200 OK)
+- **Backend**: Handles both field names correctly
+
+#### 📋 SCHEMA COMPARISON
+
+**Frontend Form Structure (Operations.jsx):**
+```javascript
+{
+  accountId: '',           // ❌ Sends string codes like "113"
+  vehicleId: '',           // ❌ Sends empty string instead of null
+  visitId: '',             // ✅ Ignored by backend (no issues)
+  scope: 'vehicle',        // ✅ Ignored by backend (no issues)
+  type: 'purchase',        // ✅ Compatible
+  partnerType: 'supplier', // ✅ Compatible
+  partnerName: '',         // ✅ Compatible
+  items: [{
+    itemType: 'part',      // ✅ Compatible
+    itemId: '',            // ✅ Compatible
+    name: '',              // ✅ Compatible
+    quantity: 1,           // ✅ Backend accepts both quantity and qty
+    price: 0               // ✅ Compatible
+  }],
+  paymentMethod: 'cash',   // ✅ Compatible
+  notes: '',               // ✅ Compatible
+  paymentReceipt: null     // ✅ Ignored by backend (no issues)
+}
+```
+
+**Backend Expected Structure (supabase_service.operations_create):**
+```python
+{
+  "type": "string",                    # ✅ Compatible
+  "accountId": "uuid_string | null",   # ❌ Frontend sends codes, not UUIDs
+  "vehicleId": "uuid_string | null",   # ❌ Frontend sends "", not null
+  "partnerType": "string",             # ✅ Compatible
+  "partnerName": "string",             # ✅ Compatible
+  "items": [{
+    "itemType": "string",              # ✅ Compatible
+    "itemId": "string",                # ✅ Compatible
+    "name": "string",                  # ✅ Compatible
+    "qty": "number",                   # ✅ Also accepts "quantity"
+    "price": "number"                  # ✅ Compatible
+  }],
+  "paymentMethod": "string",           # ✅ Compatible
+  "notes": "string"                    # ✅ Compatible
+}
+```
+
+**Database Schema (Supabase operations table):**
+```sql
+- account_id: UUID (foreign key to business_accounts.id)
+- vehicle_id: UUID (foreign key to vehicles.id) 
+- partner_type: TEXT
+- partner_name: TEXT
+- items: JSONB
+- payment_method: TEXT
+- notes: TEXT
+```
+
+#### 💡 CRITICAL FIXES REQUIRED
+
+**1. Frontend accountId Handling (HIGH PRIORITY)**
+```javascript
+// ❌ Current (causes 520 errors):
+accountId: "113"
+
+// ✅ Fix Option 1 - Use business account UUIDs:
+accountId: "40b024d7-260d-4b45-94fb-20c1c594c76f"  // الفرع الرئيسي
+
+// ✅ Fix Option 2 - Send null for no account:
+accountId: null
+```
+
+**2. Frontend Empty Field Handling (HIGH PRIORITY)**
+```javascript
+// ❌ Current (causes 520 errors):
+vehicleId: ""
+
+// ✅ Fix:
+vehicleId: null  // or undefined, or omit the field
+```
+
+**3. Business Account Integration (MEDIUM PRIORITY)**
+- Frontend needs dropdown/selector for business accounts
+- Load business accounts from `/api/business-accounts`
+- Map account codes to UUIDs before sending to backend
+
+#### 🎯 IMMEDIATE ACTION ITEMS
+
+**For Main Agent:**
+
+1. **Fix Frontend Operations.jsx** (CRITICAL):
+   ```javascript
+   // Replace empty strings with null for UUID fields
+   const cleanPayload = {
+     ...form,
+     accountId: form.accountId || null,
+     vehicleId: form.vehicleId || null,
+     visitId: form.visitId || null
+   };
+   ```
+
+2. **Add Business Account Selector** (HIGH PRIORITY):
+   - Load business accounts on component mount
+   - Replace accountId text input with dropdown
+   - Map selected account to UUID before submission
+
+3. **Backend Validation Enhancement** (MEDIUM PRIORITY):
+   - Add better error messages for UUID validation
+   - Consider accepting account codes and converting to UUIDs
+   - Add request validation middleware
+
+#### 📈 SUCCESS METRICS
+
+**Current Status**: 50% success rate (2/4 tests passing)
+**After Fixes**: Expected 100% success rate
+
+**Working Cases**:
+- ✅ Simple operations without accountId/vehicleId
+- ✅ Operations with valid business account UUIDs
+- ✅ Both `qty` and `quantity` field names supported
+- ✅ Extra frontend fields ignored gracefully
+
+**Fixed Cases** (after implementing recommendations):
+- ✅ Operations with proper accountId UUID mapping
+- ✅ Operations with null instead of empty string UUIDs
+- ✅ Full frontend-backend compatibility
+
+#### 🔍 CONCLUSION
+
+**Root Cause Confirmed**: The 500/520 errors from frontend are caused by:
+1. **Invalid UUID format** for accountId ("113" instead of proper UUID)
+2. **Empty strings** for optional UUID fields (vehicleId: "" instead of null)
+
+**Solution Verified**: 
+- Using proper business account UUIDs: ✅ WORKS
+- Using null for empty UUID fields: ✅ WORKS
+- Backend correctly handles both `qty` and `quantity`: ✅ WORKS
+
+**Next Steps**: Main agent should implement the frontend fixes to resolve the schema mismatch and achieve 100% compatibility between frontend Operations.jsx and backend POST /api/operations endpoint.
+
+---
+
 ## Journal Entries Transaction Type Testing (2026-01-25)
 
 ### Test Objective:

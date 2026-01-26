@@ -151,6 +151,12 @@ Testing backend integration for the new /ai-financial page
 
 ## AI Financial Page Rebuild Smoke Test (2026-01-26)
 
+## P1/P2 Follow-up (2026-01-26)
+- ✅ P1: تم إضافة تحليل قواعدي آمن (abu_fahad_safe_analysis) داخل رد /api/finance-bot/chat عند إرسال financial_data.
+- ✅ P2: تم إنشاء migration لضمان وجود transaction_type في جدول journal_entries وتشغيلها بنجاح.
+- ✅ تم إصلاح create_journal_entry ليُدخل transaction_type بدون الاعتماد على عمود source (غير موجود في schema cache).
+
+
 ### Test Objective:
 التأكد من أن صفحة /ai-financial الجديدة تعمل بدون أخطاء Runtime وأنها تتكامل مع:
 - تقارير المالية (Income/Balance/Trial Balance)

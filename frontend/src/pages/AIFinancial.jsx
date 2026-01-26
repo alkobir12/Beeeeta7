@@ -506,9 +506,9 @@ const AIFinancial = () => {
         />
       </div>
 
-      {/* AI Analysis Section */}
+      {/* قسم أبوفهد – التحليل + التدقيق */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Overview Card */}
+        {/* كروت التحليل الذكي */}
         <div className="lg:col-span-2">
           <FinancialCard
             title="نظرة عامة من الذكاء الاصطناعي"

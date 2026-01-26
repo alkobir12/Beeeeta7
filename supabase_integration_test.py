@@ -541,18 +541,37 @@ def test_general_consistency_verification(vehicle_id):
     # Step 4: Cross-verify operations with journal entries
     print(f"\n[4] Cross-verifying operations with journal entries")
     try:
-        # This would require a journal entries endpoint - checking if available
-        response = requests.get(f"{BACKEND_URL}/finance/journal-entries", timeout=15)
+        # Add required workshop_id parameter for journal entries
+        params = {'workshop_id': 'finmodule-sync'}
+        response = requests.get(f"{BACKEND_URL}/finance/journal-entries", params=params, timeout=15)
         response_data = response.json() if response.status_code == 200 else response.text
-        log_api_call("/api/finance/journal-entries", "GET", None, response_data, response.status_code)
+        log_api_call("/api/finance/journal-entries", "GET", params, response_data, response.status_code)
         
         if response.status_code == 200:
             journal_entries = response_data
             log_test("Journal Entries Cross-Verification", True, 
                     f"Found {len(journal_entries)} journal entries for cross-verification")
+            
+            # Calculate total debits and credits
+            total_debits = 0
+            total_credits = 0
+            for entry in journal_entries:
+                lines = entry.get('lines', [])
+                for line in lines:
+                    total_debits += line.get('debit', 0)
+                    total_credits += line.get('credit', 0)
+            
+            print(f"   📊 Total Debits: {total_debits} ريال")
+            print(f"   📊 Total Credits: {total_credits} ريال")
+            
+            if abs(total_debits - total_credits) < 0.01:
+                print("   ✅ Journal entries are balanced (Debits = Credits)")
+            else:
+                print(f"   ⚠️ Journal entries imbalance: {total_debits} ≠ {total_credits}")
+                
         else:
             log_test("Journal Entries Cross-Verification", False, 
-                    f"Journal entries endpoint not available or error: {response.status_code}")
+                    f"Status: {response.status_code}, Error: {response_data}")
     except Exception as e:
         log_test("Journal Entries Cross-Verification", False, f"Exception: {str(e)}")
 

@@ -217,6 +217,8 @@ const AIFinancial = () => {
     return risks;
   };
 
+  const [conversationId, setConversationId] = useState(null);
+
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatQuery.trim()) return;
@@ -227,15 +229,19 @@ const AIFinancial = () => {
     setChatLoading(true);
 
     try {
-      const response = await aiAPI.financialAnalysis({
-        query: chatQuery,
-        financial_data: financialData,
-      });
+      const payload = {
+        message: chatQuery,
+        workshop_id: workshopId,
+        conversation_id: conversationId,
+      };
+
+      const response = await aiAPI.financeBotChat(payload);
 
       const aiMessage = {
         role: 'assistant',
-        content: response.data?.analysis || 'تعذر الحصول على رد من المساعد المالي حالياً.',
+        content: response.data?.response || 'تعذر الحصول على رد من المساعد المالي حالياً.',
       };
+      setConversationId(response.data?.conversation_id || conversationId);
       setChatHistory((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error('Chat AI error:', err);

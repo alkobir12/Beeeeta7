@@ -28,11 +28,10 @@ const DieselExpertFloatingButton = () => {
         <div className="flex items-center gap-3 px-4 py-3 rounded-full">
           {/* Avatar with online indicator */}
           <div className="relative">
-            <img 
-              src="https://www.genspark.ai/api/files/s/owCUM0vz" 
-              alt="Diesel Expert"
-              className="w-10 h-10 rounded-full border-2 border-white shadow-lg"
-            />
+            {/* تم إزالة صورة خبير الديزل المرتبطة بـ Genspark */}
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-emergent-green-light flex items-center justify-center text-emergent-black font-bold text-xs">
+              ديزل
+            </div>
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-emergent-green shadow-md">
               <div className="w-full h-full bg-white rounded-full animate-ping opacity-75"></div>
             </div>

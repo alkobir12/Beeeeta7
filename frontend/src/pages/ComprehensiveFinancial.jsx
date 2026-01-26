@@ -43,16 +43,16 @@ const ComprehensiveFinancial = () => {
           start_date: startDate, 
           end_date: endDate 
         }),
-        financeAPI.getChartOfAccounts()
+        financeAPI.getTrialBalance({ workshop_id: workshopId })
       ]);
 
       setBalanceSheet(bsRes.data?.data || null);
       setIncomeStatement(isRes.data?.data || null);
       setCashFlow(cfRes.data?.data || null);
       
-      // Trial Balance من Chart of Accounts
-      const accounts = tbRes.data || [];
-      setTrialBalance(accounts);
+      // Trial Balance من تقرير ميزان المراجعة الحقيقي
+      const tbData = tbRes.data?.data || tbRes.data || {};
+      setTrialBalance(tbData.accounts || []);
       
     } catch (error) {
       console.error('Error fetching financial data:', error);

@@ -117,20 +117,6 @@ const AIFinancial = () => {
       await fetchAiAnalysis({
         revenue,
         expenses,
-  // تحميل دليل الحسابات لاستخدامه مع البوت المالي
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        const res = await financeAPI.getChartOfAccounts();
-        setAccounts(res.data?.accounts || res.data || []);
-      } catch (err) {
-        console.error('Failed to load chart of accounts for finance bot:', err);
-      }
-    };
-
-    loadAccounts();
-  }, []);
-
         netProfit,
         profitMargin,
         assets: balanceData?.totals?.assets || 0,

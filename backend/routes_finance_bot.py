@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Any, Dict, List
 import os
 import uuid
 from datetime import datetime
@@ -46,9 +46,57 @@ class FinanceBotChatRequest(BaseModel):
     conversation_id: Optional[str] = Field(
         None, description="معرّف المحادثة للحفاظ على السياق"
     )
+    # بيانات مالية اختيارية لتمكين التحليل القواعدي (لا تغيّر شكل الرد)
+    financial_data: Optional[Dict[str, Any]] = Field(
+        None,
+        description="ملخص بيانات مالية اختيارية (مثل revenue/expenses/assets/liabilities) لإضافة ملاحظات قواعدية",
+    )
 
 
 class FinanceBotChatResponse(BaseModel):
+
+
+def abu_fahad_safe_analysis(financial_data: Dict[str, Any]) -> Dict[str, List[str]]:
+    """تحليل قواعدي بسيط وآمن (بدون LLM) لإضافة تنبيهات سريعة.
+
+    الهدف: إضافة طبقة تدقيق مبدئية حتى لو كانت البيانات محدودة.
+    """
+    notes: List[str] = []
+
+    try:
+        revenue = float(financial_data.get("revenue") or 0)
+        expenses = float(financial_data.get("expenses") or 0)
+        net_profit = float(
+            financial_data.get("net_profit")
+            if financial_data.get("net_profit") is not None
+            else financial_data.get("netProfit")
+            if financial_data.get("netProfit") is not None
+            else (revenue - expenses)
+        )
+        assets = float(financial_data.get("assets") or 0)
+        liabilities = float(financial_data.get("liabilities") or 0)
+
+        if revenue > 0:
+            margin = (net_profit / revenue) * 100
+            if margin < 10:
+                notes.append(f"تنبيه: هامش الربح منخفض جداً ({margin:.1f}%). راجع تسعير الخدمات وهوامش قطع الغيار.")
+            elif margin < 20:
+                notes.append(f"ملاحظة: هامش الربح متوسط ({margin:.1f}%). توجد فرصة لرفع الربحية عبر ضبط المصروفات أو تحسين التسعير.")
+        else:
+            notes.append("ملاحظة: لا توجد إيرادات مسجلة في البيانات المرسلة. إذا كان هذا غير صحيح، تحقق من تسجيل العمليات والقيود.")
+
+        if revenue > 0 and expenses > revenue:
+            notes.append("تنبيه: المصروفات أعلى من الإيرادات في الفترة، وهذا مؤشر خطر على الربحية.")
+
+        if assets > 0 and liabilities > assets * 0.5:
+            notes.append("تحذير: نسبة الالتزامات إلى الأصول مرتفعة. راجع السيولة وجدول السداد.")
+
+    except Exception:
+        # في حال أي مشكلة تحويل/تنسيق لا نمنع عمل البوت
+        pass
+
+    return {"notes": notes}
+
     response: str
     conversation_id: str
     provider: str = "openai-gpt-5.1"
@@ -181,6 +229,15 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
         ai_response = await chat.send_message(user_message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"تعذّر الاتصال بالمساعد المالي: {e}")
+
+    # تحليل قواعدي آمن (يُدمج في نفس response كنص إضافي)
+    safe_analysis = abu_fahad_safe_analysis(payload.financial_data or {})
+    if safe_analysis.get("notes"):
+        ai_response = (
+            f"{ai_response}\n\n"
+            "ملاحظات سريعة (تحليل قواعدي):\n"
+            + "\n".join([f"- {n}" for n in safe_analysis["notes"]])
+        )
 
     return FinanceBotChatResponse(
         response=ai_response,

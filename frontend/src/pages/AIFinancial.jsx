@@ -220,8 +220,6 @@ const AIFinancial = () => {
     return risks;
   };
 
-  const [conversationId, setConversationId] = useState(null);
-
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatQuery.trim()) return;

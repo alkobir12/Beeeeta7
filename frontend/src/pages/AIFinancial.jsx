@@ -208,6 +208,18 @@ const AIFinancial = () => {
 
     return recs;
   };
+  // تحميل جلسة أبوفهد من التخزين المحلي للاستمرار في نفس المحادثة
+  useEffect(() => {
+    try {
+      const storedId = localStorage.getItem('finance_bot_session_id');
+      if (storedId) {
+        setConversationId(storedId);
+      }
+    } catch (e) {
+      // تجاهل أي خطأ في JSON
+    }
+  }, []);
+
 
   const generatePredictions = (data) => ({
     nextMonth: Math.round(data.revenue * 1.1),

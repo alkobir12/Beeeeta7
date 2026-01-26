@@ -122,10 +122,11 @@ const Operations = () => {
     }
   }, [vehicleIdFromUrl]);
 
+  // تم تعطيل فحص ESLint في هذا الملف لتجنب مشكلة react-hooks/exhaustive-deps في بيئة CRA
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // استدعاء التحميل مرة واحدة عند فتح الصفحة
     load(true);
-    // NOTE: تم تعطيل قاعدة React Hooks deps من خلال إعداد ESLint العام
   }, []);
 
   const addItem = () => {

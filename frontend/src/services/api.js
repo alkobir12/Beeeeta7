@@ -68,8 +68,11 @@ const aiAPI = {
   workshopAppointment: (payload) => axios.post(`${API_BASE}/ai/workshop/appointment`, payload),
   workshopServiceReport: (payload) => axios.post(`${API_BASE}/ai/workshop/service-report`, payload),
 
-  // التحليل المالي بالذكاء الاصطناعي
+  // التحليل المالي بالذكاء الاصطناعي (قديم - يعتمد على خدمة منفصلة)
   financialAnalysis: (payload) => api.post('/ai/financial-analysis', payload),
+
+  // البوت المالي الجديد (GPT-5.1 عبر EMERGENT_LLM_KEY)
+  financeBotChat: (payload) => api.post('/finance-bot/chat', payload),
 };
 
 const partAPI = {

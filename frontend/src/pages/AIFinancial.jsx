@@ -42,6 +42,7 @@ const AIFinancial = () => {
   const [chatHistory, setChatHistory] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountCode, setSelectedAccountCode] = useState('');
+  const [conversationId, setConversationId] = useState('');
 
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 

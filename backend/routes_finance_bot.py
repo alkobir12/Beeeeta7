@@ -226,7 +226,6 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
 
     # تحسين الأداء: إذا كانت الرسالة قصيرة وواضحة أنها تطلب "تنبيهات سريعة" فقط
     # نرجّح الرد القواعدي بدون استدعاء LLM لتقليل البطء.
-    user_lower = payload.message.lower()
     fast_only = (
         (payload.financial_data is not None)
         and any(k in payload.message for k in ["تنبيه", "ملاحظات سريعة", "ملخص سريع"])

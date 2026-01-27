@@ -616,7 +616,13 @@ export default function AIFinancial() {
                       : 'bg-slate-800/80 text-slate-100 mr-6 text-right'
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === 'assistant' ? (
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               ))}
             </div>

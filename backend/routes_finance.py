@@ -608,15 +608,6 @@ def _merge_by_id(primary_list, secondary_list):
 
     return merged
 
-            "error": str(e),
-            "data": {
-                "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",
-                "accounts": [],
-                "totals": {"total_debit": 0, "total_credit": 0},
-            },
-        }
-
-
 
 @router.get("/alerts")
 async def get_finance_alerts(

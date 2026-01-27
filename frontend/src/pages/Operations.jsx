@@ -162,11 +162,14 @@ const Operations = () => {
 
       // 4) بناء القيد المحاسبي وفقًا لنوع العملية
       const journalPayload = {
-        entry_date: new Date().toISOString(),
+        // routes_finance expects "date" not "entry_date"
+        date: new Date().toISOString().split('T')[0],
         description:
           form.type === 'sale'
             ? `عملية بيع - ${form.partnerName || ''}`
             : `عملية شراء - ${form.partnerName || ''}`,
+        // تحويل الدفع إلى نوع حركة واضح
+        transaction_type: form.type === 'sale' ? 'sale' : 'purchase',
         reference: op?.id || null,
         lines: [],
       };

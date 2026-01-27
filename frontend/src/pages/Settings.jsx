@@ -141,6 +141,7 @@ const Settings = () => {
     return (
       <button
         onClick={() => handleThemeChange(themeKey)}
+        data-testid={`theme-card-${themeKey}`}
         className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 ${
           isSelected 
             ? 'border-blue-500 ring-2 ring-blue-500/20' 
@@ -230,6 +231,7 @@ const Settings = () => {
         </h1>
         <button 
           onClick={saveSettings}
+          data-testid="settings-save-button"
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all"
           style={{ 
@@ -264,6 +266,7 @@ const Settings = () => {
             value={settings.workshopName}
             onChange={e => setSettings({...settings, workshopName: e.target.value})}
             placeholder={t('settings.workshop_name')}
+            data-testid="settings-workshop-name-input"
           />
         </Row>
         <Row label={t('settings.workshop_phone')}>
@@ -273,6 +276,7 @@ const Settings = () => {
             value={settings.workshopPhone}
             onChange={e => setSettings({...settings, workshopPhone: e.target.value})}
             placeholder="05xxxxxxxx"
+            data-testid="settings-workshop-phone-input"
           />
         </Row>
         <Row label={t('settings.workshop_address')}>
@@ -282,6 +286,7 @@ const Settings = () => {
             value={settings.workshopAddress}
             onChange={e => setSettings({...settings, workshopAddress: e.target.value})}
             placeholder={t('settings.workshop_address')}
+            data-testid="settings-workshop-address-input"
           />
         </Row>
       </Section>
@@ -293,6 +298,7 @@ const Settings = () => {
             style={{ color: 'var(--text-secondary)' }}
             value={settings.language}
             onChange={e => setSettings({...settings, language: e.target.value})}
+            data-testid="settings-language-select"
           >
             <option value="ar">{t('settings.arabic')}</option>
             <option value="en">{t('settings.english')}</option>
@@ -305,6 +311,7 @@ const Settings = () => {
             style={{ color: 'var(--text-secondary)' }}
             value={settings.currency}
             onChange={e => setSettings({...settings, currency: e.target.value})}
+            data-testid="settings-currency-select"
           >
             <option value="SAR">ريال سعودي (SAR)</option>
             <option value="USD">دولار أمريكي (USD)</option>
@@ -321,6 +328,7 @@ const Settings = () => {
               className="sr-only peer"
               checked={settings.taxEnabled}
               onChange={e => setSettings({...settings, taxEnabled: e.target.checked})}
+              data-testid="settings-tax-toggle"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
           </label>
@@ -333,9 +341,126 @@ const Settings = () => {
               style={{ color: 'var(--text-secondary)' }}
               value={settings.taxRate}
               onChange={e => setSettings({...settings, taxRate: parseFloat(e.target.value)})}
+              data-testid="settings-tax-rate-input"
             />
           </Row>
         )}
+      </Section>
+
+      <Section title="توليد واجهة Stitch" icon={Sparkles}>
+        <div className="p-4 space-y-4" data-testid="stitch-section">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>وصف الواجهة</label>
+            <textarea
+              className="w-full rounded-xl border bg-transparent p-3 text-sm outline-none"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              rows={4}
+              value={stitchForm.prompt}
+              onChange={(e) => setStitchForm({ ...stitchForm, prompt: e.target.value })}
+              placeholder="مثال: صفحة تسجيل دخول حديثة مع حقل بريد وكلمة مرور"
+              data-testid="stitch-prompt-input"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>نمط التصميم</label>
+              <select
+                className="w-full rounded-xl border bg-transparent p-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                value={stitchForm.designStyle}
+                onChange={(e) => setStitchForm({ ...stitchForm, designStyle: e.target.value })}
+                data-testid="stitch-style-select"
+              >
+                <option value="modern">حديث</option>
+                <option value="minimal">مختصر</option>
+                <option value="classic">كلاسيكي</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>لوحة الألوان</label>
+              <input
+                className="w-full rounded-xl border bg-transparent p-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                value={stitchForm.colorScheme}
+                onChange={(e) => setStitchForm({ ...stitchForm, colorScheme: e.target.value })}
+                placeholder="أزرق فاتح، داكن..."
+                data-testid="stitch-color-input"
+              />
+            </div>
+          </div>
+
+          {stitchError && (
+            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: '#f87171', color: '#b91c1c' }} data-testid="stitch-error-message">
+              {stitchError}
+            </div>
+          )}
+
+          <button
+            onClick={handleGenerateStitch}
+            disabled={stitchLoading}
+            className="w-full rounded-xl py-2 text-sm font-medium transition-all"
+            style={{ backgroundColor: 'var(--accent-primary)', color: '#ffffff' }}
+            data-testid="stitch-generate-button"
+          >
+            {stitchLoading ? 'جاري التوليد...' : 'توليد واجهة'}
+          </button>
+
+          {stitchResult && (
+            <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--border-color)' }} data-testid="stitch-result-card">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>تم توليد الواجهة</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{stitchResult.status || 'completed'}</p>
+                </div>
+                {stitchResult.figma_url && (
+                  <button
+                    onClick={() => window.open(stitchResult.figma_url, '_blank')}
+                    className="text-xs font-medium underline"
+                    style={{ color: 'var(--accent-primary)' }}
+                    data-testid="stitch-figma-link"
+                  >
+                    فتح في Figma
+                  </button>
+                )}
+              </div>
+              {stitchResult.generated_code && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowStitchCode(!showStitchCode)}
+                    className="text-xs font-medium underline"
+                    style={{ color: 'var(--accent-primary)' }}
+                    data-testid="stitch-toggle-code-button"
+                  >
+                    {showStitchCode ? 'إخفاء الكود' : 'عرض الكود'}
+                  </button>
+                  {showStitchCode && (
+                    <pre className="max-h-56 overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100" data-testid="stitch-code-block">
+                      {stitchResult.generated_code}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2" data-testid="stitch-history-list">
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>سجل التوليد</p>
+            {stitchHistory.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>لا يوجد توليدات سابقة بعد.</p>
+            ) : (
+              <div className="space-y-2">
+                {stitchHistory.slice(0, 5).map((item) => (
+                  <div key={item.id} className="rounded-lg border p-3" style={{ borderColor: 'var(--border-light)' }} data-testid={`stitch-history-item-${item.id}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{item.prompt}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-muted)' }}>{item.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </Section>
 
       <Section title="النسخ الاحتياطي" icon={Database}>
@@ -351,6 +476,7 @@ const Settings = () => {
             }}
             className="text-sm font-medium hover:underline"
             style={{ color: 'var(--accent-primary)' }}
+            data-testid="settings-backup-button"
           >
             نسخ الآن
           </button>

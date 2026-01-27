@@ -139,10 +139,11 @@ function App() {
                   </Layout>
                 </Protected>
               } />
-            </Routes>
-          </Router>
-        </div>
-      </ThemeProvider>
+              </Routes>
+            </Router>
+          </div>
+        </ThemeProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

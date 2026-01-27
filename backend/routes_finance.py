@@ -398,10 +398,6 @@ async def get_trial_balance(
         if not supabase:
             raise Exception("Supabase not connected")
 
-        target_date = date or datetime.now().strftime("%Y-%m-%d")
-
-        # التعامل مع op_date (timestamp) حتى لا يتم استبعاد عمليات نفس اليوم
-        # إذا كان لدينا تاريخ فقط (YYYY-MM-DD) نحوله إلى نهاية اليوم.
         # ملاحظة: عند استدعاء الدالة داخلياً قد تصل القيم ككائن Query.
         # نحصرها في string فقط.
         if date is not None and not isinstance(date, str):
@@ -410,6 +406,8 @@ async def get_trial_balance(
             start_date = None
         if end_date is not None and not isinstance(end_date, str):
             end_date = None
+
+        target_date = date or datetime.now().strftime("%Y-%m-%d")
 
         if end_date:
             end_bound = end_date

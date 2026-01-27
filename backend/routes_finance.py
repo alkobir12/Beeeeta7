@@ -704,178 +704,49 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
     دليل الحسابات محسوب من العمليات الحقيقية في Supabase
     """
     try:
-        if not supabase:
-            raise Exception("Supabase not connected")
+        accounts_balances, merged_accounts = _compute_trial_balance_map(workshop_id)
+        _, code_to_name, code_to_type = _build_account_maps(merged_accounts)
 
-        # دمج دليل الحسابات من مشروعين بدون تكرار (الأولوية للمشروع الأساسي)
-        primary_accounts = []
-        secondary_accounts = []
+        merged_by_code = {}
+        for acc in merged_accounts:
+            code = str(acc.get("code") or "").strip()
+            if not code:
+                continue
+            merged_by_code[code] = acc
 
-        try:
-            res = supabase.table("accounts").select("*").order("code").execute()
-            primary_accounts = res.data or []
-        except Exception as e:
-            print(f"Primary accounts fetch failed: {e}")
+        for code, data in accounts_balances.items():
+            if code not in merged_by_code:
+                merged_by_code[code] = {
+                    "id": code,
+                    "code": code,
+                    "name": data.get("name") or code_to_name.get(code) or code,
+                    "name_ar": data.get("name") or code_to_name.get(code) or code,
+                    "type": code_to_type.get(code) or "other",
+                }
 
-        if supabase_1 is not None:
-            try:
-                # beeeta7 يستخدم chart_of_accounts
-                res2 = supabase_1.table("chart_of_accounts").select("*").order("code").execute()
-                secondary_accounts = res2.data or []
-            except Exception as e:
-                print(f"Secondary chart_of_accounts fetch failed: {e}")
+        results = []
+        for code in sorted(merged_by_code.keys()):
+            acc = merged_by_code[code]
+            acc_type = acc.get("type") or "asset"
+            debit = accounts_balances.get(code, {}).get("debit", 0)
+            credit = accounts_balances.get(code, {}).get("credit", 0)
 
-        # Normalize + merge by code (أهم من id بين مشروعين)
-        merged = []
-        seen_codes = set()
+            if acc_type in ("asset", "expense"):
+                balance = debit - credit
+            elif acc_type in ("liability", "equity", "revenue"):
+                balance = credit - debit
+            else:
+                balance = debit - credit
 
-        def add_list(lst):
-            for a in (lst or []):
-                if not isinstance(a, dict):
-                    continue
-                code = str(a.get("code") or "").strip()
-                if not code or code in seen_codes:
-                    continue
-                seen_codes.add(code)
-                if not a.get("name_ar"):
-                    a["name_ar"] = a.get("name")
-                merged.append(a)
+            results.append(
+                {
+                    **acc,
+                    "name_ar": acc.get("name_ar") or acc.get("name"),
+                    "balance": round(balance, 2),
+                }
+            )
 
-        add_list(primary_accounts)
-        add_list(secondary_accounts)
-
-        # إذا نجح الدمج نرجعه مباشرة
-        if merged:
-            return {"success": True, "data": merged, "source": "supabase+supabase_1"}
-
-        # البديل: حساب الحسابات من operations
-        ops_response = supabase.table("operations").select("*").execute()
-        operations = ops_response.data
-
-        # حساب أرصدة الحسابات من العمليات
-        account_balances = {}
-
-        for op in operations:
-            op_type = op.get("type", "")
-            total = float(op.get("total", 0) or 0)
-            payment_method = op.get("payment_method", "cash")
-
-            if op_type == "sale":
-                # النقدية أو ذمم مدينة
-                if payment_method == "cash":
-                    account_balances["101"] = account_balances.get("101", 0) + total
-                else:
-                    account_balances["113"] = account_balances.get("113", 0) + total
-                # إيرادات
-                account_balances["411"] = account_balances.get("411", 0) + total
-
-            elif op_type == "purchase":
-                # مصروفات قطع
-                account_balances["514"] = account_balances.get("514", 0) + total
-                # النقدية أو ذمم دائنة
-                if payment_method == "cash":
-                    account_balances["101"] = account_balances.get("101", 0) - total
-                else:
-                    account_balances["211"] = account_balances.get("211", 0) + total
-
-        # الأرباح المحتجزة
-        revenue = account_balances.get("411", 0)
-        expenses = account_balances.get("514", 0)
-        account_balances["302"] = revenue - expenses
-
-        # بناء قائمة الحسابات
-        accounts = [
-            {
-                "id": "1",
-                "code": "101",
-                "name": "النقدية",
-                "name_ar": "النقدية",
-                "type": "asset",
-                "balance": round(account_balances.get("101", 0), 2),
-            },
-            {
-                "id": "2",
-                "code": "113",
-                "name": "ذمم مدينة عملاء",
-                "name_ar": "ذمم مدينة عملاء",
-                "type": "asset",
-                "balance": round(account_balances.get("113", 0), 2),
-            },
-            {
-                "id": "3",
-                "code": "121",
-                "name": "مخزون قطع الغيار",
-                "name_ar": "مخزون قطع الغيار",
-                "type": "asset",
-                "balance": 0,
-            },
-            {
-                "id": "4",
-                "code": "211",
-                "name": "ذمم دائنة موردين",
-                "name_ar": "ذمم دائنة موردين",
-                "type": "liability",
-                "balance": round(account_balances.get("211", 0), 2),
-            },
-            {
-                "id": "5",
-                "code": "301",
-                "name": "رأس المال",
-                "name_ar": "رأس المال",
-                "type": "equity",
-                "balance": 0,
-            },
-            {
-                "id": "6",
-                "code": "302",
-                "name": "الأرباح المحتجزة",
-                "name_ar": "الأرباح المحتجزة",
-                "type": "equity",
-                "balance": round(account_balances.get("302", 0), 2),
-            },
-            {
-                "id": "7",
-                "code": "411",
-                "name": "إيرادات خدمات الصيانة",
-                "name_ar": "إيرادات خدمات الصيانة",
-                "type": "revenue",
-                "balance": round(account_balances.get("411", 0), 2),
-            },
-            {
-                "id": "8",
-                "code": "412",
-                "name": "إيرادات بيع قطع الغيار",
-                "name_ar": "إيرادات بيع قطع الغيار",
-                "type": "revenue",
-                "balance": 0,
-            },
-            {
-                "id": "9",
-                "code": "514",
-                "name": "مصاريف قطع الغيار",
-                "name_ar": "مصاريف قطع الغيار",
-                "type": "expense",
-                "balance": round(account_balances.get("514", 0), 2),
-            },
-            {
-                "id": "10",
-                "code": "521",
-                "name": "مصاريف رواتب",
-                "name_ar": "مصاريف رواتب",
-                "type": "expense",
-                "balance": 0,
-            },
-            {
-                "id": "11",
-                "code": "522",
-                "name": "مصاريف إيجار",
-                "name_ar": "مصاريف إيجار",
-                "type": "expense",
-                "balance": 0,
-            },
-        ]
-
-        return {"success": True, "data": accounts}
+        return {"success": True, "data": results, "source": "journal_entries"}
 
     except Exception as e:
         print(f"Error in get_chart_of_accounts: {str(e)}")
@@ -899,264 +770,26 @@ async def get_journal_entries(
     القيود المحاسبية من Supabase و MongoDB operations
     """
     try:
-        entries = []
+        entries = _fetch_journal_entries(
+            workshop_id, start_date=start_date, end_date=end_date, skip=skip, limit=limit
+        )
 
-        # 1. جلب القيود المحاسبية اليدوية من Supabase
-        try:
-            query = (
-                supabase.table("journal_entries")
-                .select("*")
-                .eq("workshop_id", workshop_id)
+        formatted = []
+        for entry in entries:
+            formatted.append(
+                {
+                    "id": entry.get("id"),
+                    "date": entry.get("date", ""),
+                    "description": entry.get("description", "قيد"),
+                    "lines": entry.get("lines", []),
+                    "total": entry.get("total", 0),
+                    "source": entry.get("source", "manual"),
+                    "transaction_type": entry.get("transaction_type"),
+                    "reference_id": entry.get("reference_id"),
+                }
             )
 
-            if start_date:
-                query = query.gte("date", start_date)
-            if end_date:
-                query = query.lte("date", end_date)
-
-            query = query.range(skip, skip + limit - 1)
-            response = query.execute()
-
-            for entry in response.data:
-                entries.append(
-                    {
-                        "id": entry.get("id"),
-                        "date": entry.get("date", ""),
-                        "description": entry.get("description", "قيد يدوي"),
-                        "lines": entry.get("lines", []),
-                        "total": entry.get("total", 0),
-                        "source": entry.get("source", "manual"),
-                        "transaction_type": entry.get("transaction_type"),
-                    }
-                )
-        except Exception as e:
-            print(f"Supabase journal_entries error: {e}")
-
-        # 2. القيود الناتجة عن العمليات من Supabase (operations جدول)
-        try:
-            if supabase:
-                ops_query = supabase.table("operations").select(
-                    "*, vehicles(plate_number, customer_name)"
-                )
-                if start_date:
-                    ops_query = ops_query.gte("op_date", start_date)
-                if end_date:
-                    ops_query = ops_query.lte("op_date", end_date)
-                ops_query = ops_query.range(skip, skip + limit - 1).order(
-                    "op_date", desc=True
-                )
-                ops_response = ops_query.execute()
-
-                for op in ops_response.data:
-                    op_type = op.get("type", "")
-                    total = float(op.get("total", 0) or 0)
-                    date = op.get("op_date", "")
-                    payment_method = op.get("payment_method", "cash")
-
-                    if total == 0:
-                        continue
-
-                    vehicle_data = (
-                        op.get("vehicles", {})
-                        if isinstance(op.get("vehicles"), dict)
-                        else {}
-                    )
-                    vehicle_plate = vehicle_data.get("plate_number", "")
-                    customer_name = vehicle_data.get(
-                        "customer_name", op.get("partner_name", "")
-                    )
-
-                    lines = []
-
-                    if op_type == "sale":
-                        if payment_method == "cash":
-                            lines.append(
-                                {
-                                    "account": "101",
-                                    "account_name": "النقدية",
-                                    "debit": total,
-                                    "credit": 0,
-                                }
-                            )
-                        else:
-                            lines.append(
-                                {
-                                    "account": "113",
-                                    "account_name": "ذمم مدينة عملاء",
-                                    "debit": total,
-                                    "credit": 0,
-                                }
-                            )
-                        lines.append(
-                            {
-                                "account": "411",
-                                "account_name": "إيرادات خدمات الصيانة",
-                                "debit": 0,
-                                "credit": total,
-                            }
-                        )
-                    elif op_type == "purchase":
-                        lines.append(
-                            {
-                                "account": "514",
-                                "account_name": "مصاريف قطع الغيار",
-                                "debit": total,
-                                "credit": 0,
-                            }
-                        )
-                        if payment_method == "cash":
-                            lines.append(
-                                {
-                                    "account": "101",
-                                    "account_name": "النقدية",
-                                    "debit": 0,
-                                    "credit": total,
-                                }
-                            )
-                        else:
-                            lines.append(
-                                {
-                                    "account": "211",
-                                    "account_name": "ذمم دائنة موردين",
-                                    "debit": 0,
-                                    "credit": total,
-                                }
-                            )
-                    else:
-                        continue
-
-                    entries.append(
-                        {
-                            "id": op.get("id", ""),
-                            "date": date[:10] if date else "",
-                            "description": f"قيد {op_type} {payment_method}",
-                            "lines": lines,
-                            "total": total,
-                            "source": "operation",
-                            "vehicle_plate": vehicle_plate,
-                            "customer_name": customer_name,
-                        }
-                    )
-        except Exception as e:
-            print(f"Supabase operations error: {e}")
-
-        # 3. قيود من MongoDB (للوضع القديم إن وُجد finance_db)
-        if finance_db:
-            try:
-                query = {}
-                if start_date and end_date:
-                    start_dt = datetime.fromisoformat(start_date)
-                    end_dt = datetime.fromisoformat(end_date)
-                    end_dt = end_dt.replace(hour=23, minute=59, second=59)
-                    query["date"] = {"$gte": start_dt, "$lte": end_dt}
-
-                operations = (
-                    await finance_db.operations.find(query)
-                    .skip(skip)
-                    .limit(limit)
-                    .to_list(limit)
-                )
-
-                for op in operations:
-                    op_type = op.get("type", "")
-                    total = op.get("total", 0) or 0
-                    date = op.get("date", datetime.now())
-                    payment_method = op.get("paymentMethod", "cash")
-
-                    if total == 0:
-                        continue
-
-                    lines = []
-
-                    if op_type == "sale":
-                        if payment_method == "cash":
-                            lines.append(
-                                {
-                                    "account": "101",
-                                    "account_name": "النقدية",
-                                    "debit": total,
-                                    "credit": 0,
-                                }
-                            )
-                        else:
-                            lines.append(
-                                {
-                                    "account": "113",
-                                    "account_name": "ذمم مدينة عملاء",
-                                    "debit": total,
-                                    "credit": 0,
-                                }
-                            )
-                        lines.append(
-                            {
-                                "account": "411",
-                                "account_name": "إيرادات خدمات الصيانة",
-                                "debit": 0,
-                                "credit": total,
-                            }
-                        )
-
-                        entries.append(
-                            {
-                                "id": op.get("id", ""),
-                                "date": (
-                                    date.strftime("%Y-%m-%d")
-                                    if isinstance(date, datetime)
-                                    else str(date)
-                                ),
-                                "description": f"قيد بيع {payment_method}",
-                                "lines": lines,
-                                "total": total,
-                                "source": "operation",
-                            }
-                        )
-
-                    elif op_type == "purchase":
-                        lines.append(
-                            {
-                                "account": "514",
-                                "account_name": "مصاريف قطع الغيار",
-                                "debit": total,
-                                "credit": 0,
-                            }
-                        )
-                        if payment_method == "cash":
-                            lines.append(
-                                {
-                                    "account": "101",
-                                    "account_name": "النقدية",
-                                    "debit": 0,
-                                    "credit": total,
-                                }
-                            )
-                        else:
-                            lines.append(
-                                {
-                                    "account": "211",
-                                    "account_name": "ذمم دائنة موردين",
-                                    "debit": 0,
-                                    "credit": total,
-                                }
-                            )
-
-                        entries.append(
-                            {
-                                "id": op.get("id", ""),
-                                "date": (
-                                    date.strftime("%Y-%m-%d")
-                                    if isinstance(date, datetime)
-                                    else str(date)
-                                ),
-                                "description": f"قيد شراء {payment_method}",
-                                "lines": lines,
-                                "total": total,
-                                "source": "operation",
-                            }
-                        )
-            except Exception as e:
-                print(f"MongoDB operations error: {e}")
-
-        return {"success": True, "data": entries, "total": len(entries)}
+        return {"success": True, "data": formatted, "total": len(formatted)}
 
     except Exception as e:
         print(f"Error in get_journal_entries: {str(e)}")

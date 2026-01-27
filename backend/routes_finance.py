@@ -526,6 +526,9 @@ async def get_trial_balance(
                 "totals": {
                     "total_debit": round(total_debit, 2),
                     "total_credit": round(total_credit, 2),
+                },
+            },
+        }
 
 
 @router.get("/alerts")

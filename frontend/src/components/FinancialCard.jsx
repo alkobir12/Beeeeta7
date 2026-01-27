@@ -68,7 +68,7 @@ const FinancialCard = ({
         boxShadow: isExpanded
           ? '0 32px 100px rgba(15,23,42,0.9), 0 0 0 1px rgba(59,130,246,0.3)'
           : '0 24px 70px rgba(15,23,42,0.75)',
-        maxHeight: isExpanded ? '600px' : '260px',
+        maxHeight: isExpanded ? '700px' : '260px',
         transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease',
         transform: isExpanded ? 'scale(1.02)' : 'scale(1)',
       }}

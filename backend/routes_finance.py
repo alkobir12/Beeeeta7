@@ -526,6 +526,148 @@ async def get_trial_balance(
                 "totals": {
                     "total_debit": round(total_debit, 2),
                     "total_credit": round(total_credit, 2),
+
+
+@router.get("/alerts")
+async def get_finance_alerts(
+    workshop_id: str = Query(...),
+):
+    """تنبيهات محاسبية/مالية تلقائية (مراقب دائم).
+
+    يعيد قائمة تنبيهات قصيرة مع مستوى خطورة وإجراء مقترح.
+    يعتمد على:
+    - Trial Balance
+    - Income Statement (آخر 30 يوم)
+    - Audit System
+    """
+
+    alerts = []
+
+    # 1) Trial Balance: توازن المدين/الدائن + مؤشرات الذمم
+    tb = await get_trial_balance(workshop_id)
+    if tb.get("success"):
+        totals = (tb.get("data") or {}).get("totals") or {}
+        td = float(totals.get("total_debit") or 0)
+        tc = float(totals.get("total_credit") or 0)
+        if abs(td - tc) > 0.01:
+            alerts.append(
+                {
+                    "id": "tb_unbalanced",
+                    "severity": "high",
+                    "title": "عدم توازن ميزان المراجعة",
+                    "message": f"الإجمالي مدين {td:,.2f} ≠ دائن {tc:,.2f}",
+                    "action": "راجع القيود والعمليات للتأكد من اكتمال التسجيل.",
+                }
+            )
+
+        # ذمم مدينة/دائنة موجودة (عمليات آجل)
+        accounts = (tb.get("data") or {}).get("accounts") or []
+        ar = next((a for a in accounts if a.get("code") == "113"), None)
+        ap = next((a for a in accounts if a.get("code") == "211"), None)
+        ar_amt = float((ar or {}).get("debit") or 0)
+        ap_amt = float((ap or {}).get("credit") or 0)
+        if ar_amt > 0:
+            alerts.append(
+                {
+                    "id": "ar_open",
+                    "severity": "medium",
+                    "title": "ذمم مدينة مفتوحة",
+                    "message": f"يوجد آجل (غير محصل) بقيمة {ar_amt:,.2f} على حساب 113.",
+                    "action": "تابع التحصيل أو اربطها بفاتورة/سداد.",
+                }
+            )
+        if ap_amt > 0:
+            alerts.append(
+                {
+                    "id": "ap_open",
+                    "severity": "medium",
+                    "title": "ذمم دائنة مفتوحة",
+                    "message": f"يوجد آجل (غير مسدد) بقيمة {ap_amt:,.2f} على حساب 211.",
+                    "action": "راجع التزامات الموردين وجدول السداد.",
+                }
+            )
+
+    # 2) Income Statement: ربحية آخر 30 يوم
+    try:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now().replace(day=max(1, datetime.now().day - 30))).strftime("%Y-%m-%d")
+        inc = await get_income_statement(workshop_id, start_date, end_date)
+        if inc.get("success"):
+            totals = (inc.get("data") or {}).get("totals") or {}
+            revenue = float(totals.get("revenue") or 0)
+            expenses = float(totals.get("expenses") or 0)
+            net = float(totals.get("net_income") or 0)
+            if revenue > 0:
+                margin = (net / revenue) * 100
+                if margin < 10:
+                    alerts.append(
+                        {
+                            "id": "low_margin",
+                            "severity": "high",
+                            "title": "هامش ربح منخفض",
+                            "message": f"الهامش الحالي {margin:.1f}% خلال آخر 30 يوم.",
+                            "action": "راجع التسعير والمصروفات وهوامش قطع الغيار.",
+                        }
+                    )
+                elif margin < 20:
+                    alerts.append(
+                        {
+                            "id": "mid_margin",
+                            "severity": "low",
+                            "title": "هامش ربح متوسط",
+                            "message": f"الهامش الحالي {margin:.1f}% خلال آخر 30 يوم.",
+                            "action": "توجد فرصة لتحسين الربحية.",
+                        }
+                    )
+            if revenue > 0 and expenses > revenue:
+                alerts.append(
+                    {
+                        "id": "expenses_gt_revenue",
+                        "severity": "high",
+                        "title": "المصروفات أعلى من الإيرادات",
+                        "message": "هناك خسارة تشغيلية خلال آخر 30 يوم.",
+                        "action": "تحقق من تسجيل الإيرادات/المصروفات وصحة التصنيف.",
+                    }
+                )
+    except Exception:
+        pass
+
+    # 3) Audit System: استدعاء التدقيق الشامل (مؤشرات اتساق)
+    try:
+        audit = await audit_accounting_system(workshop_id)
+        if audit.get("success"):
+            data = audit.get("data") or {}
+            score = data.get("health_score")
+            if score is not None and score < 70:
+                alerts.append(
+                    {
+                        "id": "audit_low_score",
+                        "severity": "high",
+                        "title": "انخفاض درجة صحة النظام المحاسبي",
+                        "message": f"درجة الصحة {score}/100",
+                        "action": "شغّل صفحة التدقيق وراجع خطة التصحيح.",
+                    }
+                )
+            corrections = data.get("corrections_needed") or []
+            if len(corrections) > 0:
+                alerts.append(
+                    {
+                        "id": "audit_corrections",
+                        "severity": "medium",
+                        "title": "تصحيحات محاسبية مطلوبة",
+                        "message": f"عدد التصحيحات المقترحة: {len(corrections)}",
+                        "action": "راجع تفاصيل التدقيق لتطبيق التصحيحات.",
+                    }
+                )
+    except Exception:
+        pass
+
+    # ترتيب: high ثم medium ثم low
+    order = {"high": 0, "medium": 1, "low": 2}
+    alerts.sort(key=lambda a: order.get(a.get("severity"), 99))
+
+    return {"success": True, "data": {"alerts": alerts}}
+
                 },
             },
         }

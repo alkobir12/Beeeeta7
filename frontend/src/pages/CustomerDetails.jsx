@@ -7,7 +7,7 @@ import { Separator } from '../components/ui/separator';
 import { customerAPI } from '../services/api';
 import { ArrowRight, User, Phone, Mail, Car, Calendar, DollarSign, Star, History, Edit2, Save, X } from 'lucide-react';
 import Layout from '../components/Layout';
-import AIHelper from '../components/AIHelper';
+// AIHelper disabled: We keep AbuFahad only in finance-related pages
 import { useTranslation } from 'react-i18next';
 
 const CustomerDetails = () => {

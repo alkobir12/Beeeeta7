@@ -178,7 +178,6 @@ def test_journal_entries_transaction_type():
         
         # بيانات قيد محاسبي مع transaction_type
         test_data = {
-            "workshop_id": WORKSHOP_ID,
             "date": datetime.now().strftime("%Y-%m-%d"),
             "description": "اختبار قيد بيع مع نوع المعاملة",
             "transaction_type": "sale",
@@ -202,7 +201,9 @@ def test_journal_entries_transaction_type():
         print(f"📤 البيانات المرسلة:")
         print(json.dumps(test_data, indent=2, ensure_ascii=False))
         
-        response = requests.post(url, json=test_data, timeout=30)
+        # إرسال workshop_id كـ query parameter
+        params = {"workshop_id": WORKSHOP_ID}
+        response = requests.post(url, json=test_data, params=params, timeout=30)
         print(f"📊 كود الاستجابة: {response.status_code}")
         
         if response.status_code == 200:

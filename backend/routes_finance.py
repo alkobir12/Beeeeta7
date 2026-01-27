@@ -1478,7 +1478,7 @@ async def reset_all_financial_data(
                 except Exception as e:
                     print(f"Invoices table deletion: {e}")
                     
-                print(f"✅ Supabase: Deleted all financial data")
+                print("✅ Supabase: Deleted all financial data")
             except Exception as e:
                 print(f"Supabase deletion error: {e}")
         

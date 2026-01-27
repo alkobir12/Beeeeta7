@@ -70,6 +70,155 @@ def set_db(database):
     db = database
 
 
+def _safe_float(value) -> float:
+    try:
+        return float(value or 0)
+    except Exception:
+        return 0.0
+
+
+def _fetch_accounts():
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    primary_accounts = []
+    secondary_accounts = []
+
+    try:
+        res = supabase.table("accounts").select("*").order("code").execute()
+        primary_accounts = res.data or []
+    except Exception as e:
+        print(f"Primary accounts fetch failed: {e}")
+
+    if supabase_1 is not None:
+        try:
+            res2 = (
+                supabase_1.table("chart_of_accounts").select("*").order("code").execute()
+            )
+            secondary_accounts = res2.data or []
+        except Exception as e:
+            print(f"Secondary chart_of_accounts fetch failed: {e}")
+
+    merged = []
+    seen_codes = set()
+
+    def add_list(lst):
+        for a in (lst or []):
+            if not isinstance(a, dict):
+                continue
+            code = str(a.get("code") or "").strip()
+            if not code or code in seen_codes:
+                continue
+            seen_codes.add(code)
+            if not a.get("name_ar"):
+                a["name_ar"] = a.get("name")
+            merged.append(a)
+
+    add_list(primary_accounts)
+    add_list(secondary_accounts)
+
+    return merged
+
+
+def _build_account_maps(accounts):
+    id_to_code = {}
+    code_to_name = {}
+    code_to_type = {}
+    for acc in accounts or []:
+        code = str(acc.get("code") or "").strip()
+        if not code:
+            continue
+        code_to_name[code] = acc.get("name_ar") or acc.get("name") or code
+        if acc.get("id"):
+            id_to_code[str(acc.get("id"))] = code
+        if acc.get("type"):
+            code_to_type[code] = acc.get("type")
+    return id_to_code, code_to_name, code_to_type
+
+
+def _normalize_line(line, id_to_code, code_to_name):
+    if not isinstance(line, dict):
+        return None
+    account_code = line.get("account") or line.get("account_code") or line.get("code")
+    if not account_code:
+        account_id = line.get("account_id") or line.get("accountId")
+        if account_id:
+            account_code = id_to_code.get(str(account_id))
+    if not account_code:
+        return None
+    account_code = str(account_code)
+    account_name = (
+        line.get("account_name")
+        or line.get("accountName")
+        or code_to_name.get(account_code)
+        or account_code
+    )
+    debit = _safe_float(
+        line.get("debit")
+        if line.get("debit") is not None
+        else line.get("debit_amount") or line.get("debitAmount")
+    )
+    credit = _safe_float(
+        line.get("credit")
+        if line.get("credit") is not None
+        else line.get("credit_amount") or line.get("creditAmount")
+    )
+    return {
+        "code": account_code,
+        "name": account_name,
+        "debit": debit,
+        "credit": credit,
+    }
+
+
+def _fetch_journal_entries(
+    workshop_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    skip: int = 0,
+    limit: Optional[int] = None,
+):
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    query = supabase.table("journal_entries").select("*").eq(
+        "workshop_id", workshop_id
+    )
+    if start_date:
+        query = query.gte("date", start_date)
+    if end_date:
+        query = query.lte("date", end_date)
+    if limit is not None:
+        query = query.range(skip, skip + limit - 1)
+    return (query.order("date", desc=True).execute().data or [])
+
+
+def _compute_trial_balance_map(
+    workshop_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None
+):
+    accounts = _fetch_accounts()
+    id_to_code, code_to_name, _ = _build_account_maps(accounts)
+    entries = _fetch_journal_entries(
+        workshop_id, start_date=start_date, end_date=end_date, limit=10000
+    )
+    accounts_balances = {}
+    for entry in entries:
+        for line in entry.get("lines", []) or []:
+            normalized = _normalize_line(line, id_to_code, code_to_name)
+            if not normalized:
+                continue
+            code = normalized["code"]
+            if code not in accounts_balances:
+                accounts_balances[code] = {
+                    "name": normalized["name"],
+                    "debit": 0,
+                    "credit": 0,
+                }
+            accounts_balances[code]["debit"] += normalized["debit"]
+            accounts_balances[code]["credit"] += normalized["credit"]
+    return accounts_balances, accounts
+
+
 @router.get("/reports/balance-sheet")
 async def get_balance_sheet(
     workshop_id: str = Query(..., description="معرف الورشة"),

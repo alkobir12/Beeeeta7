@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
@@ -19,7 +19,6 @@ const Operations = () => {
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isMountedRef = useRef(true);
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-اختبار شامل للبوت المالي الجديد - Finance Bot Testing
-Testing the new financial bot implementation as requested in Arabic
+اختبار شامل للنظام المالي - Comprehensive Financial System Testing
+Testing the Arabic financial management system with operations, reports, and alerts
 """
 
 import requests
 import json
 import os
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 
 # Configuration
 BACKEND_URL = "https://finmate-10.preview.emergentagent.com/api"

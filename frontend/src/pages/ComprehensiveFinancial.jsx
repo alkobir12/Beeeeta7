@@ -113,6 +113,7 @@ const ComprehensiveFinancial = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              data-testid="financial-start-date-input"
               className="bg-transparent border-0 outline-none text-sm w-32"
               style={{ color: 'var(--text-primary)' }}
             />
@@ -121,12 +122,14 @@ const ComprehensiveFinancial = () => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              data-testid="financial-end-date-input"
               className="bg-transparent border-0 outline-none text-sm w-32"
               style={{ color: 'var(--text-primary)' }}
             />
           </div>
           <button
-            onClick={fetchAllData}
+            onClick={handleRefresh}
+            data-testid="financial-refresh-button"
             className="p-2.5 rounded-lg transition-colors flex items-center gap-2"
             style={{
               backgroundColor: 'var(--bg-card)',
@@ -151,6 +154,7 @@ const ComprehensiveFinancial = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
+            data-testid={`financial-tab-${tab.key}`}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key 
                 ? 'bg-blue-600 text-white shadow-lg' 

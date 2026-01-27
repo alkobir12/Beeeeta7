@@ -143,21 +143,17 @@ def test_operations_credit_payment():
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
             # التحقق من حفظ paymentMethod=credit
-            if "success" in data and data["success"]:
-                if "data" in data and isinstance(data["data"], dict):
-                    operation = data["data"]
-                    if operation.get("paymentMethod") == "credit" or operation.get("payment_method") == "credit":
-                        print_result(True, "تم حفظ العملية بطريقة الدفع الآجل بنجاح")
-                        print(f"🆔 معرف العملية: {operation.get('id')}")
-                        return operation.get('id')
-                    else:
-                        print_result(False, f"طريقة الدفع غير صحيحة: {operation.get('paymentMethod', operation.get('payment_method'))}")
-                        return False
+            # الاستجابة ترجع العملية مباشرة بدون success wrapper
+            if "id" in data and "paymentMethod" in data:
+                if data.get("paymentMethod") == "credit":
+                    print_result(True, "تم حفظ العملية بطريقة الدفع الآجل بنجاح")
+                    print(f"🆔 معرف العملية: {data.get('id')}")
+                    return data.get('id')
                 else:
-                    print_result(False, "هيكل الاستجابة غير صحيح - مفقود data")
+                    print_result(False, f"طريقة الدفع غير صحيحة: {data.get('paymentMethod')}")
                     return False
             else:
-                print_result(False, "فشل في إنشاء العملية")
+                print_result(False, "هيكل الاستجابة غير صحيح - مفقود id أو paymentMethod")
                 return False
         else:
             print_result(False, f"فشل في الاستدعاء - كود الخطأ: {response.status_code}")

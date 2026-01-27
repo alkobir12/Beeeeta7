@@ -31,7 +31,8 @@ export default function FinanceAlertsWidget({
   const path = location.pathname || '';
   const enabled = useMemo(() => enabledPaths.includes(path), [enabledPaths, path]);
 
-  const [isOpen, setIsOpen] = useState(true);
+  // افتراضياً مغلق لتقليل ازدحام الشاشة (يمكن فتحه عند الحاجة)
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: alerts = [], isFetching, refetch, dataUpdatedAt } = useFinanceAlerts();
   const loading = isFetching;

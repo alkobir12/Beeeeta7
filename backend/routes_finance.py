@@ -384,7 +384,10 @@ async def get_cash_flow(
 
 @router.get("/reports/trial-balance")
 async def get_trial_balance(
-    workshop_id: str = Query(...), date: Optional[str] = Query(None)
+    workshop_id: str = Query(...),
+    date: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ):
     """
     ميزان المراجعة من البيانات الحقيقية في Supabase
@@ -395,13 +398,26 @@ async def get_trial_balance(
 
         target_date = date or datetime.now().strftime("%Y-%m-%d")
 
+        # التعامل مع op_date (timestamp) حتى لا يتم استبعاد عمليات نفس اليوم
+        # إذا كان لدينا تاريخ فقط (YYYY-MM-DD) نحوله إلى نهاية اليوم.
+        if end_date:
+            end_bound = end_date
+        else:
+            end_bound = target_date
+            if "T" not in end_bound:
+                end_bound = f"{end_bound}T23:59:59.999999+00:00"
+
+        start_bound = start_date
+        if start_bound and "T" not in start_bound:
+            start_bound = f"{start_bound}T00:00:00+00:00"
+
         # جلب جميع العمليات
-        response = (
-            supabase.table("operations")
-            .select("*")
-            .lte("op_date", target_date)
-            .execute()
-        )
+        q = supabase.table("operations").select("*")
+        if start_bound:
+            q = q.gte("op_date", start_bound)
+        q = q.lte("op_date", end_bound)
+
+        response = q.execute()
 
         operations = response.data
 

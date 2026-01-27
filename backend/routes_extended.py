@@ -880,6 +880,110 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
 
 
 # --------------------- Operations & Analytics ---------------------
+ACCOUNT_NAME_MAP = {
+    "101": "النقدية",
+    "113": "ذمم مدينة عملاء",
+    "211": "ذمم دائنة موردين",
+    "411": "إيرادات خدمات الصيانة",
+    "514": "مصاريف قطع الغيار",
+}
+
+
+def _safe_amount(value: Any) -> float:
+    try:
+        return float(value or 0)
+    except Exception:
+        return 0.0
+
+
+def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str]):
+    if not workshop_id:
+        return None
+
+    op_type = (op.get("type") or "").lower()
+    payment_method = (op.get("paymentMethod") or op.get("payment_method") or "cash").lower()
+    total = _safe_amount(op.get("total"))
+    if total <= 0:
+        return None
+
+    is_credit = payment_method == "credit"
+    lines = []
+    transaction_type = None
+
+    if op_type in ("sale", "service"):
+        transaction_type = "sale"
+        debit_code = "113" if is_credit else "101"
+        lines = [
+            {
+                "account": debit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                "debit": total,
+                "credit": 0,
+            },
+            {
+                "account": "411",
+                "account_name": ACCOUNT_NAME_MAP.get("411", "411"),
+                "debit": 0,
+                "credit": total,
+            },
+        ]
+    elif op_type in ("purchase", "expense"):
+        transaction_type = "purchase" if op_type == "purchase" else "expense"
+        credit_code = "211" if is_credit else "101"
+        lines = [
+            {
+                "account": "514",
+                "account_name": ACCOUNT_NAME_MAP.get("514", "514"),
+                "debit": total,
+                "credit": 0,
+            },
+            {
+                "account": credit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(credit_code, credit_code),
+                "debit": 0,
+                "credit": total,
+            },
+        ]
+    else:
+        return None
+
+    return {
+        "id": str(uuid.uuid4()),
+        "workshop_id": workshop_id,
+        "date": op.get("date") or op.get("op_date") or datetime.utcnow().isoformat(),
+        "description": op.get("notes")
+        or f"عملية {transaction_type} - {op.get('partnerName') or op.get('partner_name') or ''}",
+        "lines": lines,
+        "total": total,
+        "source": "operation",
+        "transaction_type": transaction_type,
+        "reference_id": op.get("id"),
+    }
+
+
+def _safe_insert_journal_entry(supa: SupabaseService, entry: Dict[str, Any]):
+    if not entry:
+        return None
+    try:
+        return supa.client.table("journal_entries").insert(entry).execute().data
+    except Exception as error:
+        print(f"Journal entry insert failed, retry basic fields: {error}")
+        basic = {
+            k: entry.get(k)
+            for k in [
+                "id",
+                "workshop_id",
+                "date",
+                "description",
+                "lines",
+                "total",
+            ]
+        }
+        try:
+            return supa.client.table("journal_entries").insert(basic).execute().data
+        except Exception as error2:
+            print(f"Journal entry insert failed: {error2}")
+            return None
 @router.get("/operations")
 async def list_operations(
     account_id: Optional[str] = None,
@@ -890,13 +994,9 @@ async def list_operations(
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
-            ops = supa.operations_list()
-            if account_id:
-                ops = [o for o in ops if o.get("accountId") == account_id]
-            if type:
-                ops = [o for o in ops if o.get("type") == type]
-            if vehicle_id:
-                ops = [o for o in ops if o.get("vehicleId") == vehicle_id]
+            ops = supa.operations_list(
+                account_id=account_id, type=type, vehicle_id=vehicle_id
+            )
             return ops
 
         if provider == "memory" or db is None:
@@ -1088,23 +1188,13 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
+            workshop_id = payload.get("workshopId") or payload.get("workshop_id")
             op = supa.operations_create(payload)
-            # Create linked financial transaction so analytics and transactions are updated
             try:
-                tx_payload = {
-                    "accountId": op.get("accountId"),
-                    "vehicleId": op.get("vehicleId"),
-                    "visitId": op.get("visitId"),
-                    "type": "income" if op.get("type") == "sale" else "expense",
-                    "category": f"operation_{op.get('type')}",
-                    "amount": op.get("total"),
-                    "description": f"{op.get('type')} - {op.get('partnerName') or ''}",
-                    "reference": op.get("id"),
-                }
-                supa.transactions_create(tx_payload)
-            except Exception:
-                # لا نكسر العملية إذا فشل حفظ الحركة المالية
-                pass
+                entry = _build_operation_journal_entry(op, workshop_id)
+                _safe_insert_journal_entry(supa, entry)
+            except Exception as je_error:
+                print(f"Failed to create journal entry for operation: {je_error}")
             return op
 
         if provider == "memory" or db is None:

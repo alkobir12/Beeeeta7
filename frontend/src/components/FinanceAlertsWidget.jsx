@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, RefreshCw, X, ShieldAlert } from 'lucide-react';
-import { financeAPI } from '../services/api';
+import { AlertTriangle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react';
 import QuickCard from './QuickCard';
+import { useFinanceAlerts } from '../hooks/useFinanceAlerts';
 
 const POLL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -31,35 +31,11 @@ export default function FinanceAlertsWidget({
   const path = location.pathname || '';
   const enabled = useMemo(() => enabledPaths.includes(path), [enabledPaths, path]);
 
-  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
-
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const load = async () => {
-    if (!workshopId) return;
-    try {
-      setLoading(true);
-      const res = await financeAPI.getAlerts({ workshop_id: workshopId });
-      const list = res.data?.data?.alerts || [];
-      setAlerts(Array.isArray(list) ? list : []);
-      setLastUpdated(new Date());
-    } catch (e) {
-      setAlerts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!enabled) return;
-    load();
-    const t = setInterval(load, POLL_MS);
-    return () => clearInterval(t);
-    // eslint-disable-next-line
-  }, [enabled, workshopId]);
+  const { data: alerts = [], isFetching, refetch, dataUpdatedAt } = useFinanceAlerts();
+  const loading = isFetching;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   if (!enabled) return null;
 
@@ -110,7 +86,7 @@ export default function FinanceAlertsWidget({
               </button>
               <button
                 type="button"
-                onClick={load}
+                onClick={() => refetch()}
                 className="text-xs px-3 py-1.5 rounded-xl border border-slate-700 text-slate-200 hover:bg-slate-900"
               >
                 تحديث

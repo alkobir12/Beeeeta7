@@ -27,163 +27,233 @@ def print_result(success, message, details=None):
     if details:
         print(f"التفاصيل: {details}")
 
-def test_finance_bot_health():
+def test_operations_create_with_vehicle():
     """
-    اختبار 1: GET /api/finance-bot/health
-    تأكد أن status = ok, provider = openai, model = gpt-5.1, has_key = true
+    اختبار 1: إنشاء عملية جديدة مرتبطة بمركبة مع إنشاء قيد يومية تلقائيًا
     """
-    print_test_header("اختبار صحة البوت المالي - Finance Bot Health Check")
+    print_test_header("اختبار إنشاء عملية مرتبطة بمركبة مع قيد يومية تلقائي")
     
     try:
-        url = f"{BACKEND_URL}/finance-bot/health"
-        print(f"📡 استدعاء: GET {url}")
+        # First, get available vehicles
+        vehicles_url = f"{BACKEND_URL}/vehicles"
+        vehicles_response = requests.get(vehicles_url, timeout=30)
         
-        response = requests.get(url, timeout=30)
-        print(f"📊 كود الاستجابة: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"📄 البيانات المستلمة: {json.dumps(data, indent=2, ensure_ascii=False)}")
-            
-            # التحقق من القيم المطلوبة
-            checks = [
-                ("status", "ok", data.get("status")),
-                ("provider", "openai", data.get("provider")),
-                ("model", "gpt-5.1", data.get("model")),
-                ("has_key", True, data.get("has_key"))
-            ]
-            
-            all_passed = True
-            for field, expected, actual in checks:
-                if actual == expected:
-                    print_result(True, f"✓ {field} = {actual} (متوقع: {expected})")
-                else:
-                    print_result(False, f"✗ {field} = {actual} (متوقع: {expected})")
-                    all_passed = False
-            
-            if all_passed:
-                print_result(True, "جميع فحوصات صحة البوت المالي نجحت")
-                return True
-            else:
-                print_result(False, "بعض فحوصات صحة البوت المالي فشلت")
-                return False
-        else:
-            print_result(False, f"كود استجابة غير متوقع: {response.status_code}")
-            print(f"نص الاستجابة: {response.text}")
+        if vehicles_response.status_code != 200:
+            print_result(False, f"فشل في جلب المركبات: {vehicles_response.status_code}")
             return False
             
-    except Exception as e:
-        print_result(False, f"خطأ في الاتصال: {str(e)}")
-        return False
-
-def test_finance_bot_general_chat():
-    """
-    اختبار 2: POST /api/finance-bot/chat بدون account_code
-    سؤال عام عن الوضع المالي للورشة
-    """
-    print_test_header("اختبار الدردشة العامة مع البوت المالي")
-    
-    try:
-        url = f"{BACKEND_URL}/finance-bot/chat"
-        payload = {
-            "message": "أعطني ملخصاً عاماً عن وضع الورشة المالي بناءً على البيانات الحالية",
-            "workshop_id": WORKSHOP_ID
+        vehicles = vehicles_response.json()
+        if not vehicles:
+            print_result(False, "لا توجد مركبات متاحة للاختبار")
+            return False
+            
+        vehicle_id = vehicles[0].get('id')
+        print(f"🚗 استخدام المركبة: {vehicle_id}")
+        
+        # Create operation with vehicle
+        operation_data = {
+            "type": "sale",
+            "vehicleId": vehicle_id,
+            "workshopId": WORKSHOP_ID,
+            "partnerType": "customer",
+            "partnerName": "عميل تجريبي",
+            "items": [
+                {
+                    "itemType": "service",
+                    "name": "خدمة صيانة",
+                    "quantity": 1,
+                    "price": 500.0
+                }
+            ],
+            "paymentMethod": "cash",
+            "notes": "عملية اختبار مع قيد تلقائي"
         }
         
+        url = f"{BACKEND_URL}/operations"
         print(f"📡 استدعاء: POST {url}")
-        print(f"📤 البيانات المرسلة: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+        print(f"📤 البيانات المرسلة: {json.dumps(operation_data, indent=2, ensure_ascii=False)}")
         
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=operation_data, timeout=30)
         print(f"📊 كود الاستجابة: {response.status_code}")
         
-        if response.status_code == 200:
+        if response.status_code in [200, 201]:
             data = response.json()
-            print(f"📄 البيانات المستلمة: {json.dumps(data, indent=2, ensure_ascii=False)}")
+            operation_id = data.get("id")
+            print_result(True, f"تم إنشاء العملية بنجاح: {operation_id}")
             
-            # التحقق من وجود الحقول المطلوبة
-            required_fields = ["response", "conversation_id", "provider", "timestamp"]
-            missing_fields = [field for field in required_fields if field not in data]
+            # Check if journal entry was created automatically
+            journal_url = f"{BACKEND_URL}/finance/journal-entries"
+            journal_params = {"workshop_id": WORKSHOP_ID}
+            journal_response = requests.get(journal_url, params=journal_params, timeout=30)
             
-            if not missing_fields:
-                response_text = data.get("response", "")
-                if response_text and len(response_text) > 10:
-                    print_result(True, f"تم استلام رد باللغة العربية ({len(response_text)} حرف)")
-                    print(f"🤖 رد البوت: {response_text[:200]}...")
+            if journal_response.status_code == 200:
+                journal_data = journal_response.json()
+                entries = journal_data.get("data", [])
+                
+                # Look for entry with reference to our operation
+                operation_entry = None
+                for entry in entries:
+                    if entry.get("reference_id") == operation_id or entry.get("source") == "operation":
+                        operation_entry = entry
+                        break
+                
+                if operation_entry:
+                    print_result(True, f"تم إنشاء قيد يومية تلقائي: {operation_entry.get('id')}")
                     return True
                 else:
-                    print_result(False, "الرد فارغ أو قصير جداً")
+                    print_result(False, "لم يتم إنشاء قيد يومية تلقائي للعملية")
                     return False
             else:
-                print_result(False, f"حقول مفقودة: {missing_fields}")
+                print_result(False, f"فشل في جلب القيود اليومية: {journal_response.status_code}")
                 return False
         else:
-            print_result(False, f"كود استجابة غير متوقع: {response.status_code}")
+            print_result(False, f"فشل في إنشاء العملية: {response.status_code}")
             print(f"نص الاستجابة: {response.text}")
             return False
             
     except Exception as e:
-        print_result(False, f"خطأ في الاتصال: {str(e)}")
+        print_result(False, f"خطأ في الاختبار: {str(e)}")
         return False
 
-def test_finance_bot_account_specific_chat():
+def test_operations_by_vehicle():
     """
-    اختبار 3: POST /api/finance-bot/chat مع account_code = "411"
-    تحليل حساب الإيرادات 411
+    اختبار 2: جلب العمليات بالمركبة عبر vehicle_id
     """
-    print_test_header("اختبار تحليل حساب محدد (411) مع البوت المالي")
+    print_test_header("اختبار جلب العمليات بالمركبة")
     
     try:
-        url = f"{BACKEND_URL}/finance-bot/chat"
-        payload = {
-            "message": "حلل وضع حساب الإيرادات 411",
-            "account_code": "411",
-            "workshop_id": WORKSHOP_ID
-        }
+        # Get vehicles first
+        vehicles_url = f"{BACKEND_URL}/vehicles"
+        vehicles_response = requests.get(vehicles_url, timeout=30)
         
-        print(f"📡 استدعاء: POST {url}")
-        print(f"📤 البيانات المرسلة: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+        if vehicles_response.status_code != 200:
+            print_result(False, f"فشل في جلب المركبات: {vehicles_response.status_code}")
+            return False
+            
+        vehicles = vehicles_response.json()
+        if not vehicles:
+            print_result(False, "لا توجد مركبات متاحة للاختبار")
+            return False
+            
+        vehicle_id = vehicles[0].get('id')
         
-        response = requests.post(url, json=payload, timeout=60)
+        # Get operations for specific vehicle
+        url = f"{BACKEND_URL}/operations"
+        params = {"vehicle_id": vehicle_id}
+        
+        print(f"📡 استدعاء: GET {url}")
+        print(f"📤 المعاملات: {params}")
+        
+        response = requests.get(url, params=params, timeout=30)
         print(f"📊 كود الاستجابة: {response.status_code}")
         
         if response.status_code == 200:
-            data = response.json()
-            print(f"📄 البيانات المستلمة: {json.dumps(data, indent=2, ensure_ascii=False)}")
+            operations = response.json()
+            print(f"📄 عدد العمليات المرتبطة بالمركبة: {len(operations)}")
             
-            response_text = data.get("response", "")
-            if response_text and len(response_text) > 10:
-                # التحقق من أن الرد يتضمن معلومات عن الحساب أو ملاحظة تقنية
-                account_keywords = ["411", "إيرادات", "حساب", "تحليل", "بيانات"]
-                has_relevant_content = any(keyword in response_text for keyword in account_keywords)
-                
-                if has_relevant_content:
-                    print_result(True, f"تم استلام تحليل للحساب 411 ({len(response_text)} حرف)")
-                    print(f"🤖 رد البوت: {response_text[:300]}...")
-                    return True
-                else:
-                    print_result(True, f"تم استلام رد عام (قد يكون بسبب عدم وجود بيانات للحساب)")
-                    print(f"🤖 رد البوت: {response_text[:300]}...")
-                    return True
+            # Check if operations are properly linked to vehicle
+            vehicle_operations = [op for op in operations if op.get("vehicleId") == vehicle_id]
+            
+            if len(vehicle_operations) == len(operations):
+                print_result(True, f"جميع العمليات ({len(operations)}) مرتبطة بالمركبة الصحيحة")
+                return True
             else:
-                print_result(False, "الرد فارغ أو قصير جداً")
+                print_result(False, f"بعض العمليات غير مرتبطة بالمركبة الصحيحة")
                 return False
         else:
-            print_result(False, f"كود استجابة غير متوقع: {response.status_code}")
-            print(f"نص الاستجابة: {response.text}")
+            print_result(False, f"فشل في جلب العمليات: {response.status_code}")
             return False
             
     except Exception as e:
-        print_result(False, f"خطأ في الاتصال: {str(e)}")
+        print_result(False, f"خطأ في الاختبار: {str(e)}")
         return False
 
-def test_chart_of_accounts_availability():
+def test_financial_reports():
     """
-    اختبار مساعد: التحقق من توفر دليل الحسابات
+    اختبار 3: التقارير المالية (Trial Balance, Balance Sheet, Income Statement, Cash Flow)
     """
-    print_test_header("فحص توفر دليل الحسابات")
+    print_test_header("اختبار التقارير المالية")
+    
+    reports = [
+        ("Trial Balance", f"{BACKEND_URL}/finance/reports/trial-balance"),
+        ("Balance Sheet", f"{BACKEND_URL}/finance/reports/balance-sheet"),
+        ("Income Statement", f"{BACKEND_URL}/finance/reports/income-statement"),
+        ("Cash Flow", f"{BACKEND_URL}/finance/reports/cash-flow")
+    ]
+    
+    all_passed = True
+    
+    for report_name, url in reports:
+        try:
+            print(f"\n🧪 اختبار {report_name}")
+            
+            params = {"workshop_id": WORKSHOP_ID}
+            
+            # Add date parameters for reports that need them
+            if "income-statement" in url or "cash-flow" in url:
+                end_date = datetime.now().strftime("%Y-%m-%d")
+                start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+                params.update({"start_date": start_date, "end_date": end_date})
+            
+            print(f"📡 استدعاء: GET {url}")
+            print(f"📤 المعاملات: {params}")
+            
+            response = requests.get(url, params=params, timeout=30)
+            print(f"📊 كود الاستجابة: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("success"):
+                    report_data = data.get("data", {})
+                    print_result(True, f"{report_name} يعمل بنجاح")
+                    
+                    # Check for specific data structure
+                    if "trial-balance" in url:
+                        accounts = report_data.get("accounts", [])
+                        totals = report_data.get("totals", {})
+                        print(f"  📊 عدد الحسابات: {len(accounts)}")
+                        print(f"  💰 إجمالي مدين: {totals.get('total_debit', 0)}")
+                        print(f"  💰 إجمالي دائن: {totals.get('total_credit', 0)}")
+                    
+                    elif "balance-sheet" in url:
+                        totals = report_data.get("totals", {})
+                        print(f"  🏢 إجمالي الأصول: {totals.get('assets', 0)}")
+                        print(f"  📋 إجمالي الخصوم: {totals.get('liabilities', 0)}")
+                        print(f"  👤 حقوق الملكية: {totals.get('equity', 0)}")
+                    
+                    elif "income-statement" in url:
+                        totals = report_data.get("totals", {})
+                        print(f"  📈 إجمالي الإيرادات: {totals.get('revenue', 0)}")
+                        print(f"  📉 إجمالي المصروفات: {totals.get('expenses', 0)}")
+                        print(f"  💵 صافي الدخل: {totals.get('net_income', 0)}")
+                    
+                    elif "cash-flow" in url:
+                        operating = report_data.get("operating_activities", {})
+                        print(f"  💸 صافي النقد التشغيلي: {operating.get('net_operating_cash', 0)}")
+                        print(f"  💰 رصيد النقد النهائي: {report_data.get('ending_cash', 0)}")
+                        
+                else:
+                    print_result(False, f"{report_name} فشل: {data.get('message', 'خطأ غير محدد')}")
+                    all_passed = False
+            else:
+                print_result(False, f"{report_name} فشل: كود {response.status_code}")
+                all_passed = False
+                
+        except Exception as e:
+            print_result(False, f"{report_name} خطأ: {str(e)}")
+            all_passed = False
+    
+    return all_passed
+
+def test_finance_alerts():
+    """
+    اختبار 4: تنبيهات المراقبة الدائمة
+    """
+    print_test_header("اختبار تنبيهات المراقبة المالية")
     
     try:
-        url = f"{BACKEND_URL}/finance/chart-of-accounts"
+        url = f"{BACKEND_URL}/finance/alerts"
         params = {"workshop_id": WORKSHOP_ID}
         
         print(f"📡 استدعاء: GET {url}")
@@ -194,32 +264,72 @@ def test_chart_of_accounts_availability():
         
         if response.status_code == 200:
             data = response.json()
-            # Handle both possible response formats
-            if isinstance(data.get("data"), list):
-                accounts = data.get("data", [])
-            else:
-                accounts = data.get("data", {}).get("accounts", [])
             
-            if accounts:
-                print_result(True, f"تم العثور على {len(accounts)} حساب في دليل الحسابات")
+            if data.get("success"):
+                alerts = data.get("data", {}).get("alerts", [])
+                print_result(True, f"تم جلب التنبيهات بنجاح: {len(alerts)} تنبيه")
                 
-                # البحث عن حساب 411
-                account_411 = next((acc for acc in accounts if acc.get("code") == "411"), None)
-                if account_411:
-                    print_result(True, f"حساب 411 موجود: {account_411.get('name_ar', account_411.get('name', 'بدون اسم'))}")
-                else:
-                    print_result(False, "حساب 411 غير موجود في دليل الحسابات")
+                # Display alerts by severity
+                severity_counts = {"high": 0, "medium": 0, "low": 0}
+                for alert in alerts:
+                    severity = alert.get("severity", "unknown")
+                    if severity in severity_counts:
+                        severity_counts[severity] += 1
+                    
+                    print(f"  🚨 {alert.get('title', 'تنبيه')} ({severity})")
+                    print(f"     {alert.get('message', '')}")
                 
-                return len(accounts) > 0
+                print(f"📊 ملخص التنبيهات: عالية={severity_counts['high']}, متوسطة={severity_counts['medium']}, منخفضة={severity_counts['low']}")
+                return True
             else:
-                print_result(False, "دليل الحسابات فارغ")
+                print_result(False, f"فشل في جلب التنبيهات: {data.get('message', 'خطأ غير محدد')}")
                 return False
         else:
-            print_result(False, f"فشل في جلب دليل الحسابات: {response.status_code}")
+            print_result(False, f"فشل في جلب التنبيهات: كود {response.status_code}")
             return False
             
     except Exception as e:
-        print_result(False, f"خطأ في جلب دليل الحسابات: {str(e)}")
+        print_result(False, f"خطأ في اختبار التنبيهات: {str(e)}")
+        return False
+
+def test_stitch_api_error():
+    """
+    اختبار 5: Google Stitch API (متوقع أن يفشل بسبب عدم وجود API key)
+    """
+    print_test_header("اختبار Google Stitch API (متوقع فشل)")
+    
+    try:
+        url = f"{BACKEND_URL}/stitch/generate"
+        payload = {
+            "prompt": "صفحة تسجيل دخول بسيطة",
+            "design_style": "modern",
+            "color_scheme": "blue"
+        }
+        
+        print(f"📡 استدعاء: POST {url}")
+        print(f"📤 البيانات المرسلة: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+        
+        response = requests.post(url, json=payload, timeout=30)
+        print(f"📊 كود الاستجابة: {response.status_code}")
+        
+        # We expect this to fail with 500 due to missing API key
+        if response.status_code == 500:
+            error_data = response.json()
+            error_detail = error_data.get("detail", "")
+            
+            if "GOOGLE_STITCH_API_KEY" in error_detail or "configuration missing" in error_detail:
+                print_result(True, "فشل متوقع: مفتاح Google Stitch API غير مضبوط")
+                return True
+            else:
+                print_result(False, f"فشل غير متوقع: {error_detail}")
+                return False
+        else:
+            print_result(False, f"كود استجابة غير متوقع: {response.status_code}")
+            print(f"نص الاستجابة: {response.text}")
+            return False
+            
+    except Exception as e:
+        print_result(False, f"خطأ في اختبار Stitch: {str(e)}")
         return False
 
 def run_backend_tests():

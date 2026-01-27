@@ -145,6 +145,7 @@ const VehicleDetails = () => {
         
         const operationData = {
           vehicleId: id,
+          workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
           visitId: activeVisit?.id || null,
           type: 'sale',
           partnerType: 'customer',
@@ -165,40 +166,7 @@ const VehicleDetails = () => {
           operationResult = res.data;
         }
 
-        // إنشاء قيد محاسبي تلقائي لعملية البيع (ذمم مدينة عملاء 113 / إيرادات صيانة 411)
-        try {
-          const total = operationItems.reduce((sum, it) => sum + (it.total || 0), 0);
-          const customerAccount = findAccountByCode('113');
-          const serviceRevenueAccount = findAccountByCode('411');
-
-          if (customerAccount && serviceRevenueAccount && total > 0) {
-            const journalPayload = {
-              date: new Date().toISOString().split('T')[0],
-              transaction_type: 'sale',
-              description: `عملية بيع من ملف المركبة - ${vehicle.customerName || ''}`,
-              reference: operationResult?.id || null,
-              lines: [
-                {
-                  // بيع من ملف المركبة: افتراضيًا نقدي (101). عند الحاجة يمكن لاحقاً ربطها بفاتورة/آجل.
-                  account_id: (findAccountByCode('101') || customerAccount).id,
-                  debit_amount: total,
-                  credit_amount: 0,
-                },
-                {
-                  account_id: serviceRevenueAccount.id,
-                  debit_amount: 0,
-                  credit_amount: total,
-                },
-              ],
-            };
-
-            await financeAPI.createJournalEntry(journalPayload);
-          } else {
-            console.warn('لم يتم العثور على حساب العملاء (113) أو إيرادات الصيانة (411) لإنشاء قيد من ملف المركبة');
-          }
-        } catch (jeError) {
-          console.error('فشل في إنشاء القيد المحاسبي لعملية ملف المركبة:', jeError);
-        }
+        // القيود المحاسبية تُنشأ تلقائياً من الخادم عند حفظ العملية
       }
 
       // تحديث/إنشاء الفاتورة بناءً على البنود الحالية

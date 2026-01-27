@@ -641,8 +641,7 @@ async def get_finance_alerts(
     # 1) Trial Balance: توازن المدين/الدائن + مؤشرات الذمم
     tb = await get_trial_balance(workshop_id)
     if tb.get("success"):
-        print('DEBUG_ALERTS_TB_CODES', [a.get('code') for a in accounts])
-        print('DEBUG_ALERTS_AR', ar_amt, 'AP', ap_amt)
+        # debug removed
 
         totals = (tb.get("data") or {}).get("totals") or {}
         td = float(totals.get("total_debit") or 0)

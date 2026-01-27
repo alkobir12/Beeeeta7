@@ -121,6 +121,8 @@ const financeAPI = {
       params: { workshop_id: process.env.REACT_APP_WORKSHOP_ID },
     }),
   getOperations: (params) => api.get('/finance/operations', { params }),
+  getAlerts: (params) => api.get('/finance/alerts', { params }),
+
 };
 
 export { 

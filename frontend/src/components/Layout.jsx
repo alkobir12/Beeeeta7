@@ -4,6 +4,8 @@ import { Menu } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 import AbuFahadFloatingChat from './AbuFahadFloatingChat';
+import FinanceAlertsWidget from './FinanceAlertsWidget';
+
 
 
 const Layout = ({ children, pageTitle }) => {
@@ -34,6 +36,17 @@ const Layout = ({ children, pageTitle }) => {
           </button>
           <h1 className="text-base font-bold text-foreground">{pageTitle || t('app.dashboard')}</h1>
           <div className="w-10"></div>
+        {/* Finance Alerts (Permanent Monitor) */}
+        <FinanceAlertsWidget
+          enabledPaths={[
+            '/operations',
+            '/accounting/chart-of-accounts',
+            '/accounting/comprehensive',
+            '/ai-financial',
+          ]}
+        />
+
+
         </div>
         
         {/* Page Content */}

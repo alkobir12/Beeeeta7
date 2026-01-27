@@ -616,6 +616,7 @@ const Operations = () => {
                       }
                     }}
                     className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    data-testid={`operation-row-${op.id}`}
                   >
                     <td className="p-4 text-gray-600">{new Date(op.date || op.op_date || op.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
                     <td className="p-4">
@@ -660,6 +661,7 @@ const Operations = () => {
                             className="apple-button-secondary text-xs h-8 px-3"
                             disabled={!op.vehicleId}
                             title={t('quick_actions.details')}
+                            data-testid={`operation-view-button-${op.id}`}
                           >
                             {t('buttons.view')}
                           </button>
@@ -675,6 +677,7 @@ const Operations = () => {
                             }}
                             className="text-red-500 hover:text-red-700 p-2"
                             title={t('buttons.delete')}
+                            data-testid={`operation-delete-button-${op.id}`}
                           >
                             <Trash2 size={16} />
                           </button>

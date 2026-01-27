@@ -577,6 +577,7 @@ const Operations = () => {
                 type="submit" 
                 disabled={form.items.length === 0}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
+                data-testid="operation-save-button"
               >
                 {"Save"}
               </button>

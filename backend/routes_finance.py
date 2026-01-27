@@ -1547,7 +1547,7 @@ async def audit_accounting_system(
                     'liabilities': bs['totals']['liabilities'],
                     'equity': bs['totals']['equity']
                 }
-        except:
+        except Exception:
             pass
         
         # 2. جلب قائمة الدخل
@@ -1562,7 +1562,7 @@ async def audit_accounting_system(
                     'expenses': ins['totals']['expenses'],
                     'net_profit': ins['totals']['net_income']
                 }
-        except:
+        except Exception:
             pass
         
         # 3. جلب التدفقات النقدية
@@ -1575,7 +1575,7 @@ async def audit_accounting_system(
                     'investing': cf['investing_activities'].get('net_investing_cash', 0),
                     'financing': cf['financing_activities'].get('net_financing_cash', 0)
                 }
-        except:
+        except Exception:
             pass
         
         # تشغيل التدقيق

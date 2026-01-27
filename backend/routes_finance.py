@@ -226,38 +226,6 @@ async def get_income_statement(
         }
 
 
-        revenue_accounts = {}
-        expense_accounts = {}
-
-        # ملاحظة: هذا التقرير محسوب من أرصدة دليل الحسابات مباشرة.
-        # (تم إزالة منطق قديم كان يعتمد على operations لضمان اتساق البيانات)
-
-                account_name = op.get("accountName", "مصاريف عامة")
-                if code not in expense_accounts:
-                    expense_accounts[code] = {"name": account_name, "amount": 0}
-                expense_accounts[code]["amount"] += total
-
-        # حساب الإجماليات
-        total_revenue = sum(acc["amount"] for acc in revenue_accounts.values())
-        total_expenses = sum(acc["amount"] for acc in expense_accounts.values())
-        net_income = total_revenue - total_expenses
-
-        return {
-            "success": True,
-            "data": {
-                "period": {"start_date": start_date, "end_date": end_date},
-                "totals": {
-                    "revenue": total_revenue,
-                    "expenses": total_expenses,
-                    "net_income": net_income,
-                },
-                "details": {
-                    "revenue_by_account": revenue_accounts,
-                    "expenses_by_account": expense_accounts,
-                },
-            },
-        }
-
     except Exception as e:
         print(f"Error in get_income_statement: {str(e)}")
         return {

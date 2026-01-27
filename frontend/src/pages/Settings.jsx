@@ -12,9 +12,11 @@ import {
   Sun,
   Moon,
   Monitor,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import useStitch from '../hooks/useStitch';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
 

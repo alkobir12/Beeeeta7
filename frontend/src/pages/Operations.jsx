@@ -254,9 +254,6 @@ const Operations = () => {
                         vehicleId: scope === 'workshop' ? '' : prev.vehicleId,
                         visitId: scope === 'workshop' ? '' : prev.visitId,
                       }));
-                      if (scope === 'workshop') {
-                        setVisits([]);
-                      }
                     }}
                   >
                     <option value="vehicle">عملية مركبة</option>
@@ -302,26 +299,9 @@ const Operations = () => {
                     <select 
                       className="apple-input pr-10"
                       value={form.vehicleId} 
-                      onChange={async (e) => {
+                    onChange={(e) => {
                         const vehicleId = e.target.value;
                         setForm({ ...form, vehicleId, visitId: '' });
-                        
-                        // Load visits for selected vehicle
-                        if (vehicleId) {
-                          try {
-                            const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
-                            setVisits(res.data || []);
-                            // Auto-select current visit if exists
-                            const activeVisit = res.data?.find(v => v.status === 'in_progress');
-                            if (activeVisit) {
-                              setForm(prev => ({ ...prev, visitId: activeVisit.id }));
-                            }
-                          } catch (err) {
-                            console.error(err);
-                          }
-                        } else {
-                          setVisits([]);
-                        }
                       }}
                     >
                       <option value="">{t('operations.select_vehicle')}...</option>

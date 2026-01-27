@@ -253,6 +253,7 @@ const Operations = () => {
                         visitId: scope === 'workshop' ? '' : prev.visitId,
                       }));
                     }}
+                    data-testid="operation-scope-select"
                   >
                     <option value="vehicle">عملية مركبة</option>
                     <option value="workshop">عملية ورشة عامة</option>
@@ -268,6 +269,7 @@ const Operations = () => {
                     className="apple-input pr-10"
                     value={form.accountId} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
+                    data-testid="operation-account-select"
                   >
                     <option value="">{t('operations.select_account')}</option>
                     {/* 🔧 الإصلاح: تحقق من أن accounts مصفوفة قبل استخدام .map() */}
@@ -301,6 +303,7 @@ const Operations = () => {
                         const vehicleId = e.target.value;
                         setForm({ ...form, vehicleId, visitId: '' });
                       }}
+                      data-testid="operation-vehicle-select"
                     >
                       <option value="">{t('operations.select_vehicle')}...</option>
                       {vehicles.map(v => (
@@ -324,6 +327,7 @@ const Operations = () => {
                       value={form.visitId || ''} 
                       onChange={e => setForm({ ...form, visitId: e.target.value })}
                       disabled={!form.vehicleId}
+                      data-testid="operation-visit-select"
                     >
                       <option value="">---</option>
                       {visits.map(v => (
@@ -345,6 +349,7 @@ const Operations = () => {
                     className="apple-input pr-10"
                     value={form.type} 
                     onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
+                    data-testid="operation-type-select"
                   >
                     <option value="purchase">{"Purchase"}</option>
                     <option value="sale">{"Sale"}</option>

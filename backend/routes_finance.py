@@ -435,22 +435,22 @@ async def get_trial_balance(
         if start_bound and "T" not in start_bound:
             start_bound = f"{start_bound}T00:00:00+00:00"
 
-        # جلب جميع العمليات
-        q = supabase.table("operations").select("*")
+        # جلب الحركات من جدول transactions (المصدر الفعلي في هذا المشروع)
+        q = supabase.table("transactions").select("*")
         if start_bound:
-            q = q.gte("op_date", start_bound)
-        q = q.lte("op_date", end_bound)
+            q = q.gte("date", start_bound)
+        q = q.lte("date", end_bound)
 
         response = q.execute()
         operations = response.data or []
 
-        # دمج عمليات من مشروع ثانٍ (قراءة فقط) مع إزالة التكرار
+        # دمج من مشروع ثانٍ (قراءة فقط) مع إزالة التكرار
         if supabase_1 is not None:
             try:
-                q2 = supabase_1.table("operations").select("*")
+                q2 = supabase_1.table("transactions").select("*")
                 if start_bound:
-                    q2 = q2.gte("op_date", start_bound)
-                q2 = q2.lte("op_date", end_bound)
+                    q2 = q2.gte("date", start_bound)
+                q2 = q2.lte("date", end_bound)
                 resp2 = q2.execute()
                 operations = _merge_by_id(operations, resp2.data or [])
             except Exception:

@@ -470,11 +470,6 @@ async def get_trial_balance(
     ميزان المراجعة من البيانات الحقيقية في Supabase
     """
     try:
-        if not supabase:
-            raise Exception("Supabase not connected")
-
-        # ملاحظة: عند استدعاء الدالة داخلياً قد تصل القيم ككائن Query.
-        # نحصرها في string فقط.
         if date is not None and not isinstance(date, str):
             date = None
         if start_date is not None and not isinstance(start_date, str):
@@ -483,118 +478,13 @@ async def get_trial_balance(
             end_date = None
 
         target_date = date or datetime.now().strftime("%Y-%m-%d")
-
-        if end_date:
-            end_bound = end_date
-        else:
-            end_bound = target_date
-            if "T" not in end_bound:
-                end_bound = f"{end_bound}T23:59:59.999999+00:00"
-
+        end_bound = end_date or target_date
         start_bound = start_date
-        if start_bound and "T" not in start_bound:
-            start_bound = f"{start_bound}T00:00:00+00:00"
 
-        # جلب الحركات من جدول transactions (المصدر الفعلي في هذا المشروع)
-        q = supabase.table("transactions").select("*")
-        if start_bound:
-            q = q.gte("date", start_bound)
-        q = q.lte("date", end_bound)
+        accounts_balances, _ = _compute_trial_balance_map(
+            workshop_id, start_date=start_bound, end_date=end_bound
+        )
 
-        response = q.execute()
-        operations = response.data or []
-
-        # دمج من مشروع ثانٍ (قراءة فقط) مع إزالة التكرار
-        if supabase_1 is not None:
-            try:
-                q2 = supabase_1.table("transactions").select("*")
-                if start_bound:
-                    q2 = q2.gte("date", start_bound)
-                q2 = q2.lte("date", end_bound)
-                resp2 = q2.execute()
-                operations = _merge_by_id(operations, resp2.data or [])
-            except Exception:
-                pass
-
-        # حساب الأرصدة لكل حساب
-        accounts_balances = {}
-
-        for op in operations:
-            op_type = (op.get("type") or "").lower()
-            amount = float(op.get("amount", 0) or 0)
-            # category reserved for future use
-
-            # تحويل transaction record إلى semantic operation type
-            # income -> sale, expense -> purchase
-            if op_type == "income":
-                inferred = "sale"
-            elif op_type == "expense":
-                inferred = "purchase"
-            else:
-                inferred = op_type
-
-            # افتراض طريقة الدفع: إذا كان دخل/مصروف مسجل كـ transaction فهو عادة نقدي.
-            # (يمكن لاحقاً إضافة حقل payment_method في transactions لو رغبت)
-            payment_method = "cash"
-            total = amount
-
-            if inferred == "sale":
-                # دائن: إيرادات
-                if "411" not in accounts_balances:
-                    accounts_balances["411"] = {
-                        "name": "إيرادات خدمات الصيانة",
-                        "debit": 0,
-                        "credit": 0,
-                    }
-                accounts_balances["411"]["credit"] += total
-
-                # مدين: نقدية أو ذمم
-                if payment_method == "cash":
-                    if "101" not in accounts_balances:
-                        accounts_balances["101"] = {
-                            "name": "النقدية",
-                            "debit": 0,
-                            "credit": 0,
-                        }
-                    accounts_balances["101"]["debit"] += total
-                else:
-                    if "113" not in accounts_balances:
-                        accounts_balances["113"] = {
-                            "name": "ذمم مدينة",
-                            "debit": 0,
-                            "credit": 0,
-                        }
-                    accounts_balances["113"]["debit"] += total
-
-            elif inferred == "purchase":
-                # مدين: مصروفات
-                if "514" not in accounts_balances:
-                    accounts_balances["514"] = {
-                        "name": "مصاريف قطع الغيار",
-                        "debit": 0,
-                        "credit": 0,
-                    }
-                accounts_balances["514"]["debit"] += total
-
-                # دائن: نقدية أو ذمم
-                if payment_method == "cash":
-                    if "101" not in accounts_balances:
-                        accounts_balances["101"] = {
-                            "name": "النقدية",
-                            "debit": 0,
-                            "credit": 0,
-                        }
-                    accounts_balances["101"]["credit"] += total
-                else:
-                    if "211" not in accounts_balances:
-                        accounts_balances["211"] = {
-                            "name": "ذمم دائنة",
-                            "debit": 0,
-                            "credit": 0,
-                        }
-                    accounts_balances["211"]["credit"] += total
-
-        # بناء قائمة الحسابات
         accounts_list = []
         total_debit = 0
         total_credit = 0
@@ -603,29 +493,11 @@ async def get_trial_balance(
             acc = accounts_balances[code]
             debit = round(acc["debit"], 2)
             credit = round(acc["credit"], 2)
-
             accounts_list.append(
                 {"code": code, "name": acc["name"], "debit": debit, "credit": credit}
             )
-
             total_debit += debit
             total_credit += credit
-
-        # إضافة حساب الأرباح المحتجزة
-        net_income = total_credit - total_debit
-        if net_income != 0:
-            accounts_list.append(
-                {
-                    "code": "302",
-                    "name": "الأرباح المحتجزة",
-                    "debit": 0 if net_income > 0 else abs(net_income),
-                    "credit": net_income if net_income > 0 else 0,
-                }
-            )
-            if net_income > 0:
-                total_credit += net_income
-            else:
-                total_debit += abs(net_income)
 
         return {
             "success": True,

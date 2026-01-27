@@ -197,16 +197,19 @@ def test_permanent_monitor():
     print("\n📋 ملخص النتائج (Results Summary)")
     print("=" * 60)
     
-    passed_tests = sum(1 for test in results.values() if test["status"] == "✅")
-    warning_tests = sum(1 for test in results.values() if test["status"] == "⚠️")
-    failed_tests = sum(1 for test in results.values() if test["status"] == "❌")
+    # Count test results (excluding 'overall' key)
+    test_results_only = {k: v for k, v in results.items() if k != "overall"}
+    passed_tests = sum(1 for test in test_results_only.values() if test["status"] == "✅")
+    warning_tests = sum(1 for test in test_results_only.values() if test["status"] == "⚠️")
+    failed_tests = sum(1 for test in test_results_only.values() if test["status"] == "❌")
     
-    for test_name, result in results.items():
-        if test_name != "overall":
-            print(f"{result['status']} {test_name}: {result['details']}")
+    for test_name, result in test_results_only.items():
+        print(f"{result['status']} {test_name}: {result['details']}")
+    
+    print(f"\nTest Statistics: ✅ {passed_tests}, ⚠️ {warning_tests}, ❌ {failed_tests}")
     
     # Determine overall status
-    total_tests = len(results) - 1  # Exclude 'overall' key
+    total_tests = len(test_results_only)
     if failed_tests == 0 and warning_tests == 0:
         results["overall"]["status"] = "✅"
         results["overall"]["summary"] = "جميع الاختبارات نجحت - المراقب الدائم يعمل بشكل مثالي"

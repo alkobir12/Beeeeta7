@@ -123,8 +123,6 @@ const Operations = () => {
   const vehicles = vehiclesQuery.data || [];
   const ops = operationsQuery.data || [];
   const visits = visitsQuery.data || [];
-  const loading = accountsQuery.isLoading || partsQuery.isLoading || servicesQuery.isLoading || vehiclesQuery.isLoading || operationsQuery.isLoading;
-  const isRefreshing = operationsQuery.isFetching && !loading;
 
   useEffect(() => {
     if (vehicleIdFromUrl) {

@@ -1,13 +1,14 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, RefreshCw, Upload } from 'lucide-react';
+import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Floating assistant disabled: AbuFahad floating chat is injected via Layout
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,21 +18,14 @@ const Operations = () => {
   const isLight = themeName === 'light' || themeName === 'dashPro';
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState([]);
-  const [parts, setParts] = useState([]);
-  const [services, setServices] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [visits, setVisits] = useState([]);
-  const [ops, setOps] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
   const isMountedRef = useRef(true);
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',
     visitId: '',
     // scope: يحدد هل العملية مرتبطة بمركبة أم عملية عامة للورشة
-    scope: 'vehicle', // 'vehicle' | 'workshop'
+    scope: 'workshop', // 'vehicle' | 'workshop'
     type: 'purchase', 
     partnerType: 'supplier', 
     partnerName: '', 
@@ -52,82 +46,103 @@ const Operations = () => {
   const searchParams = new URLSearchParams(location.search);
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
-  const load = useCallback(async (showLoading = false) => {
-    if (!isMountedRef.current) return;
-    try {
-      if (showLoading) setLoading(true);
-      else setIsRefreshing(true);
-      
-      const operationsUrl = vehicleIdFromUrl 
-        ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
-        : `${API_URL}/operations`;
-
-      const [chartAccRes, partsRes, servicesRes, opsRes, vehRes] = await Promise.all([
-        financeAPI.getChartOfAccounts(),
-        axios.get(`${API_URL}/parts`),
-        axios.get(`${API_URL}/services`),
-        axios.get(operationsUrl),
-        axios.get(`${API_URL}/vehicles`)
-      ]);
-      
-      // 🔧 الإصلاح: استخراج البيانات بشكل آمن
+  const accountsQuery = useQuery({
+    queryKey: ['chart-of-accounts', workshopId],
+    queryFn: async () => {
+      const chartAccRes = await financeAPI.getChartOfAccounts();
       let accountsData = [];
-      
-      console.log('Chart Accounts API Response:', chartAccRes);
-      
       if (chartAccRes?.data) {
-        // الحالة 1: {success: true, data: [...]}
         if (chartAccRes.data.success && Array.isArray(chartAccRes.data.data)) {
           accountsData = chartAccRes.data.data;
-        }
-        // الحالة 2: المصفوفة مباشرة {data: [...]}
-        else if (Array.isArray(chartAccRes.data.data)) {
+        } else if (Array.isArray(chartAccRes.data.data)) {
           accountsData = chartAccRes.data.data;
-        }
-        // الحالة 3: مصفوفة مباشرة
-        else if (Array.isArray(chartAccRes.data)) {
+        } else if (Array.isArray(chartAccRes.data)) {
           accountsData = chartAccRes.data;
-        }
-        // الحالة 4: {accounts: [...]}
-        else if (chartAccRes.data.accounts && Array.isArray(chartAccRes.data.accounts)) {
+        } else if (chartAccRes.data.accounts && Array.isArray(chartAccRes.data.accounts)) {
           accountsData = chartAccRes.data.accounts;
         }
       }
-      
-      console.log('Extracted Accounts:', accountsData);
-      
-      setAccounts(accountsData || []);
-      setParts(partsRes.data || []);
-      setServices(servicesRes.data || []);
-      setOps(opsRes.data || []);
-      setVehicles(vehRes.data || []);
+      return accountsData || [];
+    }
+  });
 
-      // إذا تم استدعاء الصفحة لمركبة محددة، نربط الفورم بهذه المركبة تلقائياً
-      if (vehicleIdFromUrl) {
-        setForm(prev => ({ ...prev, vehicleId: vehicleIdFromUrl }));
-        
-        // Load visits for this vehicle
-        const visitsRes = await axios.get(`${API_URL}/vehicles/${vehicleIdFromUrl}/visits`);
-        setVisits(visitsRes.data || []);
-        
-        // Set current visit if exists
-        const activeVisit = visitsRes.data?.find(v => v.status === 'in_progress');
-        if (activeVisit) {
-          setForm(prev => ({ ...prev, visitId: activeVisit.id }));
-        }
-      }
-    } catch (e) {
-      console.error(e);
+  const partsQuery = useQuery({
+    queryKey: ['parts'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/parts`);
+      return res.data || [];
+    }
+  });
+
+  const servicesQuery = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/services`);
+      return res.data || [];
+    }
+  });
+
+  const vehiclesQuery = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/vehicles`);
+      return res.data || [];
+    }
+  });
+
+  const operationsQuery = useQuery({
+    queryKey: ['operations', vehicleIdFromUrl || 'all'],
+    queryFn: async () => {
+      const operationsUrl = vehicleIdFromUrl 
+        ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
+        : `${API_URL}/operations`;
+      const res = await axios.get(operationsUrl);
+      return res.data || [];
+    }
+  });
+
+  const activeVehicleId = form.scope === 'vehicle'
+    ? (form.vehicleId || vehicleIdFromUrl)
+    : '';
+
+  const visitsQuery = useQuery({
+    queryKey: ['vehicle-visits', activeVehicleId || 'none'],
+    queryFn: async () => {
+      if (!activeVehicleId) return [];
+      const res = await axios.get(`${API_URL}/vehicles/${activeVehicleId}/visits`);
+      return res.data || [];
+    },
+    enabled: Boolean(activeVehicleId)
+  });
+
+  const accounts = accountsQuery.data || [];
+  const parts = partsQuery.data || [];
+  const services = servicesQuery.data || [];
+  const vehicles = vehiclesQuery.data || [];
+  const ops = operationsQuery.data || [];
+  const visits = visitsQuery.data || [];
+  const loading = accountsQuery.isLoading || partsQuery.isLoading || servicesQuery.isLoading || vehiclesQuery.isLoading || operationsQuery.isLoading;
+  const isRefreshing = operationsQuery.isFetching && !loading;
+
+  useEffect(() => {
+    if (vehicleIdFromUrl) {
+      setForm(prev => ({ 
+        ...prev, 
+        scope: 'vehicle',
+        vehicleId: vehicleIdFromUrl 
+      }));
     }
   }, [vehicleIdFromUrl]);
 
-  // تم تعطيل فحص ESLint في هذا الملف لتجنب مشكلة react-hooks/exhaustive-deps في بيئة CRA
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // استدعاء التحميل مرة واحدة عند فتح الصفحة
-    load(true);
-  }, []);
+    if (!visits.length || form.visitId) return;
+    const activeVisit = visits.find(v => v.status === 'in_progress');
+    if (activeVisit) {
+      setForm(prev => ({ ...prev, visitId: activeVisit.id }));
+    }
+  }, [visits, form.visitId]);
 
   const addItem = () => {
     if (!item.name && !item.itemId) return;

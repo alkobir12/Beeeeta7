@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://finbot-insights-1.preview.emergentagent.com/api"
+BASE_URL = "https://finmate-10.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

@@ -9,7 +9,7 @@ import sys
 from typing import Dict, Any
 
 # Backend URL from environment
-BACKEND_URL = "https://finbot-insights-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://finmate-10.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://finbot-insights-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://finmate-10.preview.emergentagent.com/api"
 
 def test_operations_analytics_summary():
     """Test GET /api/operations/analytics/summary endpoint"""

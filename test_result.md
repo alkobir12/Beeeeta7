@@ -5,8 +5,8 @@
 Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Frontend URL: https://finmate-10.preview.emergentagent.com
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 11:19:00
 - Test Focus: Widget visibility, functionality, page restrictions, button interactions
@@ -60,7 +60,7 @@ Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 Testing the new "Permanent Monitor" feature
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 10:30:00
 - Test Focus: Finance alerts API, trial balance verification, performance
@@ -195,8 +195,8 @@ Testing new React Query improvements:
 5. Use login: مدير and mention any Console errors or unusual slowness
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Frontend URL: https://finmate-10.preview.emergentagent.com
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 18:15:00
 - Test Focus: React Query integration, Finance Alerts Widget functionality
@@ -349,7 +349,7 @@ Comprehensive integration testing between Supabase and main pages
 ### Test Environment:
 - Backend APIs: `/api/vehicles`, `/api/operations`, `/api/approvals`, `/api/finance/*`
 - Testing Date: 2026-01-26 11:35:22
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 - Test Focus: Vehicle reception, approval workflow, financial consistency
 
@@ -364,7 +364,7 @@ Comprehensive integration testing between Supabase and main pages
 Testing backend integration for the new /ai-financial page
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-26 22:12:00
 - Test Focus: All 6 required API endpoints for AI Financial page
@@ -499,7 +499,7 @@ Testing backend integration for the new /ai-financial page
 - P2 (transaction_type): إضافة حقل transaction_type للقيود المحاسبية
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-26 22:59:00
 - Test Focus: P1 safe analysis feature and P2 transaction_type field
@@ -852,7 +852,7 @@ The Supabase integration is **FULLY FUNCTIONAL** across all tested areas:
 Testing React interface after rebuilding /ai-financial page
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Backend APIs: `/api/finance/*`, `/api/finance-bot/chat`, `/api/finance/audit-system`
 - Testing Date: 2026-01-26 22:07:00
 - Login: Username "مدير" (no password required)
@@ -1032,7 +1032,7 @@ Testing recent Arabic features modifications and Abu Fahad integration
 ### Test Environment:
 - Backend APIs: `/api/finance/reports/trial-balance`, `/api/finance-bot/chat`
 - Testing Date: 2026-01-26 18:15:40
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 - Test Focus: Trial balance, Abu Fahad chat bot, system audit analysis
 
@@ -1177,7 +1177,7 @@ The Arabic features testing confirms that:
 Testing integration of pages after operations fixes and Genspark bot removal
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Backend APIs: Working and responding correctly
 - Testing Date: 2026-01-26 11:42:00
 - Database: Supabase (confirmed working from backend logs)
@@ -1326,7 +1326,7 @@ Testing new Arabic UI changes:
 4. Test Abu Fahad chat functionality
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Login: Username "مدير"
 - Testing Date: 2026-01-27 10:00:00
 - Test Focus: UI changes verification and Abu Fahad integration
@@ -1488,7 +1488,7 @@ Testing new backend changes as requested in Arabic:
 3. /api/finance/journal-entries - transaction_type field implementation
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 10:03:30
 - Test Focus: Specific Arabic-requested backend functionality
@@ -1700,7 +1700,7 @@ Testing operations scope feature (vehicle vs workshop operations) after recent m
 ### Test Environment:
 - Backend APIs: `/api/operations` (GET, POST)
 - Testing Date: 2026-01-25 21:20:43
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 
 ### Test Results Summary: ✅ ALL TESTS PASSED (4/4)
@@ -2930,7 +2930,7 @@ Comprehensive testing of the new financial bot and its frontend integration
 - Backend APIs: `/api/finance-bot/health`, `/api/finance-bot/chat`
 - Frontend Pages: AIFinancial.jsx, SystemAudit.jsx
 - Testing Date: 2026-01-26 16:22:00
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 
 ### Test Results Summary: ✅ ALL BACKEND TESTS PASSED (4/4)
@@ -3382,7 +3382,7 @@ Once these fixes are applied, the translation system will be fully functional an
 Testing Operations page and Dashboard integration with backend after fixing POST /api/operations
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Backend APIs: `/api/operations` (GET, POST, DELETE)
 - Testing Date: 2026-01-26 10:30:00
 - Test Scenario: Arabic user request for comprehensive integration testing
@@ -3531,7 +3531,7 @@ Comprehensive testing of POST /api/operations as used by Operations page fronten
 ### Test Environment:
 - Backend APIs: `/api/operations` (GET, POST)
 - Testing Date: 2026-01-26 10:04:01
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 - Frontend: Operations.jsx form data structure
 
@@ -3759,7 +3759,7 @@ Testing that manual journal entries stored in Supabase support transaction_type 
 ### Test Environment:
 - Backend APIs: `/api/finance/journal-entries` (GET, POST, PUT)
 - Testing Date: 2026-01-25 21:44:47
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 - Workshop ID: finmodule-sync
 
@@ -3918,7 +3918,7 @@ Re-testing transaction_type field in journal_entries table after adding the colu
 ### Test Environment:
 - Backend APIs: `/api/finance/journal-entries` (GET, POST, PUT)
 - Testing Date: 2026-01-25 21:55:56
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Database: Supabase
 - Workshop ID: finmodule-sync
 
@@ -4098,7 +4098,7 @@ After adding the database column, re-run this test to verify that:
 Testing Dashboard page after vehicle card redesign to match the requested design
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Testing Date: 2026-01-25 05:51:55
 - Browser: Desktop (1920x1080) and Mobile (390x844)
 - Login: Username "مدير" (successful)
@@ -4119,7 +4119,7 @@ Testing two interfaces after recent modifications:
 2) Operations.jsx page (operation type: vehicle / workshop)
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Testing Date: 2026-01-25 21:25:00
 - Browser: Desktop (1920x1080)
 - Login: Username "مدير" (Arabic as requested)
@@ -4202,7 +4202,7 @@ However, automated testing failed due to script execution issues. Manual verific
 Re-test Dashboard page after frontend service restart to verify new vehicle card design implementation
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Testing Date: 2026-01-25 07:56:00
 - Browser: Desktop (1920x1080)
 - Login: Username "مدير" (successful)
@@ -4935,7 +4935,7 @@ const Layout = ({ children, pageTitle }) => {
 اختبار تدفق الفاتورة من الواجهة بعد التعديلات - Testing invoice flow from frontend after modifications
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Backend APIs: `/api/invoices`, `/api/vehicles`
 - Testing Date: 2026-01-24 10:40:00
 - Browser: Playwright (Desktop 1920x1080)
@@ -5099,7 +5099,7 @@ The invoice flow system is **FULLY FUNCTIONAL** after fixing the critical compil
 اختبار سريع للواجهات الخلفية المرتبطة بنظام AutoProfit Pro بعد التأكد من استقرار واجهة Operations وإزالة مفاتيح Google الصريحة.
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 18:01:26
 - Test Focus: GET endpoints only (as requested)
 
@@ -5256,7 +5256,7 @@ All AutoProfit Pro backend endpoints are working perfectly:
 5) لا حاجة لاختبارات واجهة أمامية، التركيز على أن الربط بين APIs يعمل بشكل صحيح
 
 ### Test Environment:
-- Backend URL: https://finbot-insights-1.preview.emergentagent.com/api
+- Backend URL: https://finmate-10.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 20:06:22
 - Test Focus: AutoProfit Pro financial integration after operations creation
 
@@ -5684,7 +5684,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://finbot-insights-1.preview.emergentagent.com/api`
+**Backend URL**: `https://finmate-10.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional
@@ -6034,7 +6034,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) to ensure no 404 errors and proper data display.
 
 ### Test Environment:
-- Frontend URL: https://finbot-insights-1.preview.emergentagent.com
+- Frontend URL: https://finmate-10.preview.emergentagent.com
 - Backend API: /api/finance/reports/*
 - Workshop ID: finmodule-sync (from REACT_APP_WORKSHOP_ID)
 - Test Date: 2026-01-23
@@ -6066,9 +6066,9 @@ Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) t
 **Evidence from Console Logs:**
 ```
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://finbot-insights-1.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
+at https://finmate-10.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://finbot-insights-1.preview.emergentagent.com/api/v1/accounting/reports/income-statement
+at https://finmate-10.preview.emergentagent.com/api/v1/accounting/reports/income-statement
 ```
 
 **Root Cause Analysis:**
@@ -6082,15 +6082,15 @@ at https://finbot-insights-1.preview.emergentagent.com/api/v1/accounting/reports
 2. **Backend API Verification (Working Correctly):**
    ```bash
    # Balance Sheet API - ✅ WORKING
-   curl "https://finbot-insights-1.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
+   curl "https://finmate-10.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
    Response: {"success": true, "data": {...}}
    
    # Income Statement API - ✅ WORKING
-   curl "https://finbot-insights-1.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
+   curl "https://finmate-10.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
    Response: {"success": true, "data": {...}}
    
    # Chart of Accounts API - ✅ WORKING
-   curl "https://finbot-insights-1.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
+   curl "https://finmate-10.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
    Response: {"success": true, "data": [11 accounts]}
    ```
 

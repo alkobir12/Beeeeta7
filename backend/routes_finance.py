@@ -460,11 +460,25 @@ async def get_trial_balance(
         accounts_balances = {}
 
         for op in operations:
-            op_type = op.get("type", "")
-            total = float(op.get("total", 0) or 0)
-            payment_method = op.get("payment_method", "cash")
+            op_type = (op.get("type") or "").lower()
+            amount = float(op.get("amount", 0) or 0)
+            category = (op.get("category") or "").lower()
 
-            if op_type == "sale":
+            # تحويل transaction record إلى semantic operation type
+            # income -> sale, expense -> purchase
+            if op_type == "income":
+                inferred = "sale"
+            elif op_type == "expense":
+                inferred = "purchase"
+            else:
+                inferred = op_type
+
+            # افتراض طريقة الدفع: إذا كان دخل/مصروف مسجل كـ transaction فهو عادة نقدي.
+            # (يمكن لاحقاً إضافة حقل payment_method في transactions لو رغبت)
+            payment_method = "cash"
+            total = amount
+
+            if inferred == "sale":
                 # دائن: إيرادات
                 if "411" not in accounts_balances:
                     accounts_balances["411"] = {

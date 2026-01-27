@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock, Upload } from 'lucide-react';
+import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Floating assistant disabled: AbuFahad floating chat is injected via Layout
 import { financeAPI } from '../services/api';

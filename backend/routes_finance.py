@@ -506,7 +506,7 @@ async def get_trial_balance(
                         }
                     accounts_balances["113"]["debit"] += total
 
-            elif op_type == "purchase":
+            elif inferred == "purchase":
                 # مدين: مصروفات
                 if "514" not in accounts_balances:
                     accounts_balances["514"] = {

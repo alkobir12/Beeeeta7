@@ -206,6 +206,7 @@ def test_permanent_monitor():
             print(f"{result['status']} {test_name}: {result['details']}")
     
     # Determine overall status
+    total_tests = len(results) - 1  # Exclude 'overall' key
     if failed_tests == 0 and warning_tests == 0:
         results["overall"]["status"] = "✅"
         results["overall"]["summary"] = "جميع الاختبارات نجحت - المراقب الدائم يعمل بشكل مثالي"
@@ -214,7 +215,7 @@ def test_permanent_monitor():
         results["overall"]["summary"] = f"الاختبارات نجحت مع تحذيرات ({warning_tests} warnings)"
     else:
         results["overall"]["status"] = "❌"
-        results["overall"]["summary"] = f"فشل في {failed_tests} اختبار من أصل {len(results)-1}"
+        results["overall"]["summary"] = f"فشل في {failed_tests} اختبار من أصل {total_tests}"
     
     print(f"\n🎯 النتيجة النهائية: {results['overall']['status']} {results['overall']['summary']}")
     

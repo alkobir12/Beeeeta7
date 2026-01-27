@@ -329,7 +329,7 @@ const CustomerDetails = () => {
             </CardContent>
           </Card>
         </div>
-        <AIHelper />
+        {/* AIHelper disabled */}
       </div>
     </Layout>
   );

@@ -848,6 +848,8 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             "lines": entry.get("lines", []),
             "total": entry.get("total", 0),
             "created_at": datetime.now().isoformat(),
+            "source": entry.get("source", "manual"),
+            "reference_id": entry.get("reference_id"),
         }
 
         # Try to add transaction_type (source column may not exist in schema)
@@ -1055,7 +1057,8 @@ async def get_journal_entry(entry_id: str, workshop_id: str = Query(...)):
                 "description": entry.get("description", "قيد يدوي"),
                 "lines": entry.get("lines", []),
                 "total": entry.get("total", 0),
-                "source": "manual",
+                "source": entry.get("source", "manual"),
+                "reference_id": entry.get("reference_id"),
             },
         }
 

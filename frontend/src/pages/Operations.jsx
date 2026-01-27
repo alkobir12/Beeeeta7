@@ -448,6 +448,7 @@ const Operations = () => {
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 
                     onChange={e=>setItem({...item, itemType: e.target.value})}
+                    data-testid="operation-item-type-select"
                   >
                     <option value="part">{"Part"}</option>
                     <option value="service">{"Service"}</option>
@@ -464,6 +465,7 @@ const Operations = () => {
                         const it = parts.find(p=>p.id===e.target.value); 
                         setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.sellingPrice || 0}); 
                       }}
+                      data-testid="operation-part-select"
                     >
                       <option value="">{"Select Part"}</option>
                       {parts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -476,6 +478,7 @@ const Operations = () => {
                         const s = services.find(s=>s.id===e.target.value); 
                         setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); 
                       }}
+                      data-testid="operation-service-select"
                     >
                       <option value="">{"Select Service"}</option>
                       {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -490,6 +493,7 @@ const Operations = () => {
                     className="apple-input h-9 text-sm"
                     value={item.quantity} 
                     onChange={e=> setItem({...item, quantity: Number(e.target.value) || 0})} 
+                    data-testid="operation-item-quantity-input"
                   />
                 </div>
 
@@ -500,6 +504,7 @@ const Operations = () => {
                     className="apple-input h-9 text-sm"
                     value={item.price} 
                     onChange={e=> setItem({...item, price: Number(e.target.value) || 0})} 
+                    data-testid="operation-item-price-input"
                   />
                 </div>
 
@@ -508,6 +513,7 @@ const Operations = () => {
                     type="button" 
                     onClick={addItem}
                     className="apple-button w-full h-9 flex items-center justify-center gap-1 bg-gray-900 hover:bg-black"
+                    data-testid="operation-add-item-button"
                   >
                     <Plus size={16} />
                     <span>{"Add"}</span>
@@ -546,6 +552,7 @@ const Operations = () => {
                                 setForm({...form, items: newItems});
                               }}
                               className="text-red-400 hover:text-red-600 p-1"
+                              data-testid={`operation-remove-item-button-${idx}`}
                             >
                               <Trash2 size={16} />
                             </button>

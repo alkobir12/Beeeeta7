@@ -2,9 +2,11 @@ import React, { lazy, Suspense } from "react";
 import "./App.css"
 import "./i18n"; // Initialize i18next
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import { ThemeProvider } from './contexts/ThemeContext';
+import { queryClient } from './queryClient';
 
 // Eager load critical pages
 import Dashboard from "./pages/Dashboard";

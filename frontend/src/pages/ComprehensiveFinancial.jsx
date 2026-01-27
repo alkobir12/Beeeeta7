@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, TrendingUp, Banknote, BarChart3, RefreshCw, Calendar, Download } from 'lucide-react';
+import { Scale, TrendingUp, Banknote, BarChart3, RefreshCw, Calendar } from 'lucide-react';
 import FinancialCard from '../components/FinancialCard';
 import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';

@@ -371,14 +371,6 @@ async def get_cash_flow(
                     "net_investing_cash": 0,
                 },
 
-        # عند استدعاء الدالة داخلياً (بدون FastAPI dependency injection)
-        # قد تصل المتغيرات ككائن Query بدل string.
-        if date is not None and not isinstance(date, str):
-            date = None
-        if start_date is not None and not isinstance(start_date, str):
-            start_date = None
-        if end_date is not None and not isinstance(end_date, str):
-            end_date = None
 
                 "financing_activities": {
                     "loan_proceeds": 0,

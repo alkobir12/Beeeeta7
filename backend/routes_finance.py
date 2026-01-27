@@ -558,6 +558,38 @@ async def get_trial_balance(
         print(f"Error in get_trial_balance: {str(e)}")
         return {
             "success": False,
+
+
+def _merge_by_id(primary_list, secondary_list):
+    """دمج قائمتين بدون تكرار بحسب id.
+
+    القاعدة: أي عنصر موجود في primary يأخذ أولوية.
+    """
+    merged = []
+    seen = set()
+
+    for item in (primary_list or []):
+        if not isinstance(item, dict):
+            continue
+        _id = item.get("id")
+        if _id and _id in seen:
+            continue
+        if _id:
+            seen.add(_id)
+        merged.append(item)
+
+    for item in (secondary_list or []):
+        if not isinstance(item, dict):
+            continue
+        _id = item.get("id")
+        if _id and _id in seen:
+            continue
+        if _id:
+            seen.add(_id)
+        merged.append(item)
+
+    return merged
+
             "error": str(e),
             "data": {
                 "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",

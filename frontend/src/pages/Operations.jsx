@@ -366,6 +366,7 @@ const Operations = () => {
                     className="apple-input pr-10"
                     value={form.accountId || ''} 
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
+                    data-testid="operation-secondary-account-select"
                   >
                     <option value="">{"Select Account"}</option>
                     {accounts.filter(acc => 
@@ -390,6 +391,7 @@ const Operations = () => {
                     placeholder={"Name"} 
                     value={form.partnerName} 
                     onChange={e => setForm({ ...form, partnerName: e.target.value })} 
+                    data-testid="operation-partner-name-input"
                   />
                 </div>
               </div>
@@ -402,6 +404,7 @@ const Operations = () => {
                     className="apple-input pr-10"
                     value={form.paymentMethod} 
                     onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                    data-testid="operation-payment-method-select"
                   >
                     <option value="cash">{"Cash"}</option>
                     <option value="card">{"Card"}</option>
@@ -426,6 +429,7 @@ const Operations = () => {
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  data-testid="operation-payment-receipt-input"
                 />
                 {form.paymentReceipt && (
                   <p className="text-xs text-green-600">✓ {form.paymentReceipt.name}</p>

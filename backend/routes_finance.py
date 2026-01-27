@@ -697,28 +697,46 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
         if not supabase:
             raise Exception("Supabase not connected")
 
-        # محاولة قراءة من جدول chart_of_accounts
+        # دمج دليل الحسابات من مشروعين بدون تكرار (الأولوية للمشروع الأساسي)
+        primary_accounts = []
+        secondary_accounts = []
+
         try:
-            # محاولة قراءة من جدول accounts (الاسم الحقيقي في بعض مشاريع Supabase)
-            response = (
-                supabase.table("accounts")
-                .select("*")
-                .order("code")
-                .execute()
-            )
-            accounts = response.data or []
-
-            for account in accounts:
-                if not account.get("name_ar"):
-                    account["name_ar"] = account.get("name")
-
-            return {
-                "success": True,
-                "data": accounts,
-                "source": "supabase"
-            }
+            res = supabase.table("accounts").select("*").order("code").execute()
+            primary_accounts = res.data or []
         except Exception as e:
-            print(f"Supabase error, falling back to MongoDB: {str(e)}")
+            print(f"Primary accounts fetch failed: {e}")
+
+        if supabase_1 is not None:
+            try:
+                # beeeta7 يستخدم chart_of_accounts
+                res2 = supabase_1.table("chart_of_accounts").select("*").order("code").execute()
+                secondary_accounts = res2.data or []
+            except Exception as e:
+                print(f"Secondary chart_of_accounts fetch failed: {e}")
+
+        # Normalize + merge by code (أهم من id بين مشروعين)
+        merged = []
+        seen_codes = set()
+
+        def add_list(lst):
+            for a in (lst or []):
+                if not isinstance(a, dict):
+                    continue
+                code = str(a.get("code") or "").strip()
+                if not code or code in seen_codes:
+                    continue
+                seen_codes.add(code)
+                if not a.get("name_ar"):
+                    a["name_ar"] = a.get("name")
+                merged.append(a)
+
+        add_list(primary_accounts)
+        add_list(secondary_accounts)
+
+        # إذا نجح الدمج نرجعه مباشرة
+        if merged:
+            return {"success": True, "data": merged, "source": "supabase+supabase_1"}
 
         # البديل: حساب الحسابات من operations
         ops_response = supabase.table("operations").select("*").execute()

@@ -37,16 +37,6 @@ export default function FinanceAlertsWidget({
   const loading = isFetching;
   const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
-  // Debug logging
-  console.log('FinanceAlertsWidget Debug:', {
-    path,
-    enabled,
-    enabledPaths,
-    alerts,
-    loading,
-    workshopId: process.env.REACT_APP_WORKSHOP_ID
-  });
-
   if (!enabled) return null;
 
   const highCount = alerts.filter((a) => a.severity === 'high').length;

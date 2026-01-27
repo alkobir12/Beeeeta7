@@ -1094,6 +1094,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 tx_payload = {
                     "accountId": op.get("accountId"),
                     "vehicleId": op.get("vehicleId"),
+                    "visitId": op.get("visitId"),
                     "type": "income" if op.get("type") == "sale" else "expense",
                     "category": f"operation_{op.get('type')}",
                     "amount": op.get("total"),

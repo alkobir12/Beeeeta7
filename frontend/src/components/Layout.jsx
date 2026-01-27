@@ -36,6 +36,8 @@ const Layout = ({ children, pageTitle }) => {
           </button>
           <h1 className="text-base font-bold text-foreground">{pageTitle || t('app.dashboard')}</h1>
           <div className="w-10"></div>
+        </div>
+
         {/* Finance Alerts (Permanent Monitor) */}
         <FinanceAlertsWidget
           enabledPaths={[
@@ -45,9 +47,6 @@ const Layout = ({ children, pageTitle }) => {
             '/ai-financial',
           ]}
         />
-
-
-        </div>
         
         {/* Page Content */}
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>

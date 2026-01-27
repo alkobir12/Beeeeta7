@@ -679,7 +679,14 @@ const Operations = () => {
                         {op.type === 'sale' ? t('operations.sale') : t('operations.purchase')}
                       </span>
                     </td>
-                    <td className="p-4 font-medium text-gray-900">{op.partnerName || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-semibold text-gray-900">
+                        {op.partnerName || '-'}
+                      </span>
+                      <div className="text-xs text-gray-500">
+                        {op.paymentMethod === 'credit' ? 'آجل (غير مدفوع)' : (op.paymentMethod || '-')}
+                      </div>
+                    </td>
                     <td className="p-4 text-gray-500">{op.items?.length || 0}</td>
                     <td className="p-4 font-bold text-gray-900">{Number(op.total).toFixed(2)}</td>
                     <td className="p-4">

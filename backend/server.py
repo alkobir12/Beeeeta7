@@ -76,6 +76,7 @@ from routes_ai_recommendations import router as ai_recommendations_router
 # Import Finance Routes
 from routes_finance import router as finance_router, set_db as set_db_finance
 from routes_finance_bot import router as finance_bot_router
+from routes_stitch import router as stitch_router
 
 # Import Invoices Routes
 from routes_invoices import (
@@ -299,6 +300,7 @@ app.include_router(extended_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
 app.include_router(finance_bot_router)
+app.include_router(stitch_router)
 app.include_router(invoices_router)
 
 # Create a router with the /api prefix

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertTriangle, CheckCircle, RefreshCw, X, ShieldAlert } from 'lucide-react';

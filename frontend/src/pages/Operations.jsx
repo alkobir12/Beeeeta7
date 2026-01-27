@@ -171,32 +171,44 @@ const Operations = () => {
         lines: [],
       };
 
-      if (form.type === 'sale' && customerAccount && serviceRevenueAccount) {
-        journalPayload.lines = [
-          {
-            account_id: customerAccount.id,
-            debit_amount: total,
-            credit_amount: 0,
-          },
-          {
-            account_id: serviceRevenueAccount.id,
-            debit_amount: 0,
-            credit_amount: total,
-          },
-        ];
-      } else if (form.type === 'purchase' && partsPurchaseAccount && supplierAccount) {
-        journalPayload.lines = [
-          {
-            account_id: partsPurchaseAccount.id,
-            debit_amount: total,
-            credit_amount: 0,
-          },
-          {
-            account_id: supplierAccount.id,
-            debit_amount: 0,
-            credit_amount: total,
-          },
-        ];
+      const isCredit = form.paymentMethod === 'credit';
+
+      if (form.type === 'sale' && serviceRevenueAccount) {
+        // مدين: نقدية 101 عند الدفع الفوري / ذمم مدينة 113 عند الآجل
+        const debitAccount = isCredit ? customerAccount : findAccountByCode('101');
+
+        if (debitAccount) {
+          journalPayload.lines = [
+            {
+              account_id: debitAccount.id,
+              debit_amount: total,
+              credit_amount: 0,
+            },
+            {
+              account_id: serviceRevenueAccount.id,
+              debit_amount: 0,
+              credit_amount: total,
+            },
+          ];
+        }
+      } else if (form.type === 'purchase' && partsPurchaseAccount) {
+        // دائن: نقدية 101 عند الدفع الفوري / ذمم دائنة 211 عند الآجل
+        const creditAccount = isCredit ? supplierAccount : findAccountByCode('101');
+
+        if (creditAccount) {
+          journalPayload.lines = [
+            {
+              account_id: partsPurchaseAccount.id,
+              debit_amount: total,
+              credit_amount: 0,
+            },
+            {
+              account_id: creditAccount.id,
+              debit_amount: 0,
+              credit_amount: total,
+            },
+          ];
+        }
       }
 
       // 5) إرسال القيد إلى نظام المحاسبة إذا تم تجهيز السطور

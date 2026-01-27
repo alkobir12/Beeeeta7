@@ -657,6 +657,7 @@ class SupabaseService:
             "type": r.get("type"),
             "accountId": r.get("account_id"),
             "vehicleId": r.get("vehicle_id"),
+            "visitId": r.get("visit_id"),
             "partnerType": r.get("partner_type"),
             "partnerName": r.get("partner_name"),
             "items": r.get("items"),

@@ -720,8 +720,7 @@ const Operations = () => {
           </div>
         </div>
       
-      {/* المساعد المالي الذكي */}
-      <FloatingAIAssistant context="operations" contextData={{ operations: ops, accounts }} />
+      {/* أبوفهد (المساعد المالي) أصبح عبر الزر العائم الموحد */}
     </div>
   );
 };

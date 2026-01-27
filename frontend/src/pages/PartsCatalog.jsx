@@ -51,7 +51,7 @@ const PartsCatalog = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 relative">
       {/* Floating AI Assistant for Catalog context */}
-      <FloatingAIAssistant context="catalog" />
+      {/* تم تعطيل مساعد الكتالوج العائم حسب طلب تخصيص أبوفهد للصفحات المالية فقط */}
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

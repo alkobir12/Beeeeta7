@@ -382,47 +382,36 @@ async def get_cash_flow(
     end_date: str = Query(...),
 ):
     """
-    قائمة التدفقات النقدية من بيانات العمليات الحقيقية في Supabase
+    قائمة التدفقات النقدية من قيود اليومية في Supabase
     """
     try:
-        if not supabase:
-            raise Exception("Supabase not connected")
-
-        # جلب العمليات من Supabase
-        response = (
-            supabase.table("operations")
-            .select("*")
-            .gte("op_date", start_date)
-            .lte("op_date", end_date)
-            .execute()
+        accounts = _fetch_accounts()
+        id_to_code, code_to_name, _ = _build_account_maps(accounts)
+        entries = _fetch_journal_entries(
+            workshop_id, start_date=start_date, end_date=end_date, limit=10000
         )
 
-        operations = response.data
+        cash_in = 0.0
+        cash_out = 0.0
 
-        # حساب التدفقات النقدية
-        cash_from_operations = 0
-        cash_to_suppliers = 0
+        for entry in entries:
+            for line in entry.get("lines", []) or []:
+                normalized = _normalize_line(line, id_to_code, code_to_name)
+                if not normalized:
+                    continue
+                if normalized["code"] == "101":
+                    cash_in += normalized["debit"]
+                    cash_out += normalized["credit"]
 
-        for op in operations:
-            op_type = op.get("type", "")
-            total = float(op.get("total", 0) or 0)
-            payment_method = op.get("payment_method", "cash")
-
-            if payment_method == "cash":
-                if op_type == "sale":
-                    cash_from_operations += total
-                elif op_type == "purchase" or op_type == "expense":
-                    cash_to_suppliers += total
-
-        net_operating_cash = cash_from_operations - cash_to_suppliers
+        net_operating_cash = cash_in - cash_out
 
         return {
             "success": True,
             "data": {
                 "period": f"{start_date} إلى {end_date}",
                 "operating_activities": {
-                    "cash_from_customers": round(cash_from_operations, 2),
-                    "cash_to_suppliers": round(-cash_to_suppliers, 2),
+                    "cash_from_customers": round(cash_in, 2),
+                    "cash_to_suppliers": round(-cash_out, 2),
                     "net_operating_cash": round(net_operating_cash, 2),
                 },
                 "investing_activities": {

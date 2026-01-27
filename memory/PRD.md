@@ -46,10 +46,21 @@
 - ✅ **قائمة التدفقات النقدية** (`/accounting/cash-flow`)
 - ✅ **ميزان المراجعة** (`/accounting/trial-balance`)
 
+### إصلاحات المحاسبة الجوهرية - 27 يناير 2026
+- ✅ **مصدر الحقيقة** أصبح `operations + journal_entries` (إيقاف الاعتماد على transactions)
+- ✅ **إنشاء القيد تلقائياً** عند حفظ العملية مع `source=operation` و `reference_id`
+- ✅ **ترحيل أعمدة جديدة** في `journal_entries`: `source` و `reference_id`
+- ✅ **التقارير المالية والتنبيهات** تعمل بالكامل من `journal_entries`
+
 ### العمليات المالية - 25 يناير 2025
 - ✅ **رفع إيصال الدفع** في صفحة العمليات
   - دعم الصور و PDF
   - عرض اسم الملف المرفوع
+
+### تحسين الأداء والواجهات - 27 يناير 2026
+- ✅ ترحيل صفحة **Operations** و **Comprehensive Financial** إلى React Query
+- ✅ إصلاح تسجيل الدخول (Fallback لـ "مدير" عند فشل جلب المستخدمين)
+- ✅ إضافة قسم **Google Stitch** داخل صفحة الإعدادات لتوليد واجهات
 
 ### بوت الواتساب الذكي - 24 يناير 2025
 - ✅ **نظام واتساب متكامل** (`/api/whatsapp-bot/`)
@@ -91,9 +102,15 @@ GET  /api/finance/reports/balance-sheet          - الميزانية العمو
 GET  /api/finance/reports/trial-balance          - ميزان المراجعة
 GET  /api/finance/reports/income-statement       - قائمة الدخل
 GET  /api/finance/reports/cash-flow              - التدفقات النقدية
+GET  /api/finance/alerts                          - تنبيهات المراقبة الدائمة
 
 # العمليات
 POST /api/operations                             - إنشاء عملية جديدة
+
+# Stitch (توليد الواجهات)
+POST /api/stitch/generate                         - توليد واجهة عبر Stitch
+GET  /api/stitch/history                          - سجل التوليد
+GET  /api/stitch/status/{id}                      - حالة التوليد
 ```
 
 ---
@@ -117,6 +134,9 @@ POST /api/operations                             - إنشاء عملية جدي�
 | تحسين الأداء (Code Splitting) | ✅ مكتمل | 25 يناير 2025 |
 | تطبيق الثيمات على الصفحات | ✅ مكتمل | 25 يناير 2025 |
 | رفع إيصال الدفع | ✅ موجود سابقاً | - |
+| إصلاح مصدر الحقيقة والتقارير | ✅ مكتمل | 27 يناير 2026 |
+| ترحيل React Query لصفحات مالية | ✅ مكتمل | 27 يناير 2026 |
+| إضافة Stitch في الإعدادات | ✅ مكتمل | 27 يناير 2026 |
 
 ---
 
@@ -135,6 +155,8 @@ POST /api/operations                             - إنشاء عملية جدي�
 
 | التاريخ | الوصف |
 |---------|-------|
+| 27 يناير 2026 | إصلاح مصدر الحقيقة + تفعيل قيود العمليات التلقائية + Stitch UI |
+| 27 يناير 2026 | ترحيل Operations و Comprehensive Financial إلى React Query |
 | 25 يناير 2025 | تحسين الأداء + تطبيق الثيمات على Dashboard و Operations |
 | 25 يناير 2025 | إضافة CRUD كامل للقيود اليدوية |
 | 24 يناير 2025 | إضافة نظام الثيمات (داكن/فاتح/داش برو) |
@@ -150,7 +172,10 @@ POST /api/operations                             - إنشاء عملية جدي�
 - ✅ القيود المحاسبية تُنشأ تلقائياً من العمليات
 - ✅ القيود اليدوية تُحفظ في جدول `journal_entries`
 
+### ملاحظة Stitch
+- ⚠️ تكامل Stitch يتطلب ضبط `GOOGLE_STITCH_API_KEY` في backend/.env. بدونه سيظهر خطأ متوقع عند التوليد.
+
 ### الاختبارات
 - ✅ Backend: 100% نجاح
-- ✅ Frontend: 100% نجاح
-- 📁 ملفات الاختبار: `/app/test_reports/iteration_3.json`
+- ✅ Frontend: 100% نجاح بعد إصلاح واجهة Stitch
+- 📁 ملفات الاختبار: `/app/test_reports/iteration_5.json`

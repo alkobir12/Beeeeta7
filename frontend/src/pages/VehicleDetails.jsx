@@ -145,6 +145,7 @@ const VehicleDetails = () => {
         
         const operationData = {
           vehicleId: id,
+          visitId: activeVisit?.id || null,
           type: 'sale',
           partnerType: 'customer',
           partnerName: vehicle.customerName || '',

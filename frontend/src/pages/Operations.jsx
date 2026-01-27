@@ -651,7 +651,7 @@ const Operations = () => {
                               if (!window.confirm(t('common.confirm_delete'))) return;
                               try {
                                 await axios.delete(`${API_URL}/operations/${op.id}`);
-                                await load();
+                                queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
                               } catch (e) {
                                 console.error('Failed to delete operation:', e);
                               }

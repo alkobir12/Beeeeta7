@@ -226,18 +226,6 @@ async def get_income_statement(
         }
 
 
-        # جلب جميع العمليات في الفترة الزمنية من Supabase
-        response = (
-            supabase.table("operations")
-            .select("*")
-            .gte("op_date", start_date)
-            .lte("op_date", end_date)
-            .execute()
-        )
-
-        operations = response.data
-
-        # تصنيف العمليات حسب النوع
         revenue_accounts = {}
         expense_accounts = {}
 

@@ -442,8 +442,19 @@ async def get_trial_balance(
         q = q.lte("op_date", end_bound)
 
         response = q.execute()
+        operations = response.data or []
 
-        operations = response.data
+        # دمج عمليات من مشروع ثانٍ (قراءة فقط) مع إزالة التكرار
+        if supabase_1 is not None:
+            try:
+                q2 = supabase_1.table("operations").select("*")
+                if start_bound:
+                    q2 = q2.gte("op_date", start_bound)
+                q2 = q2.lte("op_date", end_bound)
+                resp2 = q2.execute()
+                operations = _merge_by_id(operations, resp2.data or [])
+            except Exception:
+                pass
 
         # حساب الأرصدة لكل حساب
         accounts_balances = {}

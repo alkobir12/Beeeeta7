@@ -25,6 +25,7 @@ const Settings = () => {
   const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
   const { themeName, changeTheme, isDark } = useTheme();
+  const { loading: stitchLoading, error: stitchError, result: stitchResult, generateUI, getHistory, resetError } = useStitch();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({
     workshopName: 'ورشتي',
@@ -37,8 +38,23 @@ const Settings = () => {
     language: 'ar',
     themeName: 'dark'
   });
+  const [stitchForm, setStitchForm] = useState({
+    prompt: '',
+    designStyle: 'modern',
+    colorScheme: ''
+  });
+  const [stitchHistory, setStitchHistory] = useState([]);
+  const [showStitchCode, setShowStitchCode] = useState(false);
 
   useEffect(() => { fetchSettings(); }, []);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      const history = await getHistory();
+      setStitchHistory(Array.isArray(history) ? history : []);
+    };
+    loadHistory();
+  }, [getHistory]);
 
   const fetchSettings = async () => {
     try {
@@ -72,6 +88,21 @@ const Settings = () => {
       toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateStitch = async () => {
+    resetError();
+    if ((stitchForm.prompt || '').trim().length < 10) {
+      toast({ title: 'تنبيه', description: 'وصف الواجهة يجب أن يكون 10 أحرف على الأقل', variant: 'destructive' });
+      return;
+    }
+    try {
+      await generateUI(stitchForm.prompt, stitchForm.designStyle, stitchForm.colorScheme);
+      const history = await getHistory();
+      setStitchHistory(Array.isArray(history) ? history : []);
+    } catch (error) {
+      console.error(error);
     }
   };
 

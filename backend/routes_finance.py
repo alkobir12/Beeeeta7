@@ -462,7 +462,7 @@ async def get_trial_balance(
         for op in operations:
             op_type = (op.get("type") or "").lower()
             amount = float(op.get("amount", 0) or 0)
-            category = (op.get("category") or "").lower()
+            # category reserved for future use
 
             # تحويل transaction record إلى semantic operation type
             # income -> sale, expense -> purchase

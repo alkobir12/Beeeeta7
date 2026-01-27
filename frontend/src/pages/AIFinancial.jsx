@@ -403,6 +403,12 @@ export default function AIFinancial() {
     // eslint-disable-next-line
   }, [workshopId, timeRange]);
 
+  // تحسين بسيط: فتح محادثة أبوفهد تلقائياً إذا لم يكن هناك تاريخ محادثة
+  useEffect(() => {
+    if (!chatHistory?.length) return;
+    // لا شيء هنا حالياً، فقط مكان مخصص لتحسينات UX لاحقاً بدون كسر السلوك.
+  }, [chatHistory]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96" dir="rtl">

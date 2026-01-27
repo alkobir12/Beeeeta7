@@ -73,8 +73,9 @@ const FinancialCard = ({
         transform: isExpanded ? 'scale(1.02)' : 'scale(1)',
       }}
       onClick={handleCardClick}
-      onMouseEnter={() => expandable && setIsExpanded(true)}
-      onMouseLeave={() => expandable && setIsExpanded(false)}
+      // إلغاء التوسّع التلقائي بالهوفر لأنه يسبب "الكروت لا تتوسع" / سلوك مزعج على الموبايل
+      // التوسّع الآن بالضغط فقط
+
     >
       {/* النقاط الزخرفية */}
       <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">

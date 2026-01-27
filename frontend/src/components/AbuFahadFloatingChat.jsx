@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
 };
 
 const AbuFahadFloatingChat = ({
-  enabledPaths = ['/operations', '/chart-of-accounts', '/comprehensive-financial'],
+  enabledPaths = ['/operations', '/accounting/chart-of-accounts', '/accounting/comprehensive'],
 }) => {
   const location = useLocation();
   const path = location.pathname || '';

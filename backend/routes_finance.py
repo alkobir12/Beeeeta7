@@ -229,30 +229,9 @@ async def get_income_statement(
         revenue_accounts = {}
         expense_accounts = {}
 
-        for op in operations:
-            op_type = op.get("type", "")
-            total = float(op.get("total", 0) or 0)
+        # ملاحظة: هذا التقرير محسوب من أرصدة دليل الحسابات مباشرة.
+        # (تم إزالة منطق قديم كان يعتمد على operations لضمان اتساق البيانات)
 
-            if op_type == "sale":
-                # عمليات البيع = إيرادات
-                code = "411"
-                if code not in revenue_accounts:
-                    revenue_accounts[code] = {
-                        "name": "إيرادات خدمات الصيانة وقطع الغيار",
-                        "amount": 0,
-                    }
-                revenue_accounts[code]["amount"] += total
-
-            elif op_type == "purchase":
-                # عمليات الشراء = مصروفات
-                code = "514"
-                if code not in expense_accounts:
-                    expense_accounts[code] = {"name": "مصاريف قطع الغيار", "amount": 0}
-                expense_accounts[code]["amount"] += total
-
-            elif op_type == "expense":
-                # مصروفات أخرى
-                code = op.get("accountCode", "521")
                 account_name = op.get("accountName", "مصاريف عامة")
                 if code not in expense_accounts:
                     expense_accounts[code] = {"name": account_name, "amount": 0}

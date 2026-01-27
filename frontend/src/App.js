@@ -86,10 +86,11 @@ const Protected = ({ children }) => {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
-          <Router>
-            <Routes>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <div className="App" style={{ backgroundColor: '#121314', minHeight: '100vh' }}>
+            <Router>
+              <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/approval/:token" element={<ApprovalPublic />} />
               <Route path="/report/:token" element={<ReportPublic />} />

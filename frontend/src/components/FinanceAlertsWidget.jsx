@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react
 import QuickCard from './QuickCard';
 import { useFinanceAlerts } from '../hooks/useFinanceAlerts';
 
-const POLL_MS = 5 * 60 * 1000; // 5 minutes
+// Polling handled by React Query (refetchInterval)
 
 const severityConfig = {
   high: {

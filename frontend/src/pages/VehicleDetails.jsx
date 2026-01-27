@@ -173,7 +173,8 @@ const VehicleDetails = () => {
 
           if (customerAccount && serviceRevenueAccount && total > 0) {
             const journalPayload = {
-              entry_date: new Date().toISOString(),
+              date: new Date().toISOString().split('T')[0],
+              transaction_type: 'sale',
               description: `عملية بيع من ملف المركبة - ${vehicle.customerName || ''}`,
               reference: operationResult?.id || null,
               lines: [

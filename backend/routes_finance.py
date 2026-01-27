@@ -1363,9 +1363,7 @@ async def delete_journal_entry(entry_id: str, workshop_id: str = Query(...)):
             }
 
         # حذف القيد
-        response = (
-            supabase.table("journal_entries").delete().eq("id", entry_id).execute()
-        )
+        supabase.table("journal_entries").delete().eq("id", entry_id).execute()
 
         return {"success": True, "message": "تم حذف القيد المحاسبي بنجاح"}
 

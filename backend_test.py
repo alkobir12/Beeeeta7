@@ -334,24 +334,27 @@ def test_stitch_api_error():
 
 def run_backend_tests():
     """تشغيل جميع اختبارات الباك إند"""
-    print("🚀 بدء اختبار البوت المالي الجديد")
+    print("🚀 بدء اختبار النظام المالي الشامل")
     print(f"🌐 رابط الخادم: {BACKEND_URL}")
     print(f"🏪 معرف الورشة: {WORKSHOP_ID}")
     print(f"⏰ وقت الاختبار: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     results = []
     
-    # اختبار 1: صحة البوت المالي
-    results.append(("فحص صحة البوت المالي", test_finance_bot_health()))
+    # اختبار 1: إنشاء عملية مع مركبة وقيد تلقائي
+    results.append(("إنشاء عملية مع مركبة وقيد تلقائي", test_operations_create_with_vehicle()))
     
-    # اختبار مساعد: دليل الحسابات
-    results.append(("توفر دليل الحسابات", test_chart_of_accounts_availability()))
+    # اختبار 2: جلب العمليات بالمركبة
+    results.append(("جلب العمليات بالمركبة", test_operations_by_vehicle()))
     
-    # اختبار 2: الدردشة العامة
-    results.append(("الدردشة العامة مع البوت", test_finance_bot_general_chat()))
+    # اختبار 3: التقارير المالية
+    results.append(("التقارير المالية", test_financial_reports()))
     
-    # اختبار 3: تحليل حساب محدد
-    results.append(("تحليل حساب محدد (411)", test_finance_bot_account_specific_chat()))
+    # اختبار 4: تنبيهات المراقبة
+    results.append(("تنبيهات المراقبة المالية", test_finance_alerts()))
+    
+    # اختبار 5: Google Stitch API (متوقع فشل)
+    results.append(("Google Stitch API (متوقع فشل)", test_stitch_api_error()))
     
     # ملخص النتائج
     print_test_header("ملخص نتائج اختبار الباك إند")

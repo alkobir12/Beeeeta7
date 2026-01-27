@@ -632,10 +632,14 @@ class SupabaseService:
         account_id = _sanitize_uuid(account_id)
         vehicle_id = _sanitize_uuid(vehicle_id)
 
+        visit_id = payload.get("visitId") or payload.get("visit_id") or None
+        visit_id = _sanitize_uuid(visit_id)
+
         row = {
             "type": payload.get("type", "service"),
             "account_id": account_id,
             "vehicle_id": vehicle_id,
+            "visit_id": visit_id,
             "partner_type": payload.get("partnerType"),
             "partner_name": payload.get("partnerName"),
             "items": items,

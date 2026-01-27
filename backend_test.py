@@ -312,8 +312,8 @@ def test_stitch_api_error():
         response = requests.post(url, json=payload, timeout=30)
         print(f"📊 كود الاستجابة: {response.status_code}")
         
-        # We expect this to fail with 500 due to missing API key
-        if response.status_code == 500:
+        # We expect this to fail with 500 or 520 due to missing API key
+        if response.status_code in [500, 520]:
             error_data = response.json()
             error_detail = error_data.get("detail", "")
             

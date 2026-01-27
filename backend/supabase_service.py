@@ -326,15 +326,22 @@ class SupabaseService:
         return (res.data or [{}])[0]
 
     # -------------------- Operations (minimal) --------------------
-    def operations_list(self) -> List[Dict[str, Any]]:
+    def operations_list(
+        self,
+        account_id: Optional[str] = None,
+        type: Optional[str] = None,
+        vehicle_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
-        res = (
-            self.client.table("operations")
-            .select("*")
-            .order("op_date", desc=True)
-            .execute()
-        )
+        q = self.client.table("operations").select("*")
+        if account_id:
+            q = q.eq("account_id", account_id)
+        if type:
+            q = q.eq("type", type)
+        if vehicle_id:
+            q = q.eq("vehicle_id", vehicle_id)
+        res = q.order("op_date", desc=True).execute()
         rows = res.data or []
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.
@@ -617,8 +624,8 @@ class SupabaseService:
             subtotal += it["total"]
 
         # تنظيف الحقول التي يجب أن تكون UUID أو NULL
-        account_id = payload.get("accountId") or None
-        vehicle_id = payload.get("vehicleId") or None
+        account_id = payload.get("accountId") or payload.get("account_id") or None
+        vehicle_id = payload.get("vehicleId") or payload.get("vehicle_id") or None
 
         # إذا لم يكن الشكل شكل UUID (طول 36 مع شرطات)، اعتبره None لتفادي أخطاء Supabase
         def _sanitize_uuid(value):
@@ -651,7 +658,13 @@ class SupabaseService:
             "op_date": datetime.utcnow().isoformat(),
             # Note: scope field is inferred dynamically in operations_list based on vehicle_id presence
         }
-        res = self.client.table("operations").insert(row).execute()
+        try:
+            res = self.client.table("operations").insert(row).execute()
+        except Exception as insert_error:
+            # إذا كان جدول العمليات لا يحتوي على visit_id، أعد المحاولة بدونها
+            print(f"Operations insert error, retrying without visit_id: {insert_error}")
+            row.pop("visit_id", None)
+            res = self.client.table("operations").insert(row).execute()
         r = (res.data or [{}])[0]
         return {
             "id": r.get("id"),

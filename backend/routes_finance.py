@@ -10,19 +10,34 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
-# Supabase connection for writing data
+# Supabase connections:
+# - Primary (write)
+# - Secondary (read) - used فقط للدمج إن كان موجود
 try:
     supabase_url = os.getenv("SUPABASE_URL", "")
     supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     if supabase_url and supabase_key:
         supabase = create_client(supabase_url, supabase_key)
-        print("✅ Supabase connected for Finance API")
+        print("✅ Supabase connected for Finance API (primary)")
     else:
         supabase = None
-        print("⚠️ Supabase credentials missing")
+        print("⚠️ Supabase credentials missing (primary)")
+
+    supabase_url_1 = os.getenv("SUPABASE_URL_1", "")
+    supabase_key_1 = os.getenv("SUPABASE_SERVICE_ROLE_KEY_1", "")
+    if supabase_url_1 and supabase_key_1 and supabase_url_1 != supabase_url:
+        try:
+            supabase_1 = create_client(supabase_url_1, supabase_key_1)
+            print("✅ Supabase connected for Finance API (secondary)")
+        except Exception as e:
+            supabase_1 = None
+            print(f"⚠️ Supabase secondary connection failed: {e}")
+    else:
+        supabase_1 = None
 except Exception as e:
     supabase = None
+    supabase_1 = None
     print(f"⚠️ Supabase connection failed: {e}")
 
 # MongoDB connection for reading operations (financial reports)

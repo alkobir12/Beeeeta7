@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Scale, TrendingUp, Banknote, BarChart3, RefreshCw, Calendar, Download } from 'lucide-react';
 import FinancialCard from '../components/FinancialCard';
 import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { useTheme } from '../contexts/ThemeContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ComprehensiveFinancial = () => {
   const { themeName } = useTheme();
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('balance');
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -15,50 +15,61 @@ const ComprehensiveFinancial = () => {
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  const [balanceSheet, setBalanceSheet] = useState(null);
-  const [incomeStatement, setIncomeStatement] = useState(null);
-  const [cashFlow, setCashFlow] = useState(null);
-  const [trialBalance, setTrialBalance] = useState(null);
-
   const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchAllData();
-  }, [startDate, endDate]);
-
-  const fetchAllData = async () => {
-    try {
-      setLoading(true);
-      
-      const [bsRes, isRes, cfRes, tbRes] = await Promise.all([
-        financeAPI.getBalanceSheet({ workshop_id: workshopId }),
-        financeAPI.getIncomeStatement({ 
-          workshop_id: workshopId, 
-          start_date: startDate, 
-          end_date: endDate 
-        }),
-        financeAPI.getCashFlow({ 
-          workshop_id: workshopId, 
-          start_date: startDate, 
-          end_date: endDate 
-        }),
-        financeAPI.getTrialBalance({ workshop_id: workshopId })
-      ]);
-
-      setBalanceSheet(bsRes.data?.data || null);
-      setIncomeStatement(isRes.data?.data || null);
-      setCashFlow(cfRes.data?.data || null);
-      
-      // Trial Balance من تقرير ميزان المراجعة الحقيقي
-      const tbData = tbRes.data?.data || tbRes.data || {};
-      setTrialBalance(tbData.accounts || []);
-      
-    } catch (error) {
-      console.error('Error fetching financial data:', error);
-    } finally {
-      setLoading(false);
+  const balanceSheetQuery = useQuery({
+    queryKey: ['balance-sheet', workshopId],
+    queryFn: async () => {
+      const res = await financeAPI.getBalanceSheet({ workshop_id: workshopId });
+      return res.data?.data || null;
     }
+  });
+
+  const incomeStatementQuery = useQuery({
+    queryKey: ['income-statement', workshopId, startDate, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getIncomeStatement({ 
+        workshop_id: workshopId, 
+        start_date: startDate, 
+        end_date: endDate 
+      });
+      return res.data?.data || null;
+    }
+  });
+
+  const cashFlowQuery = useQuery({
+    queryKey: ['cash-flow', workshopId, startDate, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getCashFlow({ 
+        workshop_id: workshopId, 
+        start_date: startDate, 
+        end_date: endDate 
+      });
+      return res.data?.data || null;
+    }
+  });
+
+  const trialBalanceQuery = useQuery({
+    queryKey: ['trial-balance', workshopId, startDate, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getTrialBalance({ workshop_id: workshopId, start_date: startDate, end_date: endDate });
+      const tbData = res.data?.data || res.data || {};
+      return tbData.accounts || [];
+    }
+  });
+
+  const balanceSheet = balanceSheetQuery.data;
+  const incomeStatement = incomeStatementQuery.data;
+  const cashFlow = cashFlowQuery.data;
+  const trialBalance = trialBalanceQuery.data;
+  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading;
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['income-statement', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['cash-flow', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['trial-balance', workshopId] });
   };
 
   const bsTotals = balanceSheet?.totals || { assets: 0, liabilities: 0, equity: 0 };

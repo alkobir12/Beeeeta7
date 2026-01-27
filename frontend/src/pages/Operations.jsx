@@ -151,92 +151,29 @@ const Operations = () => {
     setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
   };
 
+  const createOperationMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await axios.post(`${API_URL}/operations`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+    }
+  });
+
   const submit = async (e) => {
     e.preventDefault();
     try {
-      // 1) إنشاء العملية التشغيلية
-      // تنظيف الـ payload قبل الإرسال لتفادي أخطاء UUID في Supabase
       const cleanPayload = {
         ...form,
+        workshopId: workshopId || null,
         accountId: form.accountId || null,
-        vehicleId: form.vehicleId || null,
-      };
-      const opRes = await axios.post(`${API_URL}/operations`, cleanPayload);
-      const op = opRes.data;
-
-      // 2) حساب إجمالي العملية من العناصر
-      const total = subtotal;
-
-      // 3) إيجاد الحسابات المحاسبية من دليل الحسابات السعودي
-      const findAccountByCode = (code) => accounts.find((a) => a.code === code);
-
-      const customerAccount = findAccountByCode('113'); // العملاء
-      const supplierAccount = findAccountByCode('211'); // الموردين
-      const serviceRevenueAccount = findAccountByCode('411'); // إيرادات صيانة السيارات
-      const partsPurchaseAccount = findAccountByCode('514'); // شراء قطع الغيار
-
-      // 4) بناء القيد المحاسبي وفقًا لنوع العملية
-      const journalPayload = {
-        // routes_finance expects "date" not "entry_date"
-        date: new Date().toISOString().split('T')[0],
-        description:
-          form.type === 'sale'
-            ? `عملية بيع - ${form.partnerName || ''}`
-            : `عملية شراء - ${form.partnerName || ''}`,
-        // تحويل الدفع إلى نوع حركة واضح
-        transaction_type: form.type === 'sale' ? 'sale' : 'purchase',
-        reference: op?.id || null,
-        lines: [],
+        vehicleId: form.scope === 'workshop' ? null : (form.vehicleId || null),
+        visitId: form.scope === 'workshop' ? null : (form.visitId || null),
       };
 
-      const isCredit = form.paymentMethod === 'credit';
+      await createOperationMutation.mutateAsync(cleanPayload);
 
-      if (form.type === 'sale' && serviceRevenueAccount) {
-        // مدين: نقدية 101 عند الدفع الفوري / ذمم مدينة 113 عند الآجل
-        const debitAccount = isCredit ? customerAccount : findAccountByCode('101');
-
-        if (debitAccount) {
-          journalPayload.lines = [
-            {
-              account_id: debitAccount.id,
-              debit_amount: total,
-              credit_amount: 0,
-            },
-            {
-              account_id: serviceRevenueAccount.id,
-              debit_amount: 0,
-              credit_amount: total,
-            },
-          ];
-        }
-      } else if (form.type === 'purchase' && partsPurchaseAccount) {
-        // دائن: نقدية 101 عند الدفع الفوري / ذمم دائنة 211 عند الآجل
-        const creditAccount = isCredit ? supplierAccount : findAccountByCode('101');
-
-        if (creditAccount) {
-          journalPayload.lines = [
-            {
-              account_id: partsPurchaseAccount.id,
-              debit_amount: total,
-              credit_amount: 0,
-            },
-            {
-              account_id: creditAccount.id,
-              debit_amount: 0,
-              credit_amount: total,
-            },
-          ];
-        }
-      }
-
-      // 5) إرسال القيد إلى نظام المحاسبة إذا تم تجهيز السطور
-      if (journalPayload.lines.length === 2) {
-        await financeAPI.createJournalEntry(journalPayload);
-      } else {
-        console.warn('لم يتم العثور على الحسابات المناسبة لإنشاء القيد المحاسبي');
-      }
-
-      // 6) إعادة ضبط النموذج وتحديث القائمة
       setForm({
         accountId: '',
         vehicleId: vehicleIdFromUrl || '',
@@ -250,9 +187,8 @@ const Operations = () => {
         notes: '',
         paymentReceipt: null
       });
-      await load();
     } catch (e) {
-      console.error('Failed to save operation and journal entry:', e);
+      console.error('Failed to save operation:', e);
     }
   };
 

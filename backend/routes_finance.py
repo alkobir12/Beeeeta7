@@ -530,6 +530,19 @@ async def get_trial_balance(
             },
         }
 
+    except Exception as e:
+        print(f"Error in get_trial_balance: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": f"حتى {date or datetime.now().strftime('%Y-%m-%d')}",
+                "accounts": [],
+                "totals": {"total_debit": 0, "total_credit": 0},
+            },
+        }
+
+
 
 @router.get("/alerts")
 async def get_finance_alerts(

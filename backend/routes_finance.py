@@ -226,19 +226,6 @@ async def get_income_statement(
         }
 
 
-    except Exception as e:
-        print(f"Error in get_income_statement: {str(e)}")
-        return {
-            "success": False,
-            "error": str(e),
-            "data": {
-                "period": {"start_date": start_date, "end_date": end_date},
-                "totals": {"revenue": 0, "expenses": 0, "net_income": 0},
-                "details": {"revenue_by_account": {}, "expenses_by_account": {}},
-            },
-        }
-
-
 @router.get("/reports/cash-flow")
 async def get_cash_flow(
     workshop_id: str = Query(...),

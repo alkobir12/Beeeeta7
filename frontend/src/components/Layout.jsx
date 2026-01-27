@@ -3,6 +3,8 @@ import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
+import AbuFahadFloatingChat from './AbuFahadFloatingChat';
+
 
 const Layout = ({ children, pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +40,15 @@ const Layout = ({ children, pageTitle }) => {
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
           {children}
         </div>
+
+        {/* AbuFahad Floating Chat (Finance only) */}
+        <AbuFahadFloatingChat
+          enabledPaths={[
+            '/operations',
+            '/accounting/chart-of-accounts',
+            '/accounting/comprehensive',
+          ]}
+        />
       </main>
     </div>
   );

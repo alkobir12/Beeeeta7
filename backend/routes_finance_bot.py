@@ -224,19 +224,32 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
 
     user_message = UserMessage(text=full_text)
 
-    try:
-        ai_response = await chat.send_message(user_message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"تعذّر الاتصال بالمساعد المالي: {e}")
+    # تحسين الأداء: إذا كانت الرسالة قصيرة وواضحة أنها تطلب "تنبيهات سريعة" فقط
+    # نرجّح الرد القواعدي بدون استدعاء LLM لتقليل البطء.
+    user_lower = payload.message.lower()
+    fast_only = (
+        (payload.financial_data is not None)
+        and any(k in payload.message for k in ["تنبيه", "ملاحظات سريعة", "ملخص سريع"])
+        and len(payload.message) <= 60
+    )
+
+    ai_response = ""
+
+    if not fast_only:
+        try:
+            ai_response = await chat.send_message(user_message)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"تعذّر الاتصال بالمساعد المالي: {e}")
 
     # تحليل قواعدي آمن (يُدمج في نفس response كنص إضافي)
     safe_analysis = abu_fahad_safe_analysis(payload.financial_data or {})
     if safe_analysis.get("notes"):
-        ai_response = (
-            f"{ai_response}\n\n"
-            "ملاحظات سريعة (تحليل قواعدي):\n"
-            + "\n".join([f"- {n}" for n in safe_analysis["notes"]])
-        )
+        notes_block = "ملاحظات سريعة (تحليل قواعدي):\n" + "\n".join([f"- {n}" for n in safe_analysis["notes"]])
+        ai_response = (ai_response + "\n\n" + notes_block).strip() if ai_response else notes_block
+
+    # إذا تخطينا LLM ولم توجد ملاحظات
+    if not ai_response:
+        ai_response = "تم. إذا رغبت بتحليل أعمق، اكتب: \"حلّل الربحية والسيولة\" أو اختر حساباً للتدقيق." 
 
     return FinanceBotChatResponse(
         response=ai_response,

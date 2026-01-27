@@ -761,35 +761,26 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
 
         # محاولة قراءة من جدول chart_of_accounts
         try:
+            # محاولة قراءة من جدول accounts (الاسم الحقيقي في بعض مشاريع Supabase)
             response = (
-                supabase.table("chart_of_accounts")
+                supabase.table("accounts")
                 .select("*")
-                .or_(f"workshop_id.eq.{workshop_id},workshop_id.eq.default")
-                .eq("is_active", True)
                 .order("code")
                 .execute()
             )
+            accounts = response.data or []
 
-            if response.data and len(response.data) > 0:
-                accounts = []
-                for acc in response.data:
-                    accounts.append(
-                        {
-                            "id": acc.get("id"),
-                            "code": acc.get("code"),
-                            "name": acc.get("name_ar"),
-                            "name_ar": acc.get("name_ar"),
-                            "name_en": acc.get("name_en"),
-                            "type": acc.get("type"),
-                            "balance": float(acc.get("balance", 0)),
-                        }
-                    )
+            for account in accounts:
+                if not account.get("name_ar"):
+                    account["name_ar"] = account.get("name")
 
-                return {"success": True, "data": accounts}
+            return {
+                "success": True,
+                "data": accounts,
+                "source": "supabase"
+            }
         except Exception as e:
-            print(
-                f"Chart of accounts table not found, will calculate from operations: {e}"
-            )
+            print(f"Supabase error, falling back to MongoDB: {str(e)}")
 
         # البديل: حساب الحسابات من operations
         ops_response = supabase.table("operations").select("*").execute()

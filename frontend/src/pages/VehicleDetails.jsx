@@ -177,7 +177,8 @@ const VehicleDetails = () => {
               reference: operationResult?.id || null,
               lines: [
                 {
-                  account_id: customerAccount.id,
+                  // بيع من ملف المركبة: افتراضيًا نقدي (101). عند الحاجة يمكن لاحقاً ربطها بفاتورة/آجل.
+                  account_id: (findAccountByCode('101') || customerAccount).id,
                   debit_amount: total,
                   credit_amount: 0,
                 },

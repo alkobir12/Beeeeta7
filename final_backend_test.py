@@ -142,7 +142,8 @@ def test_p0_credit_payment_logic():
                     payment_url = f"{BACKEND_URL}/operations/{operation_id}/confirm-payment"
                     payment_data = {
                         "amount": 40.0,
-                        "payment_date": "2024-06-15"
+                        "payment_date": "2024-06-15",
+                        "workshopId": WORKSHOP_ID
                     }
                     
                     payment_response = requests.post(payment_url, json=payment_data, timeout=30)

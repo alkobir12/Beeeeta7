@@ -6,6 +6,8 @@ import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, technicianAPI, financeAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatters';
+
 
 const VehicleDetails = () => {
   const { t, i18n } = useTranslation();

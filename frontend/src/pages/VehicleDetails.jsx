@@ -151,7 +151,7 @@ const VehicleDetails = () => {
           partnerType: 'customer',
           partnerName: vehicle.customerName || '',
           items: operationItems,
-          paymentMethod: 'cash',
+          paymentMethod: (status === 'delivered') ? 'cash' : 'credit',
           notes: `عملية من ملف المركبة: ${vehicle.plateNumber}`
         };
         

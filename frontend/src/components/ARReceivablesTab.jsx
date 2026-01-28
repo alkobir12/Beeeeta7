@@ -20,6 +20,7 @@ const ARReceivablesTab = () => {
       const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: asOf });
       return res.data?.data || null;
     },
+    retry: 1,
   });
 
   const agingQuery = useQuery({

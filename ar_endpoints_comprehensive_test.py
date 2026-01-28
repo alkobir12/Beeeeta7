@@ -392,7 +392,7 @@ def test_ar_customer_statement():
         url = f"{BACKEND_URL}/finance/ar/customer-statement"
         params = {
             "workshop_id": WORKSHOP_ID,
-            "customer_name": "أحمد محمد العميل",
+            "customer": "أحمد محمد العميل",
             "start_date": "2024-06-01",
             "end_date": "2024-06-30"
         }

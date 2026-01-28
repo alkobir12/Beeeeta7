@@ -102,6 +102,7 @@ function App() {
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
+                      <Route path="*" element={<Dashboard />} />
                       <Route path="/customers" element={<Customers />} />
                       <Route path="/new-vehicle" element={<NewVehicle />} />
                       <Route path="/vehicle/:id" element={<VehicleDetails />} />

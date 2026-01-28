@@ -28,6 +28,7 @@ class StitchGenerateRequest(BaseModel):
     prompt: str
     design_style: str = "modern"
     color_scheme: Optional[str] = None
+    ui_scope: Optional[str] = "section"
 
 
 def _ensure_stitch_config():
@@ -89,6 +90,16 @@ async def generate_ui(request: StitchGenerateRequest):
     created_at = datetime.utcnow().isoformat()
     await _create_generation_record(generation_id, request)
 
+    scope_value = (request.ui_scope or "section").lower()
+    if scope_value not in ("section", "full"):
+        scope_value = "section"
+    scope_hint = (
+        "صمّم واجهة كاملة متعددة الأقسام مع تنقل داخلي وهيكل كامل للصفحة."
+        if scope_value == "full"
+        else "صمّم قسم/مكوّن واحد محدد داخل الواجهة."
+    )
+    effective_prompt = f"{request.prompt}\n\nنطاق التوليد: {scope_hint}"
+
     headers = {
         "Authorization": f"Bearer {STITCH_API_KEY}",
         "Content-Type": "application/json",
@@ -96,7 +107,7 @@ async def generate_ui(request: StitchGenerateRequest):
     }
 
     payload = {
-        "prompt": request.prompt,
+        "prompt": effective_prompt,
         "style": request.design_style,
         "color_scheme": request.color_scheme or "default",
         "format": "react-typescript",
@@ -147,6 +158,7 @@ async def generate_ui(request: StitchGenerateRequest):
         "id": generation_id,
         "status": "completed",
         "prompt": request.prompt,
+        "ui_scope": scope_value,
         "design_style": request.design_style,
         "generated_code": stitch_response.get("code"),
         "figma_url": stitch_response.get("figma_url"),

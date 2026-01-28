@@ -18,7 +18,6 @@ import {
   DollarSign,
   Receipt,
   Scale,
-  Plus,
   Trash2,
 } from 'lucide-react';
 

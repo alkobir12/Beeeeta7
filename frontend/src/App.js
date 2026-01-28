@@ -139,9 +139,7 @@ function App() {
                       <Route path="/system-audit" element={<SystemAudit />} />
                     </Routes>
                     </Suspense>
-                  </Layout>
-                </Protected>
-              } />
+              </Route>
               </Routes>
             </Router>
           </div>

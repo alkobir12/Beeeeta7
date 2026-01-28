@@ -181,8 +181,11 @@ def _fetch_journal_entries(
     if not supabase:
         raise Exception("Supabase not connected")
 
-    query = supabase.table("journal_entries").select("*").eq(
-        "workshop_id", workshop_id
+    query = (
+        supabase.table("journal_entries")
+        .select("*")
+        .eq("workshop_id", workshop_id)
+        .neq("workshop_id", None)
     )
     if start_date:
         query = query.gte("date", start_date)

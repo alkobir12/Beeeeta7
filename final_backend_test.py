@@ -180,7 +180,7 @@ def test_p0_credit_payment_logic():
                                 print_result(False, f"فشل في جلب القيود بعد الدفعة: {journal_response2.status_code}")
                                 return False
                         else:
-                            print_result(False, f"مبالغ الدفعة غير صحيحة: دُفع {paid}, متبقي {remaining}")
+                            print_result(False, f"مبالغ الدفعة غير صحيحة: دُفع {paid}, متبقي {remaining} (متوقع: دُفع 40.0)")
                             return False
                     else:
                         print_result(False, f"فشل في تأكيد الدفعة: {payment_response.status_code}")

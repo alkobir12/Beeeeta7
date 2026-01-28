@@ -257,7 +257,8 @@ class P0CreditPaymentTester:
         
         payment_data = {
             "amount": 60.0,
-            "payment_date": "2024-06-15"
+            "payment_date": "2024-06-15",
+            "workshop_id": self.workshop_id
         }
         
         endpoint = f"/operations/{self.operation_id}/confirm-payment"

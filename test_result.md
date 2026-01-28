@@ -59,6 +59,30 @@ Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 - Testing Date: 2026-01-28 16:03:42
 - Test Focus: P0 credit payment logic, partial payments, cascade deletion
 
+
+## AR Reports + Reset endpoint regression testing (2026-01-28)
+
+### Test Objective:
+- تنفيذ سيناريو يونيو 2024 (كما في برومبت الاختبار)
+- التحقق من تقارير AR الجديدة (Customers/Ledger/Statement/Aging/Turnover)
+- التأكد أن reset-all-data يحذف journal_entries فعلياً (وليس فقط operations)
+
+### Method:
+- Manual API testing عبر preview URL
+- Pytest: backend/tests/test_ar_reports_june_2024.py
+
+### Results:
+✅ PASSED
+- reset-all-data صار يحذف journal_entries scoped بالورشة (ولا يفشل عند خطأ جدول chart_of_accounts)
+- June 2024 scenario:
+  - /api/finance/ar/customers as_of=2024-06-30 => total_ar=180، عميل واحد أحمد=180
+  - /api/finance/ar/ledger (يونيو) => ending_balance=180
+  - /api/finance/ar/customer-statement (أحمد) => ending_balance=180
+  - /api/finance/ar/aging => total_ar=180 و 0-30=180
+  - /api/finance/ar/turnover (credit_sales_total=1500) => closing_receivables=180
+- Pytest suite test_ar_reports_june_2024.py: PASS
+
+
 ### Test Results Summary: ✅ ALL TESTS PASSED (7/7)
 
 #### ✅ P0 CREDIT PAYMENT LOGIC - FULLY WORKING

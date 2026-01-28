@@ -11,6 +11,8 @@ import ARReceivablesTab from '../components/ARReceivablesTab';
 
 const ComprehensiveFinancial = () => {
   const { themeName } = useTheme();
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [activeTab, setActiveTab] = useState('balance');
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();

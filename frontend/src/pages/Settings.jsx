@@ -41,10 +41,31 @@ const Settings = () => {
   const [stitchForm, setStitchForm] = useState({
     prompt: '',
     designStyle: 'modern',
-    colorScheme: ''
+    colorScheme: '',
+    uiScope: 'section'
   });
   const [stitchHistory, setStitchHistory] = useState([]);
   const [showStitchCode, setShowStitchCode] = useState(false);
+  const stitchSuggestions = [
+    {
+      id: 'full-dashboard',
+      label: 'لوحة مالية كاملة',
+      prompt: 'صمّم لوحة تحكم مالية كاملة للورشة تشمل بطاقات KPIs ورسوم بيانية وقائمة معاملات.',
+      scope: 'full',
+    },
+    {
+      id: 'invoice-page',
+      label: 'صفحة فواتير كاملة',
+      prompt: 'صمّم صفحة فواتير كاملة مع جدول الفواتير وفلاتر وبطاقات إجمالي.',
+      scope: 'full',
+    },
+    {
+      id: 'login-card',
+      label: 'بطاقة تسجيل دخول',
+      prompt: 'صمّم بطاقة تسجيل دخول أنيقة مع حقول البريد وكلمة المرور وزر أساسي.',
+      scope: 'section',
+    },
+  ];
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -98,7 +119,12 @@ const Settings = () => {
       return;
     }
     try {
-      await generateUI(stitchForm.prompt, stitchForm.designStyle, stitchForm.colorScheme);
+      await generateUI(
+        stitchForm.prompt,
+        stitchForm.designStyle,
+        stitchForm.colorScheme,
+        stitchForm.uiScope
+      );
       const history = await getHistory();
       setStitchHistory(Array.isArray(history) ? history : []);
     } catch (error) {

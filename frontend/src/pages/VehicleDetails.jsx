@@ -1018,9 +1018,50 @@ const VehicleDetails = () => {
                         {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).length > 0 ? (
                           <div className="space-y-1">
                             {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).slice(0, 3).map((op, idx) => (
-                              <div key={idx} className="flex justify-between text-xs bg-white p-2 rounded">
-                                <span>{op.partnerName || 'عملية'}</span>
-                                <span className="font-semibold">{Number(op.totalAmount || op.total || 0).toFixed(2)} ر.س</span>
+                              <div key={idx} className="flex items-center justify-between gap-2 text-xs bg-white p-2 rounded">
+                                <div className="min-w-0">
+                                  <p className="truncate">{op.partnerName || 'عملية'}</p>
+                                  <p className="text-[10px] text-gray-500">
+                                    {op.paymentMethod === 'credit' ? 'آجل' : 'نقدي'}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="font-semibold">{Number(op.totalAmount || op.total || 0).toFixed(2)} ر.س</span>
+
+                                  {op.paymentMethod === 'credit' && (
+                                    <button
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        const raw = window.prompt('أدخل مبلغ التحصيل (اتركه فارغاً للسداد الكامل):');
+                                        let amount = undefined;
+                                        if (raw && raw.trim()) {
+                                          const n = Number(raw);
+                                          if (!Number.isFinite(n) || n <= 0) {
+                                            alert('مبلغ غير صحيح');
+                                            return;
+                                          }
+                                          amount = n;
+                                        }
+                                        try {
+                                          await axios.post(`${API_URL}/operations/${op.id}/confirm-payment`, {
+                                            workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
+                                            amount,
+                                            date: new Date().toISOString().split('T')[0]
+                                          });
+                                          await fetchData();
+                                        } catch (err) {
+                                          console.error('Failed to confirm payment from vehicle page:', err);
+                                          alert('فشل تأكيد السداد');
+                                        }
+                                      }}
+                                      className="px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+                                      title="تأكيد سداد"
+                                    >
+                                      تأكيد
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             ))}
                           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
@@ -51,7 +51,15 @@ const Layout = ({ pageTitle }) => {
         
         {/* Page Content */}
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-[50vh]">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </div>
 
         {/* AbuFahad Floating Chat (Finance only) */}

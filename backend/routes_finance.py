@@ -1246,7 +1246,12 @@ async def ar_ledger(
         # sort by date
         def sort_key(r):
             dt = _to_date(r.get("date") or "")
-            return dt or datetime.min
+            if dt is None:
+                return datetime.min.replace(tzinfo=None)
+            # normalize timezone-aware to naive for safe compare
+            if getattr(dt, "tzinfo", None) is not None:
+                return dt.replace(tzinfo=None)
+            return dt
 
         rows.sort(key=sort_key)
 

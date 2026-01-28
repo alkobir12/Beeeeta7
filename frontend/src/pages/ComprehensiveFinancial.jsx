@@ -113,14 +113,6 @@ const ComprehensiveFinancial = () => {
     );
   }
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['income-statement', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['cash-flow', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['trial-balance', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['ar-customers-summary', workshopId] });
-  };
-
   const bsTotals = balanceSheet?.totals || { assets: 0, liabilities: 0, equity: 0 };
   const isTotals = incomeStatement?.totals || { revenue: 0, expenses: 0, net_income: 0 };
   const cfData = cashFlow || {};

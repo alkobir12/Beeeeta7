@@ -1281,8 +1281,6 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             "vehicleId": op.get("vehicleId"),
             "type": "income" if op["type"] == "sale" else "expense",
             "category": f"operation_{op['type']}",
-
-
             "amount": subtotal,
             "description": f"{op['type']} - {op.get('partnerName') or ''}",
             "date": op["date"],

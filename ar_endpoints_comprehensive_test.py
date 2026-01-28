@@ -167,6 +167,7 @@ def create_june_2024_scenario():
         # أحمد - تحصيل 200 ريال
         print("🔸 تحصيل من أحمد (200 ريال)")
         payment_2_data = {
+            "workshopId": WORKSHOP_ID,
             "amount": 200.0,
             "payment_date": "2024-06-25"
         }

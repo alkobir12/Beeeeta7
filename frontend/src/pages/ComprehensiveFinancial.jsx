@@ -58,20 +58,18 @@ const ComprehensiveFinancial = () => {
       const res = await financeAPI.getTrialBalance({ workshop_id: workshopId, start_date: startDate, end_date: endDate });
       const tbData = res.data?.data || res.data || {};
       return tbData.accounts || [];
+    }
+  });
 
   const receivablesSummaryQuery = useQuery({
     queryKey: ['ar-customers-summary', workshopId, endDate],
     queryFn: async () => {
       const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: endDate });
       return res.data?.data || null;
+    }
+  });
 
   const receivablesSummary = receivablesSummaryQuery.data;
-
-    }
-  });
-
-    }
-  });
 
   const balanceSheet = balanceSheetQuery.data;
   const incomeStatement = incomeStatementQuery.data;

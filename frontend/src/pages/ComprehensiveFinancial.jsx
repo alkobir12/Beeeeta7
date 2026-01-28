@@ -285,7 +285,7 @@ const ComprehensiveFinancial = () => {
             }
           />
 
-            <FinancialCard
+              <FinancialCard
             title={formatCurrency(isTotals.expenses)}
             subtitle="إجمالي المصروفات"
             icon={TrendingUp}

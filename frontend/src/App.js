@@ -98,9 +98,10 @@ function App() {
 
               <Route path="/*" element={
                 <Protected>
-                  <Layout>
-                    <Suspense fallback={<PageLoader />}>
-                    <Routes>
+                  <Layout />
+                </Protected>
+              }>
+                    
                       <Route path="/" element={<Dashboard />} />
                       <Route path="*" element={<Dashboard />} />
                       <Route path="/customers" element={<Customers />} />

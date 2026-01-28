@@ -1307,6 +1307,12 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         }
         _safe_insert_journal_entry(supa, entry)
 
+        # Cleanup legacy rows that might have been inserted without workshop_id (fallback insert)
+        try:
+            supa.client.table("journal_entries").delete().is_("workshop_id", "null").execute()
+        except Exception:
+            pass
+
         return {
             "success": True,
             "data": {

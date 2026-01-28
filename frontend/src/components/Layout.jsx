@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
+import { Outlet } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 import AbuFahadFloatingChat from './AbuFahadFloatingChat';
@@ -8,7 +9,7 @@ import FinanceAlertsWidget from './FinanceAlertsWidget';
 
 
 
-const Layout = ({ children, pageTitle }) => {
+const Layout = ({ pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -50,7 +51,7 @@ const Layout = ({ children, pageTitle }) => {
         
         {/* Page Content */}
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
-          {children}
+          <Outlet />
         </div>
 
         {/* AbuFahad Floating Chat (Finance only) */}

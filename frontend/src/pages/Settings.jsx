@@ -132,6 +132,22 @@ const Settings = () => {
     }
   };
 
+  const handleCopyStitchPrompt = async () => {
+    const text = stitchResult?.prompt || stitchForm.prompt;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'تم النسخ', description: 'تم نسخ وصف الواجهة' });
+    } catch (error) {
+      toast({ title: 'خطأ', description: 'تعذر نسخ النص', variant: 'destructive' });
+    }
+  };
+
+  const handleOpenStitch = () => {
+    const url = stitchResult?.stitch_url || 'https://stitch.withgoogle.com';
+    window.open(url, '_blank');
+  };
+
   const Section = ({ title, icon: Icon, children }) => (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3 px-1">

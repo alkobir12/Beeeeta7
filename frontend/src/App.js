@@ -105,8 +105,8 @@ function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/new-vehicle" element={<NewVehicle />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="new-vehicle" element={<NewVehicle />} />
                 <Route path="/vehicle/:id" element={<VehicleDetails />} />
                 <Route path="/customer/:id" element={<CustomerDetails />} />
                 <Route path="/technicians" element={<Technicians />} />

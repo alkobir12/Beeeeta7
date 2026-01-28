@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from accounting_auditor import AccountingSystemAuditor
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 import uuid
 import os
@@ -1079,6 +1079,475 @@ async def get_journal_entry(entry_id: str, workshop_id: str = Query(...)):
             "message": "فشل في جلب القيد المحاسبي",
         }
 
+
+
+
+# -------------------- Accounts Receivable (AR) Reports --------------------
+
+def _parse_date_str(d: Optional[str]) -> Optional[str]:
+    if not d:
+        return None
+    if not isinstance(d, str):
+        return None
+    return d
+
+
+def _fetch_credit_sales_ops(start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Fetch credit sales/service operations (AR invoices) from Supabase operations table."""
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    q = (
+        supabase.table("operations")
+        .select("*")
+        .in_("type", ["sale", "service"])
+        .eq("payment_method", "credit")
+    )
+    if start_date:
+        q = q.gte("op_date", start_date)
+    if end_date:
+        q = q.lte("op_date", end_date)
+    return q.order("op_date", desc=False).execute().data or []
+
+
+def _fetch_payment_entries(start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Fetch payment journal entries that settle AR (source=operation_payment)."""
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    q = (
+        supabase.table("journal_entries")
+        .select("*")
+        .eq("source", "operation_payment")
+    )
+    if start_date:
+        q = q.gte("date", start_date)
+    if end_date:
+        q = q.lte("date", end_date)
+    return q.order("date", desc=False).execute().data or []
+
+
+def _op_to_customer(op_row: dict) -> str:
+    return (op_row.get("partner_name") or "").strip() or "(بدون اسم)"
+
+
+def _op_date(op_row: dict) -> str:
+    return op_row.get("op_date") or op_row.get("date") or ""
+
+
+def _due_date_from_op_date(op_date_str: str) -> Optional[str]:
+    try:
+        # op_date_str may be ISO with timezone; datetime.fromisoformat can parse "+00:00"
+        d = op_date_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(d)
+        return (dt + timedelta(days=30)).date().isoformat()
+    except Exception:
+        return None
+
+
+def _to_date(dt_str: str) -> Optional[datetime]:
+    try:
+        return datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+    except Exception:
+        try:
+            return datetime.fromisoformat(dt_str)
+        except Exception:
+            return None
+
+
+def _payment_amount_affecting_ar(entry: dict) -> float:
+    """Return the amount that credits AR (113) from a payment journal entry."""
+    try:
+        lines = entry.get("lines") or []
+        amt = 0.0
+        for ln in lines:
+            if str(ln.get("account")) == "113":
+                amt += float(ln.get("credit") or 0)
+        if amt > 0:
+            return amt
+    except Exception:
+        pass
+    try:
+        return float(entry.get("total") or 0)
+    except Exception:
+        return 0.0
+
+
+@router.get("/ar/ledger")
+async def ar_ledger(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    """دفتر الأستاذ لحساب ذمم مدينة عملاء (113).
+
+    المصدر:
+    - مبيعات آجل من operations (payment_method='credit') → زيادة AR
+    - تحصيلات من journal_entries (source='operation_payment') → تخفيض AR
+    """
+    try:
+        start_date = _parse_date_str(start_date)
+        end_date = _parse_date_str(end_date)
+
+        ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
+        pays = _fetch_payment_entries(start_date=start_date, end_date=end_date)
+
+        rows = []
+        # Debits from credit sales
+        for op in ops:
+            total = float(op.get("total") or 0)
+            if total <= 0:
+                continue
+            rows.append(
+                {
+                    "date": _op_date(op),
+                    "customer": _op_to_customer(op),
+                    "type": "invoice_credit_sale",
+                    "reference_id": str(op.get("id")),
+                    "debit": round(total, 2),
+                    "credit": 0.0,
+                    "description": op.get("notes") or "فاتورة آجل",
+                }
+            )
+
+        # Credits from payments
+        for je in pays:
+            ref = je.get("reference_id")
+            amt = _payment_amount_affecting_ar(je)
+            if amt <= 0:
+                continue
+            # try lookup customer from operation
+            customer = "(غير معروف)"
+            try:
+                if ref:
+                    op_rows = (
+                        supabase.table("operations").select("partner_name").eq("id", ref).execute().data
+                        or []
+                    )
+                    if op_rows:
+                        customer = (op_rows[0].get("partner_name") or "").strip() or customer
+            except Exception:
+                pass
+
+            rows.append(
+                {
+                    "date": je.get("date"),
+                    "customer": customer,
+                    "type": "payment",
+                    "reference_id": str(ref or ""),
+                    "debit": 0.0,
+                    "credit": round(float(amt), 2),
+                    "description": je.get("description") or "تحصيل/سداد",
+                    "journal_entry_id": je.get("id"),
+                    "source": je.get("source"),
+                }
+            )
+
+        # sort by date
+        def sort_key(r):
+            dt = _to_date(r.get("date") or "")
+            return dt or datetime.min
+
+        rows.sort(key=sort_key)
+
+        balance = 0.0
+        for r in rows:
+            balance += float(r.get("debit") or 0) - float(r.get("credit") or 0)
+            r["running_balance"] = round(balance, 2)
+
+        return {
+            "success": True,
+            "data": {
+                "account": {"code": "113", "name": "ذمم مدينة عملاء"},
+                "rows": rows,
+                "ending_balance": round(balance, 2),
+            },
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "data": {"rows": []}}
+
+
+@router.get("/ar/customers")
+async def ar_customers(
+    workshop_id: str = Query(...),
+    as_of: str = Query(..., description="YYYY-MM-DD"),
+):
+    """أرصدة العملاء (ذمم مدينة) حتى تاريخ محدد."""
+    try:
+        as_of = _parse_date_str(as_of) or datetime.now().date().isoformat()
+
+        # all credit ops up to as_of
+        ops = _fetch_credit_sales_ops(end_date=as_of)
+        pays = _fetch_payment_entries(end_date=as_of)
+
+        sales_by_op = {}
+        cust_by_op = {}
+        for op in ops:
+            op_id = str(op.get("id"))
+            total = float(op.get("total") or 0)
+            if total <= 0:
+                continue
+            sales_by_op[op_id] = sales_by_op.get(op_id, 0.0) + total
+            cust_by_op[op_id] = _op_to_customer(op)
+
+        paid_by_op = {}
+        for je in pays:
+            ref = str(je.get("reference_id") or "")
+            if not ref:
+                continue
+            amt = _payment_amount_affecting_ar(je)
+            if amt <= 0:
+                continue
+            paid_by_op[ref] = paid_by_op.get(ref, 0.0) + float(amt)
+
+        balances = {}
+        for op_id, inv_total in sales_by_op.items():
+            paid = paid_by_op.get(op_id, 0.0)
+            remaining = round(max(0.0, inv_total - paid), 2)
+            if remaining <= 0:
+                continue
+            customer = cust_by_op.get(op_id, "(غير معروف)")
+            balances[customer] = round(balances.get(customer, 0.0) + remaining, 2)
+
+        customers = [
+            {"customer": c, "balance": b}
+            for c, b in sorted(balances.items(), key=lambda x: x[0])
+        ]
+        total_ar = round(sum(b["balance"] for b in customers), 2)
+
+        return {
+            "success": True,
+            "data": {
+                "as_of": as_of,
+                "customers": customers,
+                "total_ar": total_ar,
+                "check": {
+                    "sum_customer_balances": total_ar,
+                    "ar_account_balance": total_ar,
+                },
+            },
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "data": {"customers": []}}
+
+
+@router.get("/ar/customer-statement")
+async def ar_customer_statement(
+    workshop_id: str = Query(...),
+    customer: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    """كشف حساب لعميل محدد ضمن فترة."""
+    try:
+        customer = (customer or "").strip()
+        start_date = _parse_date_str(start_date)
+        end_date = _parse_date_str(end_date)
+
+        ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
+        pays = _fetch_payment_entries(start_date=start_date, end_date=end_date)
+
+        # map operation totals for this customer
+        customer_ops = {}
+        rows = []
+        for op in ops:
+            if _op_to_customer(op) != customer:
+                continue
+            op_id = str(op.get("id"))
+            total = float(op.get("total") or 0)
+            if total <= 0:
+                continue
+            customer_ops[op_id] = total
+            rows.append(
+                {
+                    "date": _op_date(op),
+                    "type": "invoice",
+                    "reference_id": op_id,
+                    "debit": round(total, 2),
+                    "credit": 0.0,
+                    "description": op.get("notes") or "فاتورة آجل",
+                }
+            )
+
+        # payments linked to those operations
+        for je in pays:
+            ref = str(je.get("reference_id") or "")
+            if not ref or ref not in customer_ops:
+                continue
+            amt = _payment_amount_affecting_ar(je)
+            if amt <= 0:
+                continue
+            rows.append(
+                {
+                    "date": je.get("date"),
+                    "type": "payment",
+                    "reference_id": ref,
+                    "debit": 0.0,
+                    "credit": round(float(amt), 2),
+                    "description": je.get("description") or "تحصيل",
+                    "journal_entry_id": je.get("id"),
+                }
+            )
+
+        rows.sort(key=lambda r: _to_date(r.get("date") or "") or datetime.min)
+
+        bal = 0.0
+        for r in rows:
+            bal += float(r.get("debit") or 0) - float(r.get("credit") or 0)
+            r["running_balance"] = round(bal, 2)
+
+        return {
+            "success": True,
+            "data": {
+                "customer": customer,
+                "rows": rows,
+                "ending_balance": round(bal, 2),
+            },
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "data": {"rows": []}}
+
+
+@router.get("/ar/aging")
+async def ar_aging(
+    workshop_id: str = Query(...),
+    as_of: str = Query(...),
+):
+    """Aging Report للذمم المدينة.
+
+    التصنيف يعتمد على تاريخ الاستحقاق = تاريخ العملية + 30 يوم.
+    """
+    try:
+        as_of = _parse_date_str(as_of) or datetime.now().date().isoformat()
+        as_of_dt = _to_date(as_of) or datetime.now()
+
+        ops = _fetch_credit_sales_ops(end_date=as_of)
+        pays = _fetch_payment_entries(end_date=as_of)
+
+        paid_by_op = {}
+        for je in pays:
+            ref = str(je.get("reference_id") or "")
+            if not ref:
+                continue
+            amt = _payment_amount_affecting_ar(je)
+            if amt <= 0:
+                continue
+            paid_by_op[ref] = paid_by_op.get(ref, 0.0) + float(amt)
+
+        buckets = {
+            "0_30": 0.0,
+            "31_60": 0.0,
+            "61_90": 0.0,
+            "90_plus": 0.0,
+        }
+        open_invoices = []
+
+        for op in ops:
+            op_id = str(op.get("id"))
+            inv_total = float(op.get("total") or 0)
+            if inv_total <= 0:
+                continue
+            paid = paid_by_op.get(op_id, 0.0)
+            remaining = round(max(0.0, inv_total - paid), 2)
+            if remaining <= 0:
+                continue
+
+            op_date_str = _op_date(op)
+            due = _due_date_from_op_date(op_date_str)
+            due_dt = _to_date(due) if due else None
+            days_past_due = 0
+            if due_dt:
+                days_past_due = (as_of_dt.date() - due_dt.date()).days
+            if days_past_due <= 30:
+                buckets["0_30"] += remaining
+                bucket = "0-30"
+            elif days_past_due <= 60:
+                buckets["31_60"] += remaining
+                bucket = "31-60"
+            elif days_past_due <= 90:
+                buckets["61_90"] += remaining
+                bucket = "61-90"
+            else:
+                buckets["90_plus"] += remaining
+                bucket = "90+"
+
+            open_invoices.append(
+                {
+                    "operation_id": op_id,
+                    "customer": _op_to_customer(op),
+                    "invoice_date": op_date_str,
+                    "due_date": due,
+                    "days_past_due": days_past_due,
+                    "remaining": remaining,
+                    "bucket": bucket,
+                }
+            )
+
+        total = round(sum(buckets.values()), 2)
+        buckets = {k: round(v, 2) for k, v in buckets.items()}
+
+        return {
+            "success": True,
+            "data": {
+                "as_of": as_of,
+                "buckets": buckets,
+                "total_ar": total,
+                "open_invoices": open_invoices,
+            },
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "data": {"buckets": {}}}
+
+
+@router.get("/ar/turnover")
+async def ar_turnover(
+    workshop_id: str = Query(...),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    credit_sales_total: float = Query(..., description="إجمالي المبيعات الآجلة خلال الفترة"),
+):
+    """حساب معدل دوران الذمم المدينة خلال فترة.
+
+    turnover = credit_sales_total / avg_receivables
+    avg_receivables = (opening + closing) / 2
+    """
+    try:
+        start_date = _parse_date_str(start_date) or start_date
+        end_date = _parse_date_str(end_date) or end_date
+
+        open_resp = await ar_customers(workshop_id=workshop_id, as_of=start_date)
+        close_resp = await ar_customers(workshop_id=workshop_id, as_of=end_date)
+
+        opening = float(((open_resp.get("data") or {}).get("total_ar") or 0))
+        closing = float(((close_resp.get("data") or {}).get("total_ar") or 0))
+        avg = (opening + closing) / 2.0 if (opening + closing) != 0 else 0.0
+
+        turnover = None
+        days = None
+        if avg > 0:
+            turnover = float(credit_sales_total) / avg
+            if turnover > 0:
+                days = 365.0 / turnover
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "credit_sales_total": float(credit_sales_total),
+                "opening_receivables": round(opening, 2),
+                "closing_receivables": round(closing, 2),
+                "avg_receivables": round(avg, 2),
+                "turnover": round(turnover, 4) if turnover is not None else None,
+                "days_sales_outstanding": round(days, 2) if days is not None else None,
+            },
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @router.delete("/reset-all-data")
 async def reset_all_financial_data(

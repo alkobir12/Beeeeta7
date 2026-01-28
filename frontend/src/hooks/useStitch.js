@@ -49,7 +49,7 @@ export const useStitch = () => {
     }, 5000);
   }, []);
 
-  const generateUI = useCallback(async (prompt, designStyle, colorScheme) => {
+  const generateUI = useCallback(async (prompt, designStyle, colorScheme, uiScope) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -67,6 +67,7 @@ export const useStitch = () => {
           prompt,
           design_style: designStyle,
           color_scheme: colorScheme || null,
+          ui_scope: uiScope || 'section',
         },
         { signal: controller.signal }
       );

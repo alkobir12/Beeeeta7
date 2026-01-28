@@ -78,6 +78,16 @@ const ComprehensiveFinancial = () => {
   const incomeStatement = incomeStatementQuery.data;
   const cashFlow = cashFlowQuery.data;
 
+  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading;
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['income-statement', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['cash-flow', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['trial-balance', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['ar-customers-summary', workshopId] });
+  };
+
   // Avoid blank/stuck page if a query fails
   const hasError = balanceSheetQuery.isError || incomeStatementQuery.isError || cashFlowQuery.isError || trialBalanceQuery.isError || receivablesSummaryQuery.isError;
   if (hasError) {
@@ -91,6 +101,7 @@ const ComprehensiveFinancial = () => {
       </div>
     );
   }
+
 
   const trialBalance = trialBalanceQuery.data;
   const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading;

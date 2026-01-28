@@ -1182,6 +1182,147 @@ async def delete_all_operations():
             return {"success": True, "message": "All operations deleted"}
 
         result = await db.operations.delete_many({})
+
+
+@router.post("/operations/{op_id}/confirm-payment")
+async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(None)):
+    """تأكيد سداد عملية آجل.
+
+    - الآجل يُسجَّل في operations (Accrual) فقط.
+    - عند التحصيل/السداد يتم إنشاء قيد يومية يعكس حركة النقد:
+      * بيع: مدين نقدية 101 / دائن ذمم 113
+      * شراء: مدين ذمم دائنة 211 / دائن نقدية 101
+
+    يدعم الدفعات الجزئية عبر payload.amount.
+    """
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider != "supabase":
+            raise HTTPException(status_code=400, detail="confirm-payment supported only for supabase provider")
+
+        supa = SupabaseService()
+        workshop_id = (payload or {}).get("workshopId") or (payload or {}).get("workshop_id")
+        if not workshop_id:
+            raise HTTPException(status_code=400, detail="workshopId required")
+
+        op_rows = (
+            supa.client.table("operations").select("*").eq("id", op_id).execute().data
+            or []
+        )
+        if not op_rows:
+            raise HTTPException(status_code=404, detail="operation not found")
+        op_row = op_rows[0]
+
+        if (op_row.get("payment_method") or "").lower() != "credit":
+            return {"success": True, "message": "operation is not credit"}
+
+        op_type = (op_row.get("type") or "").lower()
+        total = float(op_row.get("total") or 0)
+        if total <= 0:
+            raise HTTPException(status_code=400, detail="invalid operation total")
+
+        amount = None
+        if (payload or {}).get("amount") is not None:
+            try:
+                amount = float((payload or {}).get("amount"))
+            except Exception:
+                raise HTTPException(status_code=400, detail="invalid amount")
+
+        pay_amount = amount if amount is not None else total
+        if pay_amount <= 0:
+            raise HTTPException(status_code=400, detail="amount must be > 0")
+
+        already_paid = 0.0
+        try:
+            prev = (
+                supa.client.table("journal_entries")
+                .select("total")
+                .eq("source", "operation_payment")
+                .eq("reference_id", op_id)
+                .execute()
+                .data
+                or []
+            )
+            for je in prev:
+                already_paid += float(je.get("total") or 0)
+        except Exception as e:
+            print(f"Payment lookup failed: {e}")
+
+        remaining = max(0.0, total - already_paid)
+        if pay_amount > remaining + 0.0001:
+            pay_amount = remaining
+        if pay_amount <= 0:
+            return {"success": True, "message": "no remaining amount to confirm"}
+
+        if op_type in ("sale", "service"):
+            lines = [
+                {
+                    "account": "101",
+                    "account_name": ACCOUNT_NAME_MAP.get("101", "101"),
+                    "debit": pay_amount,
+                    "credit": 0,
+                },
+                {
+                    "account": "113",
+                    "account_name": ACCOUNT_NAME_MAP.get("113", "113"),
+                    "debit": 0,
+                    "credit": pay_amount,
+                },
+            ]
+            desc = f"تحصيل آجل - {op_row.get('partner_name') or ''}"
+        elif op_type in ("purchase", "expense"):
+            lines = [
+                {
+                    "account": "211",
+                    "account_name": ACCOUNT_NAME_MAP.get("211", "211"),
+                    "debit": pay_amount,
+                    "credit": 0,
+                },
+                {
+                    "account": "101",
+                    "account_name": ACCOUNT_NAME_MAP.get("101", "101"),
+                    "debit": 0,
+                    "credit": pay_amount,
+                },
+            ]
+            desc = f"سداد آجل - {op_row.get('partner_name') or ''}"
+        else:
+            raise HTTPException(status_code=400, detail="unsupported operation type")
+
+        entry = {
+            "id": str(uuid.uuid4()),
+            "workshop_id": workshop_id,
+            "date": datetime.utcnow().isoformat(),
+            "description": desc,
+            "lines": lines,
+            "total": pay_amount,
+            "source": "operation_payment",
+            "transaction_type": "payment",
+            "reference_id": op_id,
+        }
+        _safe_insert_journal_entry(supa, entry)
+
+        try:
+            if remaining - pay_amount <= 0.0001:
+                supa.client.table("operations").update(
+                    {"payment_method": "cash", "updated_at": datetime.utcnow().isoformat()}
+                ).eq("id", op_id).execute()
+        except Exception as e:
+            print(f"Operation payment_method update skipped/failed: {e}")
+
+        return {
+            "success": True,
+            "data": {
+                "paid": round(pay_amount, 2),
+                "remaining": round(max(0.0, remaining - pay_amount), 2),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         return {
             "success": True,
             "message": f"Deleted {result.deleted_count} operations",

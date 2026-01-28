@@ -1218,12 +1218,17 @@ async def ar_ledger(
         start_date = _parse_date_str(start_date)
         end_date = _parse_date_str(end_date)
 
-        ops = _fetch_credit_sales_ops(workshop_id, start_date=start_date, end_date=end_date)
+        # نحتاج العمليات حتى end_date لربط التحصيلات حتى لو كانت الفاتورة قبل start_date
+        ops_all = _fetch_credit_sales_ops(workshop_id, end_date=end_date)
+        op_by_id = {str(o.get("id")): o for o in (ops_all or []) if o.get("id")}
+
+        # صفوف الفواتير ضمن الفترة المطلوبة
+        ops_in_period = _fetch_credit_sales_ops(workshop_id, start_date=start_date, end_date=end_date)
         pays = _fetch_payment_entries(workshop_id, start_date=start_date, end_date=end_date)
 
         rows = []
         # Debits from credit sales
-        for op in ops:
+        for op in ops_in_period:
             total = float(op.get("total") or 0)
             if total <= 0:
                 continue
@@ -1241,22 +1246,19 @@ async def ar_ledger(
 
         # Credits from payments
         for je in pays:
-            ref = je.get("reference_id")
+            ref = str(je.get("reference_id") or "")
+            if not ref:
+                continue
+            # تجاهل أي تحصيلات legacy غير مرتبطة بفاتورة آجل موجودة
+            op_ref = op_by_id.get(ref)
+            if not op_ref:
+                continue
+
             amt = _payment_amount_affecting_ar(je)
             if amt <= 0:
                 continue
-            # try lookup customer from operation
-            customer = "(غير معروف)"
-            try:
-                if ref:
-                    op_rows = (
-                        supabase.table("operations").select("partner_name").eq("id", ref).execute().data
-                        or []
-                    )
-                    if op_rows:
-                        customer = (op_rows[0].get("partner_name") or "").strip() or customer
-            except Exception:
-                pass
+
+            customer = _op_to_customer(op_ref)
 
             rows.append(
                 {
@@ -1616,57 +1618,71 @@ async def reset_all_financial_data(
         
         # حذف من Supabase إذا كان متصلاً
         if supabase:
+            # مهم: لا تجعل فشل جدول واحد يمنع حذف الجداول الأخرى
+            # العمليات
             try:
-                # حذف جميع العمليات - استخدام gte مع قيمة قديمة جداً لحذف كل شيء
-                ops_del = supabase.table("operations").delete().gte("created_at", "1900-01-01").execute()
+                ops_del = (
+                    supabase.table("operations")
+                    .delete()
+                    .gte("created_at", "1900-01-01")
+                    .execute()
+                )
                 ops_count = len(ops_del.data) if ops_del.data else 0
                 deleted_counts["operations"] = ops_count if ops_count > 0 else "all"
                 print(f"✅ Deleted {ops_count} operations from Supabase")
-                
-                # حذف Chart of Accounts
-                coa_del = supabase.table("chart_of_accounts").delete().gte("created_at", "1900-01-01").execute()
+            except Exception as e:
+                print(f"Supabase operations deletion error: {e}")
+
+            # دليل الحسابات (قد يكون غير موجود في بعض المخططات)
+            try:
+                coa_del = (
+                    supabase.table("chart_of_accounts")
+                    .delete()
+                    .gte("created_at", "1900-01-01")
+                    .execute()
+                )
                 coa_count = len(coa_del.data) if coa_del.data else 0
                 deleted_counts["chart_of_accounts"] = coa_count if coa_count > 0 else "all"
                 print(f"✅ Deleted {coa_count} chart of accounts from Supabase")
-                
-                # حذف Journal Entries
-                try:
-                    # نبدأ بحذف قيود الورشة المطلوبة، ثم تنظيف أي صفوف قديمة بدون workshop_id
-                    try:
-                        je_del = (
-                            supabase.table("journal_entries")
-                            .delete()
-                            .eq("workshop_id", workshop_id)
-                            .execute()
-                        )
-                        je_count = len(je_del.data) if je_del.data else 0
-                        deleted_counts["journal_entries"] = je_count
-                        print(f"✅ Deleted {je_count} journal entries (scoped) from Supabase")
-                    except Exception as scoped_err:
-                        print(f"Scoped journal entries deletion failed: {scoped_err}")
-
-                    # تنظيف legacy rows بدون workshop_id (إن وُجدت)
-                    try:
-                        supabase.table("journal_entries").delete().is_("workshop_id", "null").execute()
-                        print("✅ Deleted legacy journal entries with NULL workshop_id")
-                    except Exception as null_err:
-                        print(f"Legacy NULL workshop_id delete skipped: {null_err}")
-
-                except Exception as e:
-                    print(f"Journal entries table deletion: {e}")
-                
-                # حذف الفواتير
-                try:
-                    inv_del = supabase.table("invoices").delete().gte("created_at", "1900-01-01").execute()
-                    inv_count = len(inv_del.data) if inv_del.data else 0
-                    deleted_counts["invoices"] = inv_count if inv_count > 0 else "all"
-                    print(f"✅ Deleted {inv_count} invoices from Supabase")
-                except Exception as e:
-                    print(f"Invoices table deletion: {e}")
-                    
-                print("✅ Supabase: Deleted all financial data")
             except Exception as e:
-                print(f"Supabase deletion error: {e}")
+                print(f"Supabase chart_of_accounts deletion skipped/failed: {e}")
+
+            # القيود المحاسبية
+            try:
+                je_del = (
+                    supabase.table("journal_entries")
+                    .delete()
+                    .eq("workshop_id", workshop_id)
+                    .execute()
+                )
+                je_count = len(je_del.data) if je_del.data else 0
+                deleted_counts["journal_entries"] = je_count
+                print(f"✅ Deleted {je_count} journal entries (scoped) from Supabase")
+            except Exception as e:
+                print(f"Supabase journal_entries deletion error: {e}")
+
+            # تنظيف legacy rows بدون workshop_id (إن وُجدت)
+            try:
+                supabase.table("journal_entries").delete().is_("workshop_id", "null").execute()
+                print("✅ Deleted legacy journal entries with NULL workshop_id")
+            except Exception as e:
+                print(f"Legacy NULL workshop_id delete skipped: {e}")
+
+            # الفواتير
+            try:
+                inv_del = (
+                    supabase.table("invoices")
+                    .delete()
+                    .gte("created_at", "1900-01-01")
+                    .execute()
+                )
+                inv_count = len(inv_del.data) if inv_del.data else 0
+                deleted_counts["invoices"] = inv_count if inv_count > 0 else "all"
+                print(f"✅ Deleted {inv_count} invoices from Supabase")
+            except Exception as e:
+                print(f"Invoices table deletion: {e}")
+
+            print("✅ Supabase: Deleted all financial data")
         
         # حذف من MongoDB
         if finance_db:

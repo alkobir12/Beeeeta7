@@ -79,8 +79,8 @@ const Protected = ({ children }) => {
   })();
 
   if (!session) {
-    window.location.href = '/login';
-    return null;
+    // Use router navigation (avoid full-page reload loops)
+    return <Login />;
   }
   return children;
 };

@@ -270,57 +270,57 @@ const ComprehensiveFinancial = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <FinancialCard
-            title={formatCurrency(isTotals.revenue)}
-            subtitle="إجمالي الإيرادات"
-            icon={TrendingUp}
-            trend="up"
-            trendValue="+15%"
-            variant="success"
-            details={
-              Object.entries(incomeStatement?.details?.revenue_by_account || {}).slice(0, 4).map(([code, data]) => ({
-                label: data.name || `حساب ${code}`,
-                value: formatCurrency(data.amount || 0)
-              }))
-            }
-          />
-
-              <FinancialCard
-            title={formatCurrency(isTotals.expenses)}
-            subtitle="إجمالي المصروفات"
-            icon={TrendingUp}
-            trend="down"
-            variant="warning"
-            details={
-              Object.entries(incomeStatement?.details?.expenses_by_account || {}).slice(0, 4).map(([code, data]) => ({
-                label: data.name || `حساب ${code}`,
-                value: formatCurrency(data.amount || 0),
-                valueColor: 'text-red-400'
-              }))
-            }
-          />
+            <FinancialCard
+              title={formatCurrency(isTotals.revenue)}
+              subtitle="إجمالي الإيرادات"
+              icon={TrendingUp}
+              trend="up"
+              trendValue="+15%"
+              variant="success"
+              details={
+                Object.entries(incomeStatement?.details?.revenue_by_account || {}).slice(0, 4).map(([code, data]) => ({
+                  label: data.name || `حساب ${code}`,
+                  value: formatCurrency(data.amount || 0)
+                }))
+              }
+            />
 
             <FinancialCard
-            title={formatCurrency(isTotals.net_income)}
-            subtitle="صافي الدخل"
-            icon={TrendingUp}
-            trend={isTotals.net_income >= 0 ? 'up' : 'down'}
-            variant={isTotals.net_income >= 0 ? 'success' : 'danger'}
-            details={[
-              { label: 'الإيرادات', value: formatCurrency(isTotals.revenue) },
-              { label: 'المصروفات', value: formatCurrency(isTotals.expenses), valueColor: 'text-red-400' },
-              { label: 'صافي الدخل', value: formatCurrency(isTotals.net_income), valueColor: isTotals.net_income >= 0 ? 'text-emerald-400' : 'text-red-400' }
-            ]}
-          />
+              title={formatCurrency(isTotals.expenses)}
+              subtitle="إجمالي المصروفات"
+              icon={TrendingUp}
+              trend="down"
+              variant="warning"
+              details={
+                Object.entries(incomeStatement?.details?.expenses_by_account || {}).slice(0, 4).map(([code, data]) => ({
+                  label: data.name || `حساب ${code}`,
+                  value: formatCurrency(data.amount || 0),
+                  valueColor: 'text-red-400'
+                }))
+              }
+            />
 
             <FinancialCard
-            title={`${isTotals.revenue > 0 ? ((isTotals.net_income / isTotals.revenue) * 100).toFixed(1) : '0'}%`}
-            subtitle="هامش الربح الصافي"
-            icon={BarChart3}
-            variant={isTotals.revenue > 0 && (isTotals.net_income / isTotals.revenue) > 0.2 ? 'success' : 'warning'}
-            expandable={false}
-          />
-        </div>
+              title={formatCurrency(isTotals.net_income)}
+              subtitle="صافي الدخل"
+              icon={TrendingUp}
+              trend={isTotals.net_income >= 0 ? 'up' : 'down'}
+              variant={isTotals.net_income >= 0 ? 'success' : 'danger'}
+              details={[
+                { label: 'الإيرادات', value: formatCurrency(isTotals.revenue) },
+                { label: 'المصروفات', value: formatCurrency(isTotals.expenses), valueColor: 'text-red-400' },
+                { label: 'صافي الدخل', value: formatCurrency(isTotals.net_income), valueColor: isTotals.net_income >= 0 ? 'text-emerald-400' : 'text-red-400' }
+              ]}
+            />
+
+            <FinancialCard
+              title={`${isTotals.revenue > 0 ? ((isTotals.net_income / isTotals.revenue) * 100).toFixed(1) : '0'}%`}
+              subtitle="هامش الربح الصافي"
+              icon={BarChart3}
+              variant={isTotals.revenue > 0 && (isTotals.net_income / isTotals.revenue) > 0.2 ? 'success' : 'warning'}
+              expandable={false}
+            />
+          </div>
       )}
 
       {/* Cash Flow Tab */}

@@ -167,6 +167,27 @@ const VehicleDetails = () => {
         }
 
         // القيود المحاسبية تُنشأ تلقائياً من الخادم عند حفظ العملية
+
+
+        // إذا كانت العملية آجل، لا نُنشئ قيود يومية الآن.
+        // عند التسليم/التحصيل نؤكد السداد وننشئ قيد النقدية (101/113).
+        if ((operationResult?.paymentMethod || operationResult?.payment_method) === 'credit' || (operationData.paymentMethod === 'credit')) {
+          if (status === 'delivered') {
+            try {
+              const amount = Number(operationResult?.totalAmount || operationResult?.total || 0);
+              if (amount > 0) {
+                await axios.post(`${API_URL}/operations/${operationResult.id}/confirm-payment`, {
+                  workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
+                  amount,
+                  date: new Date().toISOString().split('T')[0]
+                });
+              }
+            } catch (payErr) {
+              console.error('فشل تأكيد السداد عند التسليم:', payErr);
+            }
+          }
+        }
+
       }
 
       // تحديث/إنشاء الفاتورة بناءً على البنود الحالية

@@ -149,7 +149,8 @@ class AREndpointsTest:
         """Confirm payment for an operation"""
         payment_data = {
             "amount": amount,
-            "payment_date": payment_date
+            "payment_date": payment_date,
+            "workshopId": self.workshop_id
         }
         
         response = self.make_request("POST", f"/operations/{operation_id}/confirm-payment", payment_data)

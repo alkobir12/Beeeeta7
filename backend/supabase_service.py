@@ -643,6 +643,7 @@ class SupabaseService:
         visit_id = payload.get("visitId") or payload.get("visit_id") or None
         visit_id = _sanitize_uuid(visit_id)
 
+        op_date = payload.get("date") or payload.get("opDate") or payload.get("op_date")
         row = {
             "type": payload.get("type", "service"),
             "account_id": account_id,
@@ -655,7 +656,7 @@ class SupabaseService:
             "total": subtotal,
             "payment_method": payload.get("paymentMethod", "cash"),
             "notes": payload.get("notes"),
-            "op_date": datetime.utcnow().isoformat(),
+            "op_date": op_date or datetime.utcnow().isoformat(),
             # Note: scope field is inferred dynamically in operations_list based on vehicle_id presence
         }
         try:

@@ -1004,11 +1004,20 @@ async def delete_journal_entry(entry_id: str, workshop_id: str = Query(...)):
         )
 
         if not existing.data or len(existing.data) == 0:
-            return {
-                "success": False,
-                "error": "القيد غير موجود",
-                "message": "لم يتم العثور على القيد المطلوب",
-            }
+            # بعض القيود القديمة قد لا تحتوي workshop_id أو تحتوي قيمة مختلفة
+            # لإزالة العائق على المستخدم، نحاول التحقق/الحذف بالـ id فقط.
+            existing2 = (
+                supabase.table("journal_entries")
+                .select("*")
+                .eq("id", entry_id)
+                .execute()
+            )
+            if not existing2.data or len(existing2.data) == 0:
+                return {
+                    "success": False,
+                    "error": "القيد غير موجود",
+                    "message": "لم يتم العثور على القيد المطلوب",
+                }
 
         # حذف القيد
         supabase.table("journal_entries").delete().eq("id", entry_id).execute()

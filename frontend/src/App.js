@@ -104,7 +104,7 @@ function App() {
                   </Protected>
                 }
               >
-                <Route path="/" element={<Dashboard />} />
+                <Route index element={<Dashboard />} />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/new-vehicle" element={<NewVehicle />} />
                 <Route path="/vehicle/:id" element={<VehicleDetails />} />

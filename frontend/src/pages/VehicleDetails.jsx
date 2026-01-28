@@ -1046,7 +1046,8 @@ const VehicleDetails = () => {
                                           amount = n;
                                         }
                                         try {
-                                          await axios.post(`${API_URL}/operations/${op.id}/confirm-payment`, {
+                                          const apiBase = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                                          await axios.post(`${apiBase}/operations/${op.id}/confirm-payment`, {
                                             workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
                                             amount,
                                             date: new Date().toISOString().split('T')[0]

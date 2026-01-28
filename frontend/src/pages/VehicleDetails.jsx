@@ -405,6 +405,21 @@ const VehicleDetails = () => {
   // Services don't have explicit prices in the current model unless we map them or change structure.
   // Assuming services might just be names for now or if we adapt them to be objects too.
   // Based on current 'parts' array usage for both parts and services (itemType), the total is already captured there.
+  const totalVisits = visits.length;
+  const totalOperations = vehicleOperations.length;
+  const totalRevenue = vehicleOperations
+    .filter((op) => (op.type || '').toLowerCase() === 'sale')
+    .reduce((sum, op) => sum + (Number(op.total) || 0), 0);
+  const totalCredit = vehicleOperations
+    .filter((op) => (op.paymentMethod || op.payment_method) === 'credit')
+    .reduce((sum, op) => sum + (Number(op.total) || 0), 0);
+
+  const summaryCards = [
+    { id: 'visits', label: 'عدد الزيارات', value: totalVisits },
+    { id: 'operations', label: 'عدد العمليات', value: totalOperations },
+    { id: 'revenue', label: 'إجمالي المبيعات', value: formatCurrency(totalRevenue) },
+    { id: 'credit', label: 'عمليات آجلة', value: formatCurrency(totalCredit) },
+  ];
   
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">

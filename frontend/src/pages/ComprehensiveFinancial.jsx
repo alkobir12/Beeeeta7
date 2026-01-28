@@ -5,6 +5,7 @@ import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import ARReceivablesTab from '../components/ARReceivablesTab';
 

@@ -58,6 +58,18 @@ const ComprehensiveFinancial = () => {
       const res = await financeAPI.getTrialBalance({ workshop_id: workshopId, start_date: startDate, end_date: endDate });
       const tbData = res.data?.data || res.data || {};
       return tbData.accounts || [];
+
+  const receivablesSummaryQuery = useQuery({
+    queryKey: ['ar-customers-summary', workshopId, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: endDate });
+      return res.data?.data || null;
+
+  const receivablesSummary = receivablesSummaryQuery.data;
+
+    }
+  });
+
     }
   });
 
@@ -240,7 +252,26 @@ const ComprehensiveFinancial = () => {
 
       {/* Income Statement Tab */}
       {activeTab === 'income' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="space-y-6">
+          {/* Cash vs Credit quick cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FinancialCard
+              title={formatCurrency(cfData.operating_activities?.cash_from_customers || 0)}
+              subtitle="النقد المحصّل من العملاء"
+              icon={Banknote}
+              variant="success"
+              expandable={false}
+            />
+            <FinancialCard
+              title={formatCurrency(receivablesSummary?.total_ar || 0)}
+              subtitle="المبيعات الآجلة (ذمم مدينة)"
+              icon={TrendingUp}
+              variant="warning"
+              expandable={false}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <FinancialCard
             title={formatCurrency(isTotals.revenue)}
             subtitle="إجمالي الإيرادات"

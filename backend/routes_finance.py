@@ -1612,7 +1612,8 @@ async def reset_all_financial_data(
                 
                 # حذف Journal Entries
                 try:
-                    je_del = supabase.table("journal_entries").delete().gte("created_at", "1900-01-01").execute()
+                    # بعض مخططات journal_entries لا تحتوي created_at، لذلك نستخدم date كفلتر عام
+                    je_del = supabase.table("journal_entries").delete().gte("date", "1900-01-01").execute()
                     je_count = len(je_del.data) if je_del.data else 0
                     deleted_counts["journal_entries"] = je_count if je_count > 0 else "all"
                     print(f"✅ Deleted {je_count} journal entries from Supabase")

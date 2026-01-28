@@ -148,6 +148,7 @@ def create_june_2024_scenario():
         print("🔸 تحصيل من أحمد (400 ريال)")
         payment_1_url = f"{BACKEND_URL}/operations/{ahmed_op_id}/confirm-payment"
         payment_1_data = {
+            "workshopId": WORKSHOP_ID,
             "amount": 400.0,
             "payment_date": "2024-06-15"
         }

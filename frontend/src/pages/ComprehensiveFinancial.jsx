@@ -6,6 +6,8 @@ import { formatCurrency } from '../utils/formatters';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import ARReceivablesTab from '../components/ARReceivablesTab';
+
 const ComprehensiveFinancial = () => {
   const { themeName } = useTheme();
   const [activeTab, setActiveTab] = useState('balance');

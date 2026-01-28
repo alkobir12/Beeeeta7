@@ -1329,13 +1329,6 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        return {
-            "success": True,
-            "message": f"Deleted {result.deleted_count} operations",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 # ============ AutoProfit Pro Integration: Apply Accounting Entries ============
 

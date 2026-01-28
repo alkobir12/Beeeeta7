@@ -43,7 +43,8 @@ const Taxes = lazy(() => import("./pages/Taxes"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
 const JournalEntries = lazy(() => import("./pages/JournalEntries"));
-const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial"));
+// ComprehensiveFinancial is imported eagerly to avoid dev chunk-loading issues
+// (React.lazy + dev server sometimes gets stuck for this large page in this environment).
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
 const SystemAudit = lazy(() => import("./pages/SystemAudit"));
 

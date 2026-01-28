@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
-import { Outlet } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 import AbuFahadFloatingChat from './AbuFahadFloatingChat';

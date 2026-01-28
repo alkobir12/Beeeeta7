@@ -96,49 +96,52 @@ function App() {
               <Route path="/report/:token" element={<ReportPublic />} />
               <Route path="/track/:trackingId" element={<CustomerTracking />} />
 
-              <Route path="/*" element={
-                <Protected>
-                  <Layout />
-                </Protected>
-              }>
-                    
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="*" element={<Dashboard />} />
-                      <Route path="/customers" element={<Customers />} />
-                      <Route path="/new-vehicle" element={<NewVehicle />} />
-                      <Route path="/vehicle/:id" element={<VehicleDetails />} />
-                      <Route path="/customer/:id" element={<CustomerDetails />} />
-                      <Route path="/technicians" element={<Technicians />} />
-                      <Route path="/suppliers" element={<Suppliers />} />
-                      <Route path="/parts" element={<PartsInventory />} />
-                      <Route path="/catalog" element={<PartsCatalog />} />
-                      <Route path="/services" element={<ServicesManagement />} />
-                      <Route path="/templates" element={<Templates />} />
-                      <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/profile" element={<WorkshopProfile />} />
-                      <Route path="/archive" element={<VehicleArchive />} />
-                      <Route path="/database-setup" element={<DatabaseSetup />} />
-                      <Route path="/setup" element={<DatabaseSetup />} />
-                      <Route path="/operations" element={<Operations />} />
-                      <Route path="/import" element={<ImportPage />} />
-                      <Route path="/users" element={<Users />} />
-                      <Route path="/quotations" element={<QuotationGenerator />} />
-                      <Route path="/print" element={<DocumentPrint />} />
-                      <Route path="/templates" element={<TemplatesManager />} />
-                      <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
-                      <Route path="/fault-knowledge" element={<FaultKnowledge />} />
-                      {/* Finance & Accounting Routes */}
-                      <Route path="/accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />
-                      <Route path="/finance/invoices" element={<Invoices />} />
-                      <Route path="/finance/taxes" element={<Taxes />} />
-                      <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
-                      <Route path="/accounting/comprehensive" element={<ComprehensiveFinancial />} />
-                      <Route path="/accounting/journal-entries" element={<JournalEntries />} />
-                      <Route path="/ai-financial" element={<AIFinancial />} />
-                      <Route path="/system-audit" element={<SystemAudit />} />
-                    </Routes>
-                    </Suspense>
+              <Route
+                path="/*"
+                element={
+                  <Protected>
+                    <Layout />
+                  </Protected>
+                }
+              >
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/new-vehicle" element={<NewVehicle />} />
+                <Route path="/vehicle/:id" element={<VehicleDetails />} />
+                <Route path="/customer/:id" element={<CustomerDetails />} />
+                <Route path="/technicians" element={<Technicians />} />
+                <Route path="/suppliers" element={<Suppliers />} />
+                <Route path="/parts" element={<PartsInventory />} />
+                <Route path="/catalog" element={<PartsCatalog />} />
+                <Route path="/services" element={<ServicesManagement />} />
+                <Route path="/templates" element={<Templates />} />
+                <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/profile" element={<WorkshopProfile />} />
+                <Route path="/archive" element={<VehicleArchive />} />
+                <Route path="/database-setup" element={<DatabaseSetup />} />
+                <Route path="/setup" element={<DatabaseSetup />} />
+                <Route path="/operations" element={<Operations />} />
+                <Route path="/import" element={<ImportPage />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/quotations" element={<QuotationGenerator />} />
+                <Route path="/print" element={<DocumentPrint />} />
+                <Route path="/templates" element={<TemplatesManager />} />
+                <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
+                <Route path="/fault-knowledge" element={<FaultKnowledge />} />
+
+                {/* Finance & Accounting Routes */}
+                <Route path="/accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />
+                <Route path="/finance/invoices" element={<Invoices />} />
+                <Route path="/finance/taxes" element={<Taxes />} />
+                <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
+                <Route path="/accounting/comprehensive" element={<ComprehensiveFinancial />} />
+                <Route path="/accounting/journal-entries" element={<JournalEntries />} />
+
+                <Route path="/ai-financial" element={<AIFinancial />} />
+                <Route path="/system-audit" element={<SystemAudit />} />
+
+                <Route path="*" element={<Dashboard />} />
               </Route>
               </Routes>
             </Router>

@@ -11,6 +11,7 @@ import { queryClient } from './queryClient';
 // Eager load critical pages
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import ComprehensiveFinancial from "./pages/ComprehensiveFinancial";
 
 // Lazy load other pages for better performance
 const Customers = lazy(() => import("./pages/Customers"));

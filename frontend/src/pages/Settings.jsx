@@ -298,7 +298,28 @@ const Settings = () => {
               data-testid="stitch-prompt-input"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-wrap gap-2" data-testid="stitch-suggestions">
+            {stitchSuggestions.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() =>
+                  setStitchForm((prev) => ({
+                    ...prev,
+                    prompt: item.prompt,
+                    uiScope: item.scope || prev.uiScope,
+                  }))
+                }
+                className="px-3 py-1.5 rounded-full border text-xs font-medium"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                data-testid={`stitch-suggestion-${item.id}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>نمط التصميم</label>
               <select
@@ -311,6 +332,19 @@ const Settings = () => {
                 <option value="modern">حديث</option>
                 <option value="minimal">مختصر</option>
                 <option value="classic">كلاسيكي</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>نطاق التوليد</label>
+              <select
+                className="w-full rounded-xl border bg-transparent p-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                value={stitchForm.uiScope}
+                onChange={(e) => setStitchForm({ ...stitchForm, uiScope: e.target.value })}
+                data-testid="stitch-scope-select"
+              >
+                <option value="section">قسم واحد</option>
+                <option value="full">واجهة كاملة</option>
               </select>
             </div>
             <div className="space-y-2">

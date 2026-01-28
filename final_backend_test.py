@@ -292,7 +292,6 @@ def test_journal_entries_transaction_type():
     try:
         # Create journal entry with transaction_type
         entry_data = {
-            "workshop_id": WORKSHOP_ID,
             "date": datetime.now().strftime("%Y-%m-%d"),
             "description": "اختبار transaction_type",
             "transaction_type": "expense",
@@ -314,9 +313,10 @@ def test_journal_entries_transaction_type():
         }
         
         url = f"{BACKEND_URL}/finance/journal-entries"
+        params = {"workshop_id": WORKSHOP_ID}
         print(f"📡 إنشاء قيد مع transaction_type: POST {url}")
         
-        response = requests.post(url, json=entry_data, timeout=30)
+        response = requests.post(url, json=entry_data, params=params, timeout=30)
         print(f"📊 كود الاستجابة: {response.status_code}")
         
         if response.status_code == 200:

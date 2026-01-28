@@ -38,6 +38,27 @@ Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 - **Details Button**: 
   - ✅ Found button with text "إخفاء التفاصيل" (initially expanded)
   - ✅ Successfully clicked button
+
+
+---
+
+## P0 Data Integrity + Credit Payment Logic Testing (2026-01-28)
+
+### Test Objective:
+- التحقق من قاعدة الآجل: **تسجيل العملية في operations فوراً** بدون إنشاء قيد يومية
+- التحقق من تأكيد السداد: إنشاء قيد نقدي (101/113) عند التحصيل مع دعم الدفعات الجزئية
+- التحقق من الحذف الذرّي: حذف العملية يحذف كل قيودها المرتبطة (reference_id)
+
+### Test Method:
+- Manual local API testing via http://0.0.0.0:8001 (curl/requests)
+
+### Results Summary:
+✅ PASSED
+- Credit sale operation created → **no journal entry created** initially
+- Confirm-payment (partial + remaining) created **2 payment journal entries** linked by reference_id
+- DELETE /api/operations/{id} removed the operation and **cascaded delete** removed linked journal entries
+- DELETE /api/finance/journal-entries/{id} verified working
+
   - ✅ Button text changed to "عرض التفاصيل" after click
   - ✅ Alert cards area visible when expanded
 - **Update Button**:

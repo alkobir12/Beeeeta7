@@ -8,7 +8,7 @@ import FinanceAlertsWidget from './FinanceAlertsWidget';
 
 
 
-const Layout = ({ pageTitle }) => {
+const Layout = ({ children, pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
 

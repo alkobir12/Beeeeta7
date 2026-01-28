@@ -146,7 +146,7 @@ const VehicleDetails = () => {
         const operationData = {
           vehicleId: id,
           workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
-          visitId: activeVisit?.id || null,
+          visitId: currentVisit?.id || null,
           type: 'sale',
           partnerType: 'customer',
           partnerName: vehicle.customerName || '',

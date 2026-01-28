@@ -410,6 +410,31 @@ const Settings = () => {
                   </button>
                 )}
               </div>
+              {stitchResult.status === 'manual_required' && (
+                <div className="rounded-lg border p-3 text-xs" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }} data-testid="stitch-manual-hint">
+                  <p className="mb-2">لا توجد API عامة لـ Stitch حالياً. استخدم الواجهة اليدوية ثم الصق الناتج هنا.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyStitchPrompt}
+                      className="px-3 py-1.5 rounded-full border text-xs font-medium"
+                      style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                      data-testid="stitch-copy-prompt-button"
+                    >
+                      نسخ الوصف
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenStitch}
+                      className="px-3 py-1.5 rounded-full border text-xs font-medium"
+                      style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                      data-testid="stitch-open-button"
+                    >
+                      فتح Stitch
+                    </button>
+                  </div>
+                </div>
+              )}
               {stitchResult.generated_code && (
                 <div className="space-y-2">
                   <button

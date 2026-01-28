@@ -98,7 +98,7 @@ function App() {
               <Route path="/report/:token" element={<ReportPublic />} />
               <Route path="/track/:trackingId" element={<CustomerTracking />} />
 
-              <Route path="*" element={
+              <Route path="/*" element={
                 <Protected>
                   <Layout>
                     <Suspense fallback={<PageLoader />}>

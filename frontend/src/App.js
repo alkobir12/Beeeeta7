@@ -95,9 +95,11 @@ function App() {
               <Route path="/approval/:token" element={<ApprovalPublic />} />
               <Route path="/report/:token" element={<ReportPublic />} />
               <Route path="/track/:trackingId" element={<CustomerTracking />} />
+              <Route path="*" element={<Dashboard />} />
+
 
               <Route
-                path="/*"
+                path="/"
                 element={
                   <Protected>
                     <Layout />
@@ -141,7 +143,7 @@ function App() {
                 <Route path="ai-financial" element={<AIFinancial />} />
                 <Route path="system-audit" element={<SystemAudit />} />
 
-                <Route path="*" element={<Dashboard />} />
+                
               </Route>
               </Routes>
             </Router>

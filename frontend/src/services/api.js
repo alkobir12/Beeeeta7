@@ -108,6 +108,14 @@ const financeAPI = {
   getBalanceSheet: (params) => api.get('/finance/reports/balance-sheet', { params }),
   getCashFlow: (params) => api.get('/finance/reports/cash-flow', { params }),
   getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
+
+  // AR (Receivables)
+  getARCustomers: (params) => api.get('/finance/ar/customers', { params }),
+  getARLedger: (params) => api.get('/finance/ar/ledger', { params }),
+  getARCustomerStatement: (params) => api.get('/finance/ar/customer-statement', { params }),
+  getARAging: (params) => api.get('/finance/ar/aging', { params }),
+  getARTurnover: (params) => api.get('/finance/ar/turnover', { params }),
+
   getInvoices: (params) => api.get('/invoices', { params }),
   createInvoice: (data) => api.post('/invoices', data),
   updateInvoice: (id, data) => api.put(`/invoices/${id}`, data),

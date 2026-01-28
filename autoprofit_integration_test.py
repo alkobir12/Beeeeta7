@@ -17,7 +17,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://finmate-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://ledger-fixer-1.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

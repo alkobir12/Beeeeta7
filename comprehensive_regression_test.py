@@ -13,7 +13,7 @@ from typing import Dict, Any, List
 import uuid
 
 # Backend URL from environment
-BACKEND_URL = "https://finmate-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://ledger-fixer-1.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

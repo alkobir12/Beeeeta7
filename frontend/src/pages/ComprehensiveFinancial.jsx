@@ -149,6 +149,7 @@ const ComprehensiveFinancial = () => {
           { key: 'balance', label: 'الميزانية العمومية', icon: Scale },
           { key: 'income', label: 'قائمة الدخل', icon: TrendingUp },
           { key: 'cashflow', label: 'التدفقات النقدية', icon: Banknote },
+          { key: 'receivables', label: 'الذمم (نقد/آجل)', icon: Banknote },
           { key: 'trial', label: 'ميزان المراجعة', icon: BarChart3 }
         ].map(tab => (
           <button

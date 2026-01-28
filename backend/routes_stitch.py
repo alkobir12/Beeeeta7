@@ -123,25 +123,49 @@ async def generate_ui(request: StitchGenerateRequest):
             )
         except httpx.TimeoutException:
             await _update_generation_record(
-                generation_id, {"status": "failed", "error_message": "timeout"}
+                generation_id, {"status": "manual_required", "error_message": "timeout"}
             )
-            raise HTTPException(status_code=504, detail="Stitch API request timed out")
+            return {
+                "id": generation_id,
+                "status": "manual_required",
+                "prompt": request.prompt,
+                "ui_scope": scope_value,
+                "design_style": request.design_style,
+                "stitch_url": "https://stitch.withgoogle.com",
+                "message": "Stitch API غير متاح حالياً. استخدم الواجهة اليدوية.",
+                "created_at": created_at,
+            }
 
     if response.status_code == 429:
         await _update_generation_record(
-            generation_id, {"status": "failed", "error_message": "rate_limit"}
+            generation_id, {"status": "manual_required", "error_message": "rate_limit"}
         )
-        raise HTTPException(status_code=429, detail="Stitch API rate limit exceeded")
+        return {
+            "id": generation_id,
+            "status": "manual_required",
+            "prompt": request.prompt,
+            "ui_scope": scope_value,
+            "design_style": request.design_style,
+            "stitch_url": "https://stitch.withgoogle.com",
+            "message": "Stitch API غير متاح حالياً. استخدم الواجهة اليدوية.",
+            "created_at": created_at,
+        }
 
     if response.status_code >= 400:
         await _update_generation_record(
             generation_id,
-            {"status": "failed", "error_message": response.text[:500]},
+            {"status": "manual_required", "error_message": response.text[:500]},
         )
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=f"Stitch API error: {response.text}",
-        )
+        return {
+            "id": generation_id,
+            "status": "manual_required",
+            "prompt": request.prompt,
+            "ui_scope": scope_value,
+            "design_style": request.design_style,
+            "stitch_url": "https://stitch.withgoogle.com",
+            "message": "Stitch API غير متاح حالياً. استخدم الواجهة اليدوية.",
+            "created_at": created_at,
+        }
 
     stitch_response = response.json() if response.content else {}
     await _update_generation_record(

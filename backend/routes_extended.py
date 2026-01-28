@@ -1122,13 +1122,11 @@ async def delete_operation(op_id: str):
         if provider == "supabase":
             supa = SupabaseService()
 
-            # 1) delete linked journal entries first
+            # 1) delete linked journal entries first (any source) by reference_id
             try:
-                supa.client.table("journal_entries").delete().eq("source", "operation").eq(
-                    "reference_id", op_id
-                ).execute()
+                supa.client.table("journal_entries").delete().eq("reference_id", op_id).execute()
             except Exception as e:
-                # If schema doesn't have source/reference_id, ignore to avoid breaking delete operation
+                # If schema doesn't have reference_id, ignore to avoid breaking delete operation
                 print(f"Cascade journal delete skipped/failed: {e}")
 
             # 2) delete operation
@@ -1295,10 +1293,11 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         else:
             raise HTTPException(status_code=400, detail="unsupported operation type")
 
+        pay_date = (payload or {}).get("date")
         entry = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
-            "date": datetime.utcnow().isoformat(),
+            "date": pay_date or datetime.utcnow().isoformat(),
             "description": desc,
             "lines": lines,
             "total": pay_amount,
@@ -1307,14 +1306,6 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             "reference_id": op_id,
         }
         _safe_insert_journal_entry(supa, entry)
-
-        try:
-            if remaining - pay_amount <= 0.0001:
-                supa.client.table("operations").update(
-                    {"payment_method": "cash", "updated_at": datetime.utcnow().isoformat()}
-                ).eq("id", op_id).execute()
-        except Exception as e:
-            print(f"Operation payment_method update skipped/failed: {e}")
 
         return {
             "success": True,

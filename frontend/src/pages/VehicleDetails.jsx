@@ -468,6 +468,15 @@ const VehicleDetails = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {summaryCards.map((card) => (
+            <div key={card.id} className="apple-card p-4" data-testid={`vehicle-summary-${card.id}`}>
+              <p className="text-xs text-gray-500 mb-1">{card.label}</p>
+              <p className="text-lg font-semibold text-gray-900">{card.value}</p>
+            </div>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Info + Timeline */}
           <div className="lg:col-span-2 space-y-6">

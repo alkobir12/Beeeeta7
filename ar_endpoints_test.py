@@ -356,7 +356,8 @@ class AREndpointsTest:
                 print(f"📊 AR Ledger Response: {json.dumps(result, ensure_ascii=False, indent=2)}")
                 
                 # Verify ending_balance = 180
-                ending_balance = result.get("ending_balance", 0)
+                data = result.get("data", {})
+                ending_balance = data.get("ending_balance", 0)
                 if ending_balance == 180:
                     self.log_result("AR Ledger - Ending Balance", "PASS", 
                                   f"Ending balance = {ending_balance} SAR (Expected: 180)")
@@ -365,7 +366,7 @@ class AREndpointsTest:
                                   f"Ending balance = {ending_balance} SAR (Expected: 180)")
                 
                 # Verify transactions exist
-                transactions = result.get("transactions", [])
+                transactions = data.get("rows", [])
                 if len(transactions) > 0:
                     self.log_result("AR Ledger - Transactions", "PASS", 
                                   f"Found {len(transactions)} transactions")

@@ -103,7 +103,7 @@ class P0CreditPaymentTester:
                 }
             ],
             "total": 100.0,
-            "payment_method": "credit",
+            "paymentMethod": "credit",  # Use camelCase as expected by Supabase service
             "op_date": "2024-06-01"
         }
         

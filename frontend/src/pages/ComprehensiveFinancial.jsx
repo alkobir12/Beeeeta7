@@ -104,7 +104,14 @@ const ComprehensiveFinancial = () => {
 
 
   const trialBalance = trialBalanceQuery.data;
-  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });

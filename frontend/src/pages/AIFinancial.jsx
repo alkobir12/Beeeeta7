@@ -107,41 +107,70 @@ export default function AIFinancial() {
     return d.toISOString().split('T')[0];
   };
 
-  const loadChatFromStorage = () => {
-    try {
-      const storedId = localStorage.getItem(STORAGE_KEYS.conversationId);
-      if (storedId) setConversationId(storedId);
-    } catch (e) {}
-
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.history);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length) {
-          setChatHistory(parsed);
-          return;
-        }
-      }
-    } catch (e) {}
-
-    // default greeting
-    setChatHistory([
-      {
-        role: 'assistant',
-        content:
-          'مرحباً، أنا أبوفهد المحاسب المالي للورشة. ماذا تحب أن نحلّل اليوم؟ هل تريد نظرة عامة على الربحية والسيولة، أم تدقيق حساب محدد (مثل 411 أو 514)؟',
-      },
-    ]);
+  const generateSessionId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `session_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   };
 
-  const persistChatToStorage = (nextHistory, nextConversationId) => {
+  const defaultGreeting = {
+    role: 'assistant',
+    content:
+      'مرحباً، أنا أبوفهد المحاسب المالي للورشة. ماذا تحب أن نحلّل اليوم؟ هل تريد نظرة عامة على الربحية والسيولة، أم تدقيق حساب محدد (مثل 411 أو 514)؟',
+  };
+
+  const persistChatToStorage = (nextSessions, nextMessages, nextActiveId) => {
     try {
-      if (nextConversationId) localStorage.setItem(STORAGE_KEYS.conversationId, nextConversationId);
+      localStorage.setItem(STORAGE_KEYS.sessions, JSON.stringify(nextSessions));
+      localStorage.setItem(STORAGE_KEYS.messages, JSON.stringify(nextMessages));
+      if (nextActiveId) localStorage.setItem(STORAGE_KEYS.activeSession, nextActiveId);
+    } catch (e) {}
+  };
+
+  const loadChatFromStorage = () => {
+    let storedSessions = [];
+    let storedMessages = {};
+    let storedActive = '';
+
+    try {
+      storedSessions = JSON.parse(localStorage.getItem(STORAGE_KEYS.sessions) || '[]');
     } catch (e) {}
 
     try {
-      localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(nextHistory));
+      storedMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.messages) || '{}');
     } catch (e) {}
+
+    try {
+      storedActive = localStorage.getItem(STORAGE_KEYS.activeSession) || '';
+    } catch (e) {}
+
+    if (!Array.isArray(storedSessions) || storedSessions.length === 0) {
+      const newId = generateSessionId();
+      storedSessions = [
+        {
+          id: newId,
+          title: 'جلسة جديدة',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+      storedActive = newId;
+      storedMessages = { [newId]: [defaultGreeting] };
+    }
+
+    if (!storedActive) {
+      storedActive = storedSessions[0].id;
+    }
+
+    if (!storedMessages[storedActive]) {
+      storedMessages[storedActive] = [defaultGreeting];
+    }
+
+    setChatSessions(storedSessions);
+    setActiveSessionId(storedActive);
+    setSessionMessages(storedMessages);
+    persistChatToStorage(storedSessions, storedMessages, storedActive);
   };
 
   const fetchCoreFinancials = async () => {

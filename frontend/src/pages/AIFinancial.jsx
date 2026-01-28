@@ -31,8 +31,9 @@ import { aiAPI, financeAPI, vehicleAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 
 const STORAGE_KEYS = {
-  conversationId: 'finance_bot_session_id',
-  history: 'finance_bot_chat_history_v1',
+  sessions: 'finance_bot_sessions_v1',
+  messages: 'finance_bot_session_messages_v1',
+  activeSession: 'finance_bot_active_session_v1',
 };
 
 function useQuery() {

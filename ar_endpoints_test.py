@@ -296,23 +296,26 @@ class AREndpointsTest:
                 print(f"📊 AR Aging Response: {json.dumps(result, ensure_ascii=False, indent=2)}")
                 
                 # Verify total_ar = 180
-                total_ar = result.get("total_ar", 0)
+                data = result.get("data", {})
+                total_ar = data.get("total_ar", 0)
+                buckets = data.get("buckets", {})
+                
                 if total_ar == 180:
                     self.log_result("AR Aging - Total AR", "PASS", f"Total AR = {total_ar} SAR (Expected: 180)")
                 else:
                     self.log_result("AR Aging - Total AR", "FAIL", f"Total AR = {total_ar} SAR (Expected: 180)")
                 
                 # Verify 0_30 = 180 (current period)
-                aging_0_30 = result.get("0_30", 0)
+                aging_0_30 = buckets.get("0_30", 0)
                 if aging_0_30 == 180:
                     self.log_result("AR Aging - 0-30 Days", "PASS", f"0-30 days = {aging_0_30} SAR (Expected: 180)")
                 else:
                     self.log_result("AR Aging - 0-30 Days", "FAIL", f"0-30 days = {aging_0_30} SAR (Expected: 180)")
                 
                 # Verify other aging buckets are 0
-                aging_31_60 = result.get("31_60", 0)
-                aging_61_90 = result.get("61_90", 0)
-                aging_over_90 = result.get("over_90", 0)
+                aging_31_60 = buckets.get("31_60", 0)
+                aging_61_90 = buckets.get("61_90", 0)
+                aging_over_90 = buckets.get("90_plus", 0)
                 
                 if aging_31_60 == 0 and aging_61_90 == 0 and aging_over_90 == 0:
                     self.log_result("AR Aging - Other Buckets", "PASS", 

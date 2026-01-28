@@ -225,8 +225,9 @@ class AREndpointsTest:
                 print(f"📊 AR Customers Response: {json.dumps(result, ensure_ascii=False, indent=2)}")
                 
                 # Verify total_ar = 180
-                total_ar = result.get("total_ar", 0)
-                customers = result.get("customers", [])
+                data = result.get("data", {})
+                total_ar = data.get("total_ar", 0)
+                customers = data.get("customers", [])
                 
                 if total_ar == 180:
                     self.log_result("AR Customers - Total AR", "PASS", f"Total AR = {total_ar} SAR (Expected: 180)")

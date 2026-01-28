@@ -50,7 +50,7 @@ const Layout = ({ children, pageTitle }) => {
         
         {/* Page Content */}
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
-          <Outlet />
+          {children}
         </div>
 
         {/* AbuFahad Floating Chat (Finance only) */}

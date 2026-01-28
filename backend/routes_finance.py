@@ -1095,22 +1095,38 @@ def _parse_date_str(d: Optional[str]) -> Optional[str]:
     return d
 
 
-def _fetch_credit_sales_ops(start_date: Optional[str] = None, end_date: Optional[str] = None):
-    """Fetch credit sales/service operations (AR invoices) from Supabase operations table."""
+def _fetch_credit_sales_ops(
+    workshop_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    """Fetch credit sales/service operations (AR invoices) from Supabase operations table.
+
+    Note: some schemas may not have workshop_id on operations; we try to scope if possible.
+    """
     if not supabase:
         raise Exception("Supabase not connected")
 
-    q = (
-        supabase.table("operations")
-        .select("*")
-        .in_("type", ["sale", "service"])
-        .eq("payment_method", "credit")
-    )
-    if start_date:
-        q = q.gte("op_date", start_date)
-    if end_date:
-        q = q.lte("op_date", end_date)
-    return q.order("op_date", desc=False).execute().data or []
+    def _build(scoped: bool):
+        q = (
+            supabase.table("operations")
+            .select("*")
+            .in_("type", ["sale", "service"])
+            .eq("payment_method", "credit")
+        )
+        if scoped:
+            q = q.eq("workshop_id", workshop_id)
+        if start_date:
+            q = q.gte("op_date", start_date)
+        if end_date:
+            q = q.lte("op_date", end_date)
+        return q.order("op_date", desc=False)
+
+    # Try scoped first, fallback to unscoped
+    try:
+        return _build(scoped=True).execute().data or []
+    except Exception:
+        return _build(scoped=False).execute().data or []
 
 
 def _fetch_payment_entries(
@@ -1202,7 +1218,7 @@ async def ar_ledger(
         start_date = _parse_date_str(start_date)
         end_date = _parse_date_str(end_date)
 
-        ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
+        ops = _fetch_credit_sales_ops(workshop_id, start_date=start_date, end_date=end_date)
         pays = _fetch_payment_entries(workshop_id, start_date=start_date, end_date=end_date)
 
         rows = []
@@ -1296,7 +1312,7 @@ async def ar_customers(
         as_of = _parse_date_str(as_of) or datetime.now().date().isoformat()
 
         # all credit ops up to as_of
-        ops = _fetch_credit_sales_ops(end_date=as_of)
+        ops = _fetch_credit_sales_ops(workshop_id, end_date=as_of)
         pays = _fetch_payment_entries(workshop_id, end_date=as_of)
 
         sales_by_op = {}
@@ -1364,7 +1380,7 @@ async def ar_customer_statement(
         start_date = _parse_date_str(start_date)
         end_date = _parse_date_str(end_date)
 
-        ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
+        ops = _fetch_credit_sales_ops(workshop_id, start_date=start_date, end_date=end_date)
         pays = _fetch_payment_entries(workshop_id, start_date=start_date, end_date=end_date)
 
         # map operation totals for this customer
@@ -1450,7 +1466,7 @@ async def ar_aging(
         as_of = _parse_date_str(as_of) or datetime.now().date().isoformat()
         as_of_dt = _to_date(as_of) or datetime.now()
 
-        ops = _fetch_credit_sales_ops(end_date=as_of)
+        ops = _fetch_credit_sales_ops(workshop_id, end_date=as_of)
         pays = _fetch_payment_entries(workshop_id, end_date=as_of)
 
         paid_by_op = {}
@@ -1615,11 +1631,27 @@ async def reset_all_financial_data(
                 
                 # حذف Journal Entries
                 try:
-                    # بعض مخططات journal_entries لا تحتوي created_at، لذلك نستخدم date كفلتر عام
-                    je_del = supabase.table("journal_entries").delete().gte("date", "1900-01-01").execute()
-                    je_count = len(je_del.data) if je_del.data else 0
-                    deleted_counts["journal_entries"] = je_count if je_count > 0 else "all"
-                    print(f"✅ Deleted {je_count} journal entries from Supabase")
+                    # نبدأ بحذف قيود الورشة المطلوبة، ثم تنظيف أي صفوف قديمة بدون workshop_id
+                    try:
+                        je_del = (
+                            supabase.table("journal_entries")
+                            .delete()
+                            .eq("workshop_id", workshop_id)
+                            .execute()
+                        )
+                        je_count = len(je_del.data) if je_del.data else 0
+                        deleted_counts["journal_entries"] = je_count
+                        print(f"✅ Deleted {je_count} journal entries (scoped) from Supabase")
+                    except Exception as scoped_err:
+                        print(f"Scoped journal entries deletion failed: {scoped_err}")
+
+                    # تنظيف legacy rows بدون workshop_id (إن وُجدت)
+                    try:
+                        supabase.table("journal_entries").delete().is_("workshop_id", "null").execute()
+                        print("✅ Deleted legacy journal entries with NULL workshop_id")
+                    except Exception as null_err:
+                        print(f"Legacy NULL workshop_id delete skipped: {null_err}")
+
                 except Exception as e:
                     print(f"Journal entries table deletion: {e}")
                 

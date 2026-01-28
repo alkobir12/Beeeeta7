@@ -1182,6 +1182,12 @@ async def delete_all_operations():
             return {"success": True, "message": "All operations deleted"}
 
         result = await db.operations.delete_many({})
+        return {
+            "success": True,
+            "message": f"Deleted {result.deleted_count} operations",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/operations/{op_id}/confirm-payment")

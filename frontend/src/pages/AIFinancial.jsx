@@ -421,17 +421,35 @@ export default function AIFinancial() {
     const userText = chatQuery;
     const userMsg = { role: 'user', content: userText };
 
-    const optimistic = [...chatHistory, userMsg];
-    setChatHistory(optimistic);
+    const currentSessionId = activeSessionId || generateSessionId();
+    const currentMessages = sessionMessages[currentSessionId] || [defaultGreeting];
+    const optimistic = [...currentMessages, userMsg];
+    const nextMessagesMap = { ...sessionMessages, [currentSessionId]: optimistic };
+
+    let nextSessions = chatSessions;
+    if (!chatSessions.find((s) => s.id === currentSessionId)) {
+      const now = new Date().toISOString();
+      nextSessions = [
+        { id: currentSessionId, title: userText.slice(0, 24) || 'جلسة جديدة', createdAt: now, updatedAt: now },
+        ...chatSessions,
+      ];
+    } else {
+      nextSessions = updateSessionMeta(chatSessions, currentSessionId, userText);
+    }
+
+    setChatSessions(nextSessions);
+    setActiveSessionId(currentSessionId);
+    setSessionMessages(nextMessagesMap);
     setChatQuery('');
     setChatLoading(true);
+    persistChatToStorage(nextSessions, nextMessagesMap, currentSessionId);
 
     try {
       const payload = {
         message: userText,
         workshop_id: workshopId,
         account_code: selectedAccountCode || undefined,
-        conversation_id: conversationId || undefined,
+        conversation_id: currentSessionId || undefined,
         // تزويد أبوفهد بملخص مالي صغير لتمكين التحليل القواعدي (P1)
         financial_data: {
           revenue: summary.revenue,
@@ -449,39 +467,40 @@ export default function AIFinancial() {
         content: res.data?.response || 'تعذر الحصول على رد من أبوفهد حالياً.',
       };
 
-      const newId = res.data?.conversation_id || conversationId;
-      const next = [...optimistic, botMsg];
-      setChatHistory(next);
+      const resolvedId = res.data?.conversation_id || currentSessionId;
+      let updatedSessions = nextSessions;
+      let updatedMessagesMap = { ...nextMessagesMap };
 
-      if (newId && newId !== conversationId) {
-        setConversationId(newId);
+      if (resolvedId !== currentSessionId) {
+        updatedMessagesMap[resolvedId] = updatedMessagesMap[currentSessionId] || optimistic;
+        delete updatedMessagesMap[currentSessionId];
+        updatedSessions = nextSessions.map((s) =>
+          s.id === currentSessionId ? { ...s, id: resolvedId } : s
+        );
+        setActiveSessionId(resolvedId);
       }
 
-      persistChatToStorage(next, newId);
+      const next = [...(updatedMessagesMap[resolvedId] || []), botMsg];
+      updatedMessagesMap[resolvedId] = next;
+      updatedSessions = updateSessionMeta(updatedSessions, resolvedId, userText);
+      setChatSessions(updatedSessions);
+      setSessionMessages(updatedMessagesMap);
+      persistChatToStorage(updatedSessions, updatedMessagesMap, resolvedId);
     } catch (e) {
       const next = [
         ...optimistic,
         { role: 'assistant', content: 'تعذر الاتصال بأبوفهد. حاول مرة أخرى.' },
       ];
-      setChatHistory(next);
-      persistChatToStorage(next, conversationId);
+      const updatedMessagesMap = { ...nextMessagesMap, [currentSessionId]: next };
+      setSessionMessages(updatedMessagesMap);
+      persistChatToStorage(nextSessions, updatedMessagesMap, currentSessionId);
     } finally {
       setChatLoading(false);
     }
   };
 
   const clearChat = () => {
-    const next = [
-      {
-        role: 'assistant',
-        content:
-          'تم بدء محادثة جديدة. ما الذي تريد تحليله الآن؟ يمكنك طلب تحليل عام أو اختيار حساب للتدقيق.',
-      },
-    ];
-    setChatHistory(next);
-    setConversationId('');
-    setSelectedAccountCode('');
-    persistChatToStorage(next, '');
+    createNewSession();
   };
 
   useEffect(() => {

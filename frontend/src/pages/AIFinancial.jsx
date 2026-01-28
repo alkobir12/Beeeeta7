@@ -703,8 +703,8 @@ export default function AIFinancial() {
                 <Brain className="h-4 w-4 text-blue-400" />
                 محادثة أبوفهد
               </h3>
-              <Button variant="outline" className="h-8" onClick={clearChat}>
-                محادثة جديدة
+              <Button variant="outline" className="h-8" onClick={clearChat} data-testid="abu-new-session-button">
+                جلسة جديدة
               </Button>
             </div>
 
@@ -712,12 +712,40 @@ export default function AIFinancial() {
               يمكنك ترك الحقل بدون تحديد حساب لتحليل عام، أو اختيار حساب لتدقيقه.
             </p>
 
+            <div className="mb-3 space-y-2">
+              <label className="block text-xs font-medium text-slate-300">الجلسة النشطة</label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={activeSessionId}
+                  onChange={(e) => selectSession(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  data-testid="abu-session-select"
+                >
+                  {chatSessions.map((session) => (
+                    <option key={session.id} value={session.id}>
+                      {session.title || 'جلسة جديدة'}
+                    </option>
+                  ))}
+                </select>
+                {chatSessions.length > 1 ? (
+                  <button
+                    onClick={() => deleteSession(activeSessionId)}
+                    className="h-9 w-9 rounded-lg border border-slate-700 bg-slate-900 text-slate-200 hover:text-red-300"
+                    data-testid="abu-delete-session-button"
+                  >
+                    <Trash2 className="h-4 w-4 mx-auto" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             <div className="mb-3">
               <label className="block text-xs font-medium text-slate-300 mb-1">الحساب (اختياري)</label>
               <select
                 value={selectedAccountCode}
                 onChange={(e) => setSelectedAccountCode(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                data-testid="abu-account-select"
               >
                 <option value="">بدون تحديد حساب</option>
                 {(Array.isArray(accounts) ? accounts : []).map((acc) => (
@@ -756,11 +784,13 @@ export default function AIFinancial() {
                 onChange={(e) => setChatQuery(e.target.value)}
                 placeholder="اكتب سؤالك المالي هنا..."
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                data-testid="abu-chat-input"
               />
               <button
                 type="submit"
                 disabled={chatLoading}
                 className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white disabled:opacity-50"
+                data-testid="abu-chat-send-button"
               >
                 {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>

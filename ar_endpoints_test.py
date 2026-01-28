@@ -467,7 +467,8 @@ class AREndpointsTest:
                 print(f"📊 AR Turnover Response: {json.dumps(result, ensure_ascii=False, indent=2)}")
                 
                 # Verify closing_receivables = 180
-                closing_receivables = result.get("closing_receivables", 0)
+                data = result.get("data", {})
+                closing_receivables = data.get("closing_receivables", 0)
                 if closing_receivables == 180:
                     self.log_result("AR Turnover - Closing Receivables", "PASS", 
                                   f"Closing receivables = {closing_receivables} SAR (Expected: 180)")
@@ -476,7 +477,7 @@ class AREndpointsTest:
                                   f"Closing receivables = {closing_receivables} SAR (Expected: 180)")
                 
                 # Verify turnover ratio exists
-                turnover_ratio = result.get("turnover_ratio")
+                turnover_ratio = data.get("turnover")
                 if turnover_ratio is not None:
                     self.log_result("AR Turnover - Turnover Ratio", "PASS", 
                                   f"Turnover ratio = {turnover_ratio}")
@@ -485,7 +486,7 @@ class AREndpointsTest:
                                   "Turnover ratio not found in response")
                 
                 # Verify days_sales_outstanding exists
-                dso = result.get("days_sales_outstanding")
+                dso = data.get("days_sales_outstanding")
                 if dso is not None:
                     self.log_result("AR Turnover - DSO", "PASS", 
                                   f"Days Sales Outstanding = {dso} days")

@@ -97,7 +97,7 @@ function App() {
               <Route path="/track/:trackingId" element={<CustomerTracking />} />
 
               <Route
-                path="/"
+                path="/*"
                 element={
                   <Protected>
                     <Layout />

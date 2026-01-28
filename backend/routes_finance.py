@@ -1110,8 +1110,17 @@ def _fetch_credit_sales_ops(start_date: Optional[str] = None, end_date: Optional
     return q.order("op_date", desc=False).execute().data or []
 
 
-def _fetch_payment_entries(start_date: Optional[str] = None, end_date: Optional[str] = None):
-    """Fetch payment journal entries that settle AR (source=operation_payment)."""
+def _fetch_payment_entries(
+    workshop_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    """Fetch payment journal entries that settle AR (source=operation_payment).
+
+    Important:
+    - We scope by workshop_id to avoid cross-workshop contamination.
+    - Payments without reference_id are ignored downstream (can't be allocated to invoices).
+    """
     if not supabase:
         raise Exception("Supabase not connected")
 
@@ -1119,6 +1128,7 @@ def _fetch_payment_entries(start_date: Optional[str] = None, end_date: Optional[
         supabase.table("journal_entries")
         .select("*")
         .eq("source", "operation_payment")
+        .eq("workshop_id", workshop_id)
     )
     if start_date:
         q = q.gte("date", start_date)

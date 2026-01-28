@@ -1200,7 +1200,7 @@ async def ar_ledger(
         end_date = _parse_date_str(end_date)
 
         ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
-        pays = _fetch_payment_entries(start_date=start_date, end_date=end_date)
+        pays = _fetch_payment_entries(workshop_id, start_date=start_date, end_date=end_date)
 
         rows = []
         # Debits from credit sales
@@ -1294,7 +1294,7 @@ async def ar_customers(
 
         # all credit ops up to as_of
         ops = _fetch_credit_sales_ops(end_date=as_of)
-        pays = _fetch_payment_entries(end_date=as_of)
+        pays = _fetch_payment_entries(workshop_id, end_date=as_of)
 
         sales_by_op = {}
         cust_by_op = {}
@@ -1362,7 +1362,7 @@ async def ar_customer_statement(
         end_date = _parse_date_str(end_date)
 
         ops = _fetch_credit_sales_ops(start_date=start_date, end_date=end_date)
-        pays = _fetch_payment_entries(start_date=start_date, end_date=end_date)
+        pays = _fetch_payment_entries(workshop_id, start_date=start_date, end_date=end_date)
 
         # map operation totals for this customer
         customer_ops = {}
@@ -1448,7 +1448,7 @@ async def ar_aging(
         as_of_dt = _to_date(as_of) or datetime.now()
 
         ops = _fetch_credit_sales_ops(end_date=as_of)
-        pays = _fetch_payment_entries(end_date=as_of)
+        pays = _fetch_payment_entries(workshop_id, end_date=as_of)
 
         paid_by_op = {}
         for je in pays:

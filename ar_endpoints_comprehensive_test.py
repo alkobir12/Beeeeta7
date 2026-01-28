@@ -247,7 +247,7 @@ def create_june_2024_scenario():
                 }
             ],
             "total": 330.0,
-            "payment_method": "cash",
+            "paymentMethod": "cash",
             "op_date": "2024-06-12"
         }
         

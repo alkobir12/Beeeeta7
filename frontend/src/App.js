@@ -113,17 +113,17 @@ function App() {
                 <Route path="suppliers" element={<Suppliers />} />
                 <Route path="parts" element={<PartsInventory />} />
                 <Route path="catalog" element={<PartsCatalog />} />
-                <Route path="/services" element={<ServicesManagement />} />
-                <Route path="/templates" element={<Templates />} />
-                <Route path="/invoice-templates" element={<InvoiceDesignerStudio />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/profile" element={<WorkshopProfile />} />
-                <Route path="/archive" element={<VehicleArchive />} />
-                <Route path="/database-setup" element={<DatabaseSetup />} />
-                <Route path="/setup" element={<DatabaseSetup />} />
-                <Route path="/operations" element={<Operations />} />
-                <Route path="/import" element={<ImportPage />} />
-                <Route path="/users" element={<Users />} />
+                <Route path="services" element={<ServicesManagement />} />
+                <Route path="templates" element={<Templates />} />
+                <Route path="invoice-templates" element={<InvoiceDesignerStudio />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="profile" element={<WorkshopProfile />} />
+                <Route path="archive" element={<VehicleArchive />} />
+                <Route path="database-setup" element={<DatabaseSetup />} />
+                <Route path="setup" element={<DatabaseSetup />} />
+                <Route path="operations" element={<Operations />} />
+                <Route path="import" element={<ImportPage />} />
+                <Route path="users" element={<Users />} />
                 <Route path="/quotations" element={<QuotationGenerator />} />
                 <Route path="/print" element={<DocumentPrint />} />
                 <Route path="/templates" element={<TemplatesManager />} />

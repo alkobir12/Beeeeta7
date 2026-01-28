@@ -128,6 +128,7 @@ function App() {
                       <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
                       <Route path="/fault-knowledge" element={<FaultKnowledge />} />
                       {/* Finance & Accounting Routes */}
+                      <Route path="/accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />
                       <Route path="/finance/invoices" element={<Invoices />} />
                       <Route path="/finance/taxes" element={<Taxes />} />
                       <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />

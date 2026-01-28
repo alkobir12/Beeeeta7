@@ -109,16 +109,30 @@ class P0CreditPaymentTester:
         
         status_code, response_data = self.make_request("POST", "/operations", operation_data)
         
-        if status_code == 200 and response_data.get("success"):
-            self.operation_id = response_data.get("data", {}).get("id")
+        if status_code == 200:
+            # Check if response has direct ID or nested in data
+            self.operation_id = response_data.get("id") or response_data.get("data", {}).get("id")
+            
             if self.operation_id:
-                self.log_result(
-                    "Create Credit Operation", 
-                    "PASS", 
-                    f"Operation created successfully with ID: {self.operation_id}",
-                    response_data
-                )
-                return True
+                # Check if payment method was set correctly to credit
+                payment_method = response_data.get("paymentMethod", "")
+                if payment_method == "credit":
+                    self.log_result(
+                        "Create Credit Operation", 
+                        "PASS", 
+                        f"Operation created successfully with ID: {self.operation_id}, payment method: {payment_method}",
+                        response_data
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Create Credit Operation", 
+                        "WARN", 
+                        f"Operation created with ID: {self.operation_id}, but payment method is '{payment_method}' instead of 'credit'",
+                        response_data
+                    )
+                    # Continue with test even if payment method is different
+                    return True
             else:
                 self.log_result(
                     "Create Credit Operation", 

@@ -321,6 +321,7 @@ const ComprehensiveFinancial = () => {
               expandable={false}
             />
           </div>
+        </div>
       )}
 
       {/* Cash Flow Tab */}

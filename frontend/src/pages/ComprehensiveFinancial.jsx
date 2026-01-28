@@ -313,7 +313,7 @@ const ComprehensiveFinancial = () => {
             ]}
           />
 
-          <FinancialCard
+            <FinancialCard
             title={`${isTotals.revenue > 0 ? ((isTotals.net_income / isTotals.revenue) * 100).toFixed(1) : '0'}%`}
             subtitle="هامش الربح الصافي"
             icon={BarChart3}

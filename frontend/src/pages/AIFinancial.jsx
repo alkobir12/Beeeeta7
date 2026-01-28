@@ -65,8 +65,9 @@ export default function AIFinancial() {
   const [accounts, setAccounts] = useState([]);
 
   // Chat (AbuFahad)
-  const [conversationId, setConversationId] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatSessions, setChatSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState('');
+  const [sessionMessages, setSessionMessages] = useState({});
   const [selectedAccountCode, setSelectedAccountCode] = useState('');
   const [chatQuery, setChatQuery] = useState('');
   const [chatLoading, setChatLoading] = useState(false);

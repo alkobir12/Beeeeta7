@@ -131,15 +131,15 @@ function App() {
                 <Route path="fault-knowledge" element={<FaultKnowledge />} />
 
                 {/* Finance & Accounting Routes */}
-                <Route path="/accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />
-                <Route path="/finance/invoices" element={<Invoices />} />
-                <Route path="/finance/taxes" element={<Taxes />} />
-                <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
-                <Route path="/accounting/comprehensive" element={<ComprehensiveFinancial />} />
-                <Route path="/accounting/journal-entries" element={<JournalEntries />} />
+                <Route path="accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />
+                <Route path="finance/invoices" element={<Invoices />} />
+                <Route path="finance/taxes" element={<Taxes />} />
+                <Route path="accounting/chart-of-accounts" element={<ChartOfAccounts />} />
+                <Route path="accounting/comprehensive" element={<ComprehensiveFinancial />} />
+                <Route path="accounting/journal-entries" element={<JournalEntries />} />
 
-                <Route path="/ai-financial" element={<AIFinancial />} />
-                <Route path="/system-audit" element={<SystemAudit />} />
+                <Route path="ai-financial" element={<AIFinancial />} />
+                <Route path="system-audit" element={<SystemAudit />} />
 
                 <Route path="*" element={<Dashboard />} />
               </Route>

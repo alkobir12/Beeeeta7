@@ -407,7 +407,8 @@ class AREndpointsTest:
                 print(f"📊 Customer Statement Response: {json.dumps(result, ensure_ascii=False, indent=2)}")
                 
                 # Verify ending_balance = 180
-                ending_balance = result.get("ending_balance", 0)
+                data = result.get("data", {})
+                ending_balance = data.get("ending_balance", 0)
                 if ending_balance == 180:
                     self.log_result("Customer Statement - Ending Balance", "PASS", 
                                   f"أحمد العتيبي ending balance = {ending_balance} SAR (Expected: 180)")
@@ -416,7 +417,7 @@ class AREndpointsTest:
                                   f"أحمد العتيبي ending balance = {ending_balance} SAR (Expected: 180)")
                 
                 # Verify customer name
-                customer_name = result.get("customer_name", "")
+                customer_name = data.get("customer", "")
                 if customer_name == "أحمد العتيبي":
                     self.log_result("Customer Statement - Customer Name", "PASS", 
                                   f"Customer name = {customer_name} (Expected: أحمد العتيبي)")
@@ -425,7 +426,7 @@ class AREndpointsTest:
                                   f"Customer name = {customer_name} (Expected: أحمد العتيبي)")
                 
                 # Verify transactions exist
-                transactions = result.get("transactions", [])
+                transactions = data.get("rows", [])
                 if len(transactions) > 0:
                     self.log_result("Customer Statement - Transactions", "PASS", 
                                   f"Found {len(transactions)} transactions for أحمد العتيبي")

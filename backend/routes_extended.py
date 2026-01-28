@@ -1190,11 +1190,17 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             supa = SupabaseService()
             workshop_id = payload.get("workshopId") or payload.get("workshop_id")
             op = supa.operations_create(payload)
-            try:
-                entry = _build_operation_journal_entry(op, workshop_id)
-                _safe_insert_journal_entry(supa, entry)
-            except Exception as je_error:
-                print(f"Failed to create journal entry for operation: {je_error}")
+
+            # قاعدة الآجل: العملية تُسجَّل في operations فوراً (Accrual)
+            # لكن لا نُنشئ قيد يومية إلا لحركات النقد (Cash) فقط.
+            payment_method = (op.get("paymentMethod") or payload.get("paymentMethod") or "cash").lower()
+            if payment_method != "credit":
+                try:
+                    entry = _build_operation_journal_entry(op, workshop_id)
+                    _safe_insert_journal_entry(supa, entry)
+                except Exception as je_error:
+                    print(f"Failed to create journal entry for operation: {je_error}")
+
             return op
 
         if provider == "memory" or db is None:

@@ -342,6 +342,11 @@ const ComprehensiveFinancial = () => {
         </div>
       )}
 
+      {/* Receivables (AR) Tab */}
+      {activeTab === 'receivables' && (
+        <ARReceivablesTab />
+      )}
+
       {/* Trial Balance Tab */}
       {activeTab === 'trial' && (
         <div className="space-y-4">

@@ -2943,6 +2943,120 @@ const t = (key) => {
 
 #### 4. Language Toggle Functionality
 - **Status**: ✅ WORKING
+
+## AR Endpoints Testing (2026-01-28)
+
+### Test Objective:
+اختبار الـ AR endpoints الجديدة (مشتقة من operations + journal_entries) عبر عنوان الـ preview
+Testing new AR (Accounts Receivable) endpoints derived from operations + journal_entries
+
+### Test Environment:
+- Backend URL: https://ledger-fixer-1.preview.emergentagent.com/api
+- Workshop ID: finmodule-sync
+- Testing Date: 2026-01-28 18:44:00
+- Test Focus: AR customers, aging, ledger, customer statements, turnover analysis
+
+### Test Results Summary: ❌ CRITICAL ISSUES FOUND (8/21 tests failed)
+
+#### ❌ AR ENDPOINTS - MAJOR IMPLEMENTATION PROBLEMS
+
+**Test Procedure Executed:**
+1. ✅ DELETE /api/finance/reset-all-data - Successfully reset all data
+2. ✅ Created June 2024 scenario with 3 operations (أحمد العتيبي, محمد القحطاني, سارة الشمري)
+3. ✅ Confirmed payments for credit operations (fixed workshopId parameter issue)
+4. ❌ AR endpoints returning incorrect calculations and missing customer names
+5. ❌ Customer-specific queries returning empty results
+
+**1. ❌ Customer Name Storage Issue**
+- **Status**: ❌ CRITICAL FAILURE
+- **Problem**: All operations show partnerName as null despite sending partner_name in requests
+- **Impact**: AR endpoints show all customers as "(بدون اسم)" instead of actual names
+- **Evidence**: Operations API not properly mapping partner_name field to partnerName in database
+
+**2. ❌ AR Calculation Logic Issues**
+- **Status**: ❌ CRITICAL FAILURE
+- **Expected AR Balance**: 180 SAR (أحمد العتيبي: 780 - 400 - 200 = 180)
+- **Actual AR Balance**: 1500 SAR (not accounting for confirmed payments)
+- **Problem**: AR endpoints not properly calculating remaining balances after payment confirmations
+
+**3. ❌ Customer-Specific Queries Failing**
+- **Status**: ❌ CRITICAL FAILURE
+- **Customer Statement**: Returns empty results for "أحمد العتيبي"
+- **Problem**: Customer name matching not working due to null partnerName values
+
+**4. ✅ Payment Confirmation API Working**
+- **Status**: ✅ WORKING (after fix)
+- **Fix Applied**: Added missing workshopId parameter to payment confirmation requests
+- **Result**: Payment confirmations now return correct paid/remaining amounts
+
+#### 📊 DETAILED TEST RESULTS
+
+**AR Customers Endpoint:**
+- ❌ Total AR: 1500.0 SAR (Expected: 180 SAR)
+- ❌ Customer Names: All show "(بدون اسم)" (Expected: "أحمد العتيبي")
+- ✅ Customer Count: 1 customer with balance (Expected: 1)
+
+**AR Aging Endpoint:**
+- ❌ Total AR: 1500.0 SAR (Expected: 180 SAR)
+- ❌ 0-30 Days: 1500.0 SAR (Expected: 180 SAR)
+- ✅ Other Buckets: All 0 (Expected: 0)
+
+**AR Ledger Endpoint:**
+- ❌ Ending Balance: 1460.0 SAR (Expected: 180 SAR)
+- ✅ Transactions: Found 3 transactions (Expected: multiple)
+
+**Customer Statement Endpoint:**
+- ❌ Ending Balance: 0.0 SAR (Expected: 180 SAR)
+- ✅ Customer Name: "أحمد العتيبي" (Expected: "أحمد العتيبي")
+- ❌ Transactions: Empty (Expected: multiple transactions)
+
+**AR Turnover Endpoint:**
+- ❌ Closing Receivables: 1500.0 SAR (Expected: 180 SAR)
+- ✅ Turnover Ratio: 1.3158 (Calculated correctly)
+- ✅ DSO: 277.4 days (Calculated correctly)
+
+#### 🔧 ROOT CAUSE ANALYSIS
+
+**Primary Issues:**
+1. **Operations API Field Mapping**: partner_name not being saved to partnerName field
+2. **AR Calculation Logic**: Not properly accounting for confirmed payments in AR balance calculations
+3. **Customer Linking**: AR endpoints cannot link transactions to customers due to missing names
+4. **Payment Tracking**: Payment confirmations create journal entries but AR calculations don't reflect them
+
+**Technical Evidence:**
+- Operations show partnerName: null despite sending partner_name in requests
+- Journal entries for payments exist but AR balance calculations ignore them
+- Customer statement queries fail due to name matching issues
+
+#### 🎯 CRITICAL FINDINGS
+
+**❌ AR ENDPOINTS NOT PRODUCTION READY:**
+1. **Customer Name Storage**: Operations API not properly storing customer names
+2. **AR Balance Calculations**: Not accounting for confirmed payments correctly
+3. **Customer Queries**: Customer-specific endpoints returning empty results
+4. **Data Integrity**: Mismatch between payment confirmations and AR calculations
+
+**✅ WORKING COMPONENTS:**
+- Reset data endpoint functioning correctly
+- Operations creation working (except customer name storage)
+- Payment confirmation API working (after workshopId fix)
+- AR endpoint structure and response format correct
+- Turnover calculations working when data is available
+
+#### 🚨 IMMEDIATE ACTION REQUIRED
+
+**High Priority Fixes Needed:**
+1. Fix Operations API to properly store partner_name as partnerName
+2. Update AR calculation logic to account for confirmed payments
+3. Fix customer name linking in AR endpoints
+4. Ensure payment confirmations properly reduce AR balances
+
+**Recommendation**: AR endpoints require significant fixes before production deployment. The core logic is implemented but customer name storage and payment tracking are broken.
+
+### Artifacts:
+- /app/ar_endpoints_test.py (comprehensive AR endpoints test script)
+
+---
 - **Location**: Top-left corner with EN/AR buttons
 - **Functionality**: Successfully switches between languages
 - **Persistence**: Language preference saved in localStorage

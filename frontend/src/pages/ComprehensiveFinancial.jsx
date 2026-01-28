@@ -82,6 +82,7 @@ const ComprehensiveFinancial = () => {
     queryClient.invalidateQueries({ queryKey: ['income-statement', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['cash-flow', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['trial-balance', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['ar-customers-summary', workshopId] });
   };
 
   const bsTotals = balanceSheet?.totals || { assets: 0, liabilities: 0, equity: 0 };
@@ -89,14 +90,6 @@ const ComprehensiveFinancial = () => {
   const cfData = cashFlow || {};
   
   const isBalanced = Math.abs(bsTotals.assets - (bsTotals.liabilities + bsTotals.equity)) < 0.01;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl" dir="rtl" style={{

@@ -135,6 +135,11 @@ const ComprehensiveFinancial = () => {
               onChange={(e) => setStartDate(e.target.value)}
               data-testid="financial-start-date-input"
               className="bg-transparent border-0 outline-none text-sm w-32"
+
+      <div className="max-w-7xl mx-auto p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>جار التحميل...</h2>
+      </div>
+
               style={{ color: 'var(--text-primary)' }}
             />
             <span style={{ color: 'var(--text-secondary)' }}>-</span>

@@ -149,8 +149,15 @@ def test_p0_credit_payment_logic():
                     payment_response = requests.post(payment_url, json=payment_data, timeout=30)
                     if payment_response.status_code == 200:
                         payment_result = payment_response.json()
-                        paid = payment_result.get("paid", 0)
-                        remaining = payment_result.get("remaining", 0)
+                        
+                        # Handle different response formats
+                        if "data" in payment_result:
+                            payment_data_resp = payment_result["data"]
+                            paid = payment_data_resp.get("paid", 0)
+                            remaining = payment_data_resp.get("remaining", 0)
+                        else:
+                            paid = payment_result.get("paid", 0)
+                            remaining = payment_result.get("remaining", 0)
                         
                         if paid == 40.0 and remaining == 60.0:
                             print_result(True, f"تأكيد الدفعة الأولى نجح: دُفع {paid}, متبقي {remaining}")

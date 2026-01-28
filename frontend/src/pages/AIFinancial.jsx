@@ -173,6 +173,67 @@ export default function AIFinancial() {
     persistChatToStorage(storedSessions, storedMessages, storedActive);
   };
 
+  const updateSessionMeta = (sessions, sessionId, userText) => {
+    const now = new Date().toISOString();
+    return sessions.map((s) => {
+      if (s.id !== sessionId) return s;
+      const nextTitle = s.title && s.title !== 'جلسة جديدة' ? s.title : userText.slice(0, 24);
+      return { ...s, title: nextTitle || 'جلسة جديدة', updatedAt: now };
+    });
+  };
+
+  const createNewSession = () => {
+    const newId = generateSessionId();
+    const now = new Date().toISOString();
+    const newSession = { id: newId, title: 'جلسة جديدة', createdAt: now, updatedAt: now };
+    const nextSessions = [newSession, ...chatSessions];
+    const nextMessages = { ...sessionMessages, [newId]: [defaultGreeting] };
+    setChatSessions(nextSessions);
+    setActiveSessionId(newId);
+    setSessionMessages(nextMessages);
+    setSelectedAccountCode('');
+    persistChatToStorage(nextSessions, nextMessages, newId);
+  };
+
+  const selectSession = (sessionId) => {
+    if (!sessionId) return;
+    setActiveSessionId(sessionId);
+    if (!sessionMessages[sessionId]) {
+      const nextMessages = { ...sessionMessages, [sessionId]: [defaultGreeting] };
+      setSessionMessages(nextMessages);
+      persistChatToStorage(chatSessions, nextMessages, sessionId);
+      return;
+    }
+    persistChatToStorage(chatSessions, sessionMessages, sessionId);
+  };
+
+  const deleteSession = (sessionId) => {
+    const remaining = chatSessions.filter((s) => s.id !== sessionId);
+    const nextMessages = { ...sessionMessages };
+    delete nextMessages[sessionId];
+    let nextActive = activeSessionId;
+    if (activeSessionId === sessionId) {
+      nextActive = remaining[0]?.id || '';
+    }
+
+    if (!remaining.length) {
+      const newId = generateSessionId();
+      remaining.push({
+        id: newId,
+        title: 'جلسة جديدة',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      nextMessages[newId] = [defaultGreeting];
+      nextActive = newId;
+    }
+
+    setChatSessions(remaining);
+    setSessionMessages(nextMessages);
+    setActiveSessionId(nextActive);
+    persistChatToStorage(remaining, nextMessages, nextActive);
+  };
+
   const fetchCoreFinancials = async () => {
     if (!workshopId) {
       setError('لم يتم ضبط REACT_APP_WORKSHOP_ID. يرجى ضبط معرف الورشة.');

@@ -72,6 +72,9 @@ export default function AIFinancial() {
   const [chatQuery, setChatQuery] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
 
+  const chatHistory = sessionMessages[activeSessionId] || [];
+  const activeSession = chatSessions.find((s) => s.id === activeSessionId);
+
   // Audit
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditReport, setAuditReport] = useState(null);

@@ -495,7 +495,8 @@ def test_ar_turnover_endpoint():
         params = {
             "workshop_id": WORKSHOP_ID,
             "start_date": "2024-06-01",
-            "end_date": "2024-06-30"
+            "end_date": "2024-06-30",
+            "credit_sales_total": 1500.0
         }
         
         print_api_call("GET", url, params=params)

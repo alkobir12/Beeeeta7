@@ -1396,7 +1396,15 @@ async def ar_customer_statement(
                 }
             )
 
-        rows.sort(key=lambda r: _to_date(r.get("date") or "") or datetime.min)
+        def _row_dt(r):
+            dt = _to_date(r.get("date") or "")
+            if dt is None:
+                return datetime.min.replace(tzinfo=None)
+            if getattr(dt, "tzinfo", None) is not None:
+                return dt.replace(tzinfo=None)
+            return dt
+
+        rows.sort(key=_row_dt)
 
         bal = 0.0
         for r in rows:

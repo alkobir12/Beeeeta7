@@ -237,7 +237,8 @@ class AREndpointsTest:
                 # Verify only أحمد العتيبي with balance 180
                 ahmed_found = False
                 for customer in customers:
-                    if customer.get("customer_name") == "أحمد العتيبي":
+                    customer_name = customer.get("customer", customer.get("customer_name", ""))
+                    if customer_name == "أحمد العتيبي":
                         ahmed_found = True
                         balance = customer.get("balance", 0)
                         if balance == 180:

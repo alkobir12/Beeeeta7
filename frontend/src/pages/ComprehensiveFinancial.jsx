@@ -300,7 +300,7 @@ const ComprehensiveFinancial = () => {
             }
           />
 
-          <FinancialCard
+            <FinancialCard
             title={formatCurrency(isTotals.net_income)}
             subtitle="صافي الدخل"
             icon={TrendingUp}

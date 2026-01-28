@@ -124,11 +124,11 @@ function App() {
                 <Route path="operations" element={<Operations />} />
                 <Route path="import" element={<ImportPage />} />
                 <Route path="users" element={<Users />} />
-                <Route path="/quotations" element={<QuotationGenerator />} />
-                <Route path="/print" element={<DocumentPrint />} />
-                <Route path="/templates" element={<TemplatesManager />} />
-                <Route path="/denso-diagnostics" element={<DensoDiagnostics />} />
-                <Route path="/fault-knowledge" element={<FaultKnowledge />} />
+                <Route path="quotations" element={<QuotationGenerator />} />
+                <Route path="print" element={<DocumentPrint />} />
+                <Route path="templates" element={<TemplatesManager />} />
+                <Route path="denso-diagnostics" element={<DensoDiagnostics />} />
+                <Route path="fault-knowledge" element={<FaultKnowledge />} />
 
                 {/* Finance & Accounting Routes */}
                 <Route path="/accounting/test" element={<div data-testid="accounting-test">TEST ACCOUNTING</div>} />

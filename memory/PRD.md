@@ -183,5 +183,5 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 
 ### الاختبارات
 - ✅ Backend: 100% نجاح
-- ✅ Frontend: 100% نجاح بعد جلسات أبوفهد متعددة
-- 📁 ملفات الاختبار: `/app/test_reports/iteration_6.json`
+- ✅ Frontend: 100% نجاح بعد تحديثات Stitch (وضع يدوي + نطاق كامل)
+- 📁 ملفات الاختبار: `/app/test_reports/iteration_7.json`

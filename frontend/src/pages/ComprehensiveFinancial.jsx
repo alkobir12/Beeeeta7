@@ -74,6 +74,21 @@ const ComprehensiveFinancial = () => {
   const balanceSheet = balanceSheetQuery.data;
   const incomeStatement = incomeStatementQuery.data;
   const cashFlow = cashFlowQuery.data;
+
+  // Avoid blank/stuck page if a query fails
+  const hasError = balanceSheetQuery.isError || incomeStatementQuery.isError || cashFlowQuery.isError || trialBalanceQuery.isError || receivablesSummaryQuery.isError;
+  if (hasError) {
+    return (
+      <div className="max-w-7xl mx-auto p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>تعذر تحميل القوائم المالية</h2>
+        <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>تحقق من اتصال الشبكة ثم اضغط تحديث.</p>
+        <div className="mt-4">
+          <button onClick={handleRefresh} className="apple-button">تحديث</button>
+        </div>
+      </div>
+    );
+  }
+
   const trialBalance = trialBalanceQuery.data;
   const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading;
 

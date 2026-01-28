@@ -1116,11 +1116,22 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
 
 @router.delete("/operations/{op_id}")
 async def delete_operation(op_id: str):
-    """Delete a single operation"""
+    """Delete a single operation + cascade delete any linked journal entries (source=operation, reference_id=op_id)."""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
+
+            # 1) delete linked journal entries first
+            try:
+                supa.client.table("journal_entries").delete().eq("source", "operation").eq(
+                    "reference_id", op_id
+                ).execute()
+            except Exception as e:
+                # If schema doesn't have source/reference_id, ignore to avoid breaking delete operation
+                print(f"Cascade journal delete skipped/failed: {e}")
+
+            # 2) delete operation
             supa.operations_delete(op_id)
             return {"success": True}
 

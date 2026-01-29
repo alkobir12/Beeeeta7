@@ -469,13 +469,13 @@ const Operations = () => {
                     onChange={e=>setItem({...item, itemType: e.target.value})}
                     data-testid="operation-item-type-select"
                   >
-                    <option value="part">{"Part"}</option>
-                    <option value="service">{"Service"}</option>
+                    <option value="part">{t('operations.part')}</option>
+                    <option value="service">{t('operations.service')}</option>
                   </select>
                 </div>
                 
                 <div className="md:col-span-4">
-                  <label className="text-xs text-gray-500 mb-1 block">{"Items"}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.items')}</label>
                   {item.itemType === 'part' ? (
                     <select 
                       className="apple-input h-9 text-sm"
@@ -486,7 +486,7 @@ const Operations = () => {
                       }}
                       data-testid="operation-part-select"
                     >
-                      <option value="">{"Select Part"}</option>
+                      <option value="">{t('operations.selectPart')}</option>
                       {parts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   ) : (
@@ -499,14 +499,14 @@ const Operations = () => {
                       }}
                       data-testid="operation-service-select"
                     >
-                      <option value="">{"Select Service"}</option>
+                      <option value="">{t('operations.selectService')}</option>
                       {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{"Qty"}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.quantity')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -517,7 +517,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{"Price"}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.price')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -535,7 +535,7 @@ const Operations = () => {
                     data-testid="operation-add-item-button"
                   >
                     <Plus size={16} />
-                    <span>{"Add"}</span>
+                    <span>{t('operations.addItem')}</span>
                   </button>
                 </div>
               </div>
@@ -546,11 +546,11 @@ const Operations = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-gray-600">
                       <tr>
-                        <th className="p-3 text-right font-medium">{"Type"}</th>
-                        <th className="p-3 text-right font-medium">{"Name"}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>
                         <th className="p-3 text-right font-medium">{"Qty"}</th>
                         <th className="p-3 text-right font-medium">{"Price"}</th>
-                        <th className="p-3 text-right font-medium">{"Total"}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.total')}</th>
                         <th className="p-3"></th>
                       </tr>
                     </thead>

@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://ledger-fixer-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://accountrx.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

@@ -125,7 +125,7 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://ledger-fixer-1.preview.emergentagent.com`
+- **API URL**: `https://accountrx.preview.emergentagent.com`
 
 ---
 

@@ -19,7 +19,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://ledger-fixer-1.preview.emergentagent.com/api"
+BASE_URL = "https://accountrx.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class P0CreditPaymentTester:

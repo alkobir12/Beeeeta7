@@ -7,7 +7,7 @@ Test with null instead of empty string
 import requests
 import json
 
-API_URL = "https://ledger-fixer-1.preview.emergentagent.com"
+API_URL = "https://accountrx.preview.emergentagent.com"
 
 def test_with_null_values():
     """اختبار مع null بدلاً من string فارغ"""

@@ -13,14 +13,8 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  // الكشف التلقائي عن لغة المتصفح/الجهاز
-  const detectLanguage = () => {
-    const browserLang = navigator.language || navigator.userLanguage;
-    console.log('🌍 Browser language detected:', browserLang);
-    return browserLang.startsWith('ar') ? 'ar' : 'en';
-  };
-
-  const [language, setLanguage] = useState(detectLanguage());
+  // اللغة الافتراضية: عربية (RTL)
+  const [language, setLanguage] = useState('ar');
   const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
 
   // Handle language change

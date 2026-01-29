@@ -1670,6 +1670,62 @@ async def reset_all_financial_data(
             except Exception as e:
                 print(f"Legacy NULL workshop_id delete skipped: {e}")
 
+
+@router.post("/ar/migrate-operations-workshop")
+async def ar_migrate_operations_workshop(payload: dict = Body(...)):
+    """ترحيل عمليات الآجل القديمة التي لا تحتوي workshop_id.
+
+    - يحدث فقط العمليات: type in (sale, service) AND payment_method='credit'
+    - يحدّث فقط الصفوف التي workshop_id فيها NULL
+
+    مهم: هذا endpoint إداري للاستخدام مرة واحدة.
+    """
+    if not supabase:
+        return {"success": False, "message": "Supabase not connected"}
+
+    workshop_id = payload.get("workshop_id") or payload.get("workshopId")
+    confirm = payload.get("confirm")
+    if not workshop_id:
+        return {"success": False, "message": "workshop_id مطلوب"}
+    if confirm != "MIGRATE_NULL_WORKSHOP":
+        return {"success": False, "message": "يجب تأكيد العملية عبر confirm=MIGRATE_NULL_WORKSHOP"}
+
+    try:
+        # Fetch candidates (NULL workshop_id)
+        q = (
+            supabase.table("operations")
+            .select("id")
+            .in_("type", ["sale", "service"])
+            .eq("payment_method", "credit")
+            .is_("workshop_id", "null")
+        )
+        candidates = (q.execute().data or [])
+
+        updated = 0
+        failed = 0
+        for row in candidates:
+            op_id = row.get("id")
+            if not op_id:
+                continue
+            try:
+                supabase.table("operations").update({"workshop_id": workshop_id}).eq("id", op_id).execute()
+                updated += 1
+            except Exception:
+                failed += 1
+
+        return {
+            "success": True,
+            "data": {
+                "workshop_id": workshop_id,
+                "matched": len(candidates),
+                "updated": updated,
+                "failed": failed,
+            },
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
             # الفواتير
             try:
                 inv_del = (

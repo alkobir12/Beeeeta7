@@ -26,8 +26,9 @@ i18n
     },
     fallbackLng: 'ar',
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
-      caches: ['localStorage'] // Enable localStorage to persist language choice
+      // Default to Arabic (RTL) unless user explicitly changes
+      order: ['localStorage'],
+      caches: ['localStorage'],
     },
     interpolation: {
       escapeValue: false

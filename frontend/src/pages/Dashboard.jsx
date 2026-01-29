@@ -126,7 +126,7 @@ const Dashboard = () => {
     const matchesStatusFixed = filterStatus === 'approved'
       ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
       : matchesStatus;
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatusFixed;
   });
 
   const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;

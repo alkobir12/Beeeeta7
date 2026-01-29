@@ -177,6 +177,7 @@ def step_4_confirm_partial_payment(operation_id, amount, payment_date):
     
     try:
         payment_data = {
+            "workshopId": WORKSHOP_ID,
             "amount": amount,
             "payment_date": payment_date,
             "notes": f"سداد جزئي {amount} ريال"

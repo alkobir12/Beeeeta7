@@ -24,7 +24,7 @@ i18n
       en: { translation: englishTranslations },
       ar: { translation: translations }
     },
-    fallbackLng: 'en',
+    fallbackLng: 'ar',
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
       caches: ['localStorage'] // Enable localStorage to persist language choice

@@ -103,12 +103,12 @@ const ARReceivablesTab = () => {
         </div>
 
         <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Aging (0-30 / 31-60)</p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>تقادم الذمم</p>
           <div className="mt-2 space-y-1 text-sm" style={{ color: 'var(--text-primary)' }}>
-            <div className="flex justify-between"><span>0-30</span><span className="font-mono">{formatCurrency(buckets['0_30'] || 0)}</span></div>
-            <div className="flex justify-between"><span>31-60</span><span className="font-mono">{formatCurrency(buckets['31_60'] || 0)}</span></div>
-            <div className="flex justify-between"><span>61-90</span><span className="font-mono">{formatCurrency(buckets['61_90'] || 0)}</span></div>
-            <div className="flex justify-between"><span>90+</span><span className="font-mono">{formatCurrency(buckets['90_plus'] || 0)}</span></div>
+            <div className="flex justify-between"><span>0-30 يوم</span><span className="font-mono">{formatCurrency(buckets['0_30'] || 0)}</span></div>
+            <div className="flex justify-between"><span>31-60 يوم</span><span className="font-mono">{formatCurrency(buckets['31_60'] || 0)}</span></div>
+            <div className="flex justify-between"><span>61-90 يوم</span><span className="font-mono">{formatCurrency(buckets['61_90'] || 0)}</span></div>
+            <div className="flex justify-between"><span>90+ يوم</span><span className="font-mono">{formatCurrency(buckets['90_plus'] || 0)}</span></div>
           </div>
         </div>
 

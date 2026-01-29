@@ -736,10 +736,8 @@ const Operations = () => {
             alert('فشل تأكيد السداد');
           }
         }}
-
-      <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
-
       />
+      <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
 
     </div>
   );

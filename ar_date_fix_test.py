@@ -200,15 +200,15 @@ def test_ar_ledger_today():
             data = response.json()
             
             if data.get("success"):
-                entries = data.get("data", {}).get("entries", [])
+                rows = data.get("data", {}).get("rows", [])
                 ending_balance = data.get("data", {}).get("ending_balance", 0)
                 
                 print_result(True, f"تم جلب دفتر الذمم بنجاح")
                 print(f"  📊 الرصيد النهائي: {ending_balance} ريال")
-                print(f"  📄 عدد القيود: {len(entries)}")
+                print(f"  📄 عدد القيود: {len(rows)}")
                 
                 # Check for invoice_credit_sale entries
-                credit_sale_entries = [e for e in entries if e.get("type") == "invoice_credit_sale"]
+                credit_sale_entries = [e for e in rows if e.get("type") == "invoice_credit_sale"]
                 
                 if len(credit_sale_entries) >= 2:
                     print_result(True, f"يحتوي على قيود البيع الآجل: {len(credit_sale_entries)} قيد")

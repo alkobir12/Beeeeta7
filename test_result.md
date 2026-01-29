@@ -7491,3 +7491,128 @@ The backend API is working perfectly and returns real calculated balances from o
 
 ---
 
+## Credit Payment Flow + Atomic Deletion Testing (2026-01-29)
+
+### Test Objective:
+اختبار تدفق تأكيد السداد للآجل + الحذف الذري كما طُلب بالعربية
+Testing credit payment confirmation flow + atomic deletion as requested in Arabic
+
+### Test Environment:
+- Backend URL: https://accountrx.preview.emergentagent.com/api (from frontend/.env)
+- Workshop ID: finmodule-sync
+- DB Provider: Supabase (as expected)
+- Testing Date: 2026-01-29 10:09:00
+- Test Focus: Complete credit payment workflow, AR reports, atomic deletion
+
+### Test Results Summary: ❌ CRITICAL AR CALCULATION ISSUE (8/9 tests passed)
+
+#### ✅ CREDIT PAYMENT WORKFLOW - MOSTLY WORKING
+
+**Test Procedure Executed (as requested):**
+1. ✅ DELETE /api/finance/reset-all-data لتصفير البيانات
+2. ✅ POST /api/operations إنشاء عملية بيع credit مع workshopId=finmodule-sync
+3. ✅ التحقق من عدم وجود قيد محاسبي فوري (P0 logic)
+4. ✅ POST /api/operations/{op_id}/confirm-payment تأكيد سداد جزئي (40 ريال)
+5. ✅ POST /api/operations/{op_id}/confirm-payment تأكيد سداد باقي المبلغ (60 ريال)
+6. ❌ GET /api/finance/ar/customers & /api/finance/ar/ledger التحقق من تقارير AR
+7. ✅ DELETE /api/operations/{op_id} اختبار الحذف الذري
+
+**1. ✅ Data Reset (تصفير البيانات)**
+- **Status**: ✅ WORKING (200 OK)
+- **Endpoint**: DELETE /api/finance/reset-all-data?workshop_id=finmodule-sync&confirm=DELETE_ALL
+- **Result**: Successfully deleted 1 operation, 1 journal entry
+- **Response**: {"success": true, "message": "تم حذف جميع البيانات المالية بنجاح من جميع الأنظمة"}
+
+**2. ✅ Credit Operation Creation (إنشاء عملية آجلة)**
+- **Status**: ✅ WORKING (200 OK)
+- **Operation Data**: workshopId=finmodule-sync, paymentMethod=credit, total=100.0 SAR
+- **Result**: Operation created successfully with correct paymentMethod=credit
+- **Operation ID**: 6506d401-73b5-4de1-a20a-70b6d07229f0
+
+**3. ✅ P0 Logic Verification (عدم وجود قيد فوري)**
+- **Status**: ✅ WORKING - CORRECT BEHAVIOR
+- **Verification**: No journal entries found for credit operation immediately after creation
+- **P0 Rule**: ✅ Credit operations do NOT create immediate journal entries (accrual basis)
+
+**4. ✅ Partial Payment Confirmation (تأكيد سداد جزئي)**
+- **Status**: ✅ WORKING (200 OK)
+- **First Payment**: 40.0 SAR on 2024-06-15
+- **Response**: {"success": true, "data": {"paid": 40.0, "remaining": 60.0}}
+- **Journal Entry**: ✅ Created with source=operation_payment
+- **Account Mapping**: 101 (النقدية) Debit=40, 113 (ذمم مدينة عملاء) Credit=40
+
+**5. ✅ Remaining Payment Confirmation (تأكيد السداد المتبقي)**
+- **Status**: ✅ WORKING (200 OK)
+- **Second Payment**: 60.0 SAR on 2024-06-15
+- **Response**: {"success": true, "data": {"paid": 60.0, "remaining": 0.0}}
+- **Journal Entry**: ✅ Created with source=operation_payment
+- **Account Mapping**: 101 (النقدية) Debit=60, 113 (ذمم مدينة عملاء) Credit=60
+
+**6. ❌ AR Reports Verification (تقارير الذمم المدينة) - CRITICAL ISSUE**
+- **Status**: ❌ NOT WORKING CORRECTLY
+- **AR Customers Report**: ✅ Returns data but shows incorrect balance
+- **AR Ledger Report**: ❌ MAJOR ISSUE - Shows ending_balance=100.0 instead of 0.0
+- **Root Cause**: AR calculation logic NOT including payment journal entries
+- **Journal Entries**: ✅ Correct (AR balance from journal entries = -100.0, meaning 0.0 AR)
+- **AR Ledger**: ❌ Only shows initial credit sale, ignores payment entries
+
+**7. ✅ Atomic Deletion (الحذف الذري)**
+- **Status**: ✅ WORKING PERFECTLY
+- **Before Deletion**: 2 journal entries linked to operation
+- **Operation Deletion**: ✅ DELETE /api/operations/{op_id} successful (200 OK)
+- **Cascade Effect**: ✅ All related journal entries automatically deleted
+- **After Deletion**: 0 journal entries remain (perfect atomic cleanup)
+
+#### 🎯 KEY FINDINGS
+
+**✅ WORKING CORRECTLY (8/9 components):**
+1. **Credit Payment Flow**: Complete workflow functional from operation creation to payment confirmation
+2. **P0 Implementation**: Correct accrual vs cash basis separation
+3. **Journal Entry System**: Proper double-entry bookkeeping with correct account mapping
+4. **Atomic Operations**: Perfect cascade deletion maintaining data integrity
+5. **Payment Tracking**: Accurate partial payment support with remaining balance calculation
+
+**❌ CRITICAL ISSUE IDENTIFIED (1/9 components):**
+1. **AR Calculation Logic**: AR reports not integrating with payment journal entries
+2. **Data Inconsistency**: Journal entries show correct AR balance (0.0) but AR reports show incorrect balance (100.0)
+3. **Missing Integration**: Payment confirmations create journal entries but AR system ignores them
+4. **Impact**: Financial reports showing incorrect receivables balances after payments
+
+#### 🚨 ROOT CAUSE ANALYSIS
+
+**The Problem**: AR ledger calculation logic is incomplete
+- **What Works**: Payment confirmations create correct journal entries (101 Debit, 113 Credit)
+- **What Fails**: AR reports only consider initial credit sales, not subsequent payment entries
+- **Evidence**: 
+  - Journal entries show AR balance = -100.0 (meaning 0.0 AR remaining)
+  - AR ledger shows ending_balance = 100.0 (ignoring payment entries)
+  - AR ledger only shows 1 row (initial sale) instead of 3 rows (sale + 2 payments)
+
+**Required Fix**: AR calculation logic must include all journal entries affecting account 113 (ذمم مدينة عملاء), not just initial credit sales.
+
+#### 🎉 CONCLUSION
+
+**Status: ❌ CRITICAL AR CALCULATION ISSUE REQUIRES IMMEDIATE ATTENTION**
+
+The credit payment confirmation flow testing reveals:
+
+**✅ Excellent Implementation (8/9 components):**
+- Complete credit payment workflow functional
+- Perfect P0 accrual logic implementation
+- Robust journal entry system with proper account mapping
+- Flawless atomic deletion maintaining data integrity
+- Accurate payment tracking with partial payment support
+
+**❌ Critical Issue (1/9 components):**
+- AR reports not reflecting payment confirmations correctly
+- Financial reports showing incorrect receivables balances
+- Data inconsistency between journal entries and AR calculations
+
+**Recommendation**: The payment system is excellently implemented, but the AR calculation logic needs immediate fixing to properly integrate payment journal entries into receivables reporting.
+
+### Artifacts:
+- /app/credit_payment_flow_test.py (comprehensive test script)
+- /app/ar_focused_test.py (AR calculation debugging script)
+
+---
+

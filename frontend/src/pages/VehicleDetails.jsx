@@ -1037,30 +1037,10 @@ const VehicleDetails = () => {
 
                                   {op.paymentMethod === 'credit' && (
                                     <button
-                                      onClick={async (e) => {
+                                      onClick={(e) => {
                                         e.stopPropagation();
-                                        const raw = window.prompt('أدخل مبلغ التحصيل (اتركه فارغاً للسداد الكامل):');
-                                        let amount = undefined;
-                                        if (raw && raw.trim()) {
-                                          const n = Number(raw);
-                                          if (!Number.isFinite(n) || n <= 0) {
-                                            alert('مبلغ غير صحيح');
-                                            return;
-                                          }
-                                          amount = n;
-                                        }
-                                        try {
-                                          const apiBase = `${process.env.REACT_APP_BACKEND_URL}/api`;
-                                          await axios.post(`${apiBase}/operations/${op.id}/confirm-payment`, {
-                                            workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
-                                            amount,
-                                            date: new Date().toISOString().split('T')[0]
-                                          });
-                                          await fetchData();
-                                        } catch (err) {
-                                          console.error('Failed to confirm payment from vehicle page:', err);
-                                          alert('فشل تأكيد السداد');
-                                        }
+                                        setConfirmTarget(op);
+                                        setConfirmOpen(true);
                                       }}
                                       className="px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
                                       title="تأكيد سداد"

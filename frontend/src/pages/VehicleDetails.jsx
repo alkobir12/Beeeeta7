@@ -1220,6 +1220,32 @@ const VehicleDetails = () => {
             </div>
           </div>
         )}
+
+        <ConfirmPaymentDialog
+          open={confirmOpen}
+          onOpenChange={(v) => {
+            setConfirmOpen(v);
+            if (!v) setConfirmTarget(null);
+          }}
+          onConfirm={async ({ amount, date }) => {
+            if (!confirmTarget?.id) return;
+            try {
+              const apiBase = `${process.env.REACT_APP_BACKEND_URL}/api`;
+              await axios.post(`${apiBase}/operations/${confirmTarget.id}/confirm-payment`, {
+                workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
+                amount,
+                date,
+              });
+              setConfirmOpen(false);
+              setConfirmTarget(null);
+              await fetchData();
+            } catch (err) {
+              console.error('Failed to confirm payment from vehicle page:', err);
+              alert('فشل تأكيد السداد');
+            }
+          }}
+        />
+
       </div>
   );
 };

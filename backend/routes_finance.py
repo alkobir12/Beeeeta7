@@ -1729,6 +1729,59 @@ async def reset_all_financial_data(
         }
 
 
+@router.post("/ar/migrate-operations-workshop")
+async def ar_migrate_operations_workshop(payload: dict = Body(...)):
+    """ترحيل عمليات الآجل القديمة التي لا تحتوي workshop_id.
+
+    حسب طلبك: نرحّل فقط أصحاب الذمم (عمليات الآجل payment_method='credit')
+    واللي workshop_id فيها NULL.
+
+    مهم: هذا endpoint إداري للاستخدام مرة واحدة.
+    """
+    if not supabase:
+        return {"success": False, "message": "Supabase not connected"}
+
+    workshop_id = payload.get("workshop_id") or payload.get("workshopId")
+    confirm = payload.get("confirm")
+    if not workshop_id:
+        return {"success": False, "message": "workshop_id مطلوب"}
+    if confirm != "MIGRATE_NULL_WORKSHOP":
+        return {"success": False, "message": "يجب تأكيد العملية عبر confirm=MIGRATE_NULL_WORKSHOP"}
+
+    try:
+        q = (
+            supabase.table("operations")
+            .select("id")
+            .in_("type", ["sale", "service"])
+            .eq("payment_method", "credit")
+            .is_("workshop_id", "null")
+        )
+        candidates = (q.execute().data or [])
+
+        updated = 0
+        failed = 0
+        for row in candidates:
+            op_id = row.get("id")
+            if not op_id:
+                continue
+            try:
+                supabase.table("operations").update({"workshop_id": workshop_id}).eq("id", op_id).execute()
+                updated += 1
+            except Exception:
+                failed += 1
+
+        return {
+            "success": True,
+            "data": {
+                "workshop_id": workshop_id,
+                "matched": len(candidates),
+                "updated": updated,
+                "failed": failed,
+            },
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 
 @router.post("/audit-system")
 async def audit_accounting_system(
@@ -1786,59 +1839,6 @@ async def audit_accounting_system(
         # تشغيل التدقيق
         auditor = AccountingSystemAuditor("نظام الخدمات المحاسبي")
 
-
-@router.post("/ar/migrate-operations-workshop")
-async def ar_migrate_operations_workshop(payload: dict = Body(...)):
-    """ترحيل عمليات الآجل القديمة التي لا تحتوي workshop_id.
-
-    حسب طلبك: نرحّل فقط أصحاب الذمم (عمليات الآجل payment_method='credit')
-    واللي workshop_id فيها NULL.
-
-    مهم: هذا endpoint إداري للاستخدام مرة واحدة.
-    """
-    if not supabase:
-        return {"success": False, "message": "Supabase not connected"}
-
-    workshop_id = payload.get("workshop_id") or payload.get("workshopId")
-    confirm = payload.get("confirm")
-    if not workshop_id:
-        return {"success": False, "message": "workshop_id مطلوب"}
-    if confirm != "MIGRATE_NULL_WORKSHOP":
-        return {"success": False, "message": "يجب تأكيد العملية عبر confirm=MIGRATE_NULL_WORKSHOP"}
-
-    try:
-        q = (
-            supabase.table("operations")
-            .select("id")
-            .in_("type", ["sale", "service"])
-            .eq("payment_method", "credit")
-            .is_("workshop_id", "null")
-        )
-        candidates = (q.execute().data or [])
-
-        updated = 0
-        failed = 0
-        for row in candidates:
-            op_id = row.get("id")
-            if not op_id:
-                continue
-            try:
-                supabase.table("operations").update({"workshop_id": workshop_id}).eq("id", op_id).execute()
-                updated += 1
-            except Exception:
-                failed += 1
-
-        return {
-            "success": True,
-            "data": {
-                "workshop_id": workshop_id,
-                "matched": len(candidates),
-                "updated": updated,
-                "failed": failed,
-            },
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
         audit_report = auditor.run_comprehensive_audit(financial_data)
         

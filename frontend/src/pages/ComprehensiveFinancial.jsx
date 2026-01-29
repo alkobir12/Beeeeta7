@@ -298,15 +298,15 @@ const ComprehensiveFinancial = () => {
           {/* Cash vs Credit quick cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FinancialCard
-              title={formatCurrency(cfData.operating_activities?.cash_from_customers || 0)}
-              subtitle="النقد المحصّل من العملاء"
+              title={formatCurrency(cashOperationsTotal || 0)}
+              subtitle="إجمالي المبيعات/العمليات النقدية"
               icon={Banknote}
               variant="success"
               expandable={false}
             />
             <FinancialCard
-              title={formatCurrency(receivablesSummary?.total_ar || 0)}
-              subtitle="المبيعات الآجلة (ذمم مدينة)"
+              title={formatCurrency(creditOperationsTotal || 0)}
+              subtitle="إجمالي المبيعات/العمليات الآجلة"
               icon={TrendingUp}
               variant="warning"
               expandable={false}

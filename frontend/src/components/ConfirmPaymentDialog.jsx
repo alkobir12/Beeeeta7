@@ -38,7 +38,7 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
   }, [amountStr]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent dir="rtl" className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>تأكيد سداد</DialogTitle>

@@ -77,9 +77,9 @@ def add_workshop_id_to_operations():
         cursor.close()
         conn.close()
         
-        if verify_result.data:
+        if verify_result:
             print("✅ Migration completed successfully")
-            print(f"   Column details: {verify_result.data}")
+            print(f"   Column details: {verify_result}")
             return True
         else:
             print("⚠️ Column may not have been added properly")

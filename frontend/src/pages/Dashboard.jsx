@@ -121,6 +121,11 @@ const Dashboard = () => {
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
                          (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+
+    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+    const matchesStatusFixed = filterStatus === 'approved'
+      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+      : matchesStatus;
     return matchesSearch && matchesStatus;
   });
 

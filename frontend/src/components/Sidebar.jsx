@@ -144,16 +144,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     navigate('/login');
   };
 
-  const [session, setSession] = useState({});
-
-  useEffect(() => {
+  const session = useMemo(() => {
     try {
-      const s = JSON.parse(localStorage.getItem('session') || '{}');
-      setSession(s);
+      return JSON.parse(localStorage.getItem('session') || '{}');
     } catch (e) {
-      setSession({});
+      return {};
     }
-  }, []); // Run once on mount
+  }, []);
 
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;

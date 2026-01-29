@@ -1310,6 +1310,7 @@ async def ar_ledger(
 async def ar_customers(
     workshop_id: str = Query(...),
     as_of: str = Query(..., description="YYYY-MM-DD"),
+    include_today: bool = Query(True, description="لإدراج حركات اليوم عند اختلاف التوقيت"),
 ):
     """أرصدة العملاء (ذمم مدينة) حتى تاريخ محدد."""
     try:
@@ -1317,7 +1318,7 @@ async def ar_customers(
 
         # Use end-of-day cutoff to avoid timezone edge cases when op_date is stored with timezone
         # Example: op_date=2026-01-29T14:xxZ should be included for as_of=2026-01-29
-        as_of_eod = f"{as_of}T23:59:59Z"
+        as_of_eod = f"{as_of}T23:59:59Z" if include_today else as_of
 
         # all credit ops up to as_of (EOD)
         ops = _fetch_credit_sales_ops(workshop_id, end_date=as_of_eod)

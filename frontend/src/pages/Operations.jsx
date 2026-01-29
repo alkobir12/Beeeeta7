@@ -714,6 +714,31 @@ const Operations = () => {
       
       {/* أبوفهد (المساعد المالي) أصبح عبر الزر العائم الموحد */}
     </div>
+
+      <ConfirmPaymentDialog
+        open={confirmOpen}
+        onOpenChange={(v) => {
+          setConfirmOpen(v);
+          if (!v) setConfirmTarget(null);
+        }}
+        onConfirm={async ({ amount, date }) => {
+          if (!confirmTarget?.id) return;
+          try {
+            await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
+              workshopId: workshopId || null,
+              amount,
+              date,
+            });
+            setConfirmOpen(false);
+            setConfirmTarget(null);
+            queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+          } catch (e) {
+            console.error('Failed to confirm payment:', e);
+            alert('فشل تأكيد السداد');
+          }
+        }}
+      />
+
   );
 };
 

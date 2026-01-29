@@ -126,7 +126,9 @@ const Login = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lastLogin: new Date().toISOString() })
         });
-      } catch (_) {}
+      } catch (_) {
+        // ignore
+      }
 
       toast({ 
         title: 'مرحباً بك',

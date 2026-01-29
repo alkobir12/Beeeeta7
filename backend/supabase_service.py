@@ -716,7 +716,19 @@ class SupabaseService:
         }
         # إزالة القيم الفارغة
         row = {k: v for k, v in row.items() if v is not None}
-        res = self.client.table("operations").update(row).eq("id", op_id).execute()
+        
+        try:
+            res = self.client.table("operations").update(row).eq("id", op_id).execute()
+        except Exception as update_error:
+            # إذا كان جدول العمليات لا يحتوي على workshop_id، أعد المحاولة بدونها
+            error_msg = str(update_error)
+            print(f"Operations update error, retrying without problematic fields: {update_error}")
+            
+            # Remove fields that might not exist in the schema
+            if "workshop_id" in error_msg:
+                row.pop("workshop_id", None)
+                
+            res = self.client.table("operations").update(row).eq("id", op_id).execute()
         r = (res.data or [{}])[0]
         return {
             "id": r.get("id"),

@@ -154,12 +154,12 @@ const Dashboard = () => {
   };
 
   // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة
-  const isBlueCardTheme = isLight; // نستخدم الكرت الأزرق في الثيم الفاتح حالياً
-  const vehicleCardBackground = isBlueCardTheme
-    ? 'radial-gradient(circle at 0% 0%, rgba(59,130,246,0.28), transparent 55%), radial-gradient(circle at 100% 100%, rgba(56,189,248,0.22), transparent 55%), linear-gradient(145deg, #020617 0%, #020617 45%, #020617 100%)'
+  const isGlassPurpleTheme = isLight;
+  const vehicleCardBackground = isGlassPurpleTheme
+    ? 'radial-gradient(circle at 12% 18%, rgba(168,85,247,0.24), transparent 52%), radial-gradient(circle at 88% 78%, rgba(99,102,241,0.20), transparent 55%), rgba(255,255,255,0.06)'
     : styles.cardBg;
-  const vehicleCardBorder = isBlueCardTheme
-    ? 'rgba(15,23,42,0.55)'
+  const vehicleCardBorder = isGlassPurpleTheme
+    ? 'rgba(168,85,247,0.22)'
     : styles.cardBorder;
   const vehicleText = {
     primary: isBlueCardTheme ? '#f9fafb' : styles.textPrimary,

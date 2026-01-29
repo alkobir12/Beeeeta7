@@ -661,9 +661,16 @@ class SupabaseService:
         try:
             res = self.client.table("operations").insert(row).execute()
         except Exception as insert_error:
-            # إذا كان جدول العمليات لا يحتوي على visit_id، أعد المحاولة بدونها
-            print(f"Operations insert error, retrying without visit_id: {insert_error}")
-            row.pop("visit_id", None)
+            # إذا كان جدول العمليات لا يحتوي على visit_id أو workshop_id، أعد المحاولة بدونها
+            error_msg = str(insert_error)
+            print(f"Operations insert error, retrying without problematic fields: {insert_error}")
+            
+            # Remove fields that might not exist in the schema
+            if "visit_id" in error_msg:
+                row.pop("visit_id", None)
+            if "workshop_id" in error_msg:
+                row.pop("workshop_id", None)
+                
             res = self.client.table("operations").insert(row).execute()
         r = (res.data or [{}])[0]
         return {

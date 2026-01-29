@@ -426,7 +426,7 @@ const Dashboard = () => {
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
-            {['all', 'diagnosis', 'repair', 'ready'].map((status) => (
+            {['all', 'diagnosis', 'quotation', 'approved', 'repair', 'ready'].map((status) => (
               <button
                 key={`filter-${status}`}
                 onClick={() => setFilterStatus(status)}

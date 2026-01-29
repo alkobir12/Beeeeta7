@@ -25,6 +25,8 @@ i18n
       ar: { translation: translations }
     },
     fallbackLng: 'ar',
+    lng: 'ar',
+
     detection: {
       // Default to Arabic (RTL) unless user explicitly changes
       order: ['localStorage'],

@@ -334,9 +334,6 @@ const Operations = () => {
                   className="apple-input"
                 />
               </div>
-                  </div>
-                </div>
-              )}
 
               {/* زيارة المركبة / التاريخ (أيضًا فقط في حالة مركبة) */}
               {form.scope === 'vehicle' && (

@@ -261,7 +261,7 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.active_today') || 'نشطة اليوم'}</span>
+                <span>{t('dashboard.activeToday') || 'نشطة اليوم'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>

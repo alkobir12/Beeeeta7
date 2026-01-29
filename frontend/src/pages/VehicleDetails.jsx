@@ -36,6 +36,9 @@ const VehicleDetails = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);

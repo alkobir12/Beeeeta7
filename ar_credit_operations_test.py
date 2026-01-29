@@ -370,7 +370,7 @@ def step_5_check_ar_ledger():
                     print(f"   النوع: {entry.get('type', 'غير محدد')}")
                     print(f"   التاريخ: {entry.get('date', 'غير محدد')}")
                     print(f"   الوصف: {entry.get('description', 'غير محدد')}")
-                    print(f"   المبلغ: {entry.get('amount', 0)}")
+                    print(f"   المبلغ: {entry.get('debit', 0)}")
                     print(f"   الرصيد الجاري: {entry.get('running_balance', 0)}")
                 
                 # Check expectations

@@ -644,8 +644,11 @@ class SupabaseService:
         visit_id = _sanitize_uuid(visit_id)
 
         op_date = payload.get("date") or payload.get("opDate") or payload.get("op_date")
+        workshop_id = payload.get("workshopId") or payload.get("workshop_id")
+
         row = {
             "type": payload.get("type", "service"),
+            "workshop_id": workshop_id,
             "account_id": account_id,
             "vehicle_id": vehicle_id,
             "visit_id": visit_id,
@@ -692,8 +695,11 @@ class SupabaseService:
         subtotal = sum(
             (float(it.get("price", 0)) * float(it.get("quantity", 1))) for it in items
         )
+        workshop_id = payload.get("workshopId") or payload.get("workshop_id")
+
         row = {
             "type": payload.get("type"),
+            "workshop_id": workshop_id,
             "account_id": payload.get("accountId"),
             "vehicle_id": payload.get("vehicleId"),
             "partner_type": payload.get("partnerType"),

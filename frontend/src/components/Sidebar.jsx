@@ -131,6 +131,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('workshopUser');
+    localStorage.removeItem('session');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 

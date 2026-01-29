@@ -19,12 +19,15 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
   const [amountStr, setAmountStr] = useState('');
   const [dateStr, setDateStr] = useState(todayISO());
 
-  useEffect(() => {
-    if (open) {
+  // Reset fields when dialog opens
+  // (Avoid useEffect reset to satisfy strict lint rules)
+  const handleOpenChange = (v) => {
+    if (v) {
       setAmountStr('');
       setDateStr(todayISO());
     }
-  }, [open]);
+    onOpenChange(v);
+  };
 
   const parsed = useMemo(() => {
     const raw = amountStr.trim();

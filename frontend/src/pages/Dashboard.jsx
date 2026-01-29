@@ -171,7 +171,7 @@ const Dashboard = () => {
     <div 
       className={`max-w-7xl mx-auto min-h-screen px-1 sm:px-4 py-4 ${isRTL ? 'rtl' : 'ltr'}`} 
       dir={isRTL ? 'rtl' : 'ltr'}
-      style={{ backgroundColor: styles.bg }}
+      style={{ background: styles.bg }}
     >
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">

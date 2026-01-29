@@ -44,8 +44,8 @@ def add_workshop_id_to_operations():
         # Try to execute SQL using PostgreSQL connection
         import psycopg2
         
-        # Get PostgreSQL connection details
-        db_url = os.environ.get("DATABASE_URL") or os.environ.get("DIRECT_URL")
+        # Get PostgreSQL connection details - use DIRECT_URL to avoid pgbouncer issues
+        db_url = os.environ.get("DIRECT_URL")
         
         if not db_url:
             print("❌ Database URL not found")

@@ -191,6 +191,7 @@ const Operations = () => {
         items: [],
         paymentMethod: 'cash',
         notes: '',
+        date: new Date().toISOString().split('T')[0],
         paymentReceipt: null
       });
     } catch (e) {

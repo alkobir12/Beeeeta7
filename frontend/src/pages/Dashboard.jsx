@@ -477,8 +477,8 @@ const Dashboard = () => {
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
                     boxShadow: expandedVehicleId === vehicle.id
-                      ? '0 32px 100px rgba(15,23,42,0.9), 0 0 0 1px rgba(59,130,246,0.3)'
-                      : (isBlueCardTheme ? '0 24px 70px rgba(15,23,42,0.75)' : '0 18px 45px rgba(15, 23, 42, 0.6)'),
+                      ? '0 32px 120px rgba(2,6,23,0.85), 0 0 0 1px rgba(168,85,247,0.22)'
+                      : '0 18px 60px rgba(2,6,23,0.65)',
                     height: expandedVehicleId === vehicle.id ? 'auto' : '260px',
                     minHeight: '260px',
                     maxHeight: expandedVehicleId === vehicle.id ? 'none' : '260px',

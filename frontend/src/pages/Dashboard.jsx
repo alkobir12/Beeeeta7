@@ -265,7 +265,7 @@ const Dashboard = () => {
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.delivered_today') || 'تم التسليم'}</span>
+                <span>{t('dashboard.deliveredToday') || 'تم التسليم'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
             </div>
@@ -306,11 +306,11 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.waiting_parts') || 'بانتظار قطع الغيار'}</span>
+                <span>{t('dashboard.waitingParts') || 'بانتظار قطع الغيار'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingParts || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.in_diagnosis') || 'قيد التشخيص'}</span>
+                <span>{t('dashboard.inDiagnosis') || 'قيد التشخيص'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.diagnosis || 0}</span>
               </div>
             </div>
@@ -351,11 +351,11 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.waiting_payment') || 'بانتظار السداد'}</span>
+                <span>{t('dashboard.waitingPayment') || 'بانتظار السداد'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingPayment || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.in_delivery') || 'قيد التسليم'}</span>
+                <span>{t('dashboard.inDelivery') || 'قيد التسليم'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.delivering || 0}</span>
               </div>
             </div>
@@ -396,11 +396,11 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.busy_techs') || 'مشغولون'}</span>
+                <span>{t('dashboard.busyTechs') || 'مشغولون'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.busyTechnicians || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.free_techs') || 'متاحون'}</span>
+                <span>{t('dashboard.freeTechs') || 'متاحون'}</span>
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.freeTechnicians || 0}</span>
               </div>
             </div>

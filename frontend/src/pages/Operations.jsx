@@ -674,27 +674,9 @@ const Operations = () => {
                           {/* تأكيد سداد للآجل (ينشئ قيد حركة نقدية فقط) */}
                           {op.paymentMethod === 'credit' && (
                             <button
-                              onClick={async () => {
-                                const raw = window.prompt('أدخل مبلغ التحصيل/السداد (اتركه فارغاً للسداد الكامل):');
-                                let amount = undefined;
-                                if (raw && raw.trim()) {
-                                  const n = Number(raw);
-                                  if (!Number.isFinite(n) || n <= 0) {
-                                    alert('مبلغ غير صحيح');
-                                    return;
-                                  }
-                                  amount = n;
-                                }
-                                try {
-                                  await axios.post(`${API_URL}/operations/${op.id}/confirm-payment`, {
-                                    workshopId: workshopId || null,
-                                    amount,
-                                  });
-                                  queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
-                                } catch (e) {
-                                  console.error('Failed to confirm payment:', e);
-                                  alert('فشل تأكيد السداد');
-                                }
+                              onClick={() => {
+                                setConfirmTarget(op);
+                                setConfirmOpen(true);
                               }}
                               className="apple-button-secondary text-xs h-8 px-3"
                               title="تأكيد سداد الآجل"

@@ -80,11 +80,10 @@ const translations = {
     diagnosis: "تشخيص",
     waiting_approval: "بانتظار الموافقة",
     quality_check: "فحص الجودة",
-    ready: "جاهز للتسليم"
+    ready: "جاهز للتسليم",
     quotation: "تعميد",
     approved: "معتمد",
-    repair: "تحت الإصلاح",
-
+    repair: "تحت الإصلاح"
   },
   staff: {
     technicians: "الفنيون",

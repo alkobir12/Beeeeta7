@@ -130,7 +130,7 @@ const ComprehensiveFinancial = () => {
   const isBalanced = Math.abs(bsTotals.assets - (bsTotals.liabilities + bsTotals.equity)) < 0.01;
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl" dir="rtl" style={{
+    <div className="container mx-auto p-6 max-w-7xl" dir={isRTL ? 'rtl' : 'ltr'} style={{
       backgroundColor: 'var(--bg-primary)',
       minHeight: '100vh'
     }}>

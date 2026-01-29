@@ -210,8 +210,10 @@ export const services = [
 export const statusSteps = [
   { key: 'diagnosis', label: 'تشخيص', color: 'bg-blue-500' },
   { key: 'quotation', label: 'تعميد', color: 'bg-yellow-500' },
-  { key: 'repair', label: 'إصلاح', color: 'bg-orange-500' },
-  { key: 'ready', label: 'جاهز', color: 'bg-green-500' }
+  { key: 'approved', label: 'معتمد', color: 'bg-emerald-500' },
+  { key: 'repair', label: 'تحت الإصلاح', color: 'bg-orange-500' },
+  { key: 'ready', label: 'جاهز للتسليم', color: 'bg-green-500' },
+  { key: 'delivered', label: 'تم التسليم', color: 'bg-slate-500' }
 ];
 
 export const getStatusLabel = (status) => {

@@ -354,7 +354,7 @@ def step_5_check_ar_ledger():
             
             if data.get("success"):
                 report_data = data.get("data", {})
-                entries = report_data.get("entries", [])
+                entries = report_data.get("rows", [])
                 ending_balance = report_data.get("ending_balance", 0)
                 
                 print(f"📊 الرصيد النهائي: {ending_balance}")

@@ -139,18 +139,18 @@ const Dashboard = () => {
     );
   }
 
-  // Theme-based styles
+  // Theme-based styles (Glass / Purple)
   const styles = {
-    bg: isLight ? '#f5f7fb' : '#0b1120',
-    cardBg: isLight ? '#ffffff' : '#1e293b',
-    cardBorder: isLight ? '#e2e8f0' : '#334155',
-    textPrimary: isLight ? '#0f172a' : '#f9fafb',
-    textSecondary: isLight ? '#64748b' : '#cbd5f5',
-    textMuted: isLight ? '#94a3b8' : '#64748b',
-    inputBg: isLight ? '#ffffff' : '#1e293b',
-    inputBorder: isLight ? '#e2e8f0' : '#334155',
-    hoverBg: isLight ? '#f1f5f9' : '#334155',
-    statCardBg: isLight ? '#ffffff' : 'rgba(30, 41, 59, 0.8)',
+    bg: isLight ? 'radial-gradient(1200px circle at 20% 10%, rgba(168,85,247,0.18), transparent 45%), radial-gradient(900px circle at 80% 20%, rgba(99,102,241,0.16), transparent 50%), linear-gradient(180deg, #0b1020 0%, #0b1020 40%, #070a14 100%)' : '#0b1120',
+    cardBg: isLight ? 'rgba(255,255,255,0.06)' : '#1e293b',
+    cardBorder: isLight ? 'rgba(168,85,247,0.18)' : '#334155',
+    textPrimary: isLight ? '#f8fafc' : '#f9fafb',
+    textSecondary: isLight ? 'rgba(226,232,240,0.78)' : '#cbd5f5',
+    textMuted: isLight ? 'rgba(148,163,184,0.8)' : '#64748b',
+    inputBg: isLight ? 'rgba(255,255,255,0.06)' : '#1e293b',
+    inputBorder: isLight ? 'rgba(255,255,255,0.10)' : '#334155',
+    hoverBg: isLight ? 'rgba(255,255,255,0.08)' : '#334155',
+    statCardBg: isLight ? 'rgba(255,255,255,0.06)' : 'rgba(30, 41, 59, 0.8)',
   };
 
   // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة

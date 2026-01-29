@@ -320,7 +320,12 @@ const Operations = () => {
                           {v.plateNumber} - {v.brand} {v.model}
                         </option>
                       ))}
-              <div>
+                                  </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">تاريخ العملية</label>
                 <input
                   type="date"
@@ -329,8 +334,6 @@ const Operations = () => {
                   className="apple-input"
                 />
               </div>
-
-                    </select>
                   </div>
                 </div>
               )}

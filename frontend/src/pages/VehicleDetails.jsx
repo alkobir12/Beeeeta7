@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, MessageSquare, CheckCircle, FileText, Upload, Printer, Receipt, ClipboardList, Clock, Trash2, Camera, X, Scan, Plus } from 'lucide-react';

@@ -162,9 +162,9 @@ const Dashboard = () => {
     ? 'rgba(168,85,247,0.22)'
     : styles.cardBorder;
   const vehicleText = {
-    primary: isBlueCardTheme ? '#f9fafb' : styles.textPrimary,
-    secondary: isBlueCardTheme ? 'rgba(226,232,240,0.86)' : styles.textSecondary,
-    muted: isBlueCardTheme ? 'rgba(148,163,184,0.9)' : styles.textMuted,
+    primary: isGlassPurpleTheme ? '#f8fafc' : styles.textPrimary,
+    secondary: isGlassPurpleTheme ? 'rgba(226,232,240,0.82)' : styles.textSecondary,
+    muted: isGlassPurpleTheme ? 'rgba(148,163,184,0.82)' : styles.textMuted,
   };
 
   return (

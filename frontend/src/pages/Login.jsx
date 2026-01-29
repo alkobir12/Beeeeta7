@@ -30,6 +30,33 @@ const Login = () => {
       return;
     }
 
+    // تسجيل دخول سريع للمدير بدون الاعتماد على /users (لتجنب أي تعليق/تعذر شبكة)
+    if (name.trim() === 'مدير') {
+      const fallbackUser = {
+        id: 'local-admin',
+        name: 'مدير',
+        phone: '',
+        email: '',
+        role: 'admin',
+        permissions: fallbackPermissions,
+        isActive: true,
+      };
+      const session = {
+        id: fallbackUser.id,
+        name: fallbackUser.name,
+        phone: fallbackUser.phone,
+        email: fallbackUser.email,
+        role: fallbackUser.role,
+        permissions: fallbackUser.permissions,
+        loginTime: new Date().toISOString(),
+      };
+      localStorage.setItem('session', JSON.stringify(session));
+      localStorage.setItem('user', JSON.stringify(fallbackUser));
+      toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
+      navigate('/');
+      return;
+    }
+
     try {
       setLoading(true);
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;

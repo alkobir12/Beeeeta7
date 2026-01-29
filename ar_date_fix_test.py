@@ -155,7 +155,7 @@ def test_ar_customers_today():
                 
                 # Display customer details
                 for customer in customers:
-                    name = customer.get("customer_name", "بدون اسم")
+                    name = customer.get("customer", "بدون اسم")
                     balance = customer.get("balance", 0)
                     print(f"  👤 {name}: {balance} ريال")
                 

@@ -55,7 +55,7 @@ def step_1_reset_all_data():
     
     try:
         url = f"{BACKEND_URL}/finance/reset-all-data"
-        params = {"workshop_id": WORKSHOP_ID, "confirm": "true"}
+        params = {"workshop_id": WORKSHOP_ID, "confirm": "DELETE_ALL"}
         
         print_api_call("DELETE", url, params=params)
         

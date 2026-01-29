@@ -88,7 +88,7 @@ const ComprehensiveFinancial = () => {
   const incomeStatement = incomeStatementQuery.data;
   const cashFlow = cashFlowQuery.data;
 
-  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading;
+  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading || operationsQuery.isLoading;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });

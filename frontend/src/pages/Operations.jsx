@@ -557,7 +557,7 @@ const Operations = () => {
                     <tbody className="divide-y divide-gray-100">
                       {form.items.map((it, idx)=> (
                         <tr key={idx}>
-                          <td className="p-3 text-gray-600">{it.itemType==='part'? "Part" : "Service"}</td>
+                          <td className="p-3 text-gray-600">{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
                           <td className="p-3 font-medium text-gray-900">{it.name}</td>
                           <td className="p-3 text-gray-600">{it.quantity}</td>
                           <td className="p-3 text-gray-600">{it.price}</td>
@@ -581,8 +581,8 @@ const Operations = () => {
                     </tbody>
                     <tfoot className="bg-gray-50 font-bold text-gray-900">
                       <tr>
-                        <td colSpan="4" className="p-3 text-left">{"Total"}:</td>
-                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {"SAR"}</td>
+                        <td colSpan="4" className="p-3 text-left">{t('operations.total')}:</td>
+                        <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {t('operations.SAR')}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -598,7 +598,7 @@ const Operations = () => {
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
                 data-testid="operation-save-button"
               >
-                {"Save"}
+                {t('operations.submit')}
               </button>
             </div>
           </form>
@@ -610,19 +610,19 @@ const Operations = () => {
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
               <FileText size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{"Recent Operations"}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('operations.recentOperations')}</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="p-4 text-right font-medium">{"Date"}</th>
-                  <th className="p-4 text-right font-medium">{"Operation Type"}</th>
-                  <th className="p-4 text-right font-medium">{"Partner"}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.date')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.operationType')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.partner')}</th>
                   <th className="p-4 text-right font-medium">{"Items"}</th>
                   <th className="p-4 text-right font-medium">{"Total"}</th>
-                  <th className="p-4 text-right font-medium">{"Actions"}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

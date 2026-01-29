@@ -76,7 +76,6 @@
     "receiveVehicle": "استقبال مركبة جديدة",
     "quickActions": "إجراءات سريعة",
     "viewDetails": "عرض التفاصيل"
-  },
     ,"activeToday": "نشطة اليوم",
     "deliveredToday": "تم التسليم اليوم",
     "waitingPayment": "بانتظار السداد",
@@ -84,6 +83,7 @@
     "busyTechs": "مشغولون",
     "freeTechs": "متاحون",
     "inDiagnosis": "قيد التشخيص"
+  },
 
   "vehicle": {
     "plateNumber": "رقم اللوحة",

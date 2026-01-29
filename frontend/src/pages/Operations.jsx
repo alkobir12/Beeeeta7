@@ -40,12 +40,11 @@ const Operations = () => {
     itemId: '', 
     name: '', 
     quantity: 1, 
+    price: 0 
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
-
-    price: 0 
-  });
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);

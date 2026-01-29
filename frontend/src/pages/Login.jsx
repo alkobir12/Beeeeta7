@@ -61,8 +61,11 @@ const Login = () => {
       setLoading(true);
       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       
-      // Fetch users to simulate login (as per existing logic)
-      const response = await fetch(`${API_URL}/users`);
+      // Fetch users to simulate login (as per existing logic) with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(`${API_URL}/users`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (!response.ok) throw new Error('Server error');
       
       const users = await response.json();

@@ -1315,9 +1315,13 @@ async def ar_customers(
     try:
         as_of = _parse_date_str(as_of) or datetime.now().date().isoformat()
 
-        # all credit ops up to as_of
-        ops = _fetch_credit_sales_ops(workshop_id, end_date=as_of)
-        pays = _fetch_payment_entries(workshop_id, end_date=as_of)
+        # Use end-of-day cutoff to avoid timezone edge cases when op_date is stored with timezone
+        # Example: op_date=2026-01-29T14:xxZ should be included for as_of=2026-01-29
+        as_of_eod = f"{as_of}T23:59:59Z"
+
+        # all credit ops up to as_of (EOD)
+        ops = _fetch_credit_sales_ops(workshop_id, end_date=as_of_eod)
+        pays = _fetch_payment_entries(workshop_id, end_date=as_of_eod)
 
         sales_by_op = {}
         cust_by_op = {}

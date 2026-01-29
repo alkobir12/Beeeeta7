@@ -33,6 +33,9 @@ const Operations = () => {
     items: [], 
     paymentMethod: 'cash', 
     notes: '',
+    // تاريخ العملية (افتراضي اليوم)
+    date: new Date().toISOString().split('T')[0],
+
     paymentReceipt: null
   });
   const [item, setItem] = useState({ 

@@ -137,32 +137,7 @@ const Login = () => {
       navigate('/');
     } catch (e) {
       console.error('Login error:', e);
-      if (name.trim() === 'مدير') {
-        const fallbackUser = {
-          id: 'local-admin',
-          name: 'مدير',
-          phone: '',
-          email: '',
-          role: 'admin',
-          permissions: fallbackPermissions,
-          isActive: true,
-        };
-        const session = { 
-          id: fallbackUser.id,
-          name: fallbackUser.name,
-          phone: fallbackUser.phone,
-          email: fallbackUser.email,
-          role: fallbackUser.role,
-          permissions: fallbackUser.permissions,
-          loginTime: new Date().toISOString()
-        };
-        localStorage.setItem('session', JSON.stringify(session));
-        localStorage.setItem('user', JSON.stringify(fallbackUser));
-        toast({ title: 'مرحباً بك', description: `أهلاً بعودتك، ${fallbackUser.name}` });
-        navigate('/');
-        return;
-      }
-      toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول (تعذر الاتصال أو مهلة)', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

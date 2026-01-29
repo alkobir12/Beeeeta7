@@ -477,11 +477,10 @@ const Dashboard = () => {
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
                     boxShadow: expandedVehicleId === vehicle.id
-                    backdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
-                    WebkitBackdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
-
                       ? '0 32px 120px rgba(2,6,23,0.85), 0 0 0 1px rgba(168,85,247,0.22)'
                       : '0 18px 60px rgba(2,6,23,0.65)',
+                    backdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
+                    WebkitBackdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
                     height: expandedVehicleId === vehicle.id ? 'auto' : '260px',
                     minHeight: '260px',
                     maxHeight: expandedVehicleId === vehicle.id ? 'none' : '260px',

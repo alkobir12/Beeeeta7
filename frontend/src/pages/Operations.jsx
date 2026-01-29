@@ -40,6 +40,10 @@ const Operations = () => {
     itemId: '', 
     name: '', 
     quantity: 1, 
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+
     price: 0 
   });
 

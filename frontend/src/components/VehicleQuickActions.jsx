@@ -32,9 +32,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
   const statusOptions = [
     { value: 'diagnosis', label: t('status.diagnosis'), color: 'bg-yellow-500' },
-    { value: 'quotation', label: t('vehicle_details.quotation'), color: 'bg-blue-500' },
-    { value: 'approved', label: t('status.waiting_approval'), color: 'bg-green-500' },
-    { value: 'repair', label: t('status.in_progress'), color: 'bg-orange-500' },
+    { value: 'quotation', label: t('status.quotation'), color: 'bg-blue-500' },
+    { value: 'approved', label: t('status.approved'), color: 'bg-green-500' },
+    { value: 'repair', label: t('status.repair'), color: 'bg-orange-500' },
     { value: 'ready', label: t('status.ready'), color: 'bg-green-600' },
     { value: 'delivered', label: t('status.delivered'), color: 'bg-gray-500' }
   ];
@@ -351,7 +351,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               {/* Full Width Actions */}
               <div className="space-y-2 pt-2">
                 <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full h-10 justify-start text-sm hover:bg-green-500/10 hover:text-green-400">
-                  <CheckCircle size={16} className="ml-2" />{t('work_orders.deliver_vehicle')}
+                  <CheckCircle size={16} className="ml-2" />{t('status.delivered')}
                 </Button>
 
                 <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full h-10 justify-start text-sm hover:bg-red-600">

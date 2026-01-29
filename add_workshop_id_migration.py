@@ -10,7 +10,7 @@ from supabase import create_client
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv("/app/backend/.env")
 
 def add_workshop_id_to_operations():
     """Add workshop_id column to operations table"""

@@ -370,15 +370,15 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
                     data-testid="operation-type-select"
                   >
-                    <option value="purchase">{"Purchase"}</option>
-                    <option value="sale">{"Sale"}</option>
+                    <option value="purchase">{t('operations.purchase')}</option>
+                    <option value="sale">{t('operations.sale')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
                 {/* TODO: يمكن لاحقًا توحيد هذا القسم أو إزالته إذا أصبح مكررًا مع حقل الحساب في الأعلى */}
-                <label className="text-sm font-medium text-gray-700">{"Account"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.account')}</label>
                 <div className="relative">
                   <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -387,7 +387,7 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, accountId: e.target.value })}
                     data-testid="operation-secondary-account-select"
                   >
-                    <option value="">{"Select Account"}</option>
+                    <option value="">{t('operations.selectAccount')}</option>
                     {accounts.filter(acc => 
                       !acc.parent_id && !acc.parentId
                     ).map(account => (
@@ -401,13 +401,13 @@ const Operations = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  {form.partnerType === 'supplier' ? "Supplier Name" : "Customer Name"}
+                  {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
                 </label>
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     className="apple-input pr-10"
-                    placeholder={"Name"} 
+                    placeholder={t('operations.customName')} 
                     value={form.partnerName} 
                     onChange={e => setForm({ ...form, partnerName: e.target.value })} 
                     data-testid="operation-partner-name-input"
@@ -416,7 +416,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{"Payment Method"}</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.paymentMethod')}</label>
                 <div className="relative">
                   <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -425,10 +425,10 @@ const Operations = () => {
                     onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
                     data-testid="operation-payment-method-select"
                   >
-                    <option value="cash">{"Cash"}</option>
-                    <option value="card">{"Card"}</option>
-                    <option value="transfer">{"Transfer"}</option>
-                    <option value="credit">{"Credit"}</option>
+                    <option value="cash">{t('operations.cash')}</option>
+                    <option value="card">{t('operations.card')}</option>
+                    <option value="transfer">{t('operations.transfer')}</option>
+                    <option value="credit">{t('operations.credit')}</option>
                   </select>
                 </div>
               </div>
@@ -458,11 +458,11 @@ const Operations = () => {
 
             {/* Items Section */}
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
-              <label className="block text-sm font-semibold text-gray-900 mb-4">{"Add Items"}</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-4">{t('operations.addItems')}</label>
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{"Type"}</label>
+                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.itemType')}</label>
                   <select 
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 

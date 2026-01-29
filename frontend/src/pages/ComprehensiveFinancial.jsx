@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Scale, TrendingUp, Banknote, BarChart3, RefreshCw, Calendar } from 'lucide-react';
 import FinancialCard from '../components/FinancialCard';
-import { financeAPI } from '../services/api';
+import { financeAPI, operationsAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -71,6 +71,16 @@ const ComprehensiveFinancial = () => {
       return res.data?.data || null;
     }
   });
+
+  const operationsQuery = useQuery({
+    queryKey: ['operations', workshopId],
+    queryFn: async () => {
+      const res = await operationsAPI.list({});
+      return res.data || [];
+    },
+    retry: 1,
+  });
+
 
   const receivablesSummary = receivablesSummaryQuery.data;
 

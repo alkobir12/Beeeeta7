@@ -674,6 +674,7 @@ const Operations = () => {
                           {op.paymentMethod === 'credit' && (
                             <button
                               onClick={() => {
+                                console.log('confirm-payment-click', op?.id);
                                 setConfirmTarget(op);
                                 setConfirmOpen(true);
                               }}
@@ -735,6 +736,9 @@ const Operations = () => {
             alert('فشل تأكيد السداد');
           }
         }}
+
+      <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
+
       />
 
     </div>

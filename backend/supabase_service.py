@@ -566,11 +566,7 @@ class SupabaseService:
             "createdAt": r.get("created_at"),
         }
 
-    def customers_delete(self, cid: str) -> bool:
-        if self.mock_mode:
-            return True
-        self.client.table("customers").delete().eq("id", cid).execute()
-        return True
+    # NOTE: customers_delete defined earlier in this file
 
     # -------------------- Invoices --------------------
     def invoices_list(

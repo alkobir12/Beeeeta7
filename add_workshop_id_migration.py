@@ -41,11 +41,25 @@ def add_workshop_id_to_operations():
         
         print("🔄 Adding workshop_id column to operations table...")
         
-        # Execute the SQL
-        result1 = supabase.rpc('exec_sql', {'sql': sql_add_column}).execute()
+        # Try to execute SQL using PostgreSQL connection
+        import psycopg2
+        
+        # Get PostgreSQL connection details
+        db_url = os.environ.get("DATABASE_URL") or os.environ.get("DIRECT_URL")
+        
+        if not db_url:
+            print("❌ Database URL not found")
+            return False
+        
+        # Connect to PostgreSQL directly
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Execute the SQL commands
+        cursor.execute(sql_add_column)
         print("✅ Added workshop_id column")
         
-        result2 = supabase.rpc('exec_sql', {'sql': sql_add_index}).execute()
+        cursor.execute(sql_add_index)
         print("✅ Added index for workshop_id")
         
         # Verify the column was added
@@ -55,7 +69,13 @@ def add_workshop_id_to_operations():
         WHERE table_name = 'operations' AND column_name = 'workshop_id';
         """
         
-        verify_result = supabase.rpc('exec_sql', {'sql': verify_sql}).execute()
+        cursor.execute(verify_sql)
+        verify_result = cursor.fetchall()
+        
+        # Commit changes
+        conn.commit()
+        cursor.close()
+        conn.close()
         
         if verify_result.data:
             print("✅ Migration completed successfully")

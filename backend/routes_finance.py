@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Query
+from fastapi import Body
+
 from accounting_auditor import AccountingSystemAuditor
 
 from datetime import datetime, timedelta

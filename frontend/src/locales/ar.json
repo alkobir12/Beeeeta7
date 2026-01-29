@@ -77,6 +77,14 @@
     "quickActions": "إجراءات سريعة",
     "viewDetails": "عرض التفاصيل"
   },
+    ,"activeToday": "نشطة اليوم",
+    "deliveredToday": "تم التسليم اليوم",
+    "waitingPayment": "بانتظار السداد",
+    "inDelivery": "قيد التسليم",
+    "busyTechs": "مشغولون",
+    "freeTechs": "متاحون",
+    "inDiagnosis": "قيد التشخيص"
+
   "vehicle": {
     "plateNumber": "رقم اللوحة",
     "brand": "الماركة",

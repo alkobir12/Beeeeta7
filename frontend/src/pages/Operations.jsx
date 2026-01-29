@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 // Floating assistant disabled: AbuFahad floating chat is injected via Layout
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;

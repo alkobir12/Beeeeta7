@@ -216,9 +216,9 @@ def test_ar_ledger_today():
                     # Display entry details
                     for entry in credit_sale_entries:
                         date = entry.get("date", "")
-                        amount = entry.get("amount", 0)
-                        customer = entry.get("customer_name", "بدون اسم")
-                        print(f"  📝 {date}: {customer} - {amount} ريال")
+                        debit = entry.get("debit", 0)
+                        customer = entry.get("customer", "بدون اسم")
+                        print(f"  📝 {date}: {customer} - {debit} ريال")
                     
                     return True
                 else:

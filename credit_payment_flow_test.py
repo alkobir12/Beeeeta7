@@ -195,9 +195,10 @@ def step_4_confirm_partial_payment(operation_id, amount, payment_date):
             print(f"📄 تفاصيل السداد: {json.dumps(data, ensure_ascii=False, indent=2)}")
             
             # Check response contains paid and remaining
-            if "paid" in data and "remaining" in data:
-                paid = data.get("paid")
-                remaining = data.get("remaining")
+            payment_data = data.get("data", {})
+            if "paid" in payment_data and "remaining" in payment_data:
+                paid = payment_data.get("paid")
+                remaining = payment_data.get("remaining")
                 print_result(True, f"المدفوع: {paid} ريال، المتبقي: {remaining} ريال")
                 return True
             else:

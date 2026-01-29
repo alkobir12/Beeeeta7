@@ -320,6 +320,16 @@ const Operations = () => {
                           {v.plateNumber} - {v.brand} {v.model}
                         </option>
                       ))}
+              <div>
+                <label className="text-sm font-medium text-gray-700">تاريخ العملية</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  className="apple-input"
+                />
+              </div>
+
                     </select>
                   </div>
                 </div>

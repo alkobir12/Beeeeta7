@@ -713,7 +713,6 @@ const Operations = () => {
         </div>
       
       {/* أبوفهد (المساعد المالي) أصبح عبر الزر العائم الموحد */}
-    </div>
 
       <ConfirmPaymentDialog
         open={confirmOpen}

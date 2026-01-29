@@ -110,6 +110,8 @@ const Dashboard = () => {
   const [isHovering, setIsHovering] = useState(false);
 
   const filteredVehicles = vehicles.filter(vehicle => {
+    // إخفاء السيارات "تم التسليم" من لوحة التحكم (تظهر في الأرشيف)
+    if (vehicle.status === 'delivered') return false;
     const matchesSearch = 
       vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -496,13 +498,13 @@ const Dashboard = () => {
                     <span className="w-1 h-1 rounded-full bg-gray-400" />
                   </div>
 
-                  {/* شارة قيد الإصلاح + ترويسة الكرت */}
+                  {/* شارة الحالة + ترويسة الكرت */}
                   <div className="flex items-center justify-between mb-4 px-1 pt-1">
                     <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-[11px] font-medium">
-                        قيد الإصلاح
+                      <span className={`px-3 py-1 rounded-full border text-[11px] font-medium ${statusConfig?.color || 'bg-slate-800/60 text-slate-200 border-slate-700'}`}>
+                        {statusConfig?.label || (vehicle.status || '-')}
                       </span>
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className={`w-2 h-2 rounded-full ${vehicle.status === 'delivered' ? 'bg-gray-400' : vehicle.status === 'ready' ? 'bg-green-500' : vehicle.status === 'repair' ? 'bg-blue-500' : 'bg-orange-500'}`} />
                     </div>
                     <button
                       onClick={(e) => {

@@ -178,7 +178,7 @@ const Dashboard = () => {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('dashboard.title') || 'لوحة التحكم الرئيسية'}</h1>
             <p className="text-sm sm:text-base mt-1 flex items-center gap-2" style={{ color: styles.textSecondary }}>
-              {t('dashboard.overview')}
+              {t('dashboard.overview') || 'نظرة عامة على حالة الورشة'}
               {isRefreshing && (
                 <RefreshCw size={14} className="animate-spin text-primary" />
               )}
@@ -219,7 +219,7 @@ const Dashboard = () => {
               }}
             >
               <Plus size={18} />
-              <span>{t('dashboard.new_vehicle')}</span>
+              <span>{t('dashboard.new_vehicle') || 'استقبال مركبة جديدة'}</span>
             </button>
           </div>
         </div>
@@ -248,7 +248,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.total_vehicles')}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.totalVehicles') || t('dashboard.total_vehicles') || 'إجمالي المركبات'}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.in_progress')}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.inProgress') || t('dashboard.in_progress') || 'قيد العمل'}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
             </div>
@@ -338,7 +338,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready') || 'جاهز للتسليم'}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
             </div>
@@ -383,7 +383,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians') || 'الفنيين'}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
               </div>
             </div>
@@ -419,7 +419,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2" size={18} style={{ color: styles.textMuted }} />
             <input
               type="text"
-              placeholder={t('dashboard.search')}
+              placeholder={t('dashboard.searchPlaceholder') || t('dashboard.search') || 'بحث برقم اللوحة أو اسم العميل...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-10 pl-4 py-2.5 rounded-xl text-sm sm:text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -462,7 +462,7 @@ const Dashboard = () => {
                 <Car size={40} style={{ color: styles.textMuted }} />
               </div>
               <h3 className="text-lg font-medium" style={{ color: styles.textPrimary }}>{t('common.no_data')}</h3>
-              <p className="mt-1" style={{ color: styles.textSecondary }}>{t('dashboard.search')}</p>
+              <p className="mt-1" style={{ color: styles.textSecondary }}>{t('dashboard.searchPlaceholder') || t('dashboard.search') || 'بحث برقم اللوحة أو اسم العميل...'}</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {

@@ -129,8 +129,6 @@ const ComprehensiveFinancial = () => {
   
   const isBalanced = Math.abs(bsTotals.assets - (bsTotals.liabilities + bsTotals.equity)) < 0.01;
 
-  return (
-
   const operations = operationsQuery.data || [];
 
   const creditOperationsTotal = operations
@@ -141,6 +139,7 @@ const ComprehensiveFinancial = () => {
     .filter((o) => (o.paymentMethod || 'cash').toLowerCase() !== 'credit')
     .reduce((sum, o) => sum + Number(o.total || 0), 0);
 
+  return (
     <div className="container mx-auto p-6 max-w-7xl" dir={isRTL ? 'rtl' : 'ltr'} style={{
       backgroundColor: 'var(--bg-primary)',
       minHeight: '100vh'

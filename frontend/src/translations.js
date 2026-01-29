@@ -81,6 +81,10 @@ const translations = {
     waiting_approval: "بانتظار الموافقة",
     quality_check: "فحص الجودة",
     ready: "جاهز للتسليم"
+    quotation: "تعميد",
+    approved: "معتمد",
+    repair: "تحت الإصلاح",
+
   },
   staff: {
     technicians: "الفنيون",
@@ -314,6 +318,8 @@ const translations = {
     brand_model: "الماركة والموديل",
     vin_number: "رقم الهيكل",
     color: "اللون",
+    subtitle: "خيارات سريعة للمركبة",
+
     registered_services: "الخدمات المسجّلة لهذه المركبة"
   },
   quick_actions: {

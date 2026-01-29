@@ -297,7 +297,7 @@ def step_4_check_ar_customers_report():
                 # Display customer details
                 for customer in customers:
                     print(f"\n👤 عميل:")
-                    print(f"   الاسم: {customer.get('customer_name', 'غير محدد')}")
+                    print(f"   الاسم: {customer.get('customer', 'غير محدد')}")
                     print(f"   المبلغ المستحق: {customer.get('balance', 0)}")
                     print(f"   عدد الفواتير: {customer.get('invoice_count', 0)}")
                 
@@ -307,7 +307,7 @@ def step_4_check_ar_customers_report():
                     print_result(True, f"إجمالي الذمم صحيح: {total_ar} (متوقع: {expected_total})")
                     
                     # Check if customers are properly named
-                    customer_names = [c.get('customer_name', '') for c in customers]
+                    customer_names = [c.get('customer', '') for c in customers]
                     unnamed_customers = [name for name in customer_names if not name or name == 'بدون اسم']
                     
                     if len(unnamed_customers) == 0:

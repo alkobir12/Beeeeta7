@@ -250,15 +250,7 @@ export const ThemeProvider = ({ children }) => {
     document.body.setAttribute('data-theme', themeName);
   };
 
-  const applyFontSize = (size) => {
-    const root = document.documentElement;
-    const sizes = {
-      small: '14px',
-      medium: '16px',
-      large: '18px'
-    };
-    root.style.setProperty('--base-font-size', sizes[size]);
-  };
+  // applyFontSize defined above
 
   const changeTheme = (themeName) => {
     if (themes[themeName]) {

@@ -220,8 +220,6 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       await sendToWhatsApp('approval', approvalLink, message);
       
       setNewStatus('quotation');
-      // keep vehicle status in sync (optimistic)
-      setVehicleStatus('quotation');
       setApprovalDialogOpen(false);
       setApprovalForm({ title: 'طلب اعتماد الإصلاح', amount: '', expiryDays: '7', images: [] });
     } catch (e) {

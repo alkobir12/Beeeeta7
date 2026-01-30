@@ -320,8 +320,11 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className={`w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-          <DialogHeader className="sticky top-0 bg-card z-10 pb-2">
+        <DialogContent
+          className={`w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto ${isRTL ? 'rtl' : 'ltr'} bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl`}
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
+          <DialogHeader className="sticky top-0 bg-transparent z-10 pb-2">
             <DialogTitle className="flex items-center justify-between text-base sm:text-lg">
               <span>{t('quick_actions.title')}</span>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10"><X size={18} /></Button>
@@ -333,7 +336,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
           <div className="space-y-4 sm:space-y-6 pb-4">
             {/* Vehicle Info Card */}
-            <div className="bg-muted/50 p-3 sm:p-4 rounded-lg border border-border">
+            <div className="bg-white/5 p-3 sm:p-4 rounded-xl border border-purple-500/20">
               <h3 className="font-bold text-base sm:text-lg text-foreground mb-1">{vehicle.plateNumber}</h3>
               <p className="text-muted-foreground text-xs sm:text-sm">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
               <p className="text-muted-foreground text-xs sm:text-sm">{vehicle.customerName}</p>
@@ -355,7 +358,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full h-10 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm">
+              <Button onClick={handleStatusUpdate} disabled={loading || newStatus === vehicle.status} className="w-full h-10 sm:h-11 bg-purple-600 hover:bg-purple-700 text-white text-sm">
                 <CheckCircle size={16} className="ml-2" />{t('quick_actions.change_status')}
               </Button>
             </div>
@@ -366,7 +369,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
               <div className="grid grid-cols-2 gap-2">
                 {/* Approval Request */}
-                <Button onClick={handleRequestApproval} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-green-500/10 hover:text-green-400">
+                <Button data-testid="quick-actions-send-approval" onClick={handleRequestApproval} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs bg-white/5 border-purple-500/20 hover:bg-purple-500/10 hover:text-purple-200">
                   <BadgeCheck size={18} />
                   <span>{t('quick_actions.send_approval')}</span>
                 </Button>
@@ -444,7 +447,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
       {/* Approval Request Dialog */}
       <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl" dir="rtl">
           <DialogHeader>
             <DialogTitle>طلب اعتماد من العميل</DialogTitle>
             <DialogDescription>أضف تفاصيل طلب الاعتماد وصور الأعطال</DialogDescription>

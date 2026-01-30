@@ -135,9 +135,6 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     }
   };
 
-    loadProfile();
-  }, []);
-
   const handleRequestApproval = async () => {
     setApprovalDialogOpen(true);
     await computeApprovalFromVehicle();

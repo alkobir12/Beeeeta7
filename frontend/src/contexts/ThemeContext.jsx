@@ -118,7 +118,7 @@ export const themes = {
   dashPro: {
     name: 'داش برو',
     nameEn: 'Dash Pro',
-    mode: 'light',
+    mode: 'dark',
     // الألوان الأساسية
     primary: '#1e40af',
     primaryLight: '#3b82f6',
@@ -171,9 +171,9 @@ export const themes = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState('dark');
-  const [fontSize, setFontSize] = useState('medium');
-  const [layoutMode, setLayoutMode] = useState('comfortable');
+  const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'dashPro');
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
+  const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem('layoutMode') || 'comfortable');
 
   const applyTheme = (themeName) => {
     const theme = themes[themeName] || themes.dark;
@@ -212,17 +212,12 @@ export const ThemeProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Default to dashPro (glass purple)
-    const initialTheme = localStorage.getItem('theme') || 'dashPro';
-    const savedFontSize = localStorage.getItem('fontSize') || 'medium';
-    const savedLayoutMode = localStorage.getItem('layoutMode') || 'comfortable';
+    applyTheme(currentTheme);
+  }, [currentTheme]);
 
-    setCurrentTheme(initialTheme);
-    setFontSize(savedFontSize);
-    setLayoutMode(savedLayoutMode);
-    applyTheme(initialTheme);
-    applyFontSize(savedFontSize);
-  }, []);
+  useEffect(() => {
+    applyFontSize(fontSize);
+  }, [fontSize]);
 
   // applyTheme handles setting CSS vars + mode + data-theme; keep changeTheme below for state updates
 

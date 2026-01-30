@@ -176,14 +176,10 @@ export const ThemeProvider = ({ children }) => {
   const [layoutMode, setLayoutMode] = useState('comfortable');
 
   useEffect(() => {
-    let initialTheme = localStorage.getItem('theme');
+    // Default to dashPro (glass purple)
+    const initialTheme = localStorage.getItem('theme') || 'dashPro';
     const savedFontSize = localStorage.getItem('fontSize') || 'medium';
     const savedLayoutMode = localStorage.getItem('layoutMode') || 'comfortable';
-
-    // Default to dashPro (glass purple)
-    if (!initialTheme) {
-      initialTheme = 'dashPro';
-    }
 
     setCurrentTheme(initialTheme);
     setFontSize(savedFontSize);

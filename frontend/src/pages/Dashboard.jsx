@@ -293,7 +293,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.inProgress') || t('dashboard.in_progress') || 'قيد العمل'}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.inProgress') || t('dashboard.in_progress')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
               </div>
             </div>

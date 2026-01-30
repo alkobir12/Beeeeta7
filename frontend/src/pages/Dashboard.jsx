@@ -383,7 +383,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians') || 'الفنيين'}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
               </div>
             </div>

@@ -88,6 +88,8 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         console.error('Failed to load workshop profile:', e);
       }
     };
+    loadProfile();
+  }, []);
 
   const computeApprovalFromVehicle = async () => {
     if (!vehicle?.id) return;

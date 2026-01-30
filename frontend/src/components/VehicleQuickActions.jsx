@@ -198,9 +198,21 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         message += `${workshopSlogan}\n`;
       }
       message += `\nالسلام عليكم ${vehicle?.customerName}\n\n`;
-      message += `📋 *${approvalForm.title}*\n`;
-      message += `💰 المبلغ المتوقع: *${approvalForm.amount} ر.س*\n\n`;
-      message += `للموافقة على الطلب، يرجى الضغط على الرابط:\n`;
+      message += `📋 *طلب اعتماد الإصلاح*\n`;
+      message += `🚗 ${vehicle?.plateNumber || '-'}\n`;
+
+      // List items (from operations/vehicle visit)
+      if ((approvalItems || []).length) {
+        const maxLines = 8;
+        const lines = approvalItems.slice(0, maxLines).map((it) => `🔧 ${it.name}${it.quantity > 1 ? ` x${it.quantity}` : ''}`);
+        message += lines.join('\n') + `\n`;
+        if (approvalItems.length > maxLines) {
+          message += `... +${approvalItems.length - maxLines} بند إضافي\n`;
+        }
+      }
+
+      message += `💰 المبلغ : *${approvalForm.amount} ر.س*\n\n`;
+      message += `للموافقة على الطلب، يرجى الضغط على الرابط:\n\n`;
       message += `${approvalLink}\n\n`;
       message += `🔒 الرابط آمن وصالح لمدة ${approvalForm.expiryDays} يوم`;
       

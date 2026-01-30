@@ -175,6 +175,42 @@ export const ThemeProvider = ({ children }) => {
   const [fontSize, setFontSize] = useState('medium');
   const [layoutMode, setLayoutMode] = useState('comfortable');
 
+  const applyTheme = (themeName) => {
+    const theme = themes[themeName] || themes.dark;
+    const root = document.documentElement;
+    
+    // تطبيق متغيرات CSS
+    Object.entries(theme).forEach(([key, value]) => {
+      if (key !== 'name' && key !== 'nameEn' && key !== 'mode') {
+        // تحويل camelCase إلى kebab-case
+        const cssVar = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        root.style.setProperty(`--theme-${cssVar}`, value);
+      }
+    });
+
+    // تطبيق الوضع الداكن/الفاتح
+    if (theme.mode === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+    }
+
+    // إضافة اسم الثيم كـ class
+    document.body.setAttribute('data-theme', themeName);
+  };
+
+  const applyFontSize = (size) => {
+    const root = document.documentElement;
+    const sizes = {
+      small: '14px',
+      medium: '16px',
+      large: '18px'
+    };
+    root.style.setProperty('--base-font-size', sizes[size]);
+  };
+
   useEffect(() => {
     // Default to dashPro (glass purple)
     const initialTheme = localStorage.getItem('theme') || 'dashPro';
@@ -188,7 +224,7 @@ export const ThemeProvider = ({ children }) => {
     applyFontSize(savedFontSize);
   }, []);
 
-  const applyTheme = (themeName) => {
+  const changeTheme = (themeName) => {
     const theme = themes[themeName] || themes.dark;
     const root = document.documentElement;
     

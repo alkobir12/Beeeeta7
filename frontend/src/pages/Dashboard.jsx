@@ -462,7 +462,7 @@ const Dashboard = () => {
                 <Car size={40} style={{ color: styles.textMuted }} />
               </div>
               <h3 className="text-lg font-medium" style={{ color: styles.textPrimary }}>{t('common.no_data')}</h3>
-              <p className="mt-1" style={{ color: styles.textSecondary }}>{t('dashboard.searchPlaceholder') || t('dashboard.search') || 'بحث برقم اللوحة أو اسم العميل...'}</p>
+              <p className="mt-1" style={{ color: styles.textSecondary }}>{t('dashboard.searchPlaceholder') || t('dashboard.search')}</p>
             </div>
           ) : (
             filteredVehicles.map((vehicle) => {

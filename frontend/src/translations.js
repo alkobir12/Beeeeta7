@@ -368,8 +368,35 @@ const translations = {
     ready: "جاهز للتسليم",
     technicians: "الفنيين المتاحين",
     new_vehicle: "استقبال مركبة",
-    search: "بحث باسم العميل أو رقم اللوحة..."
+    search: "بحث باسم العميل أو رقم اللوحة...",
+
+    // camelCase keys used in Dashboard.jsx
+    totalVehicles: "إجمالي المركبات",
+    inProgress: "تحت الإصلاح",
+    newVehicle: "استقبال مركبة",
+    searchPlaceholder: "بحث برقم اللوحة أو اسم العميل...",
+    activeToday: "نشطة اليوم",
+    deliveredToday: "تم التسليم اليوم",
+    waitingParts: "بانتظار قطع الغيار",
+    waitingPayment: "بانتظار السداد",
+    inDelivery: "قيد التسليم",
+    inDiagnosis: "قيد التشخيص",
+    busyTechs: "مشغولون",
+    freeTechs: "متاحون"
   },
+    activeToday: "نشطة اليوم",
+    deliveredToday: "تم التسليم اليوم",
+    inDelivery: "قيد التسليم",
+    inDiagnosis: "قيد التشخيص",
+    waitingParts: "بانتظار قطع الغيار",
+    waitingPayment: "بانتظار السداد",
+    busyTechs: "مشغولون",
+    freeTechs: "متاحون",
+    totalVehicles: "إجمالي المركبات",
+    inProgress: "تحت الإصلاح",
+    newVehicle: "استقبال مركبة",
+    searchPlaceholder: "بحث برقم اللوحة أو اسم العميل..."
+
   common: {
     all: "الكل",
     save: "حفظ",

@@ -11,7 +11,7 @@ import { useTheme } from '../contexts/ThemeContext';
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
-  const isLight = themeName === 'light' || themeName === 'dashPro';
+  const isLight = true; // glass/purple theme on dashboard
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();

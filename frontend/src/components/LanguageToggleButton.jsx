@@ -14,8 +14,8 @@ const LanguageToggleButton = () => {
   return (
     <button
       onClick={handleToggle}
-      className="sidebar-item w-full justify-between hover:bg-gray-100"
-      title={i18n.language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+      className="sidebar-item w-full justify-between hover:bg-white/5"
+      title={i18n.language === 'ar' ? 'التبديل إلى الإنجليزية' : 'التبديل إلى العربية'}
       data-testid="language-toggle-button"
     >
       <span className="flex items-center gap-3">

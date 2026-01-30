@@ -135,6 +135,15 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       console.error('Failed to compute approval from vehicle:', e);
       // keep manual fallback
     }
+
+    try {
+      const visitsRes = await axios.get(`${API_URL}/vehicles/${vehicle.id}/visits`);
+      const visits = visitsRes.data || [];
+      setActiveVisitId(visits?.[0]?.id || null);
+    } catch (e) {
+      // ignore
+    }
+
   };
 
   const handleRequestApproval = async () => {

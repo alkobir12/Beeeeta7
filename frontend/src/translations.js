@@ -384,18 +384,6 @@ const translations = {
     busyTechs: "مشغولون",
     freeTechs: "متاحون"
   },
-    activeToday: "نشطة اليوم",
-    deliveredToday: "تم التسليم اليوم",
-    inDelivery: "قيد التسليم",
-    inDiagnosis: "قيد التشخيص",
-    waitingParts: "بانتظار قطع الغيار",
-    waitingPayment: "بانتظار السداد",
-    busyTechs: "مشغولون",
-    freeTechs: "متاحون",
-    totalVehicles: "إجمالي المركبات",
-    inProgress: "تحت الإصلاح",
-    newVehicle: "استقبال مركبة",
-    searchPlaceholder: "بحث برقم اللوحة أو اسم العميل..."
 
   common: {
     all: "الكل",

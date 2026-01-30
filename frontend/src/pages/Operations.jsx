@@ -17,7 +17,7 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const Operations = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
-  const isLight = themeName === 'light' || themeName === 'dashPro';
+  const isLight = false; // force glass/dark look for consistent UI
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -17,6 +17,17 @@ const Layout = ({ pageTitle }) => {
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
       {/* Animated Background */}
       <AnimatedBackground />
+      <div
+        className="pointer-events-none"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(1200px circle at 20% 10%, rgba(168,85,247,0.18), transparent 45%), radial-gradient(900px circle at 80% 20%, rgba(99,102,241,0.16), transparent 50%)',
+          opacity: 0.9,
+          zIndex: 1,
+        }}
+      />
       
       {/* Sidebar */}
       <Sidebar 

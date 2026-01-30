@@ -339,6 +339,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     <>
       <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent
+          data-testid="vehicle-quick-actions-dialog"
           className={`w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto ${isRTL ? 'rtl' : 'ltr'} bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl`}
           dir={isRTL ? 'rtl' : 'ltr'}
         >

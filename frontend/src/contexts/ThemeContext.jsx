@@ -180,16 +180,9 @@ export const ThemeProvider = ({ children }) => {
     const savedFontSize = localStorage.getItem('fontSize') || 'medium';
     const savedLayoutMode = localStorage.getItem('layoutMode') || 'comfortable';
 
+    // Default to dashPro (glass purple)
     if (!initialTheme) {
-      try {
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          initialTheme = 'dark';
-        } else {
-          initialTheme = 'light';
-        }
-      } catch (e) {
-        initialTheme = 'dark';
-      }
+      initialTheme = 'dashPro';
     }
 
     setCurrentTheme(initialTheme);

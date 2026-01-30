@@ -176,7 +176,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('dashboard.title') || 'لوحة التحكم الرئيسية'}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('dashboard.title')}</h1>
             <p className="text-sm sm:text-base mt-1 flex items-center gap-2" style={{ color: styles.textSecondary }}>
               {t('dashboard.overview')}
               {isRefreshing && (

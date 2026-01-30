@@ -219,7 +219,7 @@ const Dashboard = () => {
               }}
             >
               <Plus size={18} />
-              <span>{t('dashboard.new_vehicle') || 'استقبال مركبة جديدة'}</span>
+              <span>{t('dashboard.newVehicle') || t('dashboard.new_vehicle')}</span>
             </button>
           </div>
         </div>

@@ -178,7 +178,7 @@ const Dashboard = () => {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('dashboard.title') || 'لوحة التحكم الرئيسية'}</h1>
             <p className="text-sm sm:text-base mt-1 flex items-center gap-2" style={{ color: styles.textSecondary }}>
-              {t('dashboard.overview') || 'نظرة عامة على حالة الورشة'}
+              {t('dashboard.overview')}
               {isRefreshing && (
                 <RefreshCw size={14} className="animate-spin text-primary" />
               )}

@@ -323,6 +323,7 @@ const translations = {
   },
   quick_actions: {
     title: "إجراءات سريعة",
+    subtitle: "خيارات سريعة للمركبة",
     change_status: "تحديث الحالة",
     current_status: "الحالة الحالية",
     new_status: "الحالة الجديدة",

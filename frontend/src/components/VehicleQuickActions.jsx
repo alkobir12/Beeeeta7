@@ -67,6 +67,8 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   };
 
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [activeVisitId, setActiveVisitId] = useState(null);
+
   const [approvalForm, setApprovalForm] = useState({
     title: 'طلب اعتماد الإصلاح',
     amount: '',

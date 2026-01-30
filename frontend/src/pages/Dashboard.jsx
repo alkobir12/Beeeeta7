@@ -154,7 +154,7 @@ const Dashboard = () => {
   };
 
   // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة
-  const isGlassPurpleTheme = isLight;
+  const isGlassPurpleTheme = true;
   const vehicleCardBackground = isGlassPurpleTheme
     ? 'radial-gradient(circle at 12% 18%, rgba(168,85,247,0.24), transparent 52%), radial-gradient(circle at 88% 78%, rgba(99,102,241,0.20), transparent 55%), rgba(255,255,255,0.06)'
     : styles.cardBg;
@@ -171,7 +171,7 @@ const Dashboard = () => {
     <div 
       className={`max-w-7xl mx-auto min-h-screen px-1 sm:px-4 py-4 ${isRTL ? 'rtl' : 'ltr'}`} 
       dir={isRTL ? 'rtl' : 'ltr'}
-      style={{ background: styles.bg }}
+      style={{ background: 'transparent' }}
     >
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">

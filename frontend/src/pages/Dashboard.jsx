@@ -514,6 +514,7 @@ const Dashboard = () => {
                       <span className={`w-2 h-2 rounded-full ${vehicle.status === 'delivered' ? 'bg-gray-400' : vehicle.status === 'ready' ? 'bg-green-500' : vehicle.status === 'repair' ? 'bg-blue-500' : 'bg-orange-500'}`} />
                     </div>
                     <button
+                      data-testid={`open-quick-actions-${vehicle.id}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedVehicle(vehicle);

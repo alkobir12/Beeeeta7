@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { CheckCircle, FileText, Printer, Trash2, X, Share2, BadgeCheck, Package, Wrench, Upload, XCircle } from 'lucide-react';
+import { CheckCircle, FileText, Printer, Trash2, X, Share2, BadgeCheck, Package, Wrench, Upload, XCircle, Copy } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -68,6 +68,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [activeVisitId, setActiveVisitId] = useState(null);
+
+  const [whatsappPreviewOpen, setWhatsappPreviewOpen] = useState(false);
+  const [whatsappPreviewMessage, setWhatsappPreviewMessage] = useState('');
+  const [whatsappPreviewLink, setWhatsappPreviewLink] = useState('');
 
   const [approvalForm, setApprovalForm] = useState({
     title: 'طلب اعتماد الإصلاح',
@@ -184,7 +188,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         toast({ title: 'خطأ', description: 'الرجاء إدخال العنوان والمبلغ', variant: 'destructive' });
         return;
       }
-      
+
       setLoading(true);
       const payload = {
         vehicleId: vehicle?.id,
@@ -192,50 +196,64 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         title: approvalForm.title,
         amount: parseFloat(approvalForm.amount || '0'),
         expiryDays: parseInt(approvalForm.expiryDays || '7'),
-        images: approvalForm.images
+        images: approvalForm.images,
+        // keep items in backend record for future (optional)
+        serviceItems: approvalItems,
       };
-      
+
       const { data } = await axios.post(`${API_URL}/approvals`, payload);
       toast({ title: 'تم الإرسال', description: 'تم إنشاء طلب الاعتماد' });
       const approvalLink = `${window.location.origin}/approval/${data.token}`;
-      
-      // Get workshop name and slogan
-      const workshopName = workshopProfile?.name || 'ورشة عبدالله الكبير';
+
+      // بيانات الورشة (من /profile)
+      const workshopName = workshopProfile?.name || 'ورشتي';
       const workshopSlogan = workshopProfile?.sloganAr || workshopProfile?.slogan || '';
-      
-      // Build WhatsApp message with workshop identity
+
+      const currency = 'ر.س';
+      const items = approvalItems || [];
+      const services = items.filter((it) => (it.itemType || '').toLowerCase() !== 'part');
+      const parts = items.filter((it) => (it.itemType || '').toLowerCase() === 'part');
+
+      const fmtLine = (it) => {
+        const qty = Number(it.quantity || 1);
+        const price = Number(it.price || 0);
+        const lineTotal = Math.round(qty * price * 100) / 100;
+        return `- ${it.name}${qty > 1 ? ` (x${qty})` : ''} — ${lineTotal} ${currency}`;
+      };
+
+      // رسالة واتساب مفصّلة ومنسقة
       let message = `*${workshopName}*\n`;
-      if (workshopSlogan) {
-        message += `${workshopSlogan}\n`;
-      }
-      message += `\nالسلام عليكم ${vehicle?.customerName}\n\n`;
-      message += `📋 *طلب اعتماد الإصلاح*\n`;
-      message += `🚗 ${vehicle?.plateNumber || '-'}\n`;
+      if (workshopSlogan) message += `${workshopSlogan}\n`;
+      message += `\nالسلام عليكم ${vehicle?.customerName || ''}\n`;
+      message += `\n*طلب اعتماد إصلاح*\n`;
+      message += `المركبة: *${vehicle?.plateNumber || '-'}*\n`;
 
-      // List items (from operations/vehicle visit)
-      if ((approvalItems || []).length) {
-        const maxLines = 8;
-        const lines = approvalItems.slice(0, maxLines).map((it) => `🔧 ${it.name}${it.quantity > 1 ? ` x${it.quantity}` : ''}`);
-        message += lines.join('\n') + `\n`;
-        if (approvalItems.length > maxLines) {
-          message += `... +${approvalItems.length - maxLines} بند إضافي\n`;
-        }
+      if (services.length) {
+        message += `\n*الخدمات:*\n`;
+        message += services.map(fmtLine).join('\n') + '\n';
+      }
+      if (parts.length) {
+        message += `\n*القطع:*\n`;
+        message += parts.map(fmtLine).join('\n') + '\n';
       }
 
-      message += `💰 المبلغ : *${approvalForm.amount} ر.س*\n\n`;
-      message += `للموافقة على الطلب، يرجى الضغط على الرابط:\n\n`;
-      message += `${approvalLink}\n\n`;
-      message += `🔒 الرابط آمن وصالح لمدة ${approvalForm.expiryDays} يوم`;
-      
-      // Send to WhatsApp
-      await sendToWhatsApp('approval', approvalLink, message);
-      
-      setNewStatus('quotation');
+      message += `\n*الإجمالي: ${approvalForm.amount} ${currency}*\n`;
+      message += `\nللموافقة على الطلب، تفضل الرابط التالي:\n${approvalLink}\n`;
+      message += `\nالرابط صالح لمدة ${approvalForm.expiryDays} يوم.`;
+
+      // عرض الرسالة قبل الإرسال (حسب طلبك)
+      setWhatsappPreviewLink(approvalLink);
+      setWhatsappPreviewMessage(message);
+      setWhatsappPreviewOpen(true);
       setApprovalDialogOpen(false);
+
+      setNewStatus('quotation');
       setApprovalForm({ title: 'طلب اعتماد الإصلاح', amount: '', expiryDays: '7', images: [] });
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر إرسال طلب الاعتماد', variant: 'destructive' });
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const [lastWhatsappUrl, setLastWhatsappUrl] = useState('');
@@ -330,7 +348,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10"><X size={18} /></Button>
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-muted-foreground mt-1">
-              {t('quick_actions.subtitle') || ''}
+              {t('quick_actions.subtitle', { defaultValue: '' })}
             </DialogDescription>
           </DialogHeader>
 
@@ -426,6 +444,58 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
               <div className="space-y-2 pt-2">
                 <Button onClick={() => handleStatusUpdate('delivered')} disabled={loading} variant="outline" className="w-full h-10 justify-start text-sm hover:bg-green-500/10 hover:text-green-400">
                   <CheckCircle size={16} className="ml-2" />{t('status.delivered')}
+
+      {/* WhatsApp Preview Dialog */}
+      <Dialog open={whatsappPreviewOpen} onOpenChange={setWhatsappPreviewOpen}>
+        <DialogContent className="w-[95vw] max-w-[620px] max-h-[90vh] overflow-y-auto bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>معاينة رسالة واتساب قبل الإرسال</DialogTitle>
+            <DialogDescription>
+              يمكنك نسخ الرسالة أو فتح واتساب لإرسالها.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Textarea value={whatsappPreviewMessage} readOnly className="min-h-[240px] bg-white/5 border-purple-500/20" />
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  // فتح واتساب (سيحوّل إلى الرابط)
+                  sendToWhatsApp('approval', whatsappPreviewLink, whatsappPreviewMessage);
+                }}
+              >
+                <Share2 className="ml-2" size={16} />
+                فتح واتساب للإرسال
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 bg-white/5 border-purple-500/20 hover:bg-purple-500/10"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(whatsappPreviewMessage || '');
+                    toast({ title: 'تم النسخ', description: 'تم نسخ رسالة واتساب إلى الحافظة' });
+                  } catch (e) {
+                    toast({ title: 'تنبيه', description: 'تعذر النسخ تلقائياً. يمكنك النسخ يدوياً من مربع النص.' });
+                  }
+                }}
+              >
+                <Copy className="ml-2" size={16} />
+                نسخ الرسالة
+              </Button>
+
+              <Button type="button" variant="outline" onClick={() => setWhatsappPreviewOpen(false)}>
+                إغلاق
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
                 </Button>
 
                 <Button onClick={handleDelete} disabled={loading} variant="destructive" className="w-full h-10 justify-start text-sm hover:bg-red-600">
@@ -447,7 +517,7 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
 
       {/* Approval Request Dialog */}
       <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-[520px] max-h-[90vh] overflow-y-auto bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl" dir="rtl">
+        <DialogContent className="w-[95vw] max-w-[560px] max-h-[90vh] overflow-y-auto bg-white/5 border border-purple-500/20 shadow-2xl backdrop-blur-xl" dir="rtl">
           <DialogHeader>
             <DialogTitle>طلب اعتماد من العميل</DialogTitle>
             <DialogDescription>أضف تفاصيل طلب الاعتماد وصور الأعطال</DialogDescription>

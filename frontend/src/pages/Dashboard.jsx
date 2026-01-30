@@ -419,7 +419,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2" size={18} style={{ color: styles.textMuted }} />
             <input
               type="text"
-              placeholder={t('dashboard.searchPlaceholder') || t('dashboard.search') || 'بحث برقم اللوحة أو اسم العميل...'}
+              placeholder={t('dashboard.searchPlaceholder') || t('dashboard.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-10 pl-4 py-2.5 rounded-xl text-sm sm:text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"

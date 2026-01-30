@@ -338,7 +338,7 @@ const Dashboard = () => {
           >
             <div className="dash-widget-top">
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready') || 'جاهز للتسليم'}</span>
+                <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
                 <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
               </div>
             </div>

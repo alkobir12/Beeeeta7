@@ -598,10 +598,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={submitApprovalRequest} disabled={loading} className="flex-1 bg-green-600 hover:bg-green-700">
-                إرسال طلب الاعتماد
+              <Button onClick={submitApprovalRequest} disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                إنشاء + معاينة رسالة واتساب
               </Button>
-              <Button onClick={() => setApprovalDialogOpen(false)} variant="outline">
+              <Button onClick={() => setApprovalDialogOpen(false)} variant="outline" className="bg-white/5 border-purple-500/20 hover:bg-purple-500/10">
                 إلغاء
               </Button>
             </div>

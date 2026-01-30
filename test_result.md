@@ -7651,6 +7651,27 @@ The backend API is working perfectly and returns real calculated balances from o
 
 ---
 
+
+## Quick Actions WhatsApp Approval + UI Testing (2026-01-30)
+
+### Test Objective:
+اختبار تدفق «الإجراءات السريعة» لإرسال طلب اعتماد عبر واتساب بعد التعديلات:
+1) فتح Quick Actions من كرت مركبة
+2) الضغط على زر "طلب اعتماد"
+3) ظهور نافذة طلب الاعتماد
+4) إنشاء الطلب ثم عرض معاينة رسالة واتساب قبل الإرسال
+5) التأكد أن الرسالة تحتوي: اسم الورشة (من /profile) + اسم العميل + رقم اللوحة + الخدمات/القطع + الإجمالي + رابط الاعتماد
+
+### Test Environment:
+- Frontend URL: http://localhost:3000
+- Backend URL: (from frontend/.env)
+- Testing Date: 2026-01-30
+- Test Focus: clickability/selectors + WhatsApp preview dialog + Arabic text
+
+### Test Results Summary: ⏳ PENDING (Automation to be run)
+
+---
+
 ## Credit Payment Flow + Atomic Deletion Testing (2026-01-29)
 
 ### Test Objective:

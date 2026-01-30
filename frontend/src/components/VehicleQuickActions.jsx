@@ -73,6 +73,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     expiryDays: '7',
     images: []
   });
+
+  const [approvalItems, setApprovalItems] = useState([]);
+  const [approvalVisitId, setApprovalVisitId] = useState(null);
   const [workshopProfile, setWorkshopProfile] = useState(null);
 
   useEffect(() => {
@@ -85,11 +88,57 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
         console.error('Failed to load workshop profile:', e);
       }
     };
+
+  const computeApprovalFromVehicle = async () => {
+    if (!vehicle?.id) return;
+    try {
+      // Get latest visit
+      const visitsRes = await axios.get(`${API_URL}/vehicles/${vehicle.id}/visits`);
+      const visits = visitsRes.data || [];
+      const latestVisit = visits[0] || null;
+      const visitId = latestVisit?.id || null;
+      setApprovalVisitId(visitId);
+
+      let ops = [];
+      if (visitId) {
+        const opsRes = await axios.get(`${API_URL}/visits/${visitId}/operations`);
+        ops = opsRes.data || [];
+      } else {
+        const opsRes = await axios.get(`${API_URL}/operations`, { params: { vehicle_id: vehicle.id } });
+        ops = opsRes.data || [];
+      }
+
+      const items = [];
+      for (const op of ops) {
+        for (const it of (op.items || [])) {
+          if (!it?.name) continue;
+          items.push({
+            name: it.name,
+            quantity: Number(it.quantity || 1),
+            price: Number(it.price || 0),
+            itemType: it.itemType || it.type || 'service',
+          });
+        }
+      }
+
+      const total = items.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+      setApprovalItems(items);
+      setApprovalForm((prev) => ({
+        ...prev,
+        amount: total ? String(Math.round(total * 100) / 100) : '',
+      }));
+    } catch (e) {
+      console.error('Failed to compute approval from vehicle:', e);
+      // keep manual fallback
+    }
+  };
+
     loadProfile();
   }, []);
 
   const handleRequestApproval = async () => {
     setApprovalDialogOpen(true);
+    await computeApprovalFromVehicle();
   };
 
   const handleApprovalImageChange = (e) => {

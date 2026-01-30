@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://accountrx.preview.emergentagent.com/api"
+BACKEND_URL = "https://mechanic-hub-70.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def debug_journal_entries():

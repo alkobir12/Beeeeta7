@@ -7668,6 +7668,21 @@ The backend API is working perfectly and returns real calculated balances from o
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
+
+### Test Results Update (2026-01-30)
+✅ PASSED (E2E)
+- تم فتح الداشبورد ثم فتح Quick Actions عبر data-testid: open-quick-actions-*
+- تم الضغط على زر طلب الاعتماد data-testid=quick-actions-send-approval بنجاح
+- ظهرت نافذة "طلب اعتماد من العميل" ثم تم الضغط على "إنشاء + معاينة رسالة واتساب"
+- ظهرت نافذة "معاينة رسالة واتساب قبل الإرسال" وتحتوي الرسالة على:
+  - اسم الورشة (من /profile)
+  - اسم العميل
+  - رقم اللوحة
+  - عناصر الخدمات/القطع
+  - الإجمالي بعملة ر.س
+  - رابط /approval/... 
+
+
 - Backend URL: (from frontend/.env)
 - Testing Date: 2026-01-30
 - Test Focus: clickability/selectors + WhatsApp preview dialog + Arabic text

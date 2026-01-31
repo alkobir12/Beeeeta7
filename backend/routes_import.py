@@ -142,21 +142,57 @@ async def import_parts(file: UploadFile = File(...)):
                 "image": str(
                     row.get(find_col(df.columns, column_map["image"]), "")
                 ).strip(),
-                "updatedAt": datetime.utcnow(),
             }
 
-            # Check if exists
-            existing = await db.parts.find_one({"partNumber": part_data["partNumber"]})
-            if existing:
-                await db.parts.update_one({"_id": existing["_id"]}, {"$set": part_data})
-                updated_count += 1
+            if provider == "supabase":
+                # map to supabase schema
+                row_db = {
+                    "part_number": part_data["partNumber"],
+                    "name": part_data["name"] or part_data["partNumber"],
+                    "category": part_data["category"],
+                    "purchase_price": float(part_data["purchasePrice"] or 0),
+                    "selling_price": float(part_data["sellingPrice"] or 0),
+                    "quantity": int(part_data["quantity"] or 0),
+                    "min_quantity": int(part_data["minQuantity"] or 5),
+                    "supplier": part_data["supplier"],
+                    "image": part_data["image"],
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+
+                existing = (
+                    supa.client.table("parts")
+                    .select("id")
+                    .eq("part_number", row_db["part_number"])
+                    .maybe_single()
+                    .execute()
+                    .data
+                )
+                if existing and existing.get("id"):
+                    supa.client.table("parts").update(row_db).eq(
+                        "id", existing["id"]
+                    ).execute()
+                    updated_count += 1
+                else:
+                    row_db["created_at"] = datetime.utcnow().isoformat()
+                    parts_to_insert.append(row_db)
             else:
-                part_data["id"] = str(uuid.uuid4())
-                part_data["createdAt"] = datetime.utcnow()
-                parts_to_insert.append(part_data)
+                part_data["updatedAt"] = datetime.utcnow()
+
+                # Check if exists
+                existing = await db.parts.find_one({"partNumber": part_data["partNumber"]})
+                if existing:
+                    await db.parts.update_one({"_id": existing["_id"]}, {"$set": part_data})
+                    updated_count += 1
+                else:
+                    part_data["id"] = str(uuid.uuid4())
+                    part_data["createdAt"] = datetime.utcnow()
+                    parts_to_insert.append(part_data)
 
         if parts_to_insert:
-            await db.parts.insert_many(parts_to_insert)
+            if provider == "supabase":
+                supa.client.table("parts").insert(parts_to_insert).execute()
+            else:
+                await db.parts.insert_many(parts_to_insert)
 
         return {
             "status": "success",

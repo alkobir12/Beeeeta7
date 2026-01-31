@@ -592,7 +592,7 @@ const Dashboard = () => {
                         <Calendar size={15} className="text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">تاريخ الدخول</p>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">{t('dashboard.entryDateLabel')}</p>
                         <p className="font-bold text-sm" style={{ color: vehicleText.primary }}>
                           {vehicle.entryDate || vehicle.createdAt
                             ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')

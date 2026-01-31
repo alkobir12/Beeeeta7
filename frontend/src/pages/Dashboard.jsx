@@ -655,7 +655,7 @@ const Dashboard = () => {
                           e.stopPropagation();
                           navigate(`/vehicle/${vehicle.id}`);
                         }}
-                        title="فتح تفاصيل المركبة"
+                        title={t('dashboard.openVehicleDetails')}
                       >
                         <ArrowRight size={16} />
                       </div>

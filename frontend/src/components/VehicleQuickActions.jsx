@@ -214,32 +214,32 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       const services = items.filter((it) => (it.itemType || '').toLowerCase() !== 'part');
       const parts = items.filter((it) => (it.itemType || '').toLowerCase() === 'part');
 
-      const fmtLine = (it) => {
+      const fmtLine = (it, icon = '🔧') => {
         const qty = Number(it.quantity || 1);
         const price = Number(it.price || 0);
         const lineTotal = Math.round(qty * price * 100) / 100;
-        return `- ${it.name}${qty > 1 ? ` (x${qty})` : ''} — ${lineTotal} ${currency}`;
+        return `${icon} ${it.name}${qty > 1 ? ` (x${qty})` : ''} — ${lineTotal} ${currency}`;
       };
 
-      // رسالة واتساب مفصّلة ومنسقة
+      // رسالة واتساب مفصّلة ومنسقة (مع إيموجيات)
       let message = `*${workshopName}*\n`;
       if (workshopSlogan) message += `${workshopSlogan}\n`;
       message += `\nالسلام عليكم ${vehicle?.customerName || ''}\n`;
-      message += `\n*طلب اعتماد إصلاح*\n`;
-      message += `المركبة: *${vehicle?.plateNumber || '-'}*\n`;
+      message += `\n📝 *طلب اعتماد إصلاح*\n`;
+      message += `🚗 المركبة: *${vehicle?.plateNumber || '-'}*\n`;
 
       if (services.length) {
-        message += `\n*الخدمات:*\n`;
-        message += services.map(fmtLine).join('\n') + '\n';
+        message += `\n🔧 *الخدمات:*\n`;
+        message += services.map((it) => fmtLine(it, '🔧')).join('\n') + '\n';
       }
       if (parts.length) {
-        message += `\n*القطع:*\n`;
-        message += parts.map(fmtLine).join('\n') + '\n';
+        message += `\n🧩 *القطع:*\n`;
+        message += parts.map((it) => fmtLine(it, '🧩')).join('\n') + '\n';
       }
 
-      message += `\n*الإجمالي: ${approvalForm.amount} ${currency}*\n`;
-      message += `\nللموافقة على الطلب، تفضل الرابط التالي:\n${approvalLink}\n`;
-      message += `\nالرابط صالح لمدة ${approvalForm.expiryDays} يوم.`;
+      message += `\n💸 *الإجمالي: ${approvalForm.amount} ${currency}*\n`;
+      message += `\n🔗 للموافقة على الطلب، تفضل الرابط التالي:\n${approvalLink}\n`;
+      message += `\n⏳ الرابط صالح لمدة ${approvalForm.expiryDays} يوم.`;
 
       // عرض الرسالة قبل الإرسال (حسب طلبك)
       setWhatsappPreviewLink(approvalLink);

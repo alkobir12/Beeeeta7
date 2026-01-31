@@ -202,13 +202,15 @@ async def import_parts(file: UploadFile = File(...)):
                     supa.client.table("parts")
                     .select("id")
                     .eq("part_number", row_db["part_number"])
-                    .maybe_single()
+                    .limit(1)
                     .execute()
                     .data
                 )
-                if existing and existing.get("id"):
+                existing_id = (existing or [{}])[0].get("id") if isinstance(existing, list) else None
+
+                if existing_id:
                     supa.client.table("parts").update(row_db).eq(
-                        "id", existing["id"]
+                        "id", existing_id
                     ).execute()
                     updated_count += 1
                 else:

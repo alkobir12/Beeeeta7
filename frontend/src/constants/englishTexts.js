@@ -62,6 +62,10 @@ export const englishTexts = {
   'status.cancelled': 'Cancelled',
   'status.diagnosis': 'Diagnosis',
   'status.waiting_approval': 'Waiting Approval',
+  'status.quotation': 'Quotation',
+  'status.approved': 'Approved',
+  'status.repair': 'In Repair',
+  'status.delivering': 'Delivering',
   'status.quality_check': 'Quality Check',
   'status.ready': 'Ready for Delivery',
   
@@ -79,6 +83,17 @@ export const englishTexts = {
   'nav.users': 'Users',
   'nav.profile': 'Profile',
   'nav.settings': 'Settings',
+  'nav.finance_accounting': 'Finance & Accounting',
+  'nav.chart_of_accounts': 'Chart of Accounts',
+  'nav.financial_statements': 'Financial Statements',
+  'nav.journal': 'Journal',
+  'nav.taxes': 'Taxes',
+  'nav.abu_fahd_financial_ai': 'AbuFahd Financial AI',
+  'nav.fault_knowledge': 'Knowledge Base',
+  'nav.denso_diagnostics': 'Denso Diagnostics',
+  'nav.print_quotes': 'Print & Quotes',
+  'nav.templates_manager': 'Templates Manager',
+  'nav.workshop_system': 'Workshop Management System',
   
   'dashboard.title': 'Dashboard',
   'dashboard.overview': 'Workshop Overview',
@@ -88,7 +103,33 @@ export const englishTexts = {
   'dashboard.technicians': 'Available Technicians',
   'dashboard.new_vehicle': 'New Vehicle',
   'dashboard.search': 'Search by customer name or plate number...',
-  
+
+  // camelCase keys used in Dashboard.jsx
+  'dashboard.totalVehicles': 'Total Vehicles',
+  'dashboard.inProgress': 'In Progress',
+  'dashboard.newVehicle': 'New Vehicle',
+  'dashboard.searchPlaceholder': 'Search by plate number or customer name...',
+  'dashboard.activeToday': 'Active Today',
+  'dashboard.deliveredToday': 'Delivered Today',
+  'dashboard.waitingParts': 'Waiting for Parts',
+  'dashboard.waitingPayment': 'Waiting for Payment',
+  'dashboard.inDelivery': 'In Delivery',
+  'dashboard.inDiagnosis': 'In Diagnosis',
+  'dashboard.busyTechs': 'Busy',
+  'dashboard.freeTechs': 'Available',
+
+  // vehicle card labels
+  'dashboard.entryDateLabel': 'Entry Date',
+  'dashboard.customerLabel': 'Customer',
+  'dashboard.progressLabel': 'Progress',
+  'dashboard.responsibleTechnicianLabel': 'Responsible Technician',
+  'dashboard.openVehicleDetails': 'Open Vehicle Details',
+  'dashboard.vinLabel': 'VIN',
+  'dashboard.visitsLabel': 'Visits',
+  'dashboard.visitUnit': 'visit',
+  'dashboard.lastUpdateLabel': 'Last Update',
+  'dashboard.estimatedCostLabel': 'Estimated Cost',
+
   'common.all': 'All',
   'common.save': 'Save',
   'common.cancel': 'Cancel',
@@ -104,7 +145,10 @@ export const englishTexts = {
   'common.print': 'Print',
   'common.total': 'Total',
   'common.currency': 'SAR',
-  
+  'common.unknown': 'Unknown',
+  'common.not_specified': 'Not specified',
+  'common.urgent': 'Urgent',
+
   'inventory.spare_parts': 'Spare Parts',
   'inventory.inventory': 'Inventory',
   'inventory.suppliers': 'Suppliers',
@@ -247,6 +291,38 @@ export const englishTexts = {
   'operations.create_operation': 'Create Operation',
   'operations.recent_operations': 'Recent Operations',
   'operations.no_operations': 'No operations found',
+
+  // Operations - camelCase keys used in Operations.jsx
+  'operations.addItems': 'Items',
+  'operations.addItem': 'Add Item',
+  'operations.items': 'Items',
+  'operations.selectPart': 'Select Part',
+  'operations.selectService': 'Select Service',
+  'operations.selectAccount': 'Select Account',
+  'operations.recentOperations': 'Recent Operations',
+  'operations.operationType': 'Operation Type',
+  'operations.paymentMethod': 'Payment Method',
+  'operations.partner': 'Partner',
+  'operations.submit': 'Submit',
+  'operations.customerName': 'Customer Name',
+  'operations.supplierName': 'Supplier Name',
+  'operations.customName': 'Custom Name',
+  'operations.credit': 'Credit',
+  'operations.SAR': 'SAR',
+
+  // Operations extra labels
+  'operations.scopeLabel': 'Operation Scope',
+  'operations.scopeVehicle': 'Vehicle Operation',
+  'operations.scopeWorkshop': 'General Workshop Operation',
+  'operations.operationDateLabel': 'Operation Date',
+  'operations.no_accounts': 'No accounts available',
+  'operations.loading_accounts': 'Loading accounts...',
+  'operations.payment_receipt_optional': 'Payment Receipt (optional)',
+  'operations.credit_unpaid': 'Credit (unpaid)',
+  'operations.confirm_credit_payment': 'Confirm Credit Payment',
+  'operations.payment_confirm_failed': 'Payment confirmation failed',
+  'operations.qty': 'Qty',
+  'operations.items_count': 'Items',
   
   // Settings
   'settings.title': 'Settings',
@@ -365,5 +441,6 @@ export const englishTexts = {
   'quick_actions.receipt': 'Receipt',
   'quick_actions.details': 'Details',
   'quick_actions.spare_parts': 'Spare Parts',
-  'quick_actions.operations': 'Operations'
+  'quick_actions.operations': 'Operations',
+  'quick_actions.subtitle': 'Select an action for this vehicle'
 };

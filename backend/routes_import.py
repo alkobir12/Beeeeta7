@@ -135,6 +135,81 @@ async def import_parts(file: UploadFile = File(...)):
         updated_count = 0
         processed_count = 0
 
+        # ملاحظة أداء: في وضع Supabase نعمل upsert دفعات لتجنب وقت طويل
+        if provider == "supabase":
+            for _, row in df.iterrows():
+                # Extract values
+                p_num = row.get(find_col(df.columns, column_map["partNumber"]))
+                if pd.isna(p_num) or not str(p_num).strip():
+                    p_num = row.get(find_col(df.columns, ["الرمز"]))
+
+                if pd.isna(p_num) or not str(p_num).strip():
+                    continue
+
+                processed_count += 1
+
+                name_val = row.get(find_col(df.columns, column_map["name"]))
+                if pd.isna(name_val) or not str(name_val).strip():
+                    name_val = row.get(find_col(df.columns, ["المادة"]))
+
+                cat_val = row.get(find_col(df.columns, column_map["category"]))
+                if pd.isna(cat_val) or not str(cat_val).strip():
+                    cat_val = row.get(find_col(df.columns, ["المجموعة"]))
+
+                qty_val = row.get(find_col(df.columns, column_map["quantity"]))
+                if pd.isna(qty_val) or str(qty_val).strip() == "":
+                    qty_val = row.get(find_col(df.columns, ["الكمية"]))
+
+                price_val = row.get(find_col(df.columns, column_map["sellingPrice"]))
+                if pd.isna(price_val) or str(price_val).strip() == "":
+                    price_val = row.get(find_col(df.columns, ["السعر الإفرادي"]))
+
+                def _num(val, default=0.0):
+                    try:
+                        if val is None or (isinstance(val, float) and pd.isna(val)):
+                            return default
+                        s = str(val).strip().replace(',', '')
+                        if s == '':
+                            return default
+                        return float(s)
+                    except Exception:
+                        return default
+
+                part_number = str(p_num).strip()
+                row_db = {
+                    "part_number": part_number,
+                    "name": str(name_val or part_number).strip(),
+                    "category": str(cat_val or "عام").strip(),
+                    "purchase_price": float(
+                        row.get(find_col(df.columns, column_map["purchasePrice"]), 0) or 0
+                    ),
+                    "selling_price": float(_num(price_val, 0)),
+                    "quantity": int(abs(_num(qty_val, 0))),
+                    "min_quantity": int(
+                        float(row.get(find_col(df.columns, column_map["minQuantity"]), 5) or 5)
+                    ),
+                    "supplier": str(
+                        row.get(find_col(df.columns, column_map["supplier"]), "")
+                    ).strip(),
+                    "image": str(
+                        row.get(find_col(df.columns, column_map["image"]), "")
+                    ).strip(),
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+                parts_to_insert.append(row_db)
+
+            if parts_to_insert:
+                # Upsert by unique key: part_number
+                supa.client.table("parts").upsert(parts_to_insert, on_conflict="part_number").execute()
+
+            return {
+                "status": "success",
+                "imported": len(parts_to_insert),
+                "updated": 0,
+                "total": len(parts_to_insert),
+                "processed": processed_count,
+            }
+
         for _, row in df.iterrows():
             # Extract values
             # دعم ملفات الجرد العربية مثل الملف المرفق (رمز/المادة/المجموعة/السعر/الكمية)

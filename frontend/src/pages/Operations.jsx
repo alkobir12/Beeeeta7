@@ -264,8 +264,8 @@ const Operations = () => {
                     }}
                     data-testid="operation-scope-select"
                   >
-                    <option value="vehicle">عملية مركبة</option>
-                    <option value="workshop">عملية ورشة عامة</option>
+                    <option value="vehicle">{t('operations.scopeVehicle')}</option>
+                    <option value="workshop">{t('operations.scopeWorkshop')}</option>
                   </select>
                 </div>
               </div>

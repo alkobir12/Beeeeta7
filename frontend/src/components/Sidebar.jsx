@@ -42,7 +42,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [workshopName, setWorkshopName] = useState('الورشة');
+  const [workshopName, setWorkshopName] = useState('');
 
   // Lint rule in this repo discourages setState inside useEffect.
   // We keep an initial name and only update it after user interaction if needed.

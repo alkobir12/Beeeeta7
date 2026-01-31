@@ -255,6 +255,7 @@ async def import_parts(file: UploadFile = File(...)):
             "imported": len(parts_to_insert),
             "updated": updated_count,
             "total": len(parts_to_insert) + updated_count,
+            "processed": processed_count,
         }
 
     except Exception as e:

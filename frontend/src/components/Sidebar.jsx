@@ -74,11 +74,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageSettings',
       children: [
-        { path: '/accounting/chart-of-accounts', label: i18n.language === 'ar' ? 'دليل الحسابات' : 'Chart of Accounts', enabled: true },
-        { path: '/accounting/comprehensive', label: i18n.language === 'ar' ? '📊 القوائم المالية' : '📊 Financial Statements', enabled: true },
-        { path: '/accounting/journal-entries', label: i18n.language === 'ar' ? '📖 دفتر اليومية' : '📖 Journal', enabled: true },
-        { path: '/finance/taxes', label: i18n.language === 'ar' ? 'الضرائب' : 'Taxes', enabled: true },
-        { path: '/ai-financial', label: i18n.language === 'ar' ? '🤖 أبوفهد - التحليل والتدقيق المالي' : '🤖 AbuFahd Financial AI', enabled: true },
+        { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true },
+        { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true },
+        { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true },
+        { path: '/finance/taxes', label: t('nav.taxes'), enabled: true },
+        { path: '/ai-financial', label: `🤖 ${t('nav.abu_fahd_financial_ai')}`, enabled: true },
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة
         // { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },
       ]

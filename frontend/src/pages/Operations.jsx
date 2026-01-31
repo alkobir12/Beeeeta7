@@ -666,8 +666,8 @@ const Operations = () => {
                           }`}
                         >
                           {op.scope === 'workshop' || (!op.scope && !op.vehicleId)
-                            ? 'عملية ورشة عامة'
-                            : 'عملية مركبة'}
+                            ? t('operations.scopeWorkshop')
+                            : t('operations.scopeVehicle')}
                         </span>
 
                         <div className="flex gap-2">

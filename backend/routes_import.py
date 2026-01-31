@@ -109,7 +109,11 @@ async def import_parts(file: UploadFile = File(...)):
 
         for _, row in df.iterrows():
             # Extract values
+            # دعم ملفات الجرد العربية مثل الملف المرفق (رمز/المادة/المجموعة/السعر/الكمية)
             p_num = row.get(find_col(df.columns, column_map["partNumber"]))
+            if pd.isna(p_num) or not str(p_num).strip():
+                p_num = row.get(find_col(df.columns, ["الرمز"]))
+
             if pd.isna(p_num) or not str(p_num).strip():
                 continue  # Skip empty part numbers
 

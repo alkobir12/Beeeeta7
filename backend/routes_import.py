@@ -14,6 +14,16 @@ def set_db(database):
     db = database
 
 
+def _get_supa():
+    # Import locally to avoid circular imports
+    try:
+        from supabase_service import SupabaseService
+
+        return SupabaseService()
+    except Exception:
+        return None
+
+
 @router.post("/parts")
 async def import_parts(file: UploadFile = File(...)):
     if not db:

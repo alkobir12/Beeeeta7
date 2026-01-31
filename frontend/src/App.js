@@ -68,16 +68,36 @@ const getSessionFromCookie = () => {
 };
 
 const Protected = ({ children }) => {
-  const session = (() => {
+  const readSession = () => {
     // أولوية القراءة من الكوكي
     const fromCookie = getSessionFromCookie();
     if (fromCookie) return fromCookie;
     // توافق مع التخزين القديم في localStorage
-    try { return JSON.parse(localStorage.getItem('session')||'null'); } catch(e){ return null; }
-  })();
+    try {
+      return JSON.parse(localStorage.getItem('session') || 'null');
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const [session, setSession] = React.useState(() => readSession());
+
+  React.useEffect(() => {
+    const sync = () => setSession(readSession());
+
+    // تحديث عند تغيّر localStorage من نافذة أخرى
+    window.addEventListener('storage', sync);
+
+    // تحديث داخل نفس الصفحة (login/logout)
+    window.addEventListener('sessionUpdated', sync);
+
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('sessionUpdated', sync);
+    };
+  }, []);
 
   if (!session) {
-    // Use router navigation (avoid full-page reload loops)
     return <Login />;
   }
   return children;

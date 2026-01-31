@@ -52,6 +52,7 @@ const Login = () => {
       };
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(fallbackUser));
+      window.dispatchEvent(new Event('sessionUpdated'));
       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
       navigate('/');
       return;
@@ -118,6 +119,7 @@ const Login = () => {
 
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(user));
+      window.dispatchEvent(new Event('sessionUpdated'));
 
       // Update last login
       try {

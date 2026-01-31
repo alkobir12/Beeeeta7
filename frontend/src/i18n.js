@@ -28,8 +28,9 @@ i18n
     supportedLngs: ['ar', 'en'],
 
     detection: {
-      // Default to Arabic (RTL) unless user explicitly changes
-      order: ['localStorage'],
+      // Default to Arabic unless user explicitly changes
+      order: ['localStorage', 'navigator'],
+      lookupLocalStorage: 'language',
       caches: ['localStorage'],
     },
     interpolation: {

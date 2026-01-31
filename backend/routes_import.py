@@ -46,7 +46,8 @@ async def import_parts(file: UploadFile = File(...)):
         if filename.endswith(".csv"):
             df = pd.read_csv(io.BytesIO(contents))
         else:
-            df = pd.read_excel(io.BytesIO(contents))
+            # بعض ملفات الجرد تحتوي على عناوين متعددة الصفوف، نقرأ بدون header ثم نحدد صف الأعمدة
+            df = pd.read_excel(io.BytesIO(contents), header=None)
 
         # Normalize column names
         # Map Arabic/English to standard keys

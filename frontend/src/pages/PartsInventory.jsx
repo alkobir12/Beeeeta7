@@ -76,7 +76,7 @@ const PartsInventory = () => {
 
       toast({
         title: t('common.success'),
-        description: `تم الاستيراد: ${result.imported || 0} / تم التحديث: ${result.updated || 0}`,
+        description: `تم الاستيراد: ${result.imported || 0} / تم التحديث: ${result.updated || 0} / تمت المعالجة: ${result.processed || (result.total || 0)}`,
       });
       loadParts();
     } catch (error) {

@@ -68,13 +68,15 @@ const PartsInventory = () => {
         method: 'POST',
         body: formData
       });
-      
-      if (!res.ok) throw new Error('Import failed');
-      
-      const result = await res.json();
-      toast({ 
-        title: t('common.success'), 
-        description: t('messages.success_saved')
+
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(result?.detail || 'Import failed');
+      }
+
+      toast({
+        title: t('common.success'),
+        description: `تم الاستيراد: ${result.imported || 0} / تم التحديث: ${result.updated || 0}`,
       });
       loadParts();
     } catch (error) {

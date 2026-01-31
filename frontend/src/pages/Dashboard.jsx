@@ -595,7 +595,7 @@ const Dashboard = () => {
                         <p className="text-xs text-slate-400 font-medium mb-0.5">{t('dashboard.entryDateLabel')}</p>
                         <p className="font-bold text-sm" style={{ color: vehicleText.primary }}>
                           {vehicle.entryDate || vehicle.createdAt
-                            ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString('ar-SA')
+                            ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')
                             : '-'}
                         </p>
                       </div>

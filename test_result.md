@@ -7699,6 +7699,14 @@ All amounts match expected values:
 - Waiting for parts status count: PASS (يتغير بعد تحديث حالة مركبة)
 
 ---
+### Rollback Recovery (2026-01-31)
+- ✅ إصلاح مشاكل الـ frontend modules بعد rollback عبر: `yarn install --check-files` + إضافة eslint-config-react-app.
+- ✅ إنشاء `frontend/.env` من جديد لاستعادة REACT_APP_BACKEND_URL و REACT_APP_WORKSHOP_ID.
+- ✅ إنشاء `backend/.env` من جديد لاستعادة Mongo (محلي) بعد اختفاء الملف.
+- ✅ إضافة SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY لإعادة تفعيل تقارير الذمم (AR).
+- ✅ تحقق: `/api/finance/ar/customers` يعمل ويُرجع total_ar=13700.
+
+
 
   - ❌ "استلام دفعة من العميل" (NOT FOUND) ✅
 - **Conclusion**: All mock data successfully removed ✅

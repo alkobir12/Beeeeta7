@@ -49,6 +49,32 @@ async def import_parts(file: UploadFile = File(...)):
             # بعض ملفات الجرد تحتوي على عناوين متعددة الصفوف، نقرأ بدون header ثم نحدد صف الأعمدة
             df = pd.read_excel(io.BytesIO(contents), header=None)
 
+        # إذا كان الملف Excel: تحديد صف العناوين (header row) تلقائياً لملفات الجرد متعددة الصفوف
+        if not filename.endswith('.csv'):
+            header_idx = None
+            for i in range(min(20, len(df))):
+                row_vals = [str(x).strip() for x in df.iloc[i].tolist() if str(x) != 'nan']
+                # ملفات الجرد العربية غالباً تحتوي "الرمز" و"المادة" في صف العناوين
+                if {'الرمز', 'المادة'}.issubset(set(row_vals)):
+                    header_idx = i
+                    break
+
+            # fallback: أول صف غير فارغ
+            if header_idx is None:
+                for i in range(min(10, len(df))):
+                    row_vals = [str(x).strip() for x in df.iloc[i].tolist() if str(x) != 'nan']
+                    if len(row_vals) >= 3:
+                        header_idx = i
+                        break
+
+            if header_idx is not None:
+                df.columns = [str(x).strip() if str(x) != 'nan' else '' for x in df.iloc[header_idx].tolist()]
+                df = df.iloc[header_idx + 1 :].copy()
+
+            # تنظيف الأعمدة الفارغة
+            df = df.loc[:, [c for c in df.columns if str(c).strip() != '']]
+
+
         # Normalize column names
         # Map Arabic/English to standard keys
         column_map = {
@@ -70,23 +96,6 @@ async def import_parts(file: UploadFile = File(...)):
                 "التكلفة",
             ],
             "sellingPrice": [
-
-        # إذا كان الملف Excel: تحديد صف العناوين (header row) تلقائياً لملفات الجرد متعددة الصفوف
-        if not filename.endswith('.csv'):
-            header_idx = None
-            for i in range(min(20, len(df))):
-                row_vals = [str(x).strip() for x in df.iloc[i].tolist() if str(x) != 'nan']
-                if {'الرمز', 'المادة'}.issubset(set(row_vals)):
-                    header_idx = i
-                    break
-
-            if header_idx is not None:
-                df.columns = [str(x).strip() if str(x) != 'nan' else '' for x in df.iloc[header_idx].tolist()]
-                df = df.iloc[header_idx + 1 :].copy()
-
-            # تنظيف الأعمدة الفارغة
-            df = df.loc[:, [c for c in df.columns if str(c).strip() != '']]
-
                 "sellingprice",
                 "price",
                 "sell price",

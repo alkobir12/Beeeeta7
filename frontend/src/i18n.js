@@ -49,6 +49,15 @@ i18n.on('languageChanged', (lng) => {
 });
 
 // Set initial direction
+try {
+  const savedLang = localStorage.getItem('language');
+  if (savedLang && savedLang !== i18n.language) {
+    i18n.changeLanguage(savedLang);
+  }
+} catch (e) {
+  // ignore
+}
+
 document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
 document.documentElement.lang = i18n.language;
 

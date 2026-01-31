@@ -210,14 +210,14 @@ async def import_parts(file: UploadFile = File(...)):
                     "updated_at": datetime.utcnow().isoformat(),
                 }
 
-                existing = (
+                res = (
                     supa.client.table("parts")
                     .select("id")
                     .eq("part_number", row_db["part_number"])
                     .limit(1)
                     .execute()
-                    .data
                 )
+                existing = getattr(res, "data", None) or []
                 existing_id = (existing or [{}])[0].get("id") if isinstance(existing, list) else None
 
                 if existing_id:

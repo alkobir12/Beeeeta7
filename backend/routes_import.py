@@ -200,37 +200,63 @@ async def import_parts(file: UploadFile = File(...)):
                         return default
 
                 part_number = str(p_num).strip()
-                row_db = {
-                    "part_number": part_number,
-                    "name": str(name_val or part_number).strip(),
-                    "category": str(cat_val or "عام").strip(),
-                    "purchase_price": float(
-                        row.get(find_col(df.columns, column_map["purchasePrice"]), 0) or 0
-                    ),
-                    "selling_price": float(_num(price_val, 0)),
-                    "quantity": int(abs(_num(qty_val, 0))),
-                    "min_quantity": int(
-                        float(row.get(find_col(df.columns, column_map["minQuantity"]), 5) or 5)
-                    ),
-                    "supplier": str(
-                        row.get(find_col(df.columns, column_map["supplier"]), "")
-                    ).strip(),
-                    "image": str(
-                        row.get(find_col(df.columns, column_map["image"]), "")
-                    ).strip(),
-                    "updated_at": datetime.utcnow().isoformat(),
-                }
-                parts_to_insert.append(row_db)
+                name_str = str(name_val or part_number).strip()
+                cat_str = str(cat_val or "عام").strip()
 
-            if parts_to_insert:
-                # Upsert by unique key: part_number
-                supa.client.table("parts").upsert(parts_to_insert, on_conflict="part_number").execute()
+                if _is_service(name_str, cat_str):
+                    services_rows.append(
+                        {
+                            "name": name_str,
+                            "category": cat_str,
+                            "price": float(_num(price_val, 0)),
+                            "duration_minutes": 30,
+                            "active": True,
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    )
+                else:
+                    parts_rows.append(
+                        {
+                            "part_number": part_number,
+                            "name": name_str,
+                            "category": cat_str,
+                            "purchase_price": float(
+                                row.get(find_col(df.columns, column_map["purchasePrice"]), 0)
+                                or 0
+                            ),
+                            "selling_price": float(_num(price_val, 0)),
+                            "quantity": int(abs(_num(qty_val, 0))),
+                            "min_quantity": int(
+                                float(
+                                    row.get(
+                                        find_col(df.columns, column_map["minQuantity"]), 5
+                                    )
+                                    or 5
+                                )
+                            ),
+                            "supplier": str(
+                                row.get(find_col(df.columns, column_map["supplier"]), "")
+                            ).strip(),
+                            "image": str(
+                                row.get(find_col(df.columns, column_map["image"]), "")
+                            ).strip(),
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    )
+
+            if parts_rows:
+                supa.client.table("parts").upsert(parts_rows, on_conflict="part_number").execute()
+
+            if services_rows:
+                # لا يوجد code للخدمات حسب طلبك، فنستخدم upsert على (name)
+                supa.client.table("services").upsert(services_rows, on_conflict="name").execute()
 
             return {
                 "status": "success",
-                "imported": len(parts_to_insert),
+                "imported_parts": len(parts_rows),
+                "imported_services": len(services_rows),
                 "updated": 0,
-                "total": len(parts_to_insert),
+                "total": len(parts_rows) + len(services_rows),
                 "processed": processed_count,
             }
 

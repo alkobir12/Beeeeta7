@@ -579,7 +579,7 @@ const Dashboard = () => {
                       </div>
                       {isUrgent && (
                         <span className="px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[11px] font-bold border border-red-500/30">
-                          ⚡ عاجل
+                          ⚡ {t('common.urgent')}
                         </span>
                       )}
                     </div>

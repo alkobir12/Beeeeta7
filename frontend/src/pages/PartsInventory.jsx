@@ -265,7 +265,7 @@ const PartsInventory = () => {
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500 mb-1">{"Total Parts"}</p>
-            <p className="text-2xl font-bold text-gray-900">{filteredParts.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{parts.length}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <Package size={20} />
@@ -330,9 +330,9 @@ const PartsInventory = () => {
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div data-testid="parts-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredParts.map(part => (
-            <div key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
+            <div data-testid="part-card" key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
               <div className="h-40 bg-gray-100 relative">
                 {part.image ? (
                   <img src={part.image} alt={part.name} className="w-full h-full object-cover" />

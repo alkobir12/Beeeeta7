@@ -26,6 +26,29 @@ def _get_supa():
         return None
 
 
+
+def _is_service(name: str, category: str) -> bool:
+    name = (name or "").strip()
+    category = (category or "").strip()
+
+    prefixes = (
+        "فك وتركيب",
+        "تركيب",
+        "توضيب",
+        "صيانة",
+        "صيانه",
+    )
+
+    if name.startswith(prefixes):
+        return True
+
+    # بعض الملفات قد تضع الخدمة في خانة المجموعة
+    if category.startswith(("توضيب",)):
+        return True
+
+    return False
+
+
 @router.post("/parts")
 async def import_parts(file: UploadFile = File(...)):
     provider = os.environ.get("DB_PROVIDER", "mongo").lower()

@@ -748,7 +748,7 @@ const Operations = () => {
             queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
           } catch (e) {
             console.error('Failed to confirm payment:', e);
-            alert('فشل تأكيد السداد');
+            alert(t('operations.payment_confirm_failed'));
           }
         }}
       />

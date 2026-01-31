@@ -646,7 +646,7 @@ const Dashboard = () => {
                         <div>
                           <p className="text-xs text-slate-400 mb-0.5">{t('dashboard.responsibleTechnicianLabel')}</p>
                           <p className="font-bold text-sm text-slate-100">
-                            {vehicle.technicianName || vehicle.technician || 'غير محدد'}
+                            {vehicle.technicianName || vehicle.technician || t('common.not_specified')}
                           </p>
                         </div>
                       </div>

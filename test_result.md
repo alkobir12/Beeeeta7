@@ -7683,6 +7683,21 @@ All amounts match expected values:
   - ❌ JE-2024-001 (NOT FOUND) ✅
   - ❌ JE-2024-002 (NOT FOUND) ✅
   - ❌ "تسجيل فاتورة مبيعات INV-2024-001" (NOT FOUND) ✅
+
+## Login Auto Redirect + Dashboard Waiting Stats Testing (2026-01-31)
+
+### Test Objective:
+1) التأكد أن تسجيل الدخول لا يحتاج Refresh (redirect تلقائي)
+2) التأكد أن «بانتظار السداد» = إجمالي الذمم (AR)
+3) التأكد أن «بانتظار قطع الغيار» يتغير عند تغيير حالة مركبة إلى waiting_for_parts
+
+### Test Results Summary: ✅ PASSED
+- Login: PASS (redirect تلقائي بعد الضغط على دخول)
+- Dashboard waiting payment: PASS (عرض 13700 من /finance/ar/customers)
+- Waiting for parts status count: PASS (يتغير بعد تحديث حالة مركبة)
+
+---
+
   - ❌ "استلام دفعة من العميل" (NOT FOUND) ✅
 - **Conclusion**: All mock data successfully removed ✅
 

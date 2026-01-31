@@ -83,6 +83,9 @@ const Layout = ({ pageTitle }) => {
           ]}
         />
       </main>
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 };

@@ -312,7 +312,7 @@ const PartsInventory = () => {
           />
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadParts} variant="outline">{"Search..."}</Button>
+          <Button onClick={loadParts} variant="outline">{"Refresh"}</Button>
           <Button
             variant={showLowStock ? 'default' : 'outline'}
             onClick={() => setShowLowStock(!showLowStock)}

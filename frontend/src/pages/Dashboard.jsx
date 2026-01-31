@@ -665,8 +665,8 @@ const Dashboard = () => {
                     {expandedVehicleId === vehicle.id && (
                       <div className="grid grid-cols-2 gap-3 bg-slate-950/60 rounded-2xl px-4 py-3 border border-slate-800/80 mt-2">
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-400 font-medium">رقم الهيكل (VIN)</span>
-                          <span className="font-mono text-slate-100 text-sm font-semibold truncate">{vehicle.vin || 'غير محدد'}</span>
+                          <span className="text-xs text-slate-400 font-medium">{t('dashboard.vinLabel')}</span>
+                          <span className="font-mono text-slate-100 text-sm font-semibold truncate">{vehicle.vin || t('common.not_specified')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">عدد الزيارات</span>

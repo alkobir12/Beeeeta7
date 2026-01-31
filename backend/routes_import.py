@@ -160,6 +160,18 @@ async def import_parts(file: UploadFile = File(...)):
             if pd.isna(price_val) or str(price_val).strip() == "":
                 price_val = row.get(find_col(df.columns, ["السعر الإفرادي"]))
 
+            # في ملف الجرد المرفق: الكمية والسعر قد يكونان نصوص/قيم سالبة
+            def _num(val, default=0.0):
+                try:
+                    if val is None or (isinstance(val, float) and pd.isna(val)):
+                        return default
+                    s = str(val).strip().replace(',', '')
+                    if s == '':
+                        return default
+                    return float(s)
+                except Exception:
+                    return default
+
             part_data = {
                 "partNumber": str(p_num).strip(),
                 "name": str(name_val or "").strip(),
@@ -167,8 +179,8 @@ async def import_parts(file: UploadFile = File(...)):
                 "purchasePrice": float(
                     row.get(find_col(df.columns, column_map["purchasePrice"]), 0) or 0
                 ),
-                "sellingPrice": float(price_val or 0),
-                "quantity": int(float(qty_val or 0)),
+                "sellingPrice": _num(price_val, 0),
+                "quantity": int(abs(_num(qty_val, 0))),
                 "minQuantity": int(
                     float(row.get(find_col(df.columns, column_map["minQuantity"]), 5) or 5)
                 ),

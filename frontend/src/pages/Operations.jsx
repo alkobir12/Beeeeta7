@@ -290,10 +290,10 @@ const Operations = () => {
                           </option>
                         ))
                       ) : (
-                        <option value="">لا توجد حسابات</option>
+                        <option value="">{t('operations.no_accounts')}</option>
                       )
                     ) : (
-                      <option value="">جاري تحميل الحسابات...</option>
+                      <option value="">{t('operations.loading_accounts')}</option>
                     )}
                   </select>
                 </div>

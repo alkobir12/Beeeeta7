@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, RefreshCw, User, Calendar, ArrowRight } from 'lucide-react';
+import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, RefreshCw, User, Calendar, ArrowRight, Package } from 'lucide-react';
 import { vehicleAPI, technicianAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
@@ -21,6 +21,10 @@ const Dashboard = () => {
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+  const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID;
+  const [totalAR, setTotalAR] = useState(0);
+
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const isMountedRef = useRef(true);
@@ -34,7 +38,9 @@ const Dashboard = () => {
     in_progress: { label: t('status.in_progress'), color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
     quality_check: { label: t('status.quality_check'), color: 'text-purple-400 bg-purple-500/10 border border-purple-500/20', iconColor: 'text-purple-400' },
     ready: { label: t('status.ready'), color: 'text-green-400 bg-green-500/10 border border-green-500/20', iconColor: 'text-green-400' },
-    delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' }
+    delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
+    waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
+    delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
   };
 
   useEffect(() => {
@@ -76,14 +82,23 @@ const Dashboard = () => {
         setIsRefreshing(true);
       }
       
-      const [vehiclesRes, techniciansRes] = await Promise.all([
+      const today = new Date().toISOString().slice(0, 10);
+
+      const [vehiclesRes, techniciansRes, arRes] = await Promise.all([
         vehicleAPI.getAll(),
-        technicianAPI.getAll()
+        technicianAPI.getAll(),
+        (WORKSHOP_ID
+          ? axios.get(`${API_URL}/finance/ar/customers`, {
+              params: { workshop_id: WORKSHOP_ID, as_of: today, include_today: true },
+            })
+          : Promise.resolve({ data: { success: true, data: { total_ar: 0 } } }))
       ]);
       
       if (isMountedRef.current) {
         setVehicles(vehiclesRes.data);
         setTechnicians(techniciansRes.data);
+        const arTotal = Number(arRes?.data?.data?.total_ar || 0);
+        setTotalAR(arTotal);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -100,9 +115,17 @@ const Dashboard = () => {
 
   const stats = {
     totalVehicles: vehicles.length,
-    inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check', 'repair', 'quotation', 'approved'].includes(v.status)).length,
+    inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check', 'repair', 'quotation', 'approved', 'waiting_for_parts'].includes(v.status)).length,
     ready: vehicles.filter(v => v.status === 'ready' || v.status === 'delivered').length,
-    technicians: technicians.length
+    technicians: technicians.length,
+
+    // تفاصيل إضافية للكروت الموسّعة
+    waitingParts: vehicles.filter(v => v.status === 'waiting_for_parts').length,
+    diagnosis: vehicles.filter(v => v.status === 'diagnosis').length,
+    delivering: vehicles.filter(v => v.status === 'delivering').length,
+
+    // «بانتظار السداد» = إجمالي جميع الذمم للعملاء (AR)
+    waitingPayment: totalAR,
   };
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);

@@ -557,7 +557,7 @@ const Dashboard = () => {
                       <span className="vehicle-plate-pill inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/85 text-slate-50 text-base sm:text-lg font-bold border border-slate-700 shadow-inner">
                         <Car size={16} className="opacity-80" />
                         <span className="font-mono tracking-[0.35em] uppercase">
-                          {vehicle.plateNumber || 'غير معروف'}
+                          {vehicle.plateNumber || t('common.unknown')}
                         </span>
                       </span>
                     </div>

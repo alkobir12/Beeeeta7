@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
     {
       group: true,
-      label: i18n.language === 'ar' ? '💰 المالية والمحاسبة' : '💰 Finance & Accounting',
+      label: `💰 ${t('nav.finance_accounting')}`,
       icon: BarChart3,
       enabled: true,
       permission: 'canManageSettings',

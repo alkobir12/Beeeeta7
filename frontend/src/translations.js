@@ -74,6 +74,7 @@ const translations = {
     open: "مفتوح",
     in_progress: "إصلاح",
     waiting_for_parts: "بانتظار قطع الغيار",
+    delivering: "قيد التسليم",
     completed: "مكتمل",
     delivered: "تم التسليم",
     cancelled: "ملغى",

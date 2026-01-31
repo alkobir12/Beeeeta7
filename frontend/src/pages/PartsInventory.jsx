@@ -331,7 +331,7 @@ const PartsInventory = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {parts.map(part => (
+          {filteredParts.map(part => (
             <div key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
               <div className="h-40 bg-gray-100 relative">
                 {part.image ? (

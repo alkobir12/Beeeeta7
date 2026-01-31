@@ -265,7 +265,7 @@ const PartsInventory = () => {
         <div className="apple-card p-5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500 mb-1">{"Total Parts"}</p>
-            <p className="text-2xl font-bold text-gray-900">{parts.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{filteredParts.length}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <Package size={20} />

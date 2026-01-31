@@ -694,10 +694,10 @@ const Operations = () => {
                                 setConfirmOpen(true);
                               }}
                               className="apple-button-secondary text-xs h-8 px-3"
-                              title="تأكيد سداد الآجل"
+                              title={t('operations.confirm_credit_payment')}
                               data-testid={`operation-confirm-payment-button-${op.id}`}
                             >
-                              تأكيد سداد
+                              {t('operations.confirm_credit_payment')}
                             </button>
                           )}
 

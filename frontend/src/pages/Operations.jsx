@@ -650,7 +650,7 @@ const Operations = () => {
                         {op.partnerName || '-'}
                       </span>
                       <div className="text-xs text-gray-500">
-                        {op.paymentMethod === 'credit' ? 'آجل (غير مدفوع)' : (op.paymentMethod || '-')}
+                        {op.paymentMethod === 'credit' ? t('operations.credit_unpaid') : (op.paymentMethod || '-')}
                       </div>
                     </td>
                     <td className="p-4 text-gray-500">{op.items?.length || 0}</td>

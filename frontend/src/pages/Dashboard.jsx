@@ -675,7 +675,7 @@ const Dashboard = () => {
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.lastUpdateLabel')}</span>
                           <span className="text-slate-100 text-sm font-semibold">
-                            {vehicle.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString('ar-SA') : '-'}
+                            {vehicle.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') : '-'}
                           </span>
                         </div>
                         <div className="flex flex-col gap-1">

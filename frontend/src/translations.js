@@ -221,7 +221,39 @@ const translations = {
     subtotal: "المجموع الفرعي",
     create_operation: "إنشاء العملية",
     recent_operations: "العمليات الأخيرة",
-    no_operations: "لا توجد عمليات"
+    no_operations: "لا توجد عمليات",
+
+    // camelCase keys used in Operations.jsx
+    addItems: "العناصر",
+    addItem: "إضافة عنصر",
+    items: "العناصر",
+    selectPart: "اختر قطعة",
+    selectService: "اختر خدمة",
+    selectAccount: "اختر الحساب",
+    recentOperations: "العمليات الأخيرة",
+    operationType: "نوع العملية",
+    paymentMethod: "طريقة الدفع",
+    partner: "الشريك",
+    submit: "حفظ",
+    customerName: "اسم العميل",
+    supplierName: "اسم المورد",
+    customName: "اسم مخصص",
+    credit: "آجل",
+    SAR: "ر.س",
+
+    // additional labels
+    scopeLabel: "تصنيف العملية",
+    scopeVehicle: "عملية مركبة",
+    scopeWorkshop: "عملية ورشة عامة",
+    operationDateLabel: "تاريخ العملية",
+    no_accounts: "لا توجد حسابات",
+    loading_accounts: "جاري تحميل الحسابات...",
+    payment_receipt_optional: "إيصال الدفع (اختياري)",
+    credit_unpaid: "آجل (غير مدفوع)",
+    confirm_credit_payment: "تأكيد سداد الآجل",
+    payment_confirm_failed: "فشل تأكيد السداد",
+    qty: "الكمية",
+    items_count: "العناصر"
   },
   settings: {
     title: "الإعدادات",
@@ -361,7 +393,19 @@ const translations = {
     import: "استيراد البيانات",
     users: "المستخدمين",
     profile: "الملف الشخصي",
-    settings: "الإعدادات"
+    settings: "الإعدادات",
+
+    finance_accounting: "المالية والمحاسبة",
+    chart_of_accounts: "دليل الحسابات",
+    financial_statements: "القوائم المالية",
+    journal: "دفتر اليومية",
+    taxes: "الضرائب",
+    abu_fahd_financial_ai: "أبوفهد - التحليل والتدقيق المالي",
+    fault_knowledge: "قاعدة المعرفة",
+    denso_diagnostics: "تشخيص دينسو",
+    print_quotes: "الطباعة وعروض الأسعار",
+    templates_manager: "إدارة النماذج",
+    workshop_system: "نظام إدارة الورشة"
   },
   dashboard: {
     title: "لوحة التحكم",
@@ -385,7 +429,19 @@ const translations = {
     inDelivery: "قيد التسليم",
     inDiagnosis: "قيد التشخيص",
     busyTechs: "مشغولون",
-    freeTechs: "متاحون"
+    freeTechs: "متاحون",
+
+    // vehicle card labels
+    entryDateLabel: "تاريخ الدخول",
+    customerLabel: "العميل",
+    progressLabel: "نسبة الإنجاز",
+    responsibleTechnicianLabel: "الفني المسؤول",
+    openVehicleDetails: "فتح تفاصيل المركبة",
+    vinLabel: "رقم الهيكل (VIN)",
+    visitsLabel: "عدد الزيارات",
+    visitUnit: "زيارة",
+    lastUpdateLabel: "آخر تحديث",
+    estimatedCostLabel: "التكلفة التقديرية"
   },
 
   common: {
@@ -403,7 +459,11 @@ const translations = {
     confirm_delete: "هل أنت متأكد من الحذف؟",
     print: "طباعة",
     total: "الإجمالي",
-    currency: "ر.س"
+    currency: "ر.س",
+
+    unknown: "غير معروف",
+    not_specified: "غير محدد",
+    urgent: "عاجل"
   }
 };
 

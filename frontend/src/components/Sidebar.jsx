@@ -242,9 +242,9 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="font-semibold text-sm text-slate-50 leading-tight truncate max-w-[180px]">
-                {workshopName}
+                {workshopName || t('nav.workshop_system')}
               </h2>
-              <p className="text-[11px] text-slate-400">نظام إدارة الورشة</p>
+              <p className="text-[11px] text-slate-400">{t('nav.workshop_system')}</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white">

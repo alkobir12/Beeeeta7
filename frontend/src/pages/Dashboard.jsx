@@ -605,7 +605,7 @@ const Dashboard = () => {
                         <User size={15} className="text-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">العميل</p>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">{t('dashboard.customerLabel')}</p>
                         <p className="font-bold text-sm truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>

@@ -83,8 +83,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         // { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },
       ]
     },
-    { path: '/fault-knowledge', label: '📚 قاعدة المعرفة', icon: Archive, enabled: true, permission: 'canManageVehicles' },
-    { path: '/denso-diagnostics', label: '⚡ تشخيص دينسو', icon: Activity, enabled: true, permission: 'canManageVehicles' },
+    { path: '/fault-knowledge', label: `📚 ${t('nav.fault_knowledge')}`, icon: Archive, enabled: true, permission: 'canManageVehicles' },
+    { path: '/denso-diagnostics', label: `⚡ ${t('nav.denso_diagnostics')}`, icon: Activity, enabled: true, permission: 'canManageVehicles' },
     {
       group: true,
       label: t('nav.documents'),

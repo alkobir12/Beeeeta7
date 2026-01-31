@@ -223,6 +223,7 @@ const Dashboard = () => {
               onClick={() => {
                 const newLang = i18n.language === 'ar' ? 'en' : 'ar';
                 console.log('🔄 Changing language to:', newLang);
+                localStorage.setItem('language', newLang);
                 i18n.changeLanguage(newLang);
               }}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"

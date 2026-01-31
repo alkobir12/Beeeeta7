@@ -8,6 +8,7 @@ const LanguageToggleButton = () => {
   const handleToggle = () => {
     const newLang = i18n.language === 'ar' ? 'en' : 'ar';
     console.log('🔄 Toggling language:', i18n.language, '→', newLang);
+    localStorage.setItem('language', newLang);
     i18n.changeLanguage(newLang);
   };
 

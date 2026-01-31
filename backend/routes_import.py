@@ -133,6 +133,7 @@ async def import_parts(file: UploadFile = File(...)):
 
         parts_to_insert = []
         updated_count = 0
+        processed_count = 0
 
         for _, row in df.iterrows():
             # Extract values

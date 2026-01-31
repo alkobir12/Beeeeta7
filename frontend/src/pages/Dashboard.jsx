@@ -231,7 +231,7 @@ const Dashboard = () => {
                 color: '#ffffff'
               }}
             >
-              {i18n.language === 'ar' ? 'EN' : 'عربي'}
+              {i18n.language === 'ar' ? 'EN' : 'AR'}
             </button>
             <button 
               onClick={() => navigate('/new-vehicle')}

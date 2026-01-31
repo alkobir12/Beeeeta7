@@ -326,7 +326,7 @@ const Operations = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">تاريخ العملية</label>
+                <label className="text-sm font-medium text-gray-700">{t('operations.operationDateLabel')}</label>
                 <input
                   type="date"
                   value={form.date}

@@ -88,6 +88,7 @@ from routes_invoices import (
 from supabase_service import SupabaseService
 from routes_language import router as language_router
 from routes_workshop_bot import router as workshop_bot_router
+from routes_cleanup import router as cleanup_router
 from routes_whatsapp_bot import router as whatsapp_bot_router
 
 # Provider mode

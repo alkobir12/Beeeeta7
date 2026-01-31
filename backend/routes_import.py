@@ -117,25 +117,33 @@ async def import_parts(file: UploadFile = File(...)):
             if pd.isna(p_num) or not str(p_num).strip():
                 continue  # Skip empty part numbers
 
+            name_val = row.get(find_col(df.columns, column_map["name"]))
+            if pd.isna(name_val) or not str(name_val).strip():
+                name_val = row.get(find_col(df.columns, ["المادة"]))
+
+            cat_val = row.get(find_col(df.columns, column_map["category"]))
+            if pd.isna(cat_val) or not str(cat_val).strip():
+                cat_val = row.get(find_col(df.columns, ["المجموعة"]))
+
+            qty_val = row.get(find_col(df.columns, column_map["quantity"]))
+            if pd.isna(qty_val) or str(qty_val).strip() == "":
+                qty_val = row.get(find_col(df.columns, ["الكمية"]))
+
+            price_val = row.get(find_col(df.columns, column_map["sellingPrice"]))
+            if pd.isna(price_val) or str(price_val).strip() == "":
+                price_val = row.get(find_col(df.columns, ["السعر الإفرادي"]))
+
             part_data = {
                 "partNumber": str(p_num).strip(),
-                "name": str(
-                    row.get(find_col(df.columns, column_map["name"]), "")
-                ).strip(),
-                "category": str(
-                    row.get(find_col(df.columns, column_map["category"]), "عام")
-                ).strip(),
+                "name": str(name_val or "").strip(),
+                "category": str(cat_val or "عام").strip(),
                 "purchasePrice": float(
-                    row.get(find_col(df.columns, column_map["purchasePrice"]), 0)
+                    row.get(find_col(df.columns, column_map["purchasePrice"]), 0) or 0
                 ),
-                "sellingPrice": float(
-                    row.get(find_col(df.columns, column_map["sellingPrice"]), 0)
-                ),
-                "quantity": int(
-                    float(row.get(find_col(df.columns, column_map["quantity"]), 0))
-                ),
+                "sellingPrice": float(price_val or 0),
+                "quantity": int(float(qty_val or 0)),
                 "minQuantity": int(
-                    float(row.get(find_col(df.columns, column_map["minQuantity"]), 5))
+                    float(row.get(find_col(df.columns, column_map["minQuantity"]), 5) or 5)
                 ),
                 "supplier": str(
                     row.get(find_col(df.columns, column_map["supplier"]), "")

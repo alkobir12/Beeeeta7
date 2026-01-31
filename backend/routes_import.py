@@ -145,6 +145,8 @@ async def import_parts(file: UploadFile = File(...)):
             if pd.isna(p_num) or not str(p_num).strip():
                 continue  # Skip empty part numbers
 
+            processed_count += 1
+
             name_val = row.get(find_col(df.columns, column_map["name"]))
             if pd.isna(name_val) or not str(name_val).strip():
                 name_val = row.get(find_col(df.columns, ["المادة"]))

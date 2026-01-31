@@ -29,7 +29,7 @@ i18n
 
     detection: {
       // Default to Arabic unless user explicitly changes
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       lookupLocalStorage: 'language',
       caches: ['localStorage'],
     },

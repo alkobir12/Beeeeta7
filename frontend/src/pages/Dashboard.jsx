@@ -215,7 +215,7 @@ const Dashboard = () => {
                 backgroundColor: styles.cardBg,
                 border: `1px solid ${styles.cardBorder}`
               }}
-              title={isRTL ? 'تحديث' : 'Refresh'}
+              title={t('buttons.refresh')}
             >
               <RefreshCw size={18} className={isRefreshing ? 'animate-spin text-blue-500' : ''} style={{ color: isRefreshing ? undefined : styles.textSecondary }} />
             </button>

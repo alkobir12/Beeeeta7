@@ -27,6 +27,23 @@ def _get_supa():
 
 
 @router.post("/parts")
+
+        # إذا كان الملف Excel: تحديد صف العناوين (header row) تلقائياً
+        if not filename.endswith('.csv'):
+            header_idx = None
+            for i in range(min(20, len(df))):
+                row_vals = [str(x).strip() for x in df.iloc[i].tolist() if str(x) != 'nan']
+                if {'الرمز', 'المادة'}.issubset(set(row_vals)):
+                    header_idx = i
+                    break
+
+            if header_idx is not None:
+                df.columns = [str(x).strip() if str(x) != 'nan' else '' for x in df.iloc[header_idx].tolist()]
+                df = df.iloc[header_idx + 1 :].copy()
+
+            # تنظيف الأعمدة الفارغة
+            df = df.loc[:, [c for c in df.columns if str(c).strip() != '']]
+
 async def import_parts(file: UploadFile = File(...)):
     provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 

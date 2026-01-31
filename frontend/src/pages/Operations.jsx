@@ -620,8 +620,8 @@ const Operations = () => {
                   <th className="p-4 text-right font-medium">{t('operations.date')}</th>
                   <th className="p-4 text-right font-medium">{t('operations.operationType')}</th>
                   <th className="p-4 text-right font-medium">{t('operations.partner')}</th>
-                  <th className="p-4 text-right font-medium">{"Items"}</th>
-                  <th className="p-4 text-right font-medium">{"Total"}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.items_count')}</th>
+                  <th className="p-4 text-right font-medium">{t('operations.total')}</th>
                   <th className="p-4 text-right font-medium">{t('operations.actions')}</th>
                 </tr>
               </thead>

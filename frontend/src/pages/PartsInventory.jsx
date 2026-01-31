@@ -145,6 +145,18 @@ const PartsInventory = () => {
     setIsDialogOpen(true);
   };
 
+  const filteredParts = parts
+    .filter(p => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.trim().toLowerCase();
+      return (
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.partNumber || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q)
+      );
+    })
+    .filter(p => !showLowStock || p.quantity <= p.minQuantity);
+
   const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
 
   return (

@@ -679,9 +679,11 @@ const Dashboard = () => {
                           </span>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-400 font-medium">التكلفة التقديرية</span>
+                          <span className="text-xs text-slate-400 font-medium">{t('dashboard.estimatedCostLabel')}</span>
                           <span className="text-emerald-400 text-sm font-bold">
-                            {vehicle.estimatedTotal ? vehicle.estimatedTotal.toLocaleString('ar-SA') + ' ر.س' : '0 ر.س'}
+                            {vehicle.estimatedTotal
+                              ? vehicle.estimatedTotal.toLocaleString(isRTL ? 'ar-SA' : 'en-US') + ` ${t('common.currency')}`
+                              : `0 ${t('common.currency')}`}
                           </span>
                         </div>
                       </div>

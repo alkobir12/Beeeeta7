@@ -673,7 +673,7 @@ const Dashboard = () => {
                           <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} {isRTL ? 'زيارة' : t('dashboard.visitUnit')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-400 font-medium">آخر تحديث</span>
+                          <span className="text-xs text-slate-400 font-medium">{t('dashboard.lastUpdateLabel')}</span>
                           <span className="text-slate-100 text-sm font-semibold">
                             {vehicle.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString('ar-SA') : '-'}
                           </span>

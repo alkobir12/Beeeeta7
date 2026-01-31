@@ -618,7 +618,7 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Clock size={14} className="text-sky-400" />
-                        <span className="text-xs text-slate-300 font-medium">نسبة الإنجاز</span>
+                        <span className="text-xs text-slate-300 font-medium">{t('dashboard.progressLabel')}</span>
                       </div>
                       <span className="font-bold text-base text-sky-100">{progress}%</span>
                     </div>

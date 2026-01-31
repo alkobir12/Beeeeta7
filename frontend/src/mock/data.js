@@ -211,8 +211,11 @@ export const statusSteps = [
   { key: 'diagnosis', label: 'تشخيص', color: 'bg-blue-500' },
   { key: 'quotation', label: 'تعميد', color: 'bg-yellow-500' },
   { key: 'approved', label: 'معتمد', color: 'bg-emerald-500' },
+  { key: 'waiting_for_parts', label: 'بانتظار قطع الغيار', color: 'bg-amber-500' },
   { key: 'repair', label: 'تحت الإصلاح', color: 'bg-orange-500' },
+  { key: 'quality_check', label: 'فحص الجودة', color: 'bg-purple-500' },
   { key: 'ready', label: 'جاهز للتسليم', color: 'bg-green-500' },
+  { key: 'delivering', label: 'قيد التسليم', color: 'bg-teal-500' },
   { key: 'delivered', label: 'تم التسليم', color: 'bg-slate-500' }
 ];
 

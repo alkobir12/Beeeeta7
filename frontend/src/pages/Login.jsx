@@ -55,7 +55,7 @@ const Login = () => {
       window.dispatchEvent(new Event('sessionUpdated'));
       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)
-      window.location.assign('/');
+      window.location.assign(`${window.location.origin}/`);
       return;
     }
 
@@ -97,7 +97,7 @@ const Login = () => {
           localStorage.setItem('user', JSON.stringify(fallbackUser));
           window.dispatchEvent(new Event('sessionUpdated'));
           toast({ title: 'مرحباً بك', description: `أهلاً بعودتك، ${fallbackUser.name}` });
-          window.location.assign('/');
+          window.location.assign(`${window.location.origin}/`);
           return;
         }
         toast({ title: 'خطأ', description: 'المستخدم غير موجود', variant: 'destructive' });
@@ -138,7 +138,7 @@ const Login = () => {
         title: 'مرحباً بك',
         description: `أهلاً بعودتك، ${user.name}`
       });
-      window.location.assign('/');
+      window.location.assign(`${window.location.origin}/`);
     } catch (e) {
       console.error('Login error:', e);
       toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول (تعذر الاتصال أو مهلة)', variant: 'destructive' });

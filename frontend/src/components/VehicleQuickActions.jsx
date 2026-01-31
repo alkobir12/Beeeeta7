@@ -34,8 +34,11 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     { value: 'diagnosis', label: t('status.diagnosis'), color: 'bg-yellow-500' },
     { value: 'quotation', label: t('status.quotation'), color: 'bg-blue-500' },
     { value: 'approved', label: t('status.approved'), color: 'bg-green-500' },
+    { value: 'waiting_for_parts', label: t('status.waiting_for_parts'), color: 'bg-amber-500' },
     { value: 'repair', label: t('status.repair'), color: 'bg-orange-500' },
+    { value: 'quality_check', label: t('status.quality_check'), color: 'bg-purple-500' },
     { value: 'ready', label: t('status.ready'), color: 'bg-green-600' },
+    { value: 'delivering', label: t('status.delivering'), color: 'bg-teal-500' },
     { value: 'delivered', label: t('status.delivered'), color: 'bg-gray-500' }
   ];
 

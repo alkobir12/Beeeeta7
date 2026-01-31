@@ -92,8 +92,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageVehicles',
       children: [
-        { path: '/print', label: i18n.language === 'ar' ? 'الطباعة و عروض الأسعار' : 'Print & Quotes', enabled: true },
-        { path: '/templates', label: i18n.language === 'ar' ? '🎨 إدارة النماذج' : '🎨 Templates Manager', enabled: true },
+        { path: '/print', label: t('nav.print_quotes'), enabled: true },
+        { path: '/templates', label: `🎨 ${t('nav.templates_manager')}`, enabled: true },
       ]
     },
  

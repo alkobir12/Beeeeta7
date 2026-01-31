@@ -25,7 +25,7 @@ i18n
       ar: { translation: translations }
     },
     fallbackLng: 'ar',
-    lng: 'ar',
+    supportedLngs: ['ar', 'en'],
 
     detection: {
       // Default to Arabic (RTL) unless user explicitly changes

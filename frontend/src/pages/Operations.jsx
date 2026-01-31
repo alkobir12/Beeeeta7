@@ -548,8 +548,8 @@ const Operations = () => {
                       <tr>
                         <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
                         <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>
-                        <th className="p-3 text-right font-medium">{"Qty"}</th>
-                        <th className="p-3 text-right font-medium">{"Price"}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.qty')}</th>
+                        <th className="p-3 text-right font-medium">{t('operations.price')}</th>
                         <th className="p-3 text-right font-medium">{t('operations.total')}</th>
                         <th className="p-3"></th>
                       </tr>

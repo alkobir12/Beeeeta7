@@ -135,8 +135,32 @@ async def import_parts(file: UploadFile = File(...)):
         updated_count = 0
         processed_count = 0
 
+        def _is_service(name: str, category: str) -> bool:
+            name = (name or "").strip()
+            category = (category or "").strip()
+
+            prefixes = (
+                "فك وتركيب",
+                "تركيب",
+                "توضيب",
+                "صيانة",
+                "صيانه",
+            )
+
+            if name.startswith(prefixes):
+                return True
+
+            # بعض الملفات قد تضع الخدمة في خانة المجموعة
+            if category.startswith(("توضيب",)):
+                return True
+
+            return False
+
         # ملاحظة أداء: في وضع Supabase نعمل upsert دفعات لتجنب وقت طويل
         if provider == "supabase":
+            parts_rows = []
+            services_rows = []
+
             for _, row in df.iterrows():
                 # Extract values
                 p_num = row.get(find_col(df.columns, column_map["partNumber"]))

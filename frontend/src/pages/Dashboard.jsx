@@ -669,8 +669,8 @@ const Dashboard = () => {
                           <span className="font-mono text-slate-100 text-sm font-semibold truncate">{vehicle.vin || t('common.not_specified')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-400 font-medium">عدد الزيارات</span>
-                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} زيارة</span>
+                          <span className="text-xs text-slate-400 font-medium">{t('dashboard.visitsLabel')}</span>
+                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} {isRTL ? 'زيارة' : t('dashboard.visitUnit')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">آخر تحديث</span>

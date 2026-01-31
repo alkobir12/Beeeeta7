@@ -343,7 +343,8 @@ const translations = {
     receipt: "سند قبض",
     details: "التفاصيل",
     spare_parts: "قطع الغيار",
-    operations: "العمليات"
+    operations: "العمليات",
+    subtitle: "اختر إجراء لهذه المركبة"
   },
   // Additional translations
   nav: {

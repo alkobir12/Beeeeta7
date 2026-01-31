@@ -26,8 +26,16 @@ def _get_supa():
 
 @router.post("/parts")
 async def import_parts(file: UploadFile = File(...)):
-    if not db:
-        raise HTTPException(status_code=500, detail="Database not initialized")
+    provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+    supa = None
+    if provider == "supabase":
+        supa = _get_supa()
+        if not supa or not getattr(supa, "client", None):
+            raise HTTPException(status_code=500, detail="Supabase not initialized")
+    else:
+        if not db:
+            raise HTTPException(status_code=500, detail="Database not initialized")
 
     try:
         contents = await file.read()

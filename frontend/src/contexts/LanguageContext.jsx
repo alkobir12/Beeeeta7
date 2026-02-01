@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import i18n from '../i18n';
 import translations from '../translations';
 import { englishTexts } from '../constants/englishTexts';
 
@@ -14,12 +15,49 @@ export const useLanguage = () => {
 
 export const LanguageProvider = ({ children }) => {
   // اللغة الافتراضية: عربية (RTL)
-  const [language, setLanguage] = useState('ar');
+  const initialLang = (() => {
+    try {
+      return localStorage.getItem('language') || i18n.language || 'ar';
+    } catch (e) {
+      return i18n.language || 'ar';
+    }
+  })();
+
+  const [language, setLanguage] = useState(initialLang);
   const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
 
   // Handle language change
   const changeLanguage = (newLang) => {
     console.log('🔄 Changing language from', language, 'to', newLang);
+
+
+  // Sync context language when i18next changes (e.g., LanguageToggleButton)
+  useEffect(() => {
+    const handler = (lng) => {
+      if (lng && lng !== language) {
+        setLanguage(lng);
+        setRenderKey(prev => prev + 1);
+      }
+    };
+
+    i18n.on('languageChanged', handler);
+    return () => {
+      i18n.off('languageChanged', handler);
+    };
+    // eslint-disable-next-line
+  }, []);
+
+    try {
+      localStorage.setItem('language', newLang);
+    } catch (e) {}
+
+    // Sync with i18next so components using react-i18next update too
+    try {
+      if (i18n.language !== newLang) {
+        i18n.changeLanguage(newLang);
+      }
+    } catch (e) {}
+
     setLanguage(newLang);
     setRenderKey(prev => prev + 1); // Force all consumers to re-render
   };
@@ -27,6 +65,19 @@ export const LanguageProvider = ({ children }) => {
   // تحديث اتجاه الصفحة عند تغيير اللغة
   useEffect(() => {
     console.log('✅ Language effect triggered:', language);
+
+    // Persist (so i18next detector finds it)
+    try {
+      localStorage.setItem('language', language);
+    } catch (e) {}
+
+    // Keep i18next in sync (in case language was initialized differently)
+    try {
+      if (i18n.language !== language) {
+        i18n.changeLanguage(language);
+      }
+    } catch (e) {}
+
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [language]);

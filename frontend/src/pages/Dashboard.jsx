@@ -671,7 +671,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.visitsLabel')}</span>
-                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} {isRTL ? 'زيارة' : t('dashboard.visitUnit')}</span>
+                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} {t('dashboard.visitUnit')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.lastUpdateLabel')}</span>

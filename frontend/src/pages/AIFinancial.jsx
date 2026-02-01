@@ -349,7 +349,12 @@ export default function AIFinancial() {
       const res = await aiAPI.financeBotChat(payload);
       setAuditBotResponse(res.data?.response || 'تعذر الحصول على تحليل من أبوفهد.');
     } catch (e) {
-      setAuditBotResponse('تعذر الاتصال بأبوفهد لتحليل تقرير التدقيق.');
+      const detail = e?.response?.data?.detail || e?.message;
+      setAuditBotResponse(
+        detail
+          ? `تعذر الاتصال بأبوفهد لتحليل تقرير التدقيق.\nتفاصيل: ${detail}`
+          : 'تعذر الاتصال بأبوفهد لتحليل تقرير التدقيق.'
+      );
     } finally {
       setAuditBotLoading(false);
     }
@@ -486,9 +491,14 @@ export default function AIFinancial() {
       setSessionMessages(updatedMessagesMap);
       persistChatToStorage(updatedSessions, updatedMessagesMap, resolvedId);
     } catch (e) {
+      const detail = e?.response?.data?.detail || e?.message;
+      const errText = detail
+        ? `تعذر الاتصال بأبوفهد. حاول مرة أخرى.\nتفاصيل: ${detail}`
+        : 'تعذر الاتصال بأبوفهد. حاول مرة أخرى.';
+
       const next = [
         ...optimistic,
-        { role: 'assistant', content: 'تعذر الاتصال بأبوفهد. حاول مرة أخرى.' },
+        { role: 'assistant', content: errText },
       ];
       const updatedMessagesMap = { ...nextMessagesMap, [currentSessionId]: next };
       setSessionMessages(updatedMessagesMap);

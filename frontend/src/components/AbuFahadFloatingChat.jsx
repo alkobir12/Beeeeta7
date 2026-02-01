@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLocation } from 'react-router-dom';
 import { Brain, Loader2, Send, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../hooks/use-toast';
 import { Button } from './ui/button';
 import { aiAPI, financeAPI } from '../services/api';
 
@@ -17,6 +19,9 @@ const AbuFahadFloatingChat = ({
 }) => {
   const location = useLocation();
   const path = location.pathname || '';
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
+  const isRTL = i18n.language === 'ar';
 
   const enabled = useMemo(() => {
     // exact match only (to avoid showing in unrelated pages)
@@ -33,8 +38,7 @@ const AbuFahadFloatingChat = ({
   const [chatHistory, setChatHistory] = useState([
     {
       role: 'assistant',
-      content:
-        'مرحباً، أنا أبوفهد. ماذا تريد أن نراجع اليوم؟ يمكنك اختيار حساب للتدقيق أو كتابة سؤالك مباشرة.',
+      content: t('abu_fahad.greeting'),
     },
   ]);
 
@@ -108,7 +112,7 @@ const AbuFahadFloatingChat = ({
       const res = await aiAPI.financeBotChat(payload);
       const botMsg = {
         role: 'assistant',
-        content: res.data?.response || 'تعذر الحصول على رد من أبوفهد حالياً.',
+        content: res.data?.response || t('abu_fahad.no_response'),
       };
 
       const newId = res.data?.conversation_id || conversationId;
@@ -117,7 +121,17 @@ const AbuFahadFloatingChat = ({
       if (newId && newId !== conversationId) setConversationId(newId);
       persistChatToStorage(next, newId);
     } catch (err) {
-      const next = [...optimistic, { role: 'assistant', content: 'تعذر الاتصال بأبوفهد. حاول مرة أخرى.' }];
+      const detail = err?.response?.data?.detail || err?.message;
+      const errorText = detail
+        ? `${t('abu_fahad.connection_error')}\n${t('abu_fahad.details')}: ${detail}`
+        : t('abu_fahad.connection_error');
+
+      toast({
+        title: t('common.error'),
+        description: t('abu_fahad.connection_error'),
+      });
+
+      const next = [...optimistic, { role: 'assistant', content: errorText }];
       setChatHistory(next);
       persistChatToStorage(next, conversationId);
     } finally {
@@ -129,8 +143,7 @@ const AbuFahadFloatingChat = ({
     const next = [
       {
         role: 'assistant',
-        content:
-          'تم بدء محادثة جديدة. ما الذي تريد تحليله الآن؟ يمكنك اختيار حساب للتدقيق أو كتابة سؤالك مباشرة.',
+        content: t('abu_fahad.new_chat_greeting'),
       },
     ];
     setChatHistory(next);
@@ -142,14 +155,14 @@ const AbuFahadFloatingChat = ({
   if (!enabled) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999]" dir="rtl">
+    <div className="fixed bottom-6 right-6 z-[9999]" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Floating button */}
       {!isOpen ? (
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-xl ring-1 ring-blue-500/30 hover:scale-105 transition-transform flex items-center justify-center"
-          aria-label="فتح محادثة أبوفهد"
+          aria-label={t('abu_fahad.open_chat')}
         >
           <Brain className="h-6 w-6 text-white" />
         </button>
@@ -164,19 +177,19 @@ const AbuFahadFloatingChat = ({
                 <Brain className="h-4 w-4 text-blue-400" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-slate-100">أبوفهد</div>
-                <div className="text-[11px] text-slate-400">مساعد مالي</div>
+                <div className="text-sm font-semibold text-slate-100">{t('abu_fahad.title')}</div>
+                <div className="text-[11px] text-slate-400">{t('abu_fahad.subtitle')}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" className="h-8" onClick={clearChat}>
-                محادثة جديدة
+                {t('abu_fahad.new_chat')}
               </Button>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 className="h-8 w-8 rounded-xl hover:bg-slate-800 flex items-center justify-center"
-                aria-label="إغلاق"
+                aria-label={t('buttons.close')}
               >
                 <X className="h-4 w-4 text-slate-300" />
               </button>
@@ -184,13 +197,13 @@ const AbuFahadFloatingChat = ({
           </div>
 
           <div className="px-4 py-3">
-            <label className="block text-xs font-medium text-slate-300 mb-1">الحساب (اختياري)</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">{t('abu_fahad.account_optional')}</label>
             <select
               value={selectedAccountCode}
               onChange={(e) => setSelectedAccountCode(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">بدون تحديد حساب</option>
+              <option value="">{t('abu_fahad.no_account')}</option>
               {(Array.isArray(accounts) ? accounts : []).map((acc) => (
                 <option key={acc.id || acc.code} value={acc.code}>
                   {acc.code} - {acc.name_ar || acc.name}
@@ -226,7 +239,7 @@ const AbuFahadFloatingChat = ({
                 type="text"
                 value={chatQuery}
                 onChange={(e) => setChatQuery(e.target.value)}
-                placeholder="اكتب سؤالك المالي هنا..."
+                placeholder={t('abu_fahad.placeholder')}
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <button

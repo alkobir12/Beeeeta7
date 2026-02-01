@@ -26,17 +26,12 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(initialLang);
   const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
 
-  // Handle language change
-  const changeLanguage = (newLang) => {
-    console.log('🔄 Changing language from', language, 'to', newLang);
-
-
   // Sync context language when i18next changes (e.g., LanguageToggleButton)
   useEffect(() => {
     const handler = (lng) => {
       if (lng && lng !== language) {
         setLanguage(lng);
-        setRenderKey(prev => prev + 1);
+        setRenderKey((prev) => prev + 1);
       }
     };
 
@@ -47,19 +42,27 @@ export const LanguageProvider = ({ children }) => {
     // eslint-disable-next-line
   }, []);
 
+  // Handle language change
+  const changeLanguage = (newLang) => {
+    console.log('🔄 Changing language from', language, 'to', newLang);
+
     try {
       localStorage.setItem('language', newLang);
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     // Sync with i18next so components using react-i18next update too
     try {
       if (i18n.language !== newLang) {
         i18n.changeLanguage(newLang);
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     setLanguage(newLang);
-    setRenderKey(prev => prev + 1); // Force all consumers to re-render
+    setRenderKey((prev) => prev + 1); // Force all consumers to re-render
   };
 
   // تحديث اتجاه الصفحة عند تغيير اللغة

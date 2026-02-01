@@ -72,14 +72,18 @@ export const LanguageProvider = ({ children }) => {
     // Persist (so i18next detector finds it)
     try {
       localStorage.setItem('language', language);
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     // Keep i18next in sync (in case language was initialized differently)
     try {
       if (i18n.language !== language) {
         i18n.changeLanguage(language);
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;

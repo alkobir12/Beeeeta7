@@ -348,7 +348,7 @@ export const englishTexts = {
   'abu_fahad.no_response': 'Could not get a response from AbuFahad right now.',
   'abu_fahad.connection_error': 'Could not connect to AbuFahad. Please try again.',
   'abu_fahad.details': 'Details',
-  'abu_fahad.latency_note': 'Note: replies may take 10–30 seconds depending on load.'
+  'abu_fahad.latency_note': 'Note: replies may take 10–30 seconds depending on load.',
   'settings.currency': 'Currency',
   'settings.light': 'Light',
   'settings.dark': 'Dark',

@@ -323,6 +323,10 @@ export const englishTexts = {
   'operations.payment_confirm_failed': 'Payment confirmation failed',
   'operations.qty': 'Qty',
   'operations.items_count': 'Items',
+  'operations.saved_successfully': 'Operation saved successfully',
+  'operations.save_failed': 'Failed to save operation',
+  'operations.items_required': 'Add at least one item before saving',
+  'operations.select_vehicle_required': 'Select a vehicle first',
   
   // Settings
   'settings.title': 'Settings',

@@ -253,7 +253,11 @@ const translations = {
     confirm_credit_payment: "تأكيد سداد الآجل",
     payment_confirm_failed: "فشل تأكيد السداد",
     qty: "الكمية",
-    items_count: "العناصر"
+    items_count: "العناصر",
+    saved_successfully: "تم حفظ العملية",
+    save_failed: "فشل حفظ العملية",
+    items_required: "أضف عنصر واحد على الأقل قبل الحفظ",
+    select_vehicle_required: "اختر مركبة أولاً"
   },
   settings: {
     title: "الإعدادات",

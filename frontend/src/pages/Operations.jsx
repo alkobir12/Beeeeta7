@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../hooks/use-toast';
 // Floating assistant disabled: AbuFahad floating chat is injected via Layout
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
@@ -21,6 +22,7 @@ const Operations = () => {
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',
@@ -163,19 +165,45 @@ const Operations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
-    }
+      toast({
+        title: t('common.success'),
+        description: t('operations.saved_successfully') || 'تم حفظ العملية',
+      });
+    },
+    onError: (e) => {
+      const detail = e?.response?.data?.detail || e?.message;
+      toast({
+        title: t('common.error'),
+        description: detail || t('operations.save_failed') || 'فشل حفظ العملية',
+        variant: 'destructive',
+      });
+    },
   });
 
   const submit = async (e) => {
     e.preventDefault();
+
+    // Validate required fields for vehicle-linked operations
+    if (form.scope === 'vehicle' && !activeVehicleId) {
+      toast({
+        title: t('common.error'),
+        description: t('operations.select_vehicle_required') || 'اختر مركبة أولاً',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const cleanPayload = {
         ...form,
         workshopId: workshopId || null,
         accountId: form.accountId || null,
         opDate: form.date,
-        vehicleId: form.scope === 'workshop' ? null : (form.vehicleId || null),
+        vehicleId: form.scope === 'workshop' ? null : (activeVehicleId || null),
         visitId: form.scope === 'workshop' ? null : (form.visitId || null),
+
+        // NOTE: avoid sending File objects in JSON payload
+        paymentReceipt: null,
       };
 
       await createOperationMutation.mutateAsync(cleanPayload);
@@ -591,15 +619,23 @@ const Operations = () => {
               )}
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex flex-col items-end pt-4 gap-2">
               <button 
                 type="submit" 
-                disabled={form.items.length === 0}
+                disabled={form.items.length === 0 || (form.scope === 'vehicle' && !activeVehicleId)}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
                 data-testid="operation-save-button"
               >
                 {t('operations.submit')}
               </button>
+
+              {form.items.length === 0 && (
+                <div className="text-xs text-slate-500">{t('operations.items_required') || 'أضف عنصر واحد على الأقل قبل الحفظ'}</div>
+              )}
+
+              {form.scope === 'vehicle' && !activeVehicleId && (
+                <div className="text-xs text-slate-500">{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
+              )}
             </div>
           </form>
         </div>

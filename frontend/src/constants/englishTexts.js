@@ -334,6 +334,21 @@ export const englishTexts = {
   'settings.system_appearance': 'System & Appearance',
   'settings.language': 'Language',
   'settings.theme': 'Theme',
+
+  // AbuFahad (floating chat)
+  'abu_fahad.title': 'AbuFahad',
+  'abu_fahad.subtitle': 'Financial Assistant',
+  'abu_fahad.greeting': "Hello, I'm AbuFahad. What would you like to review today? You can choose an account for auditing or type your question directly.",
+  'abu_fahad.new_chat': 'New chat',
+  'abu_fahad.new_chat_greeting': 'New chat started. What would you like to analyze now? You can choose an account for auditing or type your question directly.',
+  'abu_fahad.open_chat': 'Open AbuFahad chat',
+  'abu_fahad.account_optional': 'Account (optional)',
+  'abu_fahad.no_account': 'No account selected',
+  'abu_fahad.placeholder': 'Type your financial question here...',
+  'abu_fahad.no_response': 'Could not get a response from AbuFahad right now.',
+  'abu_fahad.connection_error': 'Could not connect to AbuFahad. Please try again.',
+  'abu_fahad.details': 'Details',
+  'abu_fahad.latency_note': 'Note: replies may take 10–30 seconds depending on load.'
   'settings.currency': 'Currency',
   'settings.light': 'Light',
   'settings.dark': 'Dark',

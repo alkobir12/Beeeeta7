@@ -251,9 +251,7 @@ const AbuFahadFloatingChat = ({
               </button>
             </form>
 
-            <div className="mt-2 text-[11px] text-slate-400">
-              ملاحظة: قد يتأخر الرد 10-30 ثانية حسب الضغط.
-            </div>
+            <div className="mt-2 text-[11px] text-slate-400">{t('abu_fahad.latency_note')}</div>
           </div>
         </div>
       ) : null}

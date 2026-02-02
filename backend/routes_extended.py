@@ -1344,6 +1344,9 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                     supa.invoices_create(
                         {
                             "invoiceNumber": op.get("invoiceNumber"),
+                            "workshopId": workshop_id,
+                            "operationId": op.get("id"),
+                            "partnerName": op.get("partnerName"),
                             "vehicleId": op.get("vehicleId"),
                             "items": op.get("items") or [],
                             "subtotal": op.get("subtotal") or 0,

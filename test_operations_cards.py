@@ -119,7 +119,7 @@ async def test_operations_page():
                             await page.wait_for_timeout(3000)
                             
                             # Take screenshot of print page
-                            await page.screenshot(path='.screenshots/print_page_document.png', quality=40, full_page=False)
+                            await page.screenshot(path='.screenshots/print_page_document.png', full_page=False)
                             print("✅ Screenshot taken: print_page_document.png")
                             
                             # Look for document number display

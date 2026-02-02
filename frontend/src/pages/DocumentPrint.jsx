@@ -229,6 +229,8 @@ const DocumentPrint = () => {
       }
     } catch (e) {
       console.error('Error loading latest approval token:', e);
+    }
+  };
 
   const loadOperationData = async (opId) => {
     try {
@@ -268,9 +270,6 @@ const DocumentPrint = () => {
       }));
     } catch (e) {
       console.error('Error loading operation:', e);
-    }
-  };
-
     }
   };
 

@@ -30,6 +30,7 @@ const DocumentPrint = () => {
   const initialType = searchParams.get('type') || 'invoice';
   const vehicleId = searchParams.get('vehicleId');
   const operationId = searchParams.get('operationId');
+  const invoiceId = searchParams.get('invoiceId');
   
   const [docType, setDocType] = useState(initialType);
   
@@ -92,7 +93,10 @@ const DocumentPrint = () => {
     if (operationId) {
       loadOperationData(operationId);
     }
-  }, [vehicleId, operationId]);
+    if (invoiceId) {
+      loadInvoiceData(invoiceId);
+    }
+  }, [vehicleId, operationId, invoiceId]);
 
   // عند التحميل، نقرأ printDefaults إن وجدت
   useEffect(() => {
@@ -264,7 +268,47 @@ const DocumentPrint = () => {
         settings: {
           ...prev.settings,
           date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,
-          document_number: `OP-${op.id}`,
+          document_number: op.invoice_number || op.invoiceNumber || `OP-${op.id}`,
+
+  const loadInvoiceData = async (invId) => {
+    try {
+      const { data: inv } = await axios.get(`${API_URL}/invoices/${invId}`);
+      if (!inv) return;
+
+      const invItems = (inv.items || []).map((it) => ({
+        description: it.description || it.name || '',
+        quantity: Number(it.quantity || 1),
+        unit_price: Number(it.unit_price || it.price || 0),
+        discount: Number(it.discount || 0),
+      }));
+
+      const invVehicleId = inv.vehicleId || inv.vehicle_id;
+      if (invVehicleId && !vehicleId) {
+        loadVehicleData(invVehicleId);
+        loadLatestApprovalToken(invVehicleId);
+      }
+
+      setDocType(inv.type || 'invoice');
+
+      setFormData((prev) => ({
+        ...prev,
+        customer: {
+          ...prev.customer,
+          name: inv.partner_name || inv.partnerName || prev.customer.name,
+        },
+        items: invItems.length > 0 ? invItems : prev.items,
+        settings: {
+          ...prev.settings,
+          date: (inv.created_at || inv.createdAt || '').toString().slice(0, 10) || prev.settings.date,
+          document_number: inv.invoice_number || inv.invoiceNumber || prev.settings.document_number,
+          notes: inv.notes || prev.settings.notes,
+        },
+      }));
+    } catch (e) {
+      console.error('Error loading invoice:', e);
+    }
+  };
+
           notes: op.notes || prev.settings.notes,
         },
       }));

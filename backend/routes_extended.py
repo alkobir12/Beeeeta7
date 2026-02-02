@@ -1338,6 +1338,26 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             workshop_id = payload.get("workshopId") or payload.get("workshop_id")
             op = supa.operations_create(payload)
 
+            # Auto-create invoice record linked to this operation (best-effort)
+            try:
+                if op.get("invoiceNumber"):
+                    supa.invoices_create(
+                        {
+                            "invoiceNumber": op.get("invoiceNumber"),
+                            "vehicleId": op.get("vehicleId"),
+                            "items": op.get("items") or [],
+                            "subtotal": op.get("subtotal") or 0,
+                            "tax": 0,
+                            "discount": 0,
+                            "total": op.get("total") or 0,
+                            "status": "issued",
+                            "type": "invoice",
+                            "paymentMethod": op.get("paymentMethod"),
+                            "notes": f"Linked to operation {op.get('id')}",
+                        }
+                    )
+            except Exception as e:
+                print(f"Warning: auto-invoice create failed: {e}")
             # قاعدة الآجل: العملية تُسجَّل في operations فوراً (Accrual)
             # لكن لا نُنشئ قيد يومية إلا لحركات النقد (Cash) فقط.
             payment_method = (op.get("paymentMethod") or payload.get("paymentMethod") or "cash").lower()

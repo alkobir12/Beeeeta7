@@ -396,8 +396,6 @@ class SupabaseService:
             "scope": "vehicle" if r.get("vehicle_id") else "workshop",
         }
 
-        return out
-
     # -------------------- Customers --------------------
     def customers_list(self, search: Optional[str] = None) -> List[Dict[str, Any]]:
         if self.mock_mode:

@@ -660,6 +660,11 @@ const Operations = () => {
                 ? invoiceNum.slice(0, 7) // INV0000
                 : '';
 
+              const account = accounts.find((a) => (a.id || a.code) === op.accountId);
+              const fromToText = account
+                ? `${account.name_ar || account.name || account.code} → ${op.partnerName || '-'}`
+                : `${t('operations.account')} → ${op.partnerName || '-'}`;
+
               const typeLabel = op.type === 'sale'
                 ? t('operations.sale')
                 : op.type === 'purchase'

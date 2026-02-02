@@ -49,15 +49,22 @@ finance_db = None
 
 def init_mongo_connection():
     global mongo_client, finance_db
+
     mongo_uri = os.getenv("MONGO_URL")
-    if mongo_uri:
-        try:
-            mongo_client = AsyncIOMotorClient(mongo_uri)
-            finance_db = mongo_client.get_database(os.getenv("DB_NAME", "workshop_db"))
-            print("✅ MongoDB connected for Finance API")
-        except Exception as e:
-            print(f"⚠️ MongoDB connection failed: {e}")
-            finance_db = None
+    db_name = os.getenv("DB_NAME")
+
+    # Do not attempt to connect if required config is missing
+    if not mongo_uri or not db_name:
+        finance_db = None
+        return
+
+    try:
+        mongo_client = AsyncIOMotorClient(mongo_uri)
+        finance_db = mongo_client.get_database(db_name)
+        print("✅ MongoDB connected for Finance API")
+    except Exception as e:
+        print(f"⚠️ MongoDB connection failed: {e}")
+        finance_db = None
 
 
 # Initialize on module load

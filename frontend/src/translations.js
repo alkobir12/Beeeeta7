@@ -97,6 +97,12 @@ const translations = {
     working_hours: "ساعات العمل",
     performance_report: "تقرير الأداء"
   },
+
+  print: {
+    print: "طباعة",
+    print_operation: "طباعة العملية"
+  },
+
   inventory: {
     inventory: "المخزون",
     spare_parts: "قطع الغيار",

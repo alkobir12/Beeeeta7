@@ -369,6 +369,8 @@ class SupabaseService:
                 }
             )
 
+        return out
+
     def operations_get(self, op_id: str) -> Optional[Dict[str, Any]]:
         if self.mock_mode:
             return None

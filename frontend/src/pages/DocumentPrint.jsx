@@ -111,7 +111,7 @@ const DocumentPrint = () => {
               ...prev.settings,
               theme: defaults.theme || prev.settings.theme,
               style: defaults.style || prev.settings.style,
-              tax_rate: typeof defaults.tax_rate === 'number' ? defaults.tax_rate : prev.settings.tax_rate,
+              tax_rate: 0,
             }
           }));
         }

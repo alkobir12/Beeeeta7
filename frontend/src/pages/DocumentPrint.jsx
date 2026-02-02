@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -436,8 +435,7 @@ const DocumentPrint = () => {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
+    <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
@@ -819,8 +817,7 @@ const DocumentPrint = () => {
         )}
         
         {/* Hidden Print Frame Removed */}
-      </div>
-    </Layout>
+    </div>
   );
 };
 

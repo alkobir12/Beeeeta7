@@ -341,7 +341,7 @@ class SupabaseService:
             q = q.eq("type", type)
         if vehicle_id:
             q = q.eq("vehicle_id", vehicle_id)
-        res = q.order("op_date", desc=True).execute()
+        res = q.order("created_at", desc=True).execute()
         rows = res.data or []
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.

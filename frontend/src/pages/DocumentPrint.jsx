@@ -376,8 +376,8 @@ const DocumentPrint = () => {
     const subtotal = formData.items.reduce((sum, item) => {
       return sum + (item.quantity * item.unit_price) - item.discount;
     }, 0);
-    const tax = subtotal * (formData.settings.tax_rate / 100);
-    return { subtotal, tax, total: subtotal + tax };
+    const tax = 0;
+    return { subtotal, tax, total: subtotal };
   };
 
   const generateDocument = async (preview = false) => {

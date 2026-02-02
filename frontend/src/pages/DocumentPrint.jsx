@@ -229,6 +229,48 @@ const DocumentPrint = () => {
       }
     } catch (e) {
       console.error('Error loading latest approval token:', e);
+
+  const loadOperationData = async (opId) => {
+    try {
+      const { data: op } = await axios.get(`${API_URL}/operations/${opId}`);
+      if (!op) return;
+
+      // Operation -> items mapping
+      const opItems = (op.items || []).map((it) => ({
+        description: it.name || it.description || '',
+        quantity: Number(it.quantity || 1),
+        unit_price: Number(it.price || it.unit_price || 0),
+        discount: 0,
+      }));
+
+      // Prefer vehicleId from operation (if not passed)
+      const opVehicleId = op.vehicleId || op.vehicle_id;
+      if (opVehicleId && !vehicleId) {
+        loadVehicleData(opVehicleId);
+        loadLatestApprovalToken(opVehicleId);
+      }
+
+      setDocType('invoice');
+
+      setFormData((prev) => ({
+        ...prev,
+        customer: {
+          ...prev.customer,
+          name: op.partnerName || prev.customer.name,
+        },
+        items: opItems.length > 0 ? opItems : prev.items,
+        settings: {
+          ...prev.settings,
+          date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,
+          document_number: `OP-${op.id}`,
+          notes: op.notes || prev.settings.notes,
+        },
+      }));
+    } catch (e) {
+      console.error('Error loading operation:', e);
+    }
+  };
+
     }
   };
 

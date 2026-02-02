@@ -65,7 +65,7 @@ const DocumentPrint = () => {
     settings: {
       theme: 'أزرق',
       style: 'حديث',
-      tax_rate: 15,
+      tax_rate: 0,
       description: '',
       notes: '',
       approval_token: '',
@@ -513,7 +513,7 @@ const DocumentPrint = () => {
       await axios.post(`${API_URL}/settings/print-defaults`, {
         theme: formData.settings.theme,
         style: formData.settings.style,
-        tax_rate: formData.settings.tax_rate,
+        tax_rate: 0,
       });
       alert(isArabic ? 'تم حفظ الإعدادات الافتراضية للطباعة وعروض الأسعار' : 'Default print & quote settings saved');
     } catch (error) {
@@ -781,7 +781,7 @@ const DocumentPrint = () => {
                     <span className="font-semibold">{totals.subtotal.toLocaleString()} {isArabic ? 'ر.س' : 'SAR'}</span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span>{isArabic ? `الضريبة (${formData.settings.tax_rate}%):` : `Tax (${formData.settings.tax_rate}%):`}</span>
+                    <span style={{ display: 'none' }} />
                     <span className="font-semibold">{totals.tax.toLocaleString()} {isArabic ? 'ر.س' : 'SAR'}</span>
                   </div>
                   <div className="flex justify-between py-2 border-t-2 border-blue-200 text-lg font-bold text-blue-600">
@@ -820,11 +820,11 @@ const DocumentPrint = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label>{isArabic ? 'نسبة الضريبة (%)' : 'Tax Rate (%)'}</Label>
+                    <Label style={{ display: 'none' }}>{isArabic ? 'نسبة الضريبة (%)' : 'Tax Rate (%)'}</Label>
                     <Input
                       type="number"
-                      value={formData.settings.tax_rate}
-                      onChange={(e) => handleSettingsChange('tax_rate', parseFloat(e.target.value) || 0)}
+                      value={0}
+                      onChange={() => {}}
                       min="0"
                       max="100"
                     />

@@ -84,7 +84,7 @@ class ArabicQuotationBuilder:
             "items": [],
             "subtotal": 0,
             "discount": 0,
-            "tax_rate": 15,
+            "tax_rate": 0,
             "tax_amount": 0,
             "total": 0,
             "terms": [

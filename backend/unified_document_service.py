@@ -117,7 +117,7 @@ class UnifiedDocumentGenerator:
         settings = settings or {}
         theme = settings.get("theme", "أزرق")
         style = settings.get("style", "حديث")
-        tax_rate = settings.get("tax_rate", 15)
+        tax_rate = 0
 
         # إعادة تعيين البيانات
         self.builder.reset_quotation()

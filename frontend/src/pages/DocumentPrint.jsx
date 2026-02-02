@@ -316,6 +316,46 @@ const DocumentPrint = () => {
     }));
   };
 
+
+  const loadInvoiceData = async (invId) => {
+    try {
+      const { data: inv } = await axios.get(`${API_URL}/invoices/${invId}`);
+      if (!inv) return;
+
+      const invItems = (inv.items || []).map((it) => ({
+        description: it.description || it.name || '',
+        quantity: Number(it.quantity || 1),
+        unit_price: Number(it.unit_price || it.price || 0),
+        discount: Number(it.discount || 0),
+      }));
+
+      const invVehicleId = inv.vehicleId || inv.vehicle_id;
+      if (invVehicleId && !vehicleId) {
+        loadVehicleData(invVehicleId);
+        loadLatestApprovalToken(invVehicleId);
+      }
+
+      setDocType(inv.type || 'invoice');
+
+      setFormData((prev) => ({
+        ...prev,
+        customer: {
+          ...prev.customer,
+          name: inv.partner_name || inv.partnerName || prev.customer.name,
+        },
+        items: invItems.length > 0 ? invItems : prev.items,
+        settings: {
+          ...prev.settings,
+          date: (inv.created_at || inv.createdAt || '').toString().slice(0, 10) || prev.settings.date,
+          document_number: inv.invoice_number || inv.invoiceNumber || prev.settings.document_number,
+          notes: inv.notes || prev.settings.notes,
+        },
+      }));
+    } catch (e) {
+      console.error('Error loading invoice:', e);
+    }
+  };
+
   const removeItem = (index) => {
     if (formData.items.length > 1) {
       setFormData(prev => ({

@@ -720,6 +720,10 @@ const Operations = () => {
                         {op.paymentMethod === 'credit' ? t('operations.credit_unpaid') : (op.paymentMethod || '-')}
                       </div>
 
+                      <div className="mt-2 text-xs text-gray-600">
+                        {fromToText}
+                      </div>
+
                       {op.notes && (
                         <div className="mt-2 text-xs text-gray-600 line-clamp-2">{op.notes}</div>
                       )}

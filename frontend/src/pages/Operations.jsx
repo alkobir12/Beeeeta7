@@ -649,51 +649,49 @@ const Operations = () => {
             <h2 className="text-lg font-semibold text-gray-900">{t('operations.recentOperations')}</h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="p-4 text-right font-medium">{t('operations.date')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.operationType')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.partner')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.items_count')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.total')}</th>
-                  <th className="p-4 text-right font-medium">{t('operations.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {ops.map(op => (
-                  <tr 
-                    key={op.id} 
-                    onClick={() => {
-                      if (op.vehicleId) {
-                        navigate(`/vehicle/${op.vehicleId}`);
-                      }
-                    }}
-                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
-                    data-testid={`operation-row-${op.id}`}
-                  >
-                    <td className="p-4 text-gray-600">{new Date(op.date || op.op_date || op.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {op.type === 'sale' ? t('operations.sale') : t('operations.purchase')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-gray-900">
-                        {op.partnerName || '-'}
-                      </span>
-                      <div className="text-xs text-gray-500">
-                        {op.paymentMethod === 'credit' ? t('operations.credit_unpaid') : (op.paymentMethod || '-')}
-                      </div>
-                    </td>
-                    <td className="p-4 text-gray-500">{op.items?.length || 0}</td>
-                    <td className="p-4 font-bold text-gray-900">{Number(op.total).toFixed(2)}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                        {/* شارة نوع العملية: مركبة / ورشة عامة */}
+          <div className="space-y-3">
+            {ops.map((op) => {
+              const opDate = new Date(op.date || op.op_date || op.createdAt);
+              const dateStr = opDate.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US');
+              const timeStr = opDate.toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+
+              const invoiceNum = op.invoiceNumber || '';
+              const shortInvoiceNum = invoiceNum && invoiceNum.startsWith('INV')
+                ? invoiceNum.slice(0, 7) // INV0000
+                : '';
+
+              const typeLabel = op.type === 'sale'
+                ? t('operations.sale')
+                : op.type === 'purchase'
+                  ? t('operations.purchase')
+                  : (op.type || '-');
+
+              return (
+                <div
+                  key={op.id}
+                  data-testid={`operation-card-${op.id}`}
+                  className="apple-card p-4 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    // Open details modal (we'll implement as a simple view for now)
+                    if (op.vehicleId) {
+                      navigate(`/vehicle/${op.vehicleId}`);
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-bold text-gray-900">
+                          {invoiceNum || '-'}
+                        </div>
+                        {shortInvoiceNum && (
+                          <div className="text-xs text-gray-500">({shortInvoiceNum})</div>
+                        )}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {typeLabel}
+                        </span>
                         <span
                           className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
                             op.scope === 'vehicle'
@@ -705,71 +703,86 @@ const Operations = () => {
                             ? t('operations.scopeWorkshop')
                             : t('operations.scopeVehicle')}
                         </span>
-
-                        <div className="flex gap-2"> 
-                          <button
-                            onClick={() => {
-                              navigate(`/print?type=invoice&operationId=${op.id}`);
-                            }}
-                            className="apple-button-secondary text-xs h-8 px-3"
-                            title={t('print.print_operation')}
-                            data-testid={`operation-print-button-${op.id}`}
-                          >
-                            {t('print.print')}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (op.vehicleId) {
-                                navigate(`/vehicle/${op.vehicleId}`);
-                              }
-                            }}
-                            className="apple-button-secondary text-xs h-8 px-3"
-                            disabled={!op.vehicleId}
-                            title={t('quick_actions.details')}
-                            data-testid={`operation-view-button-${op.id}`}
-                          >
-                            {t('buttons.view')}
-                          </button>
-
-                          {/* تأكيد سداد للآجل (ينشئ قيد حركة نقدية فقط) */}
-                          {op.paymentMethod === 'credit' && (
-                            <button
-                              onClick={() => {
-                                console.log('confirm-payment-click', op?.id);
-                                setConfirmTarget(op);
-                                setConfirmOpen(true);
-                              }}
-                              className="apple-button-secondary text-xs h-8 px-3"
-                              title={t('operations.confirm_credit_payment')}
-                              data-testid={`operation-confirm-payment-button-${op.id}`}
-                            >
-                              {t('operations.confirm_credit_payment')}
-                            </button>
-                          )}
-
-                          <button
-                            onClick={async () => {
-                              if (!window.confirm(t('common.confirm_delete'))) return;
-                              try {
-                                await axios.delete(`${API_URL}/operations/${op.id}`);
-                                queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
-                              } catch (e) {
-                                console.error('Failed to delete operation:', e);
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 p-2"
-                            title={t('buttons.delete')}
-                            data-testid={`operation-delete-button-${op.id}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      <div className="mt-2 text-sm text-gray-700">
+                        <span className="font-semibold">{op.partnerName || '-'}</span>
+                        <span className="mx-2 text-gray-300">•</span>
+                        <span className="text-gray-500">{dateStr} {timeStr}</span>
+                      </div>
+
+                      <div className="mt-1 text-xs text-gray-500">
+                        {op.paymentMethod === 'credit' ? t('operations.credit_unpaid') : (op.paymentMethod || '-')}
+                      </div>
+
+                      {op.notes && (
+                        <div className="mt-2 text-xs text-gray-600 line-clamp-2">{op.notes}</div>
+                      )}
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-lg font-bold text-gray-900">
+                        {Number(op.total || 0).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">{t('common.currency')}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => navigate(`/print?type=invoice&operationId=${op.id}`)}
+                      className="apple-button-secondary text-xs h-8 px-3"
+                      title={t('print.print_operation')}
+                      data-testid={`operation-print-button-${op.id}`}
+                    >
+                      {t('print.print')}
+                    </button>
+
+                    {op.vehicleId && (
+                      <button
+                        onClick={() => navigate(`/vehicle/${op.vehicleId}`)}
+                        className="apple-button-secondary text-xs h-8 px-3"
+                        title={t('quick_actions.details')}
+                        data-testid={`operation-view-button-${op.id}`}
+                      >
+                        {t('buttons.view')}
+                      </button>
+                    )}
+
+                    {op.paymentMethod === 'credit' && (
+                      <button
+                        onClick={() => {
+                          setConfirmTarget(op);
+                          setConfirmOpen(true);
+                        }}
+                        className="apple-button-secondary text-xs h-8 px-3"
+                        title={t('operations.confirm_credit_payment')}
+                        data-testid={`operation-confirm-payment-button-${op.id}`}
+                      >
+                        {t('operations.confirm_credit_payment')}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(t('common.confirm_delete'))) return;
+                        try {
+                          await axios.delete(`${API_URL}/operations/${op.id}`);
+                          queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+                        } catch (e) {
+                          console.error('Failed to delete operation:', e);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700 p-2"
+                      title={t('buttons.delete')}
+                      data-testid={`operation-delete-button-${op.id}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       

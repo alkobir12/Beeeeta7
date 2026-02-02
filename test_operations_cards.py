@@ -38,7 +38,7 @@ async def test_operations_page():
             print("✅ Navigated to operations page")
             
             # Take screenshot of operations page
-            await page.screenshot(path='.screenshots/operations_page_initial.png', quality=40, full_page=False)
+            await page.screenshot(path='.screenshots/operations_page_initial.png', full_page=False)
             print("✅ Screenshot taken: operations_page_initial.png")
             
             # Step 3: Check if Recent Operations is now Cards format

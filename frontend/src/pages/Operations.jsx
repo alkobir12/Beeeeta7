@@ -706,7 +706,17 @@ const Operations = () => {
                             : t('operations.scopeVehicle')}
                         </span>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2"> 
+                          <button
+                            onClick={() => {
+                              navigate(`/print?type=invoice&operationId=${op.id}`);
+                            }}
+                            className="apple-button-secondary text-xs h-8 px-3"
+                            title={t('print.print_operation')}
+                            data-testid={`operation-print-button-${op.id}`}
+                          >
+                            {t('print.print')}
+                          </button>
                           <button
                             onClick={() => {
                               if (op.vehicleId) {

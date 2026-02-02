@@ -130,6 +130,10 @@ export const englishTexts = {
   'dashboard.lastUpdateLabel': 'Last Update',
   'dashboard.estimatedCostLabel': 'Estimated Cost',
 
+  // Print / Documents
+  'print.print': 'Print',
+  'print.print_operation': 'Print operation',
+
   'common.all': 'All',
   'common.save': 'Save',
   'common.cancel': 'Cancel',

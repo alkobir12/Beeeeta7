@@ -363,10 +363,39 @@ class SupabaseService:
                     "notes": r.get("notes"),
                     "date": r.get("op_date"),
                     "createdAt": r.get("created_at"),
+                    "invoiceNumber": r.get("invoice_number"),
                     # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicle_id
                     "scope": "vehicle" if r.get("vehicle_id") else "workshop",
                 }
             )
+
+    def operations_get(self, op_id: str) -> Optional[Dict[str, Any]]:
+        if self.mock_mode:
+            return None
+        res = self.client.table("operations").select("*").eq("id", op_id).limit(1).execute()
+        rows = res.data or []
+        if not rows:
+            return None
+        r = rows[0]
+        return {
+            "id": r.get("id"),
+            "type": r.get("type"),
+            "accountId": r.get("account_id"),
+            "vehicleId": r.get("vehicle_id"),
+            "visitId": r.get("visit_id"),
+            "partnerType": r.get("partner_type"),
+            "partnerName": r.get("partner_name"),
+            "items": r.get("items"),
+            "subtotal": r.get("subtotal"),
+            "total": r.get("total"),
+            "paymentMethod": r.get("payment_method"),
+            "notes": r.get("notes"),
+            "date": r.get("op_date"),
+            "createdAt": r.get("created_at"),
+            "invoiceNumber": r.get("invoice_number"),
+            "scope": "vehicle" if r.get("vehicle_id") else "workshop",
+        }
+
         return out
 
     # -------------------- Customers --------------------

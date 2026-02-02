@@ -1051,11 +1051,10 @@ async def get_operation(op_id: str):
         if provider == "supabase":
             # TODO: implement get one in supabase service
             supa = SupabaseService()
-            ops = supa.operations_list()
-            for o in ops:
-                if o.get("id") == op_id:
-                    return o
-            raise HTTPException(status_code=404, detail="not found")
+            o = supa.operations_get(op_id)
+            if not o:
+                raise HTTPException(status_code=404, detail="not found")
+            return o
 
         if provider == "memory" or db is None:
             ops = _mem_read("operations")

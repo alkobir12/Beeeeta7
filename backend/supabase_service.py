@@ -717,6 +717,7 @@ class SupabaseService:
             "notes": r.get("notes"),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),
+            "invoiceNumber": r.get("invoice_number"),
             "scope": r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
         }
 

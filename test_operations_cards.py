@@ -148,7 +148,7 @@ async def test_operations_page():
             print(f"❌ Error during operations page testing: {error}")
             
             # Take error screenshot
-            await page.screenshot(path='.screenshots/operations_error.png', quality=40, full_page=False)
+            await page.screenshot(path='.screenshots/operations_error.png', full_page=False)
             print("Error screenshot saved: operations_error.png")
         
         finally:

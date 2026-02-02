@@ -29,6 +29,7 @@ const DocumentPrint = () => {
   // نوع المستند من URL أو افتراضي
   const initialType = searchParams.get('type') || 'invoice';
   const vehicleId = searchParams.get('vehicleId');
+  const operationId = searchParams.get('operationId');
   
   const [docType, setDocType] = useState(initialType);
   

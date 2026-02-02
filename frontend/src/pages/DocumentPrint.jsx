@@ -89,7 +89,10 @@ const DocumentPrint = () => {
       loadVehicleData(vehicleId);
       loadLatestApprovalToken(vehicleId);
     }
-  }, [vehicleId]);
+    if (operationId) {
+      loadOperationData(operationId);
+    }
+  }, [vehicleId, operationId]);
 
   // عند التحميل، نقرأ printDefaults إن وجدت
   useEffect(() => {

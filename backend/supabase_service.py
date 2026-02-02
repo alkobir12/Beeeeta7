@@ -537,8 +537,11 @@ class SupabaseService:
             return payload
         row = {
             "invoice_number": payload.get("invoiceNumber"),
+            "workshop_id": payload.get("workshopId"),
+            "operation_id": payload.get("operationId"),
             "customer_id": payload.get("customerId"),
             "vehicle_id": payload.get("vehicleId"),
+            "partner_name": payload.get("partnerName"),
             "items": payload.get("items"),
             "subtotal": payload.get("subtotal"),
             "discount": payload.get("discount") or 0,

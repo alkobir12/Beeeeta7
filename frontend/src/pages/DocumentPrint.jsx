@@ -780,10 +780,7 @@ const DocumentPrint = () => {
                     <span>{isArabic ? 'المجموع الفرعي:' : 'Subtotal:'}</span>
                     <span className="font-semibold">{totals.subtotal.toLocaleString()} {isArabic ? 'ر.س' : 'SAR'}</span>
                   </div>
-                  <div className="flex justify-between py-2">
-                    <span style={{ display: 'none' }} />
-                    <span className="font-semibold">{totals.tax.toLocaleString()} {isArabic ? 'ر.س' : 'SAR'}</span>
-                  </div>
+                  {/* Tax removed */}
                   <div className="flex justify-between py-2 border-t-2 border-blue-200 text-lg font-bold text-blue-600">
                     <span>{isArabic ? 'المجموع الكلي:' : 'Total:'}</span>
                     <span>{totals.total.toLocaleString()} {isArabic ? 'ر.س' : 'SAR'}</span>

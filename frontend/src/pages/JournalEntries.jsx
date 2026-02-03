@@ -633,6 +633,7 @@ export default function JournalEntries() {
           saving={saving}
           isLight={isLight}
           styles={styles}
+          coaAccounts={coaAccounts}
         />
       )}
 

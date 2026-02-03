@@ -535,10 +535,14 @@ async def import_customers(file: UploadFile = File(...)):
                     supa.client.table("customers")
                     .select("id")
                     .eq("phone", phone_val)
-                    .maybe_single()
+                    .limit(1)
                     .execute()
                 )
-                existing_row = existing.data if isinstance(existing.data, dict) else None
+                existing_row = None
+                if isinstance(existing.data, list) and existing.data:
+                    existing_row = existing.data[0]
+                elif isinstance(existing.data, dict):
+                    existing_row = existing.data
                 existing_id = existing_row.get("id") if existing_row else None
 
                 if existing_id:

@@ -1878,7 +1878,6 @@ async def public_approval(token: str):
             return {
                 "id": d.get("id"),
                 "token": d.get("token"),
-                "otp": d.get("otp_code"),
                 "vehicleId": d.get("vehicle_id"),
                 "customerId": d.get("customer_id"),
                 "title": d.get("title"),
@@ -1903,6 +1902,8 @@ async def public_approval(token: str):
         if d.get("expiresAt") and d["expiresAt"] < datetime.utcnow():
             raise HTTPException(status_code=410, detail="انتهت صلاحية الرابط")
         d.pop("_id", None)
+        d.pop("otp", None)
+        d.pop("otp_code", None)
         for k in ("createdAt", "expiresAt", "respondedAt"):
             if d.get(k) and hasattr(d[k], "isoformat"):
                 d[k] = d[k].isoformat()

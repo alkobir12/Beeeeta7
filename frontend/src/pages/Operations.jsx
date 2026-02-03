@@ -24,10 +24,10 @@ const Operations = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [form, setForm] = useState({ 
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',
     visitId: '',

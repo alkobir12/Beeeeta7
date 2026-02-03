@@ -1738,6 +1738,7 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
             return {
                 "id": r.get("id"),
                 "token": r.get("token") or token,
+                "otp": r.get("otp_code") or otp_code,
                 "vehicleId": r.get("vehicle_id"),
                 "customerId": r.get("customer_id"),
                 "title": r.get("title"),

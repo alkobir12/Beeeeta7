@@ -127,11 +127,6 @@ export default function JournalEntries() {
         })
       });
 
-  useEffect(() => {
-    fetchChartOfAccounts();
-    // eslint-disable-next-line
-  }, []);
-
       const data = await response.json();
       if (data.success) {
         await fetchJournalEntries();

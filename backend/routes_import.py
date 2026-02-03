@@ -387,3 +387,221 @@ async def import_parts(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+
+
+@router.post("/customers")
+async def import_customers(file: UploadFile = File(...)):
+    provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+    supa = None
+    if provider == "supabase":
+        supa = _get_supa()
+        if not supa or not getattr(supa, "client", None):
+            raise HTTPException(status_code=500, detail="Supabase not initialized")
+    else:
+        if not db:
+            raise HTTPException(status_code=500, detail="Database not initialized")
+
+    try:
+        contents = await file.read()
+        filename = (file.filename or "").lower()
+
+        if filename.endswith(".csv"):
+            df = pd.read_csv(io.BytesIO(contents))
+        else:
+            df = pd.read_excel(io.BytesIO(contents), header=None)
+
+        if not filename.endswith(".csv"):
+            header_idx = None
+            header_keywords = {
+                "name",
+                "customer name",
+                "اسم",
+                "اسم العميل",
+                "phone",
+                "mobile",
+                "الجوال",
+                "الهاتف",
+            }
+
+            for i in range(min(15, len(df))):
+                row_vals = [str(x).strip().lower() for x in df.iloc[i].tolist() if str(x) != "nan"]
+                if any(key in row_vals for key in header_keywords):
+                    header_idx = i
+                    break
+
+            if header_idx is not None:
+                df.columns = [str(x).strip() if str(x) != "nan" else "" for x in df.iloc[header_idx].tolist()]
+                df = df.iloc[header_idx + 1 :].copy()
+
+            df = df.loc[:, [c for c in df.columns if str(c).strip() != ""]]
+
+        column_map = {
+            "name": ["name", "customer name", "اسم", "اسم العميل"],
+            "phone": ["phone", "mobile", "الجوال", "الهاتف", "رقم الجوال"],
+            "email": ["email", "e-mail", "البريد", "البريد الإلكتروني"],
+            "address": ["address", "العنوان"],
+            "vehicle_brand": ["vehicle brand", "brand", "نوع المركبة", "الماركة"],
+            "vehicle_plate": ["plate", "plate number", "رقم اللوحة", "اللوحة"],
+            "vehicle_km": ["km", "kilometers", "عداد", "الكيلومترات", "km"],
+        }
+
+        def find_col(df_cols, keys):
+            for col in df_cols:
+                if str(col).lower().strip() in keys:
+                    return col
+            return None
+
+        def clean_text(val) -> str:
+            if val is None:
+                return ""
+            if isinstance(val, float) and pd.isna(val):
+                return ""
+            if isinstance(val, float) and val.is_integer():
+                return str(int(val))
+            text = str(val).strip()
+            if text.lower() == "nan":
+                return ""
+            return text
+
+        def clean_int(val):
+            try:
+                if val is None or (isinstance(val, float) and pd.isna(val)):
+                    return None
+                text = str(val).strip().replace(",", "")
+                if text == "":
+                    return None
+                return int(float(text))
+            except Exception:
+                return None
+
+        imported_count = 0
+        updated_count = 0
+        processed_count = 0
+        skipped_count = 0
+
+        for _, row in df.iterrows():
+            name_val = clean_text(row.get(find_col(df.columns, column_map["name"])))
+            phone_val = clean_text(row.get(find_col(df.columns, column_map["phone"])))
+            email_val = clean_text(row.get(find_col(df.columns, column_map["email"])))
+            address_val = clean_text(row.get(find_col(df.columns, column_map["address"])))
+            vehicle_brand_val = clean_text(row.get(find_col(df.columns, column_map["vehicle_brand"])))
+            vehicle_plate_val = clean_text(row.get(find_col(df.columns, column_map["vehicle_plate"])))
+            vehicle_km_val = clean_int(row.get(find_col(df.columns, column_map["vehicle_km"])))
+
+            if not name_val or not phone_val:
+                skipped_count += 1
+                continue
+
+            processed_count += 1
+
+            payload = {
+                "name": name_val,
+                "phone": phone_val,
+                "email": email_val or None,
+                "address": address_val or None,
+                "vehicle_brand": vehicle_brand_val or None,
+                "vehicle_plate": vehicle_plate_val or None,
+                "vehicle_km": vehicle_km_val,
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+
+            if provider == "supabase":
+                existing = (
+                    supa.client.table("customers")
+                    .select("id")
+                    .eq("phone", phone_val)
+                    .maybe_single()
+                    .execute()
+                )
+                existing_row = existing.data if isinstance(existing.data, dict) else None
+                existing_id = existing_row.get("id") if existing_row else None
+
+                if existing_id:
+                    supa.client.table("customers").update(payload).eq("id", existing_id).execute()
+                    updated_count += 1
+                else:
+                    payload["created_at"] = datetime.utcnow().isoformat()
+                    supa.client.table("customers").insert(payload).execute()
+                    imported_count += 1
+            else:
+                if provider == "memory":
+                    rows = _mem_read("customers")
+                    existing_idx = next((i for i, c in enumerate(rows) if c.get("phone") == phone_val), None)
+                    if existing_idx is not None:
+                        rows[existing_idx] = {
+                            **rows[existing_idx],
+                            "name": name_val,
+                            "phone": phone_val,
+                            "email": email_val or None,
+                            "address": address_val or None,
+                            "vehicleBrand": vehicle_brand_val or None,
+                            "vehiclePlate": vehicle_plate_val or None,
+                            "vehicleKm": vehicle_km_val,
+                            "updatedAt": datetime.utcnow().isoformat(),
+                        }
+                        updated_count += 1
+                    else:
+                        rows.append(
+                            {
+                                "id": str(uuid.uuid4()),
+                                "name": name_val,
+                                "phone": phone_val,
+                                "email": email_val or None,
+                                "address": address_val or None,
+                                "vehicleBrand": vehicle_brand_val or None,
+                                "vehiclePlate": vehicle_plate_val or None,
+                                "vehicleKm": vehicle_km_val,
+                                "totalVisits": 0,
+                                "createdAt": datetime.utcnow().isoformat(),
+                            }
+                        )
+                        imported_count += 1
+                    _mem_write("customers", rows)
+                else:
+                    existing = await db.customers.find_one({"phone": phone_val})
+                    if existing:
+                        await db.customers.update_one(
+                            {"_id": existing["_id"]},
+                            {
+                                "$set": {
+                                    "name": name_val,
+                                    "phone": phone_val,
+                                    "email": email_val or None,
+                                    "address": address_val or None,
+                                    "vehicleBrand": vehicle_brand_val or None,
+                                    "vehiclePlate": vehicle_plate_val or None,
+                                    "vehicleKm": vehicle_km_val,
+                                    "updatedAt": datetime.utcnow(),
+                                }
+                            },
+                        )
+                        updated_count += 1
+                    else:
+                        await db.customers.insert_one(
+                            {
+                                "id": str(uuid.uuid4()),
+                                "name": name_val,
+                                "phone": phone_val,
+                                "email": email_val or None,
+                                "address": address_val or None,
+                                "vehicleBrand": vehicle_brand_val or None,
+                                "vehiclePlate": vehicle_plate_val or None,
+                                "vehicleKm": vehicle_km_val,
+                                "totalVisits": 0,
+                                "createdAt": datetime.utcnow(),
+                            }
+                        )
+                        imported_count += 1
+
+        return {
+            "status": "success",
+            "imported": imported_count,
+            "updated": updated_count,
+            "skipped": skipped_count,
+            "processed": processed_count,
+            "total": imported_count + updated_count,
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")

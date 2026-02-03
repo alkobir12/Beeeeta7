@@ -101,6 +101,11 @@ const translations = {
   print: {
     print: "طباعة",
     print_operation: "طباعة العملية"
+  operations_ui: {
+    from_to: "من/إلى",
+    notes: "البيان"
+  },
+
   },
 
   inventory: {

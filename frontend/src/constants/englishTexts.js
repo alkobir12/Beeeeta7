@@ -133,6 +133,7 @@ export const englishTexts = {
   // Print / Documents
   'print.print': 'Print',
   'print.print_operation': 'Print operation',
+  'print.invoice_number': 'Invoice Number',
 
   'common.all': 'All',
   'common.save': 'Save',

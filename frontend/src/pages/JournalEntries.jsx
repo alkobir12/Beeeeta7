@@ -86,6 +86,25 @@ export default function JournalEntries() {
         const transformedEntries = data.data.map((entry, index) => ({
           id: entry.id || String(index),
           entry_number: `JE-${String(index + 1).padStart(4, '0')}`,
+
+  const [coaAccounts, setCoaAccounts] = useState([]);
+
+  const fetchChartOfAccounts = async () => {
+    try {
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const data = await response.json();
+      if (data?.success && Array.isArray(data?.data)) {
+        setCoaAccounts(data.data);
+      } else {
+        setCoaAccounts([]);
+      }
+    } catch (e) {
+      console.error('Failed to fetch chart of accounts:', e);
+      setCoaAccounts([]);
+    }
+  };
+
           entry_date: entry.date,
           description: entry.description,
           reference_type: entry.source === 'operation' ? (entry.description?.includes('بيع') ? 'invoice' : 'purchase') : 'manual',

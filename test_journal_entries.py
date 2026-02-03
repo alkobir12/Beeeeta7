@@ -36,7 +36,7 @@ async def test_journal_entries():
             await page.wait_for_selector('[data-testid="entry-description-input"]', timeout=5000)
             print("✅ New entry form opened")
             
-            await page.screenshot(path='new_entry_form.png', quality=40, full_page=False)
+            await page.screenshot(path='new_entry_form.png', full_page=False)
             
             # Step 4: Check account options
             print("4. Checking available account codes...")

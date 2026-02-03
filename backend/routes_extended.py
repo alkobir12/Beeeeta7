@@ -2008,6 +2008,8 @@ async def respond_public_approval(token: str, request: Request):
                 "responder_name": name,
                 "responder_phone": phone,
                 "service_items_text": (
+                "otp_verified_at": timestamp,
+
                     " | ".join(meta_parts)
                     if meta_parts
                     else d.get("service_items_text")

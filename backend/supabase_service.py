@@ -414,6 +414,10 @@ class SupabaseService:
                 "name": r.get("name"),
                 "phone": r.get("phone"),
                 "email": r.get("email"),
+                "address": r.get("address"),
+                "vehicleBrand": r.get("vehicle_brand"),
+                "vehiclePlate": r.get("vehicle_plate"),
+                "vehicleKm": r.get("vehicle_km"),
                 "totalVisits": r.get("total_visits", 0),
                 "lastVisit": r.get("last_visit"),
                 "vehicles": r.get("vehicles") or [],
@@ -436,6 +440,10 @@ class SupabaseService:
             "name": r.get("name"),
             "phone": r.get("phone"),
             "email": r.get("email"),
+            "address": r.get("address"),
+            "vehicleBrand": r.get("vehicle_brand"),
+            "vehiclePlate": r.get("vehicle_plate"),
+            "vehicleKm": r.get("vehicle_km"),
             "totalVisits": r.get("total_visits", 0),
             "lastVisit": r.get("last_visit"),
             "vehicles": r.get("vehicles") or [],
@@ -461,6 +469,10 @@ class SupabaseService:
                 "name": r.get("name"),
                 "phone": r.get("phone"),
                 "email": r.get("email"),
+                "address": r.get("address"),
+                "vehicleBrand": r.get("vehicle_brand"),
+                "vehiclePlate": r.get("vehicle_plate"),
+                "vehicleKm": r.get("vehicle_km"),
                 "totalVisits": r.get("total_visits", 0),
                 "lastVisit": r.get("last_visit"),
                 "vehicles": r.get("vehicles") or [],
@@ -477,6 +489,10 @@ class SupabaseService:
             "name": payload.get("name"),
             "phone": payload.get("phone"),
             "email": payload.get("email"),
+            "address": payload.get("address"),
+            "vehicle_brand": payload.get("vehicleBrand"),
+            "vehicle_plate": payload.get("vehiclePlate"),
+            "vehicle_km": payload.get("vehicleKm"),
             "total_visits": payload.get("totalVisits", 0),
             "last_visit": payload.get("lastVisit"),
         }
@@ -490,6 +506,10 @@ class SupabaseService:
             "name": r.get("name"),
             "phone": r.get("phone"),
             "email": r.get("email"),
+            "address": r.get("address"),
+            "vehicleBrand": r.get("vehicle_brand"),
+            "vehiclePlate": r.get("vehicle_plate"),
+            "vehicleKm": r.get("vehicle_km"),
             "totalVisits": r.get("total_visits", 0),
             "lastVisit": r.get("last_visit"),
             "vehicles": r.get("vehicles") or [],
@@ -506,6 +526,14 @@ class SupabaseService:
             row["phone"] = payload["phone"]
         if "email" in payload:
             row["email"] = payload["email"]
+        if "address" in payload:
+            row["address"] = payload["address"]
+        if "vehicleBrand" in payload:
+            row["vehicle_brand"] = payload["vehicleBrand"]
+        if "vehiclePlate" in payload:
+            row["vehicle_plate"] = payload["vehiclePlate"]
+        if "vehicleKm" in payload:
+            row["vehicle_km"] = payload["vehicleKm"]
         if "totalVisits" in payload:
             row["total_visits"] = payload["totalVisits"]
         if "lastVisit" in payload:
@@ -520,6 +548,10 @@ class SupabaseService:
             "name": r.get("name"),
             "phone": r.get("phone"),
             "email": r.get("email"),
+            "address": r.get("address"),
+            "vehicleBrand": r.get("vehicle_brand"),
+            "vehiclePlate": r.get("vehicle_plate"),
+            "vehicleKm": r.get("vehicle_km"),
             "totalVisits": r.get("total_visits", 0),
             "lastVisit": r.get("last_visit"),
             "vehicles": r.get("vehicles") or [],

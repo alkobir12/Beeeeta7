@@ -16,8 +16,10 @@ const ApprovalPublic = () => {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [accepted, setAccepted] = useState(false);
 
   const load = async () => {
     try {
@@ -33,20 +35,23 @@ const ApprovalPublic = () => {
 
   useEffect(() => { load(); }, [token]);
 
-  const respond = async (status) => {
+  const respond = async () => {
     try {
       setSending(true);
       const formData = new URLSearchParams();
-      formData.append('status', status);
+      formData.append('status', 'approved');
       formData.append('name', name);
       formData.append('phone', phone);
       formData.append('notes', notes);
+      formData.append('otp', otp);
+
       await axios.post(`${API_URL}/approvals/public/${token}/respond`, formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
       await load();
     } catch (e) {
-      setError('تعذر إرسال الرد');
+      const detail = e?.response?.data?.detail || e?.message;
+      setError(detail || 'تعذر إرسال الرد');
     } finally {
       setSending(false);
     }
@@ -101,18 +106,48 @@ const ApprovalPublic = () => {
             <div className="grid grid-cols-1 gap-3">
               <Input placeholder="اسمك" value={name} onChange={e => setName(e.target.value)} />
               <Input placeholder="الجوال" value={phone} onChange={e => setPhone(e.target.value)} />
+              <Input placeholder="رمز OTP (الموجود في رسالة الواتساب)" value={otp} onChange={e => setOtp(e.target.value)} inputMode="numeric" />
               <Input placeholder="ملاحظات (اختياري)" value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <Button disabled={sending || data.status !== 'pending'} onClick={() => respond('approved')} className="bg-green-600 hover:bg-green-700">موافقة</Button>
-              <Button disabled={sending || data.status !== 'pending'} variant="destructive" onClick={() => respond('rejected')}>رفض</Button>
-              <Button disabled={sending || data.status !== 'pending'} variant="outline" onClick={() => respond('deferred')}>تأجيل</Button>
-              <Button disabled={sending || data.status !== 'pending'} variant="outline" onClick={() => respond('requote')}>تسعير أخرى</Button>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <div className="text-sm font-bold mb-2">إقرار اعتماد إلكتروني</div>
+              <div className="text-sm text-slate-700 leading-7">
+                أُفوِّض السادة / ورشة عبد اللّٰه الكبير بتنفيذ جميع أعمال الإصلاحات اللازمة للمركبة، واي تبعات تظهر بما في ذلك شراء وتركيب كافة قطع الغيار المطلوبة وتجربة المركبه داخل وخارج الورشة.
+                <br />
+                وأتعهد بسداد كامل المستحقات واستلام المركبة فور الانتهاء من الخدمة، وأُقرّ بعدم مسؤولية الورشة عن أي تبعات ناتجة عن تأخير القطع وغيرها
+              </div>
+              <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                />
+                <span>أقرّ أنني قرأت الإقرار وأوافق عليه</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                disabled={sending || data.status !== 'pending' || !otp.trim() || !accepted}
+                onClick={respond}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                موافقة
+              </Button>
+              <div className="text-xs text-slate-500">
+                لن تتم الموافقة إلا بعد إدخال رمز OTP الصحيح والموافقة على الإقرار.
+              </div>
             </div>
 
             <div className="text-sm text-slate-500">
               الحالة الحالية: {data.status === 'pending' ? 'بانتظار الرد' : data.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}
+              {data.otp && (
+                <div className="mt-2 text-xs text-slate-500">
+                  رقم OTP (للتأكيد): <span className="font-mono font-bold">{data.otp}</span>
+                </div>
+              )}
               {data.signature && (
                 <div className="mt-2 p-2 bg-slate-100 rounded text-xs font-mono break-all">
                   <div className="font-bold mb-1">التوقيع الرقمي:</div>

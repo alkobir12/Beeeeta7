@@ -1935,6 +1935,7 @@ async def respond_public_approval(token: str, request: Request):
         name = form_data.get("name", "")
         phone = form_data.get("phone", "")
         notes = form_data.get("notes", "")
+        otp = form_data.get("otp", "")
 
         # ---------- Supabase implementation ----------
         if provider == "supabase":

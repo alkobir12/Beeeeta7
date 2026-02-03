@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import os
+import json
 
 import pandas as pd
 import io
@@ -9,6 +10,29 @@ import uuid
 router = APIRouter(prefix="/api/import")
 
 db = None
+
+
+def _mem_read(name: str) -> list:
+    try:
+        base_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        path = os.path.join(base_dir, f"{name}.json")
+        if not os.path.exists(path):
+            return []
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _mem_write(name: str, items: list):
+    try:
+        base_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(base_dir, exist_ok=True)
+        path = os.path.join(base_dir, f"{name}.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(items, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 
 def set_db(database):

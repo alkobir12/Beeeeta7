@@ -19,7 +19,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://finex-manager.preview.emergentagent.com/api"
+BASE_URL = "https://fintech-approval.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class P0CreditPaymentTester:

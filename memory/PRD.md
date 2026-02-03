@@ -125,7 +125,7 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://finex-manager.preview.emergentagent.com`
+- **API URL**: `https://fintech-approval.preview.emergentagent.com`
 
 ---
 

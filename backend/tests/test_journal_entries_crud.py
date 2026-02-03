@@ -13,7 +13,7 @@ import os
 import uuid
 
 BASE_URL = os.environ.get(
-    "REACT_APP_BACKEND_URL", "https://finex-manager.preview.emergentagent.com"
+    "REACT_APP_BACKEND_URL", "https://fintech-approval.preview.emergentagent.com"
 ).rstrip("/")
 WORKSHOP_ID = "finmodule-sync"
 

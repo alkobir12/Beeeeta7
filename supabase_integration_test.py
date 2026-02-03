@@ -18,7 +18,7 @@ import uuid
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://finex-manager.preview.emergentagent.com/api"
+BACKEND_URL = "https://fintech-approval.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

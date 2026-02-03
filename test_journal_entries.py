@@ -19,7 +19,7 @@ async def test_journal_entries():
             await page.wait_for_selector('[data-testid="login-username-input"]', timeout=10000)
             await page.fill('[data-testid="login-username-input"]', 'مدير')
             await page.click('[data-testid="login-submit-button"]')
-            await page.wait_for_url('**/dashboard', timeout=15000)
+            await page.wait_for_url('https://finex-manager.preview.emergentagent.com/', timeout=15000)
             print("✅ Login successful")
             
             # Step 2: Navigate to Journal Entries

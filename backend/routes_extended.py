@@ -1878,6 +1878,7 @@ async def public_approval(token: str):
             return {
                 "id": d.get("id"),
                 "token": d.get("token"),
+                "otp": d.get("otp_code"),
                 "vehicleId": d.get("vehicle_id"),
                 "customerId": d.get("customer_id"),
                 "title": d.get("title"),

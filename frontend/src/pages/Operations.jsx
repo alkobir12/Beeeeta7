@@ -10,6 +10,7 @@ import { useToast } from '../hooks/use-toast';
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
+import OperationDetailsModal from '../components/OperationDetailsModal';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -24,6 +25,9 @@ const Operations = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState({ 
+  const [selectedOperation, setSelectedOperation] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
     accountId: '', 
     vehicleId: '',
     visitId: '',

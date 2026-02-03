@@ -144,6 +144,12 @@ export default function JournalEntries() {
           total: formData.lines.reduce((sum, l) => sum + (l.debit || 0), 0)
         })
       });
+
+  useEffect(() => {
+    fetchChartOfAccounts();
+    // eslint-disable-next-line
+  }, []);
+
       const data = await response.json();
       if (data.success) {
         await fetchJournalEntries();

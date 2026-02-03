@@ -140,7 +140,9 @@ async def test_journal_entries():
                 entry_id = first_entry_id.replace('entry-row-', '')
                 
                 await page.click(f'[data-testid="view-btn-{entry_id}"]')
-                await page.wait_for_selector('.fixed.inset-0', timeout=5000)
+                # Use a more specific selector for the modal
+                modal_selector = '[role="dialog"], .fixed.inset-0.bg-black'
+                await page.wait_for_selector(modal_selector, timeout=5000)
                 
                 await page.screenshot(path='entry_details.png', full_page=False)
                 

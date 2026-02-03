@@ -152,7 +152,7 @@ async def test_journal_entries():
                 
         except Exception as e:
             print(f"❌ Test failed: {str(e)}")
-            await page.screenshot(path='error.png', quality=40, full_page=False)
+            await page.screenshot(path='error.png', full_page=False)
             raise
         finally:
             await browser.close()

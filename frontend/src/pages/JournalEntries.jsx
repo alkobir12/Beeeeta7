@@ -692,11 +692,11 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles }) {
     setFormData(prev => {
       const newLines = [...prev.lines];
       if (field === 'account_code') {
-        const account = ACCOUNTS.find(a => a.code === value);
+        const account = coaAccounts.find((a) => String(a.code) === String(value));
         newLines[index] = {
           ...newLines[index],
           account_code: value,
-          account_name: account?.name || ''
+          account_name: account ? (account.name_ar || account.name || '') : ''
         };
       } else {
         newLines[index] = { ...newLines[index], [field]: value };

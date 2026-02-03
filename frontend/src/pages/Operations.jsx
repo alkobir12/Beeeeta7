@@ -681,10 +681,8 @@ const Operations = () => {
                   data-testid={`operation-card-${op.id}`}
                   className="apple-card p-4 hover:bg-gray-50/50 transition-colors cursor-pointer"
                   onClick={() => {
-                    // Open details modal (we'll implement as a simple view for now)
-                    if (op.vehicleId) {
-                      navigate(`/vehicle/${op.vehicleId}`);
-                    }
+                    setSelectedOperation(op);
+                    setDetailsOpen(true);
                   }}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -792,6 +790,41 @@ const Operations = () => {
                     >
                       <Trash2 size={16} />
                     </button>
+
+      <OperationDetailsModal
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        operation={selectedOperation}
+        accounts={accounts}
+        t={(k) => {
+          // small adapter to reuse existing translations
+          if (k === 'operations.from_to') return t('operations_ui.from_to');
+          if (k === 'operations.notes') return t('operations_ui.notes');
+          return t(k);
+        }}
+        isRTL={isRTL}
+        onPrint={() => {
+          if (!selectedOperation?.id) return;
+          navigate(`/print?type=invoice&operationId=${selectedOperation.id}`);
+        }}
+        onViewVehicle={() => {
+          if (!selectedOperation?.vehicleId) return;
+          navigate(`/vehicle/${selectedOperation.vehicleId}`);
+        }}
+        onDelete={async () => {
+          if (!selectedOperation?.id) return;
+          if (!window.confirm(t('common.confirm_delete'))) return;
+          try {
+            await axios.delete(`${API_URL}/operations/${selectedOperation.id}`);
+            queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+            setDetailsOpen(false);
+            setSelectedOperation(null);
+          } catch (e) {
+            console.error('Failed to delete operation:', e);
+          }
+        }}
+      />
+
                   </div>
                 </div>
               );

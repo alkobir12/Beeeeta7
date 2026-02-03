@@ -1714,8 +1714,13 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
             from supabase_service import SupabaseService
 
             supa = SupabaseService()
+            import random
+
+            otp_code = str(random.randint(1000, 9999))
+
             row = {
                 "token": token,
+                "otp_code": otp_code,
                 "vehicle_id": payload.get("vehicleId"),
                 "customer_id": payload.get("customerId"),
                 "title": payload.get("title") or "طلب اعتماد",

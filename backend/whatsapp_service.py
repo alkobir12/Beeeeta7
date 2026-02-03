@@ -167,12 +167,15 @@ class WhatsAppService:
         title: str,
         amount: float,
         approval_link: str,
+        otp_code: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Send approval request via WhatsApp"""
+        otp_line = f"\n🔐 رمز التحقق (OTP): {otp_code}\n" if otp_code else ""
         message = (
             f"السلام عليكم {customer_name}\n\n"
             f"📋 {title}\n"
             f"💰 المبلغ المتوقع: {amount} ر.س\n\n"
+            f"{otp_line}"
             f"للاعتماد أو الرفض:\n{approval_link}"
         )
 
@@ -185,6 +188,7 @@ class WhatsAppService:
                 "title": title,
                 "amount": amount,
                 "link": approval_link,
+                "otp": otp_code,
             },
         )
 

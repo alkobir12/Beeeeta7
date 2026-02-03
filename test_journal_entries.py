@@ -80,7 +80,7 @@ async def test_journal_entries():
             await page.select_option('[data-testid="line-account-1"]', '4101')  # إيرادات خدمات ميكانيكية
             await page.fill('[data-testid="line-credit-1"]', '500')
             
-            await page.screenshot(path='entry_form_filled.png', quality=40, full_page=False)
+            await page.screenshot(path='entry_form_filled.png', full_page=False)
             
             # Step 6: Save entry
             print("6. Saving journal entry...")

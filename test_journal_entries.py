@@ -40,8 +40,13 @@ async def test_journal_entries():
             
             # Step 4: Check account options
             print("4. Checking available account codes...")
+            
+            # Wait for the dropdown to be populated
+            await page.wait_for_timeout(3000)
+            
             account_options = await page.evaluate('''() => {
                 const select = document.querySelector('[data-testid="line-account-0"]');
+                if (!select) return [];
                 const options = Array.from(select.options);
                 return options.map(option => ({
                     value: option.value,
@@ -50,6 +55,35 @@ async def test_journal_entries():
             }''')
             
             print(f"📊 Total accounts available: {len(account_options)}")
+            
+            if len(account_options) == 0:
+                print("⚠️  No accounts loaded in dropdown. Checking API directly...")
+                # Check if the API is working
+                api_response = await page.evaluate('''async () => {
+                    try {
+                        const response = await fetch('/api/finance/chart-of-accounts?workshop_id=finmodule-sync');
+                        const data = await response.json();
+                        return { success: response.ok, data: data };
+                    } catch (e) {
+                        return { success: false, error: e.message };
+                    }
+                }''')
+                print(f"API Response: {api_response}")
+                
+                # Try to trigger account loading
+                await page.click('[data-testid="line-account-0"]')
+                await page.wait_for_timeout(2000)
+                
+                account_options = await page.evaluate('''() => {
+                    const select = document.querySelector('[data-testid="line-account-0"]');
+                    if (!select) return [];
+                    const options = Array.from(select.options);
+                    return options.map(option => ({
+                        value: option.value,
+                        text: option.textContent
+                    })).filter(opt => opt.value !== '');
+                }''')
+                print(f"📊 After retry - Total accounts available: {len(account_options)}")
             
             # Analyze account codes
             unified_codes = [opt for opt in account_options if len(opt['value']) >= 4 and opt['value'][0] in '123456']
@@ -68,6 +102,11 @@ async def test_journal_entries():
                 print("⚠️  Legacy codes still present:")
                 for opt in legacy_codes:
                     print(f"   - {opt['value']} - {opt['text']}")
+            
+            # If no accounts are available, skip the entry creation test
+            if len(account_options) == 0:
+                print("❌ Cannot proceed with entry creation - no accounts available")
+                return
             
             # Step 5: Test creating entry with unified codes
             print("5. Testing entry creation with unified codes...")

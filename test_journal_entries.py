@@ -132,7 +132,7 @@ async def test_journal_entries():
                 
                 await page.keyboard.press('Escape')
             
-            await page.screenshot(path='final_result.png', quality=40, full_page=False)
+            await page.screenshot(path='final_result.png', full_page=False)
             
             # Final summary
             print("\n=== TEST RESULTS SUMMARY ===")

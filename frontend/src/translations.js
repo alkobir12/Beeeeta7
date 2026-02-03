@@ -100,12 +100,13 @@ const translations = {
 
   print: {
     print: "طباعة",
-    print_operation: "طباعة العملية"
+    print_operation: "طباعة العملية",
+    invoice_number: "رقم الفاتورة"
+  },
+
   operations_ui: {
     from_to: "من/إلى",
     notes: "البيان"
-  },
-
   },
 
   inventory: {

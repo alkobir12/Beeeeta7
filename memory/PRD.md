@@ -199,5 +199,6 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 - ✅ Backend: تم اختبار استيراد العملاء عبر curl بنجاح
 - ✅ Backend: تم التحقق من أن `/api/approvals/public/{token}` لا يعرض OTP
 - ✅ Frontend: تم التحقق من صفحة اعتماد العميل بدون OTP ظاهر + صفحة العملاء وزر الاستيراد
-- 📁 لقطات: `/app/test_reports/approval_page_no_otp.png`, `/app/test_reports/customers_page.png`
+- ✅ Frontend: تم التحقق من معاينة رسالة واتساب وتضمين OTP
+- 📁 لقطات: `/app/test_reports/approval_page_no_otp.png`, `/app/test_reports/customers_page.png`, `/app/test_reports/whatsapp_preview_otp.png`
 - 📁 ملفات الاختبار: `/app/test_reports/iteration_7.json`

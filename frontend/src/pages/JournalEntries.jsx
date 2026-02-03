@@ -651,7 +651,7 @@ export default function JournalEntries() {
   );
 }
 
-function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles }) {
+function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAccounts }) {
   const [formData, setFormData] = useState({
     date: entry?.entry_date || new Date().toISOString().split('T')[0],
     description: entry?.description || '',

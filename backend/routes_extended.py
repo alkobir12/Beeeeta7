@@ -1995,21 +1995,19 @@ async def respond_public_approval(token: str, request: Request):
             meta_parts.append(f"ip={client_ip}")
             meta_parts.append(f"ua={user_agent[:120]}")
 
-            upd = {
-
             # OTP validation
             stored_otp = str(d.get("otp_code") or "").strip()
             if stored_otp:
                 if not otp or str(otp).strip() != stored_otp:
                     raise HTTPException(status_code=400, detail="رمز OTP غير صحيح")
 
+            upd = {
                 "status": status,
                 "responded_at": timestamp,
                 "responder_name": name,
                 "responder_phone": phone,
-                "service_items_text": (
                 "otp_verified_at": timestamp,
-
+                "service_items_text": (
                     " | ".join(meta_parts)
                     if meta_parts
                     else d.get("service_items_text")

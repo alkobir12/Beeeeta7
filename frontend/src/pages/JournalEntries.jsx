@@ -77,6 +77,10 @@ export default function JournalEntries() {
 
   useEffect(() => { fetchJournalEntries(); }, []);
 
+  useEffect(() => {
+    fetchChartOfAccounts();
+  }, []);
+
   const fetchJournalEntries = async () => {
     setLoading(true);
     try {

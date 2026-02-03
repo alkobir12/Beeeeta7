@@ -57,20 +57,7 @@ const getEntryTypeConfig = (type) => {
   return configs[type] || configs.manual;
 };
 
-// Chart of Accounts for selection
-const ACCOUNTS = [
-  { code: '101', name: 'النقدية', type: 'asset' },
-  { code: '113', name: 'ذمم مدينة عملاء', type: 'asset' },
-  { code: '121', name: 'مخزون قطع الغيار', type: 'asset' },
-  { code: '211', name: 'ذمم دائنة موردين', type: 'liability' },
-  { code: '301', name: 'رأس المال', type: 'equity' },
-  { code: '302', name: 'الأرباح المحتجزة', type: 'equity' },
-  { code: '411', name: 'إيرادات خدمات الصيانة', type: 'revenue' },
-  { code: '412', name: 'إيرادات بيع قطع الغيار', type: 'revenue' },
-  { code: '514', name: 'مصاريف قطع الغيار', type: 'expense' },
-  { code: '521', name: 'مصاريف رواتب', type: 'expense' },
-  { code: '522', name: 'مصاريف إيجار', type: 'expense' },
-];
+// Chart of Accounts (loaded from API)
 
 export default function JournalEntries() {
   const { themeName } = useTheme();

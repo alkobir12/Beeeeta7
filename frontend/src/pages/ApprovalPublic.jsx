@@ -177,11 +177,6 @@ const ApprovalPublic = () => {
               <div data-testid="approval-status-text">
                 الحالة الحالية: {data.status === 'pending' ? 'بانتظار الرد' : data.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}
               </div>
-              {data.otp && (
-                <div className="mt-2 text-xs text-slate-500" data-testid="approval-otp-preview">
-                  رقم OTP (للتأكيد): <span className="font-mono font-bold">{data.otp}</span>
-                </div>
-              )}
               {data.signature && (
                 <div className="mt-2 p-2 bg-slate-100 rounded text-xs font-mono break-all" data-testid="approval-signature-block">
                   <div className="font-bold mb-1" data-testid="approval-signature-title">التوقيع الرقمي:</div>

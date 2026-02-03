@@ -372,7 +372,7 @@ const translations = {
   },
   quick_actions: {
     title: "إجراءات سريعة",
-    subtitle: "خيارات سريعة للمركبة",
+    subtitle: "اختر إجراء لهذه المركبة",
     change_status: "تحديث الحالة",
     current_status: "الحالة الحالية",
     new_status: "الحالة الجديدة",
@@ -391,8 +391,7 @@ const translations = {
     receipt: "سند قبض",
     details: "التفاصيل",
     spare_parts: "قطع الغيار",
-    operations: "العمليات",
-    subtitle: "اختر إجراء لهذه المركبة"
+    operations: "العمليات"
   },
   // Additional translations
   nav: {

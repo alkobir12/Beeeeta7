@@ -71,6 +71,7 @@ export default function JournalEntries() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [coaAccounts, setCoaAccounts] = useState([]);
   
   const isLight = themeName === 'light' || themeName === 'dashPro';
 

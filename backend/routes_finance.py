@@ -118,6 +118,11 @@ def _fetch_accounts():
             code = str(a.get("code") or "").strip()
             if not code or code in seen_codes:
                 continue
+
+            # Remove legacy codes (e.g., 101/411/521) to avoid duplicates.
+            if code.isdigit() and int(code) < 1000:
+                continue
+
             seen_codes.add(code)
             if not a.get("name_ar"):
                 a["name_ar"] = a.get("name")

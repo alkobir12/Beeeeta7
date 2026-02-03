@@ -112,6 +112,22 @@ export default function JournalEntries() {
     }
   };
 
+  const fetchChartOfAccounts = async () => {
+    try {
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const data = await response.json();
+      if (data?.success && Array.isArray(data?.data)) {
+        setCoaAccounts(data.data);
+      } else {
+        setCoaAccounts([]);
+      }
+    } catch (e) {
+      console.error('Failed to fetch chart of accounts:', e);
+      setCoaAccounts([]);
+    }
+  };
+
   const handleCreateEntry = async (formData) => {
     setSaving(true);
     try {

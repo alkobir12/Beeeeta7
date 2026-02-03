@@ -192,6 +192,7 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 - ⚠️ Stitch لا يوفّر API عامة حالياً حسب دليل التكامل. تم توفير وضع يدوي (نسخ الوصف + فتح Stitch) عند التوليد.
 
 ### الاختبارات
-- ✅ Backend: 100% نجاح
-- ✅ Frontend: 100% نجاح بعد تحديثات Stitch (وضع يدوي + نطاق كامل)
+- ✅ Backend: تم اختبار استيراد العملاء عبر curl بنجاح
+- ✅ Frontend: تم التحقق من صفحة اعتماد العميل وظهور checkbox + صفحة العملاء وزر الاستيراد
+- 📁 لقطات: `/app/test_reports/approval_page.png`, `/app/test_reports/customers_page.png`
 - 📁 ملفات الاختبار: `/app/test_reports/iteration_7.json`

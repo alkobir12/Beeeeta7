@@ -103,7 +103,7 @@ async def test_journal_entries():
                 await page.click(f'[data-testid="view-btn-{entry_id}"]')
                 await page.wait_for_selector('.fixed.inset-0', timeout=5000)
                 
-                await page.screenshot(path='entry_details.png', quality=40, full_page=False)
+                await page.screenshot(path='entry_details.png', full_page=False)
                 
                 # Check displayed account codes
                 detail_accounts = await page.evaluate('''() => {

@@ -241,6 +241,9 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
       }
 
       message += `\n💸 *الإجمالي: ${approvalForm.amount} ${currency}*\n`;
+      if (data?.otp) {
+        message += `\n🔐 *رمز التحقق (OTP): ${data.otp}*\n`;
+      }
       message += `\n🔗 للموافقة على الطلب، تفضل الرابط التالي:\n${approvalLink}\n`;
       message += `\n⏳ الرابط صالح لمدة ${approvalForm.expiryDays} يوم.`;
 

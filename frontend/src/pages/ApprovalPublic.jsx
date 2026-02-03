@@ -150,7 +150,7 @@ const ApprovalPublic = () => {
               <label className="mt-3 flex items-start gap-2 text-sm text-slate-700" data-testid="approval-disclaimer-checkbox-label">
                 <input
                   type="checkbox"
-                  className="mt-1"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border border-slate-300 accent-emerald-600"
                   checked={accepted}
                   onChange={(e) => setAccepted(e.target.checked)}
                   data-testid="approval-disclaimer-checkbox"

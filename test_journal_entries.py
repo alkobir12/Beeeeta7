@@ -28,7 +28,7 @@ async def test_journal_entries():
             await page.wait_for_selector('[data-testid="journal-entries-page"]', timeout=10000)
             print("✅ Journal Entries page loaded")
             
-            await page.screenshot(path='journal_entries_page.png', quality=40, full_page=False)
+            await page.screenshot(path='journal_entries_page.png', full_page=False)
             
             # Step 3: Open new entry form
             print("3. Open new entry form...")

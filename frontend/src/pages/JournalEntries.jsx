@@ -874,9 +874,9 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles }) {
                           data-testid={`line-account-${idx}`}
                         >
                           <option value="">اختر الحساب</option>
-                          {ACCOUNTS.map(acc => (
+                          {coaAccounts.map(acc => (
                             <option key={acc.code} value={acc.code}>
-                              {acc.code} - {acc.name}
+                              {acc.code} - {acc.name_ar || acc.name || ''}
                             </option>
                           ))}
                         </select>

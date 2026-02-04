@@ -916,6 +916,18 @@ def _safe_amount(value: Any) -> float:
 
 
 def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str]):
+    """Build an accrual journal entry for an operation.
+
+    Rules (Accrual basis):
+    - Sale (cash):   Dr Cash/Bank,   Cr Revenue
+    - Sale (credit): Dr AR,          Cr Revenue
+    - Purchase/Expense (cash):   Dr Selected account (or 6100), Cr Cash/Bank
+    - Purchase/Expense (credit): Dr Selected account (or 6100), Cr AP
+
+    Note: In this codebase, Operations form provides `accountId` which refers to the *debit* account
+    for purchases/expenses (e.g., equipment asset 1201, materials expense 5103, salaries 6101, owner draw 3102).
+    """
+
     if not workshop_id:
         return None
 
@@ -926,12 +938,32 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
         return None
 
     is_credit = payment_method == "credit"
+
+    # Choose cash/bank code for non-credit payments
+    cash_code = "1101"
+    if payment_method in ("transfer", "bank"):
+        cash_code = "1102"
+
+    def _to_code(account_ref: Optional[str]) -> Optional[str]:
+        if not account_ref:
+            return None
+        v = str(account_ref).strip()
+        if not v:
+            return None
+        # Map acc-XXXX to XXXX when possible
+        if v in ACCOUNT_ID_TO_CODE:
+            return ACCOUNT_ID_TO_CODE[v]
+        # allow numeric codes directly
+        return v
+
+    selected_code = _to_code(op.get("accountId") or op.get("account_id"))
+
     lines = []
     transaction_type = None
 
     if op_type in ("sale", "service"):
         transaction_type = "sale"
-        debit_code = "113" if is_credit else "101"
+        debit_code = "1103" if is_credit else cash_code
         lines = [
             {
                 "account": debit_code,
@@ -940,19 +972,24 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
                 "credit": 0,
             },
             {
-                "account": "411",
-                "account_name": ACCOUNT_NAME_MAP.get("411", "411"),
+                "account": "4100",
+                "account_name": ACCOUNT_NAME_MAP.get("4100", "4100"),
                 "debit": 0,
                 "credit": total,
             },
         ]
+
     elif op_type in ("purchase", "expense"):
         transaction_type = "purchase" if op_type == "purchase" else "expense"
-        credit_code = "211" if is_credit else "101"
+
+        # Default for purchases if no account selected: operating expenses (6100)
+        debit_code = selected_code or "6100"
+        credit_code = "2101" if is_credit else cash_code
+
         lines = [
             {
-                "account": "514",
-                "account_name": ACCOUNT_NAME_MAP.get("514", "514"),
+                "account": debit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
                 "debit": total,
                 "credit": 0,
             },
@@ -963,6 +1000,7 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
                 "credit": total,
             },
         ]
+
     else:
         return None
 

@@ -1350,7 +1350,7 @@ async def get_salaries():
         try:
             res = supabase_service.client.table("salaries").select("*").execute()
             return res.data or []
-        except:
+        except Exception:
             return []
 
     if DB_PROVIDER == "memory":

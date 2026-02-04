@@ -230,7 +230,8 @@ const Operations = () => {
         paymentMethod: 'cash',
         notes: '',
         date: new Date().toISOString().split('T')[0],
-        paymentReceipt: null
+        paymentReceipt: null,
+        accountingAccountId: ''
       });
     } catch (e) {
       console.error('Failed to save operation:', e);

@@ -5,7 +5,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import InjectorDiagnostics from './InjectorDiagnosticsV7';
 // Floating assistant disabled: AbuFahad should appear only in Finance pages
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const PartsCatalog = () => {
   const [loading, setLoading] = useState(false);

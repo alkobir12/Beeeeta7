@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Users, Shield, Trash2, Edit, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const DEFAULT_PERMISSIONS = {
   canViewDashboard: true, canManageVehicles: true, canManageCustomers: true,

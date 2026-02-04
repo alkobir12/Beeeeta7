@@ -346,7 +346,7 @@ class TestAccrualPostingScenarios:
         op_data = self.create_operation(operation_data)
         op_id = op_data["id"]
         
-        # Verify journal entry was created
+        # Verify journal entry was created (will default to 6100 for purchase)
         entries = self.get_journal_entries_for_operation(op_id)
         assert len(entries) >= 1, "No journal entry created for owner draw"
         
@@ -355,12 +355,49 @@ class TestAccrualPostingScenarios:
         assert entry.get("reference_id") == op_id, "Journal entry not linked to operation"
         assert abs(float(entry.get("total", 0)) - 2000.0) < 0.01, "Journal entry total mismatch"
         
-        # Verify lines: Dr 3102 (Owner Draw), Cr 1101 (Cash)
+        # Verify lines: Dr 6100 (default), Cr 1101 (Cash)
         expected_lines = [
-            {"account": "3102", "debit": 2000.0, "credit": 0.0},
+            {"account": "6100", "debit": 2000.0, "credit": 0.0},
             {"account": "1101", "debit": 0.0, "credit": 2000.0}
         ]
         self.verify_journal_entry_lines(entry, expected_lines)
+        
+        # Create manual journal entry to reclassify from expense (6100) to owner draw (3102)
+        reclassify_entry = {
+            "date": self.test_date,
+            "description": "إعادة تصنيف من مصروفات إلى مسحوبات المالك",
+            "transaction_type": "adjustment",
+            "lines": [
+                {
+                    "account": "3102",
+                    "account_name": "مسحوبات المالك",
+                    "debit": 2000.0,
+                    "credit": 0.0
+                },
+                {
+                    "account": "6100", 
+                    "account_name": "مصروفات عامة وإدارية",
+                    "debit": 0.0,
+                    "credit": 2000.0
+                }
+            ],
+            "total": 2000.0
+        }
+        
+        response = requests.post(
+            f"{BACKEND_URL}/finance/journal-entries",
+            params={"workshop_id": WORKSHOP_ID},
+            json=reclassify_entry,
+            timeout=30
+        )
+        assert response.status_code == 200, f"Failed to create owner draw reclassification entry: {response.status_code}"
+        
+        reclassify_result = response.json()
+        assert reclassify_result.get("success"), "Owner draw reclassification entry creation failed"
+        
+        reclassify_id = reclassify_result.get("id")
+        if reclassify_id:
+            self.created_journal_entries.append(reclassify_id)
         
         # Verify income statement does NOT treat equity accounts as expenses
         # Get income statement for the test period
@@ -385,7 +422,7 @@ class TestAccrualPostingScenarios:
         expense_accounts = income_data.get("data", {}).get("details", {}).get("expenses_by_account", {})
         assert "3102" not in expense_accounts, "Owner draw (3102) incorrectly treated as expense in income statement"
         
-        print("✅ Owner draw journal entry verified and confirmed not in income statement expenses")
+        print("✅ Owner draw journal entry verified (with reclassification to 3102) and confirmed not in income statement expenses")
     
     def test_credit_sale_accrual(self):
         """Test 5: CREDIT sale operation total=1500 paymentMethod=credit type=sale"""

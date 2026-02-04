@@ -432,11 +432,14 @@ async def get_cash_flow(
                     "net_operating_cash": round(net_operating_cash, 2),
                 },
                 "investing_activities": {
-                    "equipment_purchase": 0,
+                    "equipment_purchases": 0,
+                    "asset_sales": 0,
                     "net_investing_cash": 0,
                 },
                 "financing_activities": {
-                    "loan_proceeds": 0,
+                    "owner_drawings": 0,
+                    "capital_injections": 0,
+                    "new_loans": 0,
                     "loan_payments": 0,
                     "net_financing_cash": 0,
                 },

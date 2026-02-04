@@ -334,12 +334,6 @@ async def security_headers_and_rate_limit(request: Request, call_next):
     )
     return response
 
-    ],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # ============ Settings: simple JSON-based global settings ============
 
 SETTINGS_FILE = ROOT_DIR / "uploads" / "settings.json"

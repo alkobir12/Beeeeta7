@@ -249,6 +249,9 @@ async def validation_exception_handler(request, exc):
     # Don't log full request body to avoid leaking sensitive data into logs.
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
+# NOTE (Security): This codebase can be hardened further (rate limiting, auth, CSP). No app can be 100% vulnerability-free.
+
+
 
 # Enable CORS for frontend access (Emergent ingress will handle exact origins)
 app.add_middleware(

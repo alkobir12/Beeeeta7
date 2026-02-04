@@ -42,7 +42,12 @@ const Operations = () => {
     // تاريخ العملية (افتراضي اليوم)
     date: new Date().toISOString().split('T')[0],
 
-    paymentReceipt: null
+    paymentReceipt: null,
+
+    // New: For non-UUID account IDs (e.g., acc-1201 from COA), we send both:
+    // - accountId: used by UI and persisted in operations table
+    // - accountingAccountId: used by backend to build journal entry debit account
+    accountingAccountId: ''
   });
   const [item, setItem] = useState({ 
     itemType: 'part', 

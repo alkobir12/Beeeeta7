@@ -712,7 +712,11 @@ const Dashboard = () => {
                 // إذا تم التسليم، أغلق أي فاتورة مفتوحة مرتبطة بهذه المركبة
                 if (newStatus === 'delivered') {
                   try {
-                    const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+                    const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
                     const invRes = await axios.get(`${API_URL}/invoices`, { params: { vehicleId: selectedVehicle.id } });
                     const invoices = invRes.data || [];
                     const openInvoice = invoices.find(inv => inv.status !== 'paid' && inv.status !== 'cancelled');

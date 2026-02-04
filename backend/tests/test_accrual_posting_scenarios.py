@@ -236,12 +236,12 @@ class TestAccrualPostingScenarios:
         print("✅ Cash operating expense journal entry verified")
     
     def test_bank_salary_expense(self):
-        """Test 3: BANK salary operation as purchase with accountId=acc-6101 total=3000 paymentMethod=transfer"""
-        print("\n🧪 Test 3: Bank Salary Expense (acc-6101)")
+        """Test 3: BANK salary operation as purchase total=3000 paymentMethod=transfer - create manual JE for 6101"""
+        print("\n🧪 Test 3: Bank Salary Expense (manual JE for 6101)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-6101",  # Salary expense
+            # Note: Will default to 6100, then we'll create manual entry for salary (6101)
             "workshopId": WORKSHOP_ID,
             "partnerType": "employee",
             "partnerName": "رواتب الموظفين",

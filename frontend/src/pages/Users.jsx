@@ -6,7 +6,11 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const Users = () => {
   const { toast } = useToast();

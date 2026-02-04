@@ -3,7 +3,11 @@ import { Search, BookOpen, FileText, Upload, History, Zap, Database, Filter, Git
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const KnowledgeBase = () => {
   const { toast } = useToast();

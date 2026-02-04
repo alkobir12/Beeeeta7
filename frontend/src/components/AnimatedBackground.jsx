@@ -127,7 +127,7 @@ const AnimatedBackground = () => {
       animationId = requestAnimationFrame(animate);
     }
 
-    animate();
+    animationId = requestAnimationFrame(animate);
 
     const handleResize = () => {
       canvas.width = window.innerWidth;

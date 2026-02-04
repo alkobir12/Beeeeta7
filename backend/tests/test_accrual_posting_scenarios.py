@@ -106,12 +106,12 @@ class TestAccrualPostingScenarios:
             assert abs(float(actual.get("credit", 0)) - float(expected.get("credit", 0))) < 0.01, f"Credit mismatch for account {expected.get('account')}"
     
     def test_cash_equipment_purchase(self):
-        """Test 1: CASH purchase operation (equipment asset) total=5000 - should default to 6100 then verify manual entry"""
-        print("\n🧪 Test 1: Cash Equipment Purchase (defaults to 6100, then manual JE for 1201)")
+        """Test 1: CASH purchase operation with accountId=acc-1201 (equipment asset) total=5000 - should post directly to 1201"""
+        print("\n🧪 Test 1: Cash Equipment Purchase (direct posting to 1201 via accountId)")
         
         operation_data = {
             "type": "purchase",
-            # Note: accountId expects UUID format, but we'll create manual journal entry for equipment (1201)
+            "accountId": "acc-1201",  # Equipment asset account
             "workshopId": WORKSHOP_ID,
             "partnerType": "supplier",
             "partnerName": "معدات الورشة المحدودة",
@@ -133,7 +133,7 @@ class TestAccrualPostingScenarios:
         op_data = self.create_operation(operation_data)
         op_id = op_data["id"]
         
-        # Verify journal entry was created (will default to 6100 for purchase)
+        # Verify journal entry was created with selected account (1201)
         entries = self.get_journal_entries_for_operation(op_id)
         assert len(entries) >= 1, "No journal entry created for cash purchase"
         
@@ -142,52 +142,15 @@ class TestAccrualPostingScenarios:
         assert entry.get("reference_id") == op_id, "Journal entry not linked to operation"
         assert abs(float(entry.get("total", 0)) - 5000.0) < 0.01, "Journal entry total mismatch"
         
-        # Verify lines: Dr 6100 (default for purchase), Cr 1101 (Cash)
-        # Note: Without accountId, system defaults to 6100 for purchases
+        # Verify lines: Dr 1201 (Equipment), Cr 1101 (Cash)
+        # The system should now use the selected debit account (1201) instead of defaulting to 6100
         expected_lines = [
-            {"account": "6100", "debit": 5000.0, "credit": 0.0},
+            {"account": "1201", "debit": 5000.0, "credit": 0.0},
             {"account": "1101", "debit": 0.0, "credit": 5000.0}
         ]
         self.verify_journal_entry_lines(entry, expected_lines)
         
-        # Now create a manual journal entry to reclassify from expense (6100) to equipment (1201)
-        reclassify_entry = {
-            "date": self.test_date,
-            "description": "إعادة تصنيف شراء المعدات من مصروفات إلى أصول",
-            "transaction_type": "adjustment",
-            "lines": [
-                {
-                    "account": "1201",
-                    "account_name": "معدات ميكانيكية",
-                    "debit": 5000.0,
-                    "credit": 0.0
-                },
-                {
-                    "account": "6100", 
-                    "account_name": "مصروفات عامة وإدارية",
-                    "debit": 0.0,
-                    "credit": 5000.0
-                }
-            ],
-            "total": 5000.0
-        }
-        
-        response = requests.post(
-            f"{BACKEND_URL}/finance/journal-entries",
-            params={"workshop_id": WORKSHOP_ID},
-            json=reclassify_entry,
-            timeout=30
-        )
-        assert response.status_code == 200, f"Failed to create reclassification entry: {response.status_code}"
-        
-        reclassify_result = response.json()
-        assert reclassify_result.get("success"), "Reclassification entry creation failed"
-        
-        reclassify_id = reclassify_result.get("id")
-        if reclassify_id:
-            self.created_journal_entries.append(reclassify_id)
-        
-        print("✅ Cash equipment purchase journal entry verified (with reclassification to 1201)")
+        print("✅ Cash equipment purchase journal entry verified (direct posting to 1201)")
     
     def test_cash_operating_expense(self):
         """Test 2: CASH purchase operation (operating expense) total=1200 - should default to 6100"""

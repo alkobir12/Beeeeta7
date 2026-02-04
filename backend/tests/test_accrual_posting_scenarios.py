@@ -152,6 +152,52 @@ class TestAccrualPostingScenarios:
         
         print("✅ Cash equipment purchase journal entry verified (direct posting to 1201)")
     
+    def test_operations_post_accepts_accounting_account_id(self):
+        """Test: Operations POST accepts accountingAccountId and posting uses it"""
+        print("\n🧪 Test: Operations POST accepts accountingAccountId parameter")
+        
+        operation_data = {
+            "type": "purchase",
+            "accountingAccountId": "acc-6101",  # Using accountingAccountId instead of accountId
+            "workshopId": WORKSHOP_ID,
+            "partnerType": "employee",
+            "partnerName": "رواتب الموظفين - اختبار accountingAccountId",
+            "items": [
+                {
+                    "itemType": "salary",
+                    "name": "راتب شهر يناير",
+                    "quantity": 1,
+                    "price": 2500.0
+                }
+            ],
+            "total": 2500.0,
+            "paymentMethod": "cash",
+            "notes": "اختبار accountingAccountId parameter",
+            "date": self.test_date
+        }
+        
+        # Create operation
+        op_data = self.create_operation(operation_data)
+        op_id = op_data["id"]
+        
+        # Verify journal entry was created with selected account from accountingAccountId
+        entries = self.get_journal_entries_for_operation(op_id)
+        assert len(entries) >= 1, "No journal entry created for operation with accountingAccountId"
+        
+        entry = entries[0]
+        assert entry.get("source") == "operation", f"Expected source=operation, got {entry.get('source')}"
+        assert entry.get("reference_id") == op_id, "Journal entry not linked to operation"
+        assert abs(float(entry.get("total", 0)) - 2500.0) < 0.01, "Journal entry total mismatch"
+        
+        # Verify lines: Dr 6101 (from accountingAccountId), Cr 1101 (Cash)
+        expected_lines = [
+            {"account": "6101", "debit": 2500.0, "credit": 0.0},
+            {"account": "1101", "debit": 0.0, "credit": 2500.0}
+        ]
+        self.verify_journal_entry_lines(entry, expected_lines)
+        
+        print("✅ Operations POST accepts accountingAccountId and uses it for posting")
+    
     def test_cash_operating_expense(self):
         """Test 2: CASH purchase operation (operating expense) total=1200 - should default to 6100"""
         print("\n🧪 Test 2: Cash Operating Expense (defaults to 6100)")

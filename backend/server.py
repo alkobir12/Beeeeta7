@@ -255,7 +255,11 @@ async def validation_exception_handler(request, exc):
 # Enable CORS for frontend access (Emergent ingress will handle exact origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://fixsa.online",
+        "https://www.fixsa.online",
+        "http://localhost:3000",
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -195,8 +195,8 @@ def run_cors_verification():
     
     results = []
     
-    # Test 1: Health endpoint
-    results.append(("Health Endpoint", test_health_endpoint()))
+    # Test 1: Health endpoint (using stats)
+    results.append(("Backend Health Check", test_health_endpoint()))
     
     # Test 2: Customers endpoint
     results.append(("Customers Endpoint", test_customers_endpoint()))

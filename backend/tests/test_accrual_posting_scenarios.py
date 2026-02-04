@@ -190,12 +190,12 @@ class TestAccrualPostingScenarios:
         print("✅ Cash equipment purchase journal entry verified (with reclassification to 1201)")
     
     def test_cash_operating_expense(self):
-        """Test 2: CASH purchase operation with accountId=acc-6100 (operating expense) total=1200"""
-        print("\n🧪 Test 2: Cash Operating Expense (acc-6100)")
+        """Test 2: CASH purchase operation (operating expense) total=1200 - should default to 6100"""
+        print("\n🧪 Test 2: Cash Operating Expense (defaults to 6100)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-6100",  # Operating expense
+            # Note: Without accountId, system defaults to 6100 for purchases (operating expense)
             "workshopId": WORKSHOP_ID,
             "partnerType": "supplier",
             "partnerName": "مواد التنظيف والصيانة",

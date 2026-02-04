@@ -80,7 +80,18 @@ const AnimatedBackground = () => {
     }
 
     let animationId;
-    function animate() {
+    // Reduce load on low-memory devices by limiting FPS
+    let lastFrameTs = 0;
+    const targetFps = 20;
+    const frameInterval = 1000 / targetFps;
+
+    function animate(ts) {
+      if (ts - lastFrameTs < frameInterval) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTs = ts;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw and update code characters

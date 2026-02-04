@@ -632,7 +632,7 @@ async def save_vehicle_parts_and_create_journal(
         if DB_PROVIDER == "supabase":
             try:
                 supabase_service.supabase.table("journal_entries").insert(journal_entry).execute()
-                print(f"✅ Journal entry saved to Supabase")
+                print("✅ Journal entry saved to Supabase")
             except Exception as e:
                 print(f"Failed to save journal entry to Supabase: {e}")
         

@@ -27,7 +27,11 @@ import {
   X
 } from 'lucide-react';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
 
 const formatCurrency = (amount) => {

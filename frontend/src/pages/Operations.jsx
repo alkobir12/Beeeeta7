@@ -207,6 +207,7 @@ const Operations = () => {
         ...form,
         workshopId: workshopId || null,
         accountId: form.accountId || null,
+        accountingAccountId: form.accountId || null,
         opDate: form.date,
         vehicleId: form.scope === 'workshop' ? null : (activeVehicleId || null),
         visitId: form.scope === 'workshop' ? null : (form.visitId || null),

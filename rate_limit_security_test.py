@@ -220,32 +220,49 @@ def test_options_preflight():
         url = f"{BACKEND_URL}/api/customers"
         print(f"📡 Request: OPTIONS {url}")
         
-        # Send OPTIONS request with CORS headers
-        headers = {
-            'Origin': 'https://fiscalfix-1.preview.emergentagent.com',
-            'Access-Control-Request-Method': 'GET',
-            'Access-Control-Request-Headers': 'Content-Type'
-        }
+        # Send OPTIONS request with CORS headers from allowed origins
+        allowed_origins = [
+            'https://fixsa.online',
+            'https://www.fixsa.online', 
+            'http://localhost:3000'
+        ]
         
-        response = requests.options(url, headers=headers, timeout=10)
-        print(f"📊 Status Code: {response.status_code}")
+        success = False
         
-        # Check CORS headers in response
-        cors_headers = {
-            'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
-            'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
-            'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
-        }
+        for origin in allowed_origins:
+            print(f"🔍 Testing with origin: {origin}")
+            
+            headers = {
+                'Origin': origin,
+                'Access-Control-Request-Method': 'GET',
+                'Access-Control-Request-Headers': 'Content-Type'
+            }
+            
+            response = requests.options(url, headers=headers, timeout=10)
+            print(f"📊 Status Code: {response.status_code}")
+            
+            # Check CORS headers in response
+            cors_headers = {
+                'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+            }
+            
+            print("🔍 CORS Headers:")
+            for header, value in cors_headers.items():
+                print(f"  {header}: {value}")
+            
+            if response.status_code in [200, 204]:
+                print_result(True, f"OPTIONS preflight working for origin: {origin}")
+                success = True
+                break
+            else:
+                print_result(False, f"OPTIONS preflight failed for {origin} with status {response.status_code}")
         
-        print("🔍 CORS Headers:")
-        for header, value in cors_headers.items():
-            print(f"  {header}: {value}")
-        
-        if response.status_code in [200, 204]:
-            print_result(True, "OPTIONS preflight request working correctly")
+        if success:
             return True
         else:
-            print_result(False, f"OPTIONS preflight failed with status {response.status_code}")
+            print_result(False, "OPTIONS preflight failed for all tested origins")
             return False
             
     except Exception as e:

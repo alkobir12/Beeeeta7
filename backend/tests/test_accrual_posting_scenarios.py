@@ -513,6 +513,7 @@ class TestAccrualPostingScenarios:
         
         # Run all individual tests
         self.test_cash_equipment_purchase()
+        self.test_operations_post_accepts_accounting_account_id()
         self.test_cash_operating_expense()
         self.test_bank_salary_expense()
         self.test_owner_draw_cash()

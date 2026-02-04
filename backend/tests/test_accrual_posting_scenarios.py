@@ -106,12 +106,12 @@ class TestAccrualPostingScenarios:
             assert abs(float(actual.get("credit", 0)) - float(expected.get("credit", 0))) < 0.01, f"Credit mismatch for account {expected.get('account')}"
     
     def test_cash_equipment_purchase(self):
-        """Test 1: CASH purchase operation with accountId=acc-1201 (equipment asset) total=5000 - should post directly to 1201"""
-        print("\n🧪 Test 1: Cash Equipment Purchase (direct posting to 1201 via accountId)")
+        """Test 1: CASH purchase operation with accountingAccountId=acc-1201 (equipment asset) total=5000 - should post directly to 1201"""
+        print("\n🧪 Test 1: Cash Equipment Purchase (direct posting to 1201 via accountingAccountId)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-1201",  # Equipment asset account
+            "accountingAccountId": "acc-1201",  # Equipment asset account
             "workshopId": WORKSHOP_ID,
             "partnerType": "supplier",
             "partnerName": "معدات الورشة المحدودة",

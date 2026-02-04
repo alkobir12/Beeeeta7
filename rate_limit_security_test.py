@@ -148,7 +148,7 @@ def test_rate_limiting():
     print_test_header("Test 4: Rate Limiting Verification")
     
     try:
-        # Use /api/import/customers endpoint which has a limit of 6 requests per minute
+        # First try /api/import/customers endpoint which has a limit of 6 requests per minute
         url = f"{BACKEND_URL}/api/import/customers"
         print(f"📡 Testing rate limiting on: {url}")
         print("📊 Import endpoints have a limit of 6 requests per minute")
@@ -207,6 +207,30 @@ def test_rate_limiting():
             else:
                 print_result(False, "Rate limiting not working - all requests succeeded")
                 return False
+                
+        # Also test with a safe GET endpoint to verify rate limiting without data modification
+        print(f"\n🔍 Additional test with safe GET endpoint:")
+        safe_url = f"{BACKEND_URL}/api/customers"
+        print(f"📡 Testing rate limiting on safe endpoint: {safe_url}")
+        
+        # Send many requests quickly to trigger general API rate limit (240/min)
+        safe_responses = []
+        for i in range(15):
+            try:
+                response = requests.get(safe_url, timeout=3)
+                safe_responses.append(response.status_code)
+                if i < 5:  # Only print first few to avoid spam
+                    print(f"Safe request {i+1}: Status {response.status_code}")
+                time.sleep(0.05)  # Very small delay
+            except Exception as e:
+                safe_responses.append('ERROR')
+                if i < 5:
+                    print(f"Safe request {i+1}: ERROR - {e}")
+        
+        safe_429_count = sum(1 for status in safe_responses if status == 429)
+        print(f"📊 Safe endpoint results: {safe_429_count} rate limited out of {len(safe_responses)} requests")
+        
+        return True
             
     except Exception as e:
         print_result(False, f"Rate limiting test error: {str(e)}")

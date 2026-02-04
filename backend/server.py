@@ -246,10 +246,8 @@ async def validation_exception_handler(request, exc):
     import logging
 
     logging.error(f"Validation Error: {exc.errors()}")
-    logging.error(f"Request Body: {exc.body}")
-    return JSONResponse(
-        status_code=422, content={"detail": exc.errors(), "body": str(exc.body)[:500]}
-    )
+    # Don't log full request body to avoid leaking sensitive data into logs.
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 # Enable CORS for frontend access (Emergent ingress will handle exact origins)

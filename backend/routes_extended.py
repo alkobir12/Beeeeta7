@@ -2454,11 +2454,6 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        deeplink = f"https://wa.me/{norm}?text={urllib.parse.quote(msg)}"
-        return {"whatsappDeeplink": deeplink}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 # --------------------- Database Initialization Endpoint ---------------------
 @router.post("/admin/init-database")

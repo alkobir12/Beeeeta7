@@ -245,12 +245,12 @@ class TestAccrualPostingScenarios:
         print("✅ Cash operating expense journal entry verified")
     
     def test_bank_salary_expense(self):
-        """Test 3: BANK salary operation with accountId=acc-6101 total=3000 paymentMethod=transfer - should post directly to 6101"""
-        print("\n🧪 Test 3: Bank Salary Expense (direct posting to 6101 via accountId)")
+        """Test 3: BANK salary operation with accountingAccountId=acc-6101 total=3000 paymentMethod=transfer - should post directly to 6101"""
+        print("\n🧪 Test 3: Bank Salary Expense (direct posting to 6101 via accountingAccountId)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-6101",  # Salary expense account
+            "accountingAccountId": "acc-6101",  # Salary expense account
             "workshopId": WORKSHOP_ID,
             "partnerType": "employee",
             "partnerName": "رواتب الموظفين",

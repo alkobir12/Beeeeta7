@@ -292,12 +292,12 @@ class TestAccrualPostingScenarios:
         print("✅ Bank salary expense journal entry verified (direct posting to 6101)")
     
     def test_owner_draw_cash(self):
-        """Test 4: Owner draw with accountId=acc-3102 total=2000 paymentMethod=cash - should post directly to 3102"""
-        print("\n🧪 Test 4: Owner Draw Cash (direct posting to 3102 via accountId)")
+        """Test 4: Owner draw with accountingAccountId=acc-3102 total=2000 paymentMethod=cash - should post directly to 3102"""
+        print("\n🧪 Test 4: Owner Draw Cash (direct posting to 3102 via accountingAccountId)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-3102",  # Owner draw account
+            "accountingAccountId": "acc-3102",  # Owner draw account
             "workshopId": WORKSHOP_ID,
             "partnerType": "owner",
             "partnerName": "مسحوبات المالك",

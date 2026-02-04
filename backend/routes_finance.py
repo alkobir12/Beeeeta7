@@ -416,7 +416,7 @@ async def get_cash_flow(
                 normalized = _normalize_line(line, id_to_code, code_to_name)
                 if not normalized:
                     continue
-                if normalized["code"] == "101":
+                if normalized["code"] in ("1101", "1102"):
                     cash_in += normalized["debit"]
                     cash_out += normalized["credit"]
 

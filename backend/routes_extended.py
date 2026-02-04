@@ -880,12 +880,31 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
 
 
 # --------------------- Operations & Analytics ---------------------
+# NOTE: This app uses a modern chart of accounts (e.g., 1101 cash, 1102 bank, 1103 customers, 2101 suppliers).
+# Legacy codes (101/113/211/411/514) caused misclassification in reports.
 ACCOUNT_NAME_MAP = {
-    "101": "النقدية",
-    "113": "ذمم مدينة عملاء",
-    "211": "ذمم دائنة موردين",
-    "411": "إيرادات خدمات الصيانة",
-    "514": "مصاريف قطع الغيار",
+    "1101": "النقد",
+    "1102": "البنك",
+    "1103": "العملاء (ذمم مدينة)",
+    "2101": "الموردون (ذمم دائنة)",
+    "4100": "إيرادات الخدمات",
+    "6101": "رواتب إدارية",
+    "3102": "مسحوبات المالك",
+    "1201": "معدات ميكانيكية",
+    "6100": "مصروفات عامة وإدارية",
+}
+
+# Fallback mapping: if an entry stores account as an internal id like acc-1101, map it to the numeric code.
+ACCOUNT_ID_TO_CODE = {
+    "acc-1101": "1101",
+    "acc-1102": "1102",
+    "acc-1103": "1103",
+    "acc-2101": "2101",
+    "acc-4100": "4100",
+    "acc-6101": "6101",
+    "acc-3102": "3102",
+    "acc-1201": "1201",
+    "acc-6100": "6100",
 }
 
 

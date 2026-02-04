@@ -17,7 +17,7 @@ const Layout = ({ pageTitle }) => {
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
       {/* Animated Background */}
-      <AnimatedBackground />
+      {process.env.NODE_ENV === 'production' ? null : <AnimatedBackground />}
       <div
         className="pointer-events-none"
         style={{

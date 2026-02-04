@@ -591,7 +591,7 @@ async def save_vehicle_parts_and_create_journal(
         if DB_PROVIDER == "supabase":
             try:
                 supabase_service.supabase.table("operations").insert(operation_data).execute()
-                print(f"✅ Operation created in Supabase")
+                print("✅ Operation created in Supabase")
             except Exception as e:
                 print(f"Failed to create operation in Supabase: {e}")
         

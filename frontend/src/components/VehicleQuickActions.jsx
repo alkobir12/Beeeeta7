@@ -12,7 +12,11 @@ import axios from 'axios';
 import DocumentFormDialog from './DocumentFormDialog';
 import { useTranslation } from 'react-i18next';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {
   const { t, i18n } = useTranslation();

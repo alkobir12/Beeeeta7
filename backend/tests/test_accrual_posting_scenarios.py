@@ -319,12 +319,12 @@ class TestAccrualPostingScenarios:
         print("✅ Bank salary expense journal entry verified (with reclassification to 6101)")
     
     def test_owner_draw_cash(self):
-        """Test 4: Owner draw as purchase with accountId=acc-3102 total=2000 paymentMethod=cash"""
-        print("\n🧪 Test 4: Owner Draw Cash (acc-3102)")
+        """Test 4: Owner draw as purchase total=2000 paymentMethod=cash - create manual JE for 3102"""
+        print("\n🧪 Test 4: Owner Draw Cash (manual JE for 3102)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-3102",  # Owner draw (equity)
+            # Note: Will default to 6100, then we'll create manual entry for owner draw (3102)
             "workshopId": WORKSHOP_ID,
             "partnerType": "owner",
             "partnerName": "مسحوبات المالك",

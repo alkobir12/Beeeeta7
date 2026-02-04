@@ -1314,33 +1314,41 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         if pay_amount <= 0:
             return {"success": True, "message": "no remaining amount to confirm"}
 
+        # Choose cash/bank account for settlement
+        payment_method = (op_row.get("payment_method") or "cash").lower()
+        cash_code = "1101"
+        if payment_method in ("transfer", "bank"):
+            cash_code = "1102"
+
         if op_type in ("sale", "service"):
+            # Dr Cash/Bank, Cr AR
             lines = [
                 {
-                    "account": "101",
-                    "account_name": ACCOUNT_NAME_MAP.get("101", "101"),
+                    "account": cash_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
                     "debit": pay_amount,
                     "credit": 0,
                 },
                 {
-                    "account": "113",
-                    "account_name": ACCOUNT_NAME_MAP.get("113", "113"),
+                    "account": "1103",
+                    "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
                     "debit": 0,
                     "credit": pay_amount,
                 },
             ]
             desc = f"تحصيل آجل - {op_row.get('partner_name') or ''}"
         elif op_type in ("purchase", "expense"):
+            # Dr AP, Cr Cash/Bank
             lines = [
                 {
-                    "account": "211",
-                    "account_name": ACCOUNT_NAME_MAP.get("211", "211"),
+                    "account": "2101",
+                    "account_name": ACCOUNT_NAME_MAP.get("2101", "2101"),
                     "debit": pay_amount,
                     "credit": 0,
                 },
                 {
-                    "account": "101",
-                    "account_name": ACCOUNT_NAME_MAP.get("101", "101"),
+                    "account": cash_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
                     "debit": 0,
                     "credit": pay_amount,
                 },

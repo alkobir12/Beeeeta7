@@ -306,7 +306,11 @@ export default function AIFinancial() {
     setAuditBotResponse('');
 
     try {
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+      const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
       const resp = await fetch(`${API_URL}/finance/audit-system?workshop_id=${workshopId}`, { method: 'POST' });
       const data = await resp.json();
       if (data?.success) {

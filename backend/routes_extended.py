@@ -1418,15 +1418,14 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                     )
             except Exception as e:
                 print(f"Warning: auto-invoice create failed: {e}")
-            # قاعدة الآجل: العملية تُسجَّل في operations فوراً (Accrual)
-            # لكن لا نُنشئ قيد يومية إلا لحركات النقد (Cash) فقط.
-            payment_method = (op.get("paymentMethod") or payload.get("paymentMethod") or "cash").lower()
-            if payment_method != "credit":
-                try:
-                    entry = _build_operation_journal_entry(op, workshop_id)
-                    _safe_insert_journal_entry(supa, entry)
-                except Exception as je_error:
-                    print(f"Failed to create journal entry for operation: {je_error}")
+            # ✅ Accrual basis: always create a journal entry for sale/purchase/expense
+            # - Credit operations will hit AR/AP
+            # - Cash/transfer operations will hit Cash/Bank
+            try:
+                entry = _build_operation_journal_entry(op, workshop_id)
+                _safe_insert_journal_entry(supa, entry)
+            except Exception as je_error:
+                print(f"Failed to create journal entry for operation: {je_error}")
 
             return op
 

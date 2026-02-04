@@ -253,13 +253,18 @@ async def validation_exception_handler(request, exc):
 
 
 
-# Enable CORS for frontend access (Emergent ingress will handle exact origins)
+# Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://fixsa.online",
         "https://www.fixsa.online",
         "http://localhost:3000",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # --------------------- Basic Security Hardening Middleware ---------------------
@@ -268,44 +273,37 @@ app.add_middleware(
 from time import time
 from fastapi import Request
 
-_RATE_STATE = {}  # key -> (window_start_ts, count)
+_RATE_STATE = {}  # (ip, bucket, window) -> count
 
 
 def _get_client_ip(request: Request) -> str:
-    # Cloudflare / reverse proxies
     cf_ip = request.headers.get("cf-connecting-ip")
     if cf_ip:
         return cf_ip.strip()
     xff = request.headers.get("x-forwarded-for")
     if xff:
-        # first is original client
         return xff.split(",")[0].strip()
     return (request.client.host if request.client else "unknown")
 
 
-def _rate_bucket(path: str, method: str) -> tuple[str, int] | None:
+def _rate_bucket(path: str, method: str):
     """Return (bucket_name, limit_per_minute) or None if not rate-limited."""
     if method == "OPTIONS":
         return None
     if not path.startswith("/api"):
         return None
 
-    # Strict buckets
     if path.startswith("/api/import/"):
         return ("import", 6)
     if path.startswith("/api/auth/"):
         return ("auth", 30)
     if path.startswith("/api/ai/") or path.startswith("/api/finance-bot/"):
         return ("ai", 30)
-
-    # Approvals: keep moderately strict for creation/verification.
     if path.startswith("/api/approvals"):
-        # Public approval link can be hit by customers; allow more headroom.
         if path.startswith("/api/approvals/public/") and method == "GET":
             return ("approvals_public", 120)
         return ("approvals", 30)
 
-    # General API
     return ("api", 240)
 
 
@@ -315,8 +313,7 @@ async def security_headers_and_rate_limit(request: Request, call_next):
     if bucket is not None:
         bucket_name, limit = bucket
         ip = _get_client_ip(request)
-        now = time()
-        window = int(now // 60)  # fixed 60s windows
+        window = int(time() // 60)
         key = (ip, bucket_name, window)
         count = _RATE_STATE.get(key, 0) + 1
         _RATE_STATE[key] = count
@@ -324,15 +321,11 @@ async def security_headers_and_rate_limit(request: Request, call_next):
         if count > limit:
             return JSONResponse(
                 status_code=429,
-                content={
-                    "success": False,
-                    "error": "Rate limit exceeded. Please try again shortly.",
-                },
+                content={"success": False, "error": "Rate limit exceeded. Please try again shortly."},
             )
 
     response = await call_next(request)
 
-    # Basic security headers
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
     response.headers.setdefault(

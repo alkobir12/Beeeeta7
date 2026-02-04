@@ -687,7 +687,10 @@ class SupabaseService:
         account_id = payload.get("accountId") or payload.get("account_id") or None
         vehicle_id = payload.get("vehicleId") or payload.get("vehicle_id") or None
 
-        # إذا لم يكن الشكل شكل UUID (طول 36 مع شرطات)، اعتبره None لتفادي أخطاء Supabase
+        # بعض الجداول لدينا تستخدم UUID، لكن دليل الحسابات لدينا يستخدم مُعرّفات نصية مثل acc-1201.
+        # لذلك:
+        # - vehicle_id / visit_id يجب أن تكون UUID
+        # - account_id قد تكون UUID أو نص (acc-xxxx أو code) فنتركها كما هي إذا كانت نصاً.
         def _sanitize_uuid(value):
             if not value:
                 return None
@@ -697,7 +700,18 @@ class SupabaseService:
                 return None
             return value
 
-        account_id = _sanitize_uuid(account_id)
+        def _sanitize_account_ref(value):
+            # Allow UUID or string IDs/codes
+            if not value:
+                return None
+            if not isinstance(value, str):
+                return None
+            v = value.strip()
+            if not v:
+                return None
+            return v
+
+        account_id = _sanitize_account_ref(account_id)
         vehicle_id = _sanitize_uuid(vehicle_id)
 
         visit_id = payload.get("visitId") or payload.get("visit_id") or None

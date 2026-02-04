@@ -598,7 +598,7 @@ async def save_vehicle_parts_and_create_journal(
         if db:
             try:
                 await db.operations.insert_one(operation_data)
-                print(f"✅ Operation created in MongoDB")
+                print("✅ Operation created in MongoDB")
             except Exception as e:
                 print(f"Failed to create operation in MongoDB: {e}")
         

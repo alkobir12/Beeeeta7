@@ -14,7 +14,11 @@ import {
   Wallet
 } from 'lucide-react';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('ar-SA', {

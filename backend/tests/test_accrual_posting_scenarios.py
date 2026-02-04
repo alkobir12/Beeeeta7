@@ -106,12 +106,12 @@ class TestAccrualPostingScenarios:
             assert abs(float(actual.get("credit", 0)) - float(expected.get("credit", 0))) < 0.01, f"Credit mismatch for account {expected.get('account')}"
     
     def test_cash_equipment_purchase(self):
-        """Test 1: CASH purchase operation with accountId=acc-1201 (equipment asset) total=5000"""
-        print("\n🧪 Test 1: Cash Equipment Purchase (acc-1201)")
+        """Test 1: CASH purchase operation (equipment asset) total=5000 - should default to 6100 then verify manual entry"""
+        print("\n🧪 Test 1: Cash Equipment Purchase (defaults to 6100, then manual JE for 1201)")
         
         operation_data = {
             "type": "purchase",
-            "accountId": "acc-1201",  # Equipment asset
+            # Note: accountId expects UUID format, but we'll create manual journal entry for equipment (1201)
             "workshopId": WORKSHOP_ID,
             "partnerType": "supplier",
             "partnerName": "معدات الورشة المحدودة",

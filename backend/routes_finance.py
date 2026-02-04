@@ -408,44 +408,99 @@ async def get_cash_flow(
             workshop_id, start_date=start_date, end_date=end_date, limit=10000
         )
 
-        cash_in = 0.0
-        cash_out = 0.0
+        # Improve categorization using the other side of each cash/bank line.
+        cash_from_customers = 0.0
+        cash_to_suppliers = 0.0
+        cash_for_salaries = 0.0
+        equipment_purchases = 0.0
+        owner_drawings = 0.0
+
+        def _is_code_in_range(code: str, start: int, end: int) -> bool:
+            try:
+                n = int(str(code))
+                return start <= n <= end
+            except Exception:
+                return False
 
         for entry in entries:
+            # find cash/bank movement line, then infer category from the counterpart accounts
+            cash_lines = []
+            other_lines = []
             for line in entry.get("lines", []) or []:
                 normalized = _normalize_line(line, id_to_code, code_to_name)
                 if not normalized:
                     continue
                 if normalized["code"] in ("1101", "1102"):
-                    cash_in += normalized["debit"]
-                    cash_out += normalized["credit"]
+                    cash_lines.append(normalized)
+                else:
+                    other_lines.append(normalized)
 
-        net_operating_cash = cash_in - cash_out
+            if not cash_lines:
+                continue
+
+            for cl in cash_lines:
+                amount_in = float(cl.get("debit") or 0)
+                amount_out = float(cl.get("credit") or 0)
+
+                # Classify inflows
+                if amount_in > 0:
+                    # If counterpart is AR (1103), it's customer collection (settlement)
+                    if any(ol.get("code") == "1103" for ol in other_lines):
+                        cash_from_customers += amount_in
+                    # If counterpart is revenue (4xxx), it's cash sale
+                    elif any(_is_code_in_range(ol.get("code"), 4000, 4999) for ol in other_lines):
+                        cash_from_customers += amount_in
+                    else:
+                        cash_from_customers += amount_in
+
+                # Classify outflows
+                if amount_out > 0:
+                    # Supplier payments: AP (2101)
+                    if any(ol.get("code") == "2101" for ol in other_lines):
+                        cash_to_suppliers += amount_out
+                    # Salaries expense (6101) or accrued salaries (2103)
+                    elif any(ol.get("code") in ("6101", "2103") for ol in other_lines):
+                        cash_for_salaries += amount_out
+                    # Equipment purchases (fixed assets 12xx)
+                    elif any(_is_code_in_range(ol.get("code"), 1200, 1299) for ol in other_lines):
+                        equipment_purchases += amount_out
+                    # Owner drawings (equity 3102)
+                    elif any(ol.get("code") == "3102" for ol in other_lines):
+                        owner_drawings += amount_out
+                    else:
+                        # default treat as supplier/operating outflow
+                        cash_to_suppliers += amount_out
+
+        net_operating_cash = cash_from_customers - (cash_to_suppliers + cash_for_salaries)
+        net_investing_cash = -equipment_purchases
+        net_financing_cash = -owner_drawings
+        net_change_in_cash = net_operating_cash + net_investing_cash + net_financing_cash
 
         return {
             "success": True,
             "data": {
                 "period": f"{start_date} إلى {end_date}",
                 "operating_activities": {
-                    "cash_from_customers": round(cash_in, 2),
-                    "cash_to_suppliers": round(-cash_out, 2),
+                    "cash_from_customers": round(cash_from_customers, 2),
+                    "cash_to_suppliers": round(-cash_to_suppliers, 2),
+                    "cash_for_salaries": round(-cash_for_salaries, 2),
                     "net_operating_cash": round(net_operating_cash, 2),
                 },
                 "investing_activities": {
-                    "equipment_purchases": 0,
+                    "equipment_purchases": round(-equipment_purchases, 2),
                     "asset_sales": 0,
-                    "net_investing_cash": 0,
+                    "net_investing_cash": round(net_investing_cash, 2),
                 },
                 "financing_activities": {
-                    "owner_drawings": 0,
+                    "owner_drawings": round(-owner_drawings, 2),
                     "capital_injections": 0,
                     "new_loans": 0,
                     "loan_payments": 0,
-                    "net_financing_cash": 0,
+                    "net_financing_cash": round(net_financing_cash, 2),
                 },
-                "net_change_in_cash": round(net_operating_cash, 2),
+                "net_change_in_cash": round(net_change_in_cash, 2),
                 "beginning_cash": 0,
-                "ending_cash": round(net_operating_cash, 2),
+                "ending_cash": round(net_change_in_cash, 2),
             },
         }
 

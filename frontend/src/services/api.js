@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const API_BASE = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+// In production, always use same-origin API to avoid CORS/domain-mismatch issues (fixsa.online vs www vs emergent.host).
+// In preview/dev, use REACT_APP_BACKEND_URL for convenience.
+const API_BASE = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const api = axios.create({
   baseURL: API_BASE,

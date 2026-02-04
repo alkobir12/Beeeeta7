@@ -640,7 +640,7 @@ async def save_vehicle_parts_and_create_journal(
         if db:
             try:
                 await db.journal_entries.insert_one(journal_entry)
-                print(f"✅ Journal entry saved to MongoDB")
+                print("✅ Journal entry saved to MongoDB")
             except Exception as e:
                 print(f"Failed to save journal entry to MongoDB: {e}")
         

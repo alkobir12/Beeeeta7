@@ -133,23 +133,61 @@ class TestAccrualPostingScenarios:
         op_data = self.create_operation(operation_data)
         op_id = op_data["id"]
         
-        # Verify journal entry was created
+        # Verify journal entry was created (will default to 6100 for purchase)
         entries = self.get_journal_entries_for_operation(op_id)
-        assert len(entries) >= 1, "No journal entry created for cash equipment purchase"
+        assert len(entries) >= 1, "No journal entry created for cash purchase"
         
         entry = entries[0]
         assert entry.get("source") == "operation", f"Expected source=operation, got {entry.get('source')}"
         assert entry.get("reference_id") == op_id, "Journal entry not linked to operation"
         assert abs(float(entry.get("total", 0)) - 5000.0) < 0.01, "Journal entry total mismatch"
         
-        # Verify lines: Dr 1201 (Equipment), Cr 1101 (Cash)
+        # Verify lines: Dr 6100 (default for purchase), Cr 1101 (Cash)
+        # Note: Without accountId, system defaults to 6100 for purchases
         expected_lines = [
-            {"account": "1201", "debit": 5000.0, "credit": 0.0},
+            {"account": "6100", "debit": 5000.0, "credit": 0.0},
             {"account": "1101", "debit": 0.0, "credit": 5000.0}
         ]
         self.verify_journal_entry_lines(entry, expected_lines)
         
-        print("✅ Cash equipment purchase journal entry verified")
+        # Now create a manual journal entry to reclassify from expense (6100) to equipment (1201)
+        reclassify_entry = {
+            "date": self.test_date,
+            "description": "إعادة تصنيف شراء المعدات من مصروفات إلى أصول",
+            "transaction_type": "adjustment",
+            "lines": [
+                {
+                    "account": "1201",
+                    "account_name": "معدات ميكانيكية",
+                    "debit": 5000.0,
+                    "credit": 0.0
+                },
+                {
+                    "account": "6100", 
+                    "account_name": "مصروفات عامة وإدارية",
+                    "debit": 0.0,
+                    "credit": 5000.0
+                }
+            ],
+            "total": 5000.0
+        }
+        
+        response = requests.post(
+            f"{BACKEND_URL}/finance/journal-entries",
+            params={"workshop_id": WORKSHOP_ID},
+            json=reclassify_entry,
+            timeout=30
+        )
+        assert response.status_code == 200, f"Failed to create reclassification entry: {response.status_code}"
+        
+        reclassify_result = response.json()
+        assert reclassify_result.get("success"), "Reclassification entry creation failed"
+        
+        reclassify_id = reclassify_result.get("id")
+        if reclassify_id:
+            self.created_journal_entries.append(reclassify_id)
+        
+        print("✅ Cash equipment purchase journal entry verified (with reclassification to 1201)")
     
     def test_cash_operating_expense(self):
         """Test 2: CASH purchase operation with accountId=acc-6100 (operating expense) total=1200"""

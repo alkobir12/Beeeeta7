@@ -685,6 +685,7 @@ class SupabaseService:
 
         # تنظيف الحقول التي يجب أن تكون UUID أو NULL
         account_id = payload.get("accountId") or payload.get("account_id") or None
+        accounting_account_id = payload.get("accountingAccountId") or payload.get("accounting_account_id") or None
         vehicle_id = payload.get("vehicleId") or payload.get("vehicle_id") or None
 
         # بعض الجداول لدينا تستخدم UUID، لكن دليل الحسابات لدينا يستخدم مُعرّفات نصية مثل acc-1201.
@@ -712,6 +713,7 @@ class SupabaseService:
             return v
 
         account_id = _sanitize_account_ref(account_id)
+        accounting_account_id = _sanitize_account_ref(accounting_account_id)
         vehicle_id = _sanitize_uuid(vehicle_id)
 
         visit_id = payload.get("visitId") or payload.get("visit_id") or None

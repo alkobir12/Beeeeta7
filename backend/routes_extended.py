@@ -956,7 +956,12 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
         # allow numeric codes directly
         return v
 
-    selected_code = _to_code(op.get("accountId") or op.get("account_id"))
+    selected_code = _to_code(
+        op.get("accountingAccountId")
+        or op.get("accounting_account_id")
+        or op.get("accountId")
+        or op.get("account_id")
+    )
 
     lines = []
     transaction_type = None

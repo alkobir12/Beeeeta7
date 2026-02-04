@@ -18,7 +18,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import useStitch from '../hooks/useStitch';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api');
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 
 const Settings = () => {
   const { t, i18n } = useTranslation();

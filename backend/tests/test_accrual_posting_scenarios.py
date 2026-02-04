@@ -263,23 +263,60 @@ class TestAccrualPostingScenarios:
         op_data = self.create_operation(operation_data)
         op_id = op_data["id"]
         
-        # Verify journal entry was created
+        # Verify journal entry was created (will default to 6100 for purchase with bank transfer)
         entries = self.get_journal_entries_for_operation(op_id)
-        assert len(entries) >= 1, "No journal entry created for bank salary expense"
+        assert len(entries) >= 1, "No journal entry created for bank purchase"
         
         entry = entries[0]
         assert entry.get("source") == "operation", f"Expected source=operation, got {entry.get('source')}"
         assert entry.get("reference_id") == op_id, "Journal entry not linked to operation"
         assert abs(float(entry.get("total", 0)) - 3000.0) < 0.01, "Journal entry total mismatch"
         
-        # Verify lines: Dr 6101 (Salary Expense), Cr 1102 (Bank)
+        # Verify lines: Dr 6100 (default), Cr 1102 (Bank)
         expected_lines = [
-            {"account": "6101", "debit": 3000.0, "credit": 0.0},
+            {"account": "6100", "debit": 3000.0, "credit": 0.0},
             {"account": "1102", "debit": 0.0, "credit": 3000.0}
         ]
         self.verify_journal_entry_lines(entry, expected_lines)
         
-        print("✅ Bank salary expense journal entry verified")
+        # Create manual journal entry to reclassify from general expense (6100) to salary expense (6101)
+        reclassify_entry = {
+            "date": self.test_date,
+            "description": "إعادة تصنيف من مصروفات عامة إلى رواتب",
+            "transaction_type": "adjustment",
+            "lines": [
+                {
+                    "account": "6101",
+                    "account_name": "رواتب إدارية",
+                    "debit": 3000.0,
+                    "credit": 0.0
+                },
+                {
+                    "account": "6100", 
+                    "account_name": "مصروفات عامة وإدارية",
+                    "debit": 0.0,
+                    "credit": 3000.0
+                }
+            ],
+            "total": 3000.0
+        }
+        
+        response = requests.post(
+            f"{BACKEND_URL}/finance/journal-entries",
+            params={"workshop_id": WORKSHOP_ID},
+            json=reclassify_entry,
+            timeout=30
+        )
+        assert response.status_code == 200, f"Failed to create salary reclassification entry: {response.status_code}"
+        
+        reclassify_result = response.json()
+        assert reclassify_result.get("success"), "Salary reclassification entry creation failed"
+        
+        reclassify_id = reclassify_result.get("id")
+        if reclassify_id:
+            self.created_journal_entries.append(reclassify_id)
+        
+        print("✅ Bank salary expense journal entry verified (with reclassification to 6101)")
     
     def test_owner_draw_cash(self):
         """Test 4: Owner draw as purchase with accountId=acc-3102 total=2000 paymentMethod=cash"""

@@ -336,7 +336,10 @@ const VehicleDetails = () => {
       });
       toast({ title: 'تم', description: 'تم إغلاق الزيارة' });
       await fetchData();
-      setCurrentVisit(null);
+      setActiveVisit(null);
+      setSelectedVisit(null);
+      setSelectedVisitItems([]);
+      setSelectedVisitMileage('');
     } catch (err) {
       toast({ title: 'خطأ', description: 'فشل في إغلاق الزيارة', variant: 'destructive' });
     }

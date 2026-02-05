@@ -1043,8 +1043,8 @@ const VehicleDetails = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Current/Latest Visit */}
-                  {currentVisit && (
+                  {/* Active / Latest Visit */}
+                  {activeVisit && (
                     <div className="p-4 rounded-xl bg-green-50 border-2 border-green-200">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
@@ -1052,7 +1052,7 @@ const VehicleDetails = () => {
                           <span className="text-sm font-bold text-green-700">الزيارة الحالية</span>
                         </div>
                         <button
-                          onClick={() => completeVisit(currentVisit.id)}
+                          onClick={() => completeVisit(activeVisit.id)}
                           className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
                           إغلاق الزيارة
@@ -1061,20 +1061,20 @@ const VehicleDetails = () => {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-gray-600">{t('vehicle_details.entry_date')}:</span>
-                          <p className="font-semibold">{new Date(currentVisit.entryDate || currentVisit.entry_date).toLocaleDateString('ar-SA')}</p>
+                          <p className="font-semibold">{new Date(activeVisit.entryDate || activeVisit.entry_date).toLocaleDateString('ar-SA')}</p>
                         </div>
                         <div>
                           <span className="text-gray-600">{t('vehicles.mileage')}:</span>
-                          <p className="font-semibold">{currentVisit.mileage?.toLocaleString('ar-SA')} كم</p>
+                          <p className="font-semibold">{activeVisit.mileage?.toLocaleString('ar-SA')} كم</p>
                         </div>
                       </div>
                       
-                      {/* Operations for current visit */}
+                      {/* Operations for active visit */}
                       <div className="mt-3 pt-3 border-t border-green-200">
                         <p className="text-xs font-semibold text-gray-700 mb-2">{t('vehicle_details.operations')}:</p>
-                        {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).length > 0 ? (
+                        {vehicleOperations.filter(op => op.visitId === activeVisit.id || op.visit_id === activeVisit.id).length > 0 ? (
                           <div className="space-y-1">
-                            {vehicleOperations.filter(op => op.visitId === currentVisit.id || op.visit_id === currentVisit.id).slice(0, 3).map((op, idx) => (
+                            {vehicleOperations.filter(op => op.visitId === activeVisit.id || op.visit_id === activeVisit.id).slice(0, 3).map((op, idx) => (
                               <div key={idx} className="flex items-center justify-between gap-2 text-xs bg-white p-2 rounded">
                                 <div className="min-w-0">
                                   <p className="truncate">{op.partnerName || 'عملية'}</p>

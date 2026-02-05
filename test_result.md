@@ -1,5 +1,13 @@
 ## Rate Limiting + Security Headers Testing (2026-02-04)
 
+## Visit Items Saved Per Visit + Edit Past Visit (COMPLETED) (2026-02-05)
+- الهدف: البنود/الخدمات تُحفظ داخل كل زيارة (visit) ويمكن تعديل زيارة سابقة (العداد + البنود + الأسعار) ثم عند حفظ التحديثات تُنشأ/تتحدث عملية البيع كما هو السيناريو الحالي.
+- التغييرات:
+  - ربط البنود بالزيارة عبر `visit.notes` (JSON: {items:[...]}) بدل تخزينها فقط في vehicle.parts.
+  - اختيار زيارة سابقة من سجل الزيارات يحمّل بنودها للتعديل.
+  - زر "حفظ التحديثات" يحفظ الزيارة + ينشئ/يحدّث عملية البيع لليوم لنفس visitId.
+- اختبار: ✅ Frontend E2E (تحقق منطقي + API verification) + ✅ ESLint.
+
 ### Test Objective:
 Test backend locally after adding rate limiting + security headers.
 1) Verify /health is 200.

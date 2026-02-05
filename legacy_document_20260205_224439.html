@@ -1,0 +1,725 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض سعر - INV-2026-0205-2244</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans Arabic', -apple-system, sans-serif;
+            direction: rtl;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            line-height: 1.4;
+            font-size: 11px;
+        }
+        
+        .container {
+            max-width: 210mm;
+            height: 297mm;
+            margin: 10px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 0;
+        }
+        
+        /* تحسينات الطباعة لحجم A4 */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container {
+                width: 210mm;
+                height: 297mm;
+                max-width: 210mm;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                page-break-after: avoid;
+            }
+            
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            padding: 1.8rem 2rem;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="0.8" fill="white" opacity="0.1"/><circle cx="80" cy="30" r="0.6" fill="white" opacity="0.1"/><circle cx="40" cy="70" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="80" r="0.7" fill="white" opacity="0.1"/></svg>');
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .company-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(255,255,255,0.4);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        
+        .logo-text {
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+        }
+        
+        .company-info h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+        
+        .company-name-en {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin-bottom: 0.2rem;
+            font-weight: 500;
+        }
+        
+        .company-address {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .quote-section {
+            text-align: left;
+            background: rgba(255,255,255,0.15);
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .quote-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.3rem;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+        
+        .quote-number {
+            font-size: 1rem;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+        
+        .content {
+            padding: 1.2rem 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.8rem;
+            padding: 0.4rem 0;
+            border-bottom: 2px solid #3b82f6;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: 0;
+            width: 40px;
+            height: 2px;
+            background: #1e40af;
+        }
+        
+        .details-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .client-info, .quote-info {
+            background: #dbeafe;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0.6rem;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .label {
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 0.75rem;
+        }
+        
+        .value {
+            font-weight: 500;
+            color: #1e293b;
+            font-size: 0.75rem;
+        }
+        
+        .project-section {
+            margin-bottom: 1.2rem;
+        }
+        
+        .project-description {
+            background: linear-gradient(135deg, #fef7cd 0%, #fef3c7 100%);
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border-right: 3px solid #f59e0b;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 6px rgba(245,158,11,0.1);
+        }
+        
+        .items-section {
+            margin-bottom: 1.2rem;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .items-table th {
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 0.6rem;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.7rem;
+        }
+        
+        .items-table td {
+            padding: 0.5rem 0.6rem;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            font-size: 0.7rem;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        .items-table tr:hover {
+            background: #dbeafe;
+        }
+
+        .items-table tfoot td {
+            padding: 0.5rem;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 0.7rem;
+        }
+
+        .items-table .total-row-table td {
+            background: #dbeafe;
+            color: #3b82f6;
+            font-size: 0.8rem;
+            border-top: 2px solid #3b82f6;
+            font-weight: 700;
+        }
+        
+        .text-right {
+            text-align: right !important;
+            padding-right: 0.8rem;
+        }
+        
+        .summary-section {
+            margin-bottom: 1.2rem;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #0ea5e9;
+            box-shadow: 0 3px 10px rgba(14,165,233,0.1);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(14,165,233,0.2);
+            font-size: 0.75rem;
+        }
+        
+        .total-row {
+            border-bottom: none;
+            border-top: 2px solid #3b82f6;
+            background: rgba(59,130,246,0.1);
+            margin: 0.5rem -1rem -0.8rem;
+            padding: 0.6rem 1rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #3b82f6;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .terms-section {
+            margin-bottom: 1rem;
+        }
+        
+        .terms-list {
+            background: #fef3c7;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border-right: 3px solid #f59e0b;
+            list-style: none;
+            box-shadow: 0 2px 6px rgba(245,158,11,0.1);
+        }
+        
+        .terms-list li {
+            margin-bottom: 0.4rem;
+            padding-right: 1rem;
+            position: relative;
+            line-height: 1.4;
+            font-size: 0.7rem;
+        }
+        
+        .terms-list li::before {
+            content: '✓';
+            position: absolute;
+            right: 0;
+            color: #059669;
+            font-weight: bold;
+            font-size: 0.7rem;
+        }
+        
+        .signatures-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .signature-box {
+            background: white;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px dashed #cbd5e1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        .signature-box h4 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 0.8rem;
+        }
+        
+        .signature-line {
+            width: 100%;
+            height: 1px;
+            background: #cbd5e1;
+            margin: 1rem 0 0.5rem;
+        }
+        
+        .signature-box p {
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+        
+        .footer {
+            background: #1e293b;
+            color: white;
+            padding: 0.8rem 1rem;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .footer-content p {
+            font-size: 0.65rem;
+        }
+        
+        .contact-info {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .contact-info span {
+            font-size: 0.65rem;
+        }
+        
+        @media print {
+            .footer {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 2rem 1.5rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+            
+            .quote-title {
+                font-size: 2.5rem;
+            }
+            
+            .content {
+                padding: 2rem 1.5rem;
+            }
+            
+            .details-section {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .signatures-section {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                margin: 0;
+                border: none;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="company-section">
+                    <div class="logo">
+                        <div class="logo-text">الشعار</div>
+                    </div>
+                    <div class="company-info">
+                        <h1>ورشة الاختبار للصيانة</h1>
+                        <p class="company-name-en">Test Maintenance Workshop</p>
+                        <p class="company-address">الرياض، المملكة العربية السعودية</p>
+                    </div>
+                </div>
+                <div class="quote-section">
+                    <h2 class="quote-title">فاتورة مبيعات</h2>
+                    <p class="quote-number">INV-2026-0205-2244</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Details Grid -->
+            <div class="details-section">
+                <div class="client-info">
+                    <h3 class="section-title">بيانات العميل</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">الاسم:</span>
+                            <span class="value">أحمد محمد العميل</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="label">الشركة:</span>
+                            <span class="value">شركة العميل التجارية</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="label">العنوان:</span>
+                            <span class="value">جدة، المملكة العربية السعودية</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">الهاتف:</span>
+                            <span class="value">+966 50 123 4567</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="label">البريد:</span>
+                            <span class="value">ahmed@client.com</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quote-info">
+                    <h3 class="section-title">بيانات الفاتورة</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">التاريخ:</span>
+                            <span class="value">2026/02/05</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="label">رقم الضريبة:</span>
+                            <span class="value">300012345600003</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="label">السجل التجاري:</span>
+                            <span class="value">111111111</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Description -->
+            <div class="project-section">
+                <h3 class="section-title">وصف المشروع</h3>
+                <div class="project-description">
+                    المركبة: تويوتا كامري 2022 | رقم اللوحة: أ ب ج 1234 | رقم الهيكل: JT2BF28K123456789 | اللون: أبيض | العداد: 45000 كم | 
+ملاحظات: صيانة دورية شاملة
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="items-section">
+                <h3 class="section-title">تفاصيل البنود</h3>
+                <div class="table-container">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>م</th>
+                                <th>الوصف</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th>الخصم</th>
+                                <th>المجموع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+            <tr>
+                <td>1</td>
+                <td class="text-right">تغيير زيت المحرك</td>
+                <td>1.0</td>
+                <td>150.00</td>
+                <td>0.00</td>
+                <td>150.00</td>
+            </tr>
+            
+            <tr>
+                <td>2</td>
+                <td class="text-right">فلتر زيت أصلي</td>
+                <td>1.0</td>
+                <td>45.00</td>
+                <td>0.00</td>
+                <td>45.00</td>
+            </tr>
+            
+                        </tbody>
+                        
+        <tfoot>
+            <tr>
+                <td colspan="5" class="text-left font-bold">المجموع الفرعي</td>
+                <td class="font-bold">195.00</td>
+            </tr>
+            <tr>
+                <td colspan="5" class="text-left font-bold">الضريبة (0%)</td>
+                <td class="font-bold">0.00</td>
+            </tr>
+            <tr class="total-row-table">
+                <td colspan="5" class="text-left font-bold">المجموع الكلي</td>
+                <td class="font-bold">195.00</td>
+            </tr>
+        </tfoot>
+        
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-section">
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>المجموع الفرعي:</span>
+                        <span>195.00 ر.س</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>إجمالي الخصم:</span>
+                        <span>0.00 ر.س</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>ضريبة القيمة المضافة (0%):</span>
+                        <span>0.00 ر.س</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>المجموع الكلي:</span>
+                        <span>195.00 ر.س</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="terms-section">
+                <h3 class="section-title">الشروط والأحكام</h3>
+                <ul class="terms-list">
+                    <li>الأسعار بالريال السعودي</li><li>يرجى التحقق من البنود قبل مغادرة الورشة</li><li>ضمان الإصلاح حسب نوع الخدمة</li><li>لا يتم استرداد المبلغ بعد الخروج</li>
+                </ul>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signatures-section">
+                <div class="signature-box">
+                    <h4>موافقة العميل</h4>
+                    
+            <div class="signature-line"></div>
+            <p>الاسم والتوقيع والتاريخ</p>
+            
+                </div>
+                <div class="signature-box">
+                    <h4>الشركة</h4>
+                    <div class="signature-line"></div>
+                    <p>الاسم والتوقيع والتاريخ</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="contact-info">
+                    <span>📧 info@testworkshop.com</span>
+                    <span>📱 +966 11 123 4567</span>
+                    <span>🌐 www.testworkshop.com</span>
+                </div>
+                <p>&copy; 2024 ورشة الاختبار للصيانة - جميع الحقوق محفوظة</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // وظائف الطباعة والتصدير
+        function printQuote() {
+            window.print();
+        }
+        
+        // تحسين العرض
+        document.addEventListener('DOMContentLoaded', function() {
+            // تطبيق تأثيرات بصرية
+            const tables = document.querySelectorAll('.items-table tr');
+            tables.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.01)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+        

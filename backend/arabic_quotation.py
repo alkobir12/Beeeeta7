@@ -164,10 +164,11 @@ class ArabicQuotationBuilder:
         info.get("responder_name") or "العميل"
         info.get("responder_phone") or "-"
         info.get("responded_at") or ""
-        client_ip = info.get("client_ip") or ""  # يبقى للاستخدام داخل ال QR فقط
+        # client_ip / user_agent are intentionally not rendered in HTML.
+        _client_ip = info.get("client_ip") or ""  # noqa: F841
         info.get("customer_name") or ""
         info.get("plate_number") or ""
-        user_agent = info.get("user_agent") or ""  # يبقى للاستخدام داخل ال QR فقط
+        _user_agent = info.get("user_agent") or ""  # noqa: F841
 
         qr_html = (
             f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>'

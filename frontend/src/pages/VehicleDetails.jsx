@@ -316,7 +316,7 @@ const VehicleDetails = () => {
   const selectVisit = (visit) => {
     setCurrentVisit(visit);
     // Load operations for this visit
-    const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
     axios.get(`${API_URL}/visits/${visit.id}/operations`)
       .then(res => setVehicleOperations(res.data || []))
       .catch(err => console.error(err));

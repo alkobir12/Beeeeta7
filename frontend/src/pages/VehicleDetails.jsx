@@ -680,18 +680,12 @@ const VehicleDetails = () => {
                               price: newItem.price || 0,
                             };
                             const updatedParts = [...existing, item];
-                            
-                            // تحديث المركبة
-                            await vehicleAPI.update(id, { parts: updatedParts });
-                            
-                            // إنشاء/تحديث الفاتورة تلقائياً
-                            await createOrUpdateInvoice(id, updatedParts);
-                            
-                            // تحديث الواجهة
-                            setVehicle({ ...vehicle, parts: updatedParts });
+
+                            // Update local visit items (saved later when clicking حفظ التحديثات)
+                            updatePartsLocally(updatedParts);
                             setNewItem({ itemType: 'service', name: '', quantity: 1, price: 0 });
-                            
-                            toast({ title: 'تمت الإضافة', description: 'تم إضافة البند وإنشاء الفاتورة' });
+
+                            toast({ title: 'تمت الإضافة', description: 'تم إضافة البند مؤقتاً — اضغط حفظ التحديثات لتثبيته' });
                           } catch (error) {
                             console.error('Error:', error);
                             toast({ title: 'خطأ', description: 'فشل في الإضافة', variant: 'destructive' });

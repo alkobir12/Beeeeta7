@@ -320,6 +320,7 @@ class ArabicQuotationBuilder:
                             <span class="value">{self.quotation['date']}</span>
                         </div>
                         {self._render_if_value(self.company.get('tax_number', ''), 'رقم الضريبة')}
+                        {self._render_if_value(self.company.get('commercial_register', ''), 'السجل التجاري')}
                     </div>
                 </div>
             </div>

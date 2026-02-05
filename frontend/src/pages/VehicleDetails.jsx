@@ -203,7 +203,7 @@ const VehicleDetails = () => {
         const operationData = {
           vehicleId: id,
           workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
-          visitId: currentVisit?.id || null,
+          visitId: selectedVisit?.id || activeVisit?.id || null,
           type: 'sale',
           partnerType: 'customer',
           partnerName: vehicle.customerName || '',

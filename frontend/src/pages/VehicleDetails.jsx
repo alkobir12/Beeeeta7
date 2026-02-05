@@ -915,7 +915,7 @@ const VehicleDetails = () => {
                               src={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
                               alt={file.filename}
                               className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                              onClick={() => setPreviewImage(`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`)}
+                              onClick={() => setPreviewImage(`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`)}
                             />
                             <button
                               onClick={(e) => {

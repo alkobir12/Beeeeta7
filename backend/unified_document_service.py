@@ -437,7 +437,7 @@ def create_unified_document_routes(router):
                 workshop_data = {}
 
             # Always merge stored profile as defaults, so missing legal fields (like commercial register) still appear.
-            workshop_data = {**_load_workshop_profile_fallback(), **workshop_data}
+            workshop_data = {**(await _load_workshop_profile_fallback()), **workshop_data}
 
             logging.info(f"Document generation request received: doc_type={doc_type}")
             logging.info(f"Workshop keys: {list((workshop_data or {}).keys())[:10]}")

@@ -68,10 +68,11 @@ const VehicleDetails = () => {
     }
   };
 
-  const saveSelectedVisit = async () => {
+  const saveSelectedVisit = async (override = {}) => {
     if (!selectedVisit?.id) return;
 
     const payload = {
+      ...override,
       mileage:
         selectedVisitMileage === '' || selectedVisitMileage === null
           ? null

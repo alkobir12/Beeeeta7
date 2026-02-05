@@ -317,9 +317,11 @@ const VehicleDetails = () => {
   };
 
   const selectVisit = (visit) => {
-    setCurrentVisit(visit);
+    setSelectedVisit(visit);
+    setSelectedVisitItems(parseVisitItems(visit));
+    setSelectedVisitMileage(visit?.mileage ?? '');
+
     // Load operations for this visit
- 
     axios.get(`${API_URL}/visits/${visit.id}/operations`)
       .then(res => setVehicleOperations(res.data || []))
       .catch(err => console.error(err));

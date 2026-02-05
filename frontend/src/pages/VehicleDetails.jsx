@@ -27,7 +27,12 @@ const VehicleDetails = () => {
   const [vehicleOperations, setVehicleOperations] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [visits, setVisits] = useState([]);
-  const [currentVisit, setCurrentVisit] = useState(null);
+  const [activeVisit, setActiveVisit] = useState(null);
+  const [selectedVisit, setSelectedVisit] = useState(null);
+
+  // Visit-level items (each visit has its own items stored in visit.notes JSON)
+  const [selectedVisitItems, setSelectedVisitItems] = useState([]);
+  const [selectedVisitMileage, setSelectedVisitMileage] = useState('');
   const [showNewVisit, setShowNewVisit] = useState(false);
   const [newVisitMileage, setNewVisitMileage] = useState('');
   const [newService, setNewService] = useState('');
@@ -44,11 +49,45 @@ const VehicleDetails = () => {
   const streamRef = useRef(null);
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
+  const API_URL = (
+    process.env.NODE_ENV === 'production'
+      ? '/api'
+      : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
+  );
+  const FILE_BASE = process.env.NODE_ENV === 'production' ? '' : (process.env.REACT_APP_BACKEND_URL || '');
+
   useEffect(() => {
     const loadAccounts = async () => {
       try {
         if (!workshopId) return;
         const res = await financeAPI.getChartOfAccounts();
+  const parseVisitItems = (visit) => {
+    try {
+      const raw = visit?.notes;
+      if (!raw) return [];
+      const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const items = Array.isArray(obj?.items) ? obj.items : [];
+      return items.filter(Boolean);
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const saveSelectedVisit = async (override = {}) => {
+    if (!selectedVisit?.id) return;
+
+    const payload = {
+      ...override,
+      mileage:
+        selectedVisitMileage === '' || selectedVisitMileage === null
+          ? null
+          : Number(selectedVisitMileage),
+      notes: JSON.stringify({ items: selectedVisitItems }),
+    };
+
+    await axios.put(`${API_URL}/visits/${selectedVisit.id}`, payload);
+  };
+
         setAccounts(res.data || []);
       } catch (err) {
         console.error('Failed to load chart of accounts for vehicle details:', err);
@@ -66,7 +105,6 @@ const VehicleDetails = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
       const [vehicleRes, techniciansRes, filesRes, approvalsRes, opsRes, visitsRes] = await Promise.all([
         vehicleAPI.getById(id),
         technicianAPI.getAll(),
@@ -82,9 +120,22 @@ const VehicleDetails = () => {
       setVehicleOperations(opsRes.data || []);
       setVisits(visitsRes.data || []);
       
-      // Set current visit (latest in-progress visit or create new one)
-      const activeVisit = visitsRes.data?.find(v => v.status === 'in_progress');
-      setCurrentVisit(activeVisit || null);
+      // Determine active and selected visit
+      const vRows = visitsRes.data || [];
+      const inProgress = vRows.find(v => v.status === 'in_progress') || null;
+      setActiveVisit(inProgress);
+
+      // Keep current selection if possible; otherwise default to active visit then latest completed
+      const existingSelectedId = selectedVisit?.id;
+      const keepSelected = existingSelectedId ? vRows.find(v => v.id === existingSelectedId) : null;
+      const latestCompleted = vRows.find(v => v.status === 'completed') || null;
+      const sel = keepSelected || inProgress || latestCompleted;
+      setSelectedVisit(sel || null);
+
+      const selItems = sel ? parseVisitItems(sel) : [];
+      const fallbackItems = selItems.length === 0 ? (vehicleRes.data?.parts || []) : selItems;
+      setSelectedVisitItems(fallbackItems);
+      setSelectedVisitMileage(sel?.mileage ?? '');
       
       setStatus(vehicleRes.data.status || 'diagnosis');
       setNotes(vehicleRes.data.notes || '');

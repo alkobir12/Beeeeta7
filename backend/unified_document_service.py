@@ -139,6 +139,9 @@ class UnifiedDocumentGenerator:
             tax_number=workshop_data.get(
                 "tax_number", workshop_data.get("taxNumber", "")
             ),
+            commercial_register=workshop_data.get(
+                "commercial_register", workshop_data.get("commercialRegister", "")
+            ),
             logo=workshop_data.get("logo", ""),
         )
 

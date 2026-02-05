@@ -419,16 +419,44 @@ const DocumentPrint = () => {
           setPreviewHtml(response.data.html);
           setShowPreview(true);
         } else {
-          // تحميل الملف
-          const blob = new Blob([response.data.html], { type: 'text/html;charset=utf-8' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${docType}_${response.data.document_number}.html`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
+          // تحميل PDF
+          const { jsPDF } = await import('jspdf');
+          const html2canvas = (await import('html2canvas')).default;
+
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'fixed';
+          wrapper.style.left = '-10000px';
+          wrapper.style.top = '0';
+          wrapper.style.width = '794px'; // A4 width at ~96dpi
+          wrapper.innerHTML = response.data.html;
+          document.body.appendChild(wrapper);
+
+          const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+          const pdf = new jsPDF('p', 'pt', 'a4');
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+
+          const imgWidth = pageWidth;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          let heightLeft = imgHeight;
+          let position = 0;
+
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+
+          pdf.save(`${docType}_${response.data.document_number}.pdf`);
+
+          document.body.removeChild(wrapper);
         }
       } else {
         throw new Error(response.data.message || 'فشل في إنشاء المستند');

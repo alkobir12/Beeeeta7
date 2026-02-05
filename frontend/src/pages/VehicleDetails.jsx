@@ -87,33 +87,6 @@ const VehicleDetails = () => {
       try {
         if (!workshopId) return;
         const res = await financeAPI.getChartOfAccounts();
-
-    try {
-      const raw = visit?.notes;
-      if (!raw) return [];
-      const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      const items = Array.isArray(obj?.items) ? obj.items : [];
-      return items.filter(Boolean);
-    } catch (e) {
-      return [];
-    }
-  };
-
-  const saveSelectedVisit = async (override = {}) => {
-    if (!selectedVisit?.id) return;
-
-    const payload = {
-      ...override,
-      mileage:
-        selectedVisitMileage === '' || selectedVisitMileage === null
-          ? null
-          : Number(selectedVisitMileage),
-      notes: JSON.stringify({ items: selectedVisitItems }),
-    };
-
-    await axios.put(`${API_URL}/visits/${selectedVisit.id}`, payload);
-  };
-
         setAccounts(res.data || []);
       } catch (err) {
         console.error('Failed to load chart of accounts for vehicle details:', err);

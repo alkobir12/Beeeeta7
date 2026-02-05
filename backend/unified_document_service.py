@@ -542,7 +542,7 @@ def create_unified_document_routes(router):
 
             # توليد HTML
             html_content = generator.generate_document(
-                doc_type=request.doc_type,
+                doc_type=doc_type,
                 workshop_data=workshop_data,
                 customer_data=customer_data,
                 vehicle_data=vehicle_data,
@@ -552,7 +552,7 @@ def create_unified_document_routes(router):
 
             return {
                 "success": True,
-                "doc_type": request.doc_type,
+                "doc_type": doc_type,
                 "document_number": generator.builder.quotation["number"],
                 "html": html_content,
                 "data": generator.get_document_data(),

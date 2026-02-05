@@ -178,9 +178,18 @@ const VehicleDetails = () => {
         }
       }
       
-      // إنشاء أو تحديث عملية تلقائية إذا كان هناك بنود
-      if (vehicle.parts && vehicle.parts.length > 0) {
-        const operationItems = vehicle.parts.map(item => ({
+      // ✅ عند حفظ التحديثات: نُثبت البنود داخل الزيارة المختارة + ننشئ/نحدّث عملية (كما السيناريو الحالي)
+      if (selectedVisit?.id) {
+        // 1) Save visit items inside visit.notes
+        try {
+          await saveSelectedVisit({});
+        } catch (e) {
+          console.error('Failed to save visit items:', e);
+        }
+      }
+
+      if (selectedVisitItems && selectedVisitItems.length > 0) {
+        const operationItems = selectedVisitItems.map(item => ({
           itemType: item.itemType || 'service',
           itemId: item.id,
           name: item.name,
@@ -188,18 +197,16 @@ const VehicleDetails = () => {
           price: item.price || 0,
           total: (item.quantity || 1) * (item.price || 0)
         }));
-        
-        // جلب العمليات الحالية للمركبة من الخادم
+
         const opsRes = await axios.get(`${API_URL}/operations?vehicle_id=${id}`);
         const currentOps = opsRes.data || [];
-        
-        // البحث عن عملية موجودة لنفس المركبة في نفس اليوم
+
         const today = new Date().toISOString().split('T')[0];
         const existingOps = currentOps.filter(op => {
           const opDate = new Date(op.date || op.createdAt).toISOString().split('T')[0];
-          return opDate === today && op.type === 'sale';
+          return opDate === today && op.type === 'sale' && (op.visitId === (selectedVisit?.id || null) || op.visit_id === (selectedVisit?.id || null));
         });
-        
+
         const operationData = {
           vehicleId: id,
           workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
@@ -211,23 +218,17 @@ const VehicleDetails = () => {
           paymentMethod: (status === 'delivered') ? 'cash' : 'credit',
           notes: `عملية من ملف المركبة: ${vehicle.plateNumber}`
         };
-        
+
         let operationResult = null;
         if (existingOps.length > 0) {
-          // تحديث العملية الموجودة
           const res = await axios.put(`${API_URL}/operations/${existingOps[0].id}`, operationData);
           operationResult = res.data;
         } else {
-          // إنشاء عملية جديدة
           const res = await axios.post(`${API_URL}/operations`, operationData);
           operationResult = res.data;
         }
 
-        // القيود المحاسبية تُنشأ تلقائياً من الخادم عند حفظ العملية
-
-
-        // إذا كانت العملية آجل، لا نُنشئ قيود يومية الآن.
-        // عند التسليم/التحصيل نؤكد السداد وننشئ قيد النقدية (101/113).
+        // Confirm payment only on delivery
         if ((operationResult?.paymentMethod || operationResult?.payment_method) === 'credit' || (operationData.paymentMethod === 'credit')) {
           if (status === 'delivered') {
             try {
@@ -244,7 +245,6 @@ const VehicleDetails = () => {
             }
           }
         }
-
       }
 
       // تحديث/إنشاء الفاتورة بناءً على البنود الحالية

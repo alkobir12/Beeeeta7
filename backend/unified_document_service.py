@@ -17,6 +17,8 @@ import qrcode
 from arabic_quotation import ArabicQuotationBuilder
 
 
+from fastapi import Body
+
 class UnifiedDocumentGenerator:
     """مولد المستندات الموحد"""
 

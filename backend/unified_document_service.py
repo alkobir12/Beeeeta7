@@ -383,33 +383,72 @@ def create_unified_document_routes(router):
 
     class GenerateDocumentRequest(BaseModel):
         doc_type: str = "invoice"  # invoice, diagnosis, quote, receipt
-        workshop: DocumentWorkshop
-        customer: DocumentCustomer
+        workshop: Optional[DocumentWorkshop] = None
+        customer: Optional[DocumentCustomer] = None
         vehicle: Optional[DocumentVehicle] = None
-        items: List[DocumentItem]
+        items: List[DocumentItem] = []
         settings: Optional[DocumentSettings] = None
 
+    def _load_workshop_profile_fallback() -> Dict:
+        """Best-effort fetch of workshop profile from the same backend.
+
+        This keeps /documents/generate backward compatible even if old frontends
+        send legacy payloads (workshop_id/company/client).
+        """
+        try:
+            import requests
+
+            r = requests.get("http://127.0.0.1:8001/api/profile", timeout=3)
+            if r.status_code == 200:
+                data = r.json() or {}
+                # unify keys
+                if "taxNumber" in data and "tax_number" not in data:
+                    data["tax_number"] = data.get("taxNumber")
+                if "commercialRegister" in data and "commercial_register" not in data:
+                    data["commercial_register"] = data.get("commercialRegister")
+                return data
+        except Exception:
+            pass
+        return {}
+
     @router.post("/documents/generate")
-    async def generate_document(request: GenerateDocumentRequest):
-        """توليد مستند (فاتورة/تشخيص/عرض سعر)"""
+    async def generate_document(payload: Dict = Body(...)):
+        """توليد مستند (فاتورة/تشخيص/عرض سعر)
+
+        Accepts both:
+        - New payload: {doc_type, workshop, customer, vehicle, items, settings}
+        - Legacy payload: {doc_type, workshop_id, company, client, vehicle, items, totals, language}
+        """
         try:
             import logging
 
-            logging.info(
-                f"Document generation request received: doc_type={request.doc_type}"
-            )
-            logging.info(f"Workshop: {request.workshop}")
-            logging.info(f"Customer: {request.customer}")
-            logging.info(f"Items count: {len(request.items)}")
+            doc_type = payload.get("doc_type") or "invoice"
+
+            # Normalize workshop/customer from multiple possible keys
+            workshop_data = payload.get("workshop") or payload.get("company") or {}
+            customer_data = payload.get("customer") or payload.get("client") or {}
+            vehicle_data = payload.get("vehicle") or None
+            items = payload.get("items") or []
+            settings = payload.get("settings") or {}
+
+            # If workshop missing, fallback to stored profile
+            if not workshop_data or not isinstance(workshop_data, dict) or not workshop_data.get("name"):
+                workshop_data = {**_load_workshop_profile_fallback(), **(workshop_data if isinstance(workshop_data, dict) else {})}
+
+            logging.info(f"Document generation request received: doc_type={doc_type}")
+            logging.info(f"Workshop keys: {list((workshop_data or {}).keys())[:10]}")
+            logging.info(f"Customer keys: {list((customer_data or {}).keys())[:10]}")
+            logging.info(f"Items count: {len(items) if isinstance(items, list) else 0}")
 
             generator = UnifiedDocumentGenerator()
 
-            # تحويل البيانات
-            workshop_data = request.workshop.dict()
-            customer_data = request.customer.dict()
-            vehicle_data = request.vehicle.dict() if request.vehicle else None
-            items = [item.dict() for item in request.items]
-            settings = request.settings.dict() if request.settings else {}
+            # Convert to dicts
+            if vehicle_data and not isinstance(vehicle_data, dict):
+                vehicle_data = {}
+            if not isinstance(items, list):
+                items = []
+            if not isinstance(settings, dict):
+                settings = {}
 
             # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase
             raw_token = settings.get("approval_token")

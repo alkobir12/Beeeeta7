@@ -450,6 +450,12 @@ def create_unified_document_routes(router):
             if not isinstance(settings, dict):
                 settings = {}
 
+            # Map workshop keys
+            if "taxNumber" in workshop_data and "tax_number" not in workshop_data:
+                workshop_data["tax_number"] = workshop_data.get("taxNumber")
+            if "commercialRegister" in workshop_data and "commercial_register" not in workshop_data:
+                workshop_data["commercial_register"] = workshop_data.get("commercialRegister")
+
             # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase
             raw_token = settings.get("approval_token")
             token = str(raw_token).strip() if raw_token is not None else ""

@@ -912,7 +912,7 @@ const VehicleDetails = () => {
                         {vehicleFiles.filter(f => f.fileType === 'photo' || f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map((file, idx) => (
                           <div key={`img-${file.id || idx}`} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                             <img
-                              src={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
+                              src={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
                               alt={file.filename}
                               className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
                               onClick={() => setPreviewImage(`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`)}

@@ -935,7 +935,7 @@ const VehicleDetails = () => {
                         {vehicleFiles.filter(f => f.fileType !== 'photo' && !f.filename?.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map((file, idx) => (
                           <div key={`file-${file.id || idx}`} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-100">
                             <a 
-                              href={`${process.env.REACT_APP_BACKEND_URL}/api/vehicles/${id}/files/${file.id}`}
+                              href={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-1 min-w-0"

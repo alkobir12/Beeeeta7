@@ -303,7 +303,10 @@ const VehicleDetails = () => {
       };
       
       const res = await axios.post(`${API_URL}/vehicles/${id}/visits`, visitData);
-      setCurrentVisit(res.data);
+      setActiveVisit(res.data);
+      setSelectedVisit(res.data);
+      setSelectedVisitItems([]);
+      setSelectedVisitMileage(res.data?.mileage ?? '');
       await fetchData();
       setShowNewVisit(false);
       setNewVisitMileage('');

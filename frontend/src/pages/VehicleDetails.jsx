@@ -1284,8 +1284,7 @@ const VehicleDetails = () => {
           onConfirm={async ({ amount, date }) => {
             if (!confirmTarget?.id) return;
             try {
-              const apiBase = `${process.env.REACT_APP_BACKEND_URL}/api`;
-              await axios.post(`${apiBase}/operations/${confirmTarget.id}/confirm-payment`, {
+              await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
                 workshopId: process.env.REACT_APP_WORKSHOP_ID || null,
                 amount,
                 date,

@@ -276,6 +276,7 @@ const VehicleDetails = () => {
   // Helper to update parts locally
   const updatePartsLocally = (newParts) => {
     setVehicle(prev => ({ ...prev, parts: newParts }));
+    setSelectedVisitItems(newParts);
   };
 
   // Helper to update services locally

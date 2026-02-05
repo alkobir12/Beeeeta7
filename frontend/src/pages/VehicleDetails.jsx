@@ -150,7 +150,7 @@ const VehicleDetails = () => {
   const handleStatusUpdate = async () => {
     try {
       setLoading(true);
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
       
       // حفظ بيانات المركبة
       await vehicleAPI.update(id, { 
@@ -287,7 +287,7 @@ const VehicleDetails = () => {
   // Visits Functions
   const createNewVisit = async () => {
     try {
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
       const mileageValue = parseInt(newVisitMileage, 10);
       if (!newVisitMileage || Number.isNaN(mileageValue)) {
         toast({ title: 'تنبيه', description: 'يرجى إدخال قراءة العداد بشكل صحيح', variant: 'destructive' });
@@ -324,7 +324,7 @@ const VehicleDetails = () => {
 
   const completeVisit = async (visitId) => {
     try {
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
       await axios.put(`${API_URL}/visits/${visitId}`, {
         status: 'completed',
         exitDate: new Date().toISOString()
@@ -388,7 +388,7 @@ const VehicleDetails = () => {
     if (!capturedImage) return;
     
     try {
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
       const blob = await fetch(capturedImage).then(r => r.blob());
       const file = new File([blob], `scan_${Date.now()}.jpg`, { type: 'image/jpeg' });
       
@@ -415,7 +415,7 @@ const VehicleDetails = () => {
 
   const createOrUpdateInvoice = async (vehicleId, parts) => {
     try {
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+ 
 
       const safeParts = (parts || []).filter(Boolean).map((p) => ({
         ...p,
@@ -867,7 +867,7 @@ const VehicleDetails = () => {
                       try {
                         const formData = new FormData();
                         formData.append('file', file);
-                        const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                   
                         const response = await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=${fileType}`, { 
                           method: 'POST', 
                           body: formData 

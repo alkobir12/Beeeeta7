@@ -1,5 +1,9 @@
 ## Rate Limiting + Security Headers Testing (2026-02-04)
 
+## Print / Quotation / Invoice Improvements (IN PROGRESS) (2026-02-05)
+- الهدف: إصلاح المعاينة لتظهر A4 كاملة + تنزيل PDF + ظهور السجل التجاري من بيانات الورشة في القوالب.
+
+
 ## Visit Items Saved Per Visit + Edit Past Visit (COMPLETED) (2026-02-05)
 - الهدف: البنود/الخدمات تُحفظ داخل كل زيارة (visit) ويمكن تعديل زيارة سابقة (العداد + البنود + الأسعار) ثم عند حفظ التحديثات تُنشأ/تتحدث عملية البيع كما هو السيناريو الحالي.
 - التغييرات:

@@ -98,10 +98,6 @@ const VehicleDetails = () => {
 
   const findAccountByCode = (code) => accounts.find((a) => a.code === code);
 
-
-
-  useEffect(() => { fetchData(); }, [id]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -146,6 +142,8 @@ const VehicleDetails = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => { fetchData(); }, [id]);
 
   const handleStatusUpdate = async () => {
     try {

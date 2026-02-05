@@ -98,7 +98,7 @@ const VehicleDetails = () => {
 
   const findAccountByCode = (code) => accounts.find((a) => a.code === code);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [vehicleRes, techniciansRes, filesRes, approvalsRes, opsRes, visitsRes] = await Promise.all([
@@ -141,9 +141,9 @@ const VehicleDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, selectedVisit?.id, API_URL]);
 
-  useEffect(() => { fetchData(); }, [id]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleStatusUpdate = async () => {
     try {

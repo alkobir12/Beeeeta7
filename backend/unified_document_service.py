@@ -391,24 +391,23 @@ def create_unified_document_routes(router):
         items: List[DocumentItem] = []
         settings: Optional[DocumentSettings] = None
 
-    def _load_workshop_profile_fallback() -> Dict:
+    async def _load_workshop_profile_fallback() -> Dict:
         """Best-effort fetch of workshop profile from the same backend.
 
-        This keeps /documents/generate backward compatible even if old frontends
-        send legacy payloads (workshop_id/company/client).
+        NOTE: use async http client to avoid blocking event loop.
         """
         try:
-            import requests
+            import httpx
 
-            r = requests.get("http://127.0.0.1:8001/api/profile", timeout=3)
-            if r.status_code == 200:
-                data = r.json() or {}
-                # unify keys
-                if "taxNumber" in data and "tax_number" not in data:
-                    data["tax_number"] = data.get("taxNumber")
-                if "commercialRegister" in data and "commercial_register" not in data:
-                    data["commercial_register"] = data.get("commercialRegister")
-                return data
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                r = await client.get("http://127.0.0.1:8001/api/profile")
+                if r.status_code == 200:
+                    data = r.json() or {}
+                    if "taxNumber" in data and "tax_number" not in data:
+                        data["tax_number"] = data.get("taxNumber")
+                    if "commercialRegister" in data and "commercial_register" not in data:
+                        data["commercial_register"] = data.get("commercialRegister")
+                    return data
         except Exception:
             pass
         return {}

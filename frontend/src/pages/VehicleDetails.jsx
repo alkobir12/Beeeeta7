@@ -208,7 +208,7 @@ const VehicleDetails = () => {
       if (selectedVisit?.id) {
         // 1) Save visit items inside visit.notes
         try {
-          await saveSelectedVisit({});
+          await saveSelectedVisit();
         } catch (e) {
           console.error('Failed to save visit items:', e);
         }

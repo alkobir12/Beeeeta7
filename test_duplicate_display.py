@@ -100,7 +100,7 @@ async def test_duplicate_display():
                     print("Translation key found instead of Arabic text")
             
             # Step 6: Take final screenshot
-            await page.screenshot(path='.screenshots/vehicle_details_final.png', quality=40, full_page=False)
+            await page.screenshot(path='.screenshots/vehicle_details_final.png', full_page=False)
             
             # Step 7: Summary of findings
             print("\n=== TEST RESULTS SUMMARY ===")

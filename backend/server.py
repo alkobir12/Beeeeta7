@@ -91,6 +91,7 @@ from routes_workshop_bot import router as workshop_bot_router
 from routes_cleanup import router as cleanup_router
 from routes_whatsapp_bot import router as whatsapp_bot_router
 
+from routes_alkabeer_bot import router as alkabeer_bot_router
 # Provider mode
 DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
 supabase_service = SupabaseService()
@@ -377,6 +378,7 @@ app.include_router(finance_router)
 app.include_router(finance_bot_router)
 app.include_router(stitch_router)
 app.include_router(invoices_router)
+app.include_router(alkabeer_bot_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

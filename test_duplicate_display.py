@@ -41,6 +41,37 @@ async def test_duplicate_display():
             is_table_visible = await items_table.is_visible()
             print(f"Items table visible: {is_table_visible}")
             
+            # Check if page loaded correctly
+            page_title = await page.title()
+            print(f"Page title: {page_title}")
+            
+            # Check for any error messages
+            error_elements = await page.locator('.error, [class*="error"], [id*="error"]').all()
+            if error_elements:
+                for i, element in enumerate(error_elements):
+                    error_text = await element.text_content()
+                    print(f"Error element {i + 1}: {error_text}")
+            
+            # Check page content
+            page_content = await page.text_content('body')
+            if 'تفاصيل المركبة' in page_content:
+                print("Vehicle details page content found")
+            else:
+                print("Vehicle details page content NOT found")
+                print(f"Page content preview: {page_content[:200]}...")
+            
+            # Check for any tables on the page
+            all_tables = await page.locator('table').all()
+            print(f"Total tables found: {len(all_tables)}")
+            
+            # Check for items-related content
+            items_content = await page.locator('*:has-text("البنود"), *:has-text("الخدمات"), *:has-text("القطع")').all()
+            print(f"Items-related content elements: {len(items_content)}")
+            
+            for i, element in enumerate(items_content[:3]):
+                text = await element.text_content()
+                print(f"Items content {i + 1}: {text[:100]}...")
+            
             # Step 4: Check for duplicate service display (blue elements/chips)
             print("Step 4: Checking for duplicate service display")
             

@@ -23,18 +23,16 @@ const ChatWidget = () => {
   const [techQuery, setTechQuery] = useState('');
   const [techResult, setTechResult] = useState(null);
 
-  // عند فتح الودجت لأول مرة: جلب معلومات الوكيل + قائمة المركبات
+  // عند فتح الودجت لأول مرة: جلب قائمة المركبات
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchMeta = async () => {
       try {
         setError('');
-        const [infoRes, vehiclesRes] = await Promise.all([
-          aiAPI.workshopInfo(),
+        const [vehiclesRes] = await Promise.all([
           vehicleAPI.getAll(),
         ]);
-        setInfo(infoRes.data);
         setVehicles(vehiclesRes.data || []);
       } catch (e) {
         console.error('Workshop AI meta error', e);
@@ -61,18 +59,17 @@ const ChatWidget = () => {
         vehicle = vehicles.find((v) => v.id === selectedVehicleId) || null;
       }
 
-      const payload = {
-        vehicle_id: vehicle ? vehicle.id : undefined,
-        make: vehicle?.brand || vehicle?.make || 'غير محدد',
-        model: vehicle?.model || 'غير محدد',
-        year: vehicle?.year || vehicle?.modelYear || '',
-        mileage: vehicle?.mileage || undefined,
-        fuel_type: vehicle?.fuelType || 'بنزين',
-        symptoms: symptoms || 'لا توجد أعراض مذكورة',
-      };
+      // Construct message for AlKabeer Bot
+      const message = `تشخيص عطل:
+      المركبة: ${vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : 'غير محددة'}
+      الوقود: ${vehicle?.fuelType || 'غير محدد'}
+      الأعراض: ${symptoms || 'لا توجد أعراض مذكورة'}
+      
+      يرجى تحليل المشكلة واقتراح الحلول وقطع الغيار المناسبة حسب خبرتك يا أبو فهد.`;
 
-      const res = await aiAPI.workshopDiagnose(payload);
-      setDiagnosisResult(res.data);
+      const res = await aiAPI.alkabeerChat({ message });
+      // Map response to match existing UI expectation (diagnosis field)
+      setDiagnosisResult({ diagnosis: res.data.response, local_manuals_found: [] });
     } catch (e) {
       console.error('Diagnosis error', e);
       setError('حدث خطأ أثناء طلب التشخيص. حاول مرة أخرى.');
@@ -90,8 +87,12 @@ const ChatWidget = () => {
     setError('');
     setTechResult(null);
     try {
-      const res = await aiAPI.workshopSearchTechnical({ query: techQuery });
-      setTechResult(res.data);
+      const message = `سؤال تقني: ${techQuery}
+      
+      أجب كخبير فني (أبو فهد) باللهجة القصيمية وقدم معلومات دقيقة.`;
+      
+      const res = await aiAPI.alkabeerChat({ message });
+      setTechResult({ ai_analysis: res.data.response, local_manuals: [] });
     } catch (e) {
       console.error('Technical search error', e);
       setError('تعذر تنفيذ البحث التقني حالياً.');

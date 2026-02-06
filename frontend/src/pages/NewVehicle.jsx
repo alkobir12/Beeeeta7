@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Wrench, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, serviceAPI, technicianAPI } from '../services/api';
+
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+);
 import { useTranslation } from 'react-i18next';
 
 const NewVehicle = () => {

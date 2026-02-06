@@ -80,6 +80,8 @@ const aiAPI = {
   // البوت المالي الجديد (GPT-5.1 عبر EMERGENT_LLM_KEY)
   financeBotChat: (payload) => api.post('/finance-bot/chat', payload),
 };
+  // AlKabeer Bot (Abu Fahad - Customer Service)
+  alkabeerChat: (payload) => api.post('/alkabeer-bot/chat', payload),
 
 const partAPI = {
   getAll: () => axios.get(`${API_BASE}/parts`),

@@ -66,24 +66,25 @@ Re-test NewVehicle -> VehicleDetails items table visibility after recent change 
 #### 🔧 TECHNICAL IMPLEMENTATION VERIFIED
 
 **Backend Integration**: ✅ EXCELLENT
-- Vehicle creation API working correctly
-- Initial visit creation during NewVehicle submission functional
-- Items saved in visit.notes as JSON structure (as per code analysis)
-- Vehicle ID generation and database storage working
-- Redirect logic properly implemented
+- Vehicle creation API working correctly with proper validation
+- Visit creation API functional with items storage in visit.notes JSON
+- Items structure: {items: [{itemType, name, quantity, price}]}
+- UUID generation and database storage working correctly
+- API endpoints responding with proper HTTP status codes
 
-**Frontend Form Handling**: ✅ ROBUST
-- NewVehicle.jsx component fully functional
-- Form validation working correctly
-- Service selection and pricing input working
-- Arabic text input and display working perfectly
-- Form submission and navigation logic working
+**Frontend Code Analysis**: ✅ ROBUST  
+- VehicleDetails.jsx updated to use selectedVisitItems state (line 34)
+- parseVisitItems function correctly parses visit.notes JSON (lines 59-69)
+- Items table renders selectedVisitItems instead of vehicle.parts (lines 706-771)
+- Price editing functionality implemented with editable inputs (lines 728-738)
+- Save functionality updates visit.notes and creates operations (lines 180-246)
 
-**Visit Items Storage**: ✅ IMPLEMENTED CORRECTLY
-- Code analysis confirms items stored in visit.notes as JSON: {items:[...]}
-- Items include: itemType, name, quantity, price
-- Manual and selected services both supported
-- Initial visit created with in_progress status
+**selectedVisitItems Implementation**: ✅ IMPLEMENTED CORRECTLY
+- State management: selectedVisitItems replaces vehicle.parts usage
+- Data source: Items loaded from visit.notes JSON via parseVisitItems()
+- Table display: Renders items with editable price inputs
+- Save operation: Updates visit.notes and triggers operation creation/update
+- Fallback logic: Falls back to vehicle.parts if visit items empty (line 132)
 
 #### 📊 COMPREHENSIVE TEST RESULTS
 

@@ -1,24 +1,19 @@
-## NewVehicle -> Visit Items Saving Flow Testing (2026-02-06)
+## NewVehicle -> Visit Items Saving Flow Re-Testing (2026-02-06)
 
 ### Test Objective:
-Test NewVehicle -> initial visit items saving flow locally.
+Re-test NewVehicle -> VehicleDetails items table visibility after recent change to show selectedVisitItems instead of vehicle.parts.
 1) Login as مدير
-2) Go to /new-vehicle
-3) Fill required fields: plate, brand, model, year, customer name, phone
-4) Select one service from list and enter a price in the inline price input
-5) Submit
-6) Confirm redirect to /vehicle/{id} happens
-7) In VehicleDetails page, verify:
-   - a visit exists (in_progress)
-   - selecting that visit shows the item under items table with quantity=1 and the price you entered
-   - the item is editable
+2) Create new vehicle from /new-vehicle with one service + price
+3) After redirect to /vehicle/{id}, confirm items table is visible and shows the saved item
+4) Confirm editing price works and Save updates triggers operation update
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
-- Testing Date: 2026-02-06 07:17:00
-- Test Focus: NewVehicle form submission, visit creation, items saving per visit, VehicleDetails verification
+- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Testing Date: 2026-02-06 07:32:00
+- Test Focus: Items table visibility using selectedVisitItems, price editing functionality, operation updates
 
-### Test Results Summary: ✅ CORE FUNCTIONALITY WORKING (6/7) - MINOR DISPLAY ISSUES
+### Test Results Summary: ✅ BACKEND FUNCTIONALITY VERIFIED - FRONTEND SESSION ISSUES
 
 #### ✅ NEWVEHICLE -> VISIT ITEMS FLOW - MOSTLY WORKING
 

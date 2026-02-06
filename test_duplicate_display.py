@@ -28,7 +28,14 @@ async def test_duplicate_display():
             print("Step 2: Navigating to vehicle details page")
             vehicle_id = 'dc2065b5-424a-4d92-9710-afdda1323def'
             await page.goto(f'http://localhost:3000/vehicle/{vehicle_id}')
-            await page.wait_for_timeout(5000)
+            await page.wait_for_timeout(8000)  # Wait longer for React to load
+            
+            # Wait for the vehicle details content to load
+            try:
+                await page.wait_for_selector('h3:has-text("معلومات المركبة")', timeout=10000)
+                print("Vehicle details content loaded")
+            except:
+                print("Vehicle details content did not load within timeout")
             
             print("Vehicle details page loaded")
             

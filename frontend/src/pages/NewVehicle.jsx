@@ -52,9 +52,46 @@ const NewVehicle = () => {
 
     try {
       setLoading(true);
-      await vehicleAPI.create(formData);
+      const { data: createdVehicle } = await vehicleAPI.create(formData);
+
+      // Always create an initial visit and store selected items for that visit.
+      // Items are stored in visit.notes as JSON: { items: [...] }
+      const items = [];
+
+      // Selected services -> items
+      (formData.services || []).forEach((name) => {
+        items.push({
+          itemType: 'service',
+          name,
+          quantity: 1,
+          price: Number(formData.servicePrices?.[name] || 0),
+        });
+      });
+
+      // Manual service (if filled but not toggled)
+      if (manualServiceName?.trim() && !((formData.services || []).includes(manualServiceName.trim()))) {
+        items.push({
+          itemType: 'service',
+          name: manualServiceName.trim(),
+          quantity: 1,
+          price: Number(manualServicePrice || 0),
+        });
+      }
+
+      await fetch(`${API_URL}/vehicles/${createdVehicle.id}/visits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entryDate: new Date().toISOString(),
+          status: 'in_progress',
+          mileage: null,
+          technicianId: formData.technicianId || null,
+          notes: JSON.stringify({ items })
+        })
+      });
+
       toast({ title: t('common.success'), description: t('messages.success_saved') });
-      setTimeout(() => navigate('/'), 1500);
+      setTimeout(() => navigate(`/vehicle/${createdVehicle.id}`), 800);
     } catch (error) {
       toast({ title: t('common.error'), description: t('messages.error_occurred'), variant: 'destructive' });
     } finally {

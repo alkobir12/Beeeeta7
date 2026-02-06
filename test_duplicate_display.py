@@ -34,7 +34,7 @@ async def test_duplicate_display():
             print("Vehicle details page loaded")
             
             # Take screenshot
-            await page.screenshot(path='.screenshots/vehicle_details_check.png', quality=40, full_page=False)
+            await page.screenshot(path='.screenshots/vehicle_details_check.png', full_page=False)
             
             # Step 3: Check items table visibility
             print("Step 3: Checking items table visibility")

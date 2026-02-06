@@ -6,6 +6,7 @@ import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 import AbuFahadFloatingChat from './AbuFahadFloatingChat';
 import FinanceAlertsWidget from './FinanceAlertsWidget';
+import ChatWidget from './ChatWidget';
 import { Toaster } from './ui/toaster';
 
 
@@ -83,6 +84,9 @@ const Layout = ({ pageTitle }) => {
           ]}
         />
       </main>
+        {/* Workshop Assistant Chat Widget */}
+        <ChatWidget />
+
       
       {/* Toast Notifications */}
       <Toaster />

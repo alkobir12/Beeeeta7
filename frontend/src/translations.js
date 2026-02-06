@@ -367,6 +367,7 @@ const translations = {
     vin_number: "رقم الهيكل",
     color: "اللون",
     subtitle: "خيارات سريعة للمركبة",
+    items_edit_hint: "يمكنك إضافة/تعديل الخدمات والقطع من جدول البنود أعلاه",
 
     registered_services: "الخدمات المسجّلة لهذه المركبة"
   },

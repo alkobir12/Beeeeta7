@@ -703,7 +703,7 @@ const VehicleDetails = () => {
                     </div>
                   </div>
 
-                  {vehicle.parts && vehicle.parts.length > 0 && (
+                  {selectedVisitItems && selectedVisitItems.length > 0 && (
                     <div className="mt-2 border border-gray-800 rounded-lg overflow-x-auto">
                       <table className="w-full min-w-[900px] text-xs">
                         <thead className="bg-gray-800 text-gray-300">
@@ -717,7 +717,7 @@ const VehicleDetails = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-800 bg-gray-900/50">
-                          {(vehicle.parts || []).filter(Boolean).map((it, idx) => (
+                          {(selectedVisitItems || []).filter(Boolean).map((it, idx) => (
                             <tr key={`part-${it.id || idx}-${idx}`}>
                               <td className="p-2 text-gray-400">
                                 {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
@@ -731,7 +731,7 @@ const VehicleDetails = () => {
                                   value={it.price || 0}
                                   onChange={(e) => {
                                     const newPrice = Number(e.target.value) || 0;
-                                    const updatedParts = [...(vehicle.parts || [])];
+                                    const updatedParts = [...(selectedVisitItems || [])];
                                     updatedParts[idx] = { ...updatedParts[idx], price: newPrice };
                                     updatePartsLocally(updatedParts);
                                   }}
@@ -746,7 +746,7 @@ const VehicleDetails = () => {
                                   type="button"
                                   className="p-1 rounded-full hover:bg-red-900/20 text-red-500"
                                   onClick={() => {
-                                    const updated = (vehicle.parts || []).filter((p, i) => i !== idx);
+                                    const updated = (selectedVisitItems || []).filter((p, i) => i !== idx);
                                     updatePartsLocally(updated);
                                     toast({ title: 'تم الحذف مؤقتاً', description: 'اضغط حفظ التحديثات للتثبيت' });
                                   }}

@@ -342,6 +342,18 @@ const VehicleDetails = () => {
       toast({ title: 'خطأ', description: 'فشل في إغلاق الزيارة', variant: 'destructive' });
     }
   };
+  const reopenVisit = async (visitId) => {
+    try {
+      await axios.put(`${API_URL}/visits/${visitId}`, {
+        status: 'in_progress'
+      });
+      toast({ title: 'تم', description: 'تم إعادة فتح الزيارة' });
+      await fetchData();
+    } catch (err) {
+      toast({ title: 'خطأ', description: 'فشل في إعادة فتح الزيارة', variant: 'destructive' });
+    }
+  };
+
 
   // Scanner Functions
   const openScanner = async () => {
@@ -618,9 +630,26 @@ const VehicleDetails = () => {
 
             {/* Registered Services & Parts - ثانياً */}
             <div className="apple-card p-6">
-              <div className="flex items-center gap-3 mb-4 text-orange-400">
-                <Wrench size={20} />
-                <h3 className="font-bold text-gray-100">{t('vehicle_details.registered_services')}</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 text-orange-400">
+                  <Wrench size={20} />
+                  <h3 className="font-bold text-gray-100">
+                    {t('vehicle_details.registered_services')} 
+                    {selectedVisit && (
+                      <span className="text-xs font-normal text-gray-400 mr-2">
+                        (زيارة {new Date(selectedVisit.entryDate || selectedVisit.entry_date).toLocaleDateString('ar-SA')})
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                {selectedVisit?.status === 'completed' && (
+                  <button 
+                    onClick={() => reopenVisit(selectedVisit.id)}
+                    className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
+                  >
+                    إعادة فتح الزيارة للتعديل
+                  </button>
+                )}
               </div>
 
               {/* إدارة البنود (الخدمات/القطع) كأساس للمبيعات */}

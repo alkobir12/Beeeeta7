@@ -18,9 +18,8 @@ async def test_duplicate_display():
             await page.goto('http://localhost:3000/login')
             await page.wait_for_timeout(2000)
             
-            await page.fill('input[type="text"]', 'مدير')
-            await page.fill('input[type="password"]', 'admin123')
-            await page.click('button[type="submit"]')
+            await page.fill('input[data-testid="login-username-input"]', 'مدير')
+            await page.click('button[data-testid="login-submit-button"]')
             await page.wait_for_timeout(3000)
             
             print("Login completed")

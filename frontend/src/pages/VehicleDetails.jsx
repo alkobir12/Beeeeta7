@@ -486,10 +486,10 @@ const VehicleDetails = () => {
   const currentStepIndex = statusSteps.findIndex(s => s.key === status);
 
   // Calculate totals
-  const totalParts = vehicle?.parts?.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)), 0) || 0;
-  // Services don't have explicit prices in the current model unless we map them or change structure.
-  // Assuming services might just be names for now or if we adapt them to be objects too.
-  // Based on current 'parts' array usage for both parts and services (itemType), the total is already captured there.
+  const totalParts = (selectedVisitItems || vehicle?.parts || []).reduce(
+    (sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)),
+    0
+  ) || 0;
   const totalVisits = visits.length;
   const totalOperations = vehicleOperations.length;
   const totalRevenue = vehicleOperations

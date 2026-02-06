@@ -677,7 +677,7 @@ const VehicleDetails = () => {
                           }
                           
                           try {
-                            const existing = vehicle.parts || [];
+                            const existing = selectedVisitItems || vehicle.parts || [];
                             const item = {
                               id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
                               itemType: newItem.itemType,

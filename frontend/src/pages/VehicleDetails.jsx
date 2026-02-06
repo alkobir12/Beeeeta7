@@ -784,20 +784,9 @@ const VehicleDetails = () => {
                   )}
                 </div>
 
-                {(!vehicle.services || vehicle.services.length === 0) ? (
-                  <p className="text-xs text-gray-500 mt-2">لا توجد خدمات مسجّلة.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {(vehicle.services || []).filter(Boolean).map((service, i) => (
-                      <span
-                        key={`service-${i}-${typeof service === 'string' ? service.slice(0,10) : i}`}
-                        className="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20"
-                      >
-                        {service}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* NOTE: services list is redundant now that visit items table includes services.
+                    Keeping a clean single source of truth to avoid duplicated display. */}
+                <p className="text-xs text-gray-500 mt-2">{t('vehicle_details.items_edit_hint') || 'يمكنك إضافة/تعديل الخدمات والقطع من جدول البنود أعلاه.'}</p>
               </div>
 
             {/* Approval Info Box */}

@@ -295,6 +295,137 @@ The NewVehicle -> VehicleDetails items table visibility re-testing confirms **SU
 
 ---
 
+## VehicleDetails Duplicate Service Display Removal Testing (2026-02-06)
+
+### Test Objective:
+Verify duplicate service display is removed in VehicleDetails as requested:
+1) Login as مدير
+2) Open a vehicle details page that has selectedVisitItems including a service
+3) Confirm services appear only in the items table and NOT again as blue chips list under the table
+4) Ensure hint text appears instead
+
+### Test Environment:
+- Frontend URL: http://localhost:3000
+- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Testing Date: 2026-02-06 08:51:00
+- Test Focus: Duplicate service display removal, hint text verification
+
+### Test Results Summary: ❌ DUPLICATE SERVICE DISPLAY ISSUE DETECTED
+
+#### ❌ VEHICLEDETAILS DUPLICATE SERVICE DISPLAY - ISSUES FOUND
+
+**Test Procedure Executed:**
+1. ✅ Login as مدير successful
+2. ✅ Navigation to vehicle details page successful (vehicle: dc2065b5-424a-4d92-9710-afdda1323def)
+3. ✅ Items table visibility confirmed with 1 service item
+4. ❌ **CRITICAL ISSUE**: Duplicate service display detected
+5. ❌ **MISSING**: Proper hint text not displayed
+
+**1. ✅ Login and Navigation Flow**
+- **Status**: ✅ WORKING (Seamless authentication and navigation)
+- **Login Process**: Successfully logged in with 'مدير' username
+- **Navigation**: Direct access to vehicle details page working correctly
+- **Page Load**: VehicleDetails page loads with complete UI including items table
+
+**2. ✅ Items Table Display**
+- **Status**: ✅ WORKING (selectedVisitItems properly displayed)
+- **Vehicle**: ت س ت 1234 (Toyota Camry 2024)
+- **Items Table**: Visible with service entry showing:
+  - Service Name: "فحمة كلتش 4JA1"
+  - Quantity: 1 (editable input field)
+  - Price: 150 ر.س (editable input field)
+  - Total: 150 ر.س (calculated correctly)
+- **selectedVisitItems Implementation**: ✅ Items properly loaded and displayed
+
+**3. ❌ CRITICAL ISSUE: Duplicate Service Display**
+- **Status**: ❌ FAILING - DUPLICATE SERVICES DETECTED
+- **Issue**: Service "فحمة كلتش 4JA1" appears both in items table AND as blue elements
+- **Blue Elements Found**: Multiple blue elements containing service data
+- **Impact**: Violates requirement that services should only appear in table
+- **Root Cause**: Blue chip/element display not properly removed
+
+**4. ❌ MISSING: Hint Text Display**
+- **Status**: ❌ FAILING - HINT TEXT NOT PROPERLY DISPLAYED
+- **Expected**: "يمكنك إضافة/تعديل الخدمات والقطع من جدول البنود أعلاه"
+- **Found**: "vehicle_details.items_edit_hint" (untranslated key)
+- **Issue**: Translation key not resolved to actual Arabic text
+- **Impact**: User guidance missing
+
+#### 🔧 TECHNICAL ISSUES IDENTIFIED
+
+**Duplicate Display Problem**: ❌ CRITICAL
+- Services appear in both the items table (correct) AND as blue elements (incorrect)
+- Blue elements contain service-related data that should not be displayed separately
+- Code comment indicates services list should be redundant, but implementation incomplete
+
+**Translation Issue**: ❌ MODERATE
+- Hint text shows translation key instead of actual Arabic text
+- Translation system not properly resolving "vehicle_details.items_edit_hint"
+- User experience degraded due to missing guidance text
+
+**Code Analysis Needed**: ⚠️ INVESTIGATION REQUIRED
+- VehicleDetails.jsx lines 787-789 show comment about redundant services list
+- Blue elements still rendering service data despite comment
+- Translation key not being resolved properly
+
+#### 📊 COMPREHENSIVE TEST RESULTS
+
+| Test Case | Status | Expected Result | Actual Result | Match |
+|-----------|--------|----------------|---------------|-------|
+| **Login as مدير** | ✅ WORKING | Successful authentication | Login successful, dashboard access | ✅ |
+| **Navigate to Vehicle Details** | ✅ WORKING | Page loads with items table | VehicleDetails loaded with service item | ✅ |
+| **Items Table Visibility** | ✅ WORKING | selectedVisitItems displayed | Table shows 1 service with quantity=1, price=150 | ✅ |
+| **No Duplicate Services** | ❌ FAILING | Services only in table | Services appear in table AND blue elements | ❌ |
+| **Hint Text Display** | ❌ FAILING | Arabic hint text shown | Translation key shown instead | ❌ |
+
+### 🎯 KEY FINDINGS
+
+**❌ CRITICAL ISSUES:**
+1. **Duplicate Service Display**: Services appear both in items table and as separate blue elements
+2. **Missing Hint Text**: Translation key not resolved to proper Arabic text
+3. **Incomplete Implementation**: Code comments indicate work in progress but not fully implemented
+
+**✅ WORKING COMPONENTS:**
+1. **Items Table**: Properly displays selectedVisitItems with correct data
+2. **Login/Navigation**: Authentication and page loading working correctly
+3. **Data Loading**: Service data correctly loaded and displayed in table
+
+**🔧 REQUIRED FIXES:**
+1. **Remove Blue Service Elements**: Eliminate duplicate service display outside the table
+2. **Fix Translation**: Resolve "vehicle_details.items_edit_hint" to proper Arabic text
+3. **Complete Implementation**: Finish the work indicated by code comments
+
+#### 🎉 CONCLUSION
+
+**Status: ❌ DUPLICATE SERVICE DISPLAY REMOVAL NOT COMPLETE**
+
+The VehicleDetails duplicate service display removal testing reveals **CRITICAL ISSUES** that need immediate attention:
+
+**❌ Core Issues Found:**
+1. ❌ Services appear both in items table AND as blue elements (duplicate display)
+2. ❌ Hint text shows translation key instead of proper Arabic text
+3. ❌ Implementation appears incomplete despite code comments
+
+**✅ Working Components:**
+- Items table properly displays selectedVisitItems
+- Service data correctly loaded (name, quantity, price)
+- Login and navigation functionality working
+
+**🔧 Immediate Action Required:**
+- Remove duplicate blue service elements/chips
+- Fix translation for "vehicle_details.items_edit_hint"
+- Complete the implementation to show only table + hint text
+
+**Recommendation**: The duplicate service display removal is **NOT COMPLETE** and requires immediate fixes to meet the specified requirements.
+
+### Artifacts:
+- Vehicle Tested: dc2065b5-424a-4d92-9710-afdda1323def (ت س ت 1234 - Toyota Camry 2024)
+- Service Item: "فحمة كلتش 4JA1" with quantity=1, price=150
+- Screenshots: vehicle_details_initial.png, vehicle_details_final.png
+- Issue: Duplicate service display + missing hint text translation
+
+---
+
 ## VehicleDetails Quantity Editing Testing (2026-02-06)
 
 ### Test Objective:

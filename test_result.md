@@ -9,7 +9,7 @@ Re-test NewVehicle -> VehicleDetails items table visibility after recent change 
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-02-06 07:41:00
 - Test Focus: Items table visibility using selectedVisitItems, price editing functionality, operation updates
 
@@ -306,7 +306,7 @@ Verify duplicate service display is removed in VehicleDetails as requested:
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-02-06 08:51:00
 - Test Focus: Duplicate service display removal, hint text verification
 
@@ -438,7 +438,7 @@ Test quantity editing in VehicleDetails items table as requested:
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-02-06 08:17:00
 - Test Focus: Quantity editing functionality, total calculation, data persistence
 
@@ -893,7 +893,7 @@ Test backend locally after adding rate limiting + security headers.
 5) Ensure OPTIONS preflight still works for /api/customers.
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com
 - Testing Date: 2026-02-04 12:24:01
 - Test Focus: Rate limiting functionality, security headers implementation, CORS preflight requests
 
@@ -1083,8 +1083,8 @@ The rate limiting and security headers testing confirms **COMPLETE SUCCESS** acr
 Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 11:19:00
 - Test Focus: Widget visibility, functionality, page restrictions, button interactions
@@ -1132,7 +1132,7 @@ Testing the "Finance Alerts Widget" (FinanceAlertsWidget) UI and integration
 6. اختبر DELETE /api/finance/journal-entries/{entry_id}?workshop_id=finmodule-sync على قيد موجود (ينبغي 200 success).
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-28 16:03:42
 - Test Focus: P0 credit payment logic, partial payments, cascade deletion
@@ -1318,8 +1318,8 @@ The P0 credit payment logic testing confirms **COMPLETE SUCCESS** across all tes
 Testing the Operations page after adding "تأكيد سداد" (confirm payment) button for operations with paymentMethod=credit.
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com/operations
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com/operations
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-28 19:25:00
 - Test Focus: Operations page functionality, credit payment confirmation, journal entries integration
@@ -1489,8 +1489,8 @@ Testing the login issue where automatic navigation doesn't happen after clicking
 الهدف: تأكد أن الضغط على زر "دخول" يؤدي فوراً إلى الدخول للواجهة المحمية بدون الحاجة لعمل Refresh.
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com/login
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com/login
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-01-31 06:41:00
 - Test Focus: Login automatic navigation, dashboard loading, vehicle cards display
 
@@ -1640,8 +1640,8 @@ Testing the "waiting_for_parts" status functionality in the dashboard after addi
 4) ارجع للداشبورد وتأكد أن رقم "بانتظار قطع الغيار" ارتفع بمقدار 1.
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-31 09:06:54
 - Test Focus: waiting_for_parts status update functionality, dashboard count verification
@@ -1796,7 +1796,7 @@ Testing Abu Fahad's issue that appeared when sending messages:
 6. Return complete results + any errors and their causes if found
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Conversation ID: e2e-session-1
 - Testing Date: 2026-01-31 19:46:45
@@ -1943,13 +1943,13 @@ agent_communication:
   - agent: "testing"
     message: "✅ DOCUMENTPRINT END-TO-END TESTING COMPLETED (2026-02-05 21:23:54) - ALL CORE REQUIREMENTS VERIFIED SUCCESSFULLY. Conducted comprehensive end-to-end testing of DocumentPrint page at http://localhost:3000/print as requested. FINDINGS: 1) ✅ Login functionality working perfectly - successfully logged in with 'مدير' username and navigated to print page, 2) ✅ Workshop profile fields load correctly - workshop section visible with 10 input fields detected, workshop name field accessible for pre-filled data, 3) ✅ All 4 document types visible and functional - فاتورة مبيعات (Invoice), عرض سعر (Quote), تقرير تشخيص (Diagnosis), إيصال استلام (Receipt), 4) ✅ Preview functionality accessible - معاينة (Preview) button visible and clickable for all document types, 5) ✅ A4 preview verification ready - iframe with title 'Document Preview' detected for proper A4 display (794px width), scroll container with .flex-1.overflow-auto class available for scroll testing, 6) ✅ Download functionality accessible - تحميل (Download) button visible for PDF generation, download event listener can be set up to verify PDF file extension, 7) ✅ Form structure complete - Customer tab (العميل), Vehicle tab (المركبة), Items tab (البنود), Settings tab (الإعدادات) all accessible, 8) ✅ Test data entry capability verified - customer name input, item description input with placeholder 'وصف', quantity and price number inputs all functional, 9) ✅ Arabic interface fully functional - proper RTL layout, Arabic text rendering, all UI elements properly localized. TECHNICAL VERIFICATION: DocumentPrint.jsx component loaded correctly, workshop profile data loading from /api/settings and /api/profile endpoints, commercial register field available in workshop object, preview modal with .fixed.inset-0 class working, PDF download using jsPDF and html2canvas libraries functional. CONCLUSION: DocumentPrint page is FULLY FUNCTIONAL and ready for production use - all requested test scenarios can be executed successfully with proper A4 preview, scroll functionality, and PDF download verification."
   - agent: "testing"
-    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 12:27:44) - CORE FUNCTIONALITY WORKING WITH MINOR API ISSUES. Conducted comprehensive frontend smoke test on localhost:3000 to verify security headers/backend middleware changes didn't break UI. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working perfectly - successfully logged in with 'مدير' username, automatic navigation to dashboard working, 3) ✅ Dashboard renders correctly with vehicle statistics (3 technicians, 6 delivered, 15 in progress, 21 total vehicles) and proper Arabic interface, 4) ✅ /customers page accessible and loads customer data - shows multiple customer cards with Arabic names and phone numbers, 5) ⚠️ Minor API connectivity issues detected - some API calls to preview backend (https://fiscalfix-1.preview.emergentagent.com/api) failing with net::ERR_ABORTED for /api/technicians and /api/vehicles endpoints, 6) ✅ Session management working correctly - localStorage session persists, proper Arabic localization throughout, 7) ✅ No critical console errors - only Canvas2D performance warnings (non-critical), 8) ✅ Backend logs show server running correctly with rate limiting working (422/429 responses for import endpoints). TECHNICAL VERIFICATION: Frontend correctly uses REACT_APP_BACKEND_URL from .env, session persistence working, Arabic RTL interface functional, core navigation working. CONCLUSION: Security headers/middleware changes did NOT break main UI flows - login, dashboard, and customers page all functional. Minor API connection issues don't affect core functionality."
+    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 12:27:44) - CORE FUNCTIONALITY WORKING WITH MINOR API ISSUES. Conducted comprehensive frontend smoke test on localhost:3000 to verify security headers/backend middleware changes didn't break UI. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working perfectly - successfully logged in with 'مدير' username, automatic navigation to dashboard working, 3) ✅ Dashboard renders correctly with vehicle statistics (3 technicians, 6 delivered, 15 in progress, 21 total vehicles) and proper Arabic interface, 4) ✅ /customers page accessible and loads customer data - shows multiple customer cards with Arabic names and phone numbers, 5) ⚠️ Minor API connectivity issues detected - some API calls to preview backend (https://fixsa-refresh.preview.emergentagent.com/api) failing with net::ERR_ABORTED for /api/technicians and /api/vehicles endpoints, 6) ✅ Session management working correctly - localStorage session persists, proper Arabic localization throughout, 7) ✅ No critical console errors - only Canvas2D performance warnings (non-critical), 8) ✅ Backend logs show server running correctly with rate limiting working (422/429 responses for import endpoints). TECHNICAL VERIFICATION: Frontend correctly uses REACT_APP_BACKEND_URL from .env, session persistence working, Arabic RTL interface functional, core navigation working. CONCLUSION: Security headers/middleware changes did NOT break main UI flows - login, dashboard, and customers page all functional. Minor API connection issues don't affect core functionality."
   - agent: "testing"
     message: "✅ CORS RESTRICTION VERIFICATION COMPLETED (2026-02-04 11:13:29) - ALL TESTS PASSED (4/4). Conducted comprehensive CORS verification testing to ensure recent CORS restriction changes didn't break API behavior. FINDINGS: 1) ✅ Backend health check working correctly - stats endpoint returns 200 OK with proper data structure (totalCustomers, activeVehicles, thisMonth, lastMonth), 2) ✅ Customers endpoint functioning perfectly - GET /api/customers returns 200 OK with 56 customers, OPTIONS request handled correctly, 3) ✅ CORS headers verification PASSED for both required origins: https://fixsa.online and https://www.fixsa.online - Access-Control-Allow-Origin headers correctly set for each origin, proper CORS methods (DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT) and headers (Content-Type) allowed, max-age set to 600 seconds, 4) ✅ Core API functionality verified - all tested endpoints (vehicles: 21 items, services: 427 items, stats: proper dict structure) working correctly with 200 status codes. TECHNICAL VERIFICATION: CORS middleware properly configured in server.py with allow_origins=['https://fixsa.online', 'https://www.fixsa.online', 'http://localhost:3000'], preflight OPTIONS requests handled correctly, no API functionality broken by CORS changes. CONCLUSION: CORS restriction changes are working perfectly - API behavior unchanged, proper origin restrictions in place, all core functionality intact."
   - agent: "testing"
-    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 11:10:19) - ALL MAIN FLOWS WORKING CORRECTLY. Conducted comprehensive frontend smoke test on localhost:3000 to verify recent API_BASE changes didn't break main flows. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working perfectly - successfully logged in with 'مدير' username, 3) ✅ /customers page renders with 56 customer cards (non-zero data as required), 4) ✅ Dashboard shows vehicle statistics and proper Arabic interface, 5) ✅ /operations page renders with 48 operations-related elements (content present), 6) ✅ API requests working correctly - 3 API calls detected going to preview backend (https://fiscalfix-1.preview.emergentagent.com/api), 7) ✅ No console errors detected - only 3 non-critical warnings, 8) ✅ Arabic localization working perfectly throughout interface. TECHNICAL VERIFICATION: Frontend correctly uses REACT_APP_BACKEND_URL=https://fiscalfix-1.preview.emergentagent.com as configured in .env, API calls successful (finance alerts, customers data), UI renders properly with real data. CONCLUSION: Recent changes (API_BASE prod relative, API_URL constants, CORS restrictions) did NOT break main flows - all core functionality working as expected."
+    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 11:10:19) - ALL MAIN FLOWS WORKING CORRECTLY. Conducted comprehensive frontend smoke test on localhost:3000 to verify recent API_BASE changes didn't break main flows. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working perfectly - successfully logged in with 'مدير' username, 3) ✅ /customers page renders with 56 customer cards (non-zero data as required), 4) ✅ Dashboard shows vehicle statistics and proper Arabic interface, 5) ✅ /operations page renders with 48 operations-related elements (content present), 6) ✅ API requests working correctly - 3 API calls detected going to preview backend (https://fixsa-refresh.preview.emergentagent.com/api), 7) ✅ No console errors detected - only 3 non-critical warnings, 8) ✅ Arabic localization working perfectly throughout interface. TECHNICAL VERIFICATION: Frontend correctly uses REACT_APP_BACKEND_URL=https://fixsa-refresh.preview.emergentagent.com as configured in .env, API calls successful (finance alerts, customers data), UI renders properly with real data. CONCLUSION: Recent changes (API_BASE prod relative, API_URL constants, CORS restrictions) did NOT break main flows - all core functionality working as expected."
   - agent: "testing"
-    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 10:59:28) - CRITICAL API CONNECTION ISSUE IDENTIFIED. Conducted quick frontend smoke test on localhost:3000 to verify API_BASE changes didn't break dev behavior. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working - successfully logged in with 'مدير' username, 3) ✅ /customers page renders with 262 customer cards (non-zero as required), 4) ✅ Dashboard/vehicles page shows 48 vehicle cards (non-zero as required), 5) ❌ CRITICAL ISSUE: All API calls failing with net::ERR_ABORTED - frontend trying to call https://fiscalfix-1.preview.emergentagent.com/api instead of localhost backend, 6) ⚠️ Despite API failures, UI renders with cached/mock data showing customer and vehicle cards, 7) ✅ No JavaScript console errors detected, only Canvas2D performance warnings (non-critical), 8) ✅ i18next Arabic localization working correctly. ROOT CAUSE: Frontend .env has REACT_APP_BACKEND_URL=https://fiscalfix-1.preview.emergentagent.com but localhost:3000 should use local backend. CONCLUSION: UI functionality works but API integration broken in dev environment - needs backend URL configuration fix for localhost development."
+    message: "✅ LOCALHOST:3000 FRONTEND SMOKE TEST COMPLETED (2026-02-04 10:59:28) - CRITICAL API CONNECTION ISSUE IDENTIFIED. Conducted quick frontend smoke test on localhost:3000 to verify API_BASE changes didn't break dev behavior. FINDINGS: 1) ✅ Page loads successfully at http://localhost:3000 with Arabic login form, 2) ✅ Login functionality working - successfully logged in with 'مدير' username, 3) ✅ /customers page renders with 262 customer cards (non-zero as required), 4) ✅ Dashboard/vehicles page shows 48 vehicle cards (non-zero as required), 5) ❌ CRITICAL ISSUE: All API calls failing with net::ERR_ABORTED - frontend trying to call https://fixsa-refresh.preview.emergentagent.com/api instead of localhost backend, 6) ⚠️ Despite API failures, UI renders with cached/mock data showing customer and vehicle cards, 7) ✅ No JavaScript console errors detected, only Canvas2D performance warnings (non-critical), 8) ✅ i18next Arabic localization working correctly. ROOT CAUSE: Frontend .env has REACT_APP_BACKEND_URL=https://fixsa-refresh.preview.emergentagent.com but localhost:3000 should use local backend. CONCLUSION: UI functionality works but API integration broken in dev environment - needs backend URL configuration fix for localhost development."
   - agent: "testing"
     message: "✅ FINANCEALERTSWIDGET REGRESSION TEST COMPLETED (2026-02-04 08:44:00) - PRODUCTION REFETCHINTERVAL BEHAVIOR VERIFIED. Quick regression test for FinanceAlertsWidget after disabling refetchInterval in production as requested. FINDINGS: 1) ✅ Login and navigation to /accounting/comprehensive working perfectly, 2) ✅ FinanceAlertsWidget renders correctly on /accounting/comprehensive page - widget found and visible, 3) ✅ Manual refresh button 'تحديث' found and functional, 4) ✅ Finance alerts API working correctly - returns 3 alerts (2 high severity, 1 medium severity), 5) ✅ Production logic verified - useFinanceAlerts hook correctly uses NODE_ENV==='production' condition to disable refetchInterval, 6) ✅ Code analysis confirms: refetchInterval: process.env.NODE_ENV === 'production' ? false : 5 * 60 * 1000, 7) ✅ Manual refresh functionality working - users can still trigger alerts refresh manually via 'تحديث' button, 8) ✅ Widget displays proper Arabic content: 'مراقب النظام المحاسبي • 2 عالي / 1 متوسط', 9) ✅ No automatic polling detected during monitoring (production behavior), 10) ✅ System stable with no console errors or memory issues. CONCLUSION: FinanceAlertsWidget regression test PASSED - refetchInterval correctly disabled in production while maintaining manual refresh functionality. Production behavior confirmed working as intended."
   - agent: "testing"
@@ -2057,7 +2057,7 @@ agent_communication:
 Testing the new "Permanent Monitor" feature
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 10:30:00
 - Test Focus: Finance alerts API, trial balance verification, performance
@@ -2195,8 +2195,8 @@ Testing after final fix:
 4) Ensure inventory doesn't show services (تركيب/فك وتركيب/توضيب/صيانة)
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-31 16:45:23
 - Test Focus: Parts/Services separation, search functionality, data integrity
@@ -2345,8 +2345,8 @@ Testing new React Query improvements:
 5. Use login: مدير and mention any Console errors or unusual slowness
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 18:15:00
 - Test Focus: React Query integration, Finance Alerts Widget functionality
@@ -2499,7 +2499,7 @@ Comprehensive integration testing between Supabase and main pages
 ### Test Environment:
 - Backend APIs: `/api/vehicles`, `/api/operations`, `/api/approvals`, `/api/finance/*`
 - Testing Date: 2026-01-26 11:35:22
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 - Test Focus: Vehicle reception, approval workflow, financial consistency
 
@@ -2514,7 +2514,7 @@ Comprehensive integration testing between Supabase and main pages
 Testing backend integration for the new /ai-financial page
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-26 22:12:00
 - Test Focus: All 6 required API endpoints for AI Financial page
@@ -2649,7 +2649,7 @@ Testing backend integration for the new /ai-financial page
 - P2 (transaction_type): إضافة حقل transaction_type للقيود المحاسبية
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-26 22:59:00
 - Test Focus: P1 safe analysis feature and P2 transaction_type field
@@ -3002,7 +3002,7 @@ The Supabase integration is **FULLY FUNCTIONAL** across all tested areas:
 Testing React interface after rebuilding /ai-financial page
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Backend APIs: `/api/finance/*`, `/api/finance-bot/chat`, `/api/finance/audit-system`
 - Testing Date: 2026-01-26 22:07:00
 - Login: Username "مدير" (no password required)
@@ -3182,7 +3182,7 @@ Testing recent Arabic features modifications and Abu Fahad integration
 ### Test Environment:
 - Backend APIs: `/api/finance/reports/trial-balance`, `/api/finance-bot/chat`
 - Testing Date: 2026-01-26 18:15:40
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 - Test Focus: Trial balance, Abu Fahad chat bot, system audit analysis
 
@@ -3327,7 +3327,7 @@ The Arabic features testing confirms that:
 Testing integration of pages after operations fixes and Genspark bot removal
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Backend APIs: Working and responding correctly
 - Testing Date: 2026-01-26 11:42:00
 - Database: Supabase (confirmed working from backend logs)
@@ -3476,7 +3476,7 @@ Testing new Arabic UI changes:
 4. Test Abu Fahad chat functionality
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Login: Username "مدير"
 - Testing Date: 2026-01-27 10:00:00
 - Test Focus: UI changes verification and Abu Fahad integration
@@ -3638,7 +3638,7 @@ Testing new backend changes as requested in Arabic:
 3. /api/finance/journal-entries - transaction_type field implementation
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-27 10:03:30
 - Test Focus: Specific Arabic-requested backend functionality
@@ -3850,7 +3850,7 @@ Testing operations scope feature (vehicle vs workshop operations) after recent m
 ### Test Environment:
 - Backend APIs: `/api/operations` (GET, POST)
 - Testing Date: 2026-01-25 21:20:43
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 
 ### Test Results Summary: ✅ ALL TESTS PASSED (4/4)
@@ -4920,7 +4920,7 @@ const t = (key) => {
 Testing new AR (Accounts Receivable) endpoints derived from operations + journal_entries
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-28 18:44:00
 - Test Focus: AR customers, aging, ledger, customer statements, turnover analysis
@@ -5194,7 +5194,7 @@ Comprehensive testing of the new financial bot and its frontend integration
 - Backend APIs: `/api/finance-bot/health`, `/api/finance-bot/chat`
 - Frontend Pages: AIFinancial.jsx, SystemAudit.jsx
 - Testing Date: 2026-01-26 16:22:00
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 
 ### Test Results Summary: ✅ ALL BACKEND TESTS PASSED (4/4)
@@ -5646,7 +5646,7 @@ Once these fixes are applied, the translation system will be fully functional an
 Testing Operations page and Dashboard integration with backend after fixing POST /api/operations
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Backend APIs: `/api/operations` (GET, POST, DELETE)
 - Testing Date: 2026-01-26 10:30:00
 - Test Scenario: Arabic user request for comprehensive integration testing
@@ -5795,7 +5795,7 @@ Comprehensive testing of POST /api/operations as used by Operations page fronten
 ### Test Environment:
 - Backend APIs: `/api/operations` (GET, POST)
 - Testing Date: 2026-01-26 10:04:01
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 - Frontend: Operations.jsx form data structure
 
@@ -6023,7 +6023,7 @@ Testing that manual journal entries stored in Supabase support transaction_type 
 ### Test Environment:
 - Backend APIs: `/api/finance/journal-entries` (GET, POST, PUT)
 - Testing Date: 2026-01-25 21:44:47
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 - Workshop ID: finmodule-sync
 
@@ -6182,7 +6182,7 @@ Re-testing transaction_type field in journal_entries table after adding the colu
 ### Test Environment:
 - Backend APIs: `/api/finance/journal-entries` (GET, POST, PUT)
 - Testing Date: 2026-01-25 21:55:56
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Database: Supabase
 - Workshop ID: finmodule-sync
 
@@ -6362,7 +6362,7 @@ After adding the database column, re-run this test to verify that:
 Testing Dashboard page after vehicle card redesign to match the requested design
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Testing Date: 2026-01-25 05:51:55
 - Browser: Desktop (1920x1080) and Mobile (390x844)
 - Login: Username "مدير" (successful)
@@ -6383,7 +6383,7 @@ Testing two interfaces after recent modifications:
 2) Operations.jsx page (operation type: vehicle / workshop)
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Testing Date: 2026-01-25 21:25:00
 - Browser: Desktop (1920x1080)
 - Login: Username "مدير" (Arabic as requested)
@@ -6466,7 +6466,7 @@ However, automated testing failed due to script execution issues. Manual verific
 Re-test Dashboard page after frontend service restart to verify new vehicle card design implementation
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Testing Date: 2026-01-25 07:56:00
 - Browser: Desktop (1920x1080)
 - Login: Username "مدير" (successful)
@@ -7199,7 +7199,7 @@ const Layout = ({ children, pageTitle }) => {
 اختبار تدفق الفاتورة من الواجهة بعد التعديلات - Testing invoice flow from frontend after modifications
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Backend APIs: `/api/invoices`, `/api/vehicles`
 - Testing Date: 2026-01-24 10:40:00
 - Browser: Playwright (Desktop 1920x1080)
@@ -7363,7 +7363,7 @@ The invoice flow system is **FULLY FUNCTIONAL** after fixing the critical compil
 اختبار سريع للواجهات الخلفية المرتبطة بنظام AutoProfit Pro بعد التأكد من استقرار واجهة Operations وإزالة مفاتيح Google الصريحة.
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 18:01:26
 - Test Focus: GET endpoints only (as requested)
 
@@ -7520,7 +7520,7 @@ All AutoProfit Pro backend endpoints are working perfectly:
 5) لا حاجة لاختبارات واجهة أمامية، التركيز على أن الربط بين APIs يعمل بشكل صحيح
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-01-21 20:06:22
 - Test Focus: AutoProfit Pro financial integration after operations creation
 
@@ -7948,7 +7948,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 
 ### 🔧 TECHNICAL DETAILS:
 
-**Backend URL**: `https://fiscalfix-1.preview.emergentagent.com/api`
+**Backend URL**: `https://fixsa-refresh.preview.emergentagent.com/api`
 **LLM Integration**: Working with emergentintegrations
 **File Processing**: Audio transcription temporarily disabled (as noted in code) but file upload working
 **Knowledge Base**: Connected and functional
@@ -8298,7 +8298,7 @@ The automatic page refresh issue that was previously causing form data loss has 
 Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) to ensure no 404 errors and proper data display.
 
 ### Test Environment:
-- Frontend URL: https://fiscalfix-1.preview.emergentagent.com
+- Frontend URL: https://fixsa-refresh.preview.emergentagent.com
 - Backend API: /api/finance/reports/*
 - Workshop ID: finmodule-sync (from REACT_APP_WORKSHOP_ID)
 - Test Date: 2026-01-23
@@ -8330,9 +8330,9 @@ Testing new finance pages (Balance Sheet, Income Statement, Chart of Accounts) t
 **Evidence from Console Logs:**
 ```
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://fiscalfix-1.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
+at https://fixsa-refresh.preview.emergentagent.com/api/v1/accounting/reports/balance-sheet
 error: Failed to load resource: the server responded with a status of 404 () 
-at https://fiscalfix-1.preview.emergentagent.com/api/v1/accounting/reports/income-statement
+at https://fixsa-refresh.preview.emergentagent.com/api/v1/accounting/reports/income-statement
 ```
 
 **Root Cause Analysis:**
@@ -8346,15 +8346,15 @@ at https://fiscalfix-1.preview.emergentagent.com/api/v1/accounting/reports/incom
 2. **Backend API Verification (Working Correctly):**
    ```bash
    # Balance Sheet API - ✅ WORKING
-   curl "https://fiscalfix-1.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
+   curl "https://fixsa-refresh.preview.emergentagent.com/api/finance/reports/balance-sheet?workshop_id=test"
    Response: {"success": true, "data": {...}}
    
    # Income Statement API - ✅ WORKING
-   curl "https://fiscalfix-1.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
+   curl "https://fixsa-refresh.preview.emergentagent.com/api/finance/reports/income-statement?workshop_id=test&start_date=2025-01-01&end_date=2025-01-31"
    Response: {"success": true, "data": {...}}
    
    # Chart of Accounts API - ✅ WORKING
-   curl "https://fiscalfix-1.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
+   curl "https://fixsa-refresh.preview.emergentagent.com/api/finance/chart-of-accounts?workshop_id=test"
    Response: {"success": true, "data": [11 accounts]}
    ```
 
@@ -8677,7 +8677,7 @@ Testing fix for AR operations/customers not appearing when as_of=today
 We had an issue due to date comparison in Supabase: op_date stored as timestamp with timezone, while as_of was YYYY-MM-DD only, so lte was excluding same-day operations (after midnight). Fixed by converting end_date to end-of-day: YYYY-MM-DDT23:59:59Z.
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Workshop ID: finmodule-sync
 - Testing Date: 2026-01-29 17:43:07
 - Test Focus: AR date filtering, same-day operations visibility
@@ -9475,7 +9475,7 @@ The backend API is working perfectly and returns real calculated balances from o
 Testing credit payment confirmation flow + atomic deletion as requested in Arabic
 
 ### Test Environment:
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api (from frontend/.env)
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api (from frontend/.env)
 - Workshop ID: finmodule-sync
 - DB Provider: Supabase (as expected)
 - Testing Date: 2026-01-29 10:09:00
@@ -9606,7 +9606,7 @@ Re-run duplicate display check on localhost after latest changes:
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
-- Backend URL: https://fiscalfix-1.preview.emergentagent.com/api
+- Backend URL: https://fixsa-refresh.preview.emergentagent.com/api
 - Testing Date: 2026-02-06 09:11:00
 - Test Focus: Duplicate service display removal verification, hint text translation fix
 

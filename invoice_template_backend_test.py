@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BASE_URL = "https://fiscalfix-1.preview.emergentagent.com/api"
+BASE_URL = "https://fixsa-refresh.preview.emergentagent.com/api"
 
 # Test results tracking
 tests_passed = 0

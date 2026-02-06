@@ -132,7 +132,7 @@ async def test_duplicate_display():
             
         except Exception as error:
             print(f'Test failed with error: {error}')
-            await page.screenshot(path='.screenshots/error_state.png', quality=40, full_page=False)
+            await page.screenshot(path='.screenshots/error_state.png', full_page=False)
             return None
         finally:
             await browser.close()

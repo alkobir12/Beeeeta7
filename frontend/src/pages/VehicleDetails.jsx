@@ -723,7 +723,20 @@ const VehicleDetails = () => {
                                 {it.itemType === 'part' ? 'قطعة غيار' : 'خدمة'}
                               </td>
                               <td className="p-2 text-gray-200 font-medium">{it.name}</td>
-                              <td className="p-2 text-gray-400">{it.quantity || 1}</td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  className="w-16 px-2 py-1 text-xs border border-gray-700 bg-gray-800 rounded text-white"
+                                  value={it.quantity ?? 1}
+                                  onChange={(e) => {
+                                    const newQty = Math.max(1, Number(e.target.value) || 1);
+                                    const updatedParts = [...(selectedVisitItems || [])];
+                                    updatedParts[idx] = { ...updatedParts[idx], quantity: newQty };
+                                    updatePartsLocally(updatedParts);
+                                  }}
+                                />
+                              </td>
                               <td className="p-2">
                                 <input
                                   type="number"

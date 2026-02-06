@@ -285,7 +285,7 @@ const NewVehicle = () => {
                     
                     // Save to services database for future use
                     try {
-                      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services`, {
+                      await fetch(`${API_URL}/services`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

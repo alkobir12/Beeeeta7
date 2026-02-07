@@ -1,27 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, X, Loader2, Search, ClipboardList, FileText, Receipt } from 'lucide-react';
+import { MessageCircle, X, Loader2, Search, ClipboardList, FileText, Receipt, Send, Wrench, Bot, AlertCircle } from 'lucide-react';
 import { aiAPI, vehicleAPI } from '../services/api';
 
-// ويدجت مساعد الورشة الذكي العائم - يظهر في كل الصفحات داخل Layout
+// ويدجت مساعد الورشة الذكي العائم - تصميم Dark/Glass مطابق لثيم الموقع
 const ChatWidget = () => {
   const navigate = useNavigate();
+  const messagesEndRef = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState('diagnosis'); // 'diagnosis' | 'technical' | 'invoice'
+  const [mode, setMode] = useState('chat'); // 'chat' | 'diagnosis' | 'technical' | 'invoice'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [info, setInfo] = useState(null);
-
+  
   // بيانات التشخيص
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [vehicles, setVehicles] = useState([]);
   const [symptoms, setSymptoms] = useState('');
-  const [diagnosisResult, setDiagnosisResult] = useState(null);
-
-  // بحث تقني عام
-  const [techQuery, setTechQuery] = useState('');
-  const [techResult, setTechResult] = useState(null);
+  
+  // المحادثة الحرة (أبو فهد)
+  const [chatInput, setChatInput] = useState('');
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'يا هلا! أنا أبو فهد، مدير خدمة العملاء. آمرني وش بغيت؟' }
+  ]);
 
   // عند فتح الودجت لأول مرة: جلب قائمة المركبات
   useEffect(() => {
@@ -29,19 +30,52 @@ const ChatWidget = () => {
 
     const fetchMeta = async () => {
       try {
-        setError('');
         const [vehiclesRes] = await Promise.all([
           vehicleAPI.getAll(),
         ]);
         setVehicles(vehiclesRes.data || []);
       } catch (e) {
         console.error('Workshop AI meta error', e);
-        setError('تعذر الاتصال بمساعد الورشة الذكي. تأكد من عمل الخادم ثم أعد المحاولة.');
       }
     };
 
     fetchMeta();
   }, [isOpen]);
+
+  // التمرير التلقائي لآخر رسالة
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, mode]);
+
+  const handleSendMessage = async (e) => {
+    e?.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMsg = chatInput;
+    setChatInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setLoading(true);
+
+    try {
+      // إرسال الرسالة إلى أبو فهد (AlKabeer Bot)
+      const res = await aiAPI.alkabeerChat({ message: userMsg });
+      
+      const botResponse = res.data.response;
+      const isDevMode = res.data.mode === 'dev';
+      
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: botResponse,
+        isDev: isDevMode
+      }]);
+
+    } catch (e) {
+      console.error('Chat error', e);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'المعذرة، صار عندي مشكلة بسيطة. حاول مرة ثانية لا هنت.' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRunDiagnosis = async () => {
     if (!selectedVehicleId && !symptoms.trim()) {
@@ -51,15 +85,18 @@ const ChatWidget = () => {
 
     setLoading(true);
     setError('');
-    setDiagnosisResult(null);
+    
+    // إضافة طلب التشخيص كرسالة مستخدم
+    let vehicle = null;
+    if (selectedVehicleId) {
+      vehicle = vehicles.find((v) => v.id === selectedVehicleId) || null;
+    }
+    
+    const userText = `تشخيص عطل:\nالمركبة: ${vehicle ? `${vehicle.brand} ${vehicle.model}` : 'غير محدد'}\nالأعراض: ${symptoms}`;
+    setMessages(prev => [...prev, { role: 'user', content: userText }]);
+    setMode('chat'); // التحويل لوضع الشات لعرض النتيجة
 
     try {
-      let vehicle = null;
-      if (selectedVehicleId) {
-        vehicle = vehicles.find((v) => v.id === selectedVehicleId) || null;
-      }
-
-      // Construct message for AlKabeer Bot
       const message = `تشخيص عطل:
       المركبة: ${vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : 'غير محددة'}
       الوقود: ${vehicle?.fuelType || 'غير محدد'}
@@ -68,40 +105,17 @@ const ChatWidget = () => {
       يرجى تحليل المشكلة واقتراح الحلول وقطع الغيار المناسبة حسب خبرتك يا أبو فهد.`;
 
       const res = await aiAPI.alkabeerChat({ message });
-      // Map response to match existing UI expectation (diagnosis field)
-      setDiagnosisResult({ diagnosis: res.data.response, local_manuals_found: [] });
+      setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }]);
+      setSymptoms(''); // مسح الحقل بعد الإرسال
     } catch (e) {
       console.error('Diagnosis error', e);
-      setError('حدث خطأ أثناء طلب التشخيص. حاول مرة أخرى.');
+      setMessages(prev => [...prev, { role: 'assistant', content: 'واجهت مشكلة أثناء التشخيص. يرجى المحاولة لاحقاً.' }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRunTechnicalSearch = async () => {
-    if (!techQuery.trim()) {
-      setError('اكتب وصفاً تقنياً أو كلمة مفتاحية للبحث.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    setTechResult(null);
-    try {
-      const message = `سؤال تقني: ${techQuery}
-      
-      أجب كخبير فني (أبو فهد) باللهجة القصيمية وقدم معلومات دقيقة.`;
-      
-      const res = await aiAPI.alkabeerChat({ message });
-      setTechResult({ ai_analysis: res.data.response, local_manuals: [] });
-    } catch (e) {
-      console.error('Technical search error', e);
-      setError('تعذر تنفيذ البحث التقني حالياً.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // تحديد المركبة الحالية من عنوان الصفحة مثل /vehicle/:id
+  // تحديد المركبة الحالية من عنوان الصفحة
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
   const currentVehicleIdFromPath = useMemo(() => {
     const match = currentPath.match(/^\/vehicle\/(.+)$/);
@@ -113,350 +127,307 @@ const ChatWidget = () => {
     [vehicles, currentVehicleIdFromPath]
   );
 
-  // اقتراح نوع المستند تلقائياً بناءً على حالة المركبة
-  const suggestedDocType = useMemo(() => {
-    if (!currentVehicle) return null;
-    const status = currentVehicle.status || '';
-    if (status === 'diagnosis') return 'diagnosis';
-    if (status === 'quotation') return 'quote';
-    if (status === 'ready' || status === 'delivered') return 'invoice';
-    return null;
-  }, [currentVehicle]);
-
-  // لا نظهر الودجت داخل شاشة تسجيل الدخول أو الشاشات العامة (approval/report)
-  if (typeof window !== 'undefined') {
-    const path = window.location.pathname;
-    if (
-      path.startsWith('/login') ||
-      path.startsWith('/approval') ||
-      path.startsWith('/report') ||
-      path.startsWith('/track')
-    ) {
-      return null;
-    }
-  }
-
   const goToPrint = (type, vehicleId) => {
     if (!vehicleId) return;
     setIsOpen(false);
     navigate(`/print?type=${encodeURIComponent(type)}&vehicleId=${encodeURIComponent(vehicleId)}`);
   };
 
-  const suggestedDocLabel =
-    suggestedDocType === 'diagnosis'
-      ? 'تقرير تشخيص'
-      : suggestedDocType === 'quote'
-      ? 'عرض سعر'
-      : suggestedDocType === 'invoice'
-      ? 'فاتورة مبيعات'
-      : null;
+  // لا نظهر الودجت داخل شاشات معينة
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname;
+    if (path.startsWith('/login') || path.startsWith('/approval') || path.startsWith('/report') || path.startsWith('/track')) {
+      return null;
+    }
+  }
 
   return (
     <>
-      {/* زر عائم لفتح/إغلاق المساعد */}
+      {/* زر عائم */}
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="fixed z-40 bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-xl border border-white/10"
+        className="fixed z-50 bottom-6 left-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all hover:scale-110 active:scale-95 group border border-blue-400/30 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+        }}
       >
-        {isOpen ? <X size={22} /> : <MessageCircle size={26} />}
+        <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors" />
+        {isOpen ? (
+          <X size={24} className="text-white relative z-10" />
+        ) : (
+          <Bot size={28} className="text-blue-400 group-hover:text-blue-300 relative z-10" />
+        )}
+        {/* نبض إشعار */}
+        {!isOpen && (
+          <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]" />
+        )}
       </button>
 
       {/* نافذة المساعد */}
       {isOpen && (
-        <div className="fixed z-40 bottom-24 left-4 w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-          {/* رأس النافذة */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-blue-600 to-blue-700 text-white">
-            <div className="flex items-center gap-2">
-              <div className="bg-white/15 rounded-full w-8 h-8 flex items-center justify-center">
-                <MessageCircle size={18} />
+        <div 
+          className="fixed z-50 bottom-24 left-6 w-[360px] sm:w-[400px] rounded-2xl flex flex-col overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-slate-700/50 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-300"
+          style={{
+            background: 'rgba(15, 23, 42, 0.95)',
+            height: '600px',
+            maxHeight: '80vh'
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50 bg-slate-900/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10">
+                <Bot size={20} className="text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold">مساعد الورشة الذكي</span>
-                <span className="text-[11px] text-white/80">تشخيص – بحث تقني – مساعدة في اختيار الفاتورة</span>
+                <span className="text-sm font-bold text-white">أبو فهد</span>
+                <span className="text-[10px] text-blue-200/70 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  مدير الورشة الذكي
+                </span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setMessages([])} 
+                className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors text-[10px]"
+                title="مسح المحادثة"
+              >
+                مسح
+              </button>
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
-          {/* شريط الأوضاع */}
-          <div className="flex text-xs border-b border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('diagnosis');
-                setError('');
-              }}
-              className={`flex-1 px-3 py-2 flex items-center justify-center gap-1 border-e border-slate-200 ${
-                mode === 'diagnosis' ? 'bg-white text-blue-700 font-semibold' : 'text-slate-600'
-              }`}
-            >
-              <ClipboardList size={14} />
-              <span>تشخيص مركبة</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('technical');
-                setError('');
-              }}
-              className={`flex-1 px-3 py-2 flex items-center justify-center gap-1 border-e border-slate-200 ${
-                mode === 'technical' ? 'bg-white text-blue-700 font-semibold' : 'text-slate-600'
-              }`}
-            >
-              <Search size={14} />
-              <span>بحث تقني</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('invoice');
-                setError('');
-              }}
-              className={`flex-1 px-3 py-2 flex items-center justify-center gap-1 ${
-                mode === 'invoice' ? 'bg-white text-blue-700 font-semibold' : 'text-slate-600'
-              }`}
-            >
-              <FileText size={14} />
-              <span>مساعدة فاتورة</span>
-            </button>
+          {/* Navigation Tabs */}
+          <div className="flex p-1 gap-1 bg-slate-900/30 m-2 rounded-xl border border-slate-800/50">
+            {[
+              { id: 'chat', icon: MessageCircle, label: 'محادثة' },
+              { id: 'diagnosis', icon: Wrench, label: 'تشخيص' },
+              { id: 'invoice', icon: Receipt, label: 'فاتورة' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setMode(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  mode === tab.id 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                }`}
+              >
+                <tab.icon size={14} />
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* محتوى النافذة */}
-          <div className="p-3 max-h-96 overflow-y-auto text-[13px] space-y-3">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-md px-3 py-2 text-xs">
-                {error}
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden relative">
+            
+            {/* Mode: CHAT */}
+            {mode === 'chat' && (
+              <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                  {messages.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div 
+                        className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${
+                          msg.role === 'user' 
+                            ? 'bg-blue-600 text-white rounded-br-none' 
+                            : msg.isDev 
+                              ? 'bg-purple-900/40 border border-purple-500/30 text-purple-100 rounded-bl-none'
+                              : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+                        }`}
+                      >
+                        {msg.isDev && <div className="text-[10px] font-bold text-purple-400 mb-1">🛠️ وضع المطور</div>}
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {loading && (
+                    <div className="flex justify-start">
+                      <div className="bg-slate-800 rounded-2xl rounded-bl-none p-3 border border-slate-700">
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+                
+                <div className="p-3 bg-slate-900/50 border-t border-slate-800">
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="اكتب رسالتك لأبو فهد..."
+                      className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading || !chatInput.trim()}
+                      className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Send size={18} />
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
 
-            {/* تنبيه حالة مفتاح Genspark */}
-            {/* تم إزالة تنبيه Genspark – المساعد يعمل الآن بالاعتماد على مصادر الورشة الداخلية فقط */}
-
+            {/* Mode: DIAGNOSIS */}
             {mode === 'diagnosis' && (
-              <>
-                <p className="text-slate-700 mb-1">
-                  اختر مركبة من القائمة أو اكتب الأعراض مباشرة لمساعدتك في التشخيص.
-                </p>
-
-                <label className="block text-xs text-slate-600 mb-1">المركبة</label>
-                <select
-                  className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                >
-                  <option value="">— بدون اختيار —</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.plateNumber || v.trackingLink} — {v.brand || v.make} {v.model}
-                    </option>
-                  ))}
-                </select>
-
-                <label className="block text-xs text-slate-600 mt-2 mb-1">الأعراض / الشكوى</label>
-                <textarea
-                  className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs min-h-[70px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="مثال: صعوبة في التشغيل صباحاً، دخان أسود من العادم، استهلاك وقود عالي"
-                  value={symptoms}
-                  onChange={(e) => setSymptoms(e.target.value)}
-                />
-
-                <button
-                  type="button"
-                  onClick={handleRunDiagnosis}
-                  disabled={loading}
-                  className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white py-1.5 text-xs font-semibold disabled:opacity-60"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={14} /> : <ClipboardList size={14} />}
-                  <span>تشخيص الآن</span>
-                </button>
-
-                {diagnosisResult && (
-                  <div className="mt-3 bg-slate-50 border border-slate-200 rounded-md p-2.5 max-h-40 overflow-y-auto">
-                    <p className="text-[11px] text-slate-800 whitespace-pre-wrap leading-relaxed">
-                      {diagnosisResult.diagnosis || 'لم يتم استلام تشخيص من العميل الذكي.'}
-                    </p>
-                    {Array.isArray(diagnosisResult.local_manuals_found) &&
-                      diagnosisResult.local_manuals_found.length > 0 && (
-                        <div className="mt-2 border-t pt-2 border-slate-200">
-                          <div className="text-[11px] font-semibold mb-1 text-slate-700">
-                            كتيبات ذات صلة:
-                          </div>
-                          <ul className="list-disc pr-4 text-[11px] text-slate-700 space-y-0.5">
-                            {diagnosisResult.local_manuals_found.map((m) => (
-                              <li key={m.manual_id}>
-                                {m.name} — {m.engine}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+              <div className="h-full overflow-y-auto p-4 space-y-4">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-xs text-blue-200">
+                  <div className="flex items-center gap-2 mb-1 font-semibold text-blue-400">
+                    <ClipboardList size={14} />
+                    مساعد التشخيص
                   </div>
-                )}
-              </>
+                  اختر مركبة واكتب الأعراض ليقوم أبو فهد بتحليل المشكلة.
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">المركبة</label>
+                    <select
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
+                      value={selectedVehicleId}
+                      onChange={(e) => setSelectedVehicleId(e.target.value)}
+                    >
+                      <option value="">— اختر من القائمة —</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.plateNumber} — {v.brand} {v.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">الأعراض / الشكوى</label>
+                    <textarea
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white min-h-[100px] focus:outline-none focus:border-blue-500 placeholder-slate-600 resize-none"
+                      placeholder="مثال: السيارة تنتع عند سرعة 80، دخان أسود، صوت طقطقة..."
+                      value={symptoms}
+                      onChange={(e) => setSymptoms(e.target.value)}
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="text-red-400 text-xs flex items-center gap-1.5 bg-red-900/20 p-2 rounded-lg border border-red-900/30">
+                      <AlertCircle size={14} /> {error}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleRunDiagnosis}
+                    disabled={loading}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <Wrench size={16} />}
+                    تحليل العطل
+                  </button>
+                </div>
+              </div>
             )}
 
-            {mode === 'technical' && (
-              <>
-                <p className="text-slate-700 mb-1">
-                  اكتب مشكلة تقنية أو مكوّناً (مثلاً: مضخة الحقن، DPF، تيربو...) لعرض معلومات وكتيبات ذات صلة.
-                </p>
-                <textarea
-                  className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs min-h-[70px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="مثال: مضخة الحقن تويوتا لاند كروزر ديزل"
-                  value={techQuery}
-                  onChange={(e) => setTechQuery(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={handleRunTechnicalSearch}
-                  disabled={loading}
-                  className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white py-1.5 text-xs font-semibold disabled:opacity-60"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={14} /> : <Search size={14} />}
-                  <span>بحث تقني</span>
-                </button>
-
-                {techResult && (
-                  <div className="mt-3 bg-slate-50 border border-slate-200 rounded-md p-2.5 max-h-40 overflow-y-auto space-y-2">
-                    <p className="text-[11px] text-slate-800 whitespace-pre-wrap leading-relaxed">
-                      {techResult.ai_analysis || 'لم يتم استلام تحليل من العميل الذكي.'}
-                    </p>
-                    {Array.isArray(techResult.local_manuals) && techResult.local_manuals.length > 0 && (
-                      <div className="border-t pt-2 border-slate-200">
-                        <div className="text-[11px] font-semibold mb-1 text-slate-700">كتيبات محلية:</div>
-                        <ul className="list-disc pr-4 text-[11px] text-slate-700 space-y-0.5">
-                          {techResult.local_manuals.map((m) => (
-                            <li key={m.manual_id}>
-                              {m.name} — {m.engine}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
+            {/* Mode: INVOICE */}
             {mode === 'invoice' && (
-              <>
+              <div className="h-full overflow-y-auto p-4 space-y-4">
                 {currentVehicle ? (
                   <>
-                    <p className="text-slate-700 mb-2">
-                      أنت حالياً في صفحة مركبة رقم{' '}
-                      <span className="font-semibold">{currentVehicle.plateNumber || currentVehicle.trackingLink}</span>.
-                      اختر نوع المستند الذي تريد طباعته لهذه المركبة:
-                    </p>
-                    <div className="bg-slate-50 border border-slate-200 rounded-md p-2.5 mb-2 text-[12px]">
-                      <div className="font-semibold mb-1 text-slate-800">ملخص سريع:</div>
-                      <div className="space-y-1 text-slate-700">
-                        <div>
-                          العميل: <span className="font-medium">{currentVehicle.customerName || '-'}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                        <Receipt size={16} className="text-green-400" />
+                        المركبة الحالية
+                      </h3>
+                      <div className="space-y-2 text-xs text-slate-300">
+                        <div className="flex justify-between">
+                          <span>اللوحة:</span>
+                          <span className="text-white font-mono">{currentVehicle.plateNumber}</span>
                         </div>
-                        <div>
-                          السيارة:{' '}
-                          <span className="font-medium">
-                            {[currentVehicle.brand, currentVehicle.model, currentVehicle.year]
-                              .filter(Boolean)
-                              .join(' ')}{' '}
-                            — {currentVehicle.plateNumber || '-'}
-                          </span>
+                        <div className="flex justify-between">
+                          <span>النوع:</span>
+                          <span className="text-white">{currentVehicle.brand} {currentVehicle.model}</span>
                         </div>
-                        <div>
-                          الحالة الحالية:{' '}
-                          <span className="font-medium">{currentVehicle.status || 'غير محددة'}</span>
+                        <div className="flex justify-between">
+                          <span>العميل:</span>
+                          <span className="text-white">{currentVehicle.customerName}</span>
                         </div>
-                        {suggestedDocType && (
-                          <div className="text-[11px] text-blue-700 mt-1">
-                            اقتراح مساعد: الأنسب الآن هو{' '}
-                            <span className="font-semibold">{suggestedDocLabel}</span>
-                            {suggestedDocType === 'diagnosis'
-                              ? ' (الحالة ما زالت في مرحلة التشخيص).'
-                              : suggestedDocType === 'quote'
-                              ? ' (المركبة في مرحلة التسعير، مناسب لإرسال عرض سعر للعميل).'
-                              : ' (المركبة جاهزة/مسلمة، مناسب لإصدار فاتورة نهائية).'}
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="space-y-2">
                       <button
-                        type="button"
                         onClick={() => goToPrint('diagnosis', currentVehicle.id)}
-                        className="w-full inline-flex items-center justify-between rounded-md border border-orange-200 bg-orange-50 hover:bg-orange-100 px-3 py-2 text-[12px] text-orange-900"
+                        className="w-full p-3 rounded-xl border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-colors flex items-center justify-between group"
                       >
-                        <div className="flex items-center gap-2">
-                          <ClipboardList size={16} />
-                          <div className="flex flex-col items-start">
-                            <span className="font-semibold">تقرير تشخيص</span>
-                            <span className="text-[10px] text-orange-800/80">
-                              يستخدم للأعطال والتقارير قبل الإصلاح
-                            </span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:text-orange-300">
+                            <ClipboardList size={18} />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-slate-200">تقرير تشخيص</div>
+                            <div className="text-[10px] text-slate-500">قبل الإصلاح</div>
                           </div>
                         </div>
-                        <span className="text-[11px]">طباعة</span>
+                        <Send size={16} className="text-slate-600 group-hover:text-slate-400" />
                       </button>
 
                       <button
-                        type="button"
-                        onClick={() => goToPrint('invoice', currentVehicle.id)}
-                        className="w-full inline-flex items-center justify-between rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-2 text-[12px] text-blue-900"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Receipt size={16} />
-                          <div className="flex flex-col items-start">
-                            <span className="font-semibold">فاتورة مبيعات</span>
-                            <span className="text-[10px] text-blue-800/80">
-                              بعد اعتماد العميل وإنهاء العمل
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-[11px]">طباعة</span>
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={() => goToPrint('quote', currentVehicle.id)}
-                        className="w-full inline-flex items-center justify-between rounded-md border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 text-[12px] text-green-900"
+                        className="w-full p-3 rounded-xl border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-colors flex items-center justify-between group"
                       >
-                        <div className="flex items-center gap-2">
-                          <FileText size={16} />
-                          <div className="flex flex-col items-start">
-                            <span className="font-semibold">عرض سعر</span>
-                            <span className="text-[10px] text-green-800/80">
-                              قبل الإصلاح أو لإرسال عرض مكتوب للعميل
-                            </span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:text-blue-300">
+                            <FileText size={18} />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-slate-200">عرض سعر</div>
+                            <div className="text-[10px] text-slate-500">للموافقة</div>
                           </div>
                         </div>
-                        <span className="text-[11px]">طباعة</span>
+                        <Send size={16} className="text-slate-600 group-hover:text-slate-400" />
+                      </button>
+
+                      <button
+                        onClick={() => goToPrint('invoice', currentVehicle.id)}
+                        className="w-full p-3 rounded-xl border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-colors flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:text-green-300">
+                            <Receipt size={18} />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-slate-200">فاتورة ضريبية</div>
+                            <div className="text-[10px] text-slate-500">نهائية</div>
+                          </div>
+                        </div>
+                        <Send size={16} className="text-slate-600 group-hover:text-slate-400" />
                       </button>
                     </div>
                   </>
                 ) : (
-                  <>
-                    <p className="text-slate-700 mb-2">
-                      لا يمكن تحديد مركبة حالياً.
+                  <div className="flex flex-col items-center justify-center h-48 text-center text-slate-500 px-4">
+                    <Receipt size={32} className="mb-2 opacity-50" />
+                    <p className="text-xs">
+                      ادخل على صفحة "تفاصيل المركبة" لتفعيل خيارات الطباعة والفواتير لهذه المركبة.
                     </p>
-                    <p className="text-[12px] text-slate-600 mb-2">
-                      لتمكين مساعد الفاتورة:
-                    </p>
-                    <ol className="list-decimal pr-4 text-[12px] text-slate-600 space-y-1">
-                      <li>اذهب إلى صفحة &quot;تفاصيل المركبة&quot; للمركبة المطلوبة.</li>
-                      <li>افتح مساعد الورشة الذكي من الزر العائم في الأسفل.</li>
-                      <li>اختر تبويب &quot;مساعدة فاتورة&quot; ليقترح عليك النوع المناسب ويحولك لصفحة الطباعة.</li>
-                    </ol>
-                  </>
+                  </div>
                 )}
-              </>
+              </div>
             )}
+
           </div>
         </div>
       )}

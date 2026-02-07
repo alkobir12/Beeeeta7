@@ -9,6 +9,8 @@ import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
 
+// Updated icons imports
+
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,14 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Plus, Trash2, FileText, Download, Eye, Loader2, Printer,
-  Receipt, ClipboardList, FileCheck, Car, Save, Check
-
-// PDF export uses dynamic imports of jspdf + html2canvas (already in dependencies)
-
+  Receipt, ClipboardList, FileCheck, Car, Save, Check, Share2
 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { downloadPDF } from '../utils/pdfGenerator'; // New utility
 
 const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -23,8 +21,10 @@ const DocumentPrint = () => {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const [searchParams] = useSearchParams();
+  const previewRef = useRef(null);
   
   const [loading, setLoading] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [previewHtml, setPreviewHtml] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [workshopSettings, setWorkshopSettings] = useState(null);
@@ -101,7 +101,6 @@ const DocumentPrint = () => {
     }
   }, [vehicleId, operationId, invoiceId]);
 
-  // عند التحميل، نقرأ printDefaults إن وجدت
   useEffect(() => {
     const loadPrintDefaults = async () => {
       try {
@@ -119,7 +118,7 @@ const DocumentPrint = () => {
           }));
         }
       } catch (e) {
-        // تجاهل أي خطأ في قراءة الإعدادات، ليست حرجة
+        // ignore
       }
     };
 
@@ -128,7 +127,6 @@ const DocumentPrint = () => {
 
   const loadWorkshopSettings = async () => {
     try {
-      // نجلب إعدادات النظام + ملف الورشة، ونعطي أولوية لبيانات "ملف الورشة"
       const [settingsRes, profileRes] = await Promise.all([
         axios.get(`${API_URL}/settings`),
         axios.get(`${API_URL}/profile`).catch(() => ({ data: null })),
@@ -141,7 +139,6 @@ const DocumentPrint = () => {
       setFormData(prev => ({
         ...prev,
         workshop: {
-          // الاسم من ملف الورشة، وإن لم يوجد من الإعدادات القديمة
           name: profile.name || data.workshopName || '',
           name_en: profile.nameEnglish || data.workshopNameEn || '',
           address: profile.address || data.address || '',
@@ -149,7 +146,6 @@ const DocumentPrint = () => {
           email: profile.email || data.email || '',
           website: data.website || '',
           tax_number: profile.taxNumber || data.taxNumber || '',
-          // الشعار والسلوقان الجديدين
           logo: profile.logo || '',
           slogan: profile.slogan || '',
           slogan_en: profile.sloganEnglish || '',
@@ -165,7 +161,6 @@ const DocumentPrint = () => {
     try {
       const { data } = await axios.get(`${API_URL}/vehicles/${id}`);
       if (data) {
-        // تحويل البنود (parts) إلى تنسيق المستند
         const vehicleParts = data.parts || [];
         const itemsFromParts = vehicleParts.map(part => ({
           description: part.name || part.description || '',
@@ -174,7 +169,6 @@ const DocumentPrint = () => {
           discount: 0
         }));
 
-        // إذا لم توجد بنود، استخدم الخدمات
         const finalItems = itemsFromParts.length > 0 
           ? itemsFromParts 
           : (data.services || []).map(s => ({
@@ -214,7 +208,6 @@ const DocumentPrint = () => {
       const { data } = await axios.get(`${API_URL}/approvals?vehicle_id=${id}`);
       if (!Array.isArray(data) || data.length === 0) return;
 
-      // نفضل الموافقات المعتمدة، وإن لم توجد نأخذ أحدث أي طلب
       const approved = data.filter(a => (a.status || '').toLowerCase() === 'approved');
       const candidates = approved.length > 0 ? approved : data;
 
@@ -244,7 +237,6 @@ const DocumentPrint = () => {
       const { data: op } = await axios.get(`${API_URL}/operations/${opId}`);
       if (!op) return;
 
-      // Operation -> items mapping
       const opItems = (op.items || []).map((it) => ({
         description: it.name || it.description || '',
         quantity: Number(it.quantity || 1),
@@ -252,7 +244,6 @@ const DocumentPrint = () => {
         discount: 0,
       }));
 
-      // Prefer vehicleId from operation (if not passed)
       const opVehicleId = op.vehicleId || op.vehicle_id;
       if (opVehicleId && !vehicleId) {
         loadVehicleData(opVehicleId);
@@ -272,7 +263,6 @@ const DocumentPrint = () => {
           ...prev.settings,
           date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,
           document_number: op.invoice_number || op.invoiceNumber || `OP-${op.id}`,
-
           notes: op.notes || prev.settings.notes,
         },
       }));
@@ -280,7 +270,6 @@ const DocumentPrint = () => {
       console.error('Error loading operation:', e);
     }
   };
-
 
   const handleWorkshopChange = (field, value) => {
     setFormData(prev => ({
@@ -318,7 +307,6 @@ const DocumentPrint = () => {
       items: [...prev.items, { description: '', quantity: 1, unit_price: 0, discount: 0 }]
     }));
   };
-
 
   const loadInvoiceData = async (invId) => {
     try {
@@ -384,76 +372,44 @@ const DocumentPrint = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!previewHtml) {
-      // If no preview generated yet, generate it first then download
-      await generateDocument(true); 
-      // Need a slight delay or effect to wait for render, but generateDocument sets previewHtml.
-      // However, the DOM element 'pdf-content' needs to be in the DOM.
-      // Current implementation shows a modal. We need that modal open or a hidden div.
-      // We will rely on generateDocument(true) opening the modal, then user clicks download there OR we handle it here.
-      // Better flow: Use the existing preview modal's download button or create a hidden container.
-    }
-    
     setGeneratingPdf(true);
     try {
-      // We need the HTML rendered in the DOM to capture it.
-      // If the modal is open, we use that. If not, we might need a temporary hidden container.
-      // For simplicity, let's assume this is triggered from the Preview Modal or we force open it.
-      
-      const element = document.getElementById('pdf-content-frame')?.contentWindow?.document?.body;
-      
-      if (!element) {
-         // Fallback: Generate HTML and put in a temporary hidden div
-         const response = await axios.post(`${API_URL}/documents/generate`, {
-            doc_type: docType,
-            workshop: formData.workshop,
-            customer: formData.customer,
-            vehicle: formData.vehicle,
-            items: formData.items.filter(item => item.description),
-            settings: {
-              ...formData.settings,
-              approval_token: formData.settings.approval_token || undefined,
-              approval_vehicle_id: vehicleId || undefined,
-            },
-          });
-          
-          if (response.data.success) {
-             const tempDiv = document.createElement('div');
-             tempDiv.style.position = 'absolute';
-             tempDiv.style.left = '-9999px';
-             tempDiv.style.width = '794px'; // A4 width
-             tempDiv.innerHTML = response.data.html;
-             document.body.appendChild(tempDiv);
-             
-             await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
-             
-             document.body.removeChild(tempDiv);
-          }
-      } else {
-         // Capture from IFrame (might have CORS issues, better to use the temp div approach above generally)
-         // The temp div approach above is safer.
-         const response = await axios.post(`${API_URL}/documents/generate`, {
-            doc_type: docType,
-            workshop: formData.workshop,
-            customer: formData.customer,
-            vehicle: formData.vehicle,
-            items: formData.items.filter(item => item.description),
-            settings: { ...formData.settings, approval_token: formData.settings.approval_token || undefined, approval_vehicle_id: vehicleId || undefined },
-          });
-          
-          if (response.data.success) {
-             const tempDiv = document.createElement('div');
-             tempDiv.style.position = 'absolute';
-             tempDiv.style.left = '-9999px';
-             tempDiv.style.width = '794px'; 
-             // Force white background and specific styles for PDF
-             tempDiv.innerHTML = response.data.html;
-             document.body.appendChild(tempDiv);
-             
-             await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
-             document.body.removeChild(tempDiv);
-          }
+      // Validate first
+      if (!formData.workshop.name || !formData.customer.name) {
+        alert(isArabic ? 'الرجاء إدخال البيانات الأساسية' : 'Please enter details');
+        setGeneratingPdf(false);
+        return;
       }
+
+      const response = await axios.post(`${API_URL}/documents/generate`, {
+        doc_type: docType,
+        workshop: formData.workshop,
+        customer: formData.customer,
+        vehicle: formData.vehicle,
+        items: formData.items.filter(item => item.description),
+        settings: {
+          ...formData.settings,
+          approval_token: formData.settings.approval_token || undefined,
+          approval_vehicle_id: vehicleId || undefined,
+        },
+      });
+      
+      if (response.data.success) {
+         const tempDiv = document.createElement('div');
+         tempDiv.style.position = 'absolute';
+         tempDiv.style.left = '-9999px';
+         tempDiv.style.top = '0';
+         tempDiv.style.width = '794px'; 
+         tempDiv.innerHTML = response.data.html;
+         document.body.appendChild(tempDiv);
+         
+         await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
+         
+         document.body.removeChild(tempDiv);
+      } else {
+        throw new Error(response.data.message);
+      }
+
     } catch (e) {
       console.error('PDF Download Error:', e);
       alert(isArabic ? 'فشل تحميل PDF' : 'PDF Download Failed');
@@ -463,21 +419,15 @@ const DocumentPrint = () => {
   };
 
   const generateDocument = async (preview = false) => {
+    if (!preview) {
+      // If triggered by "Download" button that is not using handleDownloadPDF, use it
+      return handleDownloadPDF();
+    }
+    
     setLoading(true);
     try {
-      // Validate required fields
-      if (!formData.workshop.name) {
-        alert(isArabic ? 'الرجاء إدخال اسم الورشة' : 'Please enter workshop name');
-        setLoading(false);
-        return;
-      }
-      if (!formData.customer.name) {
-        alert(isArabic ? 'الرجاء إدخال اسم العميل' : 'Please enter customer name');
-        setLoading(false);
-        return;
-      }
-      if (formData.items.filter(item => item.description).length === 0) {
-        alert(isArabic ? 'الرجاء إضافة بند واحد على الأقل' : 'Please add at least one item');
+      if (!formData.workshop.name || !formData.customer.name) {
+        alert(isArabic ? 'الرجاء إدخال البيانات المطلوبة' : 'Missing required fields');
         setLoading(false);
         return;
       }
@@ -496,48 +446,28 @@ const DocumentPrint = () => {
       });
 
       if (response.data.success) {
-        if (preview) {
-          setPreviewHtml(response.data.html);
-          setShowPreview(true);
-        } else {
-          // Direct Download Call
-          handleDownloadPDF();
-        }
+        setPreviewHtml(response.data.html);
+        setShowPreview(true);
       } else {
-        throw new Error(response.data.message || 'فشل في إنشاء المستند');
+        throw new Error(response.data.message || 'فشل');
       }
     } catch (error) {
-      console.error('Error generating document:', error);
-      const errorMsg = error.response?.data?.detail || error.message || (isArabic ? 'حدث خطأ أثناء إنشاء المستند' : 'Error generating document');
-      alert(errorMsg);
+      console.error('Error:', error);
+      alert(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const printDocument = async () => {
-    // Open window immediately to avoid popup blockers
     const printWindow = window.open('', '_blank');
-    
     if (!printWindow) {
-      alert(isArabic ? 'تم حظر النافذة المنبثقة. الرجاء السماح بالنوافذ المنبثقة لهذا الموقع.' : 'Popup blocked. Please allow popups for this site.');
-      setLoading(false);
+      alert(isArabic ? 'تم حظر النافذة المنبثقة' : 'Popup blocked');
       return;
     }
 
-    // Write initial loading state
-    printWindow.document.write(isArabic ? '<h3 style="text-align:center; font-family: sans-serif; margin-top: 50px;">جاري إعداد المستند للطباعة...</h3>' : '<h3 style="text-align:center; font-family: sans-serif; margin-top: 50px;">Preparing document for printing...</h3>');
-
     setLoading(true);
     try {
-      // Validate
-      if (!formData.workshop.name || !formData.customer.name) {
-        printWindow.close();
-        alert(isArabic ? 'بيانات الورشة والعميل مطلوبة' : 'Workshop and Customer details are required');
-        setLoading(false);
-        return;
-      }
-
       const response = await axios.post(`${API_URL}/documents/generate`, {
         doc_type: docType,
         workshop: formData.workshop,
@@ -546,7 +476,6 @@ const DocumentPrint = () => {
         items: formData.items.filter(item => item.description),
         settings: {
           ...formData.settings,
-          // نمرّر رمز الاعتماد إن وُجد، بالإضافة إلى vehicleId لربط الموافقة تلقائياً
           approval_token: formData.settings.approval_token || undefined,
           approval_vehicle_id: vehicleId || undefined,
         },
@@ -556,21 +485,13 @@ const DocumentPrint = () => {
         printWindow.document.open();
         printWindow.document.write(response.data.html);
         printWindow.document.close();
-        
-        // Wait for content to load then print
         printWindow.focus();
         setTimeout(() => {
           printWindow.print();
-          // Optional: Close after print (commented out to let user decide)
-          // printWindow.close();
         }, 1000);
-      } else {
-        printWindow.close();
-        throw new Error(response.data.message || 'Failed');
       }
     } catch (error) {
       printWindow.close();
-      console.error('Error printing:', error);
       alert(isArabic ? 'فشل الطباعة' : 'Print failed');
     } finally {
       setLoading(false);
@@ -588,10 +509,9 @@ const DocumentPrint = () => {
         style: formData.settings.style,
         tax_rate: 0,
       });
-      alert(isArabic ? 'تم حفظ الإعدادات الافتراضية للطباعة وعروض الأسعار' : 'Default print & quote settings saved');
+      alert(isArabic ? 'تم حفظ الإعدادات الافتراضية' : 'Default settings saved');
     } catch (error) {
-      console.error('Error saving defaults:', error);
-      alert(isArabic ? 'فشل حفظ الإعدادات الافتراضية' : 'Failed to save default settings');
+      alert(isArabic ? 'فشل الحفظ' : 'Failed to save');
     } finally {
       setLoading(false);
     }
@@ -625,7 +545,7 @@ const DocumentPrint = () => {
             </Button>
             <Button variant="outline" onClick={saveDefaults} disabled={loading}>
               <Save size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
-              {isArabic ? 'حفظ التعديلات كإعداد افتراضي' : 'Save as default'}
+              {isArabic ? 'حفظ كافتراضي' : 'Save Default'}
             </Button>
           </div>
         </div>
@@ -633,7 +553,7 @@ const DocumentPrint = () => {
         {/* Document Type Selection */}
         <Card className="mb-6 bg-slate-900">
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {Object.entries(docTypes).map(([type, { label, icon: Icon }]) => {
                 const isActive = docType === type;
                 return (
@@ -984,8 +904,6 @@ const DocumentPrint = () => {
             </div>
           </div>
         )}
-        
-        {/* Hidden Print Frame Removed */}
     </div>
   );
 };

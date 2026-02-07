@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, CheckCircle, FileText, Upload, Printer, Receipt, Clock, Trash2, Camera, X, Scan, Plus, ChevronDown, ChevronUp, Edit2, Save, XCircle } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { vehicleAPI, technicianAPI, financeAPI } from '../services/api';
+import { vehicleAPI, technicianAPI, financeAPI, customerAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
@@ -360,6 +360,12 @@ const VehicleDetails = () => {
   const [notes, setNotes] = useState('');
   const [assignedTech, setAssignedTech] = useState('');
   
+  // Edit Vehicle & Customer State
+  const [isEditingVehicle, setIsEditingVehicle] = useState(false);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState({});
+  const [customerForm, setCustomerForm] = useState({});
+  
   const [scannerOpen, setScannerOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [vehicleFiles, setVehicleFiles] = useState([]);
@@ -393,6 +399,19 @@ const VehicleDetails = () => {
       setNotes(vehicleRes.data.notes || '');
       setAssignedTech(vehicleRes.data.technicianId || '');
       
+      setVehicleForm({
+        plateNumber: vehicleRes.data.plateNumber,
+        brand: vehicleRes.data.brand,
+        model: vehicleRes.data.model,
+        vin: vehicleRes.data.vin,
+        color: vehicleRes.data.color
+      });
+      setCustomerForm({
+        name: vehicleRes.data.customerName,
+        phone: vehicleRes.data.customerPhone,
+        email: vehicleRes.data.customerEmail
+      });
+      
       setTechnicians(techniciansRes.data);
       setVisits(visitsRes.data || []);
       setVehicleFiles(filesRes.files || []);
@@ -406,6 +425,50 @@ const VehicleDetails = () => {
   }, [id, API_URL, toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Handle Updates
+  const handleUpdateVehicleInfo = async () => {
+    try {
+      await vehicleAPI.update(id, vehicleForm);
+      setVehicle(prev => ({ ...prev, ...vehicleForm }));
+      setIsEditingVehicle(false);
+      toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات المركبة' });
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل تحديث بيانات المركبة', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateCustomerInfo = async () => {
+    try {
+      // If backend supports updating customer from vehicle update endpoint, use that
+      // Or update customer directly. For MVP, we update vehicle record which often holds denormalized data
+      // But ideally we update customer entity too.
+      await vehicleAPI.update(id, {
+        customerName: customerForm.name,
+        customerPhone: customerForm.phone,
+        customerEmail: customerForm.email
+      });
+      
+      if (vehicle.customerId) {
+        await customerAPI.update(vehicle.customerId, {
+          name: customerForm.name,
+          phone: customerForm.phone,
+          email: customerForm.email
+        });
+      }
+      
+      setVehicle(prev => ({ 
+        ...prev, 
+        customerName: customerForm.name, 
+        customerPhone: customerForm.phone,
+        customerEmail: customerForm.email 
+      }));
+      setIsEditingCustomer(false);
+      toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات العميل' });
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل تحديث بيانات العميل', variant: 'destructive' });
+    }
+  };
 
   // Create new visit handler
   const handleCreateVisit = async () => {
@@ -532,46 +595,117 @@ const VehicleDetails = () => {
         <div className="space-y-6">
           
           {/* Vehicle Info Card */}
-          <div className="apple-card p-6">
-            <div className="flex items-center gap-3 mb-4 text-blue-600">
-              <Car size={20} />
-              <h3 className="font-bold text-gray-900">{t('vehicle_details.vehicle_info')}</h3>
+          <div className="apple-card p-6 relative group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-blue-600">
+                <Car size={20} />
+                <h3 className="font-bold text-gray-900">{t('vehicle_details.vehicle_info')}</h3>
+              </div>
+              <button 
+                onClick={() => setIsEditingVehicle(!isEditingVehicle)} 
+                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              >
+                {isEditingVehicle ? <X size={18} /> : <Edit2 size={16} />}
+              </button>
             </div>
+            
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-50">
-                <span className="text-gray-500">{t('vehicles.plate_number')}</span>
-                <span className="font-medium">{vehicle.plateNumber}</span>
+              <div className="flex flex-col py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-xs mb-1">{t('vehicles.plate_number')}</span>
+                {isEditingVehicle ? (
+                  <input className="text-sm border rounded p-1 w-full" value={vehicleForm.plateNumber} onChange={e => setVehicleForm({...vehicleForm, plateNumber: e.target.value})} />
+                ) : (
+                  <span className="font-medium">{vehicle.plateNumber}</span>
+                )}
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-50">
-                <span className="text-gray-500">{t('vehicle_details.brand_model')}</span>
-                <span className="font-medium">{vehicle.brand} {vehicle.model}</span>
+              <div className="flex flex-col py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.brand_model')}</span>
+                {isEditingVehicle ? (
+                  <div className="flex gap-2">
+                    <input className="text-sm border rounded p-1 w-1/2" value={vehicleForm.brand} onChange={e => setVehicleForm({...vehicleForm, brand: e.target.value})} placeholder="الماركة" />
+                    <input className="text-sm border rounded p-1 w-1/2" value={vehicleForm.model} onChange={e => setVehicleForm({...vehicleForm, model: e.target.value})} placeholder="الموديل" />
+                  </div>
+                ) : (
+                  <span className="font-medium">{vehicle.brand} {vehicle.model}</span>
+                )}
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-50">
-                <span className="text-gray-500">{t('vehicle_details.vin_number')}</span>
-                <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+              <div className="flex flex-col py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.vin_number')}</span>
+                {isEditingVehicle ? (
+                  <input className="text-sm border rounded p-1 w-full" value={vehicleForm.vin} onChange={e => setVehicleForm({...vehicleForm, vin: e.target.value})} />
+                ) : (
+                  <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+                )}
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-gray-500">{t('vehicle_details.color')}</span>
-                <span className="font-medium">{vehicle.color || '-'}</span>
+              <div className="flex flex-col py-2">
+                <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.color')}</span>
+                {isEditingVehicle ? (
+                  <input className="text-sm border rounded p-1 w-full" value={vehicleForm.color} onChange={e => setVehicleForm({...vehicleForm, color: e.target.value})} />
+                ) : (
+                  <span className="font-medium">{vehicle.color || '-'}</span>
+                )}
               </div>
+              
+              {isEditingVehicle && (
+                <button 
+                  onClick={handleUpdateVehicleInfo}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                >
+                  حفظ التعديلات
+                </button>
+              )}
             </div>
           </div>
 
           {/* Customer Info */}
-          <div className="apple-card p-6">
-            <div className="flex items-center gap-3 mb-4 text-green-600">
-              <User size={20} />
-              <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
+          <div className="apple-card p-6 relative group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-green-600">
+                <User size={20} />
+                <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
+              </div>
+              <button 
+                onClick={() => setIsEditingCustomer(!isEditingCustomer)} 
+                className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+              >
+                {isEditingCustomer ? <X size={18} /> : <Edit2 size={16} />}
+              </button>
             </div>
+            
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-50">
-                <span className="text-gray-500">{t('vehicles_page.customer_name')}</span>
-                <span className="font-medium">{vehicle.customerName}</span>
+              <div className="flex flex-col py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-xs mb-1">{t('vehicles_page.customer_name')}</span>
+                {isEditingCustomer ? (
+                  <input className="text-sm border rounded p-1 w-full" value={customerForm.name} onChange={e => setCustomerForm({...customerForm, name: e.target.value})} />
+                ) : (
+                  <span className="font-medium">{vehicle.customerName}</span>
+                )}
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-50">
-                <span className="text-gray-500">رقم الجوال</span>
-                <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
+              <div className="flex flex-col py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-xs mb-1">رقم الجوال</span>
+                {isEditingCustomer ? (
+                  <input className="text-sm border rounded p-1 w-full" value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: e.target.value})} />
+                ) : (
+                  <span className="font-medium" dir="ltr">{vehicle.customerPhone}</span>
+                )}
               </div>
+              <div className="flex flex-col py-2">
+                <span className="text-gray-500 text-xs mb-1">البريد الإلكتروني</span>
+                {isEditingCustomer ? (
+                  <input className="text-sm border rounded p-1 w-full" value={customerForm.email} onChange={e => setCustomerForm({...customerForm, email: e.target.value})} />
+                ) : (
+                  <span className="font-medium">{vehicle.customerEmail || '-'}</span>
+                )}
+              </div>
+
+              {isEditingCustomer && (
+                <button 
+                  onClick={handleUpdateCustomerInfo}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                >
+                  حفظ التعديلات
+                </button>
+              )}
             </div>
           </div>
 

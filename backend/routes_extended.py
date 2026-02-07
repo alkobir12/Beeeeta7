@@ -40,6 +40,7 @@ def _mem_read(name: str) -> list:
             return []
         with open(p, "r", encoding="utf-8") as f:
             return json.load(f)
+from visit_sync import _sync_visit_to_operation
     except Exception:
         return []
 
@@ -2426,6 +2427,13 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 .execute()
             )
             r = (res.data or [{}])[0]
+            
+            # --- SYNC TO OPERATIONS (FINANCE) ---
+            # Trigger sync whenever items/notes/status change
+            if "notes" in payload or "status" in payload:
+                await _sync_visit_to_operation(visit_id, r, supa_service=supa)
+            # ------------------------------------
+
             return {
                 "id": r.get("id"),
                 "vehicleId": r.get("vehicle_id"),
@@ -2452,6 +2460,14 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
 
         await db.vehicle_visits.update_one({"id": visit_id}, {"$set": upd})
         doc = await db.vehicle_visits.find_one({"id": visit_id}, {"_id": 0})
+        
+        # --- SYNC TO OPERATIONS (MONGO) ---
+        if "notes" in payload or "status" in payload:
+             # Normalize doc for helper
+             doc_norm = {**doc, "vehicleId": doc.get("vehicleId")}
+             await _sync_visit_to_operation(visit_id, doc_norm, supa_service=None)
+        # ----------------------------------
+
         for k in ("entryDate", "exitDate", "createdAt"):
             if doc.get(k) and hasattr(doc[k], "isoformat"):
                 doc[k] = doc[k].isoformat()

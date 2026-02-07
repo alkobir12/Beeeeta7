@@ -296,7 +296,7 @@ const VehicleDetails = () => {
         entryDate: new Date().toISOString(),
         status: 'in_progress',
         mileage: mileageValue,
-        technicianId: assignedTech,
+        technicianId: assignedTech || null,
         notes: notes
       };
       

@@ -132,13 +132,6 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       
-      // Also update linked Operation if exists or create new
-      if (items.length > 0) {
-        // ... (Logic to sync operations - omitted for brevity but crucial for finance)
-        // For MVP, we rely on the visit.notes as source of truth for "Service History"
-        // Financial syncing ideally happens on server side or via explicit "Create Invoice" action
-      }
-
       setIsEditing(false);
       onUpdate(); // Refresh parent
       toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات الزيارة' });
@@ -362,11 +355,18 @@ const VehicleDetails = () => {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Status & Notes (Vehicle Level)
+  const [status, setStatus] = useState('diagnosis');
+  const [notes, setNotes] = useState('');
+  const [assignedTech, setAssignedTech] = useState('');
+  
   const [scannerOpen, setScannerOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [vehicleFiles, setVehicleFiles] = useState([]);
   const [fileType, setFileType] = useState('photo');
   const [capturedImage, setCapturedImage] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -389,6 +389,10 @@ const VehicleDetails = () => {
       ]);
       
       setVehicle(vehicleRes.data);
+      setStatus(vehicleRes.data.status || 'diagnosis');
+      setNotes(vehicleRes.data.notes || '');
+      setAssignedTech(vehicleRes.data.technicianId || '');
+      
       setTechnicians(techniciansRes.data);
       setVisits(visitsRes.data || []);
       setVehicleFiles(filesRes.files || []);
@@ -423,7 +427,22 @@ const VehicleDetails = () => {
     }
   };
 
-  // Scanner Functions (Legacy maintained)
+  // Handle status update (Vehicle Level)
+  const handleStatusUpdate = async () => {
+    try {
+      await vehicleAPI.update(id, { 
+        status, 
+        notes, 
+        technicianId: assignedTech || null
+      });
+      toast({ title: 'تم الحفظ', description: 'تم تحديث حالة المركبة' });
+      fetchData();
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل تحديث الحالة', variant: 'destructive' });
+    }
+  };
+
+  // Scanner Functions
   const openScanner = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
@@ -511,6 +530,33 @@ const VehicleDetails = () => {
         
         {/* Left Column: Info */}
         <div className="space-y-6">
+          
+          {/* Vehicle Info Card */}
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-4 text-blue-600">
+              <Car size={20} />
+              <h3 className="font-bold text-gray-900">{t('vehicle_details.vehicle_info')}</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-2 border-b border-gray-50">
+                <span className="text-gray-500">{t('vehicles.plate_number')}</span>
+                <span className="font-medium">{vehicle.plateNumber}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-50">
+                <span className="text-gray-500">{t('vehicle_details.brand_model')}</span>
+                <span className="font-medium">{vehicle.brand} {vehicle.model}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-50">
+                <span className="text-gray-500">{t('vehicle_details.vin_number')}</span>
+                <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-500">{t('vehicle_details.color')}</span>
+                <span className="font-medium">{vehicle.color || '-'}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Customer Info */}
           <div className="apple-card p-6">
             <div className="flex items-center gap-3 mb-4 text-green-600">
@@ -567,27 +613,26 @@ const VehicleDetails = () => {
           </div>
         </div>
 
-        {/* Main Column: Visits Timeline */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Center Column: Visits Timeline */}
+        <div className="lg:col-span-1 space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Wrench size={24} className="text-blue-600" />
-              سجل الزيارات والخدمات
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Wrench size={20} className="text-blue-600" />
+              سجل الزيارات
             </h2>
             <button 
               onClick={handleCreateVisit}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1"
             >
-              <Plus size={18} /> زيارة جديدة
+              <Plus size={14} /> زيارة جديدة
             </button>
           </div>
 
           <div className="space-y-4">
             {visits.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                <Calendar size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500 font-medium">لا توجد زيارات مسجلة لهذه المركبة</p>
-                <p className="text-sm text-gray-400 mt-1">ابدأ بإنشاء زيارة جديدة لتسجيل الخدمات</p>
+              <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-xs text-gray-500">لا توجد زيارات مسجلة</p>
               </div>
             ) : (
               visits.map(visit => (
@@ -599,6 +644,64 @@ const VehicleDetails = () => {
                 />
               ))
             )}
+          </div>
+        </div>
+
+        {/* Right Column: Status & Actions */}
+        <div className="space-y-6">
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-6 text-orange-600">
+              <Wrench size={20} />
+              <h3 className="font-bold text-gray-900">{t('vehicle_details.status')}</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t('quick_actions.change_status')}</label>
+                <select className="apple-input" value={status} onChange={e => setStatus(e.target.value)}>
+                  {statusSteps.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الفني المسؤول</label>
+                <select className="apple-input" value={assignedTech} onChange={e => setAssignedTech(e.target.value)}>
+                  <option value="">اختر الفني...</option>
+                  {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">ملاحظات عامة</label>
+                <textarea 
+                  className="apple-input h-32 py-3 resize-none" 
+                  placeholder="ملاحظات..."
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                />
+              </div>
+
+              <button onClick={handleStatusUpdate} className="apple-button w-full mt-2">
+                حفظ التحديثات
+              </button>
+            </div>
+          </div>
+
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-4 text-gray-900">
+              <Clock size={20} />
+              <h3 className="font-bold">التواريخ</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">تاريخ الدخول</span>
+                <span className="font-medium">{new Date(vehicle.entryDate).toLocaleDateString('ar-SA')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">آخر تحديث</span>
+                <span className="font-medium">{new Date(vehicle.updatedAt).toLocaleDateString('ar-SA')}</span>
+              </div>
+            </div>
           </div>
         </div>
 

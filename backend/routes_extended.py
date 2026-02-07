@@ -25,6 +25,7 @@ except Exception:
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from supabase_service import SupabaseService
 
+from visit_sync import _sync_visit_to_operation
 router = APIRouter(prefix="/api")
 
 db = None
@@ -40,7 +41,6 @@ def _mem_read(name: str) -> list:
             return []
         with open(p, "r", encoding="utf-8") as f:
             return json.load(f)
-from visit_sync import _sync_visit_to_operation
     except Exception:
         return []
 

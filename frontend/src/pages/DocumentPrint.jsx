@@ -383,6 +383,85 @@ const DocumentPrint = () => {
     return { subtotal, tax, total: subtotal };
   };
 
+  const handleDownloadPDF = async () => {
+    if (!previewHtml) {
+      // If no preview generated yet, generate it first then download
+      await generateDocument(true); 
+      // Need a slight delay or effect to wait for render, but generateDocument sets previewHtml.
+      // However, the DOM element 'pdf-content' needs to be in the DOM.
+      // Current implementation shows a modal. We need that modal open or a hidden div.
+      // We will rely on generateDocument(true) opening the modal, then user clicks download there OR we handle it here.
+      // Better flow: Use the existing preview modal's download button or create a hidden container.
+    }
+    
+    setGeneratingPdf(true);
+    try {
+      // We need the HTML rendered in the DOM to capture it.
+      // If the modal is open, we use that. If not, we might need a temporary hidden container.
+      // For simplicity, let's assume this is triggered from the Preview Modal or we force open it.
+      
+      const element = document.getElementById('pdf-content-frame')?.contentWindow?.document?.body;
+      
+      if (!element) {
+         // Fallback: Generate HTML and put in a temporary hidden div
+         const response = await axios.post(`${API_URL}/documents/generate`, {
+            doc_type: docType,
+            workshop: formData.workshop,
+            customer: formData.customer,
+            vehicle: formData.vehicle,
+            items: formData.items.filter(item => item.description),
+            settings: {
+              ...formData.settings,
+              approval_token: formData.settings.approval_token || undefined,
+              approval_vehicle_id: vehicleId || undefined,
+            },
+          });
+          
+          if (response.data.success) {
+             const tempDiv = document.createElement('div');
+             tempDiv.style.position = 'absolute';
+             tempDiv.style.left = '-9999px';
+             tempDiv.style.width = '794px'; // A4 width
+             tempDiv.innerHTML = response.data.html;
+             document.body.appendChild(tempDiv);
+             
+             await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
+             
+             document.body.removeChild(tempDiv);
+          }
+      } else {
+         // Capture from IFrame (might have CORS issues, better to use the temp div approach above generally)
+         // The temp div approach above is safer.
+         const response = await axios.post(`${API_URL}/documents/generate`, {
+            doc_type: docType,
+            workshop: formData.workshop,
+            customer: formData.customer,
+            vehicle: formData.vehicle,
+            items: formData.items.filter(item => item.description),
+            settings: { ...formData.settings, approval_token: formData.settings.approval_token || undefined, approval_vehicle_id: vehicleId || undefined },
+          });
+          
+          if (response.data.success) {
+             const tempDiv = document.createElement('div');
+             tempDiv.style.position = 'absolute';
+             tempDiv.style.left = '-9999px';
+             tempDiv.style.width = '794px'; 
+             // Force white background and specific styles for PDF
+             tempDiv.innerHTML = response.data.html;
+             document.body.appendChild(tempDiv);
+             
+             await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
+             document.body.removeChild(tempDiv);
+          }
+      }
+    } catch (e) {
+      console.error('PDF Download Error:', e);
+      alert(isArabic ? 'فشل تحميل PDF' : 'PDF Download Failed');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const generateDocument = async (preview = false) => {
     setLoading(true);
     try {
@@ -411,7 +490,6 @@ const DocumentPrint = () => {
         items: formData.items.filter(item => item.description),
         settings: {
           ...formData.settings,
-          // نمرّر رمز الاعتماد إن وُجد، بالإضافة إلى vehicleId لربط الموافقة تلقائياً
           approval_token: formData.settings.approval_token || undefined,
           approval_vehicle_id: vehicleId || undefined,
         },
@@ -422,44 +500,8 @@ const DocumentPrint = () => {
           setPreviewHtml(response.data.html);
           setShowPreview(true);
         } else {
-          // تحميل PDF
-          const { jsPDF } = await import('jspdf');
-          const html2canvas = (await import('html2canvas')).default;
-
-          const wrapper = document.createElement('div');
-          wrapper.style.position = 'fixed';
-          wrapper.style.left = '-10000px';
-          wrapper.style.top = '0';
-          wrapper.style.width = '794px'; // A4 width at ~96dpi
-          wrapper.innerHTML = response.data.html;
-          document.body.appendChild(wrapper);
-
-          const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-          const pdf = new jsPDF('p', 'pt', 'a4');
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
-
-          const imgWidth = pageWidth;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-          let heightLeft = imgHeight;
-          let position = 0;
-
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-          }
-
-          pdf.save(`${docType}_${response.data.document_number}.pdf`);
-
-          document.body.removeChild(wrapper);
+          // Direct Download Call
+          handleDownloadPDF();
         }
       } else {
         throw new Error(response.data.message || 'فشل في إنشاء المستند');
@@ -577,9 +619,9 @@ const DocumentPrint = () => {
               <Printer size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
               {isArabic ? 'طباعة' : 'Print'}
             </Button>
-            <Button onClick={() => generateDocument(false)} disabled={loading} className="bg-gradient-to-r from-blue-600 to-indigo-600">
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} className={isArabic ? 'ml-2' : 'mr-2'} />}
-              {isArabic ? 'تحميل' : 'Download'}
+            <Button onClick={handleDownloadPDF} disabled={loading || generatingPdf} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+              {generatingPdf ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} className={isArabic ? 'ml-2' : 'mr-2'} />}
+              {isArabic ? 'تحميل PDF' : 'Download PDF'}
             </Button>
             <Button variant="outline" onClick={saveDefaults} disabled={loading}>
               <Save size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
@@ -918,9 +960,9 @@ const DocumentPrint = () => {
                     <Printer size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
                     {isArabic ? 'طباعة' : 'Print'}
                   </Button>
-                  <Button variant="outline" onClick={() => generateDocument(false)}>
-                    <Download size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
-                    {isArabic ? 'تحميل' : 'Download'}
+                  <Button variant="outline" onClick={handleDownloadPDF} disabled={generatingPdf}>
+                    {generatingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} className={isArabic ? 'ml-1' : 'mr-1'} />}
+                    {isArabic ? 'تحميل PDF' : 'Download PDF'}
                   </Button>
                   <Button variant="ghost" onClick={() => setShowPreview(false)}>
                     {isArabic ? 'إغلاق' : 'Close'}

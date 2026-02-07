@@ -582,10 +582,36 @@ const VehicleDetails = () => {
           <p className="text-gray-500 mt-1">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => navigate(`/print?type=invoice&vehicleId=${id}`)} className="apple-button flex items-center gap-2">
-            <Printer size={18} />
-            <span className="hidden sm:inline">طباعة</span>
-          </button>
+          <div className="relative group">
+            <button className="apple-button flex items-center gap-2">
+              <Printer size={18} />
+              <span className="hidden sm:inline">طباعة / PDF</span>
+            </button>
+            {/* Dropdown Menu */}
+            <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden hidden group-hover:block z-50">
+              <button 
+                onClick={() => navigate(`/print?type=invoice&vehicleId=${id}`)}
+                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors"
+              >
+                <Receipt size={16} className="text-green-500" />
+                فاتورة مبيعات
+              </button>
+              <button 
+                onClick={() => navigate(`/print?type=quote&vehicleId=${id}`)}
+                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors border-t border-slate-100 dark:border-slate-700"
+              >
+                <FileCheck size={16} className="text-blue-500" />
+                عرض سعر
+              </button>
+              <button 
+                onClick={() => navigate(`/print?type=diagnosis&vehicleId=${id}`)}
+                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors border-t border-slate-100 dark:border-slate-700"
+              >
+                <ClipboardList size={16} className="text-orange-500" />
+                تقرير تشخيص
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

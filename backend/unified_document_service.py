@@ -144,7 +144,7 @@ class UnifiedDocumentGenerator:
                 "commercial_register",
                 workshop_data.get(
                     "commercialRegister",
-                    workshop_data.get("tax_number", workshop_data.get("taxNumber", "")),
+                    "",
                 ),
             ),
             logo=workshop_data.get("logo", ""),

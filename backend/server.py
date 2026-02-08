@@ -255,13 +255,16 @@ async def validation_exception_handler(request, exc):
 
 
 # Enable CORS for frontend access
+# Configure via env to support custom domains + emergent host during deployment.
+cors_origins_raw = os.environ.get(
+    "CORS_ORIGINS",
+    "https://fixsa.online,https://www.fixsa.online,http://localhost:3000",
+)
+allow_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://fixsa.online",
-        "https://www.fixsa.online",
-        "http://localhost:3000",
-    ],
+    allow_origins=allow_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -563,9 +563,9 @@ class ArabicQuotationBuilder:
         }}
         
         .company-name-en {{
-            font-size: 0.9rem;
+            font-size: 0.78rem;
             opacity: 0.95;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.15rem;
             font-weight: 500;
         }}
         

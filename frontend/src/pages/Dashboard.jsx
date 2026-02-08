@@ -117,12 +117,7 @@ const Dashboard = () => {
         if (isMountedRef.current) setTotalAR(0);
       }
       
-      if (isMountedRef.current) {
-        setVehicles(vehiclesRes.data);
-        setTechnicians(techniciansRes.data);
-        const arTotal = Number(arRes?.data?.data?.total_ar || 0);
-        setTotalAR(arTotal);
-      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       if (showLoading) {

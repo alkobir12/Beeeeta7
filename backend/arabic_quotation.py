@@ -1684,8 +1684,8 @@ def create_quotation_routes(router):
             # تعيين وصف المشروع
             builder.set_project(request.project_description)
 
-            # تعيين نسبة الضريبة
-            builder.quotation["tax_rate"] = request.tax_rate
+            # الضرائب غير مستخدمة
+            builder.quotation["tax_rate"] = 0
 
             # إضافة البنود
             for item in request.items:

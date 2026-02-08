@@ -456,8 +456,7 @@ def create_unified_document_routes(router):
                 settings = {}
 
             # Map workshop keys
-            if "taxNumber" in workshop_data and "tax_number" not in workshop_data:
-                workshop_data["tax_number"] = workshop_data.get("taxNumber")
+
             if "commercialRegister" in workshop_data and "commercial_register" not in workshop_data:
                 workshop_data["commercial_register"] = workshop_data.get("commercialRegister")
 

@@ -443,7 +443,7 @@ class ArabicQuotationBuilder:
         }}
         
         body {{
-            font-family: 'Noto Sans Arabic', -apple-system, sans-serif;
+            font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             direction: rtl;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             color: #1e293b;

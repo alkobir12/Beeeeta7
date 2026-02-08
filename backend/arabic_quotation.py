@@ -306,6 +306,7 @@ class ArabicQuotationBuilder:
                             <span class="value">{self.quotation['client']['phone']}</span>
                         </div>
                         {self._render_if_value(self.quotation['client']['email'], 'البريد')}
+                        {self._render_if_value(self.quotation.get('project_description', ''), 'وصف الخدمة/المشروع')}
                     </div>
                 </div>
                 

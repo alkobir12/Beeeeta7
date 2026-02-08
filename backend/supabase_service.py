@@ -133,7 +133,7 @@ class SupabaseService:
             .maybe_single()
             .execute()
         )
-        return to_camel_vehicle(res.data) if res.data else None
+        return to_camel_vehicle(res.data) if res and res.data else None
 
     def vehicles_update(
         self, vid: str, upd_api: Dict[str, Any]

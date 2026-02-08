@@ -167,7 +167,7 @@ class TestVehicleDetailsVisitsAPI:
                 # Try to parse as ISO date
                 datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             
-            print(f"✅ Success: Created visit with proper ISO dates")
+            print("✅ Success: Created visit with proper ISO dates")
             
             # Store visit ID for next test
             self.created_visit_id = data.get("id")

@@ -459,6 +459,9 @@ def create_unified_document_routes(router):
 
             if "commercialRegister" in workshop_data and "commercial_register" not in workshop_data:
                 workshop_data["commercial_register"] = workshop_data.get("commercialRegister")
+            # Back-compat: some older profiles stored commercial register in tax_number.
+            if not workshop_data.get("commercial_register") and workshop_data.get("tax_number"):
+                workshop_data["commercial_register"] = workshop_data.get("tax_number")
 
             # إذا تم تمرير approval_token نحاول جلب بيانات الموافقة من Supabase
             raw_token = settings.get("approval_token")

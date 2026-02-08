@@ -139,6 +139,7 @@ class UnifiedDocumentGenerator:
             phone=workshop_data.get("phone", ""),
             email=workshop_data.get("email", ""),
             website=workshop_data.get("website", ""),
+            slogan=workshop_data.get("slogan", workshop_data.get("sloganEnglish", "")),
             
             commercial_register=workshop_data.get(
                 "commercial_register",

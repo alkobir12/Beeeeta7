@@ -1654,7 +1654,7 @@ def create_quotation_routes(router):
         phone: Optional[str] = None
         email: Optional[str] = None
         website: Optional[str] = None
-        tax_number: Optional[str] = None
+        commercial_register: Optional[str] = None
 
     class QuotationRequest(BaseModel):
         company: Optional[QuotationCompany] = None

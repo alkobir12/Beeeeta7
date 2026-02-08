@@ -278,6 +278,7 @@ class ArabicQuotationBuilder:
                     <div class="company-info">
                         <h1>{self.company['name']}</h1>
                         <p class="company-name-en">{self.company['name_en']}</p>
+                        {f'<p class="company-slogan">{self.company.get("slogan", "")}</p>' if self.company.get('slogan') else ''}
                         <p class="company-address">{self.company['address']}</p>
                     </div>
                 </div>

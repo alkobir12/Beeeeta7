@@ -139,9 +139,7 @@ class UnifiedDocumentGenerator:
             phone=workshop_data.get("phone", ""),
             email=workshop_data.get("email", ""),
             website=workshop_data.get("website", ""),
-            tax_number=workshop_data.get(
-                "tax_number", workshop_data.get("taxNumber", "")
-            ),
+            
             commercial_register=workshop_data.get(
                 "commercial_register", workshop_data.get("commercialRegister", "")
             ),

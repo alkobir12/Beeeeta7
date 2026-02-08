@@ -444,6 +444,7 @@ export const englishTexts = {
   'vehicle_details.vin_number': 'VIN Number',
   'vehicle_details.color': 'Color',
   'vehicle_details.registered_services': 'Registered Services for this Vehicle',
+  'vehicle_details.items_edit_hint': 'You can add/edit services and parts from the items table above',
   
   // Quick Actions
   'quick_actions.title': 'Quick Actions',

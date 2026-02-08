@@ -90,11 +90,11 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
 };
 
 const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
-  const [isExpanded, setIsExpanded] = useState(visit.status === 'in_progress');
+  const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(visit.status);
   const [isEditing, setIsEditing] = useState(false);
-  const [techId, setTechId] = useState(visit.technicianId || '');
+  const [techId, setTechId] = useState(visit.technicianId || visit.technician_id || '');
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');
   
@@ -118,7 +118,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
     }
     setItems(parsedItems);
     setStatus(visit.status);
-    setTechId(visit.technicianId || '');
+    setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
     setIsEditing(visit.status === 'in_progress');
   }, [visit]);
@@ -356,6 +356,7 @@ const VehicleDetails = () => {
   const [technicians, setTechnicians] = useState([]);
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Status & Notes (Vehicle Level)
   const [status, setStatus] = useState('diagnosis');
@@ -389,11 +390,36 @@ const VehicleDetails = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadingProgress(10);
+
+      const vehiclePromise = vehicleAPI.getById(id).then((r) => {
+        setLoadingProgress(40);
+        return r;
+      });
+      const techPromise = technicianAPI.getAll().then((r) => {
+        setLoadingProgress(65);
+        return r;
+      });
+      const visitsPromise = axios
+        .get(`${API_URL}/vehicles/${id}/visits`)
+        .catch(() => ({ data: [] }))
+        .then((r) => {
+          setLoadingProgress(80);
+          return r;
+        });
+      const filesPromise = fetch(`${API_URL}/vehicles/${id}/files`)
+        .then((r) => r.json())
+        .catch(() => ({ files: [] }))
+        .then((r) => {
+          setLoadingProgress(90);
+          return r;
+        });
+
       const [vehicleRes, techniciansRes, visitsRes, filesRes] = await Promise.all([
-        vehicleAPI.getById(id),
-        technicianAPI.getAll(),
-        axios.get(`${API_URL}/vehicles/${id}/visits`).catch(() => ({ data: [] })),
-        fetch(`${API_URL}/vehicles/${id}/files`).then(r => r.json()).catch(() => ({files: []}))
+        vehiclePromise,
+        techPromise,
+        visitsPromise,
+        filesPromise,
       ]);
       
       setVehicle(vehicleRes.data);
@@ -422,6 +448,7 @@ const VehicleDetails = () => {
       console.error(error);
       toast({ title: 'خطأ', description: 'فشل تحميل البيانات', variant: 'destructive' });
     } finally {
+      setLoadingProgress(100);
       setLoading(false);
     }
   }, [id, API_URL, toast]);
@@ -564,7 +591,14 @@ const VehicleDetails = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+        <div className="text-xs text-gray-400">جاري التحميل... {loadingProgress}%</div>
+      </div>
+    );
+  }
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
   return (
@@ -788,6 +822,10 @@ const VehicleDetails = () => {
             >
               <Plus size={14} /> زيارة جديدة
             </button>
+          </div>
+
+          <div className="text-[11px] text-gray-500 -mt-2">
+            {t('vehicle_details.items_edit_hint')}
           </div>
 
           <div className="space-y-4">

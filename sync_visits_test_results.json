@@ -1,0 +1,38 @@
+[
+  {
+    "test": "POST /api/vehicles/{vehicle_id}/visits with items",
+    "success": true,
+    "timestamp": "2026-02-08T22:49:22.363351",
+    "status_code": 200,
+    "error": null,
+    "details": "Visit created successfully with ID: 104c0779-88f8-475e-b167-a5fc71bcce6e",
+    "response_keys": [
+      "id",
+      "vehicleId",
+      "entryDate",
+      "exitDate",
+      "status",
+      "mileage",
+      "notes",
+      "technicianId",
+      "createdAt"
+    ],
+    "response_size": 442
+  },
+  {
+    "test": "Verify financial operation created without UUID error",
+    "success": true,
+    "timestamp": "2026-02-08T22:49:24.741878",
+    "status_code": 200,
+    "error": null,
+    "details": "Operation created with valid UUID: 5eb42c30-b1f4-4133-bf7f-65a7c61d5696, Total operations: 1"
+  },
+  {
+    "test": "GET /api/visits/{visit_id}/operations returns non-empty array",
+    "success": true,
+    "timestamp": "2026-02-08T22:49:25.138179",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 1 operations with valid structure. First operation total: 240.0"
+  }
+]

@@ -406,8 +406,6 @@ def create_unified_document_routes(router):
                 r = await client.get("http://127.0.0.1:8001/api/profile")
                 if r.status_code == 200:
                     data = r.json() or {}
-                    if "taxNumber" in data and "tax_number" not in data:
-                        data["tax_number"] = data.get("taxNumber")
                     if "commercialRegister" in data and "commercial_register" not in data:
                         data["commercial_register"] = data.get("commercialRegister")
                     return data

@@ -351,32 +351,7 @@ class ArabicQuotationBuilder:
                 </div>
             </div>
 
-            <!-- Summary -->
-            <div class="summary-section">
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span>المجموع الفرعي:</span>
-                        <span>{self.quotation['subtotal']:,.2f} ر.س</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>إجمالي الخصم:</span>
-                        <span>{self.quotation['discount']:,.2f} ر.س</span>
-                    </div>
 
-                    <div class="summary-row total-row">
-                        <span>المجموع الكلي:</span>
-                        <span>{self.quotation['total']:,.2f} ر.س</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Terms -->
-            <div class="terms-section">
-                <h3 class="section-title">الشروط والأحكام</h3>
-                <ul class="terms-list">
-                    {terms_html}
-                </ul>
-            </div>
 
             <!-- Signatures -->
             <div class="signatures-section">
@@ -747,68 +722,7 @@ class ArabicQuotationBuilder:
             padding-right: 0.8rem;
         }}
         
-        .summary-section {{
-            margin-bottom: 1.2rem;
-        }}
-        
-        .summary-box {{
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            padding: 0.8rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #0ea5e9;
-            box-shadow: 0 3px 10px rgba(14,165,233,0.1);
-        }}
-        
-        .summary-row {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.4rem 0;
-            border-bottom: 1px solid rgba(14,165,233,0.2);
-            font-size: 0.75rem;
-        }}
-        
-        .total-row {{
-            border-bottom: none;
-            border-top: 2px solid {colors['primary']};
-            background: rgba(59,130,246,0.1);
-            margin: 0.5rem -1rem -0.8rem;
-            padding: 0.6rem 1rem;
-            font-weight: 800;
-            font-size: 0.9rem;
-            color: {colors['primary']};
-            border-radius: 0 0 8px 8px;
-        }}
-        
-        .terms-section {{
-            margin-bottom: 1rem;
-        }}
-        
-        .terms-list {{
-            background: #fef3c7;
-            padding: 0.8rem 1rem;
-            border-radius: 8px;
-            border-right: 3px solid #f59e0b;
-            list-style: none;
-            box-shadow: 0 2px 6px rgba(245,158,11,0.1);
-        }}
-        
-        .terms-list li {{
-            margin-bottom: 0.4rem;
-            padding-right: 1rem;
-            position: relative;
-            line-height: 1.4;
-            font-size: 0.7rem;
-        }}
-        
-        .terms-list li::before {{
-            content: '✓';
-            position: absolute;
-            right: 0;
-            color: #059669;
-            font-weight: bold;
-            font-size: 0.7rem;
-        }}
+
         
         .signatures-section {{
             display: grid;

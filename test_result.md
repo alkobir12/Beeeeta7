@@ -188,6 +188,34 @@ The focused UI test confirms **SUCCESSFUL IMPLEMENTATION** of the NewVehicle →
 
 ### Test Results Summary: ✅ ALL TESTS PASSED (5/5) - CRITICAL BUG FIXED
 
+
+---
+
+## P0 Invoice Template (A4) + Workshop Details + No Tax (2026-02-08)
+
+### Changes Under Test
+- Backend: `/app/backend/arabic_quotation.py`
+  - Arabic font switched to **Tajawal**.
+  - A4 print CSS improved + `print-color-adjust`.
+  - Removed tax rows/labels from invoice HTML (table footer + summary).
+  - Invoice details box changed to **"بيانات الورشة"** and now includes:
+    - السجل التجاري
+    - رقم الجوال
+    - عنوان الورشة
+    - التاريخ
+    - رقم المستند
+  - Removed emoji icons from footer text.
+- Backend: `/app/backend/unified_document_service.py`
+  - Taxes disabled (tax_rate forced to 0) and tax_number no longer passed.
+  - Workshop `commercial_register` mapped (with back-compat from legacy tax_number if present).
+- Frontend: `/app/frontend/src/pages/DocumentPrint.jsx`
+  - Removed Tax field from UI; replaced with Commercial Register field.
+  - Increased PDF render scale (3) for sharper text.
+
+### Verification
+- Generate invoice HTML via `/api/documents/generate` contains Tajawal + workshop fields and no explicit tax labels.
+- UI preview should show workshop block clearly and PDF download should preserve colors/fonts.
+
 #### ✅ P0 VEHICLE API TESTING - FULLY WORKING
 
 **Test Procedure Executed:**

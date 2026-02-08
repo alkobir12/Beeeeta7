@@ -35,6 +35,11 @@ const vehicleAPI = {
   track: (trackingId) => axios.get(`${API_BASE}/vehicles/track/${trackingId}`)
 };
 
+export const visitAPI = {
+  delete: (visitId) => api.delete(`/visits/${visitId}`),
+};
+
+
 const customerAPI = {
   getAll: () => axios.get(`${API_BASE}/customers`),
   getById: (id) => axios.get(`${API_BASE}/customers/${id}`),

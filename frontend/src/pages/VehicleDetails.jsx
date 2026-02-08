@@ -434,6 +434,15 @@ const VehicleDetails = () => {
           return r;
         });
 
+
+      const approvalsPromise = axios
+        .get(`${API_URL}/approvals?vehicle_id=${id}`)
+        .catch(() => ({ data: [] }))
+        .then((r) => {
+          setLoadingProgress(95);
+          return r;
+        });
+
       const [vehicleRes, techniciansRes, visitsRes, filesRes] = await Promise.all([
         vehiclePromise,
         techPromise,

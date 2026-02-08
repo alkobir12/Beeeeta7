@@ -146,6 +146,10 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [] }) =
   const handleReopen = async () => {
     try {
       await axios.put(`${API_URL}/visits/${visit.id}`, { status: 'in_progress' });
+
+
+  const latestApproval = approvals?.[0];
+
       setStatus('in_progress');
       setIsEditing(true);
       setIsExpanded(true);

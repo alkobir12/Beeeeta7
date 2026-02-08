@@ -465,15 +465,22 @@ class ArabicQuotationBuilder:
         
         /* تحسينات الطباعة لحجم A4 */
         @media print {{
+            * {{
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }}
+
             body {{
                 background: white;
                 margin: 0;
                 padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }}
             
             .container {{
-                width: auto;
-                min-height: auto;
+                width: 100%;
+                min-height: 100%;
                 max-width: none;
                 margin: 0;
                 border-radius: 0;

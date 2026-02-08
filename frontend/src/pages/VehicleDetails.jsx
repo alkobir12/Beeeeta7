@@ -949,6 +949,7 @@ const VehicleDetails = () => {
                     technicians={technicians}
                     onUpdate={fetchData}
                     approvals={visitApprovals}
+                    onDelete={handleDeleteVisit}
                   />
                 );
               })

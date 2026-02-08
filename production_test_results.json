@@ -1,0 +1,60 @@
+[
+  {
+    "test": "GET /health",
+    "success": true,
+    "timestamp": "2026-02-08T12:00:08.152137",
+    "status_code": 200,
+    "error": null,
+    "details": "Response is not JSON but status 200 received"
+  },
+  {
+    "test": "GET /api/settings",
+    "success": true,
+    "timestamp": "2026-02-08T12:00:08.877222",
+    "status_code": 200,
+    "error": null,
+    "details": "Settings keys: ['id', 'currency', 'taxRate', 'language', 'timezone', 'invoicePrefix', 'workshopName', 'workshopPhone', 'workshopAddress', 'workshopEmail', 'menuConfig']",
+    "response_keys": [
+      "id",
+      "currency",
+      "taxRate",
+      "language",
+      "timezone",
+      "invoicePrefix",
+      "workshopName",
+      "workshopPhone",
+      "workshopAddress",
+      "workshopEmail",
+      "menuConfig"
+    ],
+    "response_size": 960
+  },
+  {
+    "test": "GET /api/vehicles",
+    "success": true,
+    "timestamp": "2026-02-08T12:00:09.394674",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 27 vehicles",
+    "response_keys": [
+      "vehicles"
+    ],
+    "response_size": 20509
+  },
+  {
+    "test": "OPTIONS /api/vehicles CORS",
+    "success": true,
+    "timestamp": "2026-02-08T12:00:09.466453",
+    "status_code": 200,
+    "error": null,
+    "details": "CORS Origin: https://fixsa.online, Methods: DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, Headers: Content-Type"
+  },
+  {
+    "test": "Server Stability (No WhatsApp endpoints)",
+    "success": true,
+    "timestamp": "2026-02-08T12:00:10.828001",
+    "status_code": null,
+    "error": null,
+    "details": "Health and settings endpoints still working - server stable without INFOBIP_API_KEY"
+  }
+]

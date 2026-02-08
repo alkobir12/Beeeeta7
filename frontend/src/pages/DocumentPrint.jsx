@@ -152,8 +152,7 @@ const DocumentPrint = () => {
           commercial_register: profile.commercialRegister || data.commercialRegister || '',
           logo: profile.logo || '',
           slogan: profile.slogan || '',
-          slogan_en: profile.sloganEnglish || '',
-          commercial_register: profile.commercialRegister || ''
+          slogan_en: profile.sloganEnglish || ''
         }
       }));
     } catch (e) {

@@ -475,6 +475,16 @@ const VehicleDetails = () => {
       setVisits(visitsRes.data || []);
       setVehicleFiles(filesRes.files || []);
       
+      const approvalsRows = approvalsRes?.data || [];
+      const approvalsByVisit = new Map();
+      approvalsRows.forEach((a) => {
+        const vId = a.visitId || a.visit_id;
+        if (!vId) return;
+        if (!approvalsByVisit.has(vId)) approvalsByVisit.set(vId, []);
+        approvalsByVisit.get(vId).push(a);
+      });
+      setApprovals(approvalsRows);
+
     } catch (error) {
       console.error(error);
       toast({ title: 'خطأ', description: 'فشل تحميل البيانات', variant: 'destructive' });

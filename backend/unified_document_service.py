@@ -119,6 +119,7 @@ class UnifiedDocumentGenerator:
         settings = settings or {}
         theme = settings.get("theme", "أزرق")
         style = settings.get("style", "حديث")
+        # الضرائب غير مستخدمة حسب متطلبات الورشة
         tax_rate = 0
 
         # إعادة تعيين البيانات

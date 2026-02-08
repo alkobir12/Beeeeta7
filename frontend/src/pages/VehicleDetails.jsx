@@ -486,6 +486,33 @@ const VehicleDetails = () => {
       
       setTechnicians(techniciansRes.data);
       setVisits(visitsRes.data || []);
+      
+      // Show loading state as false for core UI
+      setLoadingProgress(85);
+      setLoading(false);
+      
+      // Load files and approvals in background
+      const filesPromise = fetch(`${API_URL}/vehicles/${id}/files`)
+        .then((r) => r.json())
+        .catch(() => ({ files: [] }))
+        .then((r) => {
+          setLoadingProgress(92);
+          return r;
+        });
+
+      const approvalsPromise = axios
+        .get(`${API_URL}/approvals?vehicle_id=${id}`)
+        .catch(() => ({ data: [] }))
+        .then((r) => {
+          setLoadingProgress(98);
+          return r;
+        });
+
+      const [filesRes, approvalsRes] = await Promise.all([
+        filesPromise,
+        approvalsPromise,
+      ]);
+      
       setVehicleFiles(filesRes.files || []);
       
       const approvalsRows = approvalsRes?.data || [];

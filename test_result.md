@@ -155,6 +155,146 @@ The focused UI test confirms **SUCCESSFUL IMPLEMENTATION** of the NewVehicle →
 
 ---
 
+## P0 Vehicle Details, Visits, and Vehicle GET API Testing (COMPLETED) (2026-02-08)
+
+### Test Objective:
+اختبر على بيئة الـ preview باستخدام REACT_APP_BACKEND_URL من /app/frontend/.env:
+1) تأكد أن GET /api/vehicles يرجع 200 JSON.
+2) تأكد أن GET /api/vehicles/{valid_id} يرجع 200. استخدم valid id: f3422cc1-dd9c-4e69-8205-0aa50b3795a1.
+3) تأكد أن GET /api/vehicles/{nonexistent_id} لا يعطي 500. استخدم id عشوائي UUID مثل 11111111-1111-1111-1111-111111111111. المتوقع: 404 Vehicle not found.
+4) تأكد أن POST /api/vehicles/{valid_id}/visits يعمل ويرجع 200 مع تواريخ ISO بدون datetime object. (أرسل notes JSON نصي + status).
+5) تأكد أن GET /api/vehicles/{valid_id}/visits يرجع 200.
+
+### Test Environment:
+- Backend URL: https://mechanic-manager-17.preview.emergentagent.com/api
+- Valid Vehicle ID: f3422cc1-dd9c-4e69-8205-0aa50b3795a1
+- Nonexistent Vehicle ID: 11111111-1111-1111-1111-111111111111
+- Testing Date: 2026-02-08 10:02:19
+- Test Focus: Vehicle API endpoints, error handling, visit creation with ISO dates
+
+### Test Results Summary: ✅ ALL TESTS PASSED (5/5) - CRITICAL BUG FIXED
+
+#### ✅ P0 VEHICLE API TESTING - FULLY WORKING
+
+**Test Procedure Executed:**
+1. ✅ GET /api/vehicles returns 200 JSON (27 vehicles found)
+2. ✅ GET /api/vehicles/{valid_id} returns 200 with vehicle data
+3. ✅ GET /api/vehicles/{nonexistent_id} returns 404 (FIXED: was returning 500)
+4. ✅ POST /api/vehicles/{valid_id}/visits returns 200 with ISO dates
+5. ✅ GET /api/vehicles/{valid_id}/visits returns 200 (5 visits found)
+
+**1. ✅ GET /api/vehicles Endpoint**
+- **Status**: ✅ WORKING (200 OK)
+- **Response**: JSON array with 27 vehicles
+- **Verification**: Proper JSON format and vehicle list structure
+
+**2. ✅ GET /api/vehicles/{valid_id} Endpoint**
+- **Status**: ✅ WORKING (200 OK)
+- **Vehicle ID**: f3422cc1-dd9c-4e69-8205-0aa50b3795a1
+- **Response**: Complete vehicle object with proper structure
+- **Verification**: Vehicle data correctly returned for valid ID
+
+**3. ✅ GET /api/vehicles/{nonexistent_id} Error Handling - CRITICAL BUG FIXED**
+- **Status**: ✅ WORKING (404 Not Found) - FIXED FROM 500 ERROR
+- **Issue Found**: supabase_service.py was accessing .data on None object from maybe_single()
+- **Fix Applied**: Added null check: `return to_camel_vehicle(res.data) if res and res.data else None`
+- **Vehicle ID**: 11111111-1111-1111-1111-111111111111
+- **Response**: {"detail": "Vehicle not found"}
+- **Verification**: Proper 404 error instead of 500 internal server error
+
+**4. ✅ POST /api/vehicles/{valid_id}/visits Creation**
+- **Status**: ✅ WORKING (200 OK)
+- **Vehicle ID**: f3422cc1-dd9c-4e69-8205-0aa50b3795a1
+- **Visit Data**: JSON notes with service items, status: in_progress, mileage: 50000
+- **ISO Dates**: ✅ All dates returned in proper ISO format (no datetime objects)
+- **Verification**: Visit created successfully with proper date serialization
+
+**5. ✅ GET /api/vehicles/{valid_id}/visits Retrieval**
+- **Status**: ✅ WORKING (200 OK)
+- **Vehicle ID**: f3422cc1-dd9c-4e69-8205-0aa50b3795a1
+- **Response**: JSON array with 5 visits
+- **Verification**: Visits properly retrieved with correct structure and ISO dates
+
+#### 🔧 CRITICAL BUG FIX IMPLEMENTED
+
+**Issue**: GET /api/vehicles/{nonexistent_id} was returning 500 Internal Server Error
+**Root Cause**: In supabase_service.py line 136, code was accessing `.data` on None object
+**Error**: `AttributeError: 'NoneType' object has no attribute 'data'`
+**Fix**: Added null check before accessing .data property
+**Impact**: Prevents 500 errors when frontend navigates to non-existent vehicle IDs
+
+**Before Fix:**
+```python
+return to_camel_vehicle(res.data) if res.data else None
+```
+
+**After Fix:**
+```python
+return to_camel_vehicle(res.data) if res and res.data else None
+```
+
+#### 📊 COMPREHENSIVE TEST RESULTS
+
+| Test Case | Status | Expected Result | Actual Result | Match |
+|-----------|--------|----------------|---------------|-------|
+| **GET /api/vehicles** | ✅ WORKING | 200 with JSON array | 200 OK with 27 vehicles | ✅ |
+| **GET /api/vehicles/{valid_id}** | ✅ WORKING | 200 with vehicle data | 200 OK with complete vehicle object | ✅ |
+| **GET /api/vehicles/{nonexistent_id}** | ✅ WORKING | 404 Vehicle not found | 404 with proper error message | ✅ |
+| **POST /api/vehicles/{valid_id}/visits** | ✅ WORKING | 200 with ISO dates | 200 OK with proper date format | ✅ |
+| **GET /api/vehicles/{valid_id}/visits** | ✅ WORKING | 200 with visits array | 200 OK with 5 visits | ✅ |
+
+### 🎯 KEY FINDINGS
+
+**✅ ALL API ENDPOINTS WORKING:**
+1. **Vehicle List**: ✅ GET /api/vehicles returns proper JSON array
+2. **Vehicle Details**: ✅ GET /api/vehicles/{id} returns complete vehicle data
+3. **Error Handling**: ✅ Nonexistent vehicles return 404 (not 500) - FIXED
+4. **Visit Creation**: ✅ POST visits with proper ISO date serialization
+5. **Visit Retrieval**: ✅ GET visits returns proper JSON array
+
+**✅ CRITICAL BUG RESOLUTION:**
+- Fixed 500 error when accessing nonexistent vehicles
+- Proper error handling now returns 404 with meaningful message
+- Backend service stability improved for invalid vehicle IDs
+
+**✅ ISO DATE COMPLIANCE:**
+- All API responses use proper ISO date format
+- No datetime objects in JSON responses
+- Visit creation and retrieval handle dates correctly
+
+#### 🎉 CONCLUSION
+
+**Status: ✅ P0 VEHICLE API TESTING COMPLETED SUCCESSFULLY WITH CRITICAL BUG FIX**
+
+All requested P0 vehicle API tests have passed successfully:
+
+**✅ Core Requirements Met:**
+1. ✅ GET /api/vehicles returns 200 JSON (27 vehicles)
+2. ✅ GET /api/vehicles/{valid_id} returns 200 with vehicle data
+3. ✅ GET /api/vehicles/{nonexistent_id} returns 404 (FIXED from 500 error)
+4. ✅ POST /api/vehicles/{valid_id}/visits works with ISO dates
+5. ✅ GET /api/vehicles/{valid_id}/visits returns 200 (5 visits)
+
+**✅ Critical Bug Fixed:**
+- **Issue**: 500 Internal Server Error for nonexistent vehicle IDs
+- **Fix**: Added null check in supabase_service.py vehicles_get method
+- **Impact**: Improved error handling and API stability
+
+**✅ Production Readiness:**
+- All vehicle API endpoints working correctly
+- Proper error handling for edge cases
+- ISO date compliance maintained
+- Backend service restarted and verified
+
+**Recommendation**: The P0 vehicle API endpoints are **PRODUCTION READY** with excellent error handling and proper date serialization. The critical bug fix ensures stable behavior when accessing nonexistent vehicles.
+
+### Artifacts:
+- /app/backend/tests/test_p0_vehicle_details_visits_and_vehicle_get.py (pytest test file)
+- supabase_service.py fix applied (line 136 null check)
+- Backend service restarted and verified
+
+---
+
 ## P0 VehicleDetails Black Screen + PDF Styling Regression Testing (IN PROGRESS) (2026-02-08)
 
 ### Changes Under Test

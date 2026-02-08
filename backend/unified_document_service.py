@@ -222,9 +222,9 @@ class UnifiedDocumentGenerator:
         if brand or model:
             parts.append(f"المركبة: {brand} {model} {year}".strip())
         if plate:
-            parts.append(f"رقم اللوحة: {plate}")
+            parts.append(f"اللوحة: {plate}")
         if vin:
-            parts.append(f"رقم الهيكل: {vin}")
+            parts.append(f"الهيكل: {vin}")
         if color:
             parts.append(f"اللون: {color}")
         if mileage:

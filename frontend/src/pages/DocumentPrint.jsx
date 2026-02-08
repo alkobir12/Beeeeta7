@@ -400,7 +400,21 @@ const DocumentPrint = () => {
          tempDiv.style.left = '-9999px';
          tempDiv.style.top = '0';
          tempDiv.style.width = '794px'; 
-         tempDiv.innerHTML = response.data.html;
+         
+         // Inject Print Styles to force Light Mode
+         const style = document.createElement('style');
+         style.innerHTML = `
+           * { color: #000 !important; background-color: #fff !important; }
+           .bg-slate-900, .bg-slate-800, .bg-black { background-color: #fff !important; }
+           .text-white, .text-slate-200, .text-slate-300 { color: #000 !important; }
+           border { border-color: #ddd !important; }
+         `;
+         tempDiv.appendChild(style);
+         
+         const contentDiv = document.createElement('div');
+         contentDiv.innerHTML = response.data.html;
+         tempDiv.appendChild(contentDiv);
+         
          document.body.appendChild(tempDiv);
          
          await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);

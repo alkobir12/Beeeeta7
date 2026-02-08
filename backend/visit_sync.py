@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+import uuid
 
 async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service=None):
     """

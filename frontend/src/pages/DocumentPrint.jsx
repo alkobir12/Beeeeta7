@@ -215,6 +215,13 @@ const DocumentPrint = () => {
 
       if (ops.length > 0) {
         const op = ops[0]; // latest
+        // When printing from a specific visit, we derive doc type from the visit status.
+        // This matches the “print حسب الحالة” requirement.
+        if (docType === initialType && visitId) {
+          const st = String(op.status || '').toLowerCase();
+          const mapped = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : st === 'receipt' ? 'receipt' : 'invoice';
+          setDocType(mapped);
+        }
         const opItems = (op.items || []).map((it) => ({
           description: it.name || it.description || '',
           quantity: Number(it.quantity || 1),

@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://fixsa-refresh.preview.emergentagent.com/api"
+BACKEND_URL = "https://mechanic-manager-17.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

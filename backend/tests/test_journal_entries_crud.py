@@ -13,7 +13,7 @@ import os
 import uuid
 
 BASE_URL = os.environ.get(
-    "REACT_APP_BACKEND_URL", "https://fixsa-refresh.preview.emergentagent.com"
+    "REACT_APP_BACKEND_URL", "https://mechanic-manager-17.preview.emergentagent.com"
 ).rstrip("/")
 WORKSHOP_ID = "finmodule-sync"
 

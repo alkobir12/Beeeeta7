@@ -134,7 +134,7 @@ GET  /api/stitch/status/{id}                      - حالة التوليد
 
 ### معرّفات
 - **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://fixsa-refresh.preview.emergentagent.com`
+- **API URL**: `https://mechanic-manager-17.preview.emergentagent.com`
 
 ---
 

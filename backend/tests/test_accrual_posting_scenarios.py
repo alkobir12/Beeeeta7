@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 # Configuration
-BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://fixsa-refresh.preview.emergentagent.com") + "/api"
+BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://mechanic-manager-17.preview.emergentagent.com") + "/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class TestAccrualPostingScenarios:

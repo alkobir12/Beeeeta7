@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, CheckCircle, FileText, Upload, Printer, Receipt, Clock, Trash2, Camera, X, Scan, Plus, ChevronDown, ChevronUp, Edit2, Save, XCircle, FileCheck, ClipboardList } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { vehicleAPI, technicianAPI, financeAPI, customerAPI } from '../services/api';
+import { vehicleAPI, technicianAPI, financeAPI, customerAPI, visitAPI } from '../services/api';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';

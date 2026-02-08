@@ -888,14 +888,28 @@ const VehicleDetails = () => {
                 <p className="text-xs text-gray-500">لا توجد زيارات مسجلة</p>
               </div>
             ) : (
-              visits.map(visit => (
-                <VisitCard 
-                  key={visit.id} 
-                  visit={visit} 
-                  technicians={technicians} 
-                  onUpdate={fetchData} 
-                />
-              ))
+              visits.map(visit => {
+                const normVisit = {
+                  ...visit,
+                  entryDate: visit.entryDate || visit.entry_date,
+                  exitDate: visit.exitDate || visit.exit_date,
+                  technicianId: visit.technicianId || visit.technician_id,
+                  createdAt: visit.createdAt || visit.created_at,
+                };
+                const visitApprovals = approvals
+                  .filter((a) => (a.visitId || a.visit_id) === normVisit.id)
+                  .sort((x, y) => String(y.createdAt || y.created_at || '').localeCompare(String(x.createdAt || x.created_at || '')));
+
+                return (
+                  <VisitCard
+                    key={normVisit.id}
+                    visit={normVisit}
+                    technicians={technicians}
+                    onUpdate={fetchData}
+                    approvals={visitApprovals}
+                  />
+                );
+              })
             )}
           </div>
         </div>

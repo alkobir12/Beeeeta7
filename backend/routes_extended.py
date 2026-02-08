@@ -2329,6 +2329,12 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
 
             res = supa.client.table("vehicle_visits").insert(row).execute()
             r = (res.data or [{}])[0]
+
+            # --- SYNC TO OPERATIONS (FINANCE) ---
+            if "notes" in payload:
+                await _sync_visit_to_operation(visit_id, r, supa_service=supa)
+            # ------------------------------------
+
             return {
                 "id": r.get("id"),
                 "vehicleId": r.get("vehicle_id"),
@@ -2355,6 +2361,13 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
         }
 
         await db.vehicle_visits.insert_one(doc)
+        
+        # --- SYNC TO OPERATIONS (MONGO) ---
+        if "notes" in payload:
+             doc_norm = {**doc, "vehicleId": vehicle_id}
+             await _sync_visit_to_operation(visit_id, doc_norm, supa_service=None)
+        # ----------------------------------
+
         doc.pop("_id", None)
         for k in ("entryDate", "exitDate", "createdAt"):
             if doc.get(k) and hasattr(doc[k], "isoformat"):

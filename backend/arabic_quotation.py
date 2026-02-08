@@ -578,7 +578,7 @@ class ArabicQuotationBuilder:
         .quote-section {{
             text-align: left;
             background: rgba(255,255,255,0.15);
-            padding: 1rem 1.2rem;
+            padding: 0.75rem 0.95rem;
             border-radius: 10px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);

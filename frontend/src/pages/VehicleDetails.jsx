@@ -89,7 +89,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
   );
 };
 
-const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
+const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [] }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(visit.status);

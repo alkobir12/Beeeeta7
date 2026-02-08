@@ -472,9 +472,9 @@ class ArabicQuotationBuilder:
             }}
             
             .container {{
-                width: 210mm;
-                height: 297mm;
-                max-width: 210mm;
+                width: auto;
+                min-height: auto;
+                max-width: none;
                 margin: 0;
                 border-radius: 0;
                 box-shadow: none;

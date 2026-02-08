@@ -528,9 +528,9 @@ const VehicleDetails = () => {
     } catch (error) {
       console.error(error);
       toast({ title: 'خطأ', description: 'فشل تحميل البيانات', variant: 'destructive' });
+      setLoading(false);
     } finally {
       setLoadingProgress(100);
-      setLoading(false);
     }
   }, [id, API_URL, toast]);
 

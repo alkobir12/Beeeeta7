@@ -262,7 +262,7 @@ class ArabicQuotationBuilder:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض سعر - {self.quotation['number']}</title>
+    <title>{self.quotation['doc_title']} - {self.quotation['number']}</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
     <style>
         {css_style}
@@ -321,10 +321,7 @@ class ArabicQuotationBuilder:
                             <span class="label">التاريخ:</span>
                             <span class="value">{self.quotation['date']}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">رقم المستند:</span>
-                            <span class="value">{self.quotation['number']}</span>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -608,7 +605,7 @@ class ArabicQuotationBuilder:
         }}
         
         .content {{
-            padding: 1.2rem 1.5rem;
+            padding: 0.9rem 1.1rem;
         }}
         
         .section-title {{

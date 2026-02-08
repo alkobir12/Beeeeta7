@@ -570,8 +570,9 @@ class ArabicQuotationBuilder:
         }}
         
         .company-address {{
-            font-size: 0.8rem;
-            opacity: 0.9;
+            font-size: 0.72rem;
+            opacity: 0.92;
+            line-height: 1.2;
         }}
         
         .quote-section {{

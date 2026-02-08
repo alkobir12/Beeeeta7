@@ -529,19 +529,6 @@ const VehicleDetails = () => {
 
   const handleUpdateCustomerInfo = async () => {
     try {
-
-  const handleDeleteVisit = async (visitId) => {
-    if (!visitId) return;
-    if (!window.confirm('هل أنت متأكد من حذف هذه الزيارة؟ سيتم حذف العمليات المرتبطة بها.')) return;
-    try {
-      await visitAPI.delete(visitId);
-      toast({ title: 'تم الحذف', description: 'تم حذف الزيارة بنجاح' });
-      fetchData();
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'فشل حذف الزيارة', variant: 'destructive' });
-    }
-  };
-
       // If backend supports updating customer from vehicle update endpoint, use that
       // Or update customer directly. For MVP, we update vehicle record which often holds denormalized data
       // But ideally we update customer entity too.
@@ -569,6 +556,18 @@ const VehicleDetails = () => {
       toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات العميل' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل تحديث بيانات العميل', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteVisit = async (visitId) => {
+    if (!visitId) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذه الزيارة؟ سيتم حذف العمليات المرتبطة بها.')) return;
+    try {
+      await visitAPI.delete(visitId);
+      toast({ title: 'تم الحذف', description: 'تم حذف الزيارة بنجاح' });
+      fetchData();
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل حذف الزيارة', variant: 'destructive' });
     }
   };
 

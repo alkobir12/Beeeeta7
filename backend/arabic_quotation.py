@@ -555,10 +555,10 @@ class ArabicQuotationBuilder:
         }}
         
         .company-info h1 {{
-            font-size: 1.6rem;
+            font-size: 1.3rem;
             font-weight: 800;
-            margin-bottom: 0.3rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.2rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.25);
             line-height: 1.2;
         }}
         

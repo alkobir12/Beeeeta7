@@ -468,35 +468,46 @@ const DocumentPrint = () => {
       });
       
       if (response.data.success) {
-         const tempDiv = document.createElement('div');
-         tempDiv.style.position = 'absolute';
-         tempDiv.style.left = '-9999px';
-         tempDiv.style.top = '0';
-         tempDiv.style.width = '794px'; 
-         
-         const contentDiv = document.createElement('div');
-         contentDiv.innerHTML = response.data.html;
-         tempDiv.appendChild(contentDiv);
-         
-         document.body.appendChild(tempDiv);
+         // Use an offscreen iframe so the HTML <head> styles + Google Fonts load correctly.
+         // (The preview uses iframe-like rendering; this makes download match the preview.)
+         const iframe = document.createElement('iframe');
+         iframe.style.position = 'absolute';
+         iframe.style.left = '-9999px';
+         iframe.style.top = '0';
+         iframe.style.width = '794px';
+         iframe.style.height = '1123px';
+         iframe.style.border = '0';
 
-         // Ensure fonts are loaded before html2canvas snapshot.
-         if (document.fonts?.ready) {
+         const html = response.data.html;
+
+         await new Promise((resolve, reject) => {
+           iframe.onload = () => resolve(true);
+           iframe.onerror = () => reject(new Error('iframe load failed'));
+           document.body.appendChild(iframe);
+           // srcdoc is supported in modern browsers; it keeps styles/fonts intact.
+           iframe.srcdoc = html;
+         });
+
+         const doc = iframe.contentDocument;
+         const body = doc?.body;
+         if (!body) throw new Error('PDF iframe body not available');
+
+         // Wait for fonts inside iframe.
+         if (doc.fonts?.ready) {
            try {
-             await document.fonts.ready;
+             await doc.fonts.ready;
            } catch (_) {
              // ignore
            }
          }
-         // Give the browser a moment to paint styles/layout for the offscreen container.
-         await new Promise((r) => setTimeout(r, 80));
-         
-         await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
+         await new Promise((r) => setTimeout(r, 120));
+
+         await downloadPDF(body, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
            scale: 3,
            backgroundColor: '#ffffff',
          });
-         
-         document.body.removeChild(tempDiv);
+
+         document.body.removeChild(iframe);
       } else {
         throw new Error(response.data.message);
       }

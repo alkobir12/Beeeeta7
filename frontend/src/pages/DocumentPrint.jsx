@@ -334,7 +334,7 @@ const DocumentPrint = () => {
         settings: {
           ...prev.settings,
           date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,
-          document_number: op.invoice_number || op.invoiceNumber || `OP-${op.id}`,
+          document_number: op.invoice_number || op.invoiceNumber || prev.settings.document_number || `OP-${op.id}`,
           notes: op.notes || prev.settings.notes,
         },
       }));

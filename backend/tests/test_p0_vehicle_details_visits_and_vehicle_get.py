@@ -17,8 +17,22 @@ import json
 import os
 from datetime import datetime
 
-# Configuration from frontend .env
-BACKEND_URL = "https://mechanic-manager-17.preview.emergentagent.com/api"
+# Configuration
+# Use REACT_APP_BACKEND_URL (from frontend/.env) when available; fallback to the preview URL.
+_DEFAULT_BACKEND_BASE = "https://mechanic-manager-17.preview.emergentagent.com"
+try:
+    _env_path = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", ".env")
+    _backend = None
+    if os.path.exists(_env_path):
+        with open(_env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("REACT_APP_BACKEND_URL="):
+                    _backend = line.split("=", 1)[1].strip()
+                    break
+    BACKEND_URL = f"{(_backend or _DEFAULT_BACKEND_BASE).rstrip('/')}/api"
+except Exception:
+    BACKEND_URL = f"{_DEFAULT_BACKEND_BASE}/api"
+
 VALID_VEHICLE_ID = "f3422cc1-dd9c-4e69-8205-0aa50b3795a1"
 NONEXISTENT_VEHICLE_ID = "11111111-1111-1111-1111-111111111111"
 

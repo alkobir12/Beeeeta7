@@ -404,6 +404,8 @@ const VehicleDetails = () => {
   
   const [vehicle, setVehicle] = useState(null);
   const [approvals, setApprovals] = useState([]);
+  const [showFiles, setShowFiles] = useState(false);
+  const [showApprovals, setShowApprovals] = useState(false);
   const [technicians, setTechnicians] = useState([]);
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);

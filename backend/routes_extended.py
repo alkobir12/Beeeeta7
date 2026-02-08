@@ -1885,7 +1885,9 @@ async def list_approvals(vehicle_id: Optional[str] = None, visit_id: Optional[st
 
         # MongoDB implementation (legacy)
         q = {}
-        if vehicle_id:
+        if visit_id:
+            q["visitId"] = visit_id
+        elif vehicle_id:
             q["vehicleId"] = vehicle_id
         docs = (
             await db.approval_requests.find(q)

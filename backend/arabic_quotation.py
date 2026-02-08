@@ -981,7 +981,7 @@ class ArabicQuotationBuilder:
         
         .project-description {{
             background: {colors['accent']};
-            padding: 1.5rem;
+            padding: 1.0rem;
             border: 1px solid #d1d5db;
             border-right: 4px solid {colors['primary']};
         }}
@@ -1016,50 +1016,7 @@ class ArabicQuotationBuilder:
             text-align: right !important;
         }}
         
-        .summary-section {{
-            margin-bottom: 2rem;
-        }}
-        
-        .summary-box {{
-            background: {colors['accent']};
-            padding: 1.5rem;
-            border: 2px solid {colors['primary']};
-        }}
-        
-        .summary-row {{
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px dotted {colors['primary']};
-        }}
-        
-        .total-row {{
-            border-top: 2px solid {colors['primary']};
-            border-bottom: 2px solid {colors['primary']};
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: {colors['primary']};
-            background: white;
-            margin: 1rem -1.5rem -1.5rem;
-            padding: 1rem 1.5rem;
-        }}
-        
-        .terms-section {{
-            margin-bottom: 2rem;
-        }}
-        
-        .terms-list {{
-            background: {colors['accent']};
-            padding: 1.5rem;
-            border: 1px solid #d1d5db;
-            border-right: 4px solid {colors['primary']};
-            list-style: decimal inside;
-        }}
-        
-        .terms-list li {{
-            margin-bottom: 0.75rem;
-            line-height: 1.6;
-        }}
+
         
         .signatures-section {{
             display: grid;

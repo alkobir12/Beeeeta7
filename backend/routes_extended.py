@@ -1855,7 +1855,9 @@ async def list_approvals(vehicle_id: Optional[str] = None, visit_id: Optional[st
 
             supa = SupabaseService()
             q = supa.client.table("approval_requests").select("*")
-            if vehicle_id:
+            if visit_id:
+                q = q.eq("visit_id", visit_id)
+            elif vehicle_id:
                 q = q.eq("vehicle_id", vehicle_id)
             res = q.order("created_at", desc=True).execute()
             rows = res.data or []

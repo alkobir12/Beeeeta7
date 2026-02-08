@@ -168,6 +168,20 @@ The focused UI test confirms **SUCCESSFUL IMPLEMENTATION** of the NewVehicle →
 ### Test Environment:
 - Backend URL: https://mechanic-manager-17.preview.emergentagent.com/api
 - Valid Vehicle ID: f3422cc1-dd9c-4e69-8205-0aa50b3795a1
+
+---
+
+## P0 Intermittent Black Screen + Slowness (Investigation) (2026-02-08)
+
+### User Report
+- المشكلة متقطعة: أحيانًا تظهر شاشة سوداء ويطلب Reload في صفحات مختلفة.
+- الموقع ثقيل/بطيء.
+
+### Investigation Plan
+- Stress test frontend navigation + capture console/network errors.
+- Stress test backend endpoints for latency spikes and intermittent 5xx.
+- Check backend logs for crashes/restarts/exceptions.
+
 - Nonexistent Vehicle ID: 11111111-1111-1111-1111-111111111111
 - Testing Date: 2026-02-08 10:02:19
 - Test Focus: Vehicle API endpoints, error handling, visit creation with ISO dates

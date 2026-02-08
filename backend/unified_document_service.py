@@ -353,8 +353,8 @@ def create_unified_document_routes(router):
         phone: Optional[str] = ""
         email: Optional[str] = ""
         website: Optional[str] = ""
-        tax_number: Optional[str] = ""
-        taxNumber: Optional[str] = ""
+        commercial_register: Optional[str] = ""
+        commercialRegister: Optional[str] = ""
 
         class Config:
             extra = "allow"

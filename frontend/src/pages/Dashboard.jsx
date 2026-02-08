@@ -21,7 +21,11 @@ const Dashboard = () => {
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+  const API_URL = (
+    process.env.NODE_ENV === 'production'
+      ? '/api'
+      : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
+  );
   const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID;
   const [totalAR, setTotalAR] = useState(0);
 
@@ -84,15 +88,34 @@ const Dashboard = () => {
       
       const today = new Date().toISOString().slice(0, 10);
 
-      const [vehiclesRes, techniciansRes, arRes] = await Promise.all([
+      // Load core data first (vehicles + technicians). Finance AR is heavy; load it lazily.
+      const [vehiclesRes, techniciansRes] = await Promise.all([
         vehicleAPI.getAll(),
         technicianAPI.getAll(),
-        (WORKSHOP_ID
-          ? axios.get(`${API_URL}/finance/ar/customers`, {
-              params: { workshop_id: WORKSHOP_ID, as_of: today, include_today: true },
-            })
-          : Promise.resolve({ data: { success: true, data: { total_ar: 0 } } }))
       ]);
+
+      if (isMountedRef.current) {
+        setVehicles(vehiclesRes.data);
+        setTechnicians(techniciansRes.data);
+      }
+
+      // Lazy load AR in background (doesn't block UI)
+      if (WORKSHOP_ID) {
+        axios
+          .get(`${API_URL}/finance/ar/customers`, {
+            params: { workshop_id: WORKSHOP_ID, as_of: today, include_today: true },
+          })
+          .then((arRes) => {
+            if (!isMountedRef.current) return;
+            const arTotal = Number(arRes?.data?.data?.total_ar || 0);
+            setTotalAR(arTotal);
+          })
+          .catch(() => {
+            // ignore
+          });
+      } else {
+        if (isMountedRef.current) setTotalAR(0);
+      }
       
       if (isMountedRef.current) {
         setVehicles(vehiclesRes.data);

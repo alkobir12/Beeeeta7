@@ -365,10 +365,7 @@ class ArabicQuotationBuilder:
                         <span>إجمالي الخصم:</span>
                         <span>{self.quotation['discount']:,.2f} ر.س</span>
                     </div>
-                    <div class="summary-row">
-                        <span>ضريبة القيمة المضافة ({self.quotation['tax_rate']}%):</span>
-                        <span>{self.quotation['tax_amount']:,.2f} ر.س</span>
-                    </div>
+
                     <div class="summary-row total-row">
                         <span>المجموع الكلي:</span>
                         <span>{self.quotation['total']:,.2f} ر.س</span>

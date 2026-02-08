@@ -2518,7 +2518,7 @@ async def delete_visit(visit_id: str):
             except Exception:
                 pass
 
-            res = supa.client.table("visits").delete().eq("id", visit_id).execute()
+            res = supa.client.table("vehicle_visits").delete().eq("id", visit_id).execute()
             if not (res.data and len(res.data) > 0):
                 raise HTTPException(status_code=404, detail="Visit not found")
             return {"success": True}

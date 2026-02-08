@@ -33,10 +33,7 @@ router = APIRouter(prefix="/api/whatsapp-bot", tags=["whatsapp-bot"])
 
 class Config:
     INFOBIP_BASE_URL = "https://4kmg2m.api.infobip.com"
-    INFOBIP_API_KEY = os.getenv(
-        "INFOBIP_API_KEY",
-        "8038da14086df3a783c1baad41289125-68821ef3-8822-4153-b25c-c859e1fae75e",
-    )
+    INFOBIP_API_KEY = os.getenv("INFOBIP_API_KEY", "")
     WHATSAPP_SENDER = os.getenv("WHATSAPP_SENDER", "966540444051")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")

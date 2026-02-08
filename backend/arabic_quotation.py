@@ -529,8 +529,8 @@ class ArabicQuotationBuilder:
         }}
         
         .logo {{
-            width: 80px;
-            height: 80px;
+            width: 64px;
+            height: 64px;
             background: rgba(255,255,255,0.15);
             border-radius: 50%;
             display: flex;

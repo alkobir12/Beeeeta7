@@ -2394,7 +2394,8 @@ async def get_visit_operations(visit_id: str):
                 supa.client.table("operations")
                 .select("*")
                 .eq("visit_id", visit_id)
-                .order("date", desc=True)
+                # In Supabase schema the operation date column is `op_date` (not `date`).
+                .order("op_date", desc=True)
                 .execute()
             )
             return res.data or []

@@ -32,6 +32,7 @@ const DocumentPrint = () => {
   // نوع المستند من URL أو افتراضي
   const initialType = searchParams.get('type') || 'invoice';
   const vehicleId = searchParams.get('vehicleId');
+  const visitId = searchParams.get('visitId');
   const operationId = searchParams.get('operationId');
   const invoiceId = searchParams.get('invoiceId');
   
@@ -93,13 +94,16 @@ const DocumentPrint = () => {
       loadVehicleData(vehicleId);
       loadLatestApprovalToken(vehicleId);
     }
+    if (visitId && vehicleId) {
+      loadVisitItems(vehicleId, visitId);
+    }
     if (operationId) {
       loadOperationData(operationId);
     }
     if (invoiceId) {
       loadInvoiceData(invoiceId);
     }
-  }, [vehicleId, operationId, invoiceId]);
+  }, [vehicleId, visitId, operationId, invoiceId]);
 
   useEffect(() => {
     const loadPrintDefaults = async () => {
@@ -199,6 +203,69 @@ const DocumentPrint = () => {
         }));
       }
     } catch (e) {
+
+  const loadVisitItems = async (vId, vVisitId) => {
+    try {
+      // 1) Prefer finance operations linked to the visit (most accurate for invoices/receipts).
+      const opsRes = await axios.get(`${API_URL}/visits/${vVisitId}/operations`).catch(() => ({ data: [] }));
+      const ops = Array.isArray(opsRes.data) ? opsRes.data : [];
+
+      if (ops.length > 0) {
+        const op = ops[0]; // latest
+        const opItems = (op.items || []).map((it) => ({
+          description: it.name || it.description || '',
+          quantity: Number(it.quantity || 1),
+          unit_price: Number(it.price || it.unit_price || 0),
+          discount: 0,
+        }));
+
+        setFormData((prev) => ({
+          ...prev,
+          items: opItems.length > 0 ? opItems : prev.items,
+          settings: {
+            ...prev.settings,
+            document_number: op.invoice_number || op.invoiceNumber || prev.settings.document_number,
+            date: (op.op_date || op.date || '').toString().slice(0, 10) || prev.settings.date,
+          },
+        }));
+
+        // Map doc type based on vehicle/visit status when not explicitly specified.
+        if (!searchParams.get('type')) {
+          // fallback logic: keep existing
+        }
+
+        return;
+      }
+
+      // 2) Fallback: load visit notes->items from vehicle visits endpoint.
+      const visitsRes = await axios.get(`${API_URL}/vehicles/${vId}/visits`).catch(() => ({ data: [] }));
+      const visits = Array.isArray(visitsRes.data) ? visitsRes.data : [];
+      const match = visits.find((x) => (x.id || x.visitId) === vVisitId);
+
+      if (match && match.notes && String(match.notes).trim().startsWith('{')) {
+        try {
+          const obj = JSON.parse(match.notes);
+          const parsed = (obj.items || []).map((it) => ({
+            description: it.name || it.description || '',
+            quantity: Number(it.quantity || 1),
+            unit_price: Number(it.price || it.unit_price || 0),
+            discount: 0,
+          }));
+          if (parsed.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              items: parsed,
+            }));
+          }
+        } catch (_) {
+          // ignore
+        }
+      }
+    } catch (e) {
+      console.error('Error loading visit items:', e);
+    }
+  };
+
       console.error('Error loading vehicle:', e);
     }
   };
@@ -391,6 +458,7 @@ const DocumentPrint = () => {
           ...formData.settings,
           approval_token: formData.settings.approval_token || undefined,
           approval_vehicle_id: vehicleId || undefined,
+          visit_id: visitId || undefined,
         },
       });
       
@@ -460,6 +528,7 @@ const DocumentPrint = () => {
           ...formData.settings,
           approval_token: formData.settings.approval_token || undefined,
           approval_vehicle_id: vehicleId || undefined,
+          visit_id: visitId || undefined,
         },
       });
 
@@ -496,6 +565,7 @@ const DocumentPrint = () => {
           ...formData.settings,
           approval_token: formData.settings.approval_token || undefined,
           approval_vehicle_id: vehicleId || undefined,
+          visit_id: visitId || undefined,
         },
       });
 

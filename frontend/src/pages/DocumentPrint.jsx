@@ -203,6 +203,9 @@ const DocumentPrint = () => {
         }));
       }
     } catch (e) {
+      console.error('Error loading vehicle:', e);
+    }
+  };
 
   const loadVisitItems = async (vId, vVisitId) => {
     try {

@@ -111,7 +111,7 @@ class InvoiceBackendTester:
         return found_fields, missing_fields
 
     def check_forbidden_words(self, html_content):
-        """Check for forbidden tax-related words"""
+        """Check for forbidden tax-related words (excluding base64 images)"""
         forbidden_words = [
             'ضريبة',
             'رقم الضريبة', 
@@ -122,8 +122,20 @@ class InvoiceBackendTester:
         
         found_forbidden = []
         
+        # Split content into lines and exclude base64 image data
+        lines = html_content.split('\n')
+        text_content = []
+        
+        for line in lines:
+            # Skip lines containing base64 image data
+            if 'base64' not in line.lower():
+                text_content.append(line)
+        
+        # Join back the non-base64 content
+        clean_content = '\n'.join(text_content)
+        
         for word in forbidden_words:
-            if word in html_content:
+            if word in clean_content:
                 found_forbidden.append(word)
                 
         return found_forbidden

@@ -361,6 +361,8 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
     </div>
   );
 };
+  const [approvals, setApprovals] = useState([]);
+
 
 // --- Main Page Component ---
 

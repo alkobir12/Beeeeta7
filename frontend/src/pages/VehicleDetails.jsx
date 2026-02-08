@@ -458,29 +458,12 @@ const VehicleDetails = () => {
           setLoadingProgress(80);
           return r;
         });
-      const filesPromise = fetch(`${API_URL}/vehicles/${id}/files`)
-        .then((r) => r.json())
-        .catch(() => ({ files: [] }))
-        .then((r) => {
-          setLoadingProgress(90);
-          return r;
-        });
 
-
-      const approvalsPromise = axios
-        .get(`${API_URL}/approvals?vehicle_id=${id}`)
-        .catch(() => ({ data: [] }))
-        .then((r) => {
-          setLoadingProgress(95);
-          return r;
-        });
-
-      const [vehicleRes, techniciansRes, visitsRes, filesRes, approvalsRes] = await Promise.all([
+      // Load vehicle + technicians + visits first (core UI)
+      const [vehicleRes, techniciansRes, visitsRes] = await Promise.all([
         vehiclePromise,
         techPromise,
         visitsPromise,
-        filesPromise,
-        approvalsPromise,
       ]);
       
       setVehicle(vehicleRes.data);

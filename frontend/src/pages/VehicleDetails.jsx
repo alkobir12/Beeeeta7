@@ -305,6 +305,25 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete }) => {
             />
           </div>
 
+
+
+          <div className="flex justify-end gap-2 pb-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const vId = visit.id;
+                // Map visit status to default doc type
+                const st = (visit.status || '').toLowerCase();
+                const type = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : st === 'in_progress' ? 'invoice' : 'invoice';
+                window.location.href = `/print?type=${type}&vehicleId=${visit.vehicleId || visit.vehicle_id}&visitId=${vId}`;
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-2"
+              title="طباعة هذه الزيارة"
+            >
+              <Printer size={14} /> طباعة الزيارة
+            </button>
+          </div>
+
           {/* Actions Footer */}
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
             {isEditing ? (

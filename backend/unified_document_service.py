@@ -141,7 +141,11 @@ class UnifiedDocumentGenerator:
             website=workshop_data.get("website", ""),
             
             commercial_register=workshop_data.get(
-                "commercial_register", workshop_data.get("commercialRegister", "")
+                "commercial_register",
+                workshop_data.get(
+                    "commercialRegister",
+                    workshop_data.get("tax_number", workshop_data.get("taxNumber", "")),
+                ),
             ),
             logo=workshop_data.get("logo", ""),
         )

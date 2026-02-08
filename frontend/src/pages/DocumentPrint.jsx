@@ -149,7 +149,7 @@ const DocumentPrint = () => {
           phone: profile.phone || data.phone || '',
           email: profile.email || data.email || '',
           website: data.website || '',
-          tax_number: profile.taxNumber || data.taxNumber || '',
+          commercial_register: profile.commercialRegister || data.commercialRegister || '',
           logo: profile.logo || '',
           slogan: profile.slogan || '',
           slogan_en: profile.sloganEnglish || '',
@@ -724,8 +724,8 @@ const DocumentPrint = () => {
                       <Input value={formData.workshop.email} onChange={(e) => handleWorkshopChange('email', e.target.value)} />
                     </div>
                     <div>
-                      <Label>{isArabic ? 'الرقم الضريبي' : 'Tax Number'}</Label>
-                      <Input value={formData.workshop.tax_number} onChange={(e) => handleWorkshopChange('tax_number', e.target.value)} />
+                      <Label>{isArabic ? 'السجل التجاري' : 'Commercial Register'}</Label>
+                      <Input value={formData.workshop.commercial_register} onChange={(e) => handleWorkshopChange('commercial_register', e.target.value)} />
                     </div>
                   </div>
                 </CardContent>

@@ -310,15 +310,19 @@ class ArabicQuotationBuilder:
                 </div>
                 
                 <div class="quote-info">
-                    <h3 class="section-title">بيانات الفاتورة</h3>
+                    <h3 class="section-title">بيانات الورشة</h3>
                     <div class="info-grid">
+                        {self._render_if_value(self.company.get('commercial_register', ''), 'السجل التجاري')}
+                        {self._render_if_value(self.company.get('phone', ''), 'رقم الجوال')}
+                        {self._render_if_value(self.company.get('address', ''), 'عنوان الورشة')}
                         <div class="info-item">
                             <span class="label">التاريخ:</span>
                             <span class="value">{self.quotation['date']}</span>
                         </div>
-                        {self._render_if_value(self.company.get('commercial_register', ''), 'السجل التجاري')}
-                        {self._render_if_value(self.company.get('phone', ''), 'رقم الجوال')}
-                        {self._render_if_value(self.company.get('address', ''), 'عنوان الورشة')}
+                        <div class="info-item">
+                            <span class="label">رقم المستند:</span>
+                            <span class="value">{self.quotation['number']}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -445,21 +449,24 @@ class ArabicQuotationBuilder:
         body {{
             font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             direction: rtl;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            color: #1e293b;
-            line-height: 1.4;
-            font-size: 11px;
+            background: #ffffff;
+            color: #0f172a;
+            line-height: 1.5;
+            font-size: 12px;
+            text-rendering: geometricPrecision;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }}
         
         .container {{
-            max-width: 210mm;
-            height: 297mm;
-            margin: 10px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 0;
+            box-shadow: none;
             overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
             padding: 0;
         }}
         

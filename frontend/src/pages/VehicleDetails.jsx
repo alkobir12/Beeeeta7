@@ -443,11 +443,12 @@ const VehicleDetails = () => {
           return r;
         });
 
-      const [vehicleRes, techniciansRes, visitsRes, filesRes] = await Promise.all([
+      const [vehicleRes, techniciansRes, visitsRes, filesRes, approvalsRes] = await Promise.all([
         vehiclePromise,
         techPromise,
         visitsPromise,
         filesPromise,
+        approvalsPromise,
       ]);
       
       setVehicle(vehicleRes.data);

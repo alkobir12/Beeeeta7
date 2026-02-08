@@ -493,7 +493,7 @@ const DocumentPrint = () => {
          await new Promise((r) => setTimeout(r, 80));
          
          await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
-           scale: 2,
+           scale: 3,
            backgroundColor: '#ffffff',
          });
          

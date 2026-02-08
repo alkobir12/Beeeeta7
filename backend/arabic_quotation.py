@@ -399,9 +399,9 @@ class ArabicQuotationBuilder:
         <footer class="footer">
             <div class="footer-content">
                 <div class="contact-info">
-                    <span>📧 {self.company['email']}</span>
-                    <span>📱 {self.company['phone']}</span>
-                    <span>🌐 {self.company['website']}</span>
+                    <span>البريد: {self.company['email']}</span>
+                    <span>الجوال: {self.company['phone']}</span>
+                    <span>الموقع: {self.company['website']}</span>
                 </div>
                 <p>&copy; 2024 {self.company['name']} - جميع الحقوق محفوظة</p>
             </div>

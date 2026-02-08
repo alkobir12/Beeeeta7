@@ -569,6 +569,14 @@ class ArabicQuotationBuilder:
             margin-bottom: 0.15rem;
             font-weight: 500;
         }}
+
+        .company-slogan {{
+            font-size: 0.78rem;
+            opacity: 0.95;
+            margin-bottom: 0.15rem;
+            font-weight: 600;
+        }}
+
         
         .company-address {{
             font-size: 0.72rem;

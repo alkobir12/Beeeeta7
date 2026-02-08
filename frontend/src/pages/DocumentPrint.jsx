@@ -46,7 +46,7 @@ const DocumentPrint = () => {
       phone: '',
       email: '',
       website: '',
-      tax_number: ''
+      commercial_register: ''
     },
     customer: {
       name: '',

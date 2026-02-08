@@ -152,6 +152,24 @@ The focused UI test confirms **SUCCESSFUL IMPLEMENTATION** of the NewVehicle →
 - Screenshots: vehicle_details_initial.png, vehicle_details_final.png
 - Test Verification: Items table display, price editing, data persistence all confirmed
 
+
+---
+
+## P0 VehicleDetails Black Screen + PDF Styling Regression Testing (IN PROGRESS) (2026-02-08)
+
+### Changes Under Test
+- Backend: `/app/backend/supabase_service.py` updated `vehicles_get()` to use `maybe_single()` بدل `single()` لتجنب 500 عند عدم وجود المركبة.
+- Frontend: `/app/frontend/src/pages/DocumentPrint.jsx` انتظرنا تحميل الخطوط `document.fonts.ready` قبل الالتقاط + مهلة رسم قصيرة.
+- Frontend: `/app/frontend/src/utils/pdfGenerator.js` تم تعديل التوليد ليستخدم PNG بدل JPEG + خيارات html2canvas لتحسين الألوان/الخطوط.
+
+### Test Objective
+1) UI: تسجيل دخول (مدير) ثم فتح صفحة مركبة والتأكد أن الصفحة لا تعلق على شاشة تحميل.
+2) API: التأكد أن GET /api/vehicles/{id} لا يعطي 500 حتى لو المركبة غير موجودة (يرجع 404).
+3) UI: صفحة /print -> معاينة -> تحميل PDF (لا يمكن التحقق من ملف PDF هنا، لكن نتأكد أن التدفق يعمل بدون أخطاء في الكونسول).
+
+### Next Step
+- تشغيل testing subagents (frontend + backend) للتحقق الآلي.
+
 ### Test Results Summary: ✅ BACKEND FUNCTIONALITY VERIFIED - FRONTEND SESSION ISSUES
 
 #### ✅ BACKEND API VERIFICATION - FULLY WORKING

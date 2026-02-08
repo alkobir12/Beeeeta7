@@ -584,11 +584,11 @@ class ArabicQuotationBuilder:
         }}
         
         .quote-title {{
-            font-size: 2rem;
+            font-size: 1.6rem;
             font-weight: 900;
-            margin-bottom: 0.3rem;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-            letter-spacing: 1px;
+            margin-bottom: 0.2rem;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.25);
+            letter-spacing: 0.5px;
         }}
         
         .quote-number {{

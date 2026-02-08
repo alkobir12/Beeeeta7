@@ -68,6 +68,7 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                 op_data["id"] = str(uuid.uuid4())
                 op_data["op_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 op_data["created_at"] = datetime.now(timezone.utc).isoformat()
+                op_data["updated_at"] = datetime.now(timezone.utc).isoformat()
                 supa_service.client.table("operations").insert(op_data).execute()
                 print(f"✅ Synced Visit {visit_id} -> Created Operation {op_data['id']}")
         

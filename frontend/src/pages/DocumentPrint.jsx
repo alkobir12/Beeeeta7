@@ -269,10 +269,6 @@ const DocumentPrint = () => {
     }
   };
 
-      console.error('Error loading vehicle:', e);
-    }
-  };
-
   const loadLatestApprovalToken = async (id) => {
     try {
       const { data } = await axios.get(`${API_URL}/approvals?vehicle_id=${id}`);

@@ -593,7 +593,7 @@ class ArabicQuotationBuilder:
         }}
         
         .quote-number {{
-            font-size: 1rem;
+            font-size: 0.9rem;
             opacity: 0.95;
             font-weight: 600;
         }}

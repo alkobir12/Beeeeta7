@@ -2374,7 +2374,10 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
                 doc[k] = doc[k].isoformat()
         return doc
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        print(f"❌ Create Visit Error: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to create visit: {str(e)}")
 
 
 @router.get("/visits/{visit_id}/operations")

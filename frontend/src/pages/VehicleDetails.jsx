@@ -381,8 +381,6 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [] }) =
     </div>
   );
 };
-  const [approvals, setApprovals] = useState([]);
-
 
 // --- Main Page Component ---
 
@@ -394,6 +392,7 @@ const VehicleDetails = () => {
   const { toast } = useToast();
   
   const [vehicle, setVehicle] = useState(null);
+  const [approvals, setApprovals] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);

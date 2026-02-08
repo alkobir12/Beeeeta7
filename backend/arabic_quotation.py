@@ -327,13 +327,7 @@ class ArabicQuotationBuilder:
                 </div>
             </div>
 
-            <!-- Project Description -->
-            <div class="project-section">
-                <h3 class="section-title">وصف المشروع</h3>
-                <div class="project-description">
-                    {self.quotation['project_description']}
-                </div>
-            </div>
+
 
             <!-- Items Table -->
             <div class="items-section">

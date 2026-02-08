@@ -1845,7 +1845,7 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
 
 
 @router.get("/approvals")
-async def list_approvals(vehicle_id: Optional[str] = None):
+async def list_approvals(vehicle_id: Optional[str] = None, visit_id: Optional[str] = None):
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 

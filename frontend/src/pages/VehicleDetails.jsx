@@ -310,6 +310,24 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [] }) =
           </div>
 
 
+          {latestApproval && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <div className="font-bold mb-1">اعتماد واتساب</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                <div>الحالة: <span className="font-semibold">{latestApproval.status}</span></div>
+                <div>الرمز: <span className="font-mono">{latestApproval.token}</span></div>
+                {latestApproval.respondedAt && (
+                  <div>وقت الرد: <span className="font-semibold">{String(latestApproval.respondedAt).slice(0, 19).replace('T',' ')}</span></div>
+                )}
+                {latestApproval.responderName && (
+                  <div>المعتمد: <span className="font-semibold">{latestApproval.responderName}</span></div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+
 
           <div className="flex justify-end gap-2 pb-3">
             <button

@@ -1664,7 +1664,6 @@ def create_quotation_routes(router):
         terms: Optional[List[str]] = None
         theme: Optional[str] = "أزرق"
         style: Optional[str] = "حديث"
-        tax_rate: Optional[float] = 15
 
     @router.post("/quotations/generate")
     async def generate_quotation(request: QuotationRequest):

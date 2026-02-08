@@ -1,380 +1,374 @@
 #!/usr/bin/env python3
 """
-اختبار شامل للنظام المالي - Comprehensive Financial System Testing
-Testing the Arabic financial management system with operations, reports, and alerts
+Production Backend Testing for https://fixsa.online
+Testing Arabic review request requirements:
+1) GET /health => 200
+2) GET /api/settings => 200 JSON
+3) GET /api/vehicles => 200 JSON
+4) OPTIONS preflight on /api/vehicles with Origin=https://fixsa.online => Access-Control-Allow-Origin
+5) Verify INFOBIP_API_KEY absence doesn't break server (test whatsapp-bot endpoints if available)
 """
 
 import requests
 import json
-import os
-import uuid
-from datetime import datetime, timedelta
+import sys
+from datetime import datetime
+import traceback
 
-# Configuration
-BACKEND_URL = "https://mechanic-manager-17.preview.emergentagent.com/api"
-WORKSHOP_ID = "finmodule-sync"
-
-def print_test_header(test_name):
-    """Print formatted test header"""
-    print(f"\n{'='*60}")
-    print(f"🧪 {test_name}")
-    print(f"{'='*60}")
-
-def print_result(success, message, details=None):
-    """Print test result with formatting"""
-    status = "✅ نجح" if success else "❌ فشل"
-    print(f"{status}: {message}")
-    if details:
-        print(f"التفاصيل: {details}")
-
-def test_operations_create_with_vehicle():
-    """
-    اختبار 1: إنشاء عملية جديدة مرتبطة بمركبة مع إنشاء قيد يومية تلقائيًا
-    """
-    print_test_header("اختبار إنشاء عملية مرتبطة بمركبة مع قيد يومية تلقائي")
+class ProductionBackendTester:
+    def __init__(self):
+        self.base_url = "https://fixsa.online"
+        self.api_url = f"{self.base_url}/api"
+        self.results = []
+        self.session = requests.Session()
+        
+        # Set headers for all requests
+        self.session.headers.update({
+            'User-Agent': 'Backend-Tester/1.0',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        })
     
-    try:
-        # First, get available vehicles
-        vehicles_url = f"{BACKEND_URL}/vehicles"
-        vehicles_response = requests.get(vehicles_url, timeout=30)
-        
-        if vehicles_response.status_code != 200:
-            print_result(False, f"فشل في جلب المركبات: {vehicles_response.status_code}")
-            return False
-            
-        vehicles = vehicles_response.json()
-        if not vehicles:
-            print_result(False, "لا توجد مركبات متاحة للاختبار")
-            return False
-            
-        vehicle_id = vehicles[0].get('id')
-        print(f"🚗 استخدام المركبة: {vehicle_id}")
-        
-        # Create operation with vehicle
-        operation_data = {
-            "type": "sale",
-            "vehicleId": vehicle_id,
-            "workshopId": WORKSHOP_ID,
-            "partnerType": "customer",
-            "partnerName": "عميل تجريبي",
-            "items": [
-                {
-                    "itemType": "service",
-                    "name": "خدمة صيانة",
-                    "quantity": 1,
-                    "price": 500.0
-                }
-            ],
-            "paymentMethod": "cash",
-            "notes": "عملية اختبار مع قيد تلقائي"
+    def log_result(self, test_name, success, status_code=None, response_data=None, error=None, details=None):
+        """Log test result"""
+        result = {
+            'test': test_name,
+            'success': success,
+            'timestamp': datetime.now().isoformat(),
+            'status_code': status_code,
+            'error': str(error) if error else None,
+            'details': details
         }
         
-        url = f"{BACKEND_URL}/operations"
-        print(f"📡 استدعاء: POST {url}")
-        print(f"📤 البيانات المرسلة: {json.dumps(operation_data, indent=2, ensure_ascii=False)}")
+        if response_data and isinstance(response_data, dict):
+            result['response_keys'] = list(response_data.keys())
+            result['response_size'] = len(str(response_data))
         
-        response = requests.post(url, json=operation_data, timeout=30)
-        print(f"📊 كود الاستجابة: {response.status_code}")
+        self.results.append(result)
         
-        if response.status_code in [200, 201]:
-            data = response.json()
-            operation_id = data.get("id")
-            print_result(True, f"تم إنشاء العملية بنجاح: {operation_id}")
-            
-            # Check if journal entry was created automatically
-            journal_url = f"{BACKEND_URL}/finance/journal-entries"
-            journal_params = {"workshop_id": WORKSHOP_ID}
-            journal_response = requests.get(journal_url, params=journal_params, timeout=30)
-            
-            if journal_response.status_code == 200:
-                journal_data = journal_response.json()
-                entries = journal_data.get("data", [])
-                
-                # Look for entry with reference to our operation
-                operation_entry = None
-                for entry in entries:
-                    if entry.get("reference_id") == operation_id or entry.get("source") == "operation":
-                        operation_entry = entry
-                        break
-                
-                if operation_entry:
-                    print_result(True, f"تم إنشاء قيد يومية تلقائي: {operation_entry.get('id')}")
-                    return True
-                else:
-                    print_result(False, "لم يتم إنشاء قيد يومية تلقائي للعملية")
-                    return False
-            else:
-                print_result(False, f"فشل في جلب القيود اليومية: {journal_response.status_code}")
-                return False
-        else:
-            print_result(False, f"فشل في إنشاء العملية: {response.status_code}")
-            print(f"نص الاستجابة: {response.text}")
-            return False
-            
-    except Exception as e:
-        print_result(False, f"خطأ في الاختبار: {str(e)}")
-        return False
-
-def test_operations_by_vehicle():
-    """
-    اختبار 2: جلب العمليات بالمركبة عبر vehicle_id
-    """
-    print_test_header("اختبار جلب العمليات بالمركبة")
+        # Print immediate feedback
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} {test_name}")
+        if status_code:
+            print(f"    Status: {status_code}")
+        if error:
+            print(f"    Error: {error}")
+        if details:
+            print(f"    Details: {details}")
+        print()
     
-    try:
-        # Get vehicles first
-        vehicles_url = f"{BACKEND_URL}/vehicles"
-        vehicles_response = requests.get(vehicles_url, timeout=30)
-        
-        if vehicles_response.status_code != 200:
-            print_result(False, f"فشل في جلب المركبات: {vehicles_response.status_code}")
-            return False
-            
-        vehicles = vehicles_response.json()
-        if not vehicles:
-            print_result(False, "لا توجد مركبات متاحة للاختبار")
-            return False
-            
-        vehicle_id = vehicles[0].get('id')
-        
-        # Get operations for specific vehicle
-        url = f"{BACKEND_URL}/operations"
-        params = {"vehicle_id": vehicle_id}
-        
-        print(f"📡 استدعاء: GET {url}")
-        print(f"📤 المعاملات: {params}")
-        
-        response = requests.get(url, params=params, timeout=30)
-        print(f"📊 كود الاستجابة: {response.status_code}")
-        
-        if response.status_code == 200:
-            operations = response.json()
-            print(f"📄 عدد العمليات المرتبطة بالمركبة: {len(operations)}")
-            
-            # Check if operations are properly linked to vehicle
-            vehicle_operations = [op for op in operations if op.get("vehicleId") == vehicle_id]
-            
-            if len(vehicle_operations) == len(operations):
-                print_result(True, f"جميع العمليات ({len(operations)}) مرتبطة بالمركبة الصحيحة")
-                return True
-            else:
-                print_result(False, f"بعض العمليات غير مرتبطة بالمركبة الصحيحة")
-                return False
-        else:
-            print_result(False, f"فشل في جلب العمليات: {response.status_code}")
-            return False
-            
-    except Exception as e:
-        print_result(False, f"خطأ في الاختبار: {str(e)}")
-        return False
-
-def test_financial_reports():
-    """
-    اختبار 3: التقارير المالية (Trial Balance, Balance Sheet, Income Statement, Cash Flow)
-    """
-    print_test_header("اختبار التقارير المالية")
-    
-    reports = [
-        ("Trial Balance", f"{BACKEND_URL}/finance/reports/trial-balance"),
-        ("Balance Sheet", f"{BACKEND_URL}/finance/reports/balance-sheet"),
-        ("Income Statement", f"{BACKEND_URL}/finance/reports/income-statement"),
-        ("Cash Flow", f"{BACKEND_URL}/finance/reports/cash-flow")
-    ]
-    
-    all_passed = True
-    
-    for report_name, url in reports:
+    def test_health_endpoint(self):
+        """Test 1: GET /health => 200"""
         try:
-            print(f"\n🧪 اختبار {report_name}")
-            
-            params = {"workshop_id": WORKSHOP_ID}
-            
-            # Add date parameters for reports that need them
-            if "income-statement" in url or "cash-flow" in url:
-                end_date = datetime.now().strftime("%Y-%m-%d")
-                start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-                params.update({"start_date": start_date, "end_date": end_date})
-            
-            print(f"📡 استدعاء: GET {url}")
-            print(f"📤 المعاملات: {params}")
-            
-            response = requests.get(url, params=params, timeout=30)
-            print(f"📊 كود الاستجابة: {response.status_code}")
+            response = self.session.get(f"{self.base_url}/health", timeout=10)
             
             if response.status_code == 200:
-                data = response.json()
-                
-                if data.get("success"):
-                    report_data = data.get("data", {})
-                    print_result(True, f"{report_name} يعمل بنجاح")
-                    
-                    # Check for specific data structure
-                    if "trial-balance" in url:
-                        accounts = report_data.get("accounts", [])
-                        totals = report_data.get("totals", {})
-                        print(f"  📊 عدد الحسابات: {len(accounts)}")
-                        print(f"  💰 إجمالي مدين: {totals.get('total_debit', 0)}")
-                        print(f"  💰 إجمالي دائن: {totals.get('total_credit', 0)}")
-                    
-                    elif "balance-sheet" in url:
-                        totals = report_data.get("totals", {})
-                        print(f"  🏢 إجمالي الأصول: {totals.get('assets', 0)}")
-                        print(f"  📋 إجمالي الخصوم: {totals.get('liabilities', 0)}")
-                        print(f"  👤 حقوق الملكية: {totals.get('equity', 0)}")
-                    
-                    elif "income-statement" in url:
-                        totals = report_data.get("totals", {})
-                        print(f"  📈 إجمالي الإيرادات: {totals.get('revenue', 0)}")
-                        print(f"  📉 إجمالي المصروفات: {totals.get('expenses', 0)}")
-                        print(f"  💵 صافي الدخل: {totals.get('net_income', 0)}")
-                    
-                    elif "cash-flow" in url:
-                        operating = report_data.get("operating_activities", {})
-                        print(f"  💸 صافي النقد التشغيلي: {operating.get('net_operating_cash', 0)}")
-                        print(f"  💰 رصيد النقد النهائي: {report_data.get('ending_cash', 0)}")
-                        
-                else:
-                    print_result(False, f"{report_name} فشل: {data.get('message', 'خطأ غير محدد')}")
-                    all_passed = False
+                try:
+                    data = response.json()
+                    self.log_result(
+                        "GET /health", 
+                        True, 
+                        response.status_code, 
+                        data,
+                        details=f"Health status: {data.get('status', 'unknown')}"
+                    )
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "GET /health", 
+                        True, 
+                        response.status_code,
+                        details="Response is not JSON but status 200 received"
+                    )
             else:
-                print_result(False, f"{report_name} فشل: كود {response.status_code}")
-                all_passed = False
+                self.log_result(
+                    "GET /health", 
+                    False, 
+                    response.status_code,
+                    error=f"Expected 200, got {response.status_code}"
+                )
                 
         except Exception as e:
-            print_result(False, f"{report_name} خطأ: {str(e)}")
-            all_passed = False
+            self.log_result("GET /health", False, error=e)
     
-    return all_passed
-
-def test_finance_alerts():
-    """
-    اختبار 4: تنبيهات المراقبة الدائمة
-    """
-    print_test_header("اختبار تنبيهات المراقبة المالية")
-    
-    try:
-        url = f"{BACKEND_URL}/finance/alerts"
-        params = {"workshop_id": WORKSHOP_ID}
-        
-        print(f"📡 استدعاء: GET {url}")
-        print(f"📤 المعاملات: {params}")
-        
-        response = requests.get(url, params=params, timeout=30)
-        print(f"📊 كود الاستجابة: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
+    def test_settings_endpoint(self):
+        """Test 2: GET /api/settings => 200 JSON"""
+        try:
+            response = self.session.get(f"{self.api_url}/settings", timeout=10)
             
-            if data.get("success"):
-                alerts = data.get("data", {}).get("alerts", [])
-                print_result(True, f"تم جلب التنبيهات بنجاح: {len(alerts)} تنبيه")
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    self.log_result(
+                        "GET /api/settings", 
+                        True, 
+                        response.status_code, 
+                        data,
+                        details=f"Settings keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}"
+                    )
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "GET /api/settings", 
+                        False, 
+                        response.status_code,
+                        error="Response is not valid JSON"
+                    )
+            else:
+                self.log_result(
+                    "GET /api/settings", 
+                    False, 
+                    response.status_code,
+                    error=f"Expected 200, got {response.status_code}"
+                )
                 
-                # Display alerts by severity
-                severity_counts = {"high": 0, "medium": 0, "low": 0}
-                for alert in alerts:
-                    severity = alert.get("severity", "unknown")
-                    if severity in severity_counts:
-                        severity_counts[severity] += 1
+        except Exception as e:
+            self.log_result("GET /api/settings", False, error=e)
+    
+    def test_vehicles_endpoint(self):
+        """Test 3: GET /api/vehicles => 200 JSON"""
+        try:
+            response = self.session.get(f"{self.api_url}/vehicles", timeout=15)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    if isinstance(data, list):
+                        self.log_result(
+                            "GET /api/vehicles", 
+                            True, 
+                            response.status_code, 
+                            {"vehicles": data},
+                            details=f"Found {len(data)} vehicles"
+                        )
+                    else:
+                        self.log_result(
+                            "GET /api/vehicles", 
+                            True, 
+                            response.status_code, 
+                            data,
+                            details="Response is not a list but valid JSON"
+                        )
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "GET /api/vehicles", 
+                        False, 
+                        response.status_code,
+                        error="Response is not valid JSON"
+                    )
+            else:
+                self.log_result(
+                    "GET /api/vehicles", 
+                    False, 
+                    response.status_code,
+                    error=f"Expected 200, got {response.status_code}"
+                )
+                
+        except Exception as e:
+            self.log_result("GET /api/vehicles", False, error=e)
+    
+    def test_cors_preflight(self):
+        """Test 4: OPTIONS preflight on /api/vehicles with Origin=https://fixsa.online => Access-Control-Allow-Origin"""
+        try:
+            headers = {
+                'Origin': 'https://fixsa.online',
+                'Access-Control-Request-Method': 'GET',
+                'Access-Control-Request-Headers': 'Content-Type'
+            }
+            
+            response = self.session.options(f"{self.api_url}/vehicles", headers=headers, timeout=10)
+            
+            cors_origin = response.headers.get('Access-Control-Allow-Origin')
+            cors_methods = response.headers.get('Access-Control-Allow-Methods')
+            cors_headers = response.headers.get('Access-Control-Allow-Headers')
+            
+            if cors_origin:
+                self.log_result(
+                    "OPTIONS /api/vehicles CORS", 
+                    True, 
+                    response.status_code,
+                    details=f"CORS Origin: {cors_origin}, Methods: {cors_methods}, Headers: {cors_headers}"
+                )
+            else:
+                self.log_result(
+                    "OPTIONS /api/vehicles CORS", 
+                    False, 
+                    response.status_code,
+                    error="Access-Control-Allow-Origin header not found",
+                    details=f"Available headers: {dict(response.headers)}"
+                )
+                
+        except Exception as e:
+            self.log_result("OPTIONS /api/vehicles CORS", False, error=e)
+    
+    def test_whatsapp_bot_endpoints(self):
+        """Test 5: Verify INFOBIP_API_KEY absence doesn't break server - test whatsapp-bot endpoints"""
+        # First, let's check if whatsapp-bot endpoints exist by testing common patterns
+        whatsapp_endpoints = [
+            "/api/whatsapp-bot/status",
+            "/api/whatsapp-bot/info",
+            "/api/whatsapp/status",
+            "/api/whatsapp/info",
+            "/api/bot/status",
+            "/api/bot/info"
+        ]
+        
+        found_endpoint = False
+        
+        for endpoint in whatsapp_endpoints:
+            try:
+                response = self.session.get(f"{self.base_url}{endpoint}", timeout=10)
+                
+                # If we get anything other than 404, the endpoint exists
+                if response.status_code != 404:
+                    found_endpoint = True
                     
-                    print(f"  🚨 {alert.get('title', 'تنبيه')} ({severity})")
-                    print(f"     {alert.get('message', '')}")
+                    if response.status_code == 200:
+                        try:
+                            data = response.json()
+                            self.log_result(
+                                f"WhatsApp Bot {endpoint}", 
+                                True, 
+                                response.status_code,
+                                data,
+                                details="WhatsApp bot endpoint working despite missing INFOBIP_API_KEY"
+                            )
+                        except json.JSONDecodeError:
+                            self.log_result(
+                                f"WhatsApp Bot {endpoint}", 
+                                True, 
+                                response.status_code,
+                                details="Endpoint responds but not JSON"
+                            )
+                    elif response.status_code == 500:
+                        self.log_result(
+                            f"WhatsApp Bot {endpoint}", 
+                            False, 
+                            response.status_code,
+                            error="Server error - possibly due to missing INFOBIP_API_KEY"
+                        )
+                    else:
+                        self.log_result(
+                            f"WhatsApp Bot {endpoint}", 
+                            True, 
+                            response.status_code,
+                            details=f"Endpoint exists with status {response.status_code}"
+                        )
+                    break
+                    
+            except Exception as e:
+                # Continue to next endpoint
+                continue
+        
+        if not found_endpoint:
+            # No whatsapp endpoints found, verify server stability by re-testing health and settings
+            print("No WhatsApp bot endpoints found. Verifying server stability...")
+            
+            try:
+                # Re-test health endpoint
+                health_response = self.session.get(f"{self.base_url}/health", timeout=10)
+                settings_response = self.session.get(f"{self.api_url}/settings", timeout=10)
                 
-                print(f"📊 ملخص التنبيهات: عالية={severity_counts['high']}, متوسطة={severity_counts['medium']}, منخفضة={severity_counts['low']}")
-                return True
-            else:
-                print_result(False, f"فشل في جلب التنبيهات: {data.get('message', 'خطأ غير محدد')}")
-                return False
-        else:
-            print_result(False, f"فشل في جلب التنبيهات: كود {response.status_code}")
-            return False
-            
-    except Exception as e:
-        print_result(False, f"خطأ في اختبار التنبيهات: {str(e)}")
-        return False
-
-def test_stitch_api_error():
-    """
-    اختبار 5: Google Stitch API (متوقع أن يفشل بسبب عدم وجود API key)
-    """
-    print_test_header("اختبار Google Stitch API (متوقع فشل)")
+                if health_response.status_code == 200 and settings_response.status_code == 200:
+                    self.log_result(
+                        "Server Stability (No WhatsApp endpoints)", 
+                        True,
+                        details="Health and settings endpoints still working - server stable without INFOBIP_API_KEY"
+                    )
+                else:
+                    self.log_result(
+                        "Server Stability (No WhatsApp endpoints)", 
+                        False,
+                        error=f"Health: {health_response.status_code}, Settings: {settings_response.status_code}"
+                    )
+                    
+            except Exception as e:
+                self.log_result(
+                    "Server Stability (No WhatsApp endpoints)", 
+                    False,
+                    error=f"Server stability check failed: {e}"
+                )
     
+    def run_all_tests(self):
+        """Run all production tests"""
+        print("🚀 Starting Production Backend Tests for https://fixsa.online")
+        print("=" * 60)
+        
+        # Test 1: Health endpoint
+        self.test_health_endpoint()
+        
+        # Test 2: Settings endpoint
+        self.test_settings_endpoint()
+        
+        # Test 3: Vehicles endpoint
+        self.test_vehicles_endpoint()
+        
+        # Test 4: CORS preflight
+        self.test_cors_preflight()
+        
+        # Test 5: WhatsApp bot / INFOBIP stability
+        self.test_whatsapp_bot_endpoints()
+        
+        # Generate summary
+        self.generate_summary()
+    
+    def generate_summary(self):
+        """Generate test summary"""
+        print("=" * 60)
+        print("📊 TEST RESULTS SUMMARY")
+        print("=" * 60)
+        
+        total_tests = len(self.results)
+        passed_tests = len([r for r in self.results if r['success']])
+        failed_tests = total_tests - passed_tests
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"✅ Passed: {passed_tests}")
+        print(f"❌ Failed: {failed_tests}")
+        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+        print()
+        
+        # Show failed tests
+        if failed_tests > 0:
+            print("❌ FAILED TESTS:")
+            for result in self.results:
+                if not result['success']:
+                    print(f"  - {result['test']}: {result['error']}")
+            print()
+        
+        # Show passed tests
+        print("✅ PASSED TESTS:")
+        for result in self.results:
+            if result['success']:
+                details = f" ({result['details']})" if result['details'] else ""
+                print(f"  - {result['test']}{details}")
+        
+        print()
+        print("🎯 PRODUCTION VERIFICATION COMPLETE")
+        
+        # Save detailed results to file
+        try:
+            with open('/app/production_test_results.json', 'w', encoding='utf-8') as f:
+                json.dump(self.results, f, ensure_ascii=False, indent=2)
+            print("📄 Detailed results saved to: /app/production_test_results.json")
+        except Exception as e:
+            print(f"⚠️ Could not save results file: {e}")
+
+def main():
+    """Main test execution"""
     try:
-        url = f"{BACKEND_URL}/stitch/generate"
-        payload = {
-            "prompt": "صفحة تسجيل دخول بسيطة",
-            "design_style": "modern",
-            "color_scheme": "blue"
-        }
+        tester = ProductionBackendTester()
+        tester.run_all_tests()
         
-        print(f"📡 استدعاء: POST {url}")
-        print(f"📤 البيانات المرسلة: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+        # Return appropriate exit code
+        failed_tests = len([r for r in tester.results if not r['success']])
+        sys.exit(1 if failed_tests > 0 else 0)
         
-        response = requests.post(url, json=payload, timeout=30)
-        print(f"📊 كود الاستجابة: {response.status_code}")
-        
-        # We expect this to fail with 500 or 520 due to missing API key
-        if response.status_code in [500, 520]:
-            error_data = response.json()
-            error_detail = error_data.get("detail", "")
-            
-            if "GOOGLE_STITCH_API_KEY" in error_detail or "configuration missing" in error_detail:
-                print_result(True, "فشل متوقع: مفتاح Google Stitch API غير مضبوط")
-                return True
-            else:
-                print_result(False, f"فشل غير متوقع: {error_detail}")
-                return False
-        else:
-            print_result(False, f"كود استجابة غير متوقع: {response.status_code}")
-            print(f"نص الاستجابة: {response.text}")
-            return False
-            
+    except KeyboardInterrupt:
+        print("\n⚠️ Tests interrupted by user")
+        sys.exit(1)
     except Exception as e:
-        print_result(False, f"خطأ في اختبار Stitch: {str(e)}")
-        return False
-
-def run_backend_tests():
-    """تشغيل جميع اختبارات الباك إند"""
-    print("🚀 بدء اختبار النظام المالي الشامل")
-    print(f"🌐 رابط الخادم: {BACKEND_URL}")
-    print(f"🏪 معرف الورشة: {WORKSHOP_ID}")
-    print(f"⏰ وقت الاختبار: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    results = []
-    
-    # اختبار 1: إنشاء عملية مع مركبة وقيد تلقائي
-    results.append(("إنشاء عملية مع مركبة وقيد تلقائي", test_operations_create_with_vehicle()))
-    
-    # اختبار 2: جلب العمليات بالمركبة
-    results.append(("جلب العمليات بالمركبة", test_operations_by_vehicle()))
-    
-    # اختبار 3: التقارير المالية
-    results.append(("التقارير المالية", test_financial_reports()))
-    
-    # اختبار 4: تنبيهات المراقبة
-    results.append(("تنبيهات المراقبة المالية", test_finance_alerts()))
-    
-    # اختبار 5: Google Stitch API (متوقع فشل)
-    results.append(("Google Stitch API (متوقع فشل)", test_stitch_api_error()))
-    
-    # ملخص النتائج
-    print_test_header("ملخص نتائج اختبار الباك إند")
-    
-    passed = sum(1 for _, result in results if result)
-    total = len(results)
-    
-    for test_name, result in results:
-        status = "✅ نجح" if result else "❌ فشل"
-        print(f"{status} {test_name}")
-    
-    print(f"\n📊 النتيجة النهائية: {passed}/{total} اختبارات نجحت")
-    
-    if passed == total:
-        print("🎉 جميع اختبارات الباك إند نجحت!")
-        return True
-    else:
-        print(f"⚠️ {total - passed} اختبارات فشلت")
-        return False
+        print(f"💥 Critical error during testing: {e}")
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
-    success = run_backend_tests()
-    exit(0 if success else 1)
+    main()

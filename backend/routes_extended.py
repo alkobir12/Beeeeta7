@@ -2498,6 +2498,41 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
 
 
 # --------------------- Database Initialization Endpoint ---------------------
+
+
+@router.delete("/visits/{visit_id}")
+async def delete_visit(visit_id: str):
+    """Delete a visit (including closed visits)"""
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+        # Supabase implementation
+        if provider == "supabase":
+            from supabase_service import SupabaseService
+
+            supa = SupabaseService()
+
+            # Delete related operations first
+            try:
+                supa.client.table("operations").delete().eq("visit_id", visit_id).execute()
+            except Exception:
+                pass
+
+            res = supa.client.table("visits").delete().eq("id", visit_id).execute()
+            if not (res.data and len(res.data) > 0):
+                raise HTTPException(status_code=404, detail="Visit not found")
+            return {"success": True}
+
+        # MongoDB implementation (legacy)
+        await db.operations.delete_many({"visitId": visit_id})
+        result = await db.vehicle_visits.delete_one({"id": visit_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Visit not found")
+        return {"success": True}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/admin/init-database")
 async def init_database():
     """Initialize database tables and default data"""

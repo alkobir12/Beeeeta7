@@ -124,7 +124,15 @@ class SupabaseService:
     def vehicles_get(self, vid: str) -> Optional[Dict[str, Any]]:
         if self.mock_mode:
             return None
-        res = self.client.table("vehicles").select("*").eq("id", vid).single().execute()
+        # Use maybe_single() so “0 rows” becomes None instead of raising an exception.
+        # This prevents 500s when the frontend navigates to a vehicle id that doesn't exist.
+        res = (
+            self.client.table("vehicles")
+            .select("*")
+            .eq("id", vid)
+            .maybe_single()
+            .execute()
+        )
         return to_camel_vehicle(res.data) if res.data else None
 
     def vehicles_update(

@@ -401,23 +401,27 @@ const DocumentPrint = () => {
          tempDiv.style.top = '0';
          tempDiv.style.width = '794px'; 
          
-         // Inject Print Styles to force Light Mode
-         const style = document.createElement('style');
-         style.innerHTML = `
-           * { color: #000 !important; background-color: #fff !important; }
-           .bg-slate-900, .bg-slate-800, .bg-black { background-color: #fff !important; }
-           .text-white, .text-slate-200, .text-slate-300 { color: #000 !important; }
-           border { border-color: #ddd !important; }
-         `;
-         tempDiv.appendChild(style);
-         
          const contentDiv = document.createElement('div');
          contentDiv.innerHTML = response.data.html;
          tempDiv.appendChild(contentDiv);
          
          document.body.appendChild(tempDiv);
+
+         // Ensure fonts are loaded before html2canvas snapshot.
+         if (document.fonts?.ready) {
+           try {
+             await document.fonts.ready;
+           } catch (_) {
+             // ignore
+           }
+         }
+         // Give the browser a moment to paint styles/layout for the offscreen container.
+         await new Promise((r) => setTimeout(r, 80));
          
-         await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`);
+         await downloadPDF(tempDiv, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
+           scale: 2,
+           backgroundColor: '#ffffff',
+         });
          
          document.body.removeChild(tempDiv);
       } else {

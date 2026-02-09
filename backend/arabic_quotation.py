@@ -580,11 +580,11 @@ class ArabicQuotationBuilder:
         }}
         
         .section-title {{
-            font-size: 0.95rem;
-            font-weight: 700;
+            font-size: 0.82rem;
+            font-weight: 800;
             color: {colors['primary']};
-            margin-bottom: 0.8rem;
-            padding: 0.4rem 0;
+            margin-bottom: 0.55rem;
+            padding: 0.3rem 0;
             border-bottom: 2px solid {colors['primary']};
             position: relative;
         }}

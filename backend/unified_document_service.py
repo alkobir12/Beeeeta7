@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 import io
 import base64
 import json
-import qrcode
+# qrcode removed: approvals should not be embedded in printed documents
 from arabic_quotation import ArabicQuotationBuilder
 
 

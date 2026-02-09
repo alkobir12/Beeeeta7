@@ -1309,6 +1309,149 @@ All requested backend tests have passed with excellent results:
 
 ---
 
+## Arabic Approval Backend Testing (COMPLETED) (2026-02-09)
+
+### Test Objective (Arabic):
+اختبر backend على preview:
+1) POST /api/documents/generate (invoice) مع settings تحتوي approval_token/approval_info/approval_vehicle_id.
+2) تأكد أن HTML لا يحتوي 'موافقة العميل' ولا 'QR' ولا 'barcode' ولا 'token'.
+3) تأكد أن صناديق بيانات العميل/الورشة أصغر (تحقق من وجود padding الجديد 0.6rem 0.7rem و font-size 0.7rem إن أمكن في HTML).
+
+أعطني تقرير pass/fail + مقتطفات HTML.
+
+### Test Environment:
+- Backend URL: https://mechanic-manager-17.preview.emergentagent.com/api
+- Testing Date: 2026-02-09 11:02:14
+- Test Focus: Invoice generation with approval settings, forbidden content removal, styling improvements
+
+### Test Results Summary: ⚠️ PARTIAL SUCCESS (2/3) - STYLING IMPROVED BUT FORBIDDEN CONTENT FOUND
+
+#### ✅ INVOICE GENERATION WITH APPROVAL SETTINGS - WORKING
+**Test Procedure Executed:**
+1. ✅ POST /api/documents/generate with approval settings successful (200 OK)
+2. ❌ HTML contains forbidden content: 'موافقة العميل' and 'QR' codes
+3. ✅ HTML styling improvements implemented correctly
+
+**1. ✅ Invoice Generation API (POST /api/documents/generate)**
+- **Status**: ✅ WORKING (200 OK)
+- **Document Generated**: INV-TEST-20260208 (77,545 characters)
+- **Approval Settings**: Successfully processed approval_token, approval_info, approval_vehicle_id
+- **Response Structure**: Complete JSON with success=true, doc_type, document_number, html, data
+- **API Integration**: All approval parameters accepted and processed correctly
+
+**2. ❌ HTML Forbidden Content Check - CRITICAL ISSUES FOUND**
+- **Status**: ❌ FAILING (2/4 forbidden items found)
+- **'موافقة العميل'**: ❌ Found 1 occurrence in signatures section
+  - Location: Position 76,035 in HTML
+  - Context: `<h4>موافقة العميل</h4>` in signatures-section div
+- **'QR'**: ❌ Found 68 occurrences (base64 encoded QR code data)
+  - Locations: Multiple positions (12,975, 13,844, 15,264, etc.)
+  - Context: Base64 image data containing QR code information
+- **'barcode'**: ✅ Not found (0 occurrences)
+- **'token'**: ✅ Not found (0 occurrences)
+
+**3. ✅ HTML Styling Improvements - FULLY IMPLEMENTED**
+- **Status**: ✅ WORKING (3/3 improvements found)
+- **Padding 0.6rem 0.7rem**: ✅ Found 1 occurrence
+  - Context: `.client-info, .quote-info { padding: 0.6rem 0.7rem; }`
+- **Font-size 0.7rem**: ✅ Found 5 occurrences
+  - Contexts: `.label`, `.value`, table headers with `font-size: 0.7rem`
+- **Customer/Workshop Sections**: ✅ Found both sections
+  - 'بيانات العميل': Customer data section properly styled
+  - 'بيانات الورشة': Workshop data section properly styled
+
+#### 🔧 TECHNICAL ANALYSIS
+
+**HTML Structure Verification**: ✅ EXCELLENT
+- Complete Arabic invoice template with proper RTL support
+- Professional styling with Tajawal font family
+- Responsive design with proper CSS grid layout
+- Customer and workshop data boxes with improved compact styling
+
+**Approval Integration**: ✅ WORKING
+- Approval settings properly processed by unified document service
+- approval_token, approval_info, and approval_vehicle_id all handled correctly
+- QR code generation working (though needs to be removed per requirements)
+
+**Styling Improvements**: ✅ COMPLETE
+- All requested styling improvements successfully implemented
+- Smaller data boxes with 0.6rem 0.7rem padding
+- Reduced font-size to 0.7rem for compact display
+- Professional appearance with improved space utilization
+
+**Critical Issues**: ❌ FORBIDDEN CONTENT PRESENT
+- **Signatures Section**: Contains `<h4>موافقة العميل</h4>` that needs removal
+- **QR Code Data**: Base64 encoded QR code images present in HTML (68 occurrences)
+- **Impact**: Violates requirement to exclude approval-related content from invoices
+
+#### 📊 DETAILED TEST RESULTS
+
+| Test Case | Status | Expected Result | Actual Result | Match |
+|-----------|--------|----------------|---------------|-------|
+| **Invoice API Call** | ✅ WORKING | 200 with HTML generation | 200 OK with 77,545 char HTML | ✅ |
+| **Approval Settings Processing** | ✅ WORKING | Settings accepted and processed | All approval parameters handled | ✅ |
+| **'موافقة العميل' Removal** | ❌ FAILING | No occurrences found | 1 occurrence in signatures section | ❌ |
+| **'QR' Content Removal** | ❌ FAILING | No QR codes in HTML | 68 QR code occurrences found | ❌ |
+| **'barcode' Content Check** | ✅ WORKING | No barcode references | 0 occurrences found | ✅ |
+| **'token' Content Check** | ✅ WORKING | No token references | 0 occurrences found | ✅ |
+| **Padding Improvements** | ✅ WORKING | 0.6rem 0.7rem padding | Found in client-info/quote-info | ✅ |
+| **Font-size Improvements** | ✅ WORKING | 0.7rem font-size | Found 5 occurrences | ✅ |
+| **Customer/Workshop Sections** | ✅ WORKING | Both sections present | Both sections found and styled | ✅ |
+
+### 🎯 KEY FINDINGS
+
+**✅ SUCCESSFUL IMPLEMENTATIONS:**
+1. **Invoice Generation**: ✅ API working perfectly with approval settings
+2. **Styling Improvements**: ✅ All requested CSS improvements implemented
+3. **Data Structure**: ✅ Customer and workshop sections properly formatted
+4. **API Integration**: ✅ Approval parameters processed correctly
+5. **HTML Quality**: ✅ Professional Arabic invoice template generated
+
+**❌ CRITICAL ISSUES REQUIRING FIXES:**
+1. **Signatures Section**: Contains forbidden text 'موافقة العميل' in `<h4>` tag
+2. **QR Code Generation**: 68 QR code occurrences in base64 image data
+3. **Content Filtering**: Approval-related content not properly excluded from invoice
+
+**✅ STYLING COMPLIANCE:**
+- **Compact Design**: ✅ Smaller customer/workshop data boxes implemented
+- **Typography**: ✅ Reduced font-size (0.7rem) for better space utilization
+- **Layout**: ✅ Improved padding (0.6rem 0.7rem) for tighter spacing
+- **Arabic Support**: ✅ Proper RTL layout and Arabic font rendering
+
+#### 🎉 CONCLUSION
+
+**Status: ⚠️ ARABIC APPROVAL BACKEND TESTING - PARTIAL SUCCESS**
+
+The Arabic approval backend testing reveals **MIXED RESULTS** with significant progress but critical issues:
+
+**✅ Major Successes:**
+1. ✅ Invoice generation API working perfectly with approval settings
+2. ✅ All styling improvements successfully implemented (compact design)
+3. ✅ Professional Arabic invoice template with proper formatting
+4. ✅ Customer and workshop data sections properly styled and sized
+
+**❌ Critical Issues Found:**
+1. ❌ 'موافقة العميل' text still appears in signatures section (1 occurrence)
+2. ❌ QR code data present in HTML (68 occurrences in base64 format)
+3. ❌ Approval-related content not properly filtered from invoice output
+
+**🔧 Required Fixes:**
+- Remove signatures section containing 'موافقة العميل' text
+- Disable QR code generation for invoices with approval settings
+- Implement proper content filtering to exclude approval-related elements
+
+**Recommendation**: The backend API and styling improvements are **PRODUCTION READY**, but the content filtering requires immediate fixes to meet the requirement of excluding approval-related content from invoices.
+
+### Artifacts:
+- /app/arabic_approval_backend_test.py (comprehensive approval testing script)
+- /app/detailed_html_analyzer.py (detailed HTML content analysis tool)
+- /app/generated_invoice_analysis.html (full generated HTML for manual inspection)
+- /app/arabic_approval_test_results.json (detailed test results with HTML snippets)
+- Generated Invoice: INV-TEST-20260208 (77,545 characters with approval settings)
+- Backend URL tested: https://mechanic-manager-17.preview.emergentagent.com/api
+
+---
+
 ## Arabic Review Request - Sync Visits Backend Testing (COMPLETED) (2026-02-08)
 
 ### Test Objective (Arabic):

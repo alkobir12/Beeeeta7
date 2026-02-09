@@ -994,12 +994,14 @@ const DocumentPrint = () => {
               <div className="flex-1 overflow-auto">
                 <div className="w-full flex justify-center bg-gray-100 p-4">
                   <div className="bg-white shadow" style={{ width: 794 }}>
-                    <iframe
-                      srcDoc={previewHtml}
-                      className="w-[794px] h-[1123px]"
-                      title="Document Preview"
-                      style={{ border: '0' }}
-                    />
+                    <div ref={previewRef}>
+                      <iframe
+                        srcDoc={previewHtml}
+                        className="w-[794px] h-[1123px]"
+                        title="Document Preview"
+                        style={{ border: '0' }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

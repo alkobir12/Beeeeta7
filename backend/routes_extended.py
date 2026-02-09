@@ -295,6 +295,14 @@ async def get_workshop_profile():
 async def update_workshop_profile(payload: Dict[str, Any] = Body(...)):
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+        # For supabase deployments, persist workshop profile in the local JSON file.
+        if provider == "supabase":
+            rows = _mem_read("workshop_profile")
+            profile = {**(rows[0] if rows else {}), **payload, "id": "workshop_profile"}
+            _mem_write("workshop_profile", [profile])
+            return profile
+
         if provider == "memory" or db is None:
             rows = _mem_read("workshop_profile")
             profile = {**(rows[0] if rows else {}), **payload, "id": "workshop_profile"}

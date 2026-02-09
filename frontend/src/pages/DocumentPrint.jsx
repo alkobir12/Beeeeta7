@@ -453,68 +453,66 @@ const DocumentPrint = () => {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/documents/generate`, {
-        doc_type: docType,
-        workshop: formData.workshop,
-        customer: formData.customer,
-        vehicle: formData.vehicle,
-        items: formData.items.filter(item => item.description),
-        settings: {
-          ...formData.settings,
-          approval_token: formData.settings.approval_token || undefined,
-          approval_vehicle_id: vehicleId || undefined,
-          visit_id: visitId || undefined,
-        },
+      // Use the SAME HTML used in preview when available (prevents mismatch in sizing/fonts).
+      const html = previewHtml || (await (async () => {
+        const resp = await axios.post(`${API_URL}/documents/generate`, {
+          doc_type: docType,
+          workshop: formData.workshop,
+          customer: formData.customer,
+          vehicle: formData.vehicle,
+          items: formData.items.filter(item => item.description),
+          settings: {
+            ...formData.settings,
+            approval_token: formData.settings.approval_token || undefined,
+            approval_vehicle_id: vehicleId || undefined,
+            visit_id: visitId || undefined,
+          },
+        });
+        if (!resp.data?.success) throw new Error(resp.data?.message || 'Failed');
+        return resp.data.html;
+      })());
+
+      // Use an offscreen iframe so the HTML <head> styles + Google Fonts load correctly.
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.left = '-9999px';
+      iframe.style.top = '0';
+      iframe.style.width = '794px';
+      iframe.style.height = '1123px';
+      iframe.style.border = '0';
+
+      await new Promise((resolve, reject) => {
+        iframe.onload = () => resolve(true);
+        iframe.onerror = () => reject(new Error('iframe load failed'));
+        document.body.appendChild(iframe);
+        iframe.srcdoc = html;
       });
-      
-      if (response.data.success) {
-         // Use an offscreen iframe so the HTML <head> styles + Google Fonts load correctly.
-         // (The preview uses iframe-like rendering; this makes download match the preview.)
-         const iframe = document.createElement('iframe');
-         iframe.style.position = 'absolute';
-         iframe.style.left = '-9999px';
-         iframe.style.top = '0';
-         iframe.style.width = '794px';
-         iframe.style.height = '1123px';
-         iframe.style.border = '0';
 
-         const html = response.data.html;
+      const doc = iframe.contentDocument;
+      const body = doc?.body;
+      if (!body) throw new Error('PDF iframe body not available');
 
-         await new Promise((resolve, reject) => {
-           iframe.onload = () => resolve(true);
-           iframe.onerror = () => reject(new Error('iframe load failed'));
-           document.body.appendChild(iframe);
-           // srcdoc is supported in modern browsers; it keeps styles/fonts intact.
-           iframe.srcdoc = html;
-         });
-
-         const doc = iframe.contentDocument;
-         const body = doc?.body;
-         if (!body) throw new Error('PDF iframe body not available');
-
-         // Wait for fonts inside iframe.
-         if (doc.fonts?.ready) {
-           try {
-             await doc.fonts.ready;
-           } catch (_) {
-             // ignore
-           }
-         }
-         await new Promise((r) => setTimeout(r, 120));
-
-         await downloadPDF(body, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
-           scale: 3,
-           backgroundColor: '#ffffff',
-         });
-
-         document.body.removeChild(iframe);
-      } else {
-        throw new Error(response.data.message);
+      // Wait for fonts inside iframe.
+      if (doc.fonts?.ready) {
+        try {
+          await doc.fonts.ready;
+        } catch (_) {
+          // ignore
+        }
       }
+      await new Promise((r) => setTimeout(r, 180));
+
+      // Use scale 2 by default to avoid memory/canvas failures across devices.
+      await downloadPDF(body, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+      });
+
+      document.body.removeChild(iframe);
 
     } catch (e) {
       console.error('PDF Download Error:', e);
-      alert(isArabic ? 'فشل تحميل PDF' : 'PDF Download Failed');
+      alert((isArabic ? 'فشل تحميل PDF: ' : 'PDF Download Failed: ') + (e?.message || ''));
     } finally {
       setGeneratingPdf(false);
     }

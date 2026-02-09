@@ -341,7 +341,7 @@ async def upload_workshop_logo(file: UploadFile = File(...)):
 
         # Update profile with logo
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
-        if provider == "memory" or db is None:
+        if provider in ["supabase", "memory"] or db is None:
             rows = _mem_read("workshop_profile")
             profile = {
                 **(rows[0] if rows else {}),

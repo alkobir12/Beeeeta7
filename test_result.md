@@ -2,17 +2,19 @@
 
 ### Test Objective:
 Test Arabic print page functionality after modifications:
-1) Verify customer and workshop data boxes have smaller padding and fonts
-2) Verify no QR/Barcode or approval blocks appear in preview or PDF
-3) Test complete print workflow including preview and PDF generation
+1) Login 'مدير'
+2) Open /print?type=invoice&vehicleId=f3422cc1-dd9c-4e69-8205-0aa50b3795a1&visitId=20e964a9-3936-47d0-834b-8317d742e20b
+3) Click preview and verify iframe size is 794x1123
+4) Click PDF download from preview modal and monitor for alerts/console errors
+5) Compare visually if same HTML is used (sizing/fonts should match)
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
 - Backend URL: https://mechanic-manager-17.preview.emergentagent.com/api
-- Testing Date: 2026-02-09 11:10:00
-- Test Focus: Print page modifications, QR/Barcode removal, PDF generation
+- Testing Date: 2026-02-09 12:21:00
+- Test Focus: Arabic print page functionality, preview modal, PDF download, iframe sizing
 
-### Test Results Summary: ✅ BACKEND WORKING - FRONTEND SESSION ISSUES
+### Test Results Summary: ✅ ARABIC INTERFACE WORKING - PREVIEW BUTTON INTERACTION ISSUES
 
 #### ✅ BACKEND API TESTING - SUCCESSFULLY VERIFIED
 

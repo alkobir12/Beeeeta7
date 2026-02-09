@@ -125,11 +125,7 @@ class UnifiedDocumentGenerator:
         # إعادة تعيين البيانات
         self.builder.reset_quotation()
 
-        # تمرير معلومات الموافقة لمُولد الـ HTML بعد إعادة التعيين
-        if approval_meta:
-            self.builder.quotation["approval_info"] = approval_meta
-        if approval_qr_data_uri:
-            self.builder.quotation["approval_qr"] = approval_qr_data_uri
+
 
         # تعيين بيانات الورشة/الشركة
         self.builder.set_company(

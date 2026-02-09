@@ -322,11 +322,12 @@ class ArabicQuotationBuilder:
             <!-- Signatures -->
             <div class="signatures-section">
                 <div class="signature-box">
-                    <h4>موافقة العميل</h4>
-                    {self._render_approval_block()}
+                    <h4>توقيع العميل</h4>
+                    <div class="signature-line"></div>
+                    <p>الاسم والتوقيع والتاريخ</p>
                 </div>
                 <div class="signature-box">
-                    <h4>الشركة</h4>
+                    <h4>توقيع الورشة</h4>
                     <div class="signature-line"></div>
                     <p>الاسم والتوقيع والتاريخ</p>
                 </div>

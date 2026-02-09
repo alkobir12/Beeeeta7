@@ -216,6 +216,32 @@ async def save_settings(payload: Dict[str, Any] = Body(...)):
 async def get_workshop_profile():
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider == "supabase":
+            # Store workshop profile in the local JSON file to keep it available regardless of DB provider.
+            # This avoids missing workshop data on domains where Mongo isn't used.
+            rows = _mem_read("workshop_profile")
+            if rows:
+                return rows[0]
+            profile = {
+                "id": "workshop_profile",
+                "name": "ورشتي",
+                "nameEnglish": "My Workshop",
+                "phone": "",
+                "whatsapp": "",
+                "email": "",
+                "address": "",
+                "city": "",
+                "postalCode": "",
+                "commercialRegister": "",
+                "workingHours": "",
+                "invoiceFooter": "",
+                "termsAndConditions": "",
+                "slogan": "",
+                "logo": "",
+            }
+            _mem_write("workshop_profile", [profile])
+            return profile
+
         if provider == "memory" or db is None:
             # تخزين مبسط في ملف JSON داخل uploads/workshop_profile.json
             rows = _mem_read("workshop_profile")

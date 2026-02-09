@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { downloadPDF } from '../utils/pdfGenerator'; // New utility
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api');
 
 const DocumentPrint = () => {
   const { i18n } = useTranslation();

@@ -1,0 +1,29 @@
+[
+  {
+    "test": "POST /api/documents/generate (invoice with approval settings)",
+    "success": false,
+    "timestamp": "2026-02-09T11:01:09.322801",
+    "status_code": 520,
+    "error": "Expected 200, got 520. Response: {\"detail\":\"'str' object has no attribute 'get'\"}",
+    "details": null,
+    "html_snippet": null
+  },
+  {
+    "test": "HTML Forbidden Content Check",
+    "success": false,
+    "timestamp": "2026-02-09T11:01:09.322849",
+    "status_code": null,
+    "error": "No HTML available for testing (previous test failed)",
+    "details": null,
+    "html_snippet": null
+  },
+  {
+    "test": "HTML Styling Improvements Check",
+    "success": false,
+    "timestamp": "2026-02-09T11:01:09.322857",
+    "status_code": null,
+    "error": "No HTML available for testing (previous test failed)",
+    "details": null,
+    "html_snippet": null
+  }
+]

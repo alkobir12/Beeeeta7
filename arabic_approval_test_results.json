@@ -1,29 +1,37 @@
 [
   {
     "test": "POST /api/documents/generate (invoice with approval settings)",
-    "success": false,
-    "timestamp": "2026-02-09T11:01:09.322801",
-    "status_code": 520,
-    "error": "Expected 200, got 520. Response: {\"detail\":\"'str' object has no attribute 'get'\"}",
-    "details": null,
-    "html_snippet": null
+    "success": true,
+    "timestamp": "2026-02-09T11:02:14.651623",
+    "status_code": 200,
+    "error": null,
+    "details": "Invoice generated successfully with approval settings. HTML length: 77803 chars",
+    "html_snippet": "\n<!DOCTYPE html>\n<html lang=\"ar\" dir=\"rtl\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>فاتورة مبيعات - INV-TEST-20260208</title>\n    <link href=\"https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap\" rel=\"stylesheet\">\n    <style>\n        \n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        \n        body {\n            font-f",
+    "response_keys": [
+      "success",
+      "doc_type",
+      "document_number",
+      "html",
+      "data"
+    ],
+    "response_size": 141566
   },
   {
     "test": "HTML Forbidden Content Check",
     "success": false,
-    "timestamp": "2026-02-09T11:01:09.322849",
+    "timestamp": "2026-02-09T11:02:14.653835",
     "status_code": null,
-    "error": "No HTML available for testing (previous test failed)",
-    "details": null,
-    "html_snippet": null
+    "error": "Found forbidden content: 'موافقة العميل' found 1 times; 'QR' found 68 times",
+    "details": "Total forbidden words found: 2",
+    "html_snippet": "div class=\"signatures-section\">\n                <div class=\"signature-box\">\n                    <h4>موافقة العميل</h4>\n                    \n                </div>\n                <div class=\"signature"
   },
   {
     "test": "HTML Styling Improvements Check",
-    "success": false,
-    "timestamp": "2026-02-09T11:01:09.322857",
+    "success": true,
+    "timestamp": "2026-02-09T11:02:14.654938",
     "status_code": null,
-    "error": "No HTML available for testing (previous test failed)",
-    "details": null,
-    "html_snippet": null
+    "error": null,
+    "details": "Found 3/3 styling improvements: ['Padding found: padding: 0.6rem 0.7rem', 'Font-size found: font-size: 0.7rem', 'Customer/Workshop section found: بيانات العميل']",
+    "html_snippet": "Padding found: padding: 0.6rem 0.7rem; Font-size found: font-size: 0.7rem; Customer/Workshop section found: بيانات العميل"
   }
 ]

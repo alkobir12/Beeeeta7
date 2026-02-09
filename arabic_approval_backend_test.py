@@ -67,7 +67,7 @@ class ArabicApprovalBackendTester:
         try:
             # Prepare invoice generation payload with approval settings
             payload = {
-                "type": "invoice",
+                "doc_type": "invoice",
                 "customer": {
                     "name": "أحمد محمد العميل",
                     "phone": "0551234567",
@@ -88,18 +88,30 @@ class ArabicApprovalBackendTester:
                 "items": [
                     {
                         "name": "خدمة صيانة شاملة",
+                        "description": "خدمة صيانة شاملة",
                         "quantity": 1,
-                        "price": 500
+                        "price": 500,
+                        "unit_price": 500
                     },
                     {
                         "name": "قطعة غيار أصلية",
+                        "description": "قطعة غيار أصلية",
                         "quantity": 2,
-                        "price": 150
+                        "price": 150,
+                        "unit_price": 150
                     }
                 ],
                 "settings": {
                     "approval_token": "APV-TEST-2026-001",
-                    "approval_info": "موافقة مسبقة من العميل على الخدمات المطلوبة",
+                    "approval_info": {
+                        "token": "APV-TEST-2026-001",
+                        "status": "approved",
+                        "responderName": "أحمد محمد العميل",
+                        "responderPhone": "0551234567",
+                        "respondedAt": "2026-02-08T10:30:00Z",
+                        "clientIp": "192.168.1.100",
+                        "userAgent": "Mozilla/5.0 Test Browser"
+                    },
                     "approval_vehicle_id": "f3422cc1-dd9c-4e69-8205-0aa50b3795a1",
                     "document_number": "INV-TEST-20260208",
                     "date": "2026-02-08"

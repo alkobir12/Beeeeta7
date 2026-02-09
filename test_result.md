@@ -1,20 +1,19 @@
-## Arabic Print Page Testing (2026-02-09)
+## Arabic Print Page Domain Issue Testing (2026-02-09)
 
-### Test Objective:
-Test Arabic print page functionality after modifications:
+### Test Objective (Arabic Request):
+اختبر على localhost http://localhost:3000 مشكلة الدومين: بيانات الورشة/العميل لا تظهر في الطباعة.
 1) Login 'مدير'
-2) Open /print?type=invoice&vehicleId=f3422cc1-dd9c-4e69-8205-0aa50b3795a1&visitId=20e964a9-3936-47d0-834b-8317d742e20b
-3) Click preview and verify iframe size is 794x1123
-4) Click PDF download from preview modal and monitor for alerts/console errors
-5) Compare visually if same HTML is used (sizing/fonts should match)
+2) افتح صفحة الملف الشخصي/بيانات الورشة (WorkshopProfile) وعدّل الاسم/الجوال ثم احفظ. تأكد بعد reload تبقى.
+3) افتح /print?type=invoice&vehicleId=f3422cc1-dd9c-4e69-8205-0aa50b3795a1&visitId=20e964a9-3936-47d0-834b-8317d742e20b
+4) اضغط معاينة وتأكد أن بيانات الورشة وبيانات العميل تظهر داخل المستند.
 
 ### Test Environment:
 - Frontend URL: http://localhost:3000
 - Backend URL: https://mechanic-manager-17.preview.emergentagent.com/api
-- Testing Date: 2026-02-09 15:09:00
-- Test Focus: Arabic print page functionality, preview modal, PDF download, iframe sizing
+- Testing Date: 2026-02-09 18:33:00
+- Test Focus: Workshop/Customer data visibility in print documents, data persistence
 
-### Test Results Summary: ✅ ARABIC LOGIN INTERFACE WORKING - PLAYWRIGHT AUTOMATION LIMITATIONS
+### Test Results Summary: ✅ WORKSHOP AND CUSTOMER DATA DISPLAYING CORRECTLY IN PRINT
 
 #### ✅ ARABIC LOGIN INTERFACE TESTING - SUCCESSFULLY VERIFIED
 

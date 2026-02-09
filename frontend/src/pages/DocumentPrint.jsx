@@ -937,12 +937,12 @@ const DocumentPrint = () => {
                       value={formData.settings.approval_token || ''}
                       onChange={(e) => handleSettingsChange('approval_token', e.target.value)}
                       readOnly={!!vehicleId}
-                      placeholder={isArabic ? 'أدخل رمز طلب الاعتماد المطابق للمركبة (اختياري)' : 'Enter related approval token (optional)'}
+                      placeholder={isArabic ? 'رمز الاعتماد (داخلي فقط - لا يظهر في المستند)' : 'Approval token (internal only - not printed)'}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
                       {isArabic
-                        ? 'عند إدخال رمز طلب اعتماد تمت الموافقة عليه، سيتم إظهار التوقيع الإلكتروني ووقت الموافقة وباركود في أسفل الفاتورة.'
-                        : 'If you enter an approved approval token, an electronic signature with timestamp & QR will be shown on the invoice.'}
+                        ? 'هذا الرمز للاستخدام الداخلي فقط (متابعة الاعتماد داخل النظام) ولن يظهر في المستند المطبوع.'
+                        : 'This token is internal-only and will not be embedded in the printed document.'}
                     </p>
                   </div>
                 </div>

@@ -150,39 +150,9 @@ class ArabicQuotationBuilder:
         self.quotation["total"] = subtotal + self.quotation["tax_amount"]
 
     def _render_approval_block(self) -> str:
-        """إنشاء جزء HTML لتوقيع الموافقة الإلكترونية إن توفّر"""
-        info = self.quotation.get("approval_info") or {}
-        qr = self.quotation.get("approval_qr")
-        status = (info.get("status") or "").lower()
-
-        if not info or status != "approved":
-            return """
-            <div class="signature-line"></div>
-            <p>الاسم والتوقيع والتاريخ</p>
-            """
-
-        info.get("responder_name") or "العميل"
-        info.get("responder_phone") or "-"
-        info.get("responded_at") or ""
-        # client_ip / user_agent are intentionally not rendered in HTML.
-        _client_ip = info.get("client_ip") or ""  # noqa: F841
-        info.get("customer_name") or ""
-        info.get("plate_number") or ""
-        _user_agent = info.get("user_agent") or ""  # noqa: F841
-
-        qr_html = (
-            f'<div class="mt-2 flex justify-center"><img src="{qr}" alt="QR" style="width:90px;height:90px;object-fit:contain;" /></div>'
-            if qr
-            else ""
-        )
-
-        # نعرض فقط جملة بسيطة على الفاتورة، بينما تبقى جميع التفاصيل (الاسم، الجوال، اللوحة، الوقت، IP، بصمة الجهاز) داخل ال QR
-        return f"""
-        <p class="text-sm mb-2 font-semibold">
-            تمت الموافقة إلكترونياً من العميل
-        </p>
-        {qr_html}
-        """
+        # حسب طلب الورشة: لا نعرض QR/Barcode أو أي بيانات موافقة داخل المستندات المطبوعة.
+        # تبقى بيانات الاعتماد داخل النظام فقط (ملف العميل/الزيارة).
+        return ""
 
     def _render_if_value(self, value: str, label: str) -> str:
         """عرض الحقل فقط إذا كان له قيمة"""

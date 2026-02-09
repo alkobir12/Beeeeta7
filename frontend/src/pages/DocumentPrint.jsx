@@ -472,43 +472,43 @@ const DocumentPrint = () => {
         return resp.data.html;
       })());
 
-      // Use an offscreen iframe so the HTML <head> styles + Google Fonts load correctly.
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.left = '-9999px';
-      iframe.style.top = '0';
-      iframe.style.width = '794px';
-      iframe.style.height = '1123px';
-      iframe.style.border = '0';
+      // If preview iframe exists, use it directly (1:1 match with preview sizing/fonts).
+      const previewIframe = previewRef?.current?.querySelector?.('iframe');
+      const previewDoc = previewIframe?.contentDocument;
+      const previewBody = previewDoc?.body;
 
-      await new Promise((resolve, reject) => {
-        iframe.onload = () => resolve(true);
-        iframe.onerror = () => reject(new Error('iframe load failed'));
-        document.body.appendChild(iframe);
-        iframe.srcdoc = html;
-      });
+      const elementForPdf = previewBody;
+      if (!elementForPdf) {
+        throw new Error('Preview not ready. Please open preview and try again.');
+      }
 
-      const doc = iframe.contentDocument;
-      const body = doc?.body;
-      if (!body) throw new Error('PDF iframe body not available');
-
-      // Wait for fonts inside iframe.
-      if (doc.fonts?.ready) {
+      // Wait for fonts inside preview iframe.
+      if (previewDoc.fonts?.ready) {
         try {
-          await doc.fonts.ready;
+          await previewDoc.fonts.ready;
         } catch (_) {
           // ignore
         }
       }
-      await new Promise((r) => setTimeout(r, 180));
+      await new Promise((r) => setTimeout(r, 120));
 
-      // Use scale 2 by default to avoid memory/canvas failures across devices.
-      await downloadPDF(body, `${docType}_${formData.settings.document_number || 'doc'}.pdf`, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-      });
-
-      document.body.removeChild(iframe);
+      // Try multiple scales to avoid failures across devices.
+      const fileName = `${docType}_${formData.settings.document_number || 'doc'}.pdf`;
+      const scales = [2, 1.5, 1];
+      let lastErr = null;
+      for (const sc of scales) {
+        try {
+          await downloadPDF(elementForPdf, fileName, {
+            scale: sc,
+            backgroundColor: '#ffffff',
+          });
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (lastErr) throw lastErr;
 
     } catch (e) {
       console.error('PDF Download Error:', e);

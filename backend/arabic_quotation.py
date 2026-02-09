@@ -608,7 +608,7 @@ class ArabicQuotationBuilder:
         
         .client-info, .quote-info {{
             background: {colors['accent']};
-            padding: 1rem;
+            padding: 0.6rem 0.7rem;
             border-radius: 8px;
             border: 1px solid rgba(0,0,0,0.05);
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
@@ -617,14 +617,14 @@ class ArabicQuotationBuilder:
         .info-grid {{
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.3rem;
         }}
         
         .info-item {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.4rem 0.6rem;
+            padding: 0.25rem 0.45rem;
             background: white;
             border-radius: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -633,13 +633,13 @@ class ArabicQuotationBuilder:
         .label {{
             font-weight: 600;
             color: {colors['secondary']};
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }}
         
         .value {{
             font-weight: 500;
             color: #1e293b;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }}
         
         .project-section {{

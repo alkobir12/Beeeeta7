@@ -44,75 +44,8 @@ class UnifiedDocumentGenerator:
 
         settings = settings or {}
 
-        # استخراج معلومات الموافقة إن وجدت
-        approval_info = settings.get("approval_info") or {}
-        approval_info.get("token") or settings.get("approval_token")
-        approval_meta = None
-        approval_qr_data_uri = None
-
-        # إذا توفّر approval_info جاهز، نبنيه مباشرة
-        if approval_info and approval_info.get("status") == "approved":
-            approval_meta = {
-                "token": approval_info.get("token"),
-                "status": approval_info.get("status"),
-                "responder_name": approval_info.get("responderName")
-                or approval_info.get("responder_name"),
-                "responder_phone": approval_info.get("responderPhone")
-                or approval_info.get("responder_phone"),
-                "responded_at": approval_info.get("respondedAt")
-                or approval_info.get("responded_at"),
-                "client_ip": approval_info.get("clientIp")
-                or approval_info.get("client_ip"),
-                "user_agent": approval_info.get("userAgent")
-                or approval_info.get("user_agent"),
-            }
-
-            # enrich approval metadata with customer and vehicle info for better signature details
-            if customer_data:
-                approval_meta["customer_name"] = customer_data.get(
-                    "name"
-                ) or customer_data.get("customerName")
-            if vehicle_data:
-                approval_meta["plate_number"] = vehicle_data.get(
-                    "plateNumber"
-                ) or vehicle_data.get("plate")
-
-        # TODO (مرحلة لاحقة): يمكن ربط approval_token باستعلام حقيقي من Supabase
-        # في هذه المرحلة، نستخدم فقط approval_info إذا تم تمريره من الواجهة
-
-        # توليد QR من بيانات الموافقة إن وجدت
-        if approval_meta and approval_meta.get("token"):
-            try:
-                qr_payload = json.dumps(
-                    {
-                        "type": "approval",
-                        "token": approval_meta["token"],
-                        "status": approval_meta.get("status"),
-                        "name": approval_meta.get("responder_name"),
-                        "phone": approval_meta.get("responder_phone"),
-                        "responded_at": approval_meta.get("responded_at"),
-                        "client_ip": approval_meta.get("client_ip"),
-                        "customer_name": approval_meta.get("customer_name"),
-                        "plate_number": approval_meta.get("plate_number"),
-                        "user_agent": approval_meta.get("user_agent"),
-                        "display_text": f"موافقة العميل\nتمت الموافقة إلكترونياً من: {approval_meta.get('responder_name') or 'العميل'} – جوال: {approval_meta.get('responder_phone') or '-'}\nصاحب المركبة: {approval_meta.get('customer_name') or ''}\nرقم اللوحة: {approval_meta.get('plate_number') or ''}\nوقت الموافقة: {approval_meta.get('responded_at') or ''}",
-                    },
-                    ensure_ascii=False,
-                )
-
-                qr = qrcode.QRCode(box_size=4, border=1)
-                qr.add_data(qr_payload)
-                qr.make(fit=True)
-                img = qr.make_image(fill_color="black", back_color="white")
-                buf = io.BytesIO()
-                img.save(buf, format="PNG")
-                qr_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-                approval_qr_data_uri = f"data:image/png;base64,{qr_b64}"
-            except Exception:
-                approval_qr_data_uri = None
-
-        # تمرير معلومات الموافقة لمُولد الـ HTML (العرض فقط)
-        # ملاحظة: سيتم تعيين هذه البيانات بعد إعادة تعيين البيانات
+        # حسب طلب الورشة: لا نعرض QR/Barcode أو أي بيانات موافقة داخل المستندات المطبوعة.
+        # تبقى بيانات الاعتماد داخل النظام فقط (ملف العميل/الزيارة).
 
         """توليد مستند موحد"""
 

@@ -106,6 +106,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: 'canManageUsers' },
     { path: '/profile', label: t('nav.profile'), icon: Building2, enabled: true, permission: 'canManageSettings' },
     { path: '/settings', label: t('nav.settings'), icon: Settings, enabled: true, permission: 'canManageSettings' },
+    { path: '/moltbot', label: `🤖 ${t('nav.moltbot')}`, icon: Bot, enabled: true, allowedRoles: ['manager', 'admin'] },
   ];
 
   const loadSettings = async () => {
@@ -162,6 +163,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     const role = session.role;
     const permissions = session.permissions || {};
 
+    if (item.allowedRoles && !item.allowedRoles.includes(role)) {
+      return null;
+    }
+
     // Admin sees everything
     if (role !== 'admin') {
       if (item.permission && !permissions[item.permission]) {
@@ -179,6 +184,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <button
             onClick={() => toggleGroup(item.label)}
             className={`sidebar-item w-full justify-between ${hasActiveChild ? 'bg-gray-100 text-gray-900' : ''}`}
+            data-testid={`sidebar-group-${String(item.label).replace(/\s+/g, '-')}`}
           >
             <span className="flex items-center gap-3">
               <Icon size={18} className={hasActiveChild ? 'text-[#0071E3]' : 'text-gray-500'} />
@@ -197,6 +203,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     key={childIndex}
                     onClick={() => handleNavigate(child.path)}
                     className={`sidebar-item w-full text-sm ${isActive ? 'active' : '!bg-transparent hover:!bg-gray-100 !text-gray-600'}`}
+                    data-testid={`sidebar-item-${child.path.replace(/\//g, '-')}`}
                   >
                     <span>{child.label}</span>
                   </button>
@@ -220,6 +227,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             ? 'bg-sky-500/10 text-sky-100'
             : 'text-slate-300 hover:bg-slate-800/60 hover:text-slate-50'
         }`}
+        data-testid={`sidebar-item-${item.path.replace(/\//g, '-') || 'dashboard'}`}
       >
         <Icon
           size={18}

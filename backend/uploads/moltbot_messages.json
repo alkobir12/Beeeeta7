@@ -223,5 +223,50 @@
     "agent": "summary",
     "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-        <button\n+        <button\n+          data-testid=\"login-button\"\n           onClick={handleLogin}\n           disabled={loading}\n           className=\"w-full\"\n         >\n           {loading ? t('common.loading') : t('auth.login')}\n         </button>\n...",
     "created_at": "2026-02-10T14:31:11.354129"
+  },
+  {
+    "id": "e239380d-ca48-4922-8ff4-10c5879aff4c",
+    "session_id": "0fc2082c-544c-4bdc-b80b-1bad566f6a22",
+    "project_id": "7fdc82a9-aa34-4fe4-a9c9-bc2f2e30aa9a",
+    "role": "user",
+    "agent": null,
+    "content": "أضف data-testid لزر الدخول في Login.jsx",
+    "created_at": "2026-02-10T14:31:27.413809"
+  },
+  {
+    "id": "6f841801-bc6a-465d-998c-c4d610ce3d62",
+    "session_id": "0fc2082c-544c-4bdc-b80b-1bad566f6a22",
+    "project_id": "7fdc82a9-aa34-4fe4-a9c9-bc2f2e30aa9a",
+    "role": "assistant",
+    "agent": "planner",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-          <button\n+          <button\n+            data-testid=\"login-button\"\n             onClick={handleLogin}\n             disabled={loading}\n             className=\"w-full\"\n           >\n             {loading ? t('common.loading') : t('auth.login')}\n           </button>\n...",
+    "created_at": "2026-02-10T14:31:35.564165"
+  },
+  {
+    "id": "6d736714-8718-44e6-b7a9-266d25f8053d",
+    "session_id": "0fc2082c-544c-4bdc-b80b-1bad566f6a22",
+    "project_id": "7fdc82a9-aa34-4fe4-a9c9-bc2f2e30aa9a",
+    "role": "assistant",
+    "agent": "builder",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-            <button\n+            <button\n+              data-testid=\"login-button\"\n               onClick={handleLogin}\n               disabled={loading}\n               className=\"w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md\"\n             >\n               {loading ? t('loading') : t('login')}\n             </button>\n@@ ...",
+    "created_at": "2026-02-10T14:31:35.983730"
+  },
+  {
+    "id": "26e07529-4e4f-4af7-ad34-100956b37779",
+    "session_id": "0fc2082c-544c-4bdc-b80b-1bad566f6a22",
+    "project_id": "7fdc82a9-aa34-4fe4-a9c9-bc2f2e30aa9a",
+    "role": "assistant",
+    "agent": "reviewer",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          تسجيل الدخول\n+          تسجيل الدخول\n         </Button>\n       </Flex>\n     </Box>\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          تسجيل الدخول\n+          تسجيل الدخول\n         </Button>\n       </Flex>\n     </Box>\n \ndiff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,6 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n+          data-testid=\"login-button\"\n         >\n           تسجيل الدخول\n         </Button>\n       </Flex>\n     </Box>",
+    "created_at": "2026-02-10T14:31:36.324696"
+  },
+  {
+    "id": "9dc9166b-42fd-4b7b-9c8d-4713c43e7ca4",
+    "session_id": "0fc2082c-544c-4bdc-b80b-1bad566f6a22",
+    "project_id": "7fdc82a9-aa34-4fe4-a9c9-bc2f2e30aa9a",
+    "role": "assistant",
+    "agent": "summary",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,6 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n+          data-testid=\"login-button\"\n         >\n           تسجيل الدخول\n         </Button>\n       </Flex>",
+    "created_at": "2026-02-10T14:31:36.660700"
   }
 ]

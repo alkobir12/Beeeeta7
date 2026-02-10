@@ -32,7 +32,7 @@ const Operations = () => {
       return null;
     }
   }, []);
-  const guidanceEnabled = Boolean(session?.guidanceEnabled);
+  const guidanceEnabled = session?.guidanceEnabled !== false;
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 

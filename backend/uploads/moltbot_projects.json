@@ -70,5 +70,17 @@
     "created_at": "2026-02-10T14:31:26.273210",
     "updated_at": "2026-02-10T14:31:26.273210",
     "last_build_at": "2026-02-10T14:31:37.001962"
+  },
+  {
+    "id": "e94d29fd-9327-4c65-8de8-a01e283e3a9a",
+    "name": "تحرير مشروع apply 2",
+    "description": "اختبار apply",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:31:55.161311",
+    "updated_at": "2026-02-10T14:31:55.161311",
+    "last_build_at": "2026-02-10T14:32:07.408035"
   }
 ]

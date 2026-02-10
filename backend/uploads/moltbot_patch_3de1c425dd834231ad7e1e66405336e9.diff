@@ -1,0 +1,14 @@
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ ...
+-      <button
++      <button
++        data-testid="login-button"
+         onClick={handleLogin}
+         disabled={loading}
+         className="w-full"
+       >
+         {loading ? t('loading') : t('login')}
+       </button>
+@@ ...

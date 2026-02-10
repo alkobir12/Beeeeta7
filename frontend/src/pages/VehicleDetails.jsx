@@ -609,8 +609,8 @@ const VehicleDetails = () => {
           return r;
         });
 
-      const servicesPromise = servicesAPI.getAll().catch(() => ({ data: [] }));
-      const partsPromise = partsAPI.getAll().catch(() => ({ data: [] }));
+      const servicesPromise = serviceAPI.getAll().catch(() => ({ data: [] }));
+      const partsPromise = partAPI.getAll().catch(() => ({ data: [] }));
 
       const [filesRes, approvalsRes, servicesRes, partsRes] = await Promise.all([
         filesPromise,

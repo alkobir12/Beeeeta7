@@ -602,46 +602,15 @@ const DocumentPrint = () => {
   const handleDownloadPDF = async () => {
     setGeneratingPdf(true);
     try {
-      // Validate first
-      if (!formData.workshop.name || !formData.customer.name) {
-        alert(isArabic ? 'الرجاء إدخال البيانات الأساسية' : 'Please enter details');
-        setGeneratingPdf(false);
-        return;
+      const html = previewHtml || (await getDocumentHtml());
+      const { doc, body } = await getPdfBodyFromHtml(html);
+      if (!body) {
+        throw new Error(isArabic ? 'تعذر تجهيز المعاينة للطباعة' : 'Unable to prepare preview');
       }
 
-      // Use the SAME HTML used in preview when available (prevents mismatch in sizing/fonts).
-      const html = previewHtml || (await (async () => {
-        const resp = await axios.post(`${API_URL}/documents/generate`, {
-          doc_type: docType,
-          workshop: formData.workshop,
-          customer: formData.customer,
-          vehicle: formData.vehicle,
-          items: formData.items.filter(item => item.description),
-          settings: {
-            ...formData.settings,
-            approval_token: formData.settings.approval_token || undefined,
-            approval_vehicle_id: vehicleId || undefined,
-            visit_id: visitId || undefined,
-          },
-        });
-        if (!resp.data?.success) throw new Error(resp.data?.message || 'Failed');
-        return resp.data.html;
-      })());
-
-      // If preview iframe exists, use it directly (1:1 match with preview sizing/fonts).
-      const previewIframe = previewRef?.current?.querySelector?.('iframe');
-      const previewDoc = previewIframe?.contentDocument;
-      const previewBody = previewDoc?.body;
-
-      const elementForPdf = previewBody;
-      if (!elementForPdf) {
-        throw new Error('Preview not ready. Please open preview and try again.');
-      }
-
-      // Wait for fonts inside preview iframe.
-      if (previewDoc.fonts?.ready) {
+      if (doc?.fonts?.ready) {
         try {
-          await previewDoc.fonts.ready;
+          await doc.fonts.ready;
         } catch (_) {
           // ignore
         }
@@ -654,7 +623,7 @@ const DocumentPrint = () => {
       let lastErr = null;
       for (const sc of scales) {
         try {
-          await downloadPDF(elementForPdf, fileName, {
+          await downloadPDF(body, fileName, {
             scale: sc,
             backgroundColor: '#ffffff',
           });

@@ -255,7 +255,10 @@ def _build_diff_from_updates(root: Path, updates: Dict[str, str]) -> str:
             tofile=f"b/{rel_path}",
             lineterm="",
         )
-        diffs.append("\n".join(diff_lines))
+        diff_text = "\n".join(diff_lines)
+        if diff_text:
+            diff_text = f"diff --git a/{rel_path} b/{rel_path}\n" + diff_text
+        diffs.append(diff_text)
     return "\n".join([d for d in diffs if d.strip()])
 
 

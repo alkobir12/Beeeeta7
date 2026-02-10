@@ -522,6 +522,83 @@ const DocumentPrint = () => {
     return { subtotal, tax, total: subtotal };
   };
 
+  const buildDocumentPayload = () => ({
+    doc_type: docType,
+    workshop: formData.workshop,
+    customer: formData.customer,
+    vehicle: formData.vehicle,
+    items: formData.items.filter(item => item.description),
+    settings: {
+      ...formData.settings,
+      approval_token: formData.settings.approval_token || undefined,
+      approval_vehicle_id: vehicleId || undefined,
+      visit_id: visitId || undefined,
+    },
+  });
+
+  const refreshDocumentData = async () => {
+    await loadWorkshopSettings();
+    if (vehicleId) {
+      await loadVehicleData(vehicleId, { preserveItems: Boolean(visitId || operationId || invoiceId) });
+      await loadLatestApprovalToken(vehicleId);
+    }
+    if (visitId) {
+      await loadVisitItems(vehicleId || null, visitId);
+    }
+    if (operationId) {
+      await loadOperationData(operationId);
+    }
+    if (invoiceId) {
+      await loadInvoiceData(invoiceId);
+    }
+  };
+
+  const getDocumentHtml = async () => {
+    if ((!formData.workshop.name || !formData.customer.name) && !autoRefreshRef.current) {
+      autoRefreshRef.current = true;
+      await refreshDocumentData();
+    }
+
+    const response = await axios.post(`${API_URL}/documents/generate`, buildDocumentPayload());
+    if (response.data?.success) {
+      return response.data.html;
+    }
+    throw new Error(response.data?.message || 'فشل');
+  };
+
+  const getPdfBodyFromHtml = async (html) => {
+    const previewIframe = previewRef?.current?.querySelector?.('iframe');
+    if (previewIframe?.contentDocument?.body) {
+      return { doc: previewIframe.contentDocument, body: previewIframe.contentDocument.body };
+    }
+
+    setPdfSourceHtml(html);
+    await new Promise((r) => setTimeout(r, 60));
+    const hiddenIframe = pdfIframeRef.current;
+    if (!hiddenIframe) {
+      throw new Error('تعذر إنشاء المعاينة المخفية');
+    }
+
+    await new Promise((resolve) => {
+      if (hiddenIframe.contentDocument?.readyState === 'complete') {
+        resolve();
+        return;
+      }
+      const handler = () => {
+        hiddenIframe.removeEventListener('load', handler);
+        resolve();
+      };
+      hiddenIframe.addEventListener('load', handler);
+      setTimeout(() => {
+        hiddenIframe.removeEventListener('load', handler);
+        resolve();
+      }, 1200);
+    });
+
+    const doc = hiddenIframe.contentDocument;
+    return { doc, body: doc?.body };
+  };
+
   const handleDownloadPDF = async () => {
     setGeneratingPdf(true);
     try {

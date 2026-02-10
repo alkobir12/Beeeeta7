@@ -421,7 +421,8 @@ const translations = {
     denso_diagnostics: "تشخيص دينسو",
     print_quotes: "الطباعة وعروض الأسعار",
     templates_manager: "إدارة النماذج",
-    workshop_system: "نظام إدارة الورشة"
+    workshop_system: "نظام إدارة الورشة",
+    moltbot: "مولت بوت"
   },
 
   abu_fahad: {

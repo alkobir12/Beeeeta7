@@ -814,7 +814,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         try:
             if not openai_key or not openai_model:
                 raise HTTPException(status_code=500, detail="إعدادات GPT غير مكتملة")
-            system_message = planner_prompt
+            system_message = f"{planner_prompt}\n\n{thinking_keys_prompt}"
             user_message = payload.message.strip()
             if mode == "editor":
                 system_message = f"{planner_prompt}\n\n{editor_policy}"
@@ -842,7 +842,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         try:
             if not openai_key or not openai_model:
                 raise HTTPException(status_code=500, detail="إعدادات GPT غير مكتملة")
-            system_message = builder_prompt
+            system_message = f"{builder_prompt}\n\n{thinking_keys_prompt}"
             user_message = payload.message.strip()
             if mode == "editor":
                 system_message = f"{builder_prompt}\n\n{editor_policy}"
@@ -868,7 +868,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
 
     if "reviewer" in agents:
         try:
-            system_message = reviewer_prompt
+            system_message = f"{reviewer_prompt}\n\n{thinking_keys_prompt}"
             user_message = payload.message.strip()
             if mode == "editor":
                 system_message = f"{reviewer_prompt}\n\n{editor_policy}"

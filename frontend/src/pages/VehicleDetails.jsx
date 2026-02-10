@@ -1231,10 +1231,12 @@ const VehicleDetails = () => {
 
       </div>
 
-      <SmartGuidance
-        guides={guidanceList}
+      <GuidanceStepper
+        title="إرشادات ملف المركبة"
+        subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."
+        steps={guidanceSteps}
         enabled={guidanceEnabled}
-        userKey={session?.id || session?.name || 'default'}
+        storageKey={`guidance-vehicle-${session?.id || session?.name || 'default'}`}
       />
 
       {/* Modals */}

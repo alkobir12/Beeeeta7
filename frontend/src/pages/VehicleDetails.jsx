@@ -298,6 +298,9 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
                       isEditing={isEditing} 
                       onChange={(f, v) => updateItem(idx, f, v)}
                       onDelete={() => deleteItem(idx)}
+                      servicesCatalog={servicesCatalog}
+                      partsCatalog={partsCatalog}
+                      rowId={idx}
                     />
                   ))
                 )}

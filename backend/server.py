@@ -238,6 +238,11 @@ async def health_check():
     return {"status": "ok"}
 
 
+@app.get("/api/health")
+async def api_health_check():
+    return await health_check()
+
+
 # Add validation error handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse

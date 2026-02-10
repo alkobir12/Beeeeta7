@@ -26,6 +26,8 @@ const MoltBot = () => {
   const [buildPrompt, setBuildPrompt] = useState('');
   const [buildResult, setBuildResult] = useState(null);
   const [sessionId, setSessionId] = useState(null);
+  const [mode, setMode] = useState('builder');
+  const [targetFilesInput, setTargetFilesInput] = useState('');
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -137,6 +139,10 @@ const MoltBot = () => {
     }
     try {
       setBuildLoading(true);
+      const targetFiles = targetFilesInput
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
       const res = await fetch(`${API_URL}/moltbot/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,7 +150,9 @@ const MoltBot = () => {
           project_id: selectedProject.id,
           session_id: sessionId,
           message: buildPrompt,
-          goal: selectedProject.description
+          goal: selectedProject.description,
+          mode,
+          target_files: mode === 'editor' ? targetFiles : undefined,
         })
       });
       if (!res.ok) throw new Error('chat failed');
@@ -352,16 +360,57 @@ const MoltBot = () => {
                 <Sparkles className="text-sky-400" />
                 <div>
                   <h3 className="text-lg font-semibold text-white">وكلاء MoltBot متعددي النماذج</h3>
-                  <p className="text-xs text-slate-400">توليد مخطط بناء شامل باستخدام GPT + DeepSeek + Groq.</p>
+                  <p className="text-xs text-slate-400">
+                    {mode === 'editor'
+                      ? 'تحرير مشروع FastAPI قائم عبر diff فقط بدون إعادة كتابة كاملة.'
+                      : 'توليد مخطط بناء شامل باستخدام GPT + DeepSeek + Groq.'}
+                  </p>
                 </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2" data-testid="moltbot-mode-toggle">
+                <button
+                  onClick={() => setMode('builder')}
+                  className={`px-4 py-2 rounded-xl text-sm border ${
+                    mode === 'builder'
+                      ? 'bg-sky-500/20 border-sky-400 text-sky-100'
+                      : 'bg-white/5 border-white/10 text-slate-300'
+                  }`}
+                  data-testid="moltbot-builder-mode-button"
+                >
+                  بناء مشروع
+                </button>
+                <button
+                  onClick={() => setMode('editor')}
+                  className={`px-4 py-2 rounded-xl text-sm border ${
+                    mode === 'editor'
+                      ? 'bg-emerald-500/20 border-emerald-300 text-emerald-100'
+                      : 'bg-white/5 border-white/10 text-slate-300'
+                  }`}
+                  data-testid="moltbot-editor-mode-button"
+                >
+                  تحرير مشروع قائم
+                </button>
               </div>
               <textarea
                 value={buildPrompt}
                 onChange={(e) => setBuildPrompt(e.target.value)}
-                placeholder="صف الموقع المطلوب (القطاع، الميزات، الجمهور المستهدف، أسلوب العلامة)."
+                placeholder={
+                  mode === 'editor'
+                    ? 'صف التعديل المطلوب (إضافة صفحة، تعديل API، إصلاح خطأ) بلغة عربية واضحة.'
+                    : 'صف الموقع المطلوب (القطاع، الميزات، الجمهور المستهدف، أسلوب العلامة).'
+                }
                 className="mt-4 w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-sm text-white min-h-[140px]"
-                data-testid="moltbot-build-prompt"
+                data-testid={mode === 'editor' ? 'moltbot-editor-prompt' : 'moltbot-build-prompt'}
               />
+              {mode === 'editor' && (
+                <input
+                  value={targetFilesInput}
+                  onChange={(e) => setTargetFilesInput(e.target.value)}
+                  placeholder="ملفات مستهدفة (اختياري) — افصل بينها بفاصلة"
+                  className="mt-3 w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-2 text-sm text-white"
+                  data-testid="moltbot-editor-target-files"
+                />
+              )}
               <button
                 onClick={runBuild}
                 disabled={buildLoading}
@@ -374,22 +423,42 @@ const MoltBot = () => {
 
               {buildResult && (
                 <div className="mt-6 space-y-4" data-testid="moltbot-build-results">
+                  {buildResult.mode === 'editor' && buildResult.affected_files && (
+                    <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4" data-testid="moltbot-affected-files">
+                      <h4 className="text-sm font-semibold text-white mb-2">الملفات المتأثرة</h4>
+                      <ul className="text-xs text-slate-200 space-y-1">
+                        {buildResult.affected_files.map((file) => (
+                          <li key={file}>- {file}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {buildResult.mode === 'editor' && buildResult.blocked_files && buildResult.blocked_files.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-400/30 rounded-2xl p-4" data-testid="moltbot-blocked-files">
+                      <h4 className="text-sm font-semibold text-red-200 mb-2">ملفات تم منع إعادة إنشائها</h4>
+                      <ul className="text-xs text-red-100 space-y-1">
+                        {buildResult.blocked_files.map((file) => (
+                          <li key={file}>- {file}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                     <h4 className="text-sm font-semibold text-white mb-2">الخلاصة الموحدة</h4>
-                    <p className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-summary-output">{buildResult.summary}</p>
+                    <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-summary-output">{buildResult.summary}</pre>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                       <h5 className="text-xs font-semibold text-sky-300 mb-2">وكيل التخطيط (GPT)</h5>
-                      <p className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-planner-output">{buildResult.agents?.planner}</p>
+                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-planner-output">{buildResult.agents?.planner}</pre>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                       <h5 className="text-xs font-semibold text-emerald-300 mb-2">وكيل البناء (DeepSeek)</h5>
-                      <p className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-builder-output">{buildResult.agents?.builder}</p>
+                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-builder-output">{buildResult.agents?.builder}</pre>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                       <h5 className="text-xs font-semibold text-amber-300 mb-2">وكيل المراجعة (Groq)</h5>
-                      <p className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-reviewer-output">{buildResult.agents?.reviewer}</p>
+                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-reviewer-output">{buildResult.agents?.reviewer}</pre>
                     </div>
                   </div>
                 </div>

@@ -520,11 +520,18 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
 
     editor_policy = (
         "أنت تعمل على تحرير مشروع FastAPI قائم دون إعادة كتابة كاملة. "
-        "التزم بالقواعد التالية: لا تغيّر البنية الأساسية، لا تكرر الأكواد الموجودة، عدّل فقط الأجزاء المرتبطة بطلب التحرير، "
-        "أنتج تعديلات minimal patch فقط بصيغة unified diff. "
+        "التزم بالقواعد التالية: لا تغيّر البنية الأساسية، لا تكرر الأكواد الموجودة، عدّل فقط الأجزاء المرتبطة بطلب التحرير. "
+        "أنتج تعديلات minimal patch فقط بصيغة git unified diff. "
         "أظهر فقط الملفات التي تحتاج تعديل ولا تضف شرحًا. "
         "لا تنشئ ملفًا جديدًا إذا كان موجودًا مسبقًا. "
-        "الإخراج يجب أن يحتوي على PATCH فقط بصيغة diff واضحة."
+        "صيغة الإخراج المطلوبة حصراً:\n"
+        "diff --git a/path b/path\n"
+        "--- a/path\n"
+        "+++ b/path\n"
+        "@@ ...\n"
+        "-old\n"
+        "+new\n"
+        "(يمكن تكرار الكتل لعدة ملفات)."
     )
 
     if mode == "editor":
@@ -641,7 +648,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
             )
             if mode == "editor":
                 summary_prompt = (
-                    "اجمع نتائج الوكلاء في PATCH واحد فقط بصيغة unified diff. "
+                    "اجمع نتائج الوكلاء في PATCH واحد فقط بصيغة git unified diff. "
                     "لا تضف أي شرح أو نص خارج patch. "
                     "التزم بالتعديلات minimal patch ولا تعيد كتابة الملفات كاملة.\n\n"
                     f"وكيل التخطيط:\n{agents_response.get('planner','')}\n\n"

@@ -1208,6 +1208,7 @@ const VehicleDetails = () => {
                     partsCatalog={partsCatalog}
                     onServiceAdded={appendService}
                     onPartAdded={appendPart}
+                    canDelete={canDeleteVisit}
                   />
                 );
               })

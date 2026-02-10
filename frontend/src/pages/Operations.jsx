@@ -58,6 +58,29 @@ const Operations = () => {
     // - accountingAccountId: used by backend to build journal entry debit account
     accountingAccountId: ''
   });
+
+  const opsGuides = useMemo(() => (
+    [
+      {
+        id: 'ops-payment',
+        title: 'تأكيد السداد',
+        message: 'بعد إدخال البنود تأكد من توثيق السداد وإرفاق إيصال إن وجد.',
+        condition: form.items.length > 0,
+      },
+      {
+        id: 'ops-manual',
+        title: 'عملية يدوية',
+        message: 'أنت على وشك إنشاء عملية يدوية. راجع الحساب والبنود لتجنب الخطأ المالي.',
+        condition: form.scope === 'workshop',
+      },
+      {
+        id: 'ops-typo',
+        title: 'راجع اسم الطرف',
+        message: 'تأكد من كتابة اسم العميل/المورد بشكل صحيح لتجنب التكرار.',
+        condition: Boolean(form.partnerName && form.partnerName.length > 1),
+      },
+    ]
+  ), [form.items.length, form.scope, form.partnerName]);
   const [item, setItem] = useState({ 
     itemType: 'part', 
     itemId: '', 

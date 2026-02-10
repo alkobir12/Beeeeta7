@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useStitch from '../hooks/useStitch';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -28,6 +29,7 @@ const Settings = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { themeName, changeTheme, isDark } = useTheme();
   const { loading: stitchLoading, error: stitchError, result: stitchResult, generateUI, getHistory, resetError } = useStitch();
   const [loading, setLoading] = useState(true);

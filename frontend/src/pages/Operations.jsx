@@ -302,6 +302,16 @@ const Operations = () => {
           <p className="mt-1" style={{ color: styles.textSecondary }}>{t('operations.subtitle')}</p>
         </div>
 
+        <div className="mt-6" data-testid="operations-guidance-stepper">
+          <GuidanceStepper
+            title="إرشادات صفحة العمليات"
+            subtitle={operationsSubtitle}
+            steps={operationsSteps}
+            enabled={guidanceEnabled}
+            storageKey={`guidance-operations-${session?.id || session?.name || 'default'}`}
+          />
+        </div>
+
         {/* Create Operation Card */}
         <div 
           className="rounded-2xl p-6"

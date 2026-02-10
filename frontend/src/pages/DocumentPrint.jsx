@@ -450,7 +450,15 @@ const DocumentPrint = () => {
       const { data: inv } = await axios.get(`${API_URL}/invoices/${invId}`);
       if (!inv) return;
 
-      const invItems = (inv.items || []).map((it) => ({
+      let invItems = inv.items || [];
+      if (typeof invItems === 'string') {
+        try {
+          invItems = JSON.parse(invItems);
+        } catch (e) {
+          invItems = [];
+        }
+      }
+      const mappedItems = (invItems || []).map((it) => ({
         description: it.description || it.name || '',
         quantity: Number(it.quantity || 1),
         unit_price: Number(it.unit_price || it.price || 0),
@@ -465,13 +473,15 @@ const DocumentPrint = () => {
 
       setDocType(inv.type || 'invoice');
 
+      const invCustomerName = inv.partner_name || inv.partnerName || '';
+
       setFormData((prev) => ({
         ...prev,
         customer: {
           ...prev.customer,
-          name: inv.partner_name || inv.partnerName || prev.customer.name,
+          name: invCustomerName || prev.customer.name,
         },
-        items: invItems.length > 0 ? invItems : prev.items,
+        items: mappedItems.length > 0 ? mappedItems : prev.items,
         settings: {
           ...prev.settings,
           date: (inv.created_at || inv.createdAt || '').toString().slice(0, 10) || prev.settings.date,

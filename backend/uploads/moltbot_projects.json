@@ -250,5 +250,17 @@
     "created_at": "2026-02-10T17:01:30.337440",
     "updated_at": "2026-02-10T17:01:30.337440",
     "last_build_at": "2026-02-10T17:02:24.032276"
+  },
+  {
+    "id": "c70729d4-ef32-44cd-9d56-c43fd98cce9c",
+    "name": "تفاعل",
+    "description": "اختبار رسائل",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T17:02:39.501381",
+    "updated_at": "2026-02-10T17:02:39.501381",
+    "last_build_at": "2026-02-10T17:03:28.439038"
   }
 ]

@@ -99,8 +99,8 @@ const DocumentPrint = () => {
       loadVehicleData(vehicleId);
       loadLatestApprovalToken(vehicleId);
     }
-    if (visitId && vehicleId) {
-      loadVisitItems(vehicleId, visitId);
+    if (visitId) {
+      loadVisitItems(vehicleId || null, visitId);
     }
     if (operationId) {
       loadOperationData(operationId);

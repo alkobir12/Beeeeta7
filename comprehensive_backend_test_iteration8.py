@@ -260,14 +260,17 @@ class ComprehensiveBackendTester:
     
     def test_finance_endpoints(self):
         """Test 5: Finance module endpoints"""
+        # Finance endpoints require workshop_id parameter
+        workshop_id = "finmodule-sync"  # From frontend/.env
+        
         finance_endpoints = [
-            "/api/finance/chart-of-accounts",
-            "/api/finance/journal-entries", 
-            "/api/finance/reports/balance-sheet",
-            "/api/finance/reports/trial-balance",
-            "/api/finance/reports/income-statement",
-            "/api/finance/reports/cash-flow",
-            "/api/finance/alerts"
+            f"/api/finance/chart-of-accounts?workshop_id={workshop_id}",
+            f"/api/finance/journal-entries?workshop_id={workshop_id}", 
+            f"/api/finance/reports/balance-sheet?workshop_id={workshop_id}",
+            f"/api/finance/reports/trial-balance?workshop_id={workshop_id}",
+            f"/api/finance/reports/income-statement?workshop_id={workshop_id}",
+            f"/api/finance/reports/cash-flow?workshop_id={workshop_id}",
+            f"/api/finance/alerts?workshop_id={workshop_id}"
         ]
         
         for endpoint in finance_endpoints:

@@ -103,7 +103,7 @@ const UsersManagement = () => {
       role: user.role || 'employee',
       permissions: user.permissions || DEFAULT_PERMISSIONS,
       isActive: user.isActive !== false,
-      guidanceEnabled: user.guidanceEnabled === true,
+      guidanceEnabled: user.guidanceEnabled !== false,
     });
     setEditingId(user.id);
     setShowModal(true);

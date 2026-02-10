@@ -1226,6 +1226,12 @@ const VehicleDetails = () => {
 
       </div>
 
+      <SmartGuidance
+        guides={guidanceList}
+        enabled={guidanceEnabled}
+        userKey={session?.id || session?.name || 'default'}
+      />
+
       {/* Modals */}
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">

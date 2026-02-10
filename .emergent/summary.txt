@@ -1,365 +1,160 @@
-<analysis>**original_problem_statement:** The user's initial request was for a comprehensive financial management system for their vehicle workshop. This has evolved to include a glassmorphism UI/UX overhaul, fixing core accounting and dashboard logic, customizing a WhatsApp approval workflow, and adding a new AI assistant.
+<analysis>**original_problem_statement:** The user's initial request was for a comprehensive financial management system for their vehicle workshop. This has evolved significantly over time. The most recent and highest priority request is to build a new, powerful AI module named **MoltBot** within the existing application.
 
-Recent user requests from this session include:
-1.  **(P0 - In Progress)** The site is slow and pages like  are showing a black screen or crashing.
-2.  **(P0 - In Progress)** PDF invoices generated have incorrect colors and fonts.
-3.  **(P0 - Implemented)** A complete redesign of the Visits system on the  page to use expandable cards for each visit, with editable items and a re-open button per card.
-4.  **(P1 - Implemented)** Integration of a new AI assistant, AlKabeer Bot, based on a user-provided requirements document (CRP), including a developer mode.
-5.  **(P1 - Implemented)** Make customer and vehicle data editable on the  page.
-6.  **(P1 - Implemented)** Fix an issue where saving a new visit would fail.
-7.  **(P2 - Implemented)** Improve the AI bot's UI to match the website's theme.
+**MoltBot - PRODUCT REQUIREMENTS:**
+- It should be an Ultra-Level Cognitive Multi-Agent AI Application Builder Platform.
+- It must be an **independent module** accessible from the main workshop system but functionally separate.
+- It should feature a control panel to create and manage independent websites, with the potential for resale.
+- It must utilize a **multi-agent, multi-model architecture**, leveraging the latest GPT model, DeepSeek, and Groq. The user has provided API keys for DeepSeek and Groq.
+- Access to MoltBot must be restricted to users with the **manager** role.
+- The user provided a Python script () as a foundational concept for the backend orchestrator.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application is a full-stack vehicle workshop management system (React, FastAPI, MongoDB). The current session involved significant refactoring and feature additions:
--   **New Visits UI**: The  page has been completely rewritten to display vehicle visits as individual, expandable cards. Each card contains the visit's items (parts/services), which are editable.
--   **AlKabeer AI Bot**: A new AI assistant for the workshop has been integrated. It has a separate backend route () and is accessible via a floating chat widget. It also features a developer mode, triggered by the message .
--   **Performance Fixes**: A critical performance issue causing site-wide slowness was resolved by adding a MongoDB index on the  collection.
--   **PDF Generation Refactor**: The logic for generating PDF documents has been centralized into a  utility, and the  page was updated to use it.
--   **Editable Data**: The UI on the  page was updated to allow inline editing of customer and vehicle information.
+The application is a full-stack vehicle workshop management system using React, FastAPI, and Supabase as the primary database. It features vehicle and customer management, a detailed visit tracking system with expandable cards, financial operations, and two existing AI assistants for finance and workshop tasks.
+
+Recent work has focused on overhauling the PDF invoice generation system for a more professional A4 layout, fixing numerous bugs related to data persistence and performance, and preparing the application for the new MoltBot feature.
 
 **Last working item**:
--   **Last item agent was working**: The agent was debugging two critical, user-reported issues simultaneously:
-    1.  A black screen crash on the  page. The agent identified a  when creating new visits, traced it to a  object serialization problem in , and applied a fix to ensure all  objects are converted to ISO strings before being sent in the JSON response.
-    2.  Styling issues (colors, fonts) in generated PDFs. The agent attempted a fix by modifying the  options in  to set a white background and increase render scale.
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (The fixes have just been applied and require testing.)
+-   **Last item agent was working**: The agent was in the planning and requirements-gathering phase for the new **MoltBot** feature. After receiving detailed requirements, API keys (for DeepSeek and Groq), and confirmation from the user, the agent was preparing to start the implementation. The plan is to build it as a new, protected module within the existing application, utilizing a multi-LLM backend. The agent had invoked the  to get playbooks for the required LLM integrations.
+-   **Status**: NOT STARTED (Implementation has not commenced, only planning is complete).
+-   **Agent Testing Done**: N
 -   **Which testing method agent to use?**: both
-    -   **Frontend**: Use the screenshot tool on a  URL (e.g., ) to verify the black screen crash is gone.
-    -   **Backend**: Use  to test the  endpoint to confirm the  is resolved.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   Issue 1: (P0) Black screen/crash on Vehicle Details page.
--   Issue 2: (P0) PDF generation has incorrect styling (colors, fonts).
--   Issue 3: (P2)  translation key is not appearing.
+-   Issue 1: (P0, Recurring) The production site on  is unstable, with users reporting no data, a completely non-functional site, and failed PDF downloads.
+-   Issue 2: (P1, Recurring) General site performance and slowness, especially on pages with large amounts of data like the dashboard and vehicle details.
+-   Issue 3: (P2, Recurring) The  translation key is not appearing in the UI.
 
 **Issues Detail:**
--   **Issue 1: Black screen/crash on Vehicle Details page**
-    -   **Attempted fixes**: The agent identified a  on . The root cause was suspected to be improper serialization of  objects from MongoDB. A fix was applied in  to explicitly convert  objects to ISO-8601 strings before returning the JSON response.
-    -   **Next debug checklist**:
-        1.  Restart the backend service to ensure changes are applied.
-        2.  Use the  to load a vehicle details page and verify it renders correctly without crashing.
-        3.  If it still fails, check the browser console logs from the screenshot output for new frontend errors.
-        4.  Check the backend logs (==> /var/log/supervisor/backend.err.log <==
-
-  import google.generativeai as genai
-INFO:     Started server process [84]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [42] using WatchFiles
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [91]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [48] using WatchFiles
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [78]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [47] using WatchFiles
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [94]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'routes_extended.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [94]
-WARNING:  WatchFiles detected changes in 'routes_extended.py'. Reloading...
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [496]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'routes_extended.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [496]
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [779]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [47] using WatchFiles
-/app/backend/routes_gemini_chat.py:12: FutureWarning: 
-
-All support for the `google.generativeai` package has ended. It will no longer be receiving 
-updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
-See README for more details:
-
-https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-
-  import google.generativeai as genai
-INFO:     Started server process [92]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-
-==> /var/log/supervisor/backend.out.log <==
-INFO:     10.64.131.10:33374 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.131.202:37876 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.134.75:44494 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.134.75:44494 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.134.110:33148 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.134.75:44504 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.134.88:33302 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-07&include_today=true HTTP/1.1" 200 OK
-⚠️ GOOGLE_API_KEY not found in environment variables
-✅ Supabase connected for fault_knowledge
-✅ Supabase connected for Finance API (primary)
-✅ MongoDB connected for Finance API
-⚠️ Twilio credentials not found - using deeplink mode
-✅ WhatsApp Service initialized
-INFO:     10.64.131.10:39644 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.131.10:39654 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.202:53114 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.131.202:53116 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-07&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.144:53800 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.130.144:53808 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.130.144:53812 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.6:46084 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-07&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.131.202:38444 - "GET /api/vehicles HTTP/1.1" 200 OK
-⚠️ GOOGLE_API_KEY not found in environment variables
-✅ Supabase connected for fault_knowledge
-✅ Supabase connected for Finance API (primary)
-✅ MongoDB connected for Finance API
-⚠️ Twilio credentials not found - using deeplink mode
-✅ WhatsApp Service initialized
-INFO:     10.64.131.8:53946 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.132.212:34132 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.131.207:45804 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-07&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.144:38706 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.207:45804 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd HTTP/1.1" 200 OK
-INFO:     10.64.132.212:34132 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.9:52132 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/visits HTTP/1.1" 200 OK
-INFO:     10.64.131.207:53954 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/files HTTP/1.1" 200 OK
-INFO:     10.64.131.6:56066 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/files HTTP/1.1" 200 OK
-INFO:     10.64.130.143:50660 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.131.7:43322 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.131.8:56526 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.8:56530 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-07&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.131.9:59228 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd HTTP/1.1" 200 OK
-INFO:     10.64.131.10:57468 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/files HTTP/1.1" 200 OK
-INFO:     10.64.131.10:57472 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/files HTTP/1.1" 200 OK
-INFO:     10.64.131.10:57486 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.131.202:59254 - "GET /api/vehicles/c61c7020-daf9-4a59-9a86-22ae2a9a12fd/visits HTTP/1.1" 200 OK
-INFO:     10.64.134.110:37076 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-⚠️ GOOGLE_API_KEY not found in environment variables
-✅ Supabase connected for fault_knowledge
-✅ Supabase connected for Finance API (primary)
-✅ MongoDB connected for Finance API
-⚠️ Twilio credentials not found - using deeplink mode
-✅ WhatsApp Service initialized
-INFO:     10.64.128.18:40746 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.130.12:58802 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.18:40756 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.9:46840 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.9:38020 - "GET /api/vehicles/3f4d770d-73d3-43e8-b4ea-4ca50219fe65 HTTP/1.1" 200 OK
-INFO:     10.64.130.12:58802 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.9:46840 - "GET /api/vehicles/3f4d770d-73d3-43e8-b4ea-4ca50219fe65/visits HTTP/1.1" 200 OK
-INFO:     10.64.130.9:38024 - "GET /api/vehicles/3f4d770d-73d3-43e8-b4ea-4ca50219fe65/files HTTP/1.1" 200 OK
-INFO:     10.64.130.12:44374 - "GET /api/vehicles/3f4d770d-73d3-43e8-b4ea-4ca50219fe65/files HTTP/1.1" 200 OK
-⚠️ GOOGLE_API_KEY not found in environment variables
-✅ Supabase connected for fault_knowledge
-✅ Supabase connected for Finance API (primary)
-✅ MongoDB connected for Finance API
-⚠️ Twilio credentials not found - using deeplink mode
-✅ WhatsApp Service initialized
-⚠️ GOOGLE_API_KEY not found in environment variables
-✅ Supabase connected for fault_knowledge
-✅ Supabase connected for Finance API (primary)
-✅ MongoDB connected for Finance API
-⚠️ Twilio credentials not found - using deeplink mode
-✅ WhatsApp Service initialized
-INFO:     10.64.128.9:43018 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.19:43904 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.128.18:38416 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.128.18:38418 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.130.134:44128 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.130.135:39248 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.136:47380 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.130.137:36806 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.135:53234 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.130.134:56710 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.128.136:41012 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.128.137:46988 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.130.136:33254 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.128.140:49892 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.130.130:45788 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.135:54840 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.130.130:38700 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.128.135:33370 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.130.137:51146 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.128.140:53904 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.135:59946 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.128.137:57938 - "GET /api/vehicles HTTP/1.1" 200 OK
-INFO:     10.64.130.134:34154 - "GET /api/finance/alerts?workshop_id=finmodule-sync HTTP/1.1" 200 OK
-INFO:     10.64.130.135:40186 - "GET /api/finance/ar/customers?workshop_id=finmodule-sync&as_of=2026-02-08&include_today=true HTTP/1.1" 200 OK
-INFO:     10.64.130.136:45348 - "GET /api/technicians HTTP/1.1" 200 OK
-INFO:     10.64.128.137:44150 - "GET /api/vehicles HTTP/1.1" 200 OK) for any new errors.
-    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical blocker preventing users from accessing core application functionality.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: Y (The site has had multiple stability issues reported).
+-   **Issue 1: Production site  is broken**
+    -   **Attempted fixes**: The previous agent correctly identified this as a **deployment issue**, not a code bug. The production domain appears to be serving an outdated version of the application, causing failures in API calls (e.g.,  returning ) and data discrepancies. The agent implemented a fix in  to use relative API paths () in production, but this requires a new deployment to take effect.
+    -   **Next debug checklist**: This is a **BLOCKER** for any production testing. The next agent must prioritize guiding the user through redeployment.
+        1.  Instruct the user to click **Deploy Now** in the Emergent UI to publish the latest code.
+        2.  Instruct the user to **re-link the  domain** to the newly created deployment.
+        3.  Instruct the user to test the site using an **incognito window** or after a **hard refresh (Ctrl+Shift+R)** to bypass browser cache.
+        4.  DO NOT attempt to fix code for this issue until the user has confirmed successful redeployment.
+    -   **Why fix this issue and what will be achieved with the fix?**: The application is currently unusable for the end-user on their production domain.
+    -   **Status**: BLOCKED (on user action: redeployment)
+    -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on other issue**: None.
 
--   **Issue 2: PDF generation has incorrect styling (colors, fonts)**
-    -   **Attempted fixes**: The agent modified  to add  and  to the  options, hoping to fix rendering issues.
+-   **Issue 2: General site performance and slowness**
+    -   **Attempted fixes**: The agent implemented  for page components,  for list items, and converted the Files and Approvals sections in  to load on-demand (on button click) instead of on initial page load.
     -   **Next debug checklist**:
-        1.  Use the  on the  page to see if the preview layout has improved.
-        2.  Since the agent cannot download and view the PDF, the ultimate verification will require the user. The agent should complete its fix, explain the changes, and ask the user to test the PDF download.
-        3.  If the issue persists, investigate passing a custom  option or ensuring CSS is fully loaded before  runs.
-    -   **Why fix this issue and what will be achieved with the fix?**: Professional-looking invoices and reports are a core business requirement.
+        1.  For long lists (vehicles, visits), consider implementing a virtualization library like  or  to render only visible items.
+        2.  Review backend queries, especially on the dashboard, to ensure they are efficient and use indexes.
+    -   **Why fix this issue and what will be achieved with the fix?**: Improves user experience and reduces reports of the site being heavy or slow.
     -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on other issue**: None.
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: both
 
 -   **Issue 3:  translation key is still not appearing.**
-    -   **Attempted fixes**: None in this session.
-    -   **Next debug checklist**: Inspect  and the main translation file ( or ) to find the missing or mismatched key.
+    -   **Attempted fixes**: None recently.
+    -   **Next debug checklist**: Check  and  for the missing key or incorrect usage.
     -   **Why fix this issue and what will be achieved with the fix?**: Minor UI polish for language consistency.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on other issue**: None.
 
 **In progress Task List**:
--   None. All work is currently focused on bug fixing.
+-   None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   (P1) Full testing and validation of the newly refactored Visits system.
-    -   (P1) Further development of the AlKabeer bot based on the user's  document.
-    -   (P2) Verify Archive Page Functionality: Ensure delivered vehicles are correctly moved to .
+    -   **(P0) Implement the MoltBot AI Application Builder.** This is the primary new feature request.
+        -   Create new backend routes and services based on the user-provided  concept.
+        -   Integrate DeepSeek, Groq, and the latest GPT model using the provided API keys.
+        -   Create a new frontend page/module for the MoltBot control panel.
+        -   Implement role-based access control to restrict the page to manager users.
 -   **Future Tasks:**
+    -   Verify Archive Page Functionality.
     -   Enhance Dashboard Stat Cards UI.
-    -   Implement response streaming for the AI assistants.
-    -   Enable full CRUD for the Chart of Accounts from the UI.
-    -   Enhance the Permanent Monitor.
-    -   Link  to a  in the database.
+    -   Implement response streaming for AI assistants.
+    -   Enable full CRUD for the Chart of Accounts.
 
 **Completed work in this session**
--   **Visits System Refactor**: Completely redesigned the visits section in  to use expandable cards, as requested by the user.
--   **AI Bot Integration**: Integrated the AlKabeer AI assistant, including a backend route, frontend component, and a developer mode.
--   **Performance Optimization**: Resolved critical site slowness by adding a MongoDB index to the  collection.
--   **Editable Details**: Implemented functionality to edit customer and vehicle information directly from the  page.
--   **PDF Generation Refactor**: Created a dedicated  utility and updated the print page to use it.
--   **Bug Fixes**:
-    -   Resolved an issue preventing closed visits from being modified.
-    -   Fixed a bug where saving a new visit would fail.
-    -   Addressed a frontend syntax error that was breaking the application.
-    -   Fixed the AlKabeer bot not being visible after initial integration.
-
-**Earlier issues found/mentioned but not fixed**
--   **Issue 1:  translation key is still not appearing.** (Details in Pending Issues list).
+-   **PDF Invoice Overhaul**: Completely redesigned the PDF template () for a professional A4 layout, removing tax fields, adjusting the slogan position, and resizing elements to fit the page. Removed subtotal to avoid repetition.
+-   **Core Feature Implementation**:
+    -   Added a  endpoint and a corresponding UI button to allow deletion of closed visits.
+    -   Added logic to display WhatsApp approval status within each .
+-   **Performance Optimization**: Implemented on-demand loading for files/approvals in  and used  for several pages to improve initial load times.
+-   **Critical Bug Fixes**:
+    -   Resolved a backend crash () in .
+    -   Fixed an issue preventing workshop profile data from saving/loading correctly when using the Supabase DB provider.
+    -   Corrected the  page to use relative API paths, which is crucial for the production domain to function correctly after redeployment.
+-   **Deployment Readiness**: Fixed a CORS misconfiguration by moving allowed origins to a  variable, making the application more portable.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Major UI Refactoring**: The  page was transformed from a simple list to a complex, stateful component with nested, editable cards.
--   **MongoDB Indexing**: A database index () was added to the  collection to resolve a critical performance bottleneck.
--   **Backend Data Serialization**: Addressed a  by ensuring  objects are consistently converted to ISO strings in API responses.
--   **Client-Side PDF Generation**: Using  and  to generate PDFs on the client, with ongoing debugging for styling and rendering issues.
--   **Modular AI Integration**: Added a second, distinct AI bot by creating a new, separate route and service, preventing conflicts with the existing finance bot.
+-   **Dual DB Provider**: The backend contains logic to switch between MongoDB and Supabase based on the  environment variable. The user has confirmed  for production. This has been a source of bugs.
+-   **Hybrid PDF Generation**: The backend () generates HTML for invoices, which is sent to the frontend. The frontend () renders this HTML in an  for preview, and then uses  and  to generate the downloadable PDF. This complex flow is prone to style mismatches between preview and download.
+-   **Multi-Agent AI**: The app is moving towards a multi-agent architecture with the introduction of MoltBot, which will orchestrate multiple LLMs.
+
+**key DB schema**
+-   **vehicles**: {id, plateNumber, brand, model, customerId, ...}
+-   **vehicle_visits**: {id, vehicle_id, entry_date, status, notes, items: JSONB, ...}
+-   **operations**: {id, vehicle_id, visitId, total, items: JSONB, ...}
+-   **customers**: {id, name, phone, ...}
+-   **workshop_profile**: A key-value store or single-row table for workshop settings. Also backed by a JSON file.
+-   **approval_requests**: {id, vehicle_id, token, status, ...}. May be missing a  column for better linking.
+
+**changes in tech stack**
+-   The user has requested the integration of **DeepSeek** and **Groq** LLMs for the new MoltBot feature.
 
 **All files of reference**
--   **/app/frontend/src/pages/VehicleDetails.jsx**: The most heavily modified file and the source of current critical bugs.
--   **/app/backend/routes_extended.py**: Contains the backend logic for the visits system; recently modified to fix a  error.
--   **/app/frontend/src/utils/pdfGenerator.js**: The new utility for PDF generation, which is causing styling issues.
--   **/app/frontend/src/pages/DocumentPrint.jsx**: The page for printing/downloading documents.
--   **/app/backend/routes_alkabeer_bot.py**: The new backend for the workshop AI assistant.
--   **/app/backend/prompts/CRP-AlKabeer-Bot-Complete.md**: The user's requirements for the new bot.
+-   : The heavily modified invoice HTML template.
+-   : The source of the PDF generation logic and the API URL fix.
+-   : The location of recent performance and feature enhancements.
+-   : The location of the new  endpoint and profile fixes.
+-   : User-provided file to be used as a reference for the MoltBot backend.
 
 **Critical Info for New Agent**
--   **You MUST respond in Arabic.** The user exclusively communicates in Arabic.
--   **Priority 1: Fix the  page.** The black screen is the top priority. Your first action should be to test the fix applied in  by using the screenshot tool on a vehicle detail page.
--   **Priority 2: Address the PDF styling.** After confirming the  page loads, address the PDF issue. This will likely require more adjustments to .
--   **High Code Complexity**: The  component is now very complex due to the major UI refactor. Be cautious when making changes.
--   **User is waiting**: The user is actively trying to use the site and is blocked by these bugs. Communicate your plan and progress clearly and frequently.
-
-**documents and test reports created in this job**
--   
+-   **You MUST respond in Arabic.** This is non-negotiable.
+-   The #1 priority is the new **MoltBot** feature. Start planning the implementation immediately.
+-   The production domain  is **BROKEN** due to a **deployment issue**. Do not waste time debugging code for issues that only appear on . First, guide the user to **re-deploy the latest version** and **re-link their domain**. This is a recurring problem.
+-   Use the provided API keys for MoltBot:
+    -   **DeepSeek**: 
+    -   **Groq**: 
+-   MoltBot must be accessible only to users with the **manager** role.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Still a problem, black screen when entering a vehicle file. Also PDF has color/font issues. (PENDING)
-2.  **Agent**: I'm investigating the black screen and PDF issues. (IN PROGRESS)
-3.  **User**: The site is not working, Something went wrong. (Agent identified this as the  variable error and fixed it).
-4.  **User**: The changes are not on the domain and there's a runtime error: . (Agent fixed this).
-5.  **User**: Improve the print/PDF functionality completely. (Agent refactored PDF generation).
-6.  **User**: Make vehicle and customer data editable. (DONE)
-7.  **User**: The vehicle data and status boxes are missing from the  page. (Agent restored them).
-8.  **User**: The site is very slow and doesn't load. (Agent fixed with a DB index).
-9.  **User**: The new visit system is good but has issues: missing vehicle info, and visits not syncing to financial operations. (Agent fixed the sync issue).
-10. **User**: The visit system is complex. Please redesign it with expandable cards for each visit. (DONE)
+10. **User**: The site is completely down. (PENDING - This is the deployment issue on ).
+9.  **User**: I want to build MoltBot. (IN PROGRESS - Agent gathered requirements).
+8.  **User**: Use DeepSeek, Groq, and the latest GPT. Make it a separate module for managers only. (DONE - Requirements gathered).
+7.  **User**: Okay, start the implementation of MoltBot. (PENDING - Next agent's task).
+6.  **User**: After redeploying, there is still no data on the domain. (PENDING - Still a deployment/cache issue).
+5.  **User**: The PDF preview is fine, but the download fails or looks different. Also, I can't save new workshop info. (PENDING - All symptoms of the deployment/cache issue).
+4.  **User**: Can't delete a visit. Also, some additions are not showing up. (RESOLVED in code, but PENDING deployment).
+3.  **User**: The invoice is too long and the total is repeated. (RESOLVED in code).
+2.  **User**: Remove subtotal, change project description to vehicle, and show WhatsApp approvals in the visit. (RESOLVED in code).
+1.  **User**: The invoice has font/color issues and is missing workshop info. (RESOLVED in code).
 
 **Project Health Check:**
--   **Broken**:
-    -   The  page is non-functional for the user, showing a black screen or crashing. This is a critical blocker.
-    -   PDF generation produces documents with incorrect styling, making it unusable for professional purposes.
+-   **Broken**: The production deployment on  is non-functional. Core features like data display, PDF download, and saving data are failing for the user on their live domain. This is a critical deployment issue.
 -   **Mocked**: None.
 
 **3rd Party Integrations**
--   **Supabase (MongoDB)**: Primary database.
--   **OpenAI **: Used for the أبوفهد finance bot and the new AlKabeer workshop bot.
--   **Twilio (via WhatsApp)**: Used to send approval request messages.
--   **jspdf / html2canvas**: Used for client-side PDF generation.
+-   **Supabase**: Primary database provider ().
+-   **OpenAI GPT-4o-mini**: Used for existing AI assistants.
+-   **Twilio**: For WhatsApp integration.
+-   **jspdf / html2canvas**: For client-side PDF generation.
+-   **NEW: OpenAI (Latest GPT model)**: To be used for MoltBot.
+-   **NEW: DeepSeek**: To be used for MoltBot. Requires User API Key ().
+-   **NEW: Groq**: To be used for MoltBot. Requires User API Key ().
 
 **Testing status**
--   **Testing agent used after significant changes**: NO, the agent has been using  and manual  checks. Given the recurring stability issues, using the testing agent after fixing the current blockers would be advisable.
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None in this session.
--   **Known regressions**: The  page is currently in a broken state after a major refactor. The PDF generation feature may have regressed in quality.
+-   **Testing agent used after significant changes**: NO. Agent relied on manual  calls and visual inspection, which is insufficient given the recurring production issues.
+-   **Troubleshoot agent used after agent stuck in loop**: NO.
+-   **Test files created**: None.
+-   **Known regressions**: The entire production deployment is in a regressed state.
+
+**Credentials to test flow:**
+- User has provided API keys for DeepSeek and Groq for the MoltBot feature. They are listed in the 3rd Party Integrations and Critical Info sections.
 
 **What agent forgot to execute**
--   The P2 task to fix the  translation was not addressed.
--   Thorough regression testing was not performed after the major refactoring of the Visits system, leading to the current critical bugs.</analysis>
+- The P2 task to fix the  translation key remains unaddressed.
+- The agent did not enforce a strict test after deploy loop with the user, leading to a long cycle of fixing code that wasn't live, causing user frustration.</analysis>

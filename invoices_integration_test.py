@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Backend URL
-API_URL = os.getenv("REACT_APP_BACKEND_URL", "https://mechanic-manager-17.preview.emergentagent.com")
+API_URL = os.getenv("REACT_APP_BACKEND_URL", "https://smart-agents-52.preview.emergentagent.com")
 BACKEND_URL = f"{API_URL}/api"
 
 # Test results tracking

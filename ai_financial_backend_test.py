@@ -21,7 +21,7 @@ import time
 from datetime import datetime, timedelta
 
 # Configuration from frontend/.env
-BACKEND_URL = "https://mechanic-manager-17.preview.emergentagent.com/api"
+BACKEND_URL = "https://smart-agents-52.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

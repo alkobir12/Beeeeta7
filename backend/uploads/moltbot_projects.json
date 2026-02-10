@@ -190,5 +190,17 @@
     "created_at": "2026-02-10T16:21:20.940415",
     "updated_at": "2026-02-10T16:21:23.842424",
     "last_build_at": null
+  },
+  {
+    "id": "753f3eca-071a-490e-8300-ddb3ccbfeec8",
+    "name": "تحرير مشروع ملفات",
+    "description": "اختبار patch_files",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T16:32:11.557455",
+    "updated_at": "2026-02-10T16:32:11.557455",
+    "last_build_at": "2026-02-10T16:32:39.791313"
   }
 ]

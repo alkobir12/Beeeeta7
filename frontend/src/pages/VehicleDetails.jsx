@@ -443,6 +443,22 @@ const VehicleDetails = () => {
       : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
   );
 
+  const appendService = useCallback((service) => {
+    if (!service) return;
+    setServicesCatalog((prev) => {
+      const exists = prev.some((s) => s.id === service.id || (s.name || '').trim() === (service.name || '').trim());
+      return exists ? prev : [...prev, service];
+    });
+  }, []);
+
+  const appendPart = useCallback((part) => {
+    if (!part) return;
+    setPartsCatalog((prev) => {
+      const exists = prev.some((p) => p.id === part.id || (p.name || '').trim() === (part.name || '').trim());
+      return exists ? prev : [...prev, part];
+    });
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);

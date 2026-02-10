@@ -23,7 +23,7 @@ const WorkshopProfile = () => {
   const loadProfile = async () => {
     try {
       const response = await axios.get(`${API}/profile`);
-      setProfile({ ...profile, ...response.data });
+      setProfile((prev) => ({ ...prev, ...response.data }));
     } catch (error) { console.error(error); }
   };
 
@@ -55,7 +55,7 @@ const WorkshopProfile = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setProfile({ ...profile, logo: data.logo_url || data.url });
+        setProfile((prev) => ({ ...prev, logo: data.logo_url || data.url }));
         toast({ title: 'تم الرفع', description: 'تم رفع الشعار بنجاح' });
       } else {
         throw new Error('فشل رفع الشعار');
@@ -65,7 +65,7 @@ const WorkshopProfile = () => {
       // If upload fails, use base64 as fallback
       const reader = new FileReader();
       reader.onload = (e) => {
-        setProfile({ ...profile, logo: e.target.result });
+        setProfile((prev) => ({ ...prev, logo: e.target.result }));
         toast({ title: 'تم', description: 'تم تحميل الشعار محلياً' });
       };
       reader.readAsDataURL(file);
@@ -76,7 +76,7 @@ const WorkshopProfile = () => {
   };
 
   const removeLogo = () => {
-    setProfile({ ...profile, logo: '' });
+    setProfile((prev) => ({ ...prev, logo: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -84,6 +84,7 @@ const WorkshopProfile = () => {
     setLoading(true);
     try {
       await axios.put(`${API}/profile`, profile);
+      await loadProfile();
       toast({ title: 'تم الحفظ', description: 'تم تحديث معلومات الورشة بنجاح' });
     } catch (error) {
       toast({ title: 'خطأ', description: 'فشل الحفظ', variant: 'destructive' });

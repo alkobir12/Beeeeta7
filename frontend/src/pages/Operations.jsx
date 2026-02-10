@@ -59,28 +59,32 @@ const Operations = () => {
     accountingAccountId: ''
   });
 
-  const opsGuides = useMemo(() => (
+  const operationsSteps = useMemo(() => (
     [
       {
-        id: 'ops-payment',
+        id: 'account',
+        title: 'اختيار الحساب والطرف',
+        hint: 'اختر الحساب واسم المورد/العميل قبل المتابعة.',
+        done: Boolean(form.accountId && form.partnerName),
+      },
+      {
+        id: 'items',
+        title: 'إضافة البنود',
+        hint: 'أضف البنود والكميات والأسعار بدقة.',
+        done: form.items.length > 0,
+      },
+      {
+        id: 'payment',
         title: 'تأكيد السداد',
-        message: 'بعد إدخال البنود تأكد من توثيق السداد وإرفاق إيصال إن وجد.',
-        condition: form.items.length > 0,
-      },
-      {
-        id: 'ops-manual',
-        title: 'عملية يدوية',
-        message: 'أنت على وشك إنشاء عملية يدوية. راجع الحساب والبنود لتجنب الخطأ المالي.',
-        condition: form.scope === 'workshop',
-      },
-      {
-        id: 'ops-typo',
-        title: 'راجع اسم الطرف',
-        message: 'تأكد من كتابة اسم العميل/المورد بشكل صحيح لتجنب التكرار.',
-        condition: Boolean(form.partnerName && form.partnerName.length > 1),
+        hint: 'حدد طريقة السداد أو أرفق إيصالًا إن وجد.',
+        done: Boolean(form.paymentMethod),
       },
     ]
-  ), [form.items.length, form.scope, form.partnerName]);
+  ), [form.accountId, form.partnerName, form.items.length, form.paymentMethod]);
+
+  const operationsSubtitle = form.scope === 'workshop'
+    ? 'أنت تنشئ عملية يدوية. راجع الحساب والبنود لتجنب الخطأ المالي.'
+    : 'اتبع الخطوات التالية لإكمال العملية بدقة.';
   const [item, setItem] = useState({ 
     itemType: 'part', 
     itemId: '', 

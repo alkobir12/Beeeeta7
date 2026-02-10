@@ -721,20 +721,43 @@ const DocumentPrint = () => {
               {isArabic ? 'فواتير - تشخيص - عروض أسعار - إيصالات' : 'Invoices - Diagnosis - Quotes - Receipts'}
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => generateDocument(true)} disabled={loading}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => generateDocument(true)}
+              disabled={loading}
+              className="w-full sm:w-auto"
+              data-testid="document-preview-button"
+            >
               <Eye size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
               {isArabic ? 'معاينة' : 'Preview'}
             </Button>
-            <Button variant="outline" onClick={printDocument} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={printDocument}
+              disabled={loading}
+              className="w-full sm:w-auto"
+              data-testid="document-print-button"
+            >
               <Printer size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
               {isArabic ? 'طباعة' : 'Print'}
             </Button>
-            <Button onClick={handleDownloadPDF} disabled={loading || generatingPdf} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={loading || generatingPdf}
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600"
+              data-testid="document-download-button"
+            >
               {generatingPdf ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} className={isArabic ? 'ml-2' : 'mr-2'} />}
               {isArabic ? 'تحميل PDF' : 'Download PDF'}
             </Button>
-            <Button variant="outline" onClick={saveDefaults} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={saveDefaults}
+              disabled={loading}
+              className="w-full sm:w-auto"
+              data-testid="document-save-defaults-button"
+            >
               <Save size={18} className={isArabic ? 'ml-2' : 'mr-2'} />
               {isArabic ? 'حفظ كافتراضي' : 'Save Default'}
             </Button>

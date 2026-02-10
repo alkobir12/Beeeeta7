@@ -168,7 +168,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
           laborCost: 0,
           active: true,
         };
-        const res = await servicesAPI.create(payload);
+        const res = await serviceAPI.create(payload);
         onServiceAdded?.(res.data);
         serviceNames.add(normalize(svc.name));
       } catch (e) {
@@ -188,7 +188,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
           minQuantity: 0,
           supplier: '',
         };
-        const res = await partsAPI.create(payload);
+        const res = await partAPI.create(payload);
         onPartAdded?.(res.data);
         partNames.add(normalize(part.name));
       } catch (e) {

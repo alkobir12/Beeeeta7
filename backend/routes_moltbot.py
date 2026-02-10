@@ -195,6 +195,25 @@ def _read_project_files(root: Path, files: List[str], max_chars: int = 5000) -> 
     return content
 
 
+def _extract_snippets(content: str, keywords: List[str], radius: int = 6, max_snippets: int = 4) -> str:
+    lines = content.splitlines()
+    matches = []
+    lowered = [k.lower() for k in keywords if len(k) > 2]
+    for idx, line in enumerate(lines):
+        if any(k in line.lower() for k in lowered):
+            matches.append(idx)
+    if not matches:
+        return content
+
+    snippets = []
+    for idx in matches[:max_snippets]:
+        start = max(0, idx - radius)
+        end = min(len(lines), idx + radius + 1)
+        block = "\n".join(lines[start:end])
+        snippets.append(block)
+    return "\n...\n".join(snippets)
+
+
 async def _select_files_with_llm(
     api_key: str, model: str, message: str, file_list: List[str]
 ) -> List[str]:

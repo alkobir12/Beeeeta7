@@ -1003,6 +1003,10 @@ const VehicleDetails = () => {
                     onUpdate={fetchData}
                     approvals={visitApprovals}
                     onDelete={handleDeleteVisit}
+                    servicesCatalog={servicesCatalog}
+                    partsCatalog={partsCatalog}
+                    onServiceAdded={appendService}
+                    onPartAdded={appendPart}
                   />
                 );
               })

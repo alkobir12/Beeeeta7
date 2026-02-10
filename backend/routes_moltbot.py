@@ -256,7 +256,7 @@ def _apply_patch(patch_text: str, root: Path, dry_run: bool = False) -> Dict[str
     if "diff --git" not in patch_text:
         return {"success": False, "message": "تنسيق patch غير صالح"}
 
-    if "@@ ..." in patch_text or "..." in patch_text:
+    if "@@ ..." in patch_text:
         return {"success": False, "message": "patch يحتوي على مقاطع غير صالحة (ellipsis)"}
 
     patch_file = UPLOADS_DIR / f"moltbot_patch_{uuid.uuid4().hex}.diff"

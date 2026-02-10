@@ -257,16 +257,32 @@ const DocumentPrint = () => {
           const mapped = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : st === 'receipt' ? 'receipt' : 'invoice';
           setDocType(mapped);
         }
-        const opItems = (op.items || []).map((it) => ({
+        let opItems = op.items || [];
+        if (typeof opItems === 'string') {
+          try {
+            opItems = JSON.parse(opItems);
+          } catch (e) {
+            opItems = [];
+          }
+        }
+        const mappedItems = (opItems || []).map((it) => ({
           description: it.name || it.description || '',
           quantity: Number(it.quantity || 1),
           unit_price: Number(it.price || it.unit_price || 0),
           discount: 0,
         }));
 
+        const opCustomerName = op.customerName || op.customer_name || op.partnerName || op.partner_name || '';
+        const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || '';
+
         setFormData((prev) => ({
           ...prev,
           items: opItems.length > 0 ? opItems : prev.items,
+          customer: {
+            ...prev.customer,
+            name: opCustomerName || prev.customer.name,
+            phone: opCustomerPhone || prev.customer.phone,
+          },
           settings: {
             ...prev.settings,
             document_number: op.invoice_number || op.invoiceNumber || prev.settings.document_number,
@@ -283,6 +299,7 @@ const DocumentPrint = () => {
       }
 
       // 2) Fallback: load visit notes->items from vehicle visits endpoint.
+      if (!vId) return;
       const visitsRes = await axios.get(`${API_URL}/vehicles/${vId}/visits`).catch(() => ({ data: [] }));
       const visits = Array.isArray(visitsRes.data) ? visitsRes.data : [];
       const match = visits.find((x) => (x.id || x.visitId) === vVisitId);

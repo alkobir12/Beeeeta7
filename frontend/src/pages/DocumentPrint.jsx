@@ -277,7 +277,7 @@ const DocumentPrint = () => {
 
         setFormData((prev) => ({
           ...prev,
-          items: opItems.length > 0 ? opItems : prev.items,
+          items: mappedItems.length > 0 ? mappedItems : prev.items,
           customer: {
             ...prev.customer,
             name: opCustomerName || prev.customer.name,

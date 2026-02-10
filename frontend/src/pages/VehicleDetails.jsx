@@ -513,12 +513,19 @@ const VehicleDetails = () => {
           return r;
         });
 
-      const [filesRes, approvalsRes] = await Promise.all([
+      const servicesPromise = servicesAPI.getAll().catch(() => ({ data: [] }));
+      const partsPromise = partsAPI.getAll().catch(() => ({ data: [] }));
+
+      const [filesRes, approvalsRes, servicesRes, partsRes] = await Promise.all([
         filesPromise,
         approvalsPromise,
+        servicesPromise,
+        partsPromise,
       ]);
       
       setVehicleFiles(filesRes.files || []);
+      setServicesCatalog(servicesRes.data || []);
+      setPartsCatalog(partsRes.data || []);
       
       const approvalsRows = approvalsRes?.data || [];
       const approvalsByVisit = new Map();

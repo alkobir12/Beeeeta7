@@ -1,0 +1,181 @@
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ -1,140 +1,141 @@
+ import React, { useState } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import { useToast } from '../hooks/use-toast';
+ import { useTranslation } from 'react-i18next';
+ 
+ const Login = () => {
+   const navigate = useNavigate();
+   const { toast } = useToast();
+   const { t, i18n } = useTranslation();
+   const isRTL = i18n.language === 'ar';
+   const [name, setName] = useState('');
+   const [loading, setLoading] = useState(false);
+ 
+   const fallbackPermissions = {
+     canViewDashboard: true,
+     canManageVehicles: true,
+     canManageCustomers: true,
+     canManageParts: true,
+     canManageServices: true,
+     canViewReports: true,
+     canManageFinance: true,
+     canManageUsers: true,
+     canAccessCEO: true,
+     canManageSettings: true,
+   };
+ 
+   const handleLogin = async () => {
+     if (!name.trim()) {
+       toast({ title: 'خطأ', description: 'الرجاء إدخال الاسم', variant: 'destructive' });
+       return;
+     }
+ 
+     // تسجيل دخول سريع للمدير بدون الاعتماد على /users (لتجنب أي تعليق/تعذر شبكة)
+     if (name.trim() === 'مدير') {
+       const fallbackUser = {
+         id: 'local-admin',
+         name: 'مدير',
+         phone: '',
+         email: '',
+         role: 'admin',
+         permissions: fallbackPermissions,
+         isActive: true,
+       };
+       const session = {
+         id: fallbackUser.id,
+         name: fallbackUser.name,
+         phone: fallbackUser.phone,
+         email: fallbackUser.email,
+         role: fallbackUser.role,
+         permissions: fallbackUser.permissions,
+         loginTime: new Date().toISOString(),
+       };
+       localStorage.setItem('session', JSON.stringify(session));
+       localStorage.setItem('user', JSON.stringify(fallbackUser));
+       window.dispatchEvent(new Event('sessionUpdated'));
+       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
+       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)
+       window.location.assign(`${window.location.origin}/`);
+       return;
+     }
+ 
+     try {
+       setLoading(true);
+       const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+       
+       // Fetch users to simulate login (as per existing logic) with timeout
+       const controller = new AbortController();
+       const timeout = setTimeout(() => controller.abort(), 8000);
+       const response = await fetch(`${API_URL}/users`, { signal: controller.signal });
+       clearTimeout(timeout);
+       if (!response.ok) throw new Error('Server error');
+       
+       const users = await response.json();
+       const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
+ 
+       if (!user) {
+         if (name.trim() === 'مدير') {
+           const fallbackUser = {
+             id: 'local-admin',
+             name: 'مدير',
+             phone: '',
+             email: '',
+             role: 'admin',
+             permissions: fallbackPermissions,
+             isActive: true,
+           };
+           const session = { 
+             id: fallbackUser.id,
+             name: fallbackUser.name,
+             phone: fallbackUser.phone,
+             email: fallbackUser.email,
+             role: fallbackUser.role,
+             permissions: fallbackUser.permissions,
+             loginTime: new Date().toISOString()
+           };
+           localStorage.setItem('session', JSON.stringify(session));
+           localStorage.setItem('user', JSON.stringify(fallbackUser));
+           window.dispatchEvent(new Event('sessionUpdated'));
+           toast({ title: 'مرحباً بك', description: `أهلاً بعودتك، ${fallbackUser.name}` });
+           window.location.assign(`${window.location.origin}/`);
+           return;
+         }
+         toast({ title: 'خطأ', description: 'المستخدم غير موجود', variant: 'destructive' });
+         return;
+       }
+ 
+       if (user.isActive === false) {
+         toast({ title: 'خطأ', description: 'هذا الحساب معطل', variant: 'destructive' });
+         return;
+       }
+ 
+       const session = { 
+         id: user.id,
+         name: user.name,
+         phone: user.phone,
+         email: user.email,
+         role: user.role,
+         permissions: user.permissions || {},
+         loginTime: new Date().toISOString()
+       };
+ 
+       localStorage.setItem('session', JSON.stringify(session));
+       localStorage.setItem('user', JSON.stringify(user));
+       window.dispatchEvent(new Event('sessionUpdated'));
+ 
+       // Update last login
+       try {
+         await fetch(`${API_URL}/users/${user.id}`, {
+           method: 'PUT',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ lastLogin: new Date().toISOString() })
+         });
+       } catch (_) {
+         // ignore
+       }
+ 
+       toast({ 
+         title: 'مرحباً بك',
+         description: `أهلاً بعودتك، ${user.name}`
+       });
+       window.location.assign(`${window.location.origin}/`);
+     } catch (e) {
+       console.error('Login error:', e);
+       toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول (تعذر الاتصال أو مهلة)', variant: 'destructive' });
+     } finally {
+       setLoading(false);
+     }
+   };
+ 
+   return (
+     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow">
+         <h1 className="text-2xl font-bold mb-6 text-center">{t('login.title', 'تسجيل الدخول')}</h1>
+         <div className="space-y-4">
+           <input
+             type="text"
+             value={name}
+             onChange={(e) => setName(e.target.value)}
+             placeholder={t('login.namePlaceholder', 'الاسم')}
+             className="w-full px-4 py-2 border rounded"
+             dir={isRTL ? 'rtl' : 'ltr'}
+           />
+           <button
++            data-testid="login-button"
+             onClick={handleLogin}
+             disabled={loading}
+             className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+           >
+             {loading ? t('login.loading', 'جاري الدخول...') : t('login.submit', 'دخول')}
+           </button>
+         </div>
+       </div>
+     </div>
+   );
+ };
+ 
+ export default Login;

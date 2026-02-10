@@ -132,6 +132,7 @@ class MoltbotChatResponse(BaseModel):
     mode: Optional[str] = None
     affected_files: Optional[List[str]] = None
     blocked_files: Optional[List[str]] = None
+    patch_files: Optional[List[Dict[str, str]]] = None
 
 
 def _get_project_root(request_root: Optional[str] = None) -> Path:
@@ -275,6 +276,31 @@ def _extract_diff_blocks(text: str) -> str:
         if block:
             blocks.append(block)
     return "\n".join(blocks)
+
+
+def _split_diff_by_file(diff_text: str) -> List[Dict[str, str]]:
+    lines = diff_text.splitlines()
+    blocks = []
+    current = []
+    current_path = None
+
+    for line in lines:
+        if line.startswith("diff --git "):
+            if current:
+                blocks.append({"path": current_path or "", "patch": "\n".join(current) + "\n"})
+            current = [line]
+            parts = line.split()
+            if len(parts) >= 3 and parts[2].startswith("a/"):
+                current_path = parts[2][2:]
+            else:
+                current_path = None
+            continue
+        if current:
+            current.append(line)
+
+    if current:
+        blocks.append({"path": current_path or "", "patch": "\n".join(current) + "\n"})
+    return [b for b in blocks if b.get("patch")]
 
 
 async def _select_files_with_llm(
@@ -931,6 +957,8 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
     except Exception as exc:
         summary_text = f"تعذر توليد الخلاصة: {exc}"
 
+    patch_files = None
+
     if mode == "editor" and project_root:
         updated_files = _parse_updated_files(summary_text)
         if updated_files:
@@ -938,6 +966,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         else:
             summary_text = _extract_diff_blocks(summary_text)
         blocked_files = _detect_blocked_files(summary_text, project_root)
+        patch_files = _split_diff_by_file(summary_text)
 
     for agent_name, content in agents_response.items():
         stored = _store_message(
@@ -980,4 +1009,5 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         mode=mode,
         affected_files=affected_files or None,
         blocked_files=blocked_files or None,
+        patch_files=patch_files or None,
     )

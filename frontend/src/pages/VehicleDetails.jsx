@@ -539,7 +539,7 @@ const VehicleDetails = () => {
       return null;
     }
   }, []);
-  const guidanceEnabled = Boolean(session?.guidanceEnabled);
+  const guidanceEnabled = session?.guidanceEnabled !== false;
 
   const appendService = useCallback((service) => {
     if (!service) return;

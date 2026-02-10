@@ -64,9 +64,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             const match = options.find((opt) => (opt.name || '').trim() === value.trim());
             if (match) {
               const price = match.price ?? match.sellingPrice ?? match.selling_price ?? 0;
-              if (price) {
-                onChange('price', Number(price));
-              }
+              onChange('price', Number(price) || 0);
             }
           }}
           className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm border border-gray-300 rounded p-2"

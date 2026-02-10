@@ -379,7 +379,7 @@ const DocumentPrint = () => {
 
       const opVehicleId = op.vehicleId || op.vehicle_id;
       if (opVehicleId && !vehicleId) {
-        loadVehicleData(opVehicleId);
+        loadVehicleData(opVehicleId, { preserveItems: true });
         loadLatestApprovalToken(opVehicleId);
       }
 
@@ -467,7 +467,7 @@ const DocumentPrint = () => {
 
       const invVehicleId = inv.vehicleId || inv.vehicle_id;
       if (invVehicleId && !vehicleId) {
-        loadVehicleData(invVehicleId);
+        loadVehicleData(invVehicleId, { preserveItems: true });
         loadLatestApprovalToken(invVehicleId);
       }
 

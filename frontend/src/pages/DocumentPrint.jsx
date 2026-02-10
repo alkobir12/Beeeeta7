@@ -1091,15 +1091,15 @@ const DocumentPrint = () => {
               <div className="p-4 border-b flex justify-between items-center">
                 <h3 className="font-bold text-lg">{isArabic ? 'معاينة المستند' : 'Document Preview'}</h3>
                 <div className="flex gap-2 flex-wrap">
-                  <Button variant="outline" onClick={printDocument} data-testid="document-preview-print-button">
+                  <Button variant="outline" onClick={printDocument} className="w-full sm:w-auto" data-testid="document-preview-print-button">
                     <Printer size={16} className={isArabic ? 'ml-1' : 'mr-1'} />
                     {isArabic ? 'طباعة' : 'Print'}
                   </Button>
-                  <Button variant="outline" onClick={handleDownloadPDF} disabled={generatingPdf} data-testid="document-preview-download-button">
+                  <Button variant="outline" onClick={handleDownloadPDF} disabled={generatingPdf} className="w-full sm:w-auto" data-testid="document-preview-download-button">
                     {generatingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} className={isArabic ? 'ml-1' : 'mr-1'} />}
                     {isArabic ? 'تحميل PDF' : 'Download PDF'}
                   </Button>
-                  <Button variant="ghost" onClick={() => setShowPreview(false)} data-testid="document-preview-close-button">
+                  <Button variant="ghost" onClick={() => setShowPreview(false)} className="w-full sm:w-auto" data-testid="document-preview-close-button">
                     {isArabic ? 'إغلاق' : 'Close'}
                   </Button>
                 </div>

@@ -262,6 +262,20 @@ def _build_diff_from_updates(root: Path, updates: Dict[str, str]) -> str:
     return "\n".join([d for d in diffs if d.strip()])
 
 
+def _extract_diff_blocks(text: str) -> str:
+    lines = text.splitlines()
+    indices = [i for i, line in enumerate(lines) if line.startswith("diff --git")]
+    if not indices:
+        return text
+    blocks = []
+    for idx, start in enumerate(indices):
+        end = indices[idx + 1] if idx + 1 < len(indices) else len(lines)
+        block = "\n".join(lines[start:end]).strip()
+        if block:
+            blocks.append(block)
+    return "\n".join(blocks)
+
+
 async def _select_files_with_llm(
     api_key: str, model: str, message: str, file_list: List[str]
 ) -> List[str]:

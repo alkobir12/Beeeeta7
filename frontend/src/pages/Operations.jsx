@@ -25,6 +25,14 @@ const Operations = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const session = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('session'));
+    } catch (e) {
+      return null;
+    }
+  }, []);
+  const guidanceEnabled = Boolean(session?.guidanceEnabled);
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 

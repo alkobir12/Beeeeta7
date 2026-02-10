@@ -282,6 +282,7 @@ const WorkshopProfile = () => {
           type="submit" 
           disabled={loading} 
           className="apple-button w-full h-11 sm:h-12 text-base sm:text-lg font-semibold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+          data-testid="workshop-profile-save-button"
         >
           <Save size={20} />
           <span>{loading ? 'جاري الحفظ...' : 'حفظ التغييرات'}</span>

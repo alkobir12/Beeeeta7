@@ -24,6 +24,7 @@ class User(BaseModel):
     role: str = "employee"  # admin, manager, employee
     permissions: UserPermissions = UserPermissions()
     isActive: bool = True
+    guidanceEnabled: bool = False
     createdAt: datetime
     lastLogin: Optional[datetime] = None
 
@@ -34,6 +35,7 @@ class UserCreate(BaseModel):
     phone: str
     role: str = "employee"
     permissions: Optional[UserPermissions] = None
+    guidanceEnabled: Optional[bool] = False
 
 
 class UserUpdate(BaseModel):
@@ -43,3 +45,4 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     permissions: Optional[UserPermissions] = None
     isActive: Optional[bool] = None
+    guidanceEnabled: Optional[bool] = None

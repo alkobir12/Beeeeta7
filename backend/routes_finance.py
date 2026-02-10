@@ -319,16 +319,23 @@ async def get_balance_sheet(
 
 @router.get("/reports/income-statement")
 async def get_income_statement(
-    workshop_id: str = Query(...),
-    start_date: str = Query(...),
-    end_date: str = Query(...),
+    workshop_id: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ):
     """
     قائمة الدخل محسوبة من دليل الحسابات
     """
     try:
+        effective_workshop_id = workshop_id or os.environ.get("DEFAULT_WORKSHOP_ID")
+        if not effective_workshop_id:
+            raise HTTPException(status_code=400, detail="معرف الورشة مطلوب")
+
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
         # جلب دليل الحسابات
-        coa_response = await get_chart_of_accounts(workshop_id)
+        coa_response = await get_chart_of_accounts(effective_workshop_id)
         
         if not coa_response.get('success'):
             raise Exception("Failed to get chart of accounts")
@@ -394,18 +401,25 @@ async def get_income_statement(
 
 @router.get("/reports/cash-flow")
 async def get_cash_flow(
-    workshop_id: str = Query(...),
-    start_date: str = Query(...),
-    end_date: str = Query(...),
+    workshop_id: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ):
     """
     قائمة التدفقات النقدية من قيود اليومية في Supabase
     """
     try:
+        effective_workshop_id = workshop_id or os.environ.get("DEFAULT_WORKSHOP_ID")
+        if not effective_workshop_id:
+            raise HTTPException(status_code=400, detail="معرف الورشة مطلوب")
+
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
         accounts = _fetch_accounts()
         id_to_code, code_to_name, _ = _build_account_maps(accounts)
         entries = _fetch_journal_entries(
-            workshop_id, start_date=start_date, end_date=end_date, limit=10000
+            effective_workshop_id, start_date=start_date, end_date=end_date, limit=10000
         )
 
         # Improve categorization using the other side of each cash/bank line.

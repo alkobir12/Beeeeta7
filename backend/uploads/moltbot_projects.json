@@ -154,5 +154,17 @@
     "created_at": "2026-02-10T14:43:12.426268",
     "updated_at": "2026-02-10T14:43:12.426268",
     "last_build_at": "2026-02-10T14:43:39.711539"
+  },
+  {
+    "id": "045fdf9e-e135-4bbb-9452-6fb0f3c8ce7e",
+    "name": "تحرير مشروع apply test",
+    "description": "اختبار apply",
+    "industry": "تقني",
+    "domain": "",
+    "status": "draft",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:44:43.949557",
+    "updated_at": "2026-02-10T14:44:43.949557",
+    "last_build_at": null
   }
 ]

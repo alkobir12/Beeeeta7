@@ -28,6 +28,7 @@ const MoltBot = () => {
   const [sessionId, setSessionId] = useState(null);
   const [mode, setMode] = useState('builder');
   const [targetFilesInput, setTargetFilesInput] = useState('');
+  const [applyLoading, setApplyLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -363,7 +364,7 @@ const MoltBot = () => {
                   <p className="text-xs text-slate-400">
                     {mode === 'editor'
                       ? 'تحرير مشروع FastAPI قائم عبر diff فقط بدون إعادة كتابة كاملة.'
-                      : 'توليد مخطط بناء شامل باستخدام GPT + DeepSeek + Groq.'}
+                      : 'توليد مخطط بناء شامل باستخدام GPT + Groq.'}
                   </p>
                 </div>
               </div>
@@ -446,6 +447,48 @@ const MoltBot = () => {
                   <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
                     <h4 className="text-sm font-semibold text-white mb-2">الخلاصة الموحدة</h4>
                     <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-summary-output">{buildResult.summary}</pre>
+                    {buildResult.mode === 'editor' && (
+                      <button
+                        onClick={async () => {
+                          if (!selectedProject) return;
+                          if (!buildResult?.summary?.trim()) {
+                            toast({ title: 'تنبيه', description: 'لا يوجد patch للتطبيق', variant: 'destructive' });
+                            return;
+                          }
+                          if (buildResult.blocked_files && buildResult.blocked_files.length > 0) {
+                            toast({ title: 'تنبيه', description: 'يوجد ملفات محجوبة، راجع النتائج أولاً', variant: 'destructive' });
+                            return;
+                          }
+                          try {
+                            setApplyLoading(true);
+                            const res = await fetch(`${API_URL}/moltbot/apply`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                project_id: selectedProject.id,
+                                patch: buildResult.summary,
+                                session_id: buildResult.session_id
+                              })
+                            });
+                            const data = await res.json();
+                            if (!res.ok || data?.success === false) {
+                              toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق التعديل', variant: 'destructive' });
+                              return;
+                            }
+                            toast({ title: 'تم', description: data?.message || 'تم تطبيق التعديل بنجاح' });
+                          } catch (e) {
+                            toast({ title: 'خطأ', description: 'تعذر تطبيق التعديل', variant: 'destructive' });
+                          } finally {
+                            setApplyLoading(false);
+                          }
+                        }}
+                        disabled={applyLoading}
+                        className="mt-3 w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
+                        data-testid="moltbot-apply-patch-button"
+                      >
+                        {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق التعديل على المشروع'}
+                      </button>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
@@ -453,7 +496,7 @@ const MoltBot = () => {
                       <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-planner-output">{buildResult.agents?.planner}</pre>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <h5 className="text-xs font-semibold text-emerald-300 mb-2">وكيل البناء (DeepSeek)</h5>
+                      <h5 className="text-xs font-semibold text-emerald-300 mb-2">وكيل البناء (GPT)</h5>
                       <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-builder-output">{buildResult.agents?.builder}</pre>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">

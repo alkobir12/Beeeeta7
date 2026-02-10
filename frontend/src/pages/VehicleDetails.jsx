@@ -147,8 +147,61 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
     setIsEditing(visit.status === 'in_progress');
   }, [visit]);
 
+  const persistCatalogEntries = async () => {
+    const normalize = (val) => (val || '').trim().toLowerCase();
+    const serviceNames = new Set(servicesCatalog.map((s) => normalize(s.name)));
+    const partNames = new Set(partsCatalog.map((p) => normalize(p.name)));
+
+    const newServices = items
+      .filter((it) => it.itemType === 'service' && normalize(it.name))
+      .filter((it) => !serviceNames.has(normalize(it.name)));
+
+    const newParts = items
+      .filter((it) => it.itemType === 'part' && normalize(it.name))
+      .filter((it) => !partNames.has(normalize(it.name)));
+
+    for (const svc of newServices) {
+      try {
+        const payload = {
+          name: svc.name.trim(),
+          category: 'خدمة عامة',
+          price: Number(svc.price || 0),
+          duration: 30,
+          laborCost: 0,
+          active: true,
+        };
+        const res = await servicesAPI.create(payload);
+        onServiceAdded?.(res.data);
+        serviceNames.add(normalize(svc.name));
+      } catch (e) {
+        console.error('Error creating service:', e);
+      }
+    }
+
+    for (const part of newParts) {
+      try {
+        const payload = {
+          partNumber: `AUTO-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,
+          name: part.name.trim(),
+          category: 'عام',
+          purchasePrice: 0,
+          sellingPrice: Number(part.price || 0),
+          quantity: 0,
+          minQuantity: 0,
+          supplier: '',
+        };
+        const res = await partsAPI.create(payload);
+        onPartAdded?.(res.data);
+        partNames.add(normalize(part.name));
+      } catch (e) {
+        console.error('Error creating part:', e);
+      }
+    }
+  };
+
   const handleSave = async () => {
     try {
+      await persistCatalogEntries();
       const payload = {
         status: status,
         technicianId: techId || null,

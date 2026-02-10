@@ -20,7 +20,7 @@ const FILE_BASE = process.env.NODE_ENV === 'production' ? '' : (process.env.REAC
 
 // --- Helper Components ---
 
-const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
+const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
   if (!isEditing) {
     return (
       <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors">
@@ -37,34 +37,56 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
     );
   }
 
+  const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
+  const listId = `${item.itemType}-list-${rowId}`;
+
   return (
     <tr className="border-b border-blue-100 bg-blue-50/30">
-      <td className="p-2">
+      <td className="p-2 min-w-[90px]">
         <select
           value={item.itemType}
           onChange={(e) => onChange('itemType', e.target.value)}
-          className="w-full text-xs border border-gray-300 rounded p-1"
+          className="w-full text-xs sm:text-sm border border-gray-300 rounded p-2"
+          data-testid={`visit-item-type-${rowId}`}
         >
           <option value="service">خدمة</option>
           <option value="part">قطعة</option>
         </select>
       </td>
-      <td className="p-2">
+      <td className="p-2 min-w-[160px]">
         <input
           type="text"
+          list={listId}
           value={item.name}
-          onChange={(e) => onChange('name', e.target.value)}
-          className="w-full text-xs border border-gray-300 rounded p-1"
+          onChange={(e) => {
+            const value = e.target.value;
+            onChange('name', value);
+            const match = options.find((opt) => (opt.name || '').trim() === value.trim());
+            if (match) {
+              const price = match.price ?? match.sellingPrice ?? match.selling_price ?? 0;
+              if (price) {
+                onChange('price', Number(price));
+              }
+            }
+          }}
+          className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm border border-gray-300 rounded p-2"
           placeholder="اسم البند"
+          data-testid={`visit-item-name-${rowId}`}
         />
+        <datalist id={listId}>
+          {options.map((opt) => (
+            <option key={opt.id || opt.name} value={opt.name} />
+          ))}
+        </datalist>
       </td>
       <td className="p-2">
         <input
           type="number"
           value={item.quantity}
           onChange={(e) => onChange('quantity', Number(e.target.value))}
-          className="w-16 text-xs border border-gray-300 rounded p-1 text-center"
+          className="w-16 sm:w-20 text-xs sm:text-sm border border-gray-300 rounded p-2 text-center"
           min="1"
+          data-testid={`visit-item-quantity-${rowId}`}
         />
       </td>
       <td className="p-2">
@@ -72,8 +94,9 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
           type="number"
           value={item.price}
           onChange={(e) => onChange('price', Number(e.target.value))}
-          className="w-20 text-xs border border-gray-300 rounded p-1 text-center"
+          className="w-20 sm:w-24 text-xs sm:text-sm border border-gray-300 rounded p-2 text-center"
           min="0"
+          data-testid={`visit-item-price-${rowId}`}
         />
       </td>
       <td className="p-2 text-right">
@@ -81,6 +104,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete }) => {
           onClick={onDelete}
           className="p-1 text-red-500 hover:bg-red-100 rounded"
           title="حذف"
+          data-testid={`visit-item-delete-${rowId}`}
         >
           <Trash2 size={14} />
         </button>

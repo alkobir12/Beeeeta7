@@ -150,6 +150,9 @@ const UsersManagement = () => {
                     }`}>
                       {user.role === 'admin' ? 'مدير نظام' : user.role === 'manager' ? 'مدير' : user.role === 'technician' ? 'فني' : 'موظف'}
                     </span>
+                    {user.guidanceEnabled && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 ml-2">إرشادات مفعّلة</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -209,6 +212,23 @@ const UsersManagement = () => {
                       <option value="manager">مدير</option>
                       <option value="admin">مدير نظام</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-medium text-gray-900">الإرشادات الذكية</h3>
+                      <p className="text-xs text-gray-500">تنبيهات خطوة بخطوة لتقليل الأخطاء.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, guidanceEnabled: !form.guidanceEnabled })}
+                      className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${form.guidanceEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                      data-testid="user-guidance-toggle"
+                    >
+                      <span className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${form.guidanceEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
                   </div>
                 </div>
 

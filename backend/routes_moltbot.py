@@ -9,6 +9,7 @@ import os
 
 import httpx
 import subprocess
+import difflib
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 try:
@@ -212,6 +213,50 @@ def _extract_snippets(content: str, keywords: List[str], radius: int = 6, max_sn
         block = "\n".join(lines[start:end])
         snippets.append(block)
     return "\n[SNIP]\n".join(snippets)
+
+
+def _parse_updated_files(text: str) -> Dict[str, str]:
+    files = {}
+    current_path = None
+    buffer = []
+    for line in text.splitlines():
+        if line.startswith("BEGIN_UPDATED_FILE "):
+            if current_path and buffer:
+                files[current_path] = "\n".join(buffer).rstrip() + "\n"
+            current_path = line.replace("BEGIN_UPDATED_FILE ", "").strip()
+            buffer = []
+            continue
+        if line.startswith("END_UPDATED_FILE"):
+            if current_path:
+                files[current_path] = "\n".join(buffer).rstrip() + "\n"
+            current_path = None
+            buffer = []
+            continue
+        if current_path is not None:
+            buffer.append(line)
+    if current_path and buffer:
+        files[current_path] = "\n".join(buffer).rstrip() + "\n"
+    return files
+
+
+def _build_diff_from_updates(root: Path, updates: Dict[str, str]) -> str:
+    diffs = []
+    for rel_path, new_content in updates.items():
+        full_path = root / rel_path
+        if not full_path.exists():
+            continue
+        old_content = full_path.read_text(encoding="utf-8", errors="ignore")
+        if old_content == new_content:
+            continue
+        diff_lines = difflib.unified_diff(
+            old_content.splitlines(),
+            new_content.splitlines(),
+            fromfile=f"a/{rel_path}",
+            tofile=f"b/{rel_path}",
+            lineterm="",
+        )
+        diffs.append("\n".join(diff_lines))
+    return "\n".join([d for d in diffs if d.strip()])
 
 
 async def _select_files_with_llm(
@@ -580,6 +625,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
     affected_files: List[str] = []
     blocked_files: List[str] = []
     project_context = ""
+    full_context = ""
     project_root = None
 
     openai_key = os.environ.get("EMERGENT_LLM_KEY")
@@ -638,10 +684,13 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         files_content = _read_project_files(project_root, affected_files)
         if files_content:
             context_blocks = []
+            full_blocks = []
             for path, content in files_content.items():
                 snippet = _extract_snippets(content, payload.message.split())
                 context_blocks.append(f"BEGIN_FILE {path}\n{snippet}\nEND_FILE")
+                full_blocks.append(f"BEGIN_FILE {path}\n{content}\nEND_FILE")
             project_context = "\n\n".join(context_blocks)
+            full_context = "\n\n".join(full_blocks)
 
     if "planner" in agents:
         try:
@@ -736,11 +785,15 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
             )
             if mode == "editor":
                 summary_prompt = (
-                    "اجمع نتائج الوكلاء في PATCH واحد فقط بصيغة git unified diff. "
-                    "لا تضف أي شرح أو نص خارج patch. "
-                    "التزم بالتعديلات minimal patch ولا تعيد كتابة الملفات كاملة.\n\n"
-                    "لا تستخدم Markdown أو علامات ``` في الإخراج.\n\n"
-                    "ممنوع استخدام ... أو @@ ...؛ استخدم أرقام أسطر فعلية.\n\n"
+                    "اعتمد على المحتوى المقدم بين BEGIN_FILE و END_FILE لإخراج النسخة النهائية لكل ملف متأثر. "
+                    "لا تضف شرحًا. الصيغة المطلوبة حصراً:\n"
+                    "BEGIN_UPDATED_FILE path\n"
+                    "<المحتوى الكامل بعد التعديل>\n"
+                    "END_UPDATED_FILE\n"
+                    "(كرّر لكل ملف).\n\n"
+                    "ممنوع استخدام ... أو @@ ... أو Markdown.\n\n"
+                    f"ملفات المشروع:\n{full_context}\n\n"
+                    f"نتائج الوكلاء:\n"
                     f"وكيل التخطيط:\n{agents_response.get('planner','')}\n\n"
                     f"وكيل البناء:\n{agents_response.get('builder','')}\n\n"
                     f"وكيل المراجعة:\n{agents_response.get('reviewer','')}"
@@ -760,6 +813,9 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         summary_text = f"تعذر توليد الخلاصة: {exc}"
 
     if mode == "editor" and project_root:
+        updated_files = _parse_updated_files(summary_text)
+        if updated_files:
+            summary_text = _build_diff_from_updates(project_root, updated_files)
         blocked_files = _detect_blocked_files(summary_text, project_root)
 
     for agent_name, content in agents_response.items():

@@ -8,6 +8,7 @@ import json
 import os
 
 import httpx
+import subprocess
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 try:
@@ -246,6 +247,65 @@ def _detect_blocked_files(patch_text: str, root: Path) -> List[str]:
             if (root / path).exists():
                 blocked.append(path)
     return list(dict.fromkeys(blocked))
+
+
+def _apply_patch(patch_text: str, root: Path, dry_run: bool = False) -> Dict[str, Any]:
+    if not patch_text.strip():
+        return {"success": False, "message": "لا يوجد patch للتطبيق"}
+
+    patch_file = UPLOADS_DIR / f"moltbot_patch_{uuid.uuid4().hex}.diff"
+    patch_file.write_text(patch_text, encoding="utf-8")
+
+    check_cmd = ["git", "apply", "--check", str(patch_file)]
+    check = subprocess.run(check_cmd, cwd=str(root), capture_output=True, text=True)
+    if check.returncode != 0:
+        return {
+            "success": False,
+            "message": "فشل التحقق من patch",
+            "details": (check.stderr or check.stdout)[:400],
+        }
+
+    if dry_run:
+        return {"success": True, "message": "patch صالح للتطبيق"}
+
+    apply_cmd = ["git", "apply", str(patch_file)]
+    result = subprocess.run(apply_cmd, cwd=str(root), capture_output=True, text=True)
+    if result.returncode != 0:
+        return {
+            "success": False,
+            "message": "فشل تطبيق patch",
+            "details": (result.stderr or result.stdout)[:400],
+        }
+    return {"success": True, "message": "تم تطبيق التعديل بنجاح"}
+
+
+class MoltbotApplyRequest(BaseModel):
+    project_id: str
+    patch: str
+    session_id: Optional[str] = None
+    project_root: Optional[str] = None
+    dry_run: Optional[bool] = False
+
+
+@router.post("/apply")
+async def apply_patch(request: MoltbotApplyRequest):
+    project = _get_project(request.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="المشروع غير موجود")
+
+    root = _get_project_root(request.project_root)
+    blocked = _detect_blocked_files(request.patch, root)
+    if blocked:
+        return {
+            "success": False,
+            "message": "تم منع تطبيق patch بسبب محاولة إنشاء ملفات موجودة",
+            "blocked_files": blocked,
+        }
+
+    result = _apply_patch(request.patch, root, dry_run=bool(request.dry_run))
+    if result.get("success"):
+        _update_project(request.project_id, {"updated_at": _now_iso()})
+    return result
 
 
 def _save_project(project: Dict[str, Any]) -> Dict[str, Any]:
@@ -499,9 +559,6 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
 
     openai_key = os.environ.get("EMERGENT_LLM_KEY")
     openai_model = os.environ.get("MOLTBOT_OPENAI_MODEL")
-    deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
-    deepseek_url = os.environ.get("DEEPSEEK_API_BASE_URL")
-    deepseek_model = os.environ.get("DEEPSEEK_MODEL")
     groq_key = os.environ.get("GROQ_API_KEY")
     groq_url = os.environ.get("GROQ_API_BASE_URL")
     groq_model = os.environ.get("GROQ_MODEL")
@@ -588,6 +645,8 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
 
     if "builder" in agents:
         try:
+            if not openai_key or not openai_model:
+                raise HTTPException(status_code=500, detail="إعدادات GPT غير مكتملة")
             system_message = builder_prompt
             user_message = payload.message.strip()
             if mode == "editor":
@@ -599,15 +658,15 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
                 if project_context:
                     user_message += f"\n\nمحتوى الملفات:\n{project_context}"
 
-            builder_response = await _call_openai_compatible(
-                deepseek_key,
-                deepseek_url,
-                deepseek_model,
-                [
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message},
-                ],
+            chat = (
+                LlmChat(
+                    api_key=openai_key,
+                    session_id=f"{session_id}-builder",
+                    system_message=system_message,
+                )
+                .with_model("openai", openai_model)
             )
+            builder_response = await chat.send_message(UserMessage(text=user_message))
             agents_response["builder"] = builder_response
         except Exception as exc:
             agents_response["builder"] = f"تعذر تشغيل وكيل البناء: {exc}"

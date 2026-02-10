@@ -142,5 +142,17 @@
     "created_at": "2026-02-10T14:41:36.616740",
     "updated_at": "2026-02-10T14:41:36.616740",
     "last_build_at": "2026-02-10T14:42:07.660845"
+  },
+  {
+    "id": "d74c9c8a-cd6d-4d89-b469-89ed513e001d",
+    "name": "تحرير مشروع apply 8",
+    "description": "اختبار apply",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:43:12.426268",
+    "updated_at": "2026-02-10T14:43:12.426268",
+    "last_build_at": "2026-02-10T14:43:39.711539"
   }
 ]

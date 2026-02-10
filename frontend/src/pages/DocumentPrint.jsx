@@ -134,6 +134,10 @@ const DocumentPrint = () => {
     loadPrintDefaults();
   }, []);
 
+  useEffect(() => {
+    autoRefreshRef.current = false;
+  }, [vehicleId, visitId, operationId, invoiceId]);
+
   const loadWorkshopSettings = async () => {
     try {
       const [settingsRes, profileRes] = await Promise.all([

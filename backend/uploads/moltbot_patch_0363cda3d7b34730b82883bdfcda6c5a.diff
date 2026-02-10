@@ -1,0 +1,12 @@
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ -183,7 +183,7 @@
+                 value={name} 
+                 onChange={e => setName(e.target.value)}
+                 onKeyPress={handleKeyPress}
+-                className="apple-input"
++                className="apple-input" data-testid="login-input"
+                 autoFocus
+                 data-testid="login-username-input"
+               />

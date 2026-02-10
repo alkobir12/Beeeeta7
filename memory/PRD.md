@@ -114,7 +114,7 @@
 - **إطار العمل**: FastAPI
 - **قاعدة البيانات الأساسية**: Supabase (PostgreSQL)
 - **قاعدة البيانات الاحتياطية**: MongoDB
-- **AI**: Gemini 2.0 Flash, OpenAI GPT-4o-mini, GPT-5.2 (MoltBot), Groq (تم إلغاء DeepSeek)
+- **AI**: Gemini 2.0 Flash, OpenAI GPT-4o-mini, GPT-5.2 (MoltBot), Groq, Llama 4 (Scout + Maverick عبر llama-stack)
 - **WhatsApp**: Infobip API
 
 ### APIs الرئيسية

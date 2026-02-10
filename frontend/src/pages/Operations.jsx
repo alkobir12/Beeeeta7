@@ -1,11 +1,12 @@
 /* eslint-disable */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, ShoppingCart, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../hooks/use-toast';
+import SmartGuidance from '../components/SmartGuidance';
 // Floating assistant disabled: AbuFahad floating chat is injected via Layout
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';

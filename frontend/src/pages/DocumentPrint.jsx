@@ -385,8 +385,8 @@ const DocumentPrint = () => {
 
       setDocType('invoice');
 
-      const opCustomerName = op.customerName || op.customer_name || op.partnerName || prev.customer?.name || '';
-      const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || prev.customer?.phone || '';
+      const opCustomerName = op.customerName || op.customer_name || op.partnerName || '';
+      const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || '';
 
       setFormData((prev) => ({
         ...prev,

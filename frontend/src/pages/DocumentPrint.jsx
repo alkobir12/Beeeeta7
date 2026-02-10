@@ -396,6 +396,7 @@ const DocumentPrint = () => {
 
       const opCustomerName = op.customerName || op.customer_name || op.partnerName || '';
       const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || '';
+      const opCustomerId = op.customerId || op.customer_id || '';
 
       setFormData((prev) => ({
         ...prev,
@@ -412,6 +413,10 @@ const DocumentPrint = () => {
           notes: op.notes || prev.settings.notes,
         },
       }));
+
+      if (opCustomerId && !opCustomerName) {
+        loadCustomerData(opCustomerId);
+      }
     } catch (e) {
       console.error('Error loading operation:', e);
     }

@@ -337,8 +337,9 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [] }) =
                 const type = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : st === 'in_progress' ? 'invoice' : 'invoice';
                 window.location.href = `/print?type=${type}&vehicleId=${visit.vehicleId || visit.vehicle_id}&visitId=${vId}`;
               }}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-2"
+              className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center gap-2"
               title="طباعة هذه الزيارة"
+              data-testid={`visit-print-button-${visit.id}`}
             >
               <Printer size={14} /> طباعة الزيارة
             </button>

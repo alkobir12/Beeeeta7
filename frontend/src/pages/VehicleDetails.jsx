@@ -159,7 +159,14 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
       .filter((it) => it.itemType === 'part' && normalize(it.name))
       .filter((it) => !partNames.has(normalize(it.name)));
 
-    for (const svc of newServices) {
+    const uniqueServices = Array.from(
+      new Map(newServices.map((it) => [normalize(it.name), it])).values()
+    );
+    const uniqueParts = Array.from(
+      new Map(newParts.map((it) => [normalize(it.name), it])).values()
+    );
+
+    for (const svc of uniqueServices) {
       try {
         const payload = {
           name: svc.name.trim(),
@@ -177,7 +184,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
       }
     }
 
-    for (const part of newParts) {
+    for (const part of uniqueParts) {
       try {
         const payload = {
           partNumber: `AUTO-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,

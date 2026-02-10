@@ -562,15 +562,10 @@ const VehicleDetails = () => {
     [visits]
   );
 
-  const expandedVisit = useMemo(
-    () => visits.find((v) => v.id === expandedVisitId),
-    [visits, expandedVisitId]
-  );
-
   const guidanceList = useMemo(() => {
     const missingCustomer = vehicle && !vehicle.customerName && !vehicle.customerId;
     const noVisits = visits.length === 0;
-    const emptyItems = expandedVisit && (!expandedVisit.items || expandedVisit.items.length === 0);
+    const hasVisits = visits.length > 0;
 
     return [
       {
@@ -583,7 +578,7 @@ const VehicleDetails = () => {
         id: 'visit-items',
         title: 'تأكيد البنود والأسعار',
         message: 'قبل الحفظ، تأكد من تسجيل البنود بالكامل ومراجعة الأسعار لتجنب الخطأ المالي.',
-        condition: Boolean(expandedVisitId) || Boolean(emptyItems),
+        condition: hasVisits,
       },
       {
         id: 'visit-status',
@@ -592,7 +587,7 @@ const VehicleDetails = () => {
         condition: Boolean(activeVisit),
       },
     ];
-  }, [vehicle, visits.length, expandedVisitId, activeVisit, expandedVisit]);
+  }, [vehicle, visits.length, activeVisit]);
 
   const fetchData = useCallback(async () => {
     try {

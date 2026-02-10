@@ -912,16 +912,6 @@ const Operations = () => {
       />
       <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
 
-      <div className="mt-6" data-testid="operations-guidance-stepper">
-        <GuidanceStepper
-          title="إرشادات صفحة العمليات"
-          subtitle={operationsSubtitle}
-          steps={operationsSteps}
-          enabled={guidanceEnabled}
-          storageKey={`guidance-operations-${session?.id || session?.name || 'default'}`}
-        />
-      </div>
-
     </div>
   );
 };

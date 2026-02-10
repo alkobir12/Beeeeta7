@@ -749,6 +749,30 @@ const VehicleDetails = () => {
 
   // Create new visit handler
   const handleCreateVisit = async () => {
+    const missingCustomer = !vehicle?.customerName && !vehicle?.customerId;
+    if (missingCustomer) {
+      toast({
+        title: 'تنبيه',
+        description: 'يرجى إدخال بيانات العميل والمركبة قبل استقبال الزيارة.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const hasOpenVisit = visits.some((v) => (v.status || '').toLowerCase() === 'in_progress');
+    if (hasOpenVisit) {
+      const now = Date.now();
+      if (!createVisitConfirmAt || now - createVisitConfirmAt > 8000) {
+        setCreateVisitConfirmAt(now);
+        toast({
+          title: 'تنبيه',
+          description: 'يوجد زيارة مفتوحة بالفعل. اضغط مرة أخرى للتأكيد وتجنب التكرار.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     const mileage = prompt("أدخل قراءة العداد الحالية (كم):");
     if (mileage === null) return; // Cancelled
     
@@ -761,6 +785,7 @@ const VehicleDetails = () => {
         notes: JSON.stringify({ items: [], text: '' })
       });
       toast({ title: 'تم', description: 'تم فتح زيارة جديدة' });
+      setCreateVisitConfirmAt(null);
       fetchData();
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل إنشاء زيارة', variant: 'destructive' });

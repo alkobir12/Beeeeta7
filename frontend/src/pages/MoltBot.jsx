@@ -29,6 +29,8 @@ const MoltBot = () => {
   const [mode, setMode] = useState('builder');
   const [targetFilesInput, setTargetFilesInput] = useState('');
   const [applyLoading, setApplyLoading] = useState(false);
+  const [previewStatus, setPreviewStatus] = useState(null);
+  const [lastPatchId, setLastPatchId] = useState(null);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -160,6 +162,8 @@ const MoltBot = () => {
       const data = await res.json();
       setBuildResult(data);
       setSessionId(data.session_id);
+      setPreviewStatus(null);
+      setLastPatchId(null);
       fetchProjects();
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر تشغيل وكلاء MoltBot', variant: 'destructive' });
@@ -448,46 +452,139 @@ const MoltBot = () => {
                     <h4 className="text-sm font-semibold text-white mb-2">الخلاصة الموحدة</h4>
                     <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-summary-output">{buildResult.summary}</pre>
                     {buildResult.mode === 'editor' && (
-                      <button
-                        onClick={async () => {
-                          if (!selectedProject) return;
-                          if (!buildResult?.summary?.trim()) {
-                            toast({ title: 'تنبيه', description: 'لا يوجد patch للتطبيق', variant: 'destructive' });
-                            return;
-                          }
-                          if (buildResult.blocked_files && buildResult.blocked_files.length > 0) {
-                            toast({ title: 'تنبيه', description: 'يوجد ملفات محجوبة، راجع النتائج أولاً', variant: 'destructive' });
-                            return;
-                          }
-                          try {
-                            setApplyLoading(true);
-                            const res = await fetch(`${API_URL}/moltbot/apply`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                project_id: selectedProject.id,
-                                patch: buildResult.summary,
-                                session_id: buildResult.session_id
-                              })
-                            });
-                            const data = await res.json();
-                            if (!res.ok || data?.success === false) {
-                              toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق التعديل', variant: 'destructive' });
+                      <div className="mt-3 space-y-2">
+                        <button
+                          onClick={async () => {
+                            if (!selectedProject) return;
+                            if (!buildResult?.summary?.trim()) {
+                              toast({ title: 'تنبيه', description: 'لا يوجد patch للمعاينة', variant: 'destructive' });
                               return;
                             }
-                            toast({ title: 'تم', description: data?.message || 'تم تطبيق التعديل بنجاح' });
-                          } catch (e) {
-                            toast({ title: 'خطأ', description: 'تعذر تطبيق التعديل', variant: 'destructive' });
-                          } finally {
-                            setApplyLoading(false);
-                          }
-                        }}
-                        disabled={applyLoading}
-                        className="mt-3 w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
-                        data-testid="moltbot-apply-patch-button"
-                      >
-                        {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق التعديل على المشروع'}
-                      </button>
+                            if (buildResult.blocked_files && buildResult.blocked_files.length > 0) {
+                              toast({ title: 'تنبيه', description: 'يوجد ملفات محجوبة، راجع النتائج أولاً', variant: 'destructive' });
+                              return;
+                            }
+                            try {
+                              setApplyLoading(true);
+                              const res = await fetch(`${API_URL}/moltbot/apply`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  project_id: selectedProject.id,
+                                  patch: buildResult.summary,
+                                  session_id: buildResult.session_id,
+                                  dry_run: true
+                                })
+                              });
+                              const data = await res.json();
+                              if (!res.ok || data?.success === false) {
+                                setPreviewStatus({ success: false, message: data?.message || 'فشل التحقق من التعديل' });
+                                toast({ title: 'خطأ', description: data?.message || 'فشل التحقق من التعديل', variant: 'destructive' });
+                                return;
+                              }
+                              setPreviewStatus({ success: true, message: data?.message || 'الـ patch صالح للتطبيق' });
+                              toast({ title: 'نجاح', description: data?.message || 'الـ patch صالح للتطبيق' });
+                            } catch (e) {
+                              setPreviewStatus({ success: false, message: 'تعذر معاينة التعديل' });
+                              toast({ title: 'خطأ', description: 'تعذر معاينة التعديل', variant: 'destructive' });
+                            } finally {
+                              setApplyLoading(false);
+                            }
+                          }}
+                          disabled={applyLoading}
+                          className="w-full rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-100 py-2 text-sm"
+                          data-testid="moltbot-preview-patch-button"
+                        >
+                          {applyLoading ? 'جارٍ المعاينة...' : 'معاينة وفحص التعديل'}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selectedProject) return;
+                            if (!buildResult?.summary?.trim()) {
+                              toast({ title: 'تنبيه', description: 'لا يوجد patch للتطبيق', variant: 'destructive' });
+                              return;
+                            }
+                            if (!previewStatus?.success) {
+                              toast({ title: 'تنبيه', description: 'يجب معاينة التعديل أولاً بنجاح', variant: 'destructive' });
+                              return;
+                            }
+                            try {
+                              setApplyLoading(true);
+                              const res = await fetch(`${API_URL}/moltbot/apply`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  project_id: selectedProject.id,
+                                  patch: buildResult.summary,
+                                  session_id: buildResult.session_id
+                                })
+                              });
+                              const data = await res.json();
+                              if (!res.ok || data?.success === false) {
+                                toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق التعديل', variant: 'destructive' });
+                                return;
+                              }
+                              if (data?.patch_id) setLastPatchId(data.patch_id);
+                              toast({ title: 'تم', description: data?.message || 'تم تطبيق التعديل بنجاح' });
+                            } catch (e) {
+                              toast({ title: 'خطأ', description: 'تعذر تطبيق التعديل', variant: 'destructive' });
+                            } finally {
+                              setApplyLoading(false);
+                            }
+                          }}
+                          disabled={applyLoading}
+                          className="w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
+                          data-testid="moltbot-apply-patch-button"
+                        >
+                          {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق التعديل الآن'}
+                        </button>
+                        {previewStatus && (
+                          <div
+                            className={`text-xs rounded-xl px-3 py-2 border ${
+                              previewStatus.success
+                                ? 'border-emerald-400/40 text-emerald-100 bg-emerald-500/10'
+                                : 'border-red-400/40 text-red-100 bg-red-500/10'
+                            }`}
+                            data-testid="moltbot-preview-status"
+                          >
+                            {previewStatus.message}
+                          </div>
+                        )}
+                        {lastPatchId && (
+                          <button
+                            onClick={async () => {
+                              if (!selectedProject) return;
+                              try {
+                                setApplyLoading(true);
+                                const res = await fetch(`${API_URL}/moltbot/rollback`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    project_id: selectedProject.id,
+                                    patch_id: lastPatchId
+                                  })
+                                });
+                                const data = await res.json();
+                                if (!res.ok || data?.success === false) {
+                                  toast({ title: 'خطأ', description: data?.message || 'فشل التراجع عن التعديل', variant: 'destructive' });
+                                  return;
+                                }
+                                toast({ title: 'تم', description: data?.message || 'تم التراجع بنجاح' });
+                                setLastPatchId(null);
+                              } catch (e) {
+                                toast({ title: 'خطأ', description: 'تعذر التراجع عن التعديل', variant: 'destructive' });
+                              } finally {
+                                setApplyLoading(false);
+                              }
+                            }}
+                            disabled={applyLoading}
+                            className="w-full rounded-xl bg-red-500/20 border border-red-400/40 text-red-100 py-2 text-sm"
+                            data-testid="moltbot-rollback-button"
+                          >
+                            {applyLoading ? 'جارٍ التراجع...' : 'تراجع (Rollback)'}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

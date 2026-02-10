@@ -367,6 +367,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
               <button 
                 onClick={addItem}
                 className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium flex items-center justify-center gap-1 transition-colors border-t border-blue-100"
+                data-testid={`visit-add-item-button-${visit.id}`}
               >
                 <Plus size={14} /> إضافة بند جديد
               </button>
@@ -382,6 +383,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
               onChange={(e) => setNotes(e.target.value)}
               disabled={!isEditing}
               placeholder="أي ملاحظات إضافية..."
+              data-testid={`visit-notes-textarea-${visit.id}`}
             />
           </div>
 

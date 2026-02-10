@@ -588,6 +588,160 @@ const MoltBot = () => {
                             {applyLoading ? 'جارٍ التراجع...' : 'تراجع (Rollback)'}
                           </button>
                         )}
+                        {buildResult.patch_files && buildResult.patch_files.length > 0 && (
+                          <div className="space-y-3" data-testid="moltbot-file-patches">
+                            <h4 className="text-sm font-semibold text-white">تطبيق تدريجي (ملف بملف)</h4>
+                            {buildResult.patch_files.map((filePatch) => {
+                              const fileKey = filePatch.path || 'unknown-file';
+                              const preview = filePreviewStatus[fileKey];
+                              const patchId = filePatchIds[fileKey];
+                              const testIdSafe = fileKey.replace(/[^a-zA-Z0-9]/g, '-');
+                              return (
+                                <div key={fileKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs text-slate-200" data-testid={`moltbot-file-name-${testIdSafe}`}>{fileKey}</span>
+                                  </div>
+                                  <div className="mt-3 space-y-2">
+                                    <button
+                                      onClick={async () => {
+                                        if (!selectedProject) return;
+                                        try {
+                                          setApplyLoading(true);
+                                          const res = await fetch(`${API_URL}/moltbot/apply`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                              project_id: selectedProject.id,
+                                              patch: filePatch.patch,
+                                              session_id: buildResult.session_id,
+                                              dry_run: true
+                                            })
+                                          });
+                                          const data = await res.json();
+                                          if (!res.ok || data?.success === false) {
+                                            setFilePreviewStatus((prev) => ({
+                                              ...prev,
+                                              [fileKey]: { success: false, message: data?.message || 'فشل التحقق من الملف' }
+                                            }));
+                                            toast({ title: 'خطأ', description: data?.message || 'فشل التحقق من الملف', variant: 'destructive' });
+                                            return;
+                                          }
+                                          setFilePreviewStatus((prev) => ({
+                                            ...prev,
+                                            [fileKey]: { success: true, message: data?.message || 'الملف صالح للتطبيق' }
+                                          }));
+                                          toast({ title: 'نجاح', description: data?.message || 'الملف صالح للتطبيق' });
+                                        } catch (e) {
+                                          setFilePreviewStatus((prev) => ({
+                                            ...prev,
+                                            [fileKey]: { success: false, message: 'تعذر معاينة الملف' }
+                                          }));
+                                          toast({ title: 'خطأ', description: 'تعذر معاينة الملف', variant: 'destructive' });
+                                        } finally {
+                                          setApplyLoading(false);
+                                        }
+                                      }}
+                                      disabled={applyLoading}
+                                      className="w-full rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-100 py-2 text-sm"
+                                      data-testid={`moltbot-file-preview-${testIdSafe}`}
+                                    >
+                                      {applyLoading ? 'جارٍ المعاينة...' : 'معاينة هذا الملف'}
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (!selectedProject) return;
+                                        if (!preview?.success) {
+                                          toast({ title: 'تنبيه', description: 'يجب معاينة الملف أولاً', variant: 'destructive' });
+                                          return;
+                                        }
+                                        try {
+                                          setApplyLoading(true);
+                                          const res = await fetch(`${API_URL}/moltbot/apply`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                              project_id: selectedProject.id,
+                                              patch: filePatch.patch,
+                                              session_id: buildResult.session_id
+                                            })
+                                          });
+                                          const data = await res.json();
+                                          if (!res.ok || data?.success === false) {
+                                            toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق الملف', variant: 'destructive' });
+                                            return;
+                                          }
+                                          if (data?.patch_id) {
+                                            setFilePatchIds((prev) => ({ ...prev, [fileKey]: data.patch_id }));
+                                          }
+                                          toast({ title: 'تم', description: data?.message || 'تم تطبيق الملف بنجاح' });
+                                        } catch (e) {
+                                          toast({ title: 'خطأ', description: 'تعذر تطبيق الملف', variant: 'destructive' });
+                                        } finally {
+                                          setApplyLoading(false);
+                                        }
+                                      }}
+                                      disabled={applyLoading}
+                                      className="w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
+                                      data-testid={`moltbot-file-apply-${testIdSafe}`}
+                                    >
+                                      {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق هذا الملف'}
+                                    </button>
+                                    {preview && (
+                                      <div
+                                        className={`text-xs rounded-xl px-3 py-2 border ${
+                                          preview.success
+                                            ? 'border-emerald-400/40 text-emerald-100 bg-emerald-500/10'
+                                            : 'border-red-400/40 text-red-100 bg-red-500/10'
+                                        }`}
+                                        data-testid={`moltbot-file-preview-status-${testIdSafe}`}
+                                      >
+                                        {preview.message}
+                                      </div>
+                                    )}
+                                    {patchId && (
+                                      <button
+                                        onClick={async () => {
+                                          if (!selectedProject) return;
+                                          try {
+                                            setApplyLoading(true);
+                                            const res = await fetch(`${API_URL}/moltbot/rollback`, {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({
+                                                project_id: selectedProject.id,
+                                                patch_id: patchId
+                                              })
+                                            });
+                                            const data = await res.json();
+                                            if (!res.ok || data?.success === false) {
+                                              toast({ title: 'خطأ', description: data?.message || 'فشل التراجع عن الملف', variant: 'destructive' });
+                                              return;
+                                            }
+                                            toast({ title: 'تم', description: data?.message || 'تم التراجع بنجاح' });
+                                            setFilePatchIds((prev) => {
+                                              const next = { ...prev };
+                                              delete next[fileKey];
+                                              return next;
+                                            });
+                                          } catch (e) {
+                                            toast({ title: 'خطأ', description: 'تعذر التراجع عن الملف', variant: 'destructive' });
+                                          } finally {
+                                            setApplyLoading(false);
+                                          }
+                                        }}
+                                        disabled={applyLoading}
+                                        className="w-full rounded-xl bg-red-500/20 border border-red-400/40 text-red-100 py-2 text-sm"
+                                        data-testid={`moltbot-file-rollback-${testIdSafe}`}
+                                      >
+                                        {applyLoading ? 'جارٍ التراجع...' : 'Rollback هذا الملف'}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

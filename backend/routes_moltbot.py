@@ -834,6 +834,8 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         updated_files = _parse_updated_files(summary_text)
         if updated_files:
             summary_text = _build_diff_from_updates(project_root, updated_files)
+        else:
+            summary_text = _extract_diff_blocks(summary_text)
         blocked_files = _detect_blocked_files(summary_text, project_root)
 
     for agent_name, content in agents_response.items():

@@ -165,6 +165,28 @@ const DocumentPrint = () => {
     }
   };
 
+  const loadCustomerData = async (customerId) => {
+    if (!customerId) return;
+    try {
+      const response = await axios.get(`${API_URL}/customers`);
+      const rows = Array.isArray(response.data) ? response.data : (response.data?.customers || []);
+      const match = rows.find((c) => c.id === customerId || c.customerId === customerId);
+      if (!match) return;
+      setFormData((prev) => ({
+        ...prev,
+        customer: {
+          ...prev.customer,
+          name: match.name || prev.customer.name,
+          phone: match.phone || prev.customer.phone,
+          email: match.email || prev.customer.email,
+          address: match.address || match.company || prev.customer.address,
+        }
+      }));
+    } catch (e) {
+      console.error('Error loading customer:', e);
+    }
+  };
+
   const loadVehicleData = async (id) => {
     try {
       const { data } = await axios.get(`${API_URL}/vehicles/${id}`);

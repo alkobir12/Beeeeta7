@@ -133,5 +133,50 @@
     "agent": "summary",
     "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>\n@@ -145,7 +145,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>",
     "created_at": "2026-02-10T14:24:11.248877"
+  },
+  {
+    "id": "00109b00-72fc-46b2-b7d0-e67c1e8d6f85",
+    "session_id": "f1da8d98-4310-4edd-a05b-279cbc092dcd",
+    "project_id": "4ccfdf2d-a50a-4814-a593-1a20f8de9fb1",
+    "role": "user",
+    "agent": null,
+    "content": "أضف data-testid لزر الدخول في Login.jsx",
+    "created_at": "2026-02-10T14:24:46.835934"
+  },
+  {
+    "id": "3bef71b1-edf4-446c-899b-14e96eaa2f56",
+    "session_id": "f1da8d98-4310-4edd-a05b-279cbc092dcd",
+    "project_id": "4ccfdf2d-a50a-4814-a593-1a20f8de9fb1",
+    "role": "assistant",
+    "agent": "planner",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-        <button\n+        <button\n+          data-testid=\"login-button\"\n           onClick={handleLogin}\n           disabled={loading}\n           className=\"w-full\"\n         >\n           {loading ? t('loading') : t('login')}\n         </button>",
+    "created_at": "2026-02-10T14:24:53.689444"
+  },
+  {
+    "id": "be5b632a-5e10-4428-a4cc-c36167f44163",
+    "session_id": "f1da8d98-4310-4edd-a05b-279cbc092dcd",
+    "project_id": "4ccfdf2d-a50a-4814-a593-1a20f8de9fb1",
+    "role": "assistant",
+    "agent": "builder",
+    "content": "تعذر تشغيل وكيل البناء: 500: فشل الاتصال بالمزود: {\"error\":{\"message\":\"Insufficient Balance\",\"type\":\"unknown_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+    "created_at": "2026-02-10T14:24:54.071718"
+  },
+  {
+    "id": "ad43cc35-7d40-452d-8722-a3344e3bcca4",
+    "session_id": "f1da8d98-4310-4edd-a05b-279cbc092dcd",
+    "project_id": "4ccfdf2d-a50a-4814-a593-1a20f8de9fb1",
+    "role": "assistant",
+    "agent": "reviewer",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          {t('دخول')}\n+          {t('دخول')} \n         </Button>\n       </Flex>",
+    "created_at": "2026-02-10T14:24:54.389961"
+  },
+  {
+    "id": "f3f2bbf7-7608-44d6-9e51-7c10feb503c1",
+    "session_id": "f1da8d98-4310-4edd-a05b-279cbc092dcd",
+    "project_id": "4ccfdf2d-a50a-4814-a593-1a20f8de9fb1",
+    "role": "assistant",
+    "agent": "summary",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          {t('دخول')}\n+          {t('دخول')} \n         </Button>\n       </Flex>",
+    "created_at": "2026-02-10T14:24:54.719220"
   }
 ]

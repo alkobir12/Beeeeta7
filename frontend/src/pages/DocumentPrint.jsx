@@ -488,6 +488,7 @@ const DocumentPrint = () => {
       setDocType(inv.type || 'invoice');
 
       const invCustomerName = inv.partner_name || inv.partnerName || '';
+      const invCustomerId = inv.customer_id || inv.customerId || '';
 
       setFormData((prev) => ({
         ...prev,
@@ -503,6 +504,10 @@ const DocumentPrint = () => {
           notes: inv.notes || prev.settings.notes,
         },
       }));
+
+      if (invCustomerId && !invCustomerName) {
+        loadCustomerData(invCustomerId);
+      }
     } catch (e) {
       console.error('Error loading invoice:', e);
     }

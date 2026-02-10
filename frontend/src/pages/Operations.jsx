@@ -898,6 +898,12 @@ const Operations = () => {
       />
       <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
 
+      <SmartGuidance
+        guides={opsGuides}
+        enabled={guidanceEnabled}
+        userKey={session?.id || session?.name || 'default'}
+      />
+
     </div>
   );
 };

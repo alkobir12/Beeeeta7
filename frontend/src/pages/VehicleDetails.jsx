@@ -562,32 +562,34 @@ const VehicleDetails = () => {
     [visits]
   );
 
-  const guidanceList = useMemo(() => {
-    const missingCustomer = vehicle && !vehicle.customerName && !vehicle.customerId;
-    const noVisits = visits.length === 0;
-    const hasVisits = visits.length > 0;
+  const guidanceSteps = useMemo(() => {
+    const vehicleReady = Boolean(
+      vehicle && (vehicle.customerName || vehicle.customerId) && vehicle.plateNumber
+    );
+    const hasItems = visits.some((visit) => (visit.items || []).length > 0);
+    const statusUpdated = !activeVisit;
 
     return [
       {
-        id: 'vehicle-info',
-        title: 'تأكد من بيانات العميل والمركبة',
-        message: 'راجع الاسم ورقم الجوال ولوحة المركبة لتجنب الأخطاء الإملائية والتكرار.',
-        condition: missingCustomer || noVisits,
+        id: 'vehicle',
+        title: 'بيانات العميل والمركبة',
+        hint: 'تأكد من الاسم والجوال ولوحة المركبة لتجنب الأخطاء الإملائية.',
+        done: vehicleReady,
       },
       {
-        id: 'visit-items',
-        title: 'تأكيد البنود والأسعار',
-        message: 'قبل الحفظ، تأكد من تسجيل البنود بالكامل ومراجعة الأسعار لتجنب الخطأ المالي.',
-        condition: hasVisits,
+        id: 'items',
+        title: 'تسجيل البنود',
+        hint: 'أضف الخدمات أو القطع وتحقق من الأسعار قبل الحفظ.',
+        done: hasItems,
       },
       {
-        id: 'visit-status',
-        title: 'لا تنس تحديث الحالة',
-        message: 'بعد الانتهاء من العمل حدّث حالة الزيارة لإغلاقها وعدم نسيانها.',
-        condition: Boolean(activeVisit),
+        id: 'status',
+        title: 'تحديث حالة الزيارة',
+        hint: 'غيّر الحالة عند الانتهاء لإغلاق الزيارة وعدم نسيانها.',
+        done: statusUpdated,
       },
     ];
-  }, [vehicle, visits.length, activeVisit]);
+  }, [vehicle, visits, activeVisit]);
 
   const fetchData = useCallback(async () => {
     try {

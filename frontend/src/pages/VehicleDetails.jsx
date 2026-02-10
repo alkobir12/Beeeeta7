@@ -499,6 +499,7 @@ const VehicleDetails = () => {
   const [visits, setVisits] = useState([]);
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [partsCatalog, setPartsCatalog] = useState([]);
+  const [visitFilter, setVisitFilter] = useState('all');
   const [createVisitConfirmAt, setCreateVisitConfirmAt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);

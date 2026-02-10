@@ -639,7 +639,8 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         if files_content:
             context_blocks = []
             for path, content in files_content.items():
-                context_blocks.append(f"BEGIN_FILE {path}\n{content}\nEND_FILE")
+                snippet = _extract_snippets(content, payload.message.split())
+                context_blocks.append(f"BEGIN_FILE {path}\n{snippet}\nEND_FILE")
             project_context = "\n\n".join(context_blocks)
 
     if "planner" in agents:

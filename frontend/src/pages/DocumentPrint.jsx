@@ -569,7 +569,7 @@ const DocumentPrint = () => {
 
   const getPdfBodyFromHtml = async (html) => {
     const previewIframe = previewRef?.current?.querySelector?.('iframe');
-    if (previewIframe?.contentDocument?.body) {
+    if (previewIframe?.contentDocument?.readyState === 'complete' && previewIframe?.contentDocument?.body?.innerHTML?.trim()) {
       return { doc: previewIframe.contentDocument, body: previewIframe.contentDocument.body };
     }
 

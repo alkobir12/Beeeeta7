@@ -466,14 +466,17 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
             )}
 
 
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={() => onDelete?.(visit.id)}
-              className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <Trash2 size={14} /> حذف الزيارة
-            </button>
-          </div>
+          {canDelete && (visit.status || '').toLowerCase() === 'completed' && (
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => onDelete?.(visit.id)}
+                className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                data-testid={`visit-delete-button-${visit.id}`}
+              >
+                <Trash2 size={14} /> حذف الزيارة
+              </button>
+            </div>
+          )}
 
           </div>
         </div>

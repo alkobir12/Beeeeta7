@@ -652,6 +652,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
                     "اجمع نتائج الوكلاء في PATCH واحد فقط بصيغة git unified diff. "
                     "لا تضف أي شرح أو نص خارج patch. "
                     "التزم بالتعديلات minimal patch ولا تعيد كتابة الملفات كاملة.\n\n"
+                    "لا تستخدم Markdown أو علامات ``` في الإخراج.\n\n"
                     f"وكيل التخطيط:\n{agents_response.get('planner','')}\n\n"
                     f"وكيل البناء:\n{agents_response.get('builder','')}\n\n"
                     f"وكيل المراجعة:\n{agents_response.get('reviewer','')}"

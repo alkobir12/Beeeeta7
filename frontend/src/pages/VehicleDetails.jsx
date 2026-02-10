@@ -1156,14 +1156,35 @@ const VehicleDetails = () => {
             {t('vehicle_details.items_edit_hint')}
           </div>
 
+          <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
+            {[
+              { key: 'all', label: 'كل الزيارات' },
+              { key: 'open', label: 'المفتوحة' },
+              { key: 'closed', label: 'المغلقة' },
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setVisitFilter(filter.key)}
+                className={`px-3 py-1.5 rounded-full border transition-all ${
+                  visitFilter === filter.key
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+                }`}
+                data-testid={`visit-filter-${filter.key}`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-4">
-            {visits.length === 0 ? (
+            {filteredVisits.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                 <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-xs text-gray-500">لا توجد زيارات مسجلة</p>
+                <p className="text-xs text-gray-500">لا توجد زيارات مطابقة لهذا الفلتر</p>
               </div>
             ) : (
-              visits.map(visit => {
+              filteredVisits.map(visit => {
                 const normVisit = {
                   ...visit,
                   entryDate: visit.entryDate || visit.entry_date,

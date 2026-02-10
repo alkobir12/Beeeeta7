@@ -22,5 +22,17 @@
     "created_at": "2026-02-10T14:23:22.036725",
     "updated_at": "2026-02-10T14:23:22.036725",
     "last_build_at": "2026-02-10T14:23:30.933399"
+  },
+  {
+    "id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "name": "تحرير مشروع 2",
+    "description": "اختبار diff",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:24:03.145920",
+    "updated_at": "2026-02-10T14:24:03.145920",
+    "last_build_at": "2026-02-10T14:24:11.577150"
   }
 ]

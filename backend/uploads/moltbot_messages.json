@@ -88,5 +88,50 @@
     "agent": "summary",
     "content": "*** Begin Patch\n*** Update File: frontend/src/pages/Login.jsx\n@@\n           <button\n             type=\"submit\"\n-            className=\"btn btn-primary\"\n+            className=\"btn btn-primary\" data-testid=\"login-button\"\n           >\n             {t('دخول')}\n           </button>\n*** End Patch",
     "created_at": "2026-02-10T14:23:30.606649"
+  },
+  {
+    "id": "a38c2480-f5b6-43ae-8075-96917048d4b2",
+    "session_id": "5caffd31-da14-498a-a613-2d808b8a1295",
+    "project_id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "role": "user",
+    "agent": null,
+    "content": "أضف data-testid لزر الدخول في Login.jsx",
+    "created_at": "2026-02-10T14:24:04.311950"
+  },
+  {
+    "id": "bb0a8769-f244-4128-a06d-be428ca9399e",
+    "session_id": "5caffd31-da14-498a-a613-2d808b8a1295",
+    "project_id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "role": "assistant",
+    "agent": "planner",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-      <button\n+      <button\n+        data-testid=\"login-button\"\n         onClick={handleLogin}\n         disabled={loading}\n         className=\"w-full\"\n       >\n         {loading ? t('common.loading') : t('auth.login')}\n       </button>\n@@ ...",
+    "created_at": "2026-02-10T14:24:10.206659"
+  },
+  {
+    "id": "ad60a443-41b9-41a7-9079-98564c09d445",
+    "session_id": "5caffd31-da14-498a-a613-2d808b8a1295",
+    "project_id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "role": "assistant",
+    "agent": "builder",
+    "content": "تعذر تشغيل وكيل البناء: 500: فشل الاتصال بالمزود: {\"error\":{\"message\":\"Insufficient Balance\",\"type\":\"unknown_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+    "created_at": "2026-02-10T14:24:10.588153"
+  },
+  {
+    "id": "23921445-cee4-4c88-80d5-35e833519349",
+    "session_id": "5caffd31-da14-498a-a613-2d808b8a1295",
+    "project_id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "role": "assistant",
+    "agent": "reviewer",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>\n@@ -145,7 +145,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>",
+    "created_at": "2026-02-10T14:24:10.921448"
+  },
+  {
+    "id": "fb554c5e-301c-4332-a648-6abf51d9e356",
+    "session_id": "5caffd31-da14-498a-a613-2d808b8a1295",
+    "project_id": "994c641c-5ef7-4daf-8a1a-fb9ef55707b8",
+    "role": "assistant",
+    "agent": "summary",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>\n@@ -145,7 +145,7 @@\n       <button\n         type=\"submit\"\n         disabled={loading}\n-        className=\"btn btn-primary\"\n+        className=\"btn btn-primary\" data-testid=\"login-button\"\n       >\n         {t('دخول')}\n       </button>",
+    "created_at": "2026-02-10T14:24:11.248877"
   }
 ]

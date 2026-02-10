@@ -334,6 +334,9 @@ def _apply_patch(patch_text: str, root: Path, dry_run: bool = False) -> Dict[str
     if not patch_text.strip():
         return {"success": False, "message": "لا يوجد patch للتطبيق"}
 
+    if not patch_text.endswith("\n"):
+        patch_text = patch_text + "\n"
+
     if "--- " not in patch_text or "+++ " not in patch_text:
         return {"success": False, "message": "تنسيق patch غير صالح"}
 

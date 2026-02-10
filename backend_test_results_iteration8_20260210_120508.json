@@ -1,0 +1,270 @@
+[
+  {
+    "test": "GET /health",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:59.491010",
+    "status_code": 404,
+    "error": "Expected 200, got 404",
+    "details": null
+  },
+  {
+    "test": "GET /api/settings",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:59.929997",
+    "status_code": 200,
+    "error": null,
+    "details": "Settings keys: ['id', 'currency', 'taxRate', 'language', 'timezone', 'invoicePrefix', 'workshopName', 'workshopPhone', 'workshopAddress', 'workshopEmail', 'menuConfig']",
+    "response_keys": [
+      "id",
+      "currency",
+      "taxRate",
+      "language",
+      "timezone",
+      "invoicePrefix",
+      "workshopName",
+      "workshopPhone",
+      "workshopAddress",
+      "workshopEmail",
+      "menuConfig"
+    ],
+    "response_size": 960
+  },
+  {
+    "test": "OPTIONS /api/vehicles CORS",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:59.941930",
+    "status_code": 400,
+    "error": "Access-Control-Allow-Origin header not found",
+    "details": "Available headers: {'access-control-allow-headers': 'Content-Type', 'access-control-allow-methods': 'DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT', 'access-control-max-age': '600', 'Content-Length': '22', 'content-security-policy': \"frame-ancestors 'none'\", 'content-type': 'text/plain; charset=utf-8', 'date': 'Tue, 10 Feb 2026 12:04:58 GMT', 'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'server': 'uvicorn', 'vary': 'Origin', 'x-frame-options': 'DENY', 'via': '1.1 google', 'Alt-Svc': 'h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000'}"
+  },
+  {
+    "test": "GET /api/vehicles",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:00.314694",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 29 vehicles",
+    "response_count": 29,
+    "response_size": 21436
+  },
+  {
+    "test": "POST /api/vehicles",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:01.335366",
+    "status_code": 200,
+    "error": null,
+    "details": "Created vehicle with ID: 9955bb32-d45b-4c06-835e-08e2a38a1b13",
+    "response_keys": [
+      "plateNumber",
+      "brand",
+      "model",
+      "year",
+      "color",
+      "vin",
+      "fileNumber",
+      "customerName",
+      "customerPhone",
+      "customerEmail",
+      "services",
+      "technicianId",
+      "technicianName",
+      "notes",
+      "id",
+      "customerId",
+      "status",
+      "entryDate",
+      "estimatedCompletion",
+      "completionDate",
+      "trackingLink",
+      "images",
+      "parts",
+      "estimatedTotal"
+    ],
+    "response_size": 643
+  },
+  {
+    "test": "GET /api/customers",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:01.669334",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 77 customers",
+    "response_count": 77,
+    "response_size": 27990
+  },
+  {
+    "test": "GET /api/operations",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:02.045047",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 18 operations",
+    "response_count": 18,
+    "response_size": 11562
+  },
+  {
+    "test": "GET /api/finance/chart-of-accounts?workshop_id=finmodule-sync",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:02.723916",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: dict",
+    "response_keys": [
+      "success",
+      "data",
+      "source"
+    ],
+    "response_size": 9929
+  },
+  {
+    "test": "GET /api/finance/journal-entries?workshop_id=finmodule-sync",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:03.055256",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: dict",
+    "response_keys": [
+      "success",
+      "data",
+      "total"
+    ],
+    "response_size": 6356
+  },
+  {
+    "test": "GET /api/finance/reports/balance-sheet?workshop_id=finmodule-sync",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:03.710173",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: dict",
+    "response_keys": [
+      "success",
+      "data"
+    ],
+    "response_size": 421
+  },
+  {
+    "test": "GET /api/finance/reports/trial-balance?workshop_id=finmodule-sync",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:04.446926",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: dict",
+    "response_keys": [
+      "success",
+      "data"
+    ],
+    "response_size": 500
+  },
+  {
+    "test": "GET /api/finance/reports/income-statement?workshop_id=finmodule-sync",
+    "success": false,
+    "timestamp": "2026-02-10T12:05:04.456514",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/reports/cash-flow?workshop_id=finmodule-sync",
+    "success": false,
+    "timestamp": "2026-02-10T12:05:04.464683",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/alerts?workshop_id=finmodule-sync",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:07.685040",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: dict",
+    "response_keys": [
+      "success",
+      "data"
+    ],
+    "response_size": 216
+  },
+  {
+    "test": "GET /api/stitch/history",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.021506",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: list"
+  },
+  {
+    "test": "POST /api/stitch/generate",
+    "success": false,
+    "timestamp": "2026-02-10T12:05:08.031737",
+    "status_code": 520,
+    "error": "Expected 200/202, got 520. Response: {\"detail\":\"Stitch API configuration missing. Set STITCH_API_URL and GOOGLE_STITCH_API_KEY.\"}",
+    "details": null
+  },
+  {
+    "test": "GET /api/whatsapp-bot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.082303",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/whatsapp-bot/info",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.091208",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/alkabeer-bot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.101423",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/moltbot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.120482",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "POST Vehicle Parts Integration",
+    "success": true,
+    "timestamp": "2026-02-10T12:05:08.491219",
+    "status_code": 200,
+    "error": null,
+    "details": "Created operation: 34d093f5-e8e8-4699-9027-557e5d8698b1, journal: abf1debe-005d-45cb-ab3d-5ad89361d7c3",
+    "response_keys": [
+      "success",
+      "message",
+      "vehicle",
+      "operation_id",
+      "journal_entry_id",
+      "invoice_id",
+      "total"
+    ],
+    "response_size": 1005
+  }
+]

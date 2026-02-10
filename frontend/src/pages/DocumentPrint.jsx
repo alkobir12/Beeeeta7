@@ -557,6 +557,7 @@ const DocumentPrint = () => {
     if ((!formData.workshop.name || !formData.customer.name) && !autoRefreshRef.current) {
       autoRefreshRef.current = true;
       await refreshDocumentData();
+      await new Promise((r) => setTimeout(r, 120));
     }
 
     const response = await axios.post(`${API_URL}/documents/generate`, buildDocumentPayload());

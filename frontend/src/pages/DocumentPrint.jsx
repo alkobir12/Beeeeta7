@@ -278,6 +278,7 @@ const DocumentPrint = () => {
 
         const opCustomerName = op.customerName || op.customer_name || op.partnerName || op.partner_name || '';
         const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || '';
+        const opCustomerId = op.customerId || op.customer_id || '';
 
         setFormData((prev) => ({
           ...prev,
@@ -293,6 +294,10 @@ const DocumentPrint = () => {
             date: (op.op_date || op.date || '').toString().slice(0, 10) || prev.settings.date,
           },
         }));
+
+        if (opCustomerId && !opCustomerName) {
+          loadCustomerData(opCustomerId);
+        }
 
         // Map doc type based on vehicle/visit status when not explicitly specified.
         if (!searchParams.get('type')) {

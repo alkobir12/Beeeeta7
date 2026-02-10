@@ -94,6 +94,7 @@ export const englishTexts = {
   'nav.print_quotes': 'Print & Quotes',
   'nav.templates_manager': 'Templates Manager',
   'nav.workshop_system': 'Workshop Management System',
+  'nav.moltbot': 'MoltBot',
   
   'dashboard.title': 'Dashboard',
   'dashboard.overview': 'Workshop Overview',

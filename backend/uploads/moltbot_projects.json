@@ -166,5 +166,17 @@
     "created_at": "2026-02-10T14:44:43.949557",
     "updated_at": "2026-02-10T14:44:43.949557",
     "last_build_at": null
+  },
+  {
+    "id": "d5f8cf81-8a1f-4828-83bf-f42499626bca",
+    "name": "تحرير مشروع apply test 2",
+    "description": "اختبار apply",
+    "industry": "تقني",
+    "domain": "",
+    "status": "draft",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:46:49.635874",
+    "updated_at": "2026-02-10T14:46:50.490911",
+    "last_build_at": null
   }
 ]

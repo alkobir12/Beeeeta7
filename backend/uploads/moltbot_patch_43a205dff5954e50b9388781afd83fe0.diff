@@ -1,0 +1,12 @@
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ -168,7 +168,7 @@
+           <h1 className="text-3xl font-bold text-[#1D1D1F] mb-2 tracking-tight">
+             تسجيل الدخول
+           </h1>
+-          <p className="text-[#86868B] text-base mb-10">
++          <p className="text-[#86868B] text-base mb-10" data-testid="login-subtitle">
+             نظام إدارة الورش الذكي
+           </p>
+ 

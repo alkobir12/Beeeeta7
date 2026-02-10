@@ -403,5 +403,50 @@
     "agent": "summary",
     "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n       >\n         <button\n           type=\"submit\"\n-          disabled={loading}\n+          disabled={loading} data-testid=\"login-button\"\n         >\n           {t('دخول')}\n         </button>\n       </form>",
     "created_at": "2026-02-10T14:36:17.592234"
+  },
+  {
+    "id": "1188bd31-525c-47a4-8c61-edc88d329d9d",
+    "session_id": "c1ad93ef-d9a5-4cc5-b283-0559e668a4a7",
+    "project_id": "8402ca38-7262-43ef-ac97-1fbec79a7319",
+    "role": "user",
+    "agent": null,
+    "content": "أضف data-testid لزر الدخول في Login.jsx",
+    "created_at": "2026-02-10T14:38:05.451115"
+  },
+  {
+    "id": "4c5ef33f-dd3a-4695-bafd-6d83eae7b988",
+    "session_id": "c1ad93ef-d9a5-4cc5-b283-0559e668a4a7",
+    "project_id": "8402ca38-7262-43ef-ac97-1fbec79a7319",
+    "role": "assistant",
+    "agent": "planner",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -1,29 +1,29 @@\n         loginTime: new Date().toISOString(),\n       };\n       localStorage.setItem('session', JSON.stringify(session));\n       localStorage.setItem('user', JSON.stringify(fallbackUser));\n       window.dispatchEvent(new Event('sessionUpdated'));\n       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });\n       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)\n       window.location.assign(`${window.location.origin}/`);\n       return;\n     }\n \n     try {\n       setLoading(true);\n [SNIP]\n         title: 'مرحباً بك',\n         description: `أهلاً بعودتك، ${user.name}`\n       });\n       window.location.assign(`${window.location.origin}/`);\n     } catch (e) {\n       console.error('Login error:', e);\n       toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول (تعذر الاتصال أو مهلة)', variant: 'destructive' });\n     } finally {\n       setLoading(false);\n  \n ...\n END_FILE",
+    "created_at": "2026-02-10T14:38:19.088585"
+  },
+  {
+    "id": "aa557a86-35a6-4893-a0f6-b898b6f6f8e8",
+    "session_id": "c1ad93ef-d9a5-4cc5-b283-0559e668a4a7",
+    "project_id": "8402ca38-7262-43ef-ac97-1fbec79a7319",
+    "role": "assistant",
+    "agent": "builder",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ 1,31 1,31 @@\n         loginTime: new Date().toISOString(),\n       };\n       localStorage.setItem('session', JSON.stringify(session));\n       localStorage.setItem('user', JSON.stringify(fallbackUser));\n       window.dispatchEvent(new Event('sessionUpdated'));\n       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });\n       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)\n       window.location.assign(`${window.location.origin}/`);\n       return;\n     }\n \n     try {\n       setLoading(true);\n [SNIP]\n         title: 'مرحباً بك',\n         description: `أهلاً بعودتك، ${user.name}`\n       });\n       window.location.assign(`${window.location.origin}/`);\n     } catch (e) {\n       console.error('Login error:', e);\n       toast({ title: 'خطأ', description: 'فشل في تسجيل الدخول (تعذر الاتصال أو مهلة)', variant: 'destructive' });\n     } finally {\n       setLoading(false);\n  \n ...\n END_FILE",
+    "created_at": "2026-02-10T14:38:19.476573"
+  },
+  {
+    "id": "2c0524fb-4c3a-4efc-9a96-59ebacbf73e2",
+    "session_id": "c1ad93ef-d9a5-4cc5-b283-0559e668a4a7",
+    "project_id": "8402ca38-7262-43ef-ac97-1fbec79a7319",
+    "role": "assistant",
+    "agent": "reviewer",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n             <Button \n-              onClick={handleLogin}\n+              onClick={handleLogin} data-testid=\"login-button\"\n               isLoading={loading}\n               loadingText=\"جاري الدخول...\"\n               className=\"btn btn-primary\" \n               type=\"submit\"> \n               دخول \n             </Button>",
+    "created_at": "2026-02-10T14:38:19.812768"
+  },
+  {
+    "id": "e9fc1313-9794-42dd-882c-71a8635fa4ae",
+    "session_id": "c1ad93ef-d9a5-4cc5-b283-0559e668a4a7",
+    "project_id": "8402ca38-7262-43ef-ac97-1fbec79a7319",
+    "role": "assistant",
+    "agent": "summary",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -123,7 +123,7 @@\n             <Button \n-              onClick={handleLogin}\n+              onClick={handleLogin} data-testid=\"login-button\"\n               isLoading={loading}\n               loadingText=\"جاري الدخول...\"\n               className=\"btn btn-primary\" \n               type=\"submit\"> \n               دخول \n             </Button>",
+    "created_at": "2026-02-10T14:38:20.138627"
   }
 ]

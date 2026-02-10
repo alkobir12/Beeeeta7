@@ -1,0 +1,13 @@
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ -123,7 +123,7 @@
+             <Button 
+-              onClick={handleLogin}
++              onClick={handleLogin} data-testid="login-button"
+               isLoading={loading}
+               loadingText="جاري الدخول..."
+               className="btn btn-primary" 
+               type="submit"> 
+               دخول 
+             </Button>

@@ -34,7 +34,13 @@ const UsersManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
-    name: '', phone: '', email: '', role: 'employee', permissions: { ...DEFAULT_PERMISSIONS }, isActive: true
+    name: '',
+    phone: '',
+    email: '',
+    role: 'employee',
+    permissions: { ...DEFAULT_PERMISSIONS },
+    isActive: true,
+    guidanceEnabled: false,
   });
 
   useEffect(() => { fetchUsers(); }, []);
@@ -76,16 +82,28 @@ const UsersManagement = () => {
   };
 
   const resetForm = () => {
-    setForm({ name: '', phone: '', email: '', role: 'employee', permissions: { ...DEFAULT_PERMISSIONS }, isActive: true });
+    setForm({
+      name: '',
+      phone: '',
+      email: '',
+      role: 'employee',
+      permissions: { ...DEFAULT_PERMISSIONS },
+      isActive: true,
+      guidanceEnabled: false,
+    });
     setEditingId(null);
     setShowModal(false);
   };
 
   const editUser = (user) => {
     setForm({
-      name: user.name || '', phone: user.phone || '', email: user.email || '',
-      role: user.role || 'employee', permissions: user.permissions || DEFAULT_PERMISSIONS,
-      isActive: user.isActive !== false
+      name: user.name || '',
+      phone: user.phone || '',
+      email: user.email || '',
+      role: user.role || 'employee',
+      permissions: user.permissions || DEFAULT_PERMISSIONS,
+      isActive: user.isActive !== false,
+      guidanceEnabled: user.guidanceEnabled === true,
     });
     setEditingId(user.id);
     setShowModal(true);

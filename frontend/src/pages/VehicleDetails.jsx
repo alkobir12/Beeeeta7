@@ -524,6 +524,15 @@ const VehicleDetails = () => {
       : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
   );
 
+  const session = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('session'));
+    } catch (e) {
+      return null;
+    }
+  }, []);
+  const guidanceEnabled = Boolean(session?.guidanceEnabled);
+
   const appendService = useCallback((service) => {
     if (!service) return;
     setServicesCatalog((prev) => {

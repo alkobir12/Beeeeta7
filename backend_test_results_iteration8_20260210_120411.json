@@ -1,0 +1,206 @@
+[
+  {
+    "test": "GET /health",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:09.498062",
+    "status_code": 404,
+    "error": "Expected 200, got 404",
+    "details": null
+  },
+  {
+    "test": "GET /api/settings",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:09.926819",
+    "status_code": 200,
+    "error": null,
+    "details": "Settings keys: ['id', 'currency', 'taxRate', 'language', 'timezone', 'invoicePrefix', 'workshopName', 'workshopPhone', 'workshopAddress', 'workshopEmail', 'menuConfig']",
+    "response_keys": [
+      "id",
+      "currency",
+      "taxRate",
+      "language",
+      "timezone",
+      "invoicePrefix",
+      "workshopName",
+      "workshopPhone",
+      "workshopAddress",
+      "workshopEmail",
+      "menuConfig"
+    ],
+    "response_size": 960
+  },
+  {
+    "test": "OPTIONS /api/vehicles CORS",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:09.976023",
+    "status_code": 400,
+    "error": "Access-Control-Allow-Origin header not found",
+    "details": "Available headers: {'access-control-allow-headers': 'Content-Type', 'access-control-allow-methods': 'DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT', 'access-control-max-age': '600', 'Content-Length': '22', 'content-security-policy': \"frame-ancestors 'none'\", 'content-type': 'text/plain; charset=utf-8', 'date': 'Tue, 10 Feb 2026 12:04:09 GMT', 'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'server': 'uvicorn', 'vary': 'Origin', 'x-frame-options': 'DENY', 'via': '1.1 google', 'Alt-Svc': 'h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000'}"
+  },
+  {
+    "test": "GET /api/vehicles",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:10.339015",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 29 vehicles",
+    "response_count": 29,
+    "response_size": 21436
+  },
+  {
+    "test": "POST /api/vehicles",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:10.349243",
+    "status_code": 422,
+    "error": "Expected 200, got 422. Response: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"brand\"],\"msg\":\"Field required\",\"input\":{\"plateNumber\":\"TEST-120410\",\"make\":\"تويوتا\",\"model\":\"كامري\",\"year\":2020,\"color\":\"أبيض\",\"mileage\":50000,\"customerName",
+    "details": null
+  },
+  {
+    "test": "GET /api/customers",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:10.703246",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 76 customers",
+    "response_count": 76,
+    "response_size": 27617
+  },
+  {
+    "test": "GET /api/operations",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.104564",
+    "status_code": 200,
+    "error": null,
+    "details": "Found 18 operations",
+    "response_count": 18,
+    "response_size": 11562
+  },
+  {
+    "test": "GET /api/finance/chart-of-accounts",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.155489",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/journal-entries",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.206506",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/reports/balance-sheet",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.218538",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/reports/trial-balance",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.227083",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/reports/income-statement",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.277782",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/reports/cash-flow",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.286648",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/finance/alerts",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.337239",
+    "status_code": 422,
+    "error": "Expected 200, got 422",
+    "details": null
+  },
+  {
+    "test": "GET /api/stitch/history",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.723821",
+    "status_code": 200,
+    "error": null,
+    "details": "Response type: list"
+  },
+  {
+    "test": "POST /api/stitch/generate",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.733561",
+    "status_code": 520,
+    "error": "Expected 200/202, got 520. Response: {\"detail\":\"Stitch API configuration missing. Set STITCH_API_URL and GOOGLE_STITCH_API_KEY.\"}",
+    "details": null
+  },
+  {
+    "test": "GET /api/whatsapp-bot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.782029",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/whatsapp-bot/info",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.791327",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/alkabeer-bot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.840677",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "GET /api/moltbot/status",
+    "success": true,
+    "timestamp": "2026-02-10T12:04:11.889609",
+    "status_code": 404,
+    "error": null,
+    "details": "WhatsApp endpoint accessible, status: 404",
+    "response_keys": [
+      "detail"
+    ],
+    "response_size": 23
+  },
+  {
+    "test": "Vehicle Parts Integration",
+    "success": false,
+    "timestamp": "2026-02-10T12:04:11.889650",
+    "status_code": null,
+    "error": "No test vehicle ID available from previous tests",
+    "details": null
+  }
+]

@@ -941,6 +941,16 @@ const VehicleDetails = () => {
         </div>
       </div>
 
+      <div className="px-4 sm:px-0" data-testid="vehicle-guidance-stepper">
+        <GuidanceStepper
+          title="إرشادات ملف المركبة"
+          subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."
+          steps={guidanceSteps}
+          enabled={guidanceEnabled}
+          storageKey={`guidance-vehicle-${session?.id || session?.name || 'default'}`}
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-0">
         
         {/* Left Column: Info */}

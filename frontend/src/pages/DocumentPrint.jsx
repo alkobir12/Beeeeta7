@@ -362,7 +362,15 @@ const DocumentPrint = () => {
       const { data: op } = await axios.get(`${API_URL}/operations/${opId}`);
       if (!op) return;
 
-      const opItems = (op.items || []).map((it) => ({
+      let opItems = op.items || [];
+      if (typeof opItems === 'string') {
+        try {
+          opItems = JSON.parse(opItems);
+        } catch (e) {
+          opItems = [];
+        }
+      }
+      const mappedItems = (opItems || []).map((it) => ({
         description: it.name || it.description || '',
         quantity: Number(it.quantity || 1),
         unit_price: Number(it.price || it.unit_price || 0),
@@ -377,13 +385,17 @@ const DocumentPrint = () => {
 
       setDocType('invoice');
 
+      const opCustomerName = op.customerName || op.customer_name || op.partnerName || prev.customer?.name || '';
+      const opCustomerPhone = op.customerPhone || op.customer_phone || op.phone || prev.customer?.phone || '';
+
       setFormData((prev) => ({
         ...prev,
         customer: {
           ...prev.customer,
-          name: op.partnerName || prev.customer.name,
+          name: opCustomerName || prev.customer.name,
+          phone: opCustomerPhone || prev.customer.phone,
         },
-        items: opItems.length > 0 ? opItems : prev.items,
+        items: mappedItems.length > 0 ? mappedItems : prev.items,
         settings: {
           ...prev.settings,
           date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,

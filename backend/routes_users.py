@@ -35,7 +35,7 @@ def _ensure_users_file():
                 "role": "admin",
                 "permissions": UserPermissions().dict(),
                 "isActive": True,
-                "guidanceEnabled": False,
+                "guidanceEnabled": True,
                 "createdAt": datetime.utcnow().isoformat(),
                 "lastLogin": None,
             }
@@ -51,7 +51,7 @@ def _read_users() -> List[dict]:
             users = json.load(f)
             for user in users:
                 if user.get("guidanceEnabled") is None:
-                    user["guidanceEnabled"] = False
+                    user["guidanceEnabled"] = True
             return users
     except Exception:
         return []

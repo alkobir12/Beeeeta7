@@ -1,0 +1,11 @@
+[
+  {
+    "id": "adfe5adf-38b9-4067-b6ac-f2eeccf9cb13",
+    "project_id": "bf610866-4fa4-4232-8064-2fedf8e9bf85",
+    "session_id": null,
+    "patch": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -183,7 +183,7 @@\n                 value={name} \n                 onChange={e => setName(e.target.value)}\n                 onKeyPress={handleKeyPress}\n-                className=\"apple-input\"\n+                className=\"apple-input\" data-testid=\"login-input\"\n                 autoFocus\n                 data-testid=\"login-username-input\"\n               />\n",
+    "created_at": "2026-02-10T16:21:22.312891",
+    "rolled_back": true,
+    "rolled_back_at": "2026-02-10T16:21:23.842201"
+  }
+]

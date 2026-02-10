@@ -178,5 +178,17 @@
     "created_at": "2026-02-10T14:46:49.635874",
     "updated_at": "2026-02-10T14:46:50.490911",
     "last_build_at": null
+  },
+  {
+    "id": "bf610866-4fa4-4232-8064-2fedf8e9bf85",
+    "name": "تحرير مشروع rollback",
+    "description": "اختبار rollback",
+    "industry": "تقني",
+    "domain": "",
+    "status": "draft",
+    "resale_ready": false,
+    "created_at": "2026-02-10T16:21:20.940415",
+    "updated_at": "2026-02-10T16:21:23.842424",
+    "last_build_at": null
   }
 ]

@@ -27,6 +27,7 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 PROJECTS_FILE = UPLOADS_DIR / "moltbot_projects.json"
 SESSIONS_FILE = UPLOADS_DIR / "moltbot_sessions.json"
 MESSAGES_FILE = UPLOADS_DIR / "moltbot_messages.json"
+APPLIED_PATCHES_FILE = UPLOADS_DIR / "moltbot_applied_patches.json"
 
 
 def _now_iso() -> str:
@@ -377,6 +378,13 @@ class MoltbotApplyRequest(BaseModel):
     dry_run: Optional[bool] = False
 
 
+class MoltbotRollbackRequest(BaseModel):
+    project_id: str
+    patch_id: str
+    project_root: Optional[str] = None
+    dry_run: Optional[bool] = False
+
+
 @router.post("/apply")
 async def apply_patch(request: MoltbotApplyRequest):
     project = _get_project(request.project_id)
@@ -393,9 +401,75 @@ async def apply_patch(request: MoltbotApplyRequest):
         }
 
     result = _apply_patch(request.patch, root, dry_run=bool(request.dry_run))
-    if result.get("success"):
+    if result.get("success") and not request.dry_run:
+        patch_id = str(uuid.uuid4())
+        patches = _read_list(APPLIED_PATCHES_FILE)
+        patches.append(
+            {
+                "id": patch_id,
+                "project_id": request.project_id,
+                "session_id": request.session_id,
+                "patch": request.patch,
+                "created_at": _now_iso(),
+                "rolled_back": False,
+                "rolled_back_at": None,
+            }
+        )
+        _write_list(APPLIED_PATCHES_FILE, patches)
         _update_project(request.project_id, {"updated_at": _now_iso()})
+        result["patch_id"] = patch_id
     return result
+
+
+@router.post("/rollback")
+async def rollback_patch(request: MoltbotRollbackRequest):
+    project = _get_project(request.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="المشروع غير موجود")
+
+    root = _get_project_root(request.project_root)
+    patches = _read_list(APPLIED_PATCHES_FILE)
+    patch_doc = next((p for p in patches if p.get("id") == request.patch_id), None)
+    if not patch_doc:
+        raise HTTPException(status_code=404, detail="الـ patch غير موجود")
+    if patch_doc.get("rolled_back"):
+        return {"success": False, "message": "تم تنفيذ rollback مسبقاً"}
+
+    patch_text = patch_doc.get("patch", "")
+    if not patch_text.strip():
+        return {"success": False, "message": "الـ patch فارغ"}
+    if not patch_text.endswith("\n"):
+        patch_text += "\n"
+
+    patch_file = UPLOADS_DIR / f"moltbot_rollback_{uuid.uuid4().hex}.diff"
+    patch_file.write_text(patch_text, encoding="utf-8")
+
+    check_cmd = ["git", "apply", "--reverse", "--check", str(patch_file)]
+    check = subprocess.run(check_cmd, cwd=str(root), capture_output=True, text=True)
+    if check.returncode != 0:
+        return {
+            "success": False,
+            "message": "تعذر التراجع عن التعديل",
+            "details": (check.stderr or check.stdout)[:400],
+        }
+
+    if request.dry_run:
+        return {"success": True, "message": "rollback صالح للتطبيق"}
+
+    apply_cmd = ["git", "apply", "--reverse", str(patch_file)]
+    result = subprocess.run(apply_cmd, cwd=str(root), capture_output=True, text=True)
+    if result.returncode != 0:
+        return {
+            "success": False,
+            "message": "فشل تنفيذ rollback",
+            "details": (result.stderr or result.stdout)[:400],
+        }
+
+    patch_doc["rolled_back"] = True
+    patch_doc["rolled_back_at"] = _now_iso()
+    _write_list(APPLIED_PATCHES_FILE, patches)
+    _update_project(request.project_id, {"updated_at": _now_iso()})
+    return {"success": True, "message": "تم التراجع عن التعديل بنجاح"}
 
 
 def _save_project(project: Dict[str, Any]) -> Dict[str, Any]:

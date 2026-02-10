@@ -1,0 +1,14 @@
+[
+  {
+    "id": "bcb32805-2936-4eec-b112-28fa62950454",
+    "name": "مشروع مولت بوت تجريبي",
+    "description": "منصة حجز وخدمات رقمية للورش",
+    "industry": "السيارات",
+    "domain": "moltbot-demo.com",
+    "status": "draft",
+    "resale_ready": false,
+    "created_at": "2026-02-10T00:44:13.276739",
+    "updated_at": "2026-02-10T00:44:13.276739",
+    "last_build_at": null
+  }
+]

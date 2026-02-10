@@ -336,6 +336,13 @@ async def security_headers_and_rate_limit(request: Request, call_next):
 
     response = await call_next(request)
 
+    origin = request.headers.get("origin")
+    if origin and "Access-Control-Allow-Origin" not in response.headers:
+        if "*" in allow_origins:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+        elif origin in allow_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
     response.headers.setdefault(

@@ -524,6 +524,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         "أنتج تعديلات minimal patch فقط بصيغة git unified diff. "
         "أظهر فقط الملفات التي تحتاج تعديل ولا تضف شرحًا. "
         "لا تنشئ ملفًا جديدًا إذا كان موجودًا مسبقًا. "
+        "لا تستخدم Markdown أو علامات ``` في الإخراج. "
         "صيغة الإخراج المطلوبة حصراً:\n"
         "diff --git a/path b/path\n"
         "--- a/path\n"

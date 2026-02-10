@@ -1120,6 +1120,13 @@ const DocumentPrint = () => {
             </div>
           </div>
         )}
+        <div className="hidden" data-testid="document-hidden-iframe">
+          <iframe
+            ref={pdfIframeRef}
+            srcDoc={pdfSourceHtml}
+            title="Document PDF Hidden"
+          />
+        </div>
     </div>
   );
 };

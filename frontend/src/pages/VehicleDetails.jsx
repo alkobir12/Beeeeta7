@@ -1231,14 +1231,6 @@ const VehicleDetails = () => {
 
       </div>
 
-      <GuidanceStepper
-        title="إرشادات ملف المركبة"
-        subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."
-        steps={guidanceSteps}
-        enabled={guidanceEnabled}
-        storageKey={`guidance-vehicle-${session?.id || session?.name || 'default'}`}
-      />
-
       {/* Modals */}
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">

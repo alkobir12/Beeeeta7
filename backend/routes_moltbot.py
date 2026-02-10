@@ -795,6 +795,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
                     "END_UPDATED_FILE\n"
                     "(كرّر لكل ملف).\n\n"
                     "ممنوع استخدام ... أو @@ ... أو Markdown.\n\n"
+                    "لا تحذف أو تعيد ترتيب أقسام غير مرتبطة بطلب التحرير. حافظ على بقية الملف كما هو.\n\n"
                     f"ملفات المشروع:\n{full_context}\n\n"
                     f"نتائج الوكلاء:\n"
                     f"وكيل التخطيط:\n{agents_response.get('planner','')}\n\n"

@@ -24,12 +24,15 @@ const DocumentPrint = () => {
   const isArabic = i18n.language === 'ar';
   const [searchParams] = useSearchParams();
   const previewRef = useRef(null);
+  const pdfIframeRef = useRef(null);
+  const autoRefreshRef = useRef(false);
   
   const [loading, setLoading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [previewHtml, setPreviewHtml] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [workshopSettings, setWorkshopSettings] = useState(null);
+  const [pdfSourceHtml, setPdfSourceHtml] = useState('');
   
   // نوع المستند من URL أو افتراضي
   const initialType = searchParams.get('type') || 'invoice';

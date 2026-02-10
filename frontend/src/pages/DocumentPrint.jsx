@@ -651,32 +651,9 @@ const DocumentPrint = () => {
     
     setLoading(true);
     try {
-      if (!formData.workshop.name || !formData.customer.name) {
-        alert(isArabic ? 'الرجاء إدخال البيانات المطلوبة' : 'Missing required fields');
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.post(`${API_URL}/documents/generate`, {
-        doc_type: docType,
-        workshop: formData.workshop,
-        customer: formData.customer,
-        vehicle: formData.vehicle,
-        items: formData.items.filter(item => item.description),
-        settings: {
-          ...formData.settings,
-          approval_token: formData.settings.approval_token || undefined,
-          approval_vehicle_id: vehicleId || undefined,
-          visit_id: visitId || undefined,
-        },
-      });
-
-      if (response.data.success) {
-        setPreviewHtml(response.data.html);
-        setShowPreview(true);
-      } else {
-        throw new Error(response.data.message || 'فشل');
-      }
+      const html = await getDocumentHtml();
+      setPreviewHtml(html);
+      setShowPreview(true);
     } catch (error) {
       console.error('Error:', error);
       alert(error.message);
@@ -694,23 +671,10 @@ const DocumentPrint = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/documents/generate`, {
-        doc_type: docType,
-        workshop: formData.workshop,
-        customer: formData.customer,
-        vehicle: formData.vehicle,
-        items: formData.items.filter(item => item.description),
-        settings: {
-          ...formData.settings,
-          approval_token: formData.settings.approval_token || undefined,
-          approval_vehicle_id: vehicleId || undefined,
-          visit_id: visitId || undefined,
-        },
-      });
-
-      if (response.data.success && response.data.html) {
+      const html = previewHtml || (await getDocumentHtml());
+      if (html) {
         printWindow.document.open();
-        printWindow.document.write(response.data.html);
+        printWindow.document.write(html);
         printWindow.document.close();
         printWindow.focus();
         setTimeout(() => {

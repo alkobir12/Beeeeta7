@@ -94,5 +94,17 @@
     "created_at": "2026-02-10T14:33:19.983993",
     "updated_at": "2026-02-10T14:33:19.983993",
     "last_build_at": "2026-02-10T14:34:11.500982"
+  },
+  {
+    "id": "113976f7-e275-44aa-a582-e277d11fcffc",
+    "name": "تحرير مشروع apply 4",
+    "description": "اختبار apply",
+    "industry": "تقني",
+    "domain": "",
+    "status": "building",
+    "resale_ready": false,
+    "created_at": "2026-02-10T14:35:39.621061",
+    "updated_at": "2026-02-10T14:35:39.621061",
+    "last_build_at": "2026-02-10T14:36:17.922018"
   }
 ]

@@ -176,16 +176,13 @@ class ComprehensiveBackendTester:
         try:
             test_vehicle_data = {
                 "plateNumber": f"TEST-{datetime.now().strftime('%H%M%S')}",
-                "make": "تويوتا",
+                "brand": "تويوتا",
                 "model": "كامري",
                 "year": 2020,
                 "color": "أبيض",
-                "mileage": 50000,
                 "customerName": "عميل تجريبي",
                 "customerPhone": f"05{datetime.now().strftime('%H%M%S')}",
-                "customerEmail": "test@example.com",
-                "issueDescription": "فحص دوري",
-                "status": "diagnosis"
+                "customerEmail": "test@example.com"
             }
             
             response = self.session.post(f"{self.api_url}/vehicles", json=test_vehicle_data, timeout=15)

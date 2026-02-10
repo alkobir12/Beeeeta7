@@ -550,6 +550,42 @@ const VehicleDetails = () => {
     });
   }, []);
 
+  const activeVisit = useMemo(
+    () => visits.find((v) => (v.status || '').toLowerCase() === 'in_progress'),
+    [visits]
+  );
+
+  const expandedVisit = useMemo(
+    () => visits.find((v) => v.id === expandedVisitId),
+    [visits, expandedVisitId]
+  );
+
+  const guidanceList = useMemo(() => {
+    const missingCustomer = vehicle && !vehicle.customerName && !vehicle.customerId;
+    const noVisits = visits.length === 0;
+
+    return [
+      {
+        id: 'vehicle-info',
+        title: 'تأكد من بيانات العميل والمركبة',
+        message: 'راجع الاسم ورقم الجوال ولوحة المركبة لتجنب الأخطاء الإملائية والتكرار.',
+        condition: missingCustomer || noVisits,
+      },
+      {
+        id: 'visit-items',
+        title: 'تأكيد البنود والأسعار',
+        message: 'قبل الحفظ، تأكد من تسجيل البنود بالكامل ومراجعة الأسعار لتجنب الخطأ المالي.',
+        condition: Boolean(expandedVisitId),
+      },
+      {
+        id: 'visit-status',
+        title: 'لا تنس تحديث الحالة',
+        message: 'بعد الانتهاء من العمل حدّث حالة الزيارة لإغلاقها وعدم نسيانها.',
+        condition: Boolean(activeVisit),
+      },
+    ];
+  }, [vehicle, visits.length, expandedVisitId, activeVisit]);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);

@@ -178,5 +178,50 @@
     "agent": "summary",
     "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          {t('دخول')}\n+          {t('دخول')} \n         </Button>\n       </Flex>",
     "created_at": "2026-02-10T14:24:54.719220"
+  },
+  {
+    "id": "9ee14671-6dc8-4393-9a00-d9e7b9c449d0",
+    "session_id": "b7b62d71-03be-4d4d-a139-1f9959f453d2",
+    "project_id": "f921f88b-cbd7-40c3-a161-4a944e4abb78",
+    "role": "user",
+    "agent": null,
+    "content": "أضف data-testid لزر الدخول في Login.jsx",
+    "created_at": "2026-02-10T14:31:01.620893"
+  },
+  {
+    "id": "149bab79-ad85-4ba8-a54f-f6accc369e5a",
+    "session_id": "b7b62d71-03be-4d4d-a139-1f9959f453d2",
+    "project_id": "f921f88b-cbd7-40c3-a161-4a944e4abb78",
+    "role": "assistant",
+    "agent": "planner",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-            <button\n+            <button\n+              data-testid=\"login-button\"\n               onClick={handleLogin}\n               disabled={loading}\n               className=\"w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded\"\n             >\n               {loading ? t('loading') : t('login')}\n             </button>",
+    "created_at": "2026-02-10T14:31:10.262022"
+  },
+  {
+    "id": "2281f638-2eb3-4692-98ea-ea33b9d95227",
+    "session_id": "b7b62d71-03be-4d4d-a139-1f9959f453d2",
+    "project_id": "f921f88b-cbd7-40c3-a161-4a944e4abb78",
+    "role": "assistant",
+    "agent": "builder",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-        <button\n+        <button\n+          data-testid=\"login-button\"\n           onClick={handleLogin}\n           disabled={loading}\n           className=\"w-full\"\n         >\n           {loading ? t('common.loading') : t('auth.login')}\n         </button>\n...",
+    "created_at": "2026-02-10T14:31:10.661327"
+  },
+  {
+    "id": "fddb6a2e-7eb2-4dc0-b9c3-f07189c98df1",
+    "session_id": "b7b62d71-03be-4d4d-a139-1f9959f453d2",
+    "project_id": "f921f88b-cbd7-40c3-a161-4a944e4abb78",
+    "role": "assistant",
+    "agent": "reviewer",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ -246,7 +246,7 @@\n           disabled={loading}\n           onClick={handleLogin}\n         >\n-          {t('دخول')}\n+          {t('دخول')} \n         </Button>\n```",
+    "created_at": "2026-02-10T14:31:11.001380"
+  },
+  {
+    "id": "33afda5f-8915-4638-92e6-2c295f4da3fd",
+    "session_id": "b7b62d71-03be-4d4d-a139-1f9959f453d2",
+    "project_id": "f921f88b-cbd7-40c3-a161-4a944e4abb78",
+    "role": "assistant",
+    "agent": "summary",
+    "content": "diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx\n--- a/frontend/src/pages/Login.jsx\n+++ b/frontend/src/pages/Login.jsx\n@@ ...\n-        <button\n+        <button\n+          data-testid=\"login-button\"\n           onClick={handleLogin}\n           disabled={loading}\n           className=\"w-full\"\n         >\n           {loading ? t('common.loading') : t('auth.login')}\n         </button>\n...",
+    "created_at": "2026-02-10T14:31:11.354129"
   }
 ]

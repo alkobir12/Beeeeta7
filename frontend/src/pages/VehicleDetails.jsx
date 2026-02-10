@@ -592,6 +592,18 @@ const VehicleDetails = () => {
     ];
   }, [vehicle, visits, activeVisit]);
 
+  const canDeleteVisit = ['manager', 'admin'].includes(session?.role);
+
+  const filteredVisits = useMemo(() => {
+    if (visitFilter === 'open') {
+      return visits.filter((v) => (v.status || '').toLowerCase() !== 'completed');
+    }
+    if (visitFilter === 'closed') {
+      return visits.filter((v) => (v.status || '').toLowerCase() === 'completed');
+    }
+    return visits;
+  }, [visits, visitFilter]);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);

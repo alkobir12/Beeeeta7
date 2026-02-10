@@ -31,6 +31,8 @@ const MoltBot = () => {
   const [applyLoading, setApplyLoading] = useState(false);
   const [previewStatus, setPreviewStatus] = useState(null);
   const [lastPatchId, setLastPatchId] = useState(null);
+  const [filePreviewStatus, setFilePreviewStatus] = useState({});
+  const [filePatchIds, setFilePatchIds] = useState({});
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -164,6 +166,8 @@ const MoltBot = () => {
       setSessionId(data.session_id);
       setPreviewStatus(null);
       setLastPatchId(null);
+      setFilePreviewStatus({});
+      setFilePatchIds({});
       fetchProjects();
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر تشغيل وكلاء MoltBot', variant: 'destructive' });

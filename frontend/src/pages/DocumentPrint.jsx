@@ -96,7 +96,7 @@ const DocumentPrint = () => {
   useEffect(() => {
     loadWorkshopSettings();
     if (vehicleId) {
-      loadVehicleData(vehicleId);
+      loadVehicleData(vehicleId, { preserveItems: Boolean(visitId || operationId || invoiceId) });
       loadLatestApprovalToken(vehicleId);
     }
     if (visitId) {

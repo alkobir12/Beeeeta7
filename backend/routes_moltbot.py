@@ -115,6 +115,9 @@ class MoltbotChatRequest(BaseModel):
     message: str
     goal: Optional[str] = None
     use_agents: Optional[List[str]] = None
+    mode: Optional[str] = "builder"
+    target_files: Optional[List[str]] = None
+    project_root: Optional[str] = None
 
 
 class MoltbotChatResponse(BaseModel):
@@ -123,6 +126,126 @@ class MoltbotChatResponse(BaseModel):
     agents: Dict[str, str]
     summary: str
     messages: List[MoltbotMessage]
+    mode: Optional[str] = None
+    affected_files: Optional[List[str]] = None
+    blocked_files: Optional[List[str]] = None
+
+
+def _get_project_root(request_root: Optional[str] = None) -> Path:
+    env_root = os.environ.get("MOLTBOT_PROJECT_ROOT")
+    if not env_root:
+        raise HTTPException(status_code=500, detail="MOLTBOT_PROJECT_ROOT غير مضبوط")
+    base_root = Path(env_root).resolve()
+    if request_root:
+        requested = Path(request_root).resolve()
+        if base_root not in requested.parents and requested != base_root:
+            raise HTTPException(status_code=400, detail="مسار مشروع غير مسموح")
+        return requested
+    return base_root
+
+
+def _should_skip_dir(dir_name: str) -> bool:
+    blocked = {
+        "node_modules",
+        ".git",
+        "uploads",
+        "static",
+        "test_reports",
+        "tests",
+        "__pycache__",
+        ".venv",
+        ".ruff_cache",
+        ".pytest_cache",
+        ".emergent",
+    }
+    return dir_name in blocked
+
+
+def _scan_project_files(root: Path, max_files: int = 600) -> List[str]:
+    allowed_ext = {".py", ".js", ".jsx", ".ts", ".tsx", ".json", ".css", ".md"}
+    results = []
+    for base, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if not _should_skip_dir(d)]
+        for fname in files:
+            ext = Path(fname).suffix.lower()
+            if ext not in allowed_ext:
+                continue
+            full_path = Path(base) / fname
+            rel = str(full_path.relative_to(root))
+            results.append(rel)
+            if len(results) >= max_files:
+                return results
+    return results
+
+
+def _read_project_files(root: Path, files: List[str], max_chars: int = 5000) -> Dict[str, str]:
+    content = {}
+    for rel_path in files:
+        full_path = root / rel_path
+        if not full_path.exists() or not full_path.is_file():
+            continue
+        try:
+            text = full_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        if len(text) > max_chars:
+            text = text[:max_chars] + "\n...\n"
+        content[rel_path] = text
+    return content
+
+
+async def _select_files_with_llm(
+    api_key: str, model: str, message: str, file_list: List[str]
+) -> List[str]:
+    if not api_key or not model:
+        return []
+    selector_prompt = (
+        "أنت مساعد يختار الملفات المتأثرة فقط لتنفيذ تعديل مطلوب. "
+        "أعد إجابتك كقائمة JSON فقط (Array of strings) بدون شرح. "
+        "اختر أقل عدد ممكن من الملفات الضرورية." 
+    )
+    files_blob = "\n".join(f"- {f}" for f in file_list)
+    chat = (
+        LlmChat(
+            api_key=api_key,
+            session_id=f"selector-{uuid.uuid4()}",
+            system_message=selector_prompt,
+        ).with_model("openai", model)
+    )
+    response = await chat.send_message(
+        UserMessage(
+            text=f"طلب التعديل:\n{message}\n\nقائمة الملفات المتاحة:\n{files_blob}"
+        )
+    )
+    try:
+        selected = json.loads(response)
+        if isinstance(selected, list):
+            return [str(p) for p in selected if isinstance(p, str)]
+    except Exception:
+        return []
+    return []
+
+
+def _detect_blocked_files(patch_text: str, root: Path) -> List[str]:
+    if not patch_text:
+        return []
+    blocked = []
+    lines = patch_text.splitlines()
+    for idx, line in enumerate(lines):
+        if not line.startswith("+++ "):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        path = parts[1]
+        if path.startswith("b/"):
+            path = path[2:]
+        prev_line = lines[idx - 1] if idx > 0 else ""
+        nearby = "\n".join(lines[max(0, idx - 3):idx + 1])
+        if "new file mode" in nearby or prev_line.startswith("--- /dev/null"):
+            if (root / path).exists():
+                blocked.append(path)
+    return list(dict.fromkeys(blocked))
 
 
 def _save_project(project: Dict[str, Any]) -> Dict[str, Any]:
@@ -368,6 +491,12 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
     agents_response: Dict[str, str] = {}
     recorded_messages: List[MoltbotMessage] = []
 
+    mode = (payload.mode or "builder").strip().lower()
+    affected_files: List[str] = []
+    blocked_files: List[str] = []
+    project_context = ""
+    project_root = None
+
     openai_key = os.environ.get("EMERGENT_LLM_KEY")
     openai_model = os.environ.get("MOLTBOT_OPENAI_MODEL")
     deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -389,34 +518,86 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         "أنت وكيل مراجعة وجودة. قيّم المخاطر والثغرات واقترح تحسينات للأمان والأداء والتسويق."
     )
 
+    editor_policy = (
+        "أنت تعمل على تحرير مشروع FastAPI قائم دون إعادة كتابة كاملة. "
+        "التزم بالقواعد التالية: لا تغيّر البنية الأساسية، لا تكرر الأكواد الموجودة، عدّل فقط الأجزاء المرتبطة بطلب التحرير، "
+        "أنتج تعديلات minimal patch فقط بصيغة unified diff. "
+        "أظهر فقط الملفات التي تحتاج تعديل ولا تضف شرحًا. "
+        "لا تنشئ ملفًا جديدًا إذا كان موجودًا مسبقًا. "
+        "الإخراج يجب أن يحتوي على PATCH فقط بصيغة diff واضحة."
+    )
+
+    if mode == "editor":
+        project_root = _get_project_root(payload.project_root)
+        available_files = _scan_project_files(project_root)
+        target_files = payload.target_files or []
+        if target_files:
+            affected_files = [f for f in target_files if f in available_files]
+        else:
+            affected_files = await _select_files_with_llm(
+                openai_key or "",
+                openai_model or "",
+                payload.message.strip(),
+                available_files,
+            )
+            affected_files = [f for f in affected_files if f in available_files]
+
+        affected_files = affected_files[:8]
+        files_content = _read_project_files(project_root, affected_files)
+        if files_content:
+            context_blocks = []
+            for path, content in files_content.items():
+                context_blocks.append(f"FILE: {path}\n{content}\n")
+            project_context = "\n\n".join(context_blocks)
+
     if "planner" in agents:
         try:
             if not openai_key or not openai_model:
                 raise HTTPException(status_code=500, detail="إعدادات GPT غير مكتملة")
+            system_message = planner_prompt
+            user_message = payload.message.strip()
+            if mode == "editor":
+                system_message = f"{planner_prompt}\n\n{editor_policy}"
+                user_message = (
+                    f"طلب التحرير:\n{payload.message.strip()}\n\n"
+                    f"الملفات المتاحة للتعديل:\n" + "\n".join(f"- {f}" for f in affected_files)
+                )
+                if project_context:
+                    user_message += f"\n\nمحتوى الملفات:\n{project_context}"
+
             chat = (
                 LlmChat(
                     api_key=openai_key,
                     session_id=f"{session_id}-planner",
-                    system_message=planner_prompt,
+                    system_message=system_message,
                 )
                 .with_model("openai", openai_model)
             )
-            planner_response = await chat.send_message(
-                UserMessage(text=payload.message.strip())
-            )
+            planner_response = await chat.send_message(UserMessage(text=user_message))
             agents_response["planner"] = planner_response
         except Exception as exc:
             agents_response["planner"] = f"تعذر تشغيل وكيل التخطيط: {exc}"
 
     if "builder" in agents:
         try:
+            system_message = builder_prompt
+            user_message = payload.message.strip()
+            if mode == "editor":
+                system_message = f"{builder_prompt}\n\n{editor_policy}"
+                user_message = (
+                    f"طلب التحرير:\n{payload.message.strip()}\n\n"
+                    f"الملفات المتاحة للتعديل:\n" + "\n".join(f"- {f}" for f in affected_files)
+                )
+                if project_context:
+                    user_message += f"\n\nمحتوى الملفات:\n{project_context}"
+
             builder_response = await _call_openai_compatible(
                 deepseek_key,
                 deepseek_url,
                 deepseek_model,
                 [
-                    {"role": "system", "content": builder_prompt},
-                    {"role": "user", "content": payload.message.strip()},
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message},
                 ],
             )
             agents_response["builder"] = builder_response
@@ -425,13 +606,24 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
 
     if "reviewer" in agents:
         try:
+            system_message = reviewer_prompt
+            user_message = payload.message.strip()
+            if mode == "editor":
+                system_message = f"{reviewer_prompt}\n\n{editor_policy}"
+                user_message = (
+                    f"طلب التحرير:\n{payload.message.strip()}\n\n"
+                    f"الملفات المتاحة للتعديل:\n" + "\n".join(f"- {f}" for f in affected_files)
+                )
+                if project_context:
+                    user_message += f"\n\nمحتوى الملفات:\n{project_context}"
+
             reviewer_response = await _call_openai_compatible(
                 groq_key,
                 groq_url,
                 groq_model,
                 [
-                    {"role": "system", "content": reviewer_prompt},
-                    {"role": "user", "content": payload.message.strip()},
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message},
                 ],
             )
             agents_response["reviewer"] = reviewer_response
@@ -447,6 +639,15 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
                 f"وكيل البناء:\n{agents_response.get('builder','')}\n\n"
                 f"وكيل المراجعة:\n{agents_response.get('reviewer','')}"
             )
+            if mode == "editor":
+                summary_prompt = (
+                    "اجمع نتائج الوكلاء في PATCH واحد فقط بصيغة unified diff. "
+                    "لا تضف أي شرح أو نص خارج patch. "
+                    "التزم بالتعديلات minimal patch ولا تعيد كتابة الملفات كاملة.\n\n"
+                    f"وكيل التخطيط:\n{agents_response.get('planner','')}\n\n"
+                    f"وكيل البناء:\n{agents_response.get('builder','')}\n\n"
+                    f"وكيل المراجعة:\n{agents_response.get('reviewer','')}"
+                )
             summary_chat = (
                 LlmChat(
                     api_key=openai_key,
@@ -460,6 +661,9 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
             summary_text = "لم يتم إعداد GPT لتوليد الخلاصة."
     except Exception as exc:
         summary_text = f"تعذر توليد الخلاصة: {exc}"
+
+    if mode == "editor" and project_root:
+        blocked_files = _detect_blocked_files(summary_text, project_root)
 
     for agent_name, content in agents_response.items():
         stored = _store_message(
@@ -499,4 +703,7 @@ async def run_moltbot_chat(payload: MoltbotChatRequest):
         agents=agents_response,
         summary=summary_text,
         messages=recorded_messages,
+        mode=mode,
+        affected_files=affected_files or None,
+        blocked_files=blocked_files or None,
     )

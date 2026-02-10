@@ -92,7 +92,7 @@ const Login = () => {
             email: fallbackUser.email,
             role: fallbackUser.role,
             permissions: fallbackUser.permissions,
-            guidanceEnabled: fallbackUser.guidanceEnabled,
+            guidanceEnabled: fallbackUser.guidanceEnabled !== false,
             loginTime: new Date().toISOString()
           };
           localStorage.setItem('session', JSON.stringify(session));
@@ -118,7 +118,7 @@ const Login = () => {
         email: user.email,
         role: user.role,
         permissions: user.permissions || {},
-        guidanceEnabled: user.guidanceEnabled === true,
+        guidanceEnabled: user.guidanceEnabled !== false,
         loginTime: new Date().toISOString()
       };
 

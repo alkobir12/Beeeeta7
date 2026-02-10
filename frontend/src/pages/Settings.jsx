@@ -482,36 +482,19 @@ const Settings = () => {
       </Section>
 
       <Section title={t('settings.workshop_info')} icon={Building2}>
-        <Row label={t('settings.workshop_name')}>
-          <input 
-            className="text-left bg-transparent outline-none w-64"
-            style={{ color: 'var(--text-secondary)' }}
-            value={settings.workshopName}
-            onChange={e => setSettings({...settings, workshopName: e.target.value})}
-            placeholder={t('settings.workshop_name')}
-            data-testid="settings-workshop-name-input"
-          />
-        </Row>
-        <Row label={t('settings.workshop_phone')}>
-          <input 
-            className="text-left bg-transparent outline-none w-64"
-            style={{ color: 'var(--text-secondary)' }}
-            value={settings.workshopPhone}
-            onChange={e => setSettings({...settings, workshopPhone: e.target.value})}
-            placeholder="05xxxxxxxx"
-            data-testid="settings-workshop-phone-input"
-          />
-        </Row>
-        <Row label={t('settings.workshop_address')}>
-          <input 
-            className="text-left bg-transparent outline-none w-64"
-            style={{ color: 'var(--text-secondary)' }}
-            value={settings.workshopAddress}
-            onChange={e => setSettings({...settings, workshopAddress: e.target.value})}
-            placeholder={t('settings.workshop_address')}
-            data-testid="settings-workshop-address-input"
-          />
-        </Row>
+        <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)', background: 'var(--bg-card)' }} data-testid="settings-workshop-info-note">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            تم نقل بيانات الورشة إلى صفحة «ملف الورشة» لتجنب التكرار وضمان توحيد البيانات.
+          </p>
+          <button
+            onClick={() => navigate('/profile')}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
+            style={{ borderColor: 'var(--border-light)', color: 'var(--text-primary)' }}
+            data-testid="settings-open-workshop-profile"
+          >
+            فتح ملف الورشة
+          </button>
+        </div>
       </Section>
 
       <Section title={t('settings.system_appearance')} icon={Globe}>

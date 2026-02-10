@@ -46,6 +46,7 @@ const JournalEntries = lazy(() => import("./pages/JournalEntries"));
 const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial"));
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
 const SystemAudit = lazy(() => import("./pages/SystemAudit"));
+const MoltBot = lazy(() => import("./pages/MoltBot"));
 
 // Loading component
 const PageLoader = () => (
@@ -162,6 +163,7 @@ function App() {
 
                 <Route path="ai-financial" element={<AIFinancial />} />
                 <Route path="system-audit" element={<SystemAudit />} />
+                <Route path="moltbot" element={<MoltBot />} />
 
                 
               </Route>

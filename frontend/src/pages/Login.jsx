@@ -83,7 +83,7 @@ const Login = () => {
             role: 'admin',
             permissions: fallbackPermissions,
             isActive: true,
-            guidanceEnabled: false,
+            guidanceEnabled: true,
           };
           const session = { 
             id: fallbackUser.id,

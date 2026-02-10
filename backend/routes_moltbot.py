@@ -211,7 +211,7 @@ def _extract_snippets(content: str, keywords: List[str], radius: int = 6, max_sn
         end = min(len(lines), idx + radius + 1)
         block = "\n".join(lines[start:end])
         snippets.append(block)
-    return "\n...\n".join(snippets)
+    return "\n[SNIP]\n".join(snippets)
 
 
 async def _select_files_with_llm(

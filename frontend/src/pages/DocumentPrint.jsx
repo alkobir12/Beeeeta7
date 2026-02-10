@@ -187,7 +187,8 @@ const DocumentPrint = () => {
     }
   };
 
-  const loadVehicleData = async (id) => {
+  const loadVehicleData = async (id, options = {}) => {
+    const { preserveItems = false } = options;
     try {
       const { data } = await axios.get(`${API_URL}/vehicles/${id}`);
       if (data) {
@@ -208,12 +209,16 @@ const DocumentPrint = () => {
               discount: 0
             }));
 
+        const customerName = data.customerName || data.customer_name || '';
+        const customerPhone = data.customerPhone || data.customer_phone || '';
+        const customerId = data.customerId || data.customer_id || '';
+
         setFormData(prev => ({
           ...prev,
           customer: {
             ...prev.customer,
-            name: data.customerName || '',
-            phone: data.customerPhone || ''
+            name: customerName || prev.customer.name,
+            phone: customerPhone || prev.customer.phone
           },
           vehicle: {
             brand: data.brand || '',
@@ -225,8 +230,12 @@ const DocumentPrint = () => {
             mileage: data.mileage || '',
             notes: data.notes || ''
           },
-          items: finalItems.length > 0 ? finalItems : [{ description: '', quantity: 1, unit_price: 0, discount: 0 }]
+          items: preserveItems ? prev.items : (finalItems.length > 0 ? finalItems : [{ description: '', quantity: 1, unit_price: 0, discount: 0 }])
         }));
+
+        if (customerId && !customerName) {
+          loadCustomerData(customerId);
+        }
       }
     } catch (e) {
       console.error('Error loading vehicle:', e);

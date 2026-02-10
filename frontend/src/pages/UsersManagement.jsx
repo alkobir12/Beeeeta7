@@ -40,7 +40,7 @@ const UsersManagement = () => {
     role: 'employee',
     permissions: { ...DEFAULT_PERMISSIONS },
     isActive: true,
-    guidanceEnabled: false,
+    guidanceEnabled: true,
   });
 
   useEffect(() => { fetchUsers(); }, []);
@@ -89,7 +89,7 @@ const UsersManagement = () => {
       role: 'employee',
       permissions: { ...DEFAULT_PERMISSIONS },
       isActive: true,
-      guidanceEnabled: false,
+      guidanceEnabled: true,
     });
     setEditingId(null);
     setShowModal(false);

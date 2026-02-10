@@ -19,7 +19,8 @@
     },
     "isActive": true,
     "createdAt": "2025-11-15T15:31:38.451018",
-    "lastLogin": null
+    "lastLogin": null,
+    "guidanceEnabled": true
   },
   {
     "name": "S",
@@ -41,7 +42,8 @@
     "id": "522230c4-d47c-438e-8bb2-1d6d2b484ea1",
     "createdAt": "2025-12-03T19:25:16.176554",
     "lastLogin": null,
-    "isActive": true
+    "isActive": true,
+    "guidanceEnabled": true
   },
   {
     "name": "A",
@@ -63,6 +65,7 @@
     "id": "dde5fac4-fa9e-42a1-a16c-4c2bbef61dac",
     "createdAt": "2025-12-08T08:25:06.676970",
     "lastLogin": null,
-    "isActive": true
+    "isActive": true,
+    "guidanceEnabled": false
   }
 ]

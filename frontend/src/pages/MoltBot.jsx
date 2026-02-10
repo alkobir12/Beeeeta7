@@ -33,6 +33,8 @@ const MoltBot = () => {
   const [lastPatchId, setLastPatchId] = useState(null);
   const [filePreviewStatus, setFilePreviewStatus] = useState({});
   const [filePatchIds, setFilePatchIds] = useState({});
+  const [chatMessages, setChatMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -77,6 +79,21 @@ const MoltBot = () => {
       toast({ title: 'خطأ', description: 'تعذر تحميل مشاريع MoltBot', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMessages = async (session) => {
+    if (!session) return;
+    try {
+      setMessagesLoading(true);
+      const res = await fetch(`${API_URL}/moltbot/sessions/${session}/messages`);
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      setChatMessages(data || []);
+    } catch (e) {
+      toast({ title: 'تنبيه', description: 'تعذر تحميل سجل المحادثة', variant: 'destructive' });
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -168,6 +185,7 @@ const MoltBot = () => {
       setLastPatchId(null);
       setFilePreviewStatus({});
       setFilePatchIds({});
+      loadMessages(data.session_id);
       fetchProjects();
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر تشغيل وكلاء MoltBot', variant: 'destructive' });
@@ -427,7 +445,11 @@ const MoltBot = () => {
                 data-testid="moltbot-run-build-button"
               >
                 <Rocket size={18} />
-                {buildLoading ? 'جارٍ تشغيل الوكلاء...' : 'تشغيل البناء متعدد الوكلاء'}
+                {buildLoading
+                  ? 'جارٍ إرسال الطلب...'
+                  : mode === 'editor'
+                    ? 'إرسال طلب التعديل'
+                    : 'تشغيل البناء متعدد الوكلاء'}
               </button>
 
               {buildResult && (
@@ -758,6 +780,35 @@ const MoltBot = () => {
                       <h5 className="text-xs font-semibold text-amber-300 mb-2">وكيل المراجعة (Groq)</h5>
                       <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-reviewer-output">{buildResult.agents?.reviewer}</pre>
                     </div>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6" data-testid="moltbot-chat-history">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-white">سجل التفاعل</h4>
+                      {messagesLoading && <span className="text-xs text-slate-400">تحميل...</span>}
+                    </div>
+                    {chatMessages.length === 0 ? (
+                      <p className="text-xs text-slate-400">لا توجد رسائل بعد.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                        {chatMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`rounded-2xl px-4 py-3 text-xs border ${
+                              msg.role === 'user'
+                                ? 'bg-sky-500/10 border-sky-400/40 text-sky-100'
+                                : 'bg-white/5 border-white/10 text-slate-200'
+                            }`}
+                            data-testid={`moltbot-message-${msg.id}`}
+                          >
+                            <div className="flex items-center justify-between mb-2 text-[11px] text-slate-400">
+                              <span>{msg.role === 'user' ? 'المستخدم' : `الوكيل: ${msg.agent || 'assistant'}`}</span>
+                              <span>{new Date(msg.created_at).toLocaleString('ar')}</span>
+                            </div>
+                            <pre className="whitespace-pre-wrap">{msg.content}</pre>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -221,10 +221,22 @@
     "description": "اختبار rollback",
     "industry": "تقني",
     "domain": "",
-    "status": "draft",
+    "status": "building",
     "resale_ready": false,
     "created_at": "2026-02-10T16:33:38.500130",
     "updated_at": "2026-02-10T16:33:40.749707",
+    "last_build_at": "2026-02-10T16:54:01.643440"
+  },
+  {
+    "id": "88f51baa-ae24-40d6-af67-cfe54c662a8d",
+    "name": "Dashboard",
+    "description": "موقع fullstack لورشة صيانه سيارات",
+    "industry": "Workshop",
+    "domain": "",
+    "status": "draft",
+    "resale_ready": false,
+    "created_at": "2026-02-10T16:56:33.933652",
+    "updated_at": "2026-02-10T16:56:33.933652",
     "last_build_at": null
   }
 ]

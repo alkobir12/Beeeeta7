@@ -765,6 +765,7 @@ const Operations = () => {
                 </div>
               )}
             </div>
+            </div>
 
             <div className="flex flex-col items-end pt-4 gap-2">
               <button 

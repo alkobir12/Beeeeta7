@@ -58,16 +58,22 @@ export default function OperationCard({
       ? t('operations.purchase')
       : (operation.type || '-');
 
-  const typePill = operation.type === 'sale'
-    ? 'bg-emerald-500/10 text-emerald-200 border border-emerald-500/20'
-    : 'bg-rose-500/10 text-rose-200 border border-rose-500/20';
+  const isIncome = operation.type === 'sale';
+
+  const typePill = isIncome
+    ? 'bg-emerald-500/12 text-emerald-200 border border-emerald-500/25'
+    : 'bg-rose-500/12 text-rose-200 border border-rose-500/25';
 
   const scopePill = (operation.scope === 'workshop' || (!operation.scope && !operation.vehicleId))
     ? 'bg-slate-500/10 text-slate-200 border border-slate-500/20'
     : 'bg-sky-500/10 text-sky-200 border border-sky-500/20';
 
-  const cardBackground = 'radial-gradient(circle at 12% 18%, rgba(168,85,247,0.20), transparent 52%), radial-gradient(circle at 88% 78%, rgba(99,102,241,0.16), transparent 55%), rgba(255,255,255,0.06)';
-  const cardBorder = 'rgba(168,85,247,0.22)';
+  // Color-coded card by operation type (Income green / Expense red)
+  const cardBackground = isIncome
+    ? 'radial-gradient(circle at 12% 18%, rgba(16,185,129,0.22), transparent 54%), radial-gradient(circle at 88% 78%, rgba(99,102,241,0.14), transparent 55%), rgba(255,255,255,0.06)'
+    : 'radial-gradient(circle at 12% 18%, rgba(244,63,94,0.22), transparent 54%), radial-gradient(circle at 88% 78%, rgba(168,85,247,0.14), transparent 55%), rgba(255,255,255,0.06)';
+
+  const cardBorder = isIncome ? 'rgba(16,185,129,0.26)' : 'rgba(244,63,94,0.26)';
 
   const stop = (e) => e.stopPropagation();
 

@@ -883,6 +883,9 @@ const Operations = () => {
             </div>
 
             <div className="flex flex-col items-end pt-4 gap-2">
+              <div className="text-xs" style={{ color: styles.textMuted }}>
+                {t('operations.items_count') || 'العناصر'}: {form.items.length}
+              </div>
               <button 
                 type="submit" 
                 disabled={form.items.length === 0 || (form.scope === 'vehicle' && !activeVehicleId)}

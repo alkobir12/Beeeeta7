@@ -366,9 +366,11 @@ const Operations = () => {
     }
 
     if (form.scope === 'vehicle' && !activeVehicleId) {
+      const msg = t('operations.select_vehicle_required') || 'اختر مركبة أولاً';
+      setCreateError(msg);
       toast({
         title: t('common.error'),
-        description: t('operations.select_vehicle_required') || 'اختر مركبة أولاً',
+        description: msg,
         variant: 'destructive',
       });
       return;

@@ -1,252 +1,109 @@
 # AutoPro Workshop Management System PRD
 
-## مستند متطلبات المنتج - نظام إدارة ورشة الكبير للسيارات
-**آخر تحديث:** 03 فبراير 2026
-
-### نظرة عامة
-نظام إدارة ورشة سيارات متكامل يدعم اللغة العربية، مع وحدات محاسبية ومالية شاملة، وبوت واتساب ذكي.
+## Original Problem Statement
+نظام إدارة ورشة سيارات متكامل يدعم اللغة العربية، مع وحدات محاسبية ومالية شاملة، وبوت واتساب ذكي، ووحدة MoltBot للذكاء الاصطناعي.
 
 ---
 
-## ما تم إنجازه ✅
-
-### الإصدار الأول (الأساسي)
-- ✅ نظام تسجيل الدخول والمصادقة
-- ✅ لوحة تحكم رئيسية مع إحصائيات
-- ✅ إدارة المركبات والعملاء
-- ✅ إدارة الفنيين والخدمات
-- ✅ إدارة قطع الغيار والمخزون
-- ✅ نظام التقارير
-- ✅ إدارة الموردين
-
-### نظام الثيمات - 24-25 يناير 2025
-- ✅ **3 ثيمات قابلة للتبديل:**
-  - 🌙 **داكن**: الثيم الأساسي - خلفية داكنة، نصوص فاتحة
-  - ☀️ **فاتح**: خلفية بيضاء/رمادي فاتح، نصوص داكنة
-  - 💼 **داش برو**: sidebar داكن + محتوى فاتح (احترافي)
-- ✅ تبديل الثيم من صفحة الإعدادات
-- ✅ حفظ الثيم في localStorage
-- ✅ تطبيق فوري بدون إعادة تحميل
-- ✅ **تطبيق الثيمات على Dashboard و Operations و JournalEntries**
-
-### تحسين الأداء - 25 يناير 2025
-- ✅ **Code Splitting** باستخدام React.lazy و Suspense
-- ✅ تحميل الصفحات عند الطلب (Lazy Loading)
-- ✅ مكون PageLoader للتحميل
-
-### وحدات المحاسبة والمالية
-- ✅ **دليل الحسابات** (`/accounting/chart-of-accounts`)
-- ✅ **القيود اليومية** (`/accounting/journal-entries`) - **محدّث 25 يناير 2025**
-  - ✅ **CRUD كامل للقيود اليدوية**
-    - إنشاء قيد يدوي جديد
-    - تعديل القيود اليدوية
-    - حذف القيود اليدوية
-    - التحقق التلقائي من توازن القيد
-- ✅ **الميزانية العمومية** (`/accounting/balance-sheet`)
-- ✅ **قائمة الدخل** (`/accounting/income-statement`)
-- ✅ **قائمة التدفقات النقدية** (`/accounting/cash-flow`)
-- ✅ **ميزان المراجعة** (`/accounting/trial-balance`)
-
-### إصلاحات المحاسبة الجوهرية - 27 يناير 2026
-- ✅ **مصدر الحقيقة** أصبح `operations + journal_entries` (إيقاف الاعتماد على transactions)
-- ✅ **إنشاء القيد تلقائياً** عند حفظ العملية مع `source=operation` و `reference_id`
-- ✅ **ترحيل أعمدة جديدة** في `journal_entries`: `source` و `reference_id`
-- ✅ **التقارير المالية والتنبيهات** تعمل بالكامل من `journal_entries`
-
-### العمليات المالية - 25 يناير 2025
-- ✅ **رفع إيصال الدفع** في صفحة العمليات
-  - دعم الصور و PDF
-  - عرض اسم الملف المرفوع
-
-### تحسين الأداء والواجهات - 27 يناير 2026
-- ✅ ترحيل صفحة **Operations** و **Comprehensive Financial** إلى React Query
-- ✅ إصلاح تسجيل الدخول (Fallback لـ "مدير" عند فشل جلب المستخدمين)
-- ✅ إضافة قسم **Google Stitch** داخل صفحة الإعدادات لتوليد واجهات
-- ✅ نظام جلسات متعددة لمحادثات أبوفهد مع حفظ محلي لكل جلسة
-- ✅ خيار توليد "واجهة كاملة" في Stitch مع اقتراحات جاهزة
-- ✅ بطاقات ملخص سريعة داخل VehicleDetails
-
-### تحسينات الاعتماد والعملاء - 03 فبراير 2026
-- ✅ تحديث صفحة اعتماد العميل بإقرار قانوني وحقول OTP مع موافقة إجبارية
-- ✅ إصلاح ظهور checkbox وإضافة data-testid لجميع عناصر صفحة الاعتماد
-- ✅ نقل رمز OTP إلى رسالة الاعتماد عبر واتساب وإخفاؤه من صفحة الاعتماد
-- ✅ إزالة OTP من استجابة صفحة الاعتماد العامة (API) لمنع ظهوره نهائيًا
-- ✅ دعم تضمين OTP في خدمة واتساب مباشرةً عند إرسال طلب الاعتماد
-- ✅ تفعيل استيراد العملاء من Excel/CSV وإضافة زر الاستيراد بواجهة العملاء
-
-### مولتبوت - 10 فبراير 2026
-- ✅ إنشاء وحدة MoltBot مستقلة للمدير فقط داخل النظام
-- ✅ لوحة تحكم لإدارة مشاريع المواقع (إنشاء/تحديث الحالة/جاهز للبيع)
-- ✅ تكامل متعدد النماذج (GPT عبر Emergent + DeepSeek + Groq) مع تدفقات وكلاء متعددة
-- ✅ حفظ الجلسات والرسائل ونتائج الوكلاء
-- ✅ إضافة وضع التحرير الذكي لمشاريع FastAPI الحالية عبر diff فقط مع تحديد الملفات المتأثرة
-- ✅ إضافة زر تطبيق الـ patch مباشرة على المشروع (مع تحقق مسبق)
-- ✅ إضافة معاينة/فحص قبل التطبيق + دعم rollback للتراجع الفوري
-- ✅ دمج مفاتيح التفكير العشرين في منطق الوكلاء داخليًا
-- ✅ تفعيل تطبيق تدريجي (ملف بملف) مع موافقة لكل ملف
-- ✅ إضافة سجل تفاعلي للمحادثة مع إمكانية إرسال البرومبت ومراجعة الردود
-
-### إصلاحات الطباعة والملف التعريفي - 10 فبراير 2026
-- ✅ إلغاء شرط المعاينة قبل تحميل PDF وتوحيد مصدر HTML للمعاينة والطباعة
-- ✅ تحسين تحميل بيانات العميل/الورشة/البنود عند طباعة زيارة أو عملية
-- ✅ إزالة تكرار حقول بيانات الورشة من الإعدادات وربطها بصفحة ملف الورشة
-- ✅ تحسين حفظ ملف الورشة وتحديث البيانات بعد الحفظ
-
-### تحسين بنود الزيارة - 10 فبراير 2026
-- ✅ عرض جميع الخدمات والقطع المحفوظة داخل بنود الزيارة مع إدخال ذكي
-- ✅ حفظ الخدمات/القطع الجديدة تلقائياً عند الحفظ
-- ✅ تكبير حقول نوع البند واسم البند لتناسب الكمبيوتر والجوال
-
-### تحسين نظام الزيارات - 10 فبراير 2026
-- ✅ إضافة فلاتر عرض (كل الزيارات/المفتوحة/المغلقة) داخل ملف المركبة
-- ✅ تقييد حذف الزيارة للمشرفين فقط وبعد الإغلاق لتجنب الحذف غير المقصود
-
-### نظام الإرشادات الذكية - 10 فبراير 2026
-- ✅ إضافة نظام إرشادات **Step-by-Step** داخل ملف المركبة وصفحة العمليات
-- ✅ ربط الإرشادات بإعداد المستخدم (تفعيل/تعطيل من صفحة المستخدمين)
-- ✅ خطوات واضحة لتأكيد البنود وتحديث الحالة وتأكيد السداد
-
-### بوت الواتساب الذكي - 24 يناير 2025
-- ✅ **نظام واتساب متكامل** (`/api/whatsapp-bot/`)
-  - تكامل مع Infobip API
-  - الرد التلقائي باللهجة القصيمية (أبو فهد)
-  - تحليل الصور بالذكاء الاصطناعي (Gemini)
+## Core Requirements
+1. **Workshop Management**: Vehicle/customer management, visit tracking, service/parts catalog
+2. **Financial Module**: Operations, journal entries, chart of accounts, financial reports
+3. **MoltBot AI**: Intelligent code editor for FastAPI project analysis and modification
+4. **Smart Guidance**: Step-by-step instructions for elderly users
+5. **PDF/Document**: Invoice, quotation, diagnosis report generation
+6. **WhatsApp Bot**: Customer communication via Infobip API
 
 ---
 
-## البنية التقنية
+## What's Been Implemented
 
-### Frontend
-- **إطار العمل**: React 18
-- **التوجيه**: React Router v6
-- **التنسيق**: TailwindCSS
-- **الأيقونات**: Lucide React
-- **اللغة**: دعم كامل للعربية (RTL)
-- **تحسين الأداء**: React.lazy + Suspense
+### Visit System (Fixed 11 Feb 2026)
+- Fixed critical bug: visits disappearing after save/close (handleCloseVisit now saves items+notes)
+- Fixed backend 500 error (removed non-existent updated_at column)
+- Added loading state (isSaving) to prevent double-clicks
+- Added confirmation dialog before closing visits
+- Visit filters show counts (all/open/closed)
+- Warning when filter hides visits
+- Fixed "Invalid Date" display in dates section
 
-### Backend
-- **إطار العمل**: FastAPI
-- **قاعدة البيانات الأساسية**: Supabase (PostgreSQL)
-- **قاعدة البيانات الاحتياطية**: MongoDB
-- **AI**: Gemini 2.0 Flash, OpenAI GPT-4o-mini, GPT-5.2 (MoltBot), Groq, Llama 4 (Scout + Maverick عبر llama-stack)
-- **WhatsApp**: Infobip API
+### MoltBot (10 Feb 2026)
+- Multi-agent architecture (Planner, Builder, Reviewer)
+- Intelligent code editor with diff patches
+- File-by-file patch application with rollback
+- Interactive chat interface
 
-### APIs الرئيسية
-```
-# القيود المحاسبية - CRUD كامل
-GET    /api/finance/journal-entries              - قائمة القيود
-POST   /api/finance/journal-entries              - إنشاء قيد جديد
-GET    /api/finance/journal-entries/{id}         - جلب قيد واحد
-PUT    /api/finance/journal-entries/{id}         - تعديل قيد
-DELETE /api/finance/journal-entries/{id}         - حذف قيد
+### Smart Guidance (10 Feb 2026)
+- GuidanceStepper component for VehicleDetails and Operations
+- Per-user enable/disable via guidanceEnabled flag
 
-# التقارير المالية
-GET  /api/finance/chart-of-accounts              - دليل الحسابات
-GET  /api/finance/reports/balance-sheet          - الميزانية العمومية
-GET  /api/finance/reports/trial-balance          - ميزان المراجعة
-GET  /api/finance/reports/income-statement       - قائمة الدخل
-GET  /api/finance/reports/cash-flow              - التدفقات النقدية
-GET  /api/finance/alerts                          - تنبيهات المراقبة الدائمة
+### Financial/Accounting
+- Full CRUD for journal entries
+- Chart of accounts, balance sheet, income statement, cash flow
+- Auto journal entry creation from operations
+- React Query migration for Operations/Financial pages
 
-# العمليات
-POST /api/operations                             - إنشاء عملية جديدة
-
-# Stitch (توليد الواجهات)
-POST /api/stitch/generate                         - توليد واجهة عبر Stitch
-GET  /api/stitch/history                          - سجل التوليد
-GET  /api/stitch/status/{id}                      - حالة التوليد
-```
+### Other Completed Features
+- Theme system (dark/light/dash-pro)
+- Code splitting with React.lazy
+- PDF generation (direct fetch, no preview required)
+- Customer approval page with OTP
+- Customer import from Excel/CSV
+- WhatsApp bot integration
+- Vehicle files/photos upload
 
 ---
 
-## بيانات الاختبار
+## Architecture
 
-### تسجيل الدخول
-- **اسم المستخدم**: `مدير`
+### Frontend: React 18 + TailwindCSS + Shadcn/UI
+### Backend: FastAPI + Supabase (PostgreSQL) + MongoDB fallback
+### Key Routes
+- `/vehicle/:id` - Vehicle details with visits
+- `/operations` - Financial operations
+- `/moltbot` - AI code editor
+- `/print` - Document generation
 
-### معرّفات
-- **Workshop ID**: `finmodule-sync`
-- **API URL**: `https://guidance-elderly.preview.emergentagent.com`
-
----
-
-## المهام المكتملة في هذه الجلسة ✅
-
-| المهمة | الحالة | التاريخ |
-|--------|--------|---------|
-| CRUD للقيود اليدوية | ✅ مكتمل | 25 يناير 2025 |
-| تحسين الأداء (Code Splitting) | ✅ مكتمل | 25 يناير 2025 |
-| تطبيق الثيمات على الصفحات | ✅ مكتمل | 25 يناير 2025 |
-| رفع إيصال الدفع | ✅ موجود سابقاً | - |
-| إصلاح مصدر الحقيقة والتقارير | ✅ مكتمل | 27 يناير 2026 |
-| ترحيل React Query لصفحات مالية | ✅ مكتمل | 27 يناير 2026 |
-| إضافة Stitch في الإعدادات | ✅ مكتمل | 27 يناير 2026 |
-| جلسات متعددة لمحادثات أبوفهد | ✅ مكتمل | 28 يناير 2026 |
-| بطاقات ملخص VehicleDetails | ✅ مكتمل | 28 يناير 2026 |
-| صفحة اعتماد العميل + استيراد العملاء من Excel | ✅ مكتمل | 03 فبراير 2026 |
+### API Endpoints
+- `GET/POST /api/vehicles/{id}/visits` - Visit CRUD
+- `PUT/DELETE /api/visits/{id}` - Visit update/delete
+- `GET/POST /api/operations` - Financial operations
+- `POST /api/moltbot/chat` - AI chat
+- `POST /api/moltbot/apply-patch` - Apply code changes
 
 ---
 
-## المهام القادمة (Backlog)
+## Current Status
 
-### P2 - أولوية منخفضة
-- [ ] بث ردود أبوفهد (Streaming) لتحسين السرعة
-- [ ] اكتشاف ثيم النظام تلقائياً (Auto Dark/Light Mode)
-- [ ] CRUD كامل لدليل الحسابات
-- [ ] تعديل بيانات العملاء
-- [ ] تقارير PDF قابلة للطباعة
-- [ ] تصدير للـ Excel
-- [ ] تحسينات إضافية لمولت بوت (تصدير مشروع كقالب/تقرير قابل للبيع)
-- [ ] بث ردود مولت بوت (Streaming)
+### P0 - Critical (COMPLETED)
+- [x] Fix visits disappearing after save/close
 
----
+### P1 - High Priority
+- [ ] Integrate Llama 4 (Scout & Maverick) into MoltBot
+- [ ] Production site fixsa.online sync (blocked on user redeployment)
 
-## تاريخ التحديثات
+### P2 - Medium Priority
+- [ ] Enhance MoltBot with emergent.sh-like capabilities
+- [ ] Add filter/search to service/part selection in visits
+- [ ] General performance improvements
 
-| التاريخ | الوصف |
-|---------|-------|
-| 10 فبراير 2026 | تحسين نظام الزيارات بفلاتر العرض وتقييد الحذف | 
-| 10 فبراير 2026 | تحويل الإرشادات إلى نظام Step-by-Step متكامل |
-| 10 فبراير 2026 | إصلاح خطأ expandedVisitId في صفحة ملف المركبة |
-| 10 فبراير 2026 | إضافة نظام إرشادات ذكية عائمة وربطه بصلاحيات المستخدم |
-| 10 فبراير 2026 | تحسين بنود الزيارة: قائمة خدمات/قطع + حفظ تلقائي + حقول متجاوبة |
-| 10 فبراير 2026 | إصلاحات الطباعة: إلغاء شرط المعاينة + توحيد HTML + تحميل بيانات الورشة/العميل/البنود |
-| 10 فبراير 2026 | إزالة حقول الورشة المكررة من الإعدادات + تحسين حفظ ملف الورشة |
-| 10 فبراير 2026 | دمج Llama 4 Scout + Maverick عبر llama-stack داخل MoltBot |
-| 10 فبراير 2026 | إضافة UI تفاعلي لسجل المحادثة داخل MoltBot وإرسال البرومبت | 
-| 10 فبراير 2026 | تفعيل تطبيق تدريجي للـ patch (ملف بملف) مع معاينة/تراجع مستقل |
-| 10 فبراير 2026 | إضافة معاينة/فحص التعديل + rollback ومفاتيح التفكير العشرين في MoltBot |
-| 10 فبراير 2026 | إلغاء DeepSeek من MoltBot والاعتماد على GPT + Groq |
-| 10 فبراير 2026 | ترقية MoltBot لوضع محرّر FastAPI مع إخراج diff فقط |
-| 10 فبراير 2026 | إطلاق وحدة MoltBot متعددة الوكلاء لإدارة مواقع مستقلة قابلة للبيع |
-| 03 فبراير 2026 | تحسين صفحة اعتماد العميل + تفعيل استيراد العملاء من Excel/CSV |
-| 28 يناير 2026 | تحسين VehicleDetails ببطاقات ملخص للزيارات والعمليات |
-| 28 يناير 2026 | إضافة نطاق توليد Stitch (واجهة كاملة/قسم واحد) + اقتراحات جاهزة + وضع يدوي |
-| 28 يناير 2026 | جلسات متعددة لمحادثات أبوفهد + تحسين إدارة الجلسات |
-| 27 يناير 2026 | إصلاح مصدر الحقيقة + تفعيل قيود العمليات التلقائية + Stitch UI |
-| 27 يناير 2026 | ترحيل Operations و Comprehensive Financial إلى React Query |
-| 25 يناير 2025 | تحسين الأداء + تطبيق الثيمات على Dashboard و Operations |
-| 25 يناير 2025 | إضافة CRUD كامل للقيود اليدوية |
-| 24 يناير 2025 | إضافة نظام الثيمات (داكن/فاتح/داش برو) |
-| 24 يناير 2025 | إضافة بوت واتساب الكبير v3.1.0 |
-| 23 يناير 2025 | إضافة جميع وحدات المحاسبة والمالية |
+### P3 - Low Priority
+- [ ] quick_actions.subtitle translation visibility
+- [ ] Add "Reset Guidance" button in profile
+- [ ] Streaming responses for MoltBot/AbuFahd
+- [ ] Auto dark/light mode detection
+- [ ] Excel export for reports
 
 ---
 
-## ملاحظات مهمة
+## Test Credentials
+- Username: مدير
+- Workshop ID: finmodule-sync
+- API URL: https://guidance-elderly.preview.emergentagent.com
+- Groq API Key: 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
 
-### البيانات الحية
-- ✅ جميع البيانات المالية من **Supabase الحقيقي** (ليست وهمية)
-- ✅ القيود المحاسبية تُنشأ تلقائياً من العمليات
-- ✅ القيود اليدوية تُحفظ في جدول `journal_entries`
-
-### ملاحظة Stitch
-- ⚠️ Stitch لا يوفّر API عامة حالياً حسب دليل التكامل. تم توفير وضع يدوي (نسخ الوصف + فتح Stitch) عند التوليد.
-
-### الاختبارات
-- ✅ Backend: تم اختبار استيراد العملاء عبر curl بنجاح
-- ✅ Backend: تم التحقق من أن `/api/approvals/public/{token}` لا يعرض OTP
-- ✅ Frontend: تم التحقق من صفحة اعتماد العميل بدون OTP ظاهر + صفحة العملاء وزر الاستيراد
-- ✅ Frontend: تم التحقق من معاينة رسالة واتساب وتضمين OTP
-- 📁 لقطات: `/app/test_reports/approval_page_no_otp.png`, `/app/test_reports/customers_page.png`, `/app/test_reports/whatsapp_preview_otp.png`
-- 📁 ملفات الاختبار: `/app/test_reports/iteration_7.json`
+## Key Files
+- `frontend/src/pages/VehicleDetails.jsx` - Visit management
+- `backend/routes_extended.py` - Visit CRUD endpoints
+- `backend/visit_sync.py` - Visit-to-operation sync
+- `frontend/src/pages/MoltBot.jsx` - AI code editor
+- `backend/routes_moltbot.py` - MoltBot backend

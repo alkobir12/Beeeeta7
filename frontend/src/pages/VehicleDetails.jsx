@@ -212,17 +212,17 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
         status: status,
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: items }) // Store both structured items and text notes
+        notes: JSON.stringify({ text: notes, items: items })
       };
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       
       setIsEditing(false);
-      onUpdate(); // Refresh parent
-      toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات الزيارة' });
+      onUpdate();
+      toast({ title: 'تم الحفظ', description: `تم حفظ ${items.length} بند بنجاح` });
     } catch (e) {
-      console.error(e);
-      toast({ title: 'خطأ', description: 'فشل الحفظ', variant: 'destructive' });
+      console.error('Save visit error:', e);
+      toast({ title: 'خطأ', description: 'فشل الحفظ. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
     }
   };
 

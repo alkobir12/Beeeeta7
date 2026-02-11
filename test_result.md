@@ -12093,6 +12093,21 @@ Quick test for Operations page after fixing accounts.map error
 
 ### Test Results Summary: ✅ FULLY WORKING - ALL TESTS PASSED
 
+
+---
+## Operations Page Manual Operation Form + Delete Modal + Details Grid (2026-02-11)
+
+**Changes**
+- Restructured manual operation creation form into 4 sections: Basic Info / Linking / Payment / Items.
+- Added live total summary in Items section.
+- Added glass delete confirmation modal with operation summary (customer/type/total/date).
+- Enhanced OperationCard expanded view with full info grid + items table.
+
+**Test Results**
+- ✅ Frontend testing agent: login works, 24 operations render as cards, expand details shows info grid, delete modal opens and cancel works, live total updates.
+- ✅ Translation keys fixed for section headers (common.basic_info, common.linking).
+
+
 #### ✅ FIX VERIFICATION - SUCCESSFUL
 
 **Fix Applied (Lines 66-92 in Operations.jsx):**

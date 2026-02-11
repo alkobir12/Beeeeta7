@@ -466,6 +466,34 @@ const Operations = () => {
           className="rounded-[32px] p-5 sm:p-6"
           style={{ 
             backgroundColor: styles.cardBg,
+
+          {createError ? (
+            <div
+              className="mb-5 rounded-2xl border px-4 py-3"
+              style={{
+                backgroundColor: 'rgba(244,63,94,0.10)',
+                borderColor: 'rgba(244,63,94,0.25)',
+              }}
+              role="alert"
+              data-testid="operation-create-error-banner"
+            >
+              <div className="text-sm font-semibold" style={{ color: 'rgba(254,226,226,0.95)' }}>
+                {t('common.error') || 'خطأ'}
+              </div>
+              <div className="text-sm mt-1" style={{ color: 'rgba(254,226,226,0.82)' }}>
+                {createError}
+              </div>
+              <button
+                type="button"
+                className="mt-2 text-xs underline"
+                style={{ color: 'rgba(254,226,226,0.85)' }}
+                onClick={() => setCreateError('')}
+              >
+                {t('common.close') || 'إغلاق'}
+              </button>
+            </div>
+          ) : null}
+
             border: `1px solid ${styles.cardBorder}`,
             boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
             backdropFilter: 'blur(14px)',

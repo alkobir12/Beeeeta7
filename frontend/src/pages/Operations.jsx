@@ -615,7 +615,7 @@ const Operations = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.itemType')}</label>
+                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.itemType')}</label>
                   <select 
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 

@@ -353,6 +353,7 @@ const Operations = () => {
         paymentReceipt: null,
         accountingAccountId: ''
       });
+      setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
     } catch (e) {
       console.error('Failed to save operation:', e);
     }

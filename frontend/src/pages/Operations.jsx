@@ -282,13 +282,20 @@ const Operations = () => {
     }
   };
 
-  const handleDeleteOperation = async (op) => {
+  const requestDeleteOperation = (op) => {
     if (!op?.id) return;
-    if (!window.confirm(t('common.confirm_delete') || t('common.confirmDelete') || 'هل أنت متأكد من الحذف؟')) return;
+    setDeleteTarget(op);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteOperation = async () => {
+    if (!deleteTarget?.id) return;
     try {
-      setDeleteOpId(op.id);
-      await axios.delete(`${API_URL}/operations/${op.id}`);
+      setDeleteOpId(deleteTarget.id);
+      await axios.delete(`${API_URL}/operations/${deleteTarget.id}`);
       queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
     } catch (e) {
       console.error('Failed to delete operation:', e);
     } finally {

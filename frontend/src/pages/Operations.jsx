@@ -211,6 +211,26 @@ const Operations = () => {
   const ops = operationsQuery.data || [];
   const visits = visitsQuery.data || [];
 
+  const sortedOps = useMemo(() => {
+    const arr = Array.isArray(ops) ? [...ops] : [];
+    const getTs = (o) => {
+      try {
+        return new Date(o.date || o.op_date || o.createdAt || 0).getTime() || 0;
+      } catch {
+        return 0;
+      }
+    };
+    // Smart order (CEO view): newest first, then higher absolute total
+    arr.sort((a, b) => {
+      const dt = getTs(b) - getTs(a);
+      if (dt !== 0) return dt;
+      const at = Math.abs(Number(b.total || 0)) - Math.abs(Number(a.total || 0));
+      if (at !== 0) return at;
+      return String(b.id || '').localeCompare(String(a.id || ''));
+    });
+    return arr;
+  }, [ops]);
+
   useEffect(() => {
     if (vehicleIdFromUrl) {
       setForm(prev => ({ 

@@ -232,6 +232,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
       setStatus('in_progress');
       setIsEditing(true);
       setIsExpanded(true);
+      onUpdate();
       toast({ title: 'تم', description: 'تم إعادة فتح الزيارة للتعديل' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل إعادة فتح الزيارة', variant: 'destructive' });

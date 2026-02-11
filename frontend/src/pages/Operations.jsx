@@ -374,10 +374,13 @@ const Operations = () => {
 
         {/* Create Operation Card */}
         <div 
-          className="rounded-2xl p-6"
+          className="rounded-[32px] p-5 sm:p-6"
           style={{ 
             backgroundColor: styles.cardBg,
-            border: `1px solid ${styles.cardBorder}`
+            border: `1px solid ${styles.cardBorder}`,
+            boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)'
           }}
         >
           <div className="flex items-center gap-3 mb-6 pb-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>

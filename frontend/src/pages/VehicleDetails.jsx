@@ -583,6 +583,9 @@ const VehicleDetails = () => {
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   
+  // Page-level WhatsApp notification (persists across filter changes)
+  const [pageWhatsappNotification, setPageWhatsappNotification] = useState(null);
+  
   // Status & Notes (Vehicle Level)
   const [status, setStatus] = useState('diagnosis');
   const [notes, setNotes] = useState('');

@@ -871,6 +871,22 @@ const Operations = () => {
             });
             setConfirmOpen(false);
             setConfirmTarget(null);
+
+      <OperationDeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(v) => {
+          // prevent closing while delete is in-flight
+          if (deleteOpId) return;
+          setDeleteConfirmOpen(v);
+          if (!v) setDeleteTarget(null);
+        }}
+        operation={deleteTarget}
+        isRTL={isRTL}
+        t={t}
+        isLoading={Boolean(deleteOpId)}
+        onConfirm={confirmDeleteOperation}
+      />
+
             queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
           } catch (e) {
             console.error('Failed to confirm payment:', e);

@@ -7,7 +7,7 @@ Focused test to check AR calculation issue
 import requests
 import json
 
-BACKEND_URL = "https://smart-agents-52.preview.emergentagent.com/api"
+BACKEND_URL = "https://guidance-elderly.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def test_ar_calculation_issue():

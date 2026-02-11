@@ -629,8 +629,15 @@ const Operations = () => {
                     borderColor: styles.inputBorder,
                     color: styles.textPrimary,
                   }}
-                </div>
+                  data-testid="operation-payment-receipt-input"
+                />
+                {form.paymentReceipt && (
+                  <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
+                )}
               </div>
+
+              </div>
+              {/* end Section 1 */}
 
               {/* Section 2: Linking */}
               <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>

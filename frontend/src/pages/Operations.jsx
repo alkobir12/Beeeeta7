@@ -697,7 +697,7 @@ const Operations = () => {
               {form.items.length > 0 && (
                 <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: styles.cardBg, borderColor: styles.cardBorder }}>
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600">
+                    <thead style={{ backgroundColor: styles.tableBg, color: styles.textSecondary }}>
                       <tr>
                         <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
                         <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>

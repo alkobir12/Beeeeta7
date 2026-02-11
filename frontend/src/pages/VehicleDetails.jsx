@@ -117,6 +117,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(visit.status);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [techId, setTechId] = useState(visit.technicianId || visit.technician_id || '');
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');

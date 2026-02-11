@@ -497,6 +497,19 @@ const translations = {
     unknown: "غير معروف",
     not_specified: "غير محدد",
     urgent: "عاجل"
+    ,
+    basic_info: "المعلومات الأساسية",
+    linking: "الربط",
+    payment: "الدفع",
+    payment_status: "حالة الدفع",
+    issued: "صادرة",
+    draft: "مسودة",
+    paid: "مدفوع",
+    unpaid: "غير مدفوع",
+    delete_warning: "سيتم حذف العملية نهائيًا ولا يمكن التراجع.",
+    description: "الوصف",
+    optional: "اختياري"
+
   }
 };
 

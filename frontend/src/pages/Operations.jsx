@@ -757,192 +757,76 @@ const Operations = () => {
         </div>
 
         {/* Recent Operations */}
-        <div className="apple-card p-6">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-              <FileText size={20} />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-50">{t('operations.recentOperations')}</h2>
+              <p className="text-sm text-slate-200/70 mt-1">{t('operations.subtitle') || ''}</p>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('operations.recentOperations')}</h2>
           </div>
 
-          <div className="space-y-3">
-            {ops.map((op) => {
-              const opDate = new Date(op.date || op.op_date || op.createdAt);
-              const dateStr = opDate.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US');
-              const timeStr = opDate.toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-
-              const invoiceNum = op.invoiceNumber || '';
-              const shortInvoiceNum = invoiceNum && invoiceNum.startsWith('INV')
-                ? invoiceNum.slice(0, 7) // INV0000
-                : '';
-
-              const account = accounts.find((a) => (a.id || a.code) === op.accountId);
-              const fromToText = account
-                ? `${account.name_ar || account.name || account.code} → ${op.partnerName || '-'}`
-                : `${t('operations.account')} → ${op.partnerName || '-'}`;
-
-              const typeLabel = op.type === 'sale'
-                ? t('operations.sale')
-                : op.type === 'purchase'
-                  ? t('operations.purchase')
-                  : (op.type || '-');
-
-              return (
-                <div
+          {ops.length === 0 ? (
+            <div className="apple-card p-6 text-center">
+              <div className="text-sm text-slate-500">{t('operations.noOperations') || t('common.no_data') || '-'}</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {ops.map((op) => (
+                <OperationCard
                   key={op.id}
-                  data-testid={`operation-card-${op.id}`}
-                  className="apple-card p-4 hover:bg-gray-50/50 transition-colors cursor-pointer"
-                  onClick={() => {
-                    setSelectedOperation(op);
-                    setDetailsOpen(true);
+                  operation={op}
+                  isRTL={isRTL}
+                  t={t}
+                  accounts={accounts}
+                  isSaving={saveOpId === op.id}
+                  isDeleting={deleteOpId === op.id}
+                  onPrint={(o) => {
+                    if (!o?.id) return;
+                    navigate(`/print?type=invoice&operationId=${o.id}`);
                   }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-bold text-gray-900">
-                          {invoiceNum || '-'}
-                        </div>
-                        {shortInvoiceNum && (
-                          <div className="text-xs text-gray-500">({shortInvoiceNum})</div>
-                        )}
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          op.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {typeLabel}
-                        </span>
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                            op.scope === 'vehicle'
-                              ? 'bg-sky-50 text-sky-700 border border-sky-100'
-                              : 'bg-slate-50 text-slate-700 border border-slate-100'
-                          }`}
-                        >
-                          {op.scope === 'workshop' || (!op.scope && !op.vehicleId)
-                            ? t('operations.scopeWorkshop')
-                            : t('operations.scopeVehicle')}
-                        </span>
-                      </div>
+                  onViewVehicle={(o) => {
+                    if (!o?.vehicleId) return;
+                    navigate(`/vehicle/${o.vehicleId}`);
+                  }}
+                  onConfirmCreditPayment={(o) => {
+                    setConfirmTarget(o);
+                    setConfirmOpen(true);
+                  }}
+                  onDelete={(o) => handleDeleteOperation(o)}
+                  onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
-                      <div className="mt-2 text-sm text-gray-700">
-                        <span className="font-semibold">{op.partnerName || '-'}</span>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-gray-500">{dateStr} {timeStr}</span>
-                      </div>
-
-                      <div className="mt-1 text-xs text-gray-500">
-                        {op.paymentMethod === 'credit' ? t('operations.credit_unpaid') : (op.paymentMethod || '-')}
-                      </div>
-
-                      <div className="mt-2 text-xs text-gray-600">
-                        {fromToText}
-                      </div>
-
-                      {op.notes && (
-                        <div className="mt-2 text-xs text-gray-600 line-clamp-2">{op.notes}</div>
-                      )}
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <div className="text-lg font-bold text-gray-900">
-                        {Number(op.total || 0).toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-500">{t('common.currency')}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => navigate(`/print?type=invoice&operationId=${op.id}`)}
-                      className="apple-button-secondary text-xs h-8 px-3"
-                      title={t('print.print_operation')}
-                      data-testid={`operation-print-button-${op.id}`}
-                    >
-                      {t('print.print')}
-                    </button>
-
-                    {op.vehicleId && (
-                      <button
-                        onClick={() => navigate(`/vehicle/${op.vehicleId}`)}
-                        className="apple-button-secondary text-xs h-8 px-3"
-                        title={t('quick_actions.details')}
-                        data-testid={`operation-view-button-${op.id}`}
-                      >
-                        {t('buttons.view')}
-                      </button>
-                    )}
-
-                    {op.paymentMethod === 'credit' && (
-                      <button
-                        onClick={() => {
-                          setConfirmTarget(op);
-                          setConfirmOpen(true);
-                        }}
-                        className="apple-button-secondary text-xs h-8 px-3"
-                        title={t('operations.confirm_credit_payment')}
-                        data-testid={`operation-confirm-payment-button-${op.id}`}
-                      >
-                        {t('operations.confirm_credit_payment')}
-                      </button>
-                    )}
-
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm(t('common.confirm_delete'))) return;
-                        try {
-                          await axios.delete(`${API_URL}/operations/${op.id}`);
-                          queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
-                        } catch (e) {
-                          console.error('Failed to delete operation:', e);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-700 p-2"
-                      title={t('buttons.delete')}
-                      data-testid={`operation-delete-button-${op.id}`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-
-      <OperationDetailsModal
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        operation={selectedOperation}
-        accounts={accounts}
-        t={(k) => {
-          // small adapter to reuse existing translations
-          if (k === 'operations.from_to') return t('operations_ui.from_to');
-          if (k === 'operations.notes') return t('operations_ui.notes');
-          return t(k);
-        }}
-        isRTL={isRTL}
-        onPrint={() => {
-          if (!selectedOperation?.id) return;
-          navigate(`/print?type=invoice&operationId=${selectedOperation.id}`);
-        }}
-        onViewVehicle={() => {
-          if (!selectedOperation?.vehicleId) return;
-          navigate(`/vehicle/${selectedOperation.vehicleId}`);
-        }}
-        onDelete={async () => {
-          if (!selectedOperation?.id) return;
-          if (!window.confirm(t('common.confirm_delete'))) return;
-          try {
-            await axios.delete(`${API_URL}/operations/${selectedOperation.id}`);
-            queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+        <OperationDetailsModal
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+          operation={selectedOperation}
+          accounts={accounts}
+          t={(k) => {
+            // small adapter to reuse existing translations
+            if (k === 'operations.from_to') return t('operations_ui.from_to');
+            if (k === 'operations.notes') return t('operations_ui.notes');
+            return t(k);
+          }}
+          isRTL={isRTL}
+          onPrint={() => {
+            if (!selectedOperation?.id) return;
+            navigate(`/print?type=invoice&operationId=${selectedOperation.id}`);
+          }}
+          onViewVehicle={() => {
+            if (!selectedOperation?.vehicleId) return;
+            navigate(`/vehicle/${selectedOperation.vehicleId}`);
+          }}
+          onDelete={async () => {
+            if (!selectedOperation?.id) return;
+            await handleDeleteOperation(selectedOperation);
             setDetailsOpen(false);
             setSelectedOperation(null);
-          } catch (e) {
-            console.error('Failed to delete operation:', e);
-          }
-        }}
-      />
-
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          }}
+        />
       
       {/* أبوفهد (المساعد المالي) أصبح عبر الزر العائم الموحد */}
 

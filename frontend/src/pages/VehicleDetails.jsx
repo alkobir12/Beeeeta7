@@ -1168,9 +1168,9 @@ const VehicleDetails = () => {
 
           <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
             {[
-              { key: 'all', label: 'كل الزيارات' },
-              { key: 'open', label: 'المفتوحة' },
-              { key: 'closed', label: 'المغلقة' },
+              { key: 'all', label: 'كل الزيارات', count: visits.length },
+              { key: 'open', label: 'المفتوحة', count: visits.filter(v => (v.status || '').toLowerCase() !== 'completed').length },
+              { key: 'closed', label: 'المغلقة', count: visits.filter(v => (v.status || '').toLowerCase() === 'completed').length },
             ].map((filter) => (
               <button
                 key={filter.key}
@@ -1182,10 +1182,17 @@ const VehicleDetails = () => {
                 }`}
                 data-testid={`visit-filter-${filter.key}`}
               >
-                {filter.label}
+                {filter.label} ({filter.count})
               </button>
             ))}
           </div>
+
+          {visitFilter !== 'all' && filteredVisits.length === 0 && visits.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+              <span>لا توجد زيارات في هذا الفلتر. الزيارات موجودة في فلاتر أخرى.</span>
+              <button onClick={() => setVisitFilter('all')} className="text-amber-700 font-bold underline mr-2">عرض الكل</button>
+            </div>
+          )}
 
           <div className="space-y-4">
             {filteredVisits.length === 0 ? (

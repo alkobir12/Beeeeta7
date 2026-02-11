@@ -260,9 +260,15 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
         mileage: Number(mileage),
         notes: JSON.stringify({ text: notes, items: items })
       };
-      await axios.put(`${API_URL}/visits/${visit.id}`, payload);
+      const response = await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       setStatus('completed');
       setIsEditing(false);
+      
+      // Check for WhatsApp notification
+      if (response.data?.whatsappNotification) {
+        setWhatsappNotification(response.data.whatsappNotification);
+      }
+      
       onUpdate();
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {

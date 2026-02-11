@@ -1,0 +1,78 @@
+{
+  "summary": "Bug fix verification for visit disappearing issue completed. All 7 backend tests passed (100%) and frontend UI tests confirmed the fix. The main bug was that handleCloseVisit was NOT saving items/notes before closing - now it does. Backend update_visit endpoint fixed (removed non-existent updated_at column that caused 500 errors).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Vehicle Details - Dates Section",
+        "issues": ["Shows 'Invalid Date' for last update date (آخر تحديث)"]
+      }
+    ]
+  },
+  "passed_tests": [
+    "GET /api/vehicles/{vehicle_id}/visits - returns visits list correctly",
+    "POST /api/vehicles/{vehicle_id}/visits - creates visit with items in notes JSON",
+    "PUT /api/visits/{visit_id} - updates visit with status=completed, exitDate, notes (with items), mileage WITHOUT 500 error",
+    "GET /api/vehicles/{vehicle_id}/visits after update - visits persist after being closed (BUG FIX VERIFIED)",
+    "DELETE /api/visits/{visit_id} - cleanup works correctly",
+    "Multiple update variations do NOT return 500 error (updated_at column removed)",
+    "Visit filter counts logic (all, open, closed) works correctly",
+    "Frontend: Visit filter buttons show counts (كل الزيارات (1), المفتوحة (0), المغلقة (1))",
+    "Frontend: Visit card expands correctly showing items table",
+    "Frontend: Items persist in visit after close (verified: 'تبديل سيرمكينة' service with price 50 ر.س)",
+    "Frontend: Reopen button visible on completed visits",
+    "Frontend: Technician dropdown and mileage input visible",
+    "Frontend: Notes textarea visible",
+    "Frontend: Print/Delete buttons visible for manager role"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_visit_crud_bug_fix.py",
+    "/app/test_reports/pytest/pytest_visit_crud.xml"
+  ],
+  "action_items": [
+    "Minor: Fix 'Invalid Date' display in vehicle dates section (آخر تحديث shows Invalid Date)"
+  ],
+  "critical_code_review_comments": [
+    "handleCloseVisit now correctly saves items/notes/mileage alongside status change - BUG FIXED",
+    "Backend update_visit endpoint no longer includes non-existent updated_at column - 500 ERROR FIXED",
+    "Confirmation dialog added before closing visit - IMPLEMENTED",
+    "Loading state (isSaving) prevents double-clicks - IMPLEMENTED",
+    "Visit filters show count of visits per filter - IMPLEMENTED"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_visit_crud_bug_fix.py"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7 tests passed)",
+    "frontend": "95% (all major features working, minor date display issue)"
+  },
+  "test_credentials": {
+    "session": {"username": "مدير", "role": "manager", "guidanceEnabled": false},
+    "test_vehicle_id": "ca81024e-195b-464e-9671-0f532aad1545"
+  },
+  "seed_data_creation": "Created multiple test visits during testing, cleaned up automatically by test fixtures",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Visit CRUD bug fix has been verified. The visits no longer disappear after being saved and closed. Backend PUT /api/visits/{visit_id} no longer returns 500. Frontend visit filters show counts correctly. Test vehicle ca81024e-195b-464e-9671-0f532aad1545 has 1 completed visit with 1 service item.",
+  "rca_of_the_issue": {
+    "root_cause": "Two issues: 1) Frontend handleCloseVisit only sent status+exitDate without items/notes/mileage. 2) Backend update_visit tried to set updated_at column which doesn't exist in Supabase vehicle_visits table",
+    "reproduction_steps": [
+      "1. Create a new visit for a vehicle",
+      "2. Add items (services/parts) to the visit",
+      "3. Click 'Save and Close' button",
+      "4. Observe: Items were lost because handleCloseVisit didn't include them in payload",
+      "5. Backend also returned 500 due to non-existent updated_at column"
+    ],
+    "mitigation": [
+      "handleCloseVisit now builds payload with all fields: status, exitDate, technicianId, mileage, notes (with items JSON)",
+      "Backend removed updated_at from update payload since column doesn't exist",
+      "Added confirmation dialog before closing",
+      "Added isSaving loading state to prevent double-clicks"
+    ]
+  }
+}

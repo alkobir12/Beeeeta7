@@ -630,6 +630,7 @@ const Operations = () => {
                 )}
               </div>
             </div>
+            </div>
 
             {/* Items Section */}
             <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>

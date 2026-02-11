@@ -592,6 +592,19 @@ const Operations = () => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('common.description') || 'الوصف'}</label>
+                <textarea
+                  className="apple-input h-[44px] py-2"
+                  style={{ minHeight: 44, resize: 'vertical' }}
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  placeholder={t('common.optional') || 'اختياري'}
+                  data-testid="operation-notes-input"
+                />
+              </div>
+
+
               {/* رفع إيصال الدفع */}
               <div className="space-y-2">
                 <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>

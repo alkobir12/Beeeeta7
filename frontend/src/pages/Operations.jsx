@@ -732,7 +732,7 @@ const Operations = () => {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-gray-50 font-bold text-gray-900">
+                    <tfoot className="font-bold" style={{ backgroundColor: styles.tableBg, color: styles.textPrimary }}>
                       <tr>
                         <td colSpan="4" className="p-3 text-left">{t('operations.total')}:</td>
                         <td className="p-3 text-[#0071E3]">{subtotal.toFixed(2)} {t('operations.SAR')}</td>

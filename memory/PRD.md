@@ -128,3 +128,4 @@
 | 11 Feb 2026 | Auto WhatsApp notification on visit close + page-level banner |
 | 11 Feb 2026 | Fix visits disappearing + filter counts + Invalid Date fix |
 | 10 Feb 2026 | MoltBot, Smart Guidance, PDF fixes, Visit UI improvements |
+| 11 Feb 2026 | Operations page UI/UX refresh: dashboard-style cards + expandable details + inline edit items/prices |

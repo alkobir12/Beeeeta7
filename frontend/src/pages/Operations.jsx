@@ -255,13 +255,20 @@ const Operations = () => {
   const handleUpdateOperationItems = async (opId, items) => {
     try {
       setSaveOpId(opId);
-      const current = ops.find((o) => o.id === opId) || {};
+
+      const safeItems = Array.isArray(items) ? items : [];
+      const newTotal = safeItems.reduce(
+        (sum, it) => sum + (Number(it.quantity || 1) * Number(it.price || 0)),
+        0
+      );
+
       const payload = {
-        ...current,
-        items,
-        // ensure backend recomputes total
+        items: safeItems,
+        subtotal: newTotal,
+        total: newTotal,
         workshopId: workshopId || null,
       };
+
       await updateOperationMutation.mutateAsync({ opId, payload });
       return true;
     } catch (e) {

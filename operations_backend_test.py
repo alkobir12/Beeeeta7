@@ -101,7 +101,7 @@ def create_test_operation():
     # Create minimal payload as specified
     operation_payload = {
         "workshopId": "finmodule-sync",
-        "accountId": "113",  # Accounts receivable
+        "accountId": None,  # Use null like existing operations
         "partnerType": "customer",
         "partnerName": "عميل اختبار العمليات",
         "type": "sale",

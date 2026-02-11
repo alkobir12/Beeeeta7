@@ -450,7 +450,7 @@ const Operations = () => {
               {/* اختيار المركبة (يظهر فقط عندما يكون التصنيف = مركبة) */}
               {form.scope === 'vehicle' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{t('operations.vehicle')}</label>
+                  <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
                   <div className="relative">
                     <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <select 
@@ -474,7 +474,7 @@ const Operations = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.operationDateLabel')}</label>
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operationDateLabel')}</label>
                 <input
                   type="date"
                   value={form.date}
@@ -486,7 +486,7 @@ const Operations = () => {
               {/* زيارة المركبة / التاريخ (أيضًا فقط في حالة مركبة) */}
               {form.scope === 'vehicle' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{t('operations.date')}</label>
+                  <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.date')}</label>
                   <div className="relative">
                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <select 
@@ -509,7 +509,7 @@ const Operations = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.operation_type')}</label>
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operation_type')}</label>
                 <div className="relative">
                   <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -548,7 +548,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
                   {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
                 </label>
                 <div className="relative">
@@ -564,7 +564,7 @@ const Operations = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">{t('operations.paymentMethod')}</label>
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
                 <div className="relative">
                   <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <select 
@@ -583,7 +583,7 @@ const Operations = () => {
 
               {/* رفع إيصال الدفع */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
                   📎 {t('operations.payment_receipt_optional')}
                 </label>
                 <input

@@ -13,6 +13,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
 import OperationDetailsModal from '../components/OperationDetailsModal';
 import OperationCard from '../components/OperationCard';
+import OperationDeleteConfirmDialog from '../components/OperationDeleteConfirmDialog';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 

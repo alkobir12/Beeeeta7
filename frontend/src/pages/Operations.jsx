@@ -627,6 +627,9 @@ const Operations = () => {
                   }}
                   data-testid="operation-payment-receipt-input"
                 />
+                {form.paymentReceipt && (
+                  <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
+                )}
               </div>
 
               </div>

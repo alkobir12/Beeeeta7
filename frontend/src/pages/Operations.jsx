@@ -595,7 +595,12 @@ const Operations = () => {
                       setForm({ ...form, paymentReceipt: file });
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  style={{
+                    backgroundColor: styles.inputBg,
+                    borderColor: styles.inputBorder,
+                    color: styles.textPrimary,
+                  }}
                   data-testid="operation-payment-receipt-input"
                 />
                 {form.paymentReceipt && (

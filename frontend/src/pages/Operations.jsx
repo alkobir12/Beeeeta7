@@ -710,11 +710,11 @@ const Operations = () => {
                     <tbody className="divide-y" style={{ borderColor: 'rgba(148,163,184,0.14)' }}>
                       {form.items.map((it, idx)=> (
                         <tr key={idx}>
-                          <td className="p-3 text-gray-600">{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
-                          <td className="p-3 font-medium text-gray-900">{it.name}</td>
-                          <td className="p-3 text-gray-600">{it.quantity}</td>
-                          <td className="p-3 text-gray-600">{it.price}</td>
-                          <td className="p-3 font-medium text-gray-900">{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
+                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
+                          <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{it.name}</td>
+                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.quantity}</td>
+                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.price}</td>
+                          <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
                           <td className="p-3 text-left">
                             <button 
                               type="button"
@@ -723,7 +723,7 @@ const Operations = () => {
                                 newItems.splice(idx, 1);
                                 setForm({...form, items: newItems});
                               }}
-                              className="text-red-400 hover:text-red-600 p-1"
+                              className="text-rose-200 hover:text-rose-100 p-1"
                               data-testid={`operation-remove-item-button-${idx}`}
                             >
                               <Trash2 size={16} />

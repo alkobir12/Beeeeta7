@@ -498,13 +498,6 @@ const Operations = () => {
               </button>
             </div>
           ) : null}
-
-            border: `1px solid ${styles.cardBorder}`,
-            boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)'
-          }}
-        >
           <div className="flex items-center gap-3 mb-6 pb-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
               <Plus size={20} className="text-white" />

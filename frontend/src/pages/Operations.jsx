@@ -883,6 +883,22 @@ const Operations = () => {
           }
         }}
       />
+      
+      <OperationDeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(v) => {
+          // prevent closing while delete is in-flight
+          if (deleteOpId) return;
+          setDeleteConfirmOpen(v);
+          if (!v) setDeleteTarget(null);
+        }}
+        operation={deleteTarget}
+        isRTL={isRTL}
+        t={t}
+        isLoading={Boolean(deleteOpId)}
+        onConfirm={confirmDeleteOperation}
+      />
+      
       <span data-testid="confirm-open-state" className="hidden">{confirmOpen ? 'open' : 'closed'}</span>
 
     </div>

@@ -707,7 +707,7 @@ const Operations = () => {
                         <th className="p-3"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y" style={{ borderColor: 'rgba(148,163,184,0.14)' }}>
                       {form.items.map((it, idx)=> (
                         <tr key={idx}>
                           <td className="p-3 text-gray-600">{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>

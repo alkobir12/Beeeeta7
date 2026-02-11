@@ -161,6 +161,28 @@ const Operations = () => {
     }
   });
 
+  const updateOperationMutation = useMutation({
+    mutationFn: async ({ opId, payload }) => {
+      const res = await axios.put(`${API_URL}/operations/${opId}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+      toast({
+        title: t('common.success'),
+        description: t('operations.saved_successfully') || 'تم حفظ العملية',
+      });
+    },
+    onError: (e) => {
+      const detail = e?.response?.data?.detail || e?.message;
+      toast({
+        title: t('common.error'),
+        description: detail || t('operations.save_failed') || 'فشل حفظ العملية',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const activeVehicleId = form.scope === 'vehicle'
     ? (form.vehicleId || vehicleIdFromUrl)
     : '';

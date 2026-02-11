@@ -341,19 +341,25 @@ const Operations = () => {
     e.preventDefault();
 
     // Validate required fields
+    setCreateError('');
+
     if (!form.partnerName) {
+      const msg = t('operations.customer_required') || 'اكتب اسم العميل/المورد';
+      setCreateError(msg);
       toast({
         title: t('common.error'),
-        description: t('operations.customer_required') || 'اكتب اسم العميل/المورد',
+        description: msg,
         variant: 'destructive',
       });
       return;
     }
 
     if (!form.accountId) {
+      const msg = t('operations.account_required') || 'اختر الحساب';
+      setCreateError(msg);
       toast({
         title: t('common.error'),
-        description: t('operations.account_required') || 'اختر الحساب',
+        description: msg,
         variant: 'destructive',
       });
       return;

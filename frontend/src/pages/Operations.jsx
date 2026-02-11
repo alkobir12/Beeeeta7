@@ -256,6 +256,15 @@ const Operations = () => {
     setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
   };
 
+  const getErrorMessage = (e) => {
+    const detail = e?.response?.data?.detail;
+    if (Array.isArray(detail)) {
+      return detail.map((x) => x?.msg || x?.message || JSON.stringify(x)).join(' | ');
+    }
+    if (detail && typeof detail === 'object') return JSON.stringify(detail);
+    return detail || e?.response?.data?.message || e?.message || t('common.error') || 'حدث خطأ';
+  };
+
   const createOperationMutation = useMutation({
     mutationFn: async (payload) => {
       const res = await axios.post(`${API_URL}/operations`, payload);
@@ -269,10 +278,10 @@ const Operations = () => {
       });
     },
     onError: (e) => {
-      const detail = e?.response?.data?.detail || e?.message;
+      const msg = getErrorMessage(e);
       toast({
         title: t('common.error'),
-        description: detail || t('operations.save_failed') || 'فشل حفظ العملية',
+        description: msg || t('operations.save_failed') || 'فشل حفظ العملية',
         variant: 'destructive',
       });
     },
@@ -329,7 +338,25 @@ const Operations = () => {
   const submit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields for vehicle-linked operations
+    // Validate required fields
+    if (!form.partnerName) {
+      toast({
+        title: t('common.error'),
+        description: t('operations.customer_required') || 'اكتب اسم العميل/المورد',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!form.accountId) {
+      toast({
+        title: t('common.error'),
+        description: t('operations.account_required') || 'اختر الحساب',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (form.scope === 'vehicle' && !activeVehicleId) {
       toast({
         title: t('common.error'),
@@ -375,7 +402,12 @@ const Operations = () => {
       });
       setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
     } catch (e) {
-      console.error('Failed to save operation:', e);
+      const msg = getErrorMessage(e);
+      toast({
+        title: t('common.error'),
+        description: msg || t('operations.save_failed') || 'فشل حفظ العملية',
+        variant: 'destructive',
+      });
     }
   };
 

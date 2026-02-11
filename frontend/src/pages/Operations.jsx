@@ -37,6 +37,9 @@ const Operations = () => {
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const [saveOpId, setSaveOpId] = useState(null);
+  const [deleteOpId, setDeleteOpId] = useState(null);
+
   const [form, setForm] = useState({ 
     accountId: '', 
     vehicleId: '',

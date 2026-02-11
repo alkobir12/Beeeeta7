@@ -409,7 +409,11 @@ const Operations = () => {
           </div>
 
           <form onSubmit={submit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-5">
+              {/* Section 1: Basic Info */}
+              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.basic_info') || 'المعلومات الأساسية'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* تصنيف العملية: مركبة / ورشة عامة */}
               <div className="space-y-2">
                 <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.scopeLabel')}</label>

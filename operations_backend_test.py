@@ -293,22 +293,33 @@ def main():
     
     # Test 2: Create operation if needed
     created_operation = create_test_operation()
+    operation_id = None
+    
     if created_operation and created_operation.get('id'):
         results["create_operation"] = True
         results["created_operation_id"] = created_operation['id']
         operation_id = created_operation['id']
-        
+    else:
+        # If creation failed, use an existing operation for testing update/delete
+        if operations_with_id:
+            operation_id = operations_with_id[0]['id']
+            print(f"\n⚠️  Using existing operation for update/delete tests: {operation_id}")
+    
+    if operation_id:
         # Test 3: Get single operation
         single_operation = test_get_single_operation(operation_id)
         results["get_single_operation"] = single_operation is not None
         
-        # Test 4: Update operation
-        updated_operation = test_update_operation(operation_id)
-        results["update_operation"] = updated_operation is not None
-        
-        # Test 5: Delete operation
-        delete_success = test_delete_operation(operation_id)
-        results["delete_operation"] = delete_success
+        # Test 4: Update operation (only if we created it, not existing ones)
+        if results["create_operation"]:
+            updated_operation = test_update_operation(operation_id)
+            results["update_operation"] = updated_operation is not None
+            
+            # Test 5: Delete operation (only if we created it)
+            delete_success = test_delete_operation(operation_id)
+            results["delete_operation"] = delete_success
+        else:
+            print(f"\n⚠️  Skipping update/delete tests on existing operation to avoid data corruption")
     
     # Final verification - check operations list again
     print("\n🔄 Final verification - checking operations list...")

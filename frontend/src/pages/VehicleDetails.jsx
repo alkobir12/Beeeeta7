@@ -1313,6 +1313,7 @@ const VehicleDetails = () => {
                     visit={normVisit}
                     technicians={technicians}
                     onUpdate={fetchData}
+                    onVisitClosed={handleVisitClosed}
                     approvals={visitApprovals}
                     onDelete={handleDeleteVisit}
                     servicesCatalog={servicesCatalog}

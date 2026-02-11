@@ -278,8 +278,9 @@ const Operations = () => {
   const handleUpdateOperationItems = async (opId, items) => {
     try {
       setSaveOpId(opId);
+      const current = ops.find((o) => o.id === opId) || {};
       const payload = {
-        ...ops.find((o) => o.id === opId),
+        ...current,
         items,
         // ensure backend recomputes total
         workshopId: workshopId || null,

@@ -2475,7 +2475,6 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 upd["notes"] = payload["notes"]
             if "technicianId" in payload:
                 upd["technician_id"] = payload["technicianId"]
-            upd["updated_at"] = datetime.now(timezone.utc).isoformat()
 
             res = (
                 supa.client.table("vehicle_visits")

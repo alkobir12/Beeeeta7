@@ -873,7 +873,7 @@ const Operations = () => {
             </div>
           </div>
 
-          {ops.length === 0 ? (
+          {sortedOps.length === 0 ? (
             <div className="apple-card p-6 text-center">
               <div className="text-sm text-slate-500">{t('operations.noOperations') || t('common.no_data') || '-'}</div>
             </div>

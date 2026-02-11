@@ -21,7 +21,7 @@ const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const Operations = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
-  const isLight = false; // force glass/dark look for consistent UI
+  const isLight = false; // keep dark/glass look for operations page
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -2457,6 +2457,7 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
     """Update a visit"""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        print(f"📝 Update Visit {visit_id[:8]}: keys={list(payload.keys())} status={payload.get('status','--')}")
 
         if provider == "supabase":
             from supabase_service import SupabaseService
@@ -2474,6 +2475,7 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 upd["notes"] = payload["notes"]
             if "technicianId" in payload:
                 upd["technician_id"] = payload["technicianId"]
+            upd["updated_at"] = datetime.now(timezone.utc).isoformat()
 
             res = (
                 supa.client.table("vehicle_visits")
@@ -2481,10 +2483,12 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 .eq("id", visit_id)
                 .execute()
             )
-            r = (res.data or [{}])[0]
+            if not res.data:
+                raise HTTPException(status_code=404, detail="Visit not found")
+            r = res.data[0]
+            print(f"   Visit updated in DB: status={r.get('status')} notes_len={len(r.get('notes','') or '')}")
             
             # --- SYNC TO OPERATIONS (FINANCE) ---
-            # Trigger sync whenever items/notes/status change
             if "notes" in payload or "status" in payload:
                 await _sync_visit_to_operation(visit_id, r, supa_service=supa)
             # ------------------------------------

@@ -247,8 +247,10 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
   const latestApproval = approvals?.[0];
 
   const handleCloseVisit = async () => {
+    if (isSaving) return;
+    if (!window.confirm('هل تريد حفظ جميع البنود وإغلاق الزيارة؟')) return;
+    setIsSaving(true);
     try {
-      // Save items and notes FIRST, then close
       await persistCatalogEntries();
       const payload = {
         status: 'completed',
@@ -265,6 +267,8 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
     } catch (e) {
       console.error('Close visit error:', e);
       toast({ title: 'خطأ', description: 'فشل إغلاق الزيارة. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 

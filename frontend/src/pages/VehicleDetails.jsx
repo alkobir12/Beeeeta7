@@ -275,6 +275,10 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
       // Check for WhatsApp notification
       if (response.data?.whatsappNotification) {
         setWhatsappNotification(response.data.whatsappNotification);
+        // Store in ref to preserve across re-renders from onUpdate
+        whatsappNotificationRef.current = response.data.whatsappNotification;
+        // Keep card expanded to show notification
+        setIsExpanded(true);
       }
       
       onUpdate();

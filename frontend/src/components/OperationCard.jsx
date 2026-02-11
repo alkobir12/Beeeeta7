@@ -262,6 +262,33 @@ export default function OperationCard({
       {/* Collapsible Details */}
       {expanded ? (
         <div className="px-5 pb-5">
+          {/* Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('operations.customerName') || t('operations.partner_name') || 'العميل'}</div>
+              <div className="text-sm font-semibold text-slate-50 truncate">{operation.partnerName || '-'}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('operations.operationType') || 'نوع العملية'}</div>
+              <div className="text-sm font-semibold text-slate-50 truncate">{typeLabel}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('operations.operationDateLabel') || t('operations.date') || 'التاريخ'}</div>
+              <div className="text-sm font-semibold text-slate-50 truncate">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
+              <div className="text-sm font-semibold text-slate-50 truncate">{operation.paymentMethod || '-'}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('operations.account') || 'الحساب'}</div>
+              <div className="text-sm font-semibold text-slate-50 truncate">{account ? (account.name_ar || account.name || account.code) : (operation.accountId || '-')}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="text-[11px] text-slate-300/70 mb-1">{t('common.total') || 'الإجمالي'}</div>
+              <div className="text-sm font-extrabold text-slate-50 tabular-nums">{Number(editing ? totalDraft : (operation.total || 0)).toFixed(2)} {t('common.currency') || ''}</div>
+            </div>
+          </div>
           {operation.notes ? (
             <div className="mb-3 bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/70">
               <div className="text-[11px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>

@@ -421,219 +421,257 @@ const Operations = () => {
               <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
                 <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.basic_info') || 'المعلومات الأساسية'}</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* تصنيف العملية: مركبة / ورشة عامة */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.scopeLabel')}</label>
-                <div className="relative">
-                  <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select
-                    className="apple-input pr-10"
-                    value={form.scope}
-                    onChange={(e) => {
-                      const scope = e.target.value;
-                      setForm(prev => ({
-                        ...prev,
-                        scope,
-                        // إذا كانت عملية ورشة، نجعل المركبة والزيارة اختيارية
-                        vehicleId: scope === 'workshop' ? '' : prev.vehicleId,
-                        visitId: scope === 'workshop' ? '' : prev.visitId,
-                      }));
-                    }}
-                    data-testid="operation-scope-select"
-                  >
-                    <option value="vehicle">{t('operations.scopeVehicle')}</option>
-                    <option value="workshop">{t('operations.scopeWorkshop')}</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                      {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
+                    </label>
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input 
+                        className="apple-input pr-10"
+                        placeholder={t('operations.customName')} 
+                        value={form.partnerName} 
+                        onChange={e => setForm({ ...form, partnerName: e.target.value })} 
+                        data-testid="operation-partner-name-input"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.account')}</label>
-                <div className="relative">
-                  <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.accountId} 
-                    onChange={e => setForm({ ...form, accountId: e.target.value })}
-                    data-testid="operation-account-select"
-                  >
-                    <option value="">{t('operations.select_account')}</option>
-                    {/* 🔧 الإصلاح: تحقق من أن accounts مصفوفة قبل استخدام .map() */}
-                    {Array.isArray(accounts) ? (
-                      accounts.length > 0 ? (
-                        accounts.map(a => (
-                          <option key={a.id || a.code} value={a.id || a.code}>
-                            {a.name_ar || a.name || a.code}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">{t('operations.no_accounts')}</option>
-                      )
-                    ) : (
-                      <option value="">{t('operations.loading_accounts')}</option>
-                    )}
-                  </select>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operation_type')}</label>
+                    <div className="relative">
+                      <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <select 
+                        className="apple-input pr-10"
+                        value={form.type} 
+                        onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
+                        data-testid="operation-type-select"
+                      >
+                        <option value="purchase">{t('operations.purchase')}</option>
+                        <option value="sale">{t('operations.sale')}</option>
+                      </select>
+                    </div>
+                  </div>
 
-              {/* اختيار المركبة (يظهر فقط عندما يكون التصنيف = مركبة) */}
-              {form.scope === 'vehicle' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
-                  <div className="relative">
-                    <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <select 
-                      className="apple-input pr-10"
-                      value={form.vehicleId} 
-                    onChange={(e) => {
-                        const vehicleId = e.target.value;
-                        setForm({ ...form, vehicleId, visitId: '' });
-                      }}
-                      data-testid="operation-vehicle-select"
-                    >
-                      <option value="">{t('operations.select_vehicle')}...</option>
-                      {vehicles.map(v => (
-                        <option key={v.id} value={v.id}>
-                          {v.plateNumber} - {v.brand} {v.model}
-                        </option>
-                      ))}
-                                  </select>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operationDateLabel')}</label>
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      className="apple-input"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('common.description') || 'الوصف'}</label>
+                    <textarea
+                      className="apple-input h-[44px] py-2"
+                      style={{ minHeight: 44, resize: 'vertical' }}
+                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                      placeholder={t('common.optional') || 'اختياري'}
+                      data-testid="operation-notes-input"
+                    />
                   </div>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operationDateLabel')}</label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="apple-input"
-                />
               </div>
 
-              {/* زيارة المركبة / التاريخ (أيضًا فقط في حالة مركبة) */}
-              {form.scope === 'vehicle' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.date')}</label>
-                  <div className="relative">
-                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <select 
-                      className="apple-input pr-10"
-                      value={form.visitId || ''} 
-                      onChange={e => setForm({ ...form, visitId: e.target.value })}
-                      disabled={!form.vehicleId}
-                      data-testid="operation-visit-select"
+              {/* Section 2: Linking */}
+              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.linking') || 'الربط'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.scopeLabel')}</label>
+                    <div className="relative">
+                      <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <select
+                        className="apple-input pr-10"
+                        value={form.scope}
+                        onChange={(e) => {
+                          const scope = e.target.value;
+                          setForm(prev => ({
+                            ...prev,
+                            scope,
+                            vehicleId: scope === 'workshop' ? '' : prev.vehicleId,
+                            visitId: scope === 'workshop' ? '' : prev.visitId,
+                          }));
+                        }}
+                        data-testid="operation-scope-select"
+                      >
+                        <option value="vehicle">{t('operations.scopeVehicle')}</option>
+                        <option value="workshop">{t('operations.scopeWorkshop')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {form.scope === 'vehicle' ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
+                        <div className="relative">
+                          <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                          <select 
+                            className="apple-input pr-10"
+                            value={form.vehicleId} 
+                            onChange={(e) => {
+                              const vehicleId = e.target.value;
+                              setForm({ ...form, vehicleId, visitId: '' });
+                            }}
+                            data-testid="operation-vehicle-select"
+                          >
+                            <option value="">{t('operations.select_vehicle')}...</option>
+                            {vehicles.map(v => (
+                              <option key={v.id} value={v.id}>
+                                {v.plateNumber} - {v.brand} {v.model}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.visit') || t('operations.date')}</label>
+                        <div className="relative">
+                          <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                          <select 
+                            className="apple-input pr-10"
+                            value={form.visitId || ''} 
+                            onChange={e => setForm({ ...form, visitId: e.target.value })}
+                            disabled={!form.vehicleId}
+                            data-testid="operation-visit-select"
+                          >
+                            <option value="">---</option>
+                            {visits.map(v => (
+                              <option key={v.id} value={v.id}>
+                                {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
+                                {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs" style={{ color: styles.textMuted }}>
+                      {t('operations.scopeWorkshop')}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Section 3: Payment */}
+              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.payment') || 'الدفع'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
+                    <div className="relative">
+                      <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <select 
+                        className="apple-input pr-10"
+                        value={form.paymentMethod} 
+                        onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                        data-testid="operation-payment-method-select"
+                      >
+                        <option value="cash">{t('operations.cash')}</option>
+                        <option value="card">{t('operations.card')}</option>
+                        <option value="transfer">{t('operations.transfer')}</option>
+                        <option value="credit">{t('operations.credit')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.account')}</label>
+                    <div className="relative">
+                      <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <select 
+                        className="apple-input pr-10"
+                        value={form.accountId} 
+                        onChange={e => setForm({ ...form, accountId: e.target.value })}
+                        data-testid="operation-account-select"
+                      >
+                        <option value="">{t('operations.select_account')}</option>
+                        {Array.isArray(accounts) ? (
+                          accounts.length > 0 ? (
+                            accounts.map(a => (
+                              <option key={a.id || a.code} value={a.id || a.code}>
+                                {a.name_ar || a.name || a.code}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="">{t('operations.no_accounts')}</option>
+                          )
+                        ) : (
+                          <option value="">{t('operations.loading_accounts')}</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.invoiceNumber') || t('invoices.invoice_number') || 'رقم الفاتورة'}</label>
+                    <input
+                      className="apple-input"
+                      value={form.invoiceNumber}
+                      onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
+                      placeholder="INV-..."
+                      data-testid="operation-invoice-number-input"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('status.status') || 'الحالة'}</label>
+                    <select
+                      className="apple-input"
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                      data-testid="operation-status-select"
                     >
-                      <option value="">---</option>
-                      {visits.map(v => (
-                        <option key={v.id} value={v.id}>
-                          {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
-                          {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
-                        </option>
-                      ))}
+                      <option value="issued">{t('common.issued') || 'صادرة'}</option>
+                      <option value="draft">{t('common.draft') || 'مسودة'}</option>
                     </select>
                   </div>
-                </div>
-              )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operation_type')}</label>
-                <div className="relative">
-                  <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.type} 
-                    onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
-                    data-testid="operation-type-select"
-                  >
-                    <option value="purchase">{t('operations.purchase')}</option>
-                    <option value="sale">{t('operations.sale')}</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentStatus') || (t('common.payment_status') || 'حالة الدفع')}</label>
+                    <select
+                      className="apple-input"
+                      value={form.paymentStatus}
+                      onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}
+                      data-testid="operation-payment-status-select"
+                    >
+                      <option value="paid">{t('common.paid') || 'مدفوع'}</option>
+                      <option value="unpaid">{t('common.unpaid') || 'غير مدفوع'}</option>
+                    </select>
+                  </div>
 
-              <div className="space-y-2">
-                {/* TODO: يمكن لاحقًا توحيد هذا القسم أو إزالته إذا أصبح مكررًا مع حقل الحساب في الأعلى */}
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.account')}</label>
-                <div className="relative">
-                  <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.accountId || ''} 
-                    onChange={e => setForm({ ...form, accountId: e.target.value })}
-                    data-testid="operation-secondary-account-select"
-                  >
-                    <option value="">{t('operations.selectAccount')}</option>
-                    {Array.isArray(accounts) ? accounts.filter(acc => 
-                      !acc.parent_id && !acc.parentId
-                    ).map(account => (
-                      <option key={account.id} value={account.id}>
-                        {account.name} ({account.code})
-                      </option>
-                    )) : null}
-                  </select>
+                  <div className="space-y-2 lg:col-span-3">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                      📎 {t('operations.payment_receipt_optional')}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setForm({ ...form, paymentReceipt: file });
+                      }}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      style={{
+                        backgroundColor: styles.inputBg,
+                        borderColor: styles.inputBorder,
+                        color: styles.textPrimary,
+                      }}
+                      data-testid="operation-payment-receipt-input"
+                    />
+                    {form.paymentReceipt && (
+                      <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                  {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
-                </label>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input 
-                    className="apple-input pr-10"
-                    placeholder={t('operations.customName')} 
-                    value={form.partnerName} 
-                    onChange={e => setForm({ ...form, partnerName: e.target.value })} 
-                    data-testid="operation-partner-name-input"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('common.description') || 'الوصف'}</label>
-                <textarea
-                  className="apple-input h-[44px] py-2"
-                  style={{ minHeight: 44, resize: 'vertical' }}
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder={t('common.optional') || 'اختياري'}
-                  data-testid="operation-notes-input"
-                />
-              </div>
-
-
-              {/* رفع إيصال الدفع */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                  📎 {t('operations.payment_receipt_optional')}
-                </label>
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setForm({ ...form, paymentReceipt: file });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                  style={{
-                    backgroundColor: styles.inputBg,
-                    borderColor: styles.inputBorder,
-                    color: styles.textPrimary,
-                  }}
-                  data-testid="operation-payment-receipt-input"
-                />
-                {form.paymentReceipt && (
-                  <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
-                )}
-              </div>
-
-              </div>
-              {/* end Section 1 */}
 
               {/* Section 4: Items */}
 

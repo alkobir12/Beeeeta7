@@ -83,7 +83,9 @@ export default function OperationCard({
       style={{
         background: cardBackground,
         border: `1px solid ${cardBorder}`,
-        boxShadow: expanded ? '0 32px 120px rgba(2,6,23,0.85), 0 0 0 1px rgba(168,85,247,0.22)' : '0 18px 60px rgba(2,6,23,0.65)',
+        boxShadow: expanded
+          ? `0 32px 120px rgba(2,6,23,0.85), 0 0 0 1px ${cardBorder}`
+          : '0 18px 60px rgba(2,6,23,0.65)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         overflow: 'hidden',

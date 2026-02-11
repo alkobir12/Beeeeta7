@@ -629,6 +629,107 @@ const Operations = () => {
                     borderColor: styles.inputBorder,
                     color: styles.textPrimary,
                   }}
+                </div>
+              </div>
+
+              {/* Section 2: Linking */}
+              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.linking') || 'الربط'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* (المحتوى الحالي الخاص بالمركبة/الزيارة موجود بالفعل ضمن القسم الأساسي، نُبقيه كما هو لتجنب تغيير المنطق) */}
+                  <div className="text-xs" style={{ color: styles.textMuted }}>
+                    {t('operations.scopeLabel')}: {form.scope === 'workshop' ? t('operations.scopeWorkshop') : t('operations.scopeVehicle')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Payment */}
+              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.payment') || 'الدفع'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
+                    <div className="relative">
+                      <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <select 
+                        className="apple-input pr-10"
+                        value={form.paymentMethod} 
+                        onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                        data-testid="operation-payment-method-select-2"
+                      >
+                        <option value="cash">{t('operations.cash')}</option>
+                        <option value="card">{t('operations.card')}</option>
+                        <option value="transfer">{t('operations.transfer')}</option>
+                        <option value="credit">{t('operations.credit')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('status.status') || 'الحالة'}</label>
+                    <select
+                      className="apple-input"
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                      data-testid="operation-status-select"
+                    >
+                      <option value="issued">{t('common.issued') || 'صادرة'}</option>
+                      <option value="draft">{t('common.draft') || 'مسودة'}</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.invoiceNumber') || t('invoices.invoice_number') || 'رقم الفاتورة'}</label>
+                    <input
+                      className="apple-input"
+                      value={form.invoiceNumber}
+                      onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
+                      placeholder="INV-..."
+                      data-testid="operation-invoice-number-input"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentStatus') || (t('common.payment_status') || 'حالة الدفع')}</label>
+                    <select
+                      className="apple-input"
+                      value={form.paymentStatus}
+                      onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}
+                      data-testid="operation-payment-status-select"
+                    >
+                      <option value="paid">{t('common.paid') || 'مدفوع'}</option>
+                      <option value="unpaid">{t('common.unpaid') || 'غير مدفوع'}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                    📎 {t('operations.payment_receipt_optional')}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setForm({ ...form, paymentReceipt: file });
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    style={{
+                      backgroundColor: styles.inputBg,
+                      borderColor: styles.inputBorder,
+                      color: styles.textPrimary,
+                    }}
+                    data-testid="operation-payment-receipt-input-2"
+                  />
+                  {form.paymentReceipt ? (
+                    <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Section 4: Items */}
+
                   data-testid="operation-payment-receipt-input"
                 />
                 {form.paymentReceipt && (

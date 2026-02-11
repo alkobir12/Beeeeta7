@@ -336,18 +336,18 @@ const Operations = () => {
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || 0), 0);
 
-  // Theme-based styles
+  // Theme-based styles (align with dashboard glass look)
   const styles = {
-    bg: isLight ? '#f8fafc' : '#0f172a',
-    cardBg: isLight ? '#ffffff' : '#1e293b',
-    cardBorder: isLight ? '#e2e8f0' : '#334155',
-    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
-    textSecondary: isLight ? '#64748b' : '#94a3b8',
-    textMuted: isLight ? '#94a3b8' : '#64748b',
-    inputBg: isLight ? '#ffffff' : '#1e293b',
-    inputBorder: isLight ? '#e2e8f0' : '#334155',
-    hoverBg: isLight ? '#f1f5f9' : '#334155',
-    tableBg: isLight ? '#f8fafc' : '#1e293b',
+    bg: 'transparent',
+    cardBg: isLight ? '#ffffff' : 'rgba(255,255,255,0.06)',
+    cardBorder: isLight ? '#e2e8f0' : 'rgba(168,85,247,0.18)',
+    textPrimary: isLight ? '#1e293b' : '#f8fafc',
+    textSecondary: isLight ? '#64748b' : 'rgba(226,232,240,0.78)',
+    textMuted: isLight ? '#94a3b8' : 'rgba(148,163,184,0.82)',
+    inputBg: isLight ? '#ffffff' : 'rgba(255,255,255,0.06)',
+    inputBorder: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.10)',
+    hoverBg: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.08)',
+    tableBg: isLight ? '#f8fafc' : 'rgba(2,6,23,0.35)',
   };
 
   return (

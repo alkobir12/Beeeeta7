@@ -1298,11 +1298,11 @@ const VehicleDetails = () => {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">تاريخ الدخول</span>
-                <span className="font-medium">{new Date(vehicle.entryDate).toLocaleDateString('ar-SA')}</span>
+                <span className="font-medium">{vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString('ar-SA') : '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">آخر تحديث</span>
-                <span className="font-medium">{new Date(vehicle.updatedAt).toLocaleDateString('ar-SA')}</span>
+                <span className="font-medium">{vehicle.updatedAt || vehicle.updated_at ? new Date(vehicle.updatedAt || vehicle.updated_at).toLocaleDateString('ar-SA') : '-'}</span>
               </div>
             </div>
           </div>

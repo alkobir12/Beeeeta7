@@ -384,10 +384,10 @@ const Operations = () => {
           }}
         >
           <div className="flex items-center gap-3 mb-6 pb-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-              <Plus size={20} />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
+              <Plus size={20} className="text-white" />
             </div>
-            <h2 className="text-lg font-semibold" style={{ color: styles.textPrimary }}>{t('operations.new_operation')}</h2>
+            <h2 className="text-base sm:text-lg font-semibold" style={{ color: styles.textPrimary }}>{t('operations.new_operation')}</h2>
           </div>
 
           <form onSubmit={submit} className="space-y-6">

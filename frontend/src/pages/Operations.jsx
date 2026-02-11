@@ -785,6 +785,7 @@ const Operations = () => {
                 <div className="text-xs text-slate-500">{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
               )}
             </div>
+            </div>
           </form>
         </div>
 

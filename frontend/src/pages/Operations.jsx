@@ -359,7 +359,7 @@ const Operations = () => {
     }
   };
 
-  const subtotal = form.items.reduce((s, it) => s + Number(it.total || 0), 0);
+  const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
 
   // Theme-based styles (align with dashboard glass look)
   const styles = {

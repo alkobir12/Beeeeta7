@@ -628,7 +628,7 @@ const Operations = () => {
                 </div>
                 
                 <div className="md:col-span-4">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.items')}</label>
+                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.items')}</label>
                   {item.itemType === 'part' ? (
                     <select 
                       className="apple-input h-9 text-sm"
@@ -659,7 +659,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.quantity')}</label>
+                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.quantity')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -670,7 +670,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">{t('operations.price')}</label>
+                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.price')}</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"
@@ -684,7 +684,7 @@ const Operations = () => {
                   <button 
                     type="button" 
                     onClick={addItem}
-                    className="apple-button w-full h-9 flex items-center justify-center gap-1 bg-gray-900 hover:bg-black"
+                    className="apple-button w-full h-9 flex items-center justify-center gap-1"
                     data-testid="operation-add-item-button"
                   >
                     <Plus size={16} />

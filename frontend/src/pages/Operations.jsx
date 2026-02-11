@@ -818,7 +818,6 @@ const Operations = () => {
                 </div>
               )}
             </div>
-            </div>
 
             <div className="flex flex-col items-end pt-4 gap-2">
               <div className="text-xs" style={{ color: styles.textMuted }}>

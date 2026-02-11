@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://guidance-elderly.preview.emergentagent.com/api"
+BASE_URL = "https://visit-notify-2.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

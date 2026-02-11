@@ -18,7 +18,7 @@ import uuid
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://guidance-elderly.preview.emergentagent.com/api"
+BACKEND_URL = "https://visit-notify-2.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

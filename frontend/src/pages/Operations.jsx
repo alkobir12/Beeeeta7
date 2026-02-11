@@ -592,24 +592,6 @@ const Operations = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
-                <div className="relative">
-                  <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <select 
-                    className="apple-input pr-10"
-                    value={form.paymentMethod} 
-                    onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
-                    data-testid="operation-payment-method-select"
-                  >
-                    <option value="cash">{t('operations.cash')}</option>
-                    <option value="card">{t('operations.card')}</option>
-                    <option value="transfer">{t('operations.transfer')}</option>
-                    <option value="credit">{t('operations.credit')}</option>
-                  </select>
-                </div>
-              </div>
-
               {/* رفع إيصال الدفع */}
               <div className="space-y-2">
                 <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>

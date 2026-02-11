@@ -101,6 +101,9 @@ const Operations = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const vehicleIdFromUrl = searchParams.get('vehicleId');

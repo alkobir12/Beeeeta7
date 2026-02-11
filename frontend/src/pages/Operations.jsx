@@ -737,14 +737,6 @@ const Operations = () => {
 
               {/* Section 4: Items */}
 
-                  data-testid="operation-payment-receipt-input"
-                />
-                {form.paymentReceipt && (
-                  <p className="text-xs" style={{ color: 'rgba(34,197,94,0.95)' }}>✓ {form.paymentReceipt.name}</p>
-                )}
-              </div>
-            </div>
-
             {/* Items Section */}
             <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
               <label className="block text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('operations.addItems')}</label>

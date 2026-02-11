@@ -466,7 +466,12 @@ const Operations = () => {
           className="rounded-[32px] p-5 sm:p-6"
           style={{ 
             backgroundColor: styles.cardBg,
-
+            border: `1px solid ${styles.cardBorder}`,
+            boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)'
+          }}
+        >
           {createError ? (
             <div
               className="mb-5 rounded-2xl border px-4 py-3"

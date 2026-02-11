@@ -242,16 +242,23 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
 
   const handleCloseVisit = async () => {
     try {
-      await axios.put(`${API_URL}/visits/${visit.id}`, { 
+      // Save items and notes FIRST, then close
+      await persistCatalogEntries();
+      const payload = {
         status: 'completed',
-        exitDate: new Date().toISOString()
-      });
+        exitDate: new Date().toISOString(),
+        technicianId: techId || null,
+        mileage: Number(mileage),
+        notes: JSON.stringify({ text: notes, items: items })
+      };
+      await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       setStatus('completed');
       setIsEditing(false);
       onUpdate();
-      toast({ title: 'تم', description: 'تم إغلاق الزيارة' });
+      toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {
-      toast({ title: 'خطأ', description: 'فشل إغلاق الزيارة', variant: 'destructive' });
+      console.error('Close visit error:', e);
+      toast({ title: 'خطأ', description: 'فشل إغلاق الزيارة. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
     }
   };
 

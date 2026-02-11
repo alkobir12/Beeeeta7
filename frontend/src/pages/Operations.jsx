@@ -251,6 +251,40 @@ const Operations = () => {
     },
   });
 
+
+  const handleUpdateOperationItems = async (opId, items) => {
+    try {
+      setSaveOpId(opId);
+      const current = ops.find((o) => o.id === opId) || {};
+      const payload = {
+        ...current,
+        items,
+        // ensure backend recomputes total
+        workshopId: workshopId || null,
+      };
+      await updateOperationMutation.mutateAsync({ opId, payload });
+      return true;
+    } catch (e) {
+      return false;
+    } finally {
+      setSaveOpId(null);
+    }
+  };
+
+  const handleDeleteOperation = async (op) => {
+    if (!op?.id) return;
+    if (!window.confirm(t('common.confirm_delete') || t('common.confirmDelete') || 'هل أنت متأكد من الحذف؟')) return;
+    try {
+      setDeleteOpId(op.id);
+      await axios.delete(`${API_URL}/operations/${op.id}`);
+      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+    } catch (e) {
+      console.error('Failed to delete operation:', e);
+    } finally {
+      setDeleteOpId(null);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
 

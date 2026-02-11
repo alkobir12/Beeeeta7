@@ -686,6 +686,26 @@ const VehicleDetails = () => {
     return visits;
   }, [visits, visitFilter]);
 
+  // Handler for when a visit is closed - shows WhatsApp notification at page level
+  const handleVisitClosed = useCallback((notification) => {
+    if (notification) {
+      setPageWhatsappNotification(notification);
+      // Switch filter to 'all' so user can see the closed visit
+      setVisitFilter('all');
+    }
+    fetchDataLight(); // Refresh visits without full loading
+  }, []);
+
+  // Lightweight fetch that doesn't show loading spinner
+  const fetchDataLight = useCallback(async () => {
+    try {
+      const visitsRes = await axios.get(`${API_URL}/vehicles/${id}/visits`).catch(() => ({ data: [] }));
+      setVisits(visitsRes.data || []);
+    } catch (e) {
+      console.error('fetchDataLight error:', e);
+    }
+  }, [id, API_URL]);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);

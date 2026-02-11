@@ -391,6 +391,7 @@ const Operations = () => {
       };
 
       await createOperationMutation.mutateAsync(cleanPayload);
+      setCreateError('');
 
       setForm({
         accountId: '',

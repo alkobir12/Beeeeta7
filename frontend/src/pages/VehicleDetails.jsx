@@ -207,6 +207,8 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await persistCatalogEntries();
       const payload = {
@@ -224,6 +226,8 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
     } catch (e) {
       console.error('Save visit error:', e);
       toast({ title: 'خطأ', description: 'فشل الحفظ. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 

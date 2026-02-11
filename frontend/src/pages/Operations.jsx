@@ -695,7 +695,7 @@ const Operations = () => {
 
               {/* Items Table */}
               {form.items.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: styles.cardBg, borderColor: styles.cardBorder }}>
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-gray-600">
                       <tr>

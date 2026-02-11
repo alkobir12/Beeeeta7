@@ -436,7 +436,38 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
             </div>
           )}
 
-
+          {/* WhatsApp Auto-Notification */}
+          {whatsappNotification && (
+            <div className="rounded-lg border-2 border-green-400 bg-green-50 px-4 py-3 mb-3 animate-in fade-in slide-in-from-top-2" data-testid={`visit-whatsapp-notification-${visit.id}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1">
+                  <div className="font-bold text-green-800 text-sm flex items-center gap-2 mb-1">
+                    <MessageCircle size={16} />
+                    إبلاغ العميل بجاهزية المركبة
+                  </div>
+                  <p className="text-xs text-green-700">{whatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب</p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={whatsappNotification.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                    data-testid={`visit-whatsapp-send-${visit.id}`}
+                  >
+                    <MessageCircle size={14} /> إرسال واتساب
+                  </a>
+                  <button
+                    onClick={() => setWhatsappNotification(null)}
+                    className="px-2 py-2 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                    title="إغلاق"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
 
           <div className="flex justify-end gap-2 pb-3">

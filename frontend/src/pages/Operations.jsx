@@ -740,6 +740,15 @@ const Operations = () => {
             {/* Items Section */}
             <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
               <label className="block text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('operations.addItems')}</label>
+
+              {/* Live total summary */}
+              <div className="mt-4 flex items-center justify-between rounded-2xl border px-4 py-3" style={{ backgroundColor: 'rgba(15,23,42,0.35)', borderColor: styles.cardBorder }}>
+                <div className="text-sm" style={{ color: styles.textSecondary }}>{t('operations.total') || 'الإجمالي'}</div>
+                <div className="text-lg font-extrabold tabular-nums" style={{ color: styles.textPrimary }}>
+                  {subtotal.toFixed(2)} {t('operations.SAR')}
+                </div>
+              </div>
+
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                 <div className="md:col-span-2">

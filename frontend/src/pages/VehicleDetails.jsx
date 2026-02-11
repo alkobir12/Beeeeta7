@@ -470,7 +470,10 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
                     <MessageCircle size={14} /> إرسال واتساب
                   </a>
                   <button
-                    onClick={() => setWhatsappNotification(null)}
+                    onClick={() => {
+                      setWhatsappNotification(null);
+                      whatsappNotificationRef.current = null;
+                    }}
                     className="px-2 py-2 text-gray-400 hover:text-gray-600 rounded transition-colors"
                     title="إغلاق"
                   >

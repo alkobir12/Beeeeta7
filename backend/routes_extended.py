@@ -2492,7 +2492,7 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 await _sync_visit_to_operation(visit_id, r, supa_service=supa)
             # ------------------------------------
 
-            return {
+            result = {
                 "id": r.get("id"),
                 "vehicleId": r.get("vehicle_id"),
                 "entryDate": r.get("entry_date"),
@@ -2502,6 +2502,56 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 "notes": r.get("notes"),
                 "technicianId": r.get("technician_id"),
             }
+
+            # --- AUTO WHATSAPP NOTIFICATION on completion ---
+            if payload.get("status") == "completed":
+                try:
+                    vehicle_id = r.get("vehicle_id")
+                    v_res = supa.client.table("vehicles").select("plate_number,customer_name,customer_phone").eq("id", vehicle_id).single().execute()
+                    if v_res.data:
+                        phone = v_res.data.get("customer_phone", "")
+                        customer_name = v_res.data.get("customer_name", "عميل")
+                        plate = v_res.data.get("plate_number", "")
+                        # Parse items total
+                        total = 0
+                        try:
+                            notes_raw = r.get("notes", "")
+                            if notes_raw and isinstance(notes_raw, str) and notes_raw.strip().startswith("{"):
+                                parsed = json.loads(notes_raw)
+                                items = parsed.get("items", [])
+                                total = sum(float(it.get("price", 0)) * float(it.get("quantity", 1)) for it in items)
+                        except Exception:
+                            pass
+                        total_str = f"{total:,.0f}" if total else ""
+                        msg = (
+                            f"السلام عليكم {customer_name}\n\n"
+                            f"نفيدكم بأن مركبتكم ({plate}) جاهزة للاستلام.\n"
+                        )
+                        if total_str:
+                            msg += f"المبلغ المستحق: {total_str} ر.س\n"
+                        msg += f"\nشاكرين ثقتكم بنا."
+                        if phone:
+                            import urllib.parse
+                            norm = "".join([c for c in phone if c.isdigit()])
+                            if norm.startswith("05"):
+                                norm = "966" + norm[1:]
+                            elif norm.startswith("5") and len(norm) == 9:
+                                norm = "966" + norm
+                            elif not norm.startswith("966"):
+                                norm = "966" + norm
+                            encoded = urllib.parse.quote(msg)
+                            result["whatsappNotification"] = {
+                                "url": f"https://api.whatsapp.com/send?phone={norm}&text={encoded}",
+                                "phone": norm,
+                                "message": msg,
+                                "customerName": customer_name,
+                            }
+                            print(f"   WhatsApp notification prepared for {customer_name} ({norm})")
+                except Exception as e:
+                    print(f"   WhatsApp notification prep failed: {e}")
+            # ------------------------------------------------
+
+            return result
 
         # MongoDB fallback
         upd = {}

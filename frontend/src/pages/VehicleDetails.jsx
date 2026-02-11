@@ -123,6 +123,9 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');
   
+  // Ref to preserve whatsapp notification across re-renders
+  const whatsappNotificationRef = useRef(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -146,6 +149,11 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
     setIsEditing(visit.status === 'in_progress');
+    
+    // Restore whatsapp notification if it was set before re-render
+    if (whatsappNotificationRef.current) {
+      setWhatsappNotification(whatsappNotificationRef.current);
+    }
   }, [visit]);
 
   const persistCatalogEntries = async () => {

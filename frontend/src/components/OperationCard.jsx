@@ -180,8 +180,8 @@ export default function OperationCard({
                 type="button"
                 className="apple-button h-9 px-3 text-xs"
                 onClick={async () => {
-                  await onUpdateItems(operation.id, itemsDraft);
-                  setEditing(false);
+                  const ok = await onUpdateItems(operation.id, itemsDraft);
+                  if (ok) setEditing(false);
                 }}
                 disabled={isSaving}
               >

@@ -536,7 +536,7 @@ const Operations = () => {
                     data-testid="operation-secondary-account-select"
                   >
                     <option value="">{t('operations.selectAccount')}</option>
-                    {accounts.filter(acc => 
+                    {Array.isArray(accounts) ? accounts.filter(acc => 
                       !acc.parent_id && !acc.parentId
                     ).map(account => (
                       <option key={account.id} value={account.id}>

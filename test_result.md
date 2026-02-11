@@ -12092,3 +12092,21 @@ All requested performance optimizations have been successfully implemented and v
 - Console Logs: Clean execution with no critical errors
 - Files Section: "عرض" button working correctly for on-demand loading
 
+
+
+---
+## Operations Page UI/UX Cards Refresh (2026-02-11)
+
+**Change Summary**
+- Updated /operations UI to display operations using dashboard-style glass cards with expandable details.
+- Added inline editing for items/prices with Save/Cancel actions.
+- Print button prints full operation details via existing /print route.
+
+**Testing To Perform (Playwright)**
+1. Login as 'مدير'
+2. Navigate to /operations
+3. Verify operations render as cards (grid)
+4. Expand a card to view items table
+5. Edit an item (name/qty/price), save, and confirm UI updates
+6. Click Print and verify navigation to /print?type=invoice&operationId=...
+

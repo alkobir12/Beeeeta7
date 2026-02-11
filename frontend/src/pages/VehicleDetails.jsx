@@ -275,13 +275,14 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, onVisitClosed, appr
       // Check for WhatsApp notification
       if (response.data?.whatsappNotification) {
         setWhatsappNotification(response.data.whatsappNotification);
-        // Store in ref to preserve across re-renders from onUpdate
         whatsappNotificationRef.current = response.data.whatsappNotification;
-        // Keep card expanded to show notification
         setIsExpanded(true);
+        // Also notify parent to show page-level notification
+        onVisitClosed?.(response.data.whatsappNotification);
+      } else {
+        onUpdate?.();
       }
       
-      onUpdate();
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {
       console.error('Close visit error:', e);

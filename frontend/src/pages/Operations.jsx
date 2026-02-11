@@ -605,7 +605,7 @@ const Operations = () => {
             </div>
 
             {/* Items Section */}
-            <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+            <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
               <label className="block text-sm font-semibold text-gray-900 mb-4">{t('operations.addItems')}</label>
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">

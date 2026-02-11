@@ -819,7 +819,7 @@ const Operations = () => {
                     setConfirmTarget(o);
                     setConfirmOpen(true);
                   }}
-                  onDelete={(o) => handleDeleteOperation(o)}
+                  onDelete={(o) => requestDeleteOperation(o)}
                   onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
                 />
               ))}

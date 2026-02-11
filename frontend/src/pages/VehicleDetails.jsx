@@ -451,37 +451,43 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, approvals = [], ser
           </div>
 
           {/* Actions Footer */}
-          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap justify-end gap-3 pt-2 border-t border-gray-100">
             {isEditing ? (
               <>
                 <button 
                   onClick={() => setIsEditing(false)}
                   className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  data-testid={`visit-cancel-edit-${visit.id}`}
+                  disabled={isSaving}
                 >
                   إلغاء
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  data-testid={`visit-save-button-${visit.id}`}
                 >
-                  <Save size={14} /> حفظ التغييرات
+                  <Save size={14} /> {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                 </button>
                 <button 
                   onClick={handleCloseVisit}
-                  className="px-4 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center gap-2"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  data-testid={`visit-close-button-${visit.id}`}
                 >
-                  <CheckCircle size={14} /> حفظ وإغلاق الزيارة
+                  <CheckCircle size={14} /> {isSaving ? 'جاري الإغلاق...' : 'حفظ وإغلاق الزيارة'}
                 </button>
               </>
             ) : (
               <button 
                 onClick={handleReopen}
                 className="px-4 py-2 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors flex items-center gap-2"
+                data-testid={`visit-reopen-button-${visit.id}`}
               >
                 <Edit2 size={14} /> إعادة فتح للتعديل
               </button>
             )}
-
 
           {canDelete && (visit.status || '').toLowerCase() === 'completed' && (
             <div className="flex justify-end pt-2">

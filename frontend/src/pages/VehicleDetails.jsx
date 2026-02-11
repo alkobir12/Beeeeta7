@@ -1195,10 +1195,11 @@ const VehicleDetails = () => {
           )}
 
           <div className="space-y-4">
-            {filteredVisits.length === 0 ? (
+            {filteredVisits.length === 0 && (visitFilter === 'all' || visits.length === 0) ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                 <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-xs text-gray-500">لا توجد زيارات مطابقة لهذا الفلتر</p>
+                <p className="text-xs text-gray-500">لا توجد زيارات بعد</p>
+                <p className="text-[11px] text-gray-400 mt-1">اضغط "زيارة جديدة" لاستقبال المركبة</p>
               </div>
             ) : (
               filteredVisits.map(visit => {

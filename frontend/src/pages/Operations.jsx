@@ -352,14 +352,14 @@ const Operations = () => {
 
   return (
     <div 
-      className={`max-w-7xl mx-auto space-y-8 p-4 min-h-screen ${isRTL ? 'rtl' : 'ltr'}`} 
+      className={`max-w-7xl mx-auto space-y-8 p-2 sm:p-4 min-h-screen ${isRTL ? 'rtl' : 'ltr'}`} 
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{ backgroundColor: styles.bg }}
     >
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{t('operations.title')}</h1>
-          <p className="mt-1" style={{ color: styles.textSecondary }}>{t('operations.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: styles.textPrimary }}>{t('operations.title')}</h1>
+          <p className="mt-1 text-sm sm:text-base" style={{ color: styles.textSecondary }}>{t('operations.subtitle')}</p>
         </div>
 
         <div className="mt-6" data-testid="operations-guidance-stepper">

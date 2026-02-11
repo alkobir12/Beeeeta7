@@ -849,9 +849,7 @@ const Operations = () => {
           }}
           onDelete={async () => {
             if (!selectedOperation?.id) return;
-            await handleDeleteOperation(selectedOperation);
-            setDetailsOpen(false);
-            setSelectedOperation(null);
+            requestDeleteOperation(selectedOperation);
           }}
         />
       

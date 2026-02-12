@@ -1364,7 +1364,7 @@ const VehicleDetails = () => {
                     onUpdate={fetchData}
                     onVisitClosed={handleVisitClosed}
                     approvals={visitApprovals}
-                    onDelete={handleDeleteVisit}
+                    onDelete={requestDeleteVisit}
                     servicesCatalog={servicesCatalog}
                     partsCatalog={partsCatalog}
                     onServiceAdded={appendService}

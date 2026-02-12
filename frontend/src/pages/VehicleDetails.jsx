@@ -861,15 +861,25 @@ const VehicleDetails = () => {
     }
   };
 
-  const handleDeleteVisit = async (visitId) => {
-    if (!visitId) return;
-    if (!window.confirm('هل أنت متأكد من حذف هذه الزيارة؟ سيتم حذف العمليات المرتبطة بها.')) return;
+  const requestDeleteVisit = (visitId) => {
+    const v = visits.find((x) => x.id === visitId) || visits.find((x) => x.visitId === visitId);
+    setDeleteVisitTarget(v || { id: visitId });
+    setDeleteVisitOpen(true);
+  };
+
+  const confirmDeleteVisit = async () => {
+    if (!deleteVisitTarget?.id) return;
     try {
-      await visitAPI.delete(visitId);
+      setDeleteVisitLoading(true);
+      await visitAPI.delete(deleteVisitTarget.id);
       toast({ title: 'تم الحذف', description: 'تم حذف الزيارة بنجاح' });
+      setDeleteVisitOpen(false);
+      setDeleteVisitTarget(null);
       fetchData();
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل حذف الزيارة', variant: 'destructive' });
+    } finally {
+      setDeleteVisitLoading(false);
     }
   };
 

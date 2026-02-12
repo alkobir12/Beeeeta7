@@ -6,6 +6,7 @@ import { ArrowRight, Car, User, Phone, Calendar, Wrench, CheckCircle, FileText, 
 import { useToast } from '../hooks/use-toast';
 import GuidanceStepper from '../components/GuidanceStepper';
 import { vehicleAPI, technicianAPI, financeAPI, customerAPI, visitAPI, serviceAPI, partAPI } from '../services/api';
+import VisitDeleteConfirmDialog from '../components/VisitDeleteConfirmDialog';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';

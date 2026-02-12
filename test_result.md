@@ -12092,6 +12092,20 @@ const financeAPI = {
 **Balance Sheet Mismatch:**
 
 Frontend expects flat account arrays:
+
+
+---
+## Vehicle Visit Delete Button + Glass Confirm Modal (2026-02-12)
+
+**Change**
+- Added delete button for completed visits inside VehicleDetails visits timeline.
+- Replaced window.confirm with glass AlertDialog modal.
+- Deletion is permanent and also deletes related operations via backend cascade (DELETE /api/visits/{visit_id}).
+
+**Testing**
+- ✅ Frontend agent verified delete button visibility for manager/admin, modal opens, cancel/confirm works.
+- ✅ Backend DELETE /api/visits/{visit_id} returns success and removes visit; related operations deletion handled server-side.
+
 ```javascript
 sections: {
   assets: [{code: "101", name: "النقدية", balance: 150000}],

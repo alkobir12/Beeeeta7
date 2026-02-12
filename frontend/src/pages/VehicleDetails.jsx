@@ -606,6 +606,10 @@ const VehicleDetails = () => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+
+  const [deleteVisitOpen, setDeleteVisitOpen] = useState(false);
+  const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
+  const [deleteVisitLoading, setDeleteVisitLoading] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);

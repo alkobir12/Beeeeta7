@@ -2422,16 +2422,7 @@ const VehicleDetails = () => {
           </div>
 
 
-      {/* Financial Summary */}
-      <div className="px-4 sm:px-0 liquid-surface liquid-section">
-        <div className="flex items-end justify-between gap-3 mb-3">
-          <div>
-            <div className="liquid-title">{t('common.vehicle_finance') || 'ملخص مالي'}</div>
-            <div className="liquid-subtitle">{t('common.vehicle_finance_subtitle') || 'تكاليف المركبة عبر جميع الزيارات'}</div>
-          </div>
-        </div>
-        <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
-      </div>
+      {/* Financial Summary (moved into draggable layout) */}
 
       {/* Draggable Layout Blocks */}
       {layoutLoaded ? (

@@ -2038,7 +2038,7 @@ const VehicleDetails = () => {
             </div>
 
             {/* Right Column: Status & Actions */}
-            <div className="space-y-6">
+            <div className="space-y-6 hidden">
               <div className="apple-card p-6">
                 <div className="flex items-center gap-3 mb-6 text-orange-600">
                   <Wrench size={20} />

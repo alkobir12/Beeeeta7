@@ -544,7 +544,7 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, onVisitClosed, appr
               </button>
             )}
 
-          {canDelete && (visit.status || '').toLowerCase() === 'completed' && (
+          {canDelete && (
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => onDelete?.(visit.id)}

@@ -1836,7 +1836,16 @@ const VehicleDetails = () => {
               </div>
 
             {/* Customer Info */}
-            <div className="apple-card p-6 relative group">
+            <div
+              className="liquid-surface relative"
+              style={{
+                borderRadius: 20,
+                padding: 14,
+                background:
+                  'radial-gradient(circle at 12% 18%, rgba(16,185,129,0.10), transparent 55%), rgba(255,255,255,0.05)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+            >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3 text-green-600">
                     <User size={20} />

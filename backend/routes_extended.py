@@ -2340,6 +2340,65 @@ def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
     total_suppliers = 0.0
     for it in items:
         # Backward compatibility: default to workshop
+
+
+@router.get("/vehicles/{vehicle_id}/financial-summary")
+async def vehicle_financial_summary(vehicle_id: str):
+    """Aggregate financial totals for a vehicle across all visits.
+
+    Reads visit items/payments from visit.notes JSON (no schema changes).
+    Returns workshop/suppliers/paid/balance + advance_paid.
+    """
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+        total_workshop = 0.0
+        total_suppliers = 0.0
+        total_paid = 0.0
+        total_advance = 0.0
+
+        if provider == "supabase":
+            from supabase_service import SupabaseService
+
+            supa = SupabaseService()
+            res = (
+                supa.client.table("vehicle_visits")
+                .select("id, notes")
+                .eq("vehicle_id", vehicle_id)
+                .execute()
+            )
+            for r in (res.data or []):
+                parsed = _parse_notes_json(r.get('notes'))
+                fin = _calc_visit_financial(parsed)
+                total_workshop += fin['total_workshop']
+                total_suppliers += fin['total_suppliers']
+                total_paid += fin['total_paid']
+                total_advance += fin['advance_paid']
+
+        else:
+            docs = await db.vehicle_visits.find({"vehicleId": vehicle_id}, {"_id": 0, "notes": 1}).to_list(2000)
+            for d in docs:
+                parsed = _parse_notes_json(d.get('notes'))
+                fin = _calc_visit_financial(parsed)
+                total_workshop += fin['total_workshop']
+                total_suppliers += fin['total_suppliers']
+                total_paid += fin['total_paid']
+                total_advance += fin['advance_paid']
+
+        total_amount = total_workshop + total_suppliers
+        balance = total_amount - total_paid
+
+        return {
+            "total_workshop": round(total_workshop, 2),
+            "total_suppliers": round(total_suppliers, 2),
+            "total_paid": round(total_paid, 2),
+            "advance_paid": round(total_advance, 2),
+            "balance": round(balance, 2),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
         billing_type = (it.get('billingType') or it.get('type') or 'workshop').lower()
         qty = _num(it.get('quantity', 1), 1.0)
         price = _num(it.get('price', it.get('unit_price', 0)), 0.0)

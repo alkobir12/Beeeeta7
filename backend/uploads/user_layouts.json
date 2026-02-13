@@ -9,5 +9,16 @@
       "guidance",
       "status_actions"
     ]
+  },
+  {
+    "userId": "local-admin",
+    "page": "vehicleDetails",
+    "blocks": [
+      "visits",
+      "financial_summary",
+      "guidance",
+      "status_actions",
+      "vehicle_info"
+    ]
   }
 ]

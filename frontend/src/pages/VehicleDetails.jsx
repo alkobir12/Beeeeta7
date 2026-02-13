@@ -2127,7 +2127,6 @@ const VehicleDetails = () => {
               </div>
             </div>
           </div>
-        </div>
         );
 
       case 'financial_summary':

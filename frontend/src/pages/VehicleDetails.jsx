@@ -611,6 +611,9 @@ const VehicleDetails = () => {
   const [deleteVisitOpen, setDeleteVisitOpen] = useState(false);
   const [deleteVisitTarget, setDeleteVisitTarget] = useState(null);
   const [deleteVisitLoading, setDeleteVisitLoading] = useState(false);
+
+  const [waPreviewOpen, setWaPreviewOpen] = useState(false);
+  const [waPreview, setWaPreview] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);

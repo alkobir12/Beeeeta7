@@ -2127,19 +2127,7 @@ const VehicleDetails = () => {
         );
 
       case 'financial_summary':
-        return (
-          <div className="liquid-surface liquid-section">
-            <div className="flex items-end justify-between gap-3 mb-3">
-              <div>
-                <div className="liquid-title">{t('common.vehicle_finance') || 'ملخص مالي'}</div>
-                <div className="liquid-subtitle">
-                  {t('common.vehicle_finance_subtitle') || 'تكاليف المركبة عبر جميع الزيارات'}
-                </div>
-              </div>
-            </div>
-            <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
-          </div>
-        );
+        return <VehicleFinancialSummary summary={financeSummary || {}} t={t} />;
 
       case 'guidance':
         return (

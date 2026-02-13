@@ -1542,7 +1542,7 @@ const VehicleDetails = () => {
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 space-y-6">
+    <div className="max-w-6xl mx-auto pb-20 space-y-6" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div className="flex items-center gap-4 pt-4 px-4 sm:px-0">
         <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">

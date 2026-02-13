@@ -1102,6 +1102,13 @@ const VehicleDetails = () => {
               </button>
             </div>
           </div>
+
+
+      {/* Financial Summary */}
+      <div className="px-4 sm:px-0">
+        <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+      </div>
+
         </div>
       </div>
 

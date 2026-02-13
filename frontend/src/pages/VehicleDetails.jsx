@@ -1515,7 +1515,9 @@ const VehicleDetails = () => {
       <WhatsAppPreviewDialog
         open={waPreviewOpen}
         onOpenChange={setWaPreviewOpen}
-        notification={waPreview}
+        preview={waPreview}
+        t={t}
+        isRTL={isRTL}
       />
 
     </div>

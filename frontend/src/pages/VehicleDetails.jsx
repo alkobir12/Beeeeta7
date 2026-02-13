@@ -2431,6 +2431,32 @@ const VehicleDetails = () => {
           </div>
         </div>
         <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+
+      {/* Draggable Layout Blocks */}
+      {layoutLoaded ? (
+        <div className="px-4 sm:px-0">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleLayoutDragEnd}
+          >
+            <SortableContext items={layoutBlocks} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4" data-testid="vehicle-layout">
+                {layoutBlocks.map((blockId) => (
+                  <SortableBlock key={blockId} id={blockId} title={blockTitles[blockId] || blockId}>
+                    {renderBlock(blockId)}
+                  </SortableBlock>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      ) : (
+        <div className="px-4 sm:px-0 text-xs" style={{ color: 'rgba(226,232,240,0.62)' }}>
+          جاري تحميل التخطيط...
+        </div>
+      )}
+
       </div>
 
       {/* Page-level WhatsApp Notification Banner */}

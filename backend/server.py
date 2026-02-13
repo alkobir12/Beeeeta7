@@ -376,6 +376,7 @@ def write_settings(data: dict):
 
 # Include Routers
 app.include_router(users_router)
+app.include_router(user_layouts_router)
 app.include_router(injectors_router)
 app.include_router(import_router)
 app.include_router(gemini_chat_router)

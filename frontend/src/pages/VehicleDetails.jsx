@@ -2491,7 +2491,7 @@ const VehicleDetails = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-0 hidden">
         
         {/* Left Column: Info */}
         <div className="space-y-6">

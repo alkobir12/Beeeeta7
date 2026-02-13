@@ -1700,9 +1700,7 @@ const VehicleDetails = () => {
     switch (blockId) {
       case 'vehicle_info':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Info */}
-            <div className="space-y-6">
+          <div className="space-y-6">
               {/* Vehicle Info Card */}
               <div className="apple-card p-6 relative group">
                 <div className="flex items-center justify-between mb-4">

@@ -2481,7 +2481,7 @@ const VehicleDetails = () => {
         </div>
       )}
 
-      <div className="px-4 sm:px-0" data-testid="vehicle-guidance-stepper">
+      <div className="px-4 sm:px-0 hidden" data-testid="vehicle-guidance-stepper">
         <GuidanceStepper
           title="إرشادات ملف المركبة"
           subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."

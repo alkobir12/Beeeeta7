@@ -98,18 +98,17 @@ const Login = () => {
             name: fallbackUser.name,
             phone: fallbackUser.phone,
             email: fallbackUser.email,
+            role: fallbackUser.role,
+            permissions: fallbackUser.permissions,
+            guidanceEnabled: fallbackUser.guidanceEnabled !== false,
+            loginTime: new Date().toISOString()
+          };
 
           try {
             document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
           } catch (e) {
             // ignore
           }
-
-            role: fallbackUser.role,
-            permissions: fallbackUser.permissions,
-            guidanceEnabled: fallbackUser.guidanceEnabled !== false,
-            loginTime: new Date().toISOString()
-          };
           localStorage.setItem('session', JSON.stringify(session));
           localStorage.setItem('user', JSON.stringify(fallbackUser));
           window.dispatchEvent(new Event('sessionUpdated'));

@@ -2032,7 +2032,6 @@ const VehicleDetails = () => {
                   })
                 )}
               </div>
-            </div>
 
             {/* Right Column: Status & Actions */}
             <div className="space-y-6 hidden">

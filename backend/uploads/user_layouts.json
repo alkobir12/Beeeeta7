@@ -39,5 +39,16 @@
       "block1",
       "block2"
     ]
+  },
+  {
+    "userId": "pytest_user_123",
+    "page": "vehicleDetails",
+    "blocks": [
+      "vehicle_info",
+      "visits",
+      "financial_summary",
+      "guidance",
+      "status_actions"
+    ]
   }
 ]

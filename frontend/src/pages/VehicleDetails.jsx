@@ -1544,9 +1544,9 @@ const VehicleDetails = () => {
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <style>{`
-        select, option { color: #0f172a; }
-        body.dark-mode select, body.dark-mode option,
-        body[data-theme="dashPro"] select, body[data-theme="dashPro"] option { color: #0f172a; }
+        /* Make native select/options readable (browser renders options in its own UI) */
+        select { color: rgba(248,250,252,0.92); }
+        option { color: #0f172a; }
       `}</style>
       {/* Header */}
       <div className="flex items-center gap-4 pt-4 px-4 sm:px-0">

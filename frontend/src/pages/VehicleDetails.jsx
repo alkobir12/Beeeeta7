@@ -1291,17 +1291,7 @@ const VehicleDetails = () => {
       : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
   );
 
-  const session = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('session');
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  }, []);
-  const guidanceEnabled = session?.guidanceEnabled !== false;
-
-  const userId = session?.id || session?.name || 'default';
+  // session/userId now initialized at top of component for layout saving
 
   const appendService = useCallback((service) => {
     if (!service) return;

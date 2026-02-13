@@ -1158,6 +1158,28 @@ const VehicleDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const userId = session?.id || session?.name || 'default';
+
+  const DEFAULT_BLOCKS = useMemo(
+    () => [
+      'vehicle_info',
+      'financial_summary',
+      'guidance',
+      'visits',
+      'status_actions',
+    ],
+    []
+  );
+
+  const [layoutBlocks, setLayoutBlocks] = useState(DEFAULT_BLOCKS);
+  const [layoutLoaded, setLayoutLoaded] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 5 } })
+  );
+
   
   const [vehicle, setVehicle] = useState(null);
   const [approvals, setApprovals] = useState([]);

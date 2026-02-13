@@ -504,10 +504,13 @@ const translations = {
     total: "الإجمالي",
     currency: "ر.س",
 
+    vehicle_finance: "ملخص مالي",
+    vehicle_finance_subtitle: "تكاليف المركبة عبر جميع الزيارات",
+
     unknown: "غير معروف",
     not_specified: "غير محدد",
-    urgent: "عاجل"
-    ,
+    urgent: "عاجل",
+
     basic_info: "المعلومات الأساسية",
     linking: "الربط",
     payment: "الدفع",

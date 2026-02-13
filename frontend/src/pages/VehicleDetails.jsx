@@ -1815,7 +1815,7 @@ const VehicleDetails = () => {
                         onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
                       />
                     ) : (
-                      <span className="font-medium">{vehicle.color || '-'}</span>
+                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.color || '-'}</span>
                     )}
                   </div>
 

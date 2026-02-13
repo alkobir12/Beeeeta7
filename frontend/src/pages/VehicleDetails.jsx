@@ -1209,12 +1209,15 @@ const VehicleDetails = () => {
       }
     };
 
+    // wait for session to be available
+    if (session === undefined) return;
+
     loadLayout();
 
     return () => {
       mounted = false;
     };
-  }, [userId, DEFAULT_BLOCKS]);
+  }, [userId, DEFAULT_BLOCKS, session]);
 
   const handleLayoutDragEnd = async (event) => {
     const { active, over } = event;

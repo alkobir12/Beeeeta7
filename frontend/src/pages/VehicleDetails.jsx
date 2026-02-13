@@ -109,6 +109,62 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             <option key={opt.id || opt.name} value={opt.name} />
           ))}
         </datalist>
+
+const DragHandle = ({ listeners, attributes }) => {
+  return (
+    <button
+      type="button"
+      className="p-2 rounded-xl"
+      style={{
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(148,163,184,0.16)',
+        color: 'rgba(226,232,240,0.85)',
+        cursor: 'grab',
+      }}
+      title="سحب لتغيير المكان"
+      {...attributes}
+      {...listeners}
+      data-testid="layout-drag-handle"
+    >
+      <span className="text-lg leading-none">⋮⋮</span>
+    </button>
+  );
+};
+
+const SortableBlock = ({ id, title, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.75 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} data-testid={`layout-block-${id}`}>
+      <div
+        className="liquid-surface"
+        style={{
+          borderRadius: 24,
+          padding: 14,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(148,163,184,0.14)',
+          boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
+        }}
+      >
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <div className="text-sm font-extrabold truncate" style={{ color: 'rgba(248,250,252,0.95)' }}>
+              {title}
+            </div>
+          </div>
+          <DragHandle listeners={listeners} attributes={attributes} />
+        </div>
+        <div>{children}</div>
+      </div>
+    </div>
+  );
+};
+
       </td>
       <td className="p-2">
         <input

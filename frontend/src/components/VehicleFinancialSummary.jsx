@@ -57,7 +57,7 @@ const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
         padding: 12,
       }}
     >
-      <div className="text-xs" style={{ color: 'rgba(226,232,240,0.7)' }}>{title}</div>
+      <div className="text-[11px] sm:text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>{title}</div>
       <div className="mt-1 text-lg sm:text-2xl font-extrabold tabular-nums" style={{ color: c.text }}>
         {formatMoney(value)}
         <span className="text-xs font-medium" style={{ color: 'rgba(226,232,240,0.65)', marginInlineStart: 6 }}>

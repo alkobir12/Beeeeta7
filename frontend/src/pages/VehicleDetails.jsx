@@ -1822,7 +1822,12 @@ const VehicleDetails = () => {
                   {isEditingVehicle && (
                     <button
                       onClick={handleUpdateVehicleInfo}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                      className="w-full rounded-2xl px-4 py-3 text-sm font-extrabold mt-2"
+                      style={{
+                        background: 'rgba(56,189,248,0.14)',
+                        border: '1px solid rgba(56,189,248,0.28)',
+                        color: 'rgba(186,230,253,0.95)',
+                      }}
                     >
                       حفظ التعديلات
                     </button>

@@ -1846,16 +1846,23 @@ const VehicleDetails = () => {
                 border: '1px solid rgba(148,163,184,0.14)',
               }}
             >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3 text-green-600">
-                    <User size={20} />
-                    <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2" style={{ color: 'rgba(167,243,208,0.95)' }}>
+                    <User size={18} />
+                    <h3 className="text-sm font-extrabold" style={{ color: 'rgba(248,250,252,0.95)' }}>
+                      {t('vehicle_details.customer_info')}
+                    </h3>
                   </div>
                   <button
                     onClick={() => setIsEditingCustomer(!isEditingCustomer)}
-                    className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                    className="p-2 rounded-xl"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.16)',
+                      color: 'rgba(226,232,240,0.85)',
+                    }}
                   >
-                    {isEditingCustomer ? <X size={18} /> : <Edit2 size={16} />}
+                    {isEditingCustomer ? <X size={16} /> : <Edit2 size={16} />}
                   </button>
                 </div>
 

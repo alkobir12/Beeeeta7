@@ -2136,21 +2136,19 @@ const VehicleDetails = () => {
 
       case 'visits':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Wrench size={20} className="text-blue-600" />
-                سجل الزيارات
-              </h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <button
                 onClick={handleCreateVisit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+                data-testid="visit-create-button"
               >
                 <Plus size={14} /> زيارة جديدة
               </button>
+              <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>
+                {t('vehicle_details.items_edit_hint')}
+              </div>
             </div>
-
-            <div className="text-[11px] text-gray-500">{t('vehicle_details.items_edit_hint')}</div>
 
             <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
               {[
@@ -2243,12 +2241,8 @@ const VehicleDetails = () => {
 
       case 'status_actions':
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="apple-card p-6">
-              <div className="flex items-center gap-3 mb-6 text-orange-600">
-                <Wrench size={20} />
-                <h3 className="font-bold text-gray-900">{t('vehicle_details.status')}</h3>
-              </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -2306,10 +2300,6 @@ const VehicleDetails = () => {
             </div>
 
             <div className="apple-card p-6">
-              <div className="flex items-center gap-3 mb-4 text-gray-900">
-                <Clock size={20} />
-                <h3 className="font-bold">التواريخ</h3>
-              </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">تاريخ الدخول</span>

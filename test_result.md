@@ -64,6 +64,23 @@
 - /app/artifacts/vehicle_details_loaded_proof.png
 - /app/artifacts/vehicle_visit_expanded_loaded_proof.png
 
+
+
+## Vehicle Details Draggable Blocks Testing (2026-02-13)
+
+### Test Objective:
+تأكيد أن بلوكات صفحة تفاصيل المركبة قابلة للسحب (Drag & Drop) مع حفظ الترتيب تلقائياً عبر API.
+
+### Results Summary: ✅ PASSED (Desktop) / ⚠️ Mobile drag needs refinement
+- ✅ ظهور [data-testid=vehicle-layout] وبلوكات متعددة [data-testid^=layout-block-].
+- ✅ السحب على الديسكتوب يعمل ويغيّر ترتيب البلوكات.
+- ✅ الاستمرارية بعد إعادة تحميل الصفحة تعمل (order persists).
+- ⚠️ على الجوال: الواجهة تظهر والمقابض موجودة، لكن السحب باللمس قد يحتاج معايرة إضافية حسب الجهاز.
+
+### Backend API:
+- ✅ GET/PUT /api/user-layouts/{userId}/vehicleDetails تعمل وتخزن الترتيب.
+- ✅ تم إنشاء اختبار backend: /app/backend/tests/test_user_layouts.py
+
 - **Navigation**: Seamless access to operations page after login
 
 **2. ✅ Operations Page Layout and Grid Display**

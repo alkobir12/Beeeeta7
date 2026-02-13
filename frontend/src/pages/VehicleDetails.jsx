@@ -2149,7 +2149,7 @@ const VehicleDetails = () => {
               </button>
             </div>
 
-            <div className="text-[11px] text-gray-500 -mt-2">{t('vehicle_details.items_edit_hint')}</div>
+            <div className="text-[11px] text-gray-500">{t('vehicle_details.items_edit_hint')}</div>
 
             <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
               {[

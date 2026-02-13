@@ -54,7 +54,7 @@ const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
         boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        padding: 18,
+        padding: 12,
       }}
     >
       <div className="text-xs" style={{ color: 'rgba(226,232,240,0.7)' }}>{title}</div>

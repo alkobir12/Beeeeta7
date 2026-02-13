@@ -1292,6 +1292,9 @@ const VehicleDetails = () => {
 
   const appendService = useCallback((service) => {
     if (!service) return;
+
+  const userId = session?.id || session?.name || 'default';
+
     setServicesCatalog((prev) => {
       const exists = prev.some((s) => s.id === service.id || (s.name || '').trim() === (service.name || '').trim());
       return exists ? prev : [...prev, service];

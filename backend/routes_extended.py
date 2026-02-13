@@ -2440,49 +2440,6 @@ async def vehicle_financial_summary(vehicle_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        billing_type = (it.get('billingType') or it.get('type') or 'workshop').lower()
-        qty = _num(it.get('quantity', 1), 1.0)
-        price = _num(it.get('price', it.get('unit_price', 0)), 0.0)
-        line_total = _num(it.get('total'), qty * price)
-        if billing_type == 'supplier':
-            total_suppliers += line_total
-        else:
-            total_workshop += line_total
-
-    advance_paid = 0.0
-    total_paid = 0.0
-    for p in payments:
-        amt = _num(p.get('amount'), 0.0)
-        total_paid += amt
-        kind = (p.get('kind') or '').lower()
-        if kind == 'advance':
-            advance_paid += amt
-
-    total_amount = total_workshop + total_suppliers
-    balance = total_amount - total_paid
-
-    # Payment status
-    if total_paid == 0:
-        payment_status = 'unpaid'
-    elif balance > 0:
-        payment_status = 'partial'
-    elif balance == 0:
-        payment_status = 'paid_full'
-    else:
-        payment_status = 'credit'
-
-    return {
-        'items': items,
-        'payments': payments,
-        'total_workshop': round(total_workshop, 2),
-        'total_suppliers': round(total_suppliers, 2),
-        'total_amount': round(total_amount, 2),
-        'total_paid': round(total_paid, 2),
-        'advance_paid': round(advance_paid, 2),
-        'balance': round(balance, 2),
-        'payment_status': payment_status,
-    }
-
 @router.get("/vehicles/{vehicle_id}/visits")
 async def get_vehicle_visits(vehicle_id: str):
     """Get all visits for a vehicle"""

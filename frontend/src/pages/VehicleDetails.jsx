@@ -1197,13 +1197,19 @@ const VehicleDetails = () => {
   const canDeleteVisit = ['manager', 'admin'].includes(session?.role);
 
   const filteredVisits = useMemo(() => {
+    const sorted = [...visits].sort((a, b) => {
+      const da = new Date(a.entryDate || a.entry_date || a.createdAt || a.created_at || 0).getTime();
+      const db = new Date(b.entryDate || b.entry_date || b.createdAt || b.created_at || 0).getTime();
+      return db - da;
+    });
+
     if (visitFilter === 'open') {
-      return visits.filter((v) => (v.status || '').toLowerCase() !== 'completed');
+      return sorted.filter((v) => (v.status || '').toLowerCase() !== 'completed');
     }
     if (visitFilter === 'closed') {
-      return visits.filter((v) => (v.status || '').toLowerCase() === 'completed');
+      return sorted.filter((v) => (v.status || '').toLowerCase() === 'completed');
     }
-    return visits;
+    return sorted;
   }, [visits, visitFilter]);
 
   // Handler for when a visit is closed - shows WhatsApp notification at page level

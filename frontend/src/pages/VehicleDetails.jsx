@@ -1184,8 +1184,8 @@ const VehicleDetails = () => {
   const userId = session?.id || session?.name || 'default';
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 2 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 60, tolerance: 3 } })
   );
 
   const [vehicle, setVehicle] = useState(null);

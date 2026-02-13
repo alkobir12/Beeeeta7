@@ -1,0 +1,13 @@
+[
+  {
+    "userId": "test_user",
+    "page": "vehicleDetails",
+    "blocks": [
+      "vehicle_info",
+      "visits",
+      "financial_summary",
+      "guidance",
+      "status_actions"
+    ]
+  }
+]

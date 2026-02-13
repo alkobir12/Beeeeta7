@@ -1748,7 +1748,7 @@ const VehicleDetails = () => {
                         onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value })}
                       />
                     ) : (
-                      <span className="font-medium">{vehicle.plateNumber}</span>
+                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.plateNumber}</span>
                     )}
                   </div>
                   <div className="flex flex-col py-2 border-b border-gray-50">

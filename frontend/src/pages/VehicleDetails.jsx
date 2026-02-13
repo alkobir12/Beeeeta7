@@ -2414,7 +2414,7 @@ const VehicleDetails = () => {
             onDragEnd={handleLayoutDragEnd}
           >
             <SortableContext items={layoutBlocks} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4" data-testid="vehicle-layout">
+              <div className="space-y-3" data-testid="vehicle-layout">
                 {layoutBlocks.map((blockId) => (
                   <SortableBlock key={blockId} id={blockId} title={blockTitles[blockId] || blockId}>
                     {renderBlock(blockId)}

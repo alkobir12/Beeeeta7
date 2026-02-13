@@ -124,7 +124,7 @@ class TestUserLayouts:
     
     async def test_page_mismatch_error(self):
         """Test PUT with page mismatch returns 400 error"""
-        print(f"\n🧪 Testing page mismatch error")
+        print("\n🧪 Testing page mismatch error")
         
         payload = {
             "page": "wrongPage",  # Different from URL

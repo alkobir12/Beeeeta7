@@ -1186,6 +1186,54 @@ const VehicleDetails = () => {
   const [showFiles, setShowFiles] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
   const [technicians, setTechnicians] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLayout = async () => {
+      try {
+        const res = await userLayoutsAPI.getVehicleDetailsLayout(userId);
+        const blocks = res?.data?.blocks || [];
+        const normalized = Array.isArray(blocks) ? blocks.filter(Boolean) : [];
+
+        if (!mounted) return;
+
+        // Merge with defaults to handle new blocks added later
+        const merged = [
+          ...normalized.filter((b) => DEFAULT_BLOCKS.includes(b)),
+          ...DEFAULT_BLOCKS.filter((b) => !normalized.includes(b)),
+        ];
+
+        setLayoutBlocks(merged.length ? merged : DEFAULT_BLOCKS);
+      } catch (e) {
+        setLayoutBlocks(DEFAULT_BLOCKS);
+      } finally {
+        if (mounted) setLayoutLoaded(true);
+      }
+    };
+
+    loadLayout();
+
+    return () => {
+      mounted = false;
+    };
+  }, [userId, DEFAULT_BLOCKS]);
+
+  const handleLayoutDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setLayoutBlocks((items) => {
+      const oldIndex = items.indexOf(active.id);
+      const newIndex = items.indexOf(over.id);
+      const next = arrayMove(items, oldIndex, newIndex);
+
+      // Auto-save (fire & forget)
+      userLayoutsAPI.saveVehicleDetailsLayout(userId, next).catch(() => {});
+      return next;
+    });
+  };
+
   const [visits, setVisits] = useState([]);
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [partsCatalog, setPartsCatalog] = useState([]);

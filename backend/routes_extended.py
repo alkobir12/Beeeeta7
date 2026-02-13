@@ -2307,6 +2307,82 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
 
 
 # --------------------- Visits APIs ---------------------
+
+
+def _parse_notes_json(notes: Any) -> Dict[str, Any]:
+    if not notes:
+        return {}
+    if isinstance(notes, dict):
+        return notes
+    if isinstance(notes, str):
+        s = notes.strip()
+        if s.startswith('{') and s.endswith('}'):
+            try:
+                import json
+
+                return json.loads(s)
+            except Exception:
+                return {}
+    return {}
+
+
+def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
+    items = parsed_notes.get('items') or []
+    payments = parsed_notes.get('payments') or []
+
+    def _num(x, default=0.0):
+        try:
+            return float(x)
+        except Exception:
+            return default
+
+    total_workshop = 0.0
+    total_suppliers = 0.0
+    for it in items:
+        # Backward compatibility: default to workshop
+        billing_type = (it.get('billingType') or it.get('type') or 'workshop').lower()
+        qty = _num(it.get('quantity', 1), 1.0)
+        price = _num(it.get('price', it.get('unit_price', 0)), 0.0)
+        line_total = _num(it.get('total'), qty * price)
+        if billing_type == 'supplier':
+            total_suppliers += line_total
+        else:
+            total_workshop += line_total
+
+    advance_paid = 0.0
+    total_paid = 0.0
+    for p in payments:
+        amt = _num(p.get('amount'), 0.0)
+        total_paid += amt
+        kind = (p.get('kind') or '').lower()
+        if kind == 'advance':
+            advance_paid += amt
+
+    total_amount = total_workshop + total_suppliers
+    balance = total_amount - total_paid
+
+    # Payment status
+    if total_paid == 0:
+        payment_status = 'unpaid'
+    elif balance > 0:
+        payment_status = 'partial'
+    elif balance == 0:
+        payment_status = 'paid_full'
+    else:
+        payment_status = 'credit'
+
+    return {
+        'items': items,
+        'payments': payments,
+        'total_workshop': round(total_workshop, 2),
+        'total_suppliers': round(total_suppliers, 2),
+        'total_amount': round(total_amount, 2),
+        'total_paid': round(total_paid, 2),
+        'advance_paid': round(advance_paid, 2),
+        'balance': round(balance, 2),
+        'payment_status': payment_status,
+    }
+
 @router.get("/vehicles/{vehicle_id}/visits")
 async def get_vehicle_visits(vehicle_id: str):
     """Get all visits for a vehicle"""

@@ -1163,9 +1163,9 @@ const VehicleDetails = () => {
   const DEFAULT_BLOCKS = useMemo(
     () => [
       'vehicle_info',
+      'visits',
       'financial_summary',
       'guidance',
-      'visits',
       'status_actions',
     ],
     []

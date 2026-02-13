@@ -2150,7 +2150,11 @@ const VehicleDetails = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
+            <div
+              className="flex gap-2 text-xs overflow-x-auto whitespace-nowrap pb-1"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+              data-testid="visit-filter-controls"
+            >
               {[
                 { key: 'all', label: 'كل الزيارات', count: visits.length },
                 {

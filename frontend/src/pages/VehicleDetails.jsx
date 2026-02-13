@@ -1172,12 +1172,22 @@ const VehicleDetails = () => {
   const [layoutBlocks, setLayoutBlocks] = useState(DEFAULT_BLOCKS);
   const [layoutLoaded, setLayoutLoaded] = useState(false);
 
+  const session = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('session');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+  const guidanceEnabled = session?.guidanceEnabled !== false;
+  const userId = session?.id || session?.name || 'default';
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 5 } })
   );
 
-  
   const [vehicle, setVehicle] = useState(null);
   const [approvals, setApprovals] = useState([]);
   const [showFiles, setShowFiles] = useState(false);

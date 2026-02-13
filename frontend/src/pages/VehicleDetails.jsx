@@ -1686,6 +1686,492 @@ const VehicleDetails = () => {
   }
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
+  const blockTitles = useMemo(
+    () => ({
+      vehicle_info: 'معلومات المركبة',
+      financial_summary: 'الملخص المالي',
+      guidance: 'إرشادات الملف',
+      visits: 'الزيارات',
+      status_actions: 'الحالة والإجراءات',
+    }),
+    []
+  );
+
+  const renderBlock = (blockId) => {
+    switch (blockId) {
+      case 'vehicle_info':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Info */}
+            <div className="space-y-6">
+              {/* Vehicle Info Card */}
+              <div className="apple-card p-6 relative group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <Car size={20} />
+                    <h3 className="font-bold text-gray-900">{t('vehicle_details.vehicle_info')}</h3>
+                  </div>
+                  <button
+                    onClick={() => setIsEditingVehicle(!isEditingVehicle)}
+                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  >
+                    {isEditingVehicle ? <X size={18} /> : <Edit2 size={16} />}
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex flex-col py-2 border-b border-gray-50">
+                    <span className="text-gray-500 text-xs mb-1">{t('vehicles.plate_number')}</span>
+                    {isEditingVehicle ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={vehicleForm.plateNumber}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium">{vehicle.plateNumber}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-50">
+                    <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.brand_model')}</span>
+                    {isEditingVehicle ? (
+                      <div className="flex gap-2">
+                        <input
+                          className="text-sm border rounded p-1 w-1/2"
+                          value={vehicleForm.brand}
+                          onChange={(e) => setVehicleForm({ ...vehicleForm, brand: e.target.value })}
+                          placeholder="الماركة"
+                        />
+                        <input
+                          className="text-sm border rounded p-1 w-1/2"
+                          value={vehicleForm.model}
+                          onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
+                          placeholder="الموديل"
+                        />
+                      </div>
+                    ) : (
+                      <span className="font-medium">
+                        {vehicle.brand} {vehicle.model}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-50">
+                    <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.vin_number')}</span>
+                    {isEditingVehicle ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={vehicleForm.vin}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, vin: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col py-2">
+                    <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.color')}</span>
+                    {isEditingVehicle ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={vehicleForm.color}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium">{vehicle.color || '-'}</span>
+                    )}
+                  </div>
+
+                  {isEditingVehicle && (
+                    <button
+                      onClick={handleUpdateVehicleInfo}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                    >
+                      حفظ التعديلات
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="apple-card p-6 relative group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-green-600">
+                    <User size={20} />
+                    <h3 className="font-bold text-gray-900">{t('vehicle_details.customer_info')}</h3>
+                  </div>
+                  <button
+                    onClick={() => setIsEditingCustomer(!isEditingCustomer)}
+                    className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                  >
+                    {isEditingCustomer ? <X size={18} /> : <Edit2 size={16} />}
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex flex-col py-2 border-b border-gray-50">
+                    <span className="text-gray-500 text-xs mb-1">{t('vehicles_page.customer_name')}</span>
+                    {isEditingCustomer ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={customerForm.name}
+                        onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium">{vehicle.customerName}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-50">
+                    <span className="text-gray-500 text-xs mb-1">رقم الجوال</span>
+                    {isEditingCustomer ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={customerForm.phone}
+                        onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium" dir="ltr">
+                        {vehicle.customerPhone}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col py-2">
+                    <span className="text-gray-500 text-xs mb-1">البريد الإلكتروني</span>
+                    {isEditingCustomer ? (
+                      <input
+                        className="text-sm border rounded p-1 w-full"
+                        value={customerForm.email}
+                        onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                      />
+                    ) : (
+                      <span className="font-medium">{vehicle.customerEmail || '-'}</span>
+                    )}
+                  </div>
+
+                  {isEditingCustomer && (
+                    <button
+                      onClick={handleUpdateCustomerInfo}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                    >
+                      حفظ التعديلات
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Files Section (Load on demand) */}
+              <div className="apple-card p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3 text-purple-600">
+                    <FileText size={20} />
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t('vehicle_details.files')}</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowFiles((v) => !v)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  >
+                    {showFiles ? 'إخفاء' : 'عرض'}
+                  </button>
+                </div>
+
+                {showFiles && (
+                  <>
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        onClick={openScanner}
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600"
+                      >
+                        <Scan size={16} />
+                      </button>
+                      <label className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 cursor-pointer">
+                        <Upload size={16} />
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=other`, {
+                                method: 'POST',
+                                body: formData,
+                              });
+                              fetchData();
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {vehicleFiles.slice(0, 6).map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 overflow-hidden relative group cursor-pointer"
+                          onClick={() =>
+                            setPreviewImage(`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`)
+                          }
+                        >
+                          {file.filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                            <img
+                              src={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
+                              alt="file"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <FileText size={24} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {!showFiles && (
+                  <div className="text-xs text-gray-400">اضغط “عرض” لتحميل ملفات المركبة</div>
+                )}
+              </div>
+            </div>
+
+            {/* Center Column: Visits Timeline */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Wrench size={20} className="text-blue-600" />
+                  سجل الزيارات
+                </h2>
+                <button
+                  onClick={handleCreateVisit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+                >
+                  <Plus size={14} /> زيارة جديدة
+                </button>
+              </div>
+
+              <div className="text-[11px] text-gray-500 -mt-2">{t('vehicle_details.items_edit_hint')}</div>
+
+              <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
+                {[
+                  { key: 'all', label: 'كل الزيارات', count: visits.length },
+                  {
+                    key: 'open',
+                    label: 'المفتوحة',
+                    count: visits.filter((v) => (v.status || '').toLowerCase() !== 'completed').length,
+                  },
+                  {
+                    key: 'closed',
+                    label: 'المغلقة',
+                    count: visits.filter((v) => (v.status || '').toLowerCase() === 'completed').length,
+                  },
+                ].map((filter) => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setVisitFilter(filter.key)}
+                    className={`px-3 py-1.5 rounded-full border transition-all ${
+                      visitFilter === filter.key
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+                    }`}
+                    data-testid={`visit-filter-${filter.key}`}
+                  >
+                    {filter.label} ({filter.count})
+                  </button>
+                ))}
+              </div>
+
+              {visitFilter !== 'all' && filteredVisits.length === 0 && visits.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+                  <span>لا توجد زيارات في هذا الفلتر. الزيارات موجودة في فلاتر أخرى.</span>
+                  <button
+                    onClick={() => setVisitFilter('all')}
+                    className="text-amber-700 font-bold underline mr-2"
+                  >
+                    عرض الكل
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {filteredVisits.length === 0 && (visitFilter === 'all' || visits.length === 0) ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-xs text-gray-500">لا توجد زيارات بعد</p>
+                    <p className="text-[11px] text-gray-400 mt-1">اضغط "زيارة جديدة" لاستقبال المركبة</p>
+                  </div>
+                ) : (
+                  filteredVisits.map((visit) => {
+                    const normVisit = {
+                      ...visit,
+                      entryDate: visit.entryDate || visit.entry_date,
+                      exitDate: visit.exitDate || visit.exit_date,
+                      technicianId: visit.technicianId || visit.technician_id,
+                      createdAt: visit.createdAt || visit.created_at,
+                    };
+                    const visitApprovals = approvals
+                      .filter((a) => (a.visitId || a.visit_id) === normVisit.id)
+                      .sort((x, y) =>
+                        String(y.createdAt || y.created_at || '').localeCompare(
+                          String(x.createdAt || x.created_at || '')
+                        )
+                      );
+
+                    return (
+                      <VisitCard
+                        key={normVisit.id}
+                        visit={normVisit}
+                        vehicle={vehicle}
+                        technicians={technicians}
+                        onUpdate={fetchData}
+                        onVisitClosed={handleVisitClosed}
+                        onShowWhatsAppPreview={(notification) => {
+                          setWaPreview(notification);
+                          setWaPreviewOpen(true);
+                        }}
+                        approvals={visitApprovals}
+                        onDelete={requestDeleteVisit}
+                        servicesCatalog={servicesCatalog}
+                        partsCatalog={partsCatalog}
+                        onServiceAdded={appendService}
+                        onPartAdded={appendPart}
+                        canDelete={canDeleteVisit}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Status & Actions */}
+            <div className="space-y-6">
+              <div className="apple-card p-6">
+                <div className="flex items-center gap-3 mb-6 text-orange-600">
+                  <Wrench size={20} />
+                  <h3 className="font-bold text-gray-900">{t('vehicle_details.status')}</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">{t('quick_actions.change_status')}</label>
+                    <select className="apple-input" value={status} onChange={(e) => setStatus(e.target.value)}>
+                      {statusSteps.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">الفني المسؤول</label>
+                    <select
+                      className="apple-input"
+                      value={assignedTech}
+                      onChange={(e) => setAssignedTech(e.target.value)}
+                    >
+                      <option value="">اختر الفني...</option>
+                      {technicians.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">ملاحظات عامة</label>
+
+                    <VisitDeleteConfirmDialog
+                      open={deleteVisitOpen}
+                      onOpenChange={(v) => {
+                        if (deleteVisitLoading) return;
+                        setDeleteVisitOpen(v);
+                        if (!v) setDeleteVisitTarget(null);
+                      }}
+                      visit={deleteVisitTarget}
+                      t={t}
+                      isRTL={isRTL}
+                      isLoading={deleteVisitLoading}
+                      onConfirm={confirmDeleteVisit}
+                    />
+
+                    <textarea
+                      className="apple-input h-32 py-3 resize-none"
+                      placeholder="ملاحظات..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+
+                  <button onClick={handleStatusUpdate} className="apple-button w-full mt-2">
+                    حفظ التحديثات
+                  </button>
+                </div>
+              </div>
+
+              <div className="apple-card p-6">
+                <div className="flex items-center gap-3 mb-4 text-gray-900">
+                  <Clock size={20} />
+                  <h3 className="font-bold">التواريخ</h3>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">تاريخ الدخول</span>
+                    <span className="font-medium">
+                      {vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString('ar-SA') : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">آخر تحديث</span>
+                    <span className="font-medium">
+                      {vehicle.updatedAt || vehicle.updated_at
+                        ? new Date(vehicle.updatedAt || vehicle.updated_at).toLocaleDateString('ar-SA')
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'financial_summary':
+        return (
+          <div className="liquid-surface liquid-section">
+            <div className="flex items-end justify-between gap-3 mb-3">
+              <div>
+                <div className="liquid-title">{t('common.vehicle_finance') || 'ملخص مالي'}</div>
+                <div className="liquid-subtitle">
+                  {t('common.vehicle_finance_subtitle') || 'تكاليف المركبة عبر جميع الزيارات'}
+                </div>
+              </div>
+            </div>
+            <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+          </div>
+        );
+
+      case 'guidance':
+        return (
+          <div data-testid="vehicle-guidance-stepper">
+            <GuidanceStepper
+              title="إرشادات ملف المركبة"
+              subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."
+              steps={guidanceSteps}
+              enabled={guidanceEnabled}
+              storageKey={`guidance-vehicle-${userId}`}
+            />
+          </div>
+        );
+
+      case 'visits':
+        return null; // visits already included inside vehicle_info block layout for now
+
+      case 'status_actions':
+        return null; // status/actions included in vehicle_info layout for now
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <style>{`

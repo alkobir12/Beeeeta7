@@ -1065,7 +1065,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
             onClick={(e) => e.stopPropagation()}
           >
             {isEditing ? (
-              <>
+
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}

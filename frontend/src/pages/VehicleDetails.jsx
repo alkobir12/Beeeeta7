@@ -1382,6 +1382,7 @@ const VehicleDetails = () => {
                   <VisitCard
                     key={normVisit.id}
                     visit={normVisit}
+                    vehicle={vehicle}
                     technicians={technicians}
                     onUpdate={fetchData}
                     onVisitClosed={handleVisitClosed}

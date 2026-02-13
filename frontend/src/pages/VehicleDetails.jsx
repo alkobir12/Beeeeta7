@@ -1928,7 +1928,7 @@ const VehicleDetails = () => {
                   <div className="text-xs text-gray-400">اضغط “عرض” لتحميل ملفات المركبة</div>
                 )}
               </div>
-            </div>
+
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <Wrench size={20} className="text-blue-600" />

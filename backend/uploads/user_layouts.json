@@ -20,5 +20,24 @@
       "status_actions",
       "vehicle_info"
     ]
+  },
+  {
+    "userId": "test_user_123",
+    "page": "vehicleDetails",
+    "blocks": [
+      "vehicle_info",
+      "visits",
+      "financial_summary",
+      "guidance",
+      "status_actions"
+    ]
+  },
+  {
+    "userId": "db_test_user_789",
+    "page": "vehicleDetails",
+    "blocks": [
+      "block1",
+      "block2"
+    ]
   }
 ]

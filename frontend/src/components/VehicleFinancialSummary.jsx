@@ -82,7 +82,7 @@ export default function VehicleFinancialSummary({ summary, t }) {
   const balanceAccent = balance === 0 ? 'emerald' : balance > 0 ? 'rose' : 'sky';
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
       <StatCard
         title={t?.('vehicle_finance.workshop_due') || 'ذمم الورشة'}
         value={s.total_workshop}

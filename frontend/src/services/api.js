@@ -167,6 +167,7 @@ export {
   transactionAPI,
   operationsAPI,
   financeAPI,
+  vehicleFinanceAPI,
   api,
 };
 

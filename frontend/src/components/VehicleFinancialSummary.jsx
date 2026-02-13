@@ -1,6 +1,18 @@
 import React from 'react';
 import { ArrowDownRight, ArrowUpRight, Wallet, Building2, HandCoins } from 'lucide-react';
 
+const formatMoney = (value) => {
+  const n = Number(value || 0);
+  try {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: n % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(n);
+  } catch {
+    return n.toFixed(2);
+  }
+};
+
 const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
   const accentMap = {
     emerald: {

@@ -1854,8 +1854,8 @@ const VehicleDetails = () => {
                 </div>
               </div>
 
-              {/* Files Section (Load on demand) */}
-              <div className="apple-card p-4 sm:p-6">
+            {/* Files Section (Load on demand) */}
+            <div className="apple-card p-4 sm:p-6 lg:col-span-2">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3 text-purple-600">
                     <FileText size={20} />

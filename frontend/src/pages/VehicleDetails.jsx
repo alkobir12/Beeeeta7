@@ -2419,6 +2419,9 @@ const VehicleDetails = () => {
       {/* Draggable Layout Blocks */}
       {layoutLoaded ? (
         <div className="px-4 sm:px-0">
+          <div className="text-[11px] mb-2" style={{ color: 'rgba(226,232,240,0.58)' }}>
+            اسحب البلوكات من زر (⋮⋮) لترتيب الصفحة كما تريد — يتم الحفظ تلقائياً.
+          </div>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

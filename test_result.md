@@ -38,6 +38,32 @@
 - **Status**: ✅ WORKING (Arabic login interface fully functional)
 - **Login Process**: Successfully logged in with 'مدير' username
 - **Session Management**: Stable authentication throughout testing
+
+
+## Vehicle Details Liquid System Redesign Testing (2026-02-13)
+
+### Test Objective (Arabic Request):
+اختبار صفحة تفاصيل المركبة /vehicle/:id بعد تطبيق Liquid System على كروت الزيارات VisitCard وتحسين الجوال (تحويل البنود إلى كروت).
+
+### Test Environment:
+- Frontend URL: https://carfix-admin-2.preview.emergentagent.com
+- Backend URL: https://carfix-admin-2.preview.emergentagent.com/api
+- Testing Date: 2026-02-13
+- Test Focus: VehicleDetails UI/UX + visits filter/sort + expand/collapse + mobile cards
+
+### Test Results Summary: ✅ PASSED (via Playwright + screenshots)
+- ✅ الصفحة تُحمّل بنجاح بعد تسجيل الدخول (مدير) وتظهر عناصر التحكّم بفلترة الزيارات.
+- ✅ فلتر الزيارات موجود (الكل/جارية/مكتملة) مع ترتيب الزيارات الأحدث أولاً.
+- ✅ كرت الزيارة بأسلوب Liquid (داكن/زجاجي) مع توسعة/طي.
+- ✅ داخل التوسعة تظهر pills للإحصائيات (ورشة/مورد/مدفوع/متبقي).
+- ✅ على الجوال: البنود تظهر كبطاقات (Card-based) بدل الجدول.
+- ✅ أزرار الإجراءات موجودة (حفظ/إغلاق/إعادة فتح حسب الحالة) + زر طباعة + زر حذف الزيارة للمدير.
+- ⚠️ ملاحظة: ظهرت تحذيرات/أخطاء شبكة متقطعة من سكربت خارجي (rrweb/unpkg) لكنها لا تمنع عمل الصفحة. (مشكلة بيئية/شبكية وليست منطق التطبيق).
+
+### Artifacts:
+- /app/artifacts/vehicle_details_loaded_proof.png
+- /app/artifacts/vehicle_visit_expanded_loaded_proof.png
+
 - **Navigation**: Seamless access to operations page after login
 
 **2. ✅ Operations Page Layout and Grid Display**

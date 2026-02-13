@@ -1286,7 +1286,8 @@ const VehicleDetails = () => {
 
   const session = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('session'));
+      const raw = localStorage.getItem('session');
+      return raw ? JSON.parse(raw) : null;
     } catch (e) {
       return null;
     }

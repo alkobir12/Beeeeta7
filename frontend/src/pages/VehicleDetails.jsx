@@ -1688,9 +1688,9 @@ const VehicleDetails = () => {
   const blockTitles = useMemo(
     () => ({
       vehicle_info: 'معلومات المركبة',
+      visits: 'الزيارات',
       financial_summary: 'الملخص المالي',
       guidance: 'إرشادات الملف',
-      visits: 'الزيارات',
       status_actions: 'الحالة والإجراءات',
     }),
     []

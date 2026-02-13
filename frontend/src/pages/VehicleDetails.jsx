@@ -2356,7 +2356,8 @@ const VehicleDetails = () => {
       `}</style>
 
       {/* Header */}
-      <div className="flex items-center gap-4 pt-4 px-4 sm:px-0">
+      <div className="flex items-center justify-between gap-4 pt-4 px-4 sm:px-0">
+        <div className="flex items-center gap-4">
         <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowRight size={24} className="text-gray-600" />
         </button>

@@ -12092,6 +12092,18 @@ at https://visit-notify-2.preview.emergentagent.com/api/v1/accounting/reports/in
    ```
    
    **Income Statement Page Expects:**
+
+
+---
+## Vehicle Visits: Delete Button for All Statuses + WhatsApp Preview Before Send (2026-02-12)
+
+**Changes**
+- Visit delete button now shows for manager/admin on *all* visit statuses (not only completed).
+- On closing a visit, the system opens a WhatsApp preview modal showing the extracted message text before sending.
+
+**Testing**
+- ✅ Frontend agent verified code paths and UI wiring (delete button condition removed, preview modal rendered and opens on close).
+
    ```javascript
    {
      totals: { revenue, expenses, net_income },

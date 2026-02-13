@@ -1294,10 +1294,10 @@ const VehicleDetails = () => {
   }, []);
   const guidanceEnabled = session?.guidanceEnabled !== false;
 
+  const userId = session?.id || session?.name || 'default';
+
   const appendService = useCallback((service) => {
     if (!service) return;
-
-  const userId = session?.id || session?.name || 'default';
 
     setServicesCatalog((prev) => {
       const exists = prev.some((s) => s.id === service.id || (s.name || '').trim() === (service.name || '').trim());

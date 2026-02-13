@@ -269,6 +269,16 @@ const translations = {
     saved_successfully: "تم حفظ العملية",
     save_failed: "فشل حفظ العملية",
     items_required: "أضف عنصر واحد على الأقل قبل الحفظ",
+
+  vehicle_finance: {
+    workshop_due: "ذمم الورشة",
+    suppliers_due: "ذمم الموردين",
+    total_paid: "المدفوع",
+    advance_paid: "دفعة مقدمة",
+    balance: "المتبقي",
+    credit: "رصيد للعميل"
+  },
+
     select_vehicle_required: "اختر مركبة أولاً"
   },
   settings: {

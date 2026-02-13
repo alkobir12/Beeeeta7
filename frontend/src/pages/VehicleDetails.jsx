@@ -2433,9 +2433,6 @@ const VehicleDetails = () => {
         <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
       </div>
 
-        </div>
-      </div>
-
       {/* Page-level WhatsApp Notification Banner */}
       {pageWhatsappNotification && (
         <div className="mx-4 sm:mx-0 mt-4 rounded-lg border-2 border-green-400 bg-green-50 px-4 py-3 animate-in fade-in slide-in-from-top-2" data-testid="page-whatsapp-notification">

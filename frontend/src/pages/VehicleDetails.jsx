@@ -1756,13 +1756,23 @@ const VehicleDetails = () => {
                     {isEditingVehicle ? (
                       <div className="flex gap-2">
                         <input
-                          className="text-sm border rounded p-1 w-1/2"
+                          className="text-sm rounded-xl px-3 py-2 w-1/2"
+                          style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(148,163,184,0.18)',
+                            color: 'rgba(248,250,252,0.92)',
+                          }}
                           value={vehicleForm.brand}
                           onChange={(e) => setVehicleForm({ ...vehicleForm, brand: e.target.value })}
                           placeholder="الماركة"
                         />
                         <input
-                          className="text-sm border rounded p-1 w-1/2"
+                          className="text-sm rounded-xl px-3 py-2 w-1/2"
+                          style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(148,163,184,0.18)',
+                            color: 'rgba(248,250,252,0.92)',
+                          }}
                           value={vehicleForm.model}
                           onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
                           placeholder="الموديل"

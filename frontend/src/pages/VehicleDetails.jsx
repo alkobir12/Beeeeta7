@@ -2370,6 +2370,7 @@ const VehicleDetails = () => {
           </div>
           <p className="text-gray-500 mt-1">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
         </div>
+
         <div className="flex gap-2">
           <div className="relative group">
             <button className="apple-button flex items-center gap-2">

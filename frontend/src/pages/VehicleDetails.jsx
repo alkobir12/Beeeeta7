@@ -1871,7 +1871,12 @@ const VehicleDetails = () => {
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicles_page.customer_name')}</span>
                     {isEditingCustomer ? (
                       <input
-                        className="text-sm border rounded p-1 w-full"
+                        className="w-full text-sm rounded-xl px-3 py-2"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          color: 'rgba(248,250,252,0.92)',
+                        }}
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
                       />

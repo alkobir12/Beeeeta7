@@ -53,6 +53,14 @@ const Login = () => {
       localStorage.setItem('session', JSON.stringify(session));
       localStorage.setItem('user', JSON.stringify(fallbackUser));
       window.dispatchEvent(new Event('sessionUpdated'));
+
+      // keep session in cookie for Protected routes
+      try {
+        document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
+      } catch (e) {
+        // ignore
+      }
+
       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)
       window.location.assign(`${window.location.origin}/`);

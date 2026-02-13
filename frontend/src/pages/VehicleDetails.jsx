@@ -2431,6 +2431,7 @@ const VehicleDetails = () => {
           </div>
         </div>
         <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+      </div>
 
       {/* Draggable Layout Blocks */}
       {layoutLoaded ? (

@@ -2783,19 +2783,19 @@ const VehicleDetails = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">ملاحظات عامة</label>
 
-      <VisitDeleteConfirmDialog
-        open={deleteVisitOpen}
-        onOpenChange={(v) => {
-          if (deleteVisitLoading) return;
-          setDeleteVisitOpen(v);
-          if (!v) setDeleteVisitTarget(null);
-        }}
-        visit={deleteVisitTarget}
-        t={t}
-        isRTL={isRTL}
-        isLoading={deleteVisitLoading}
-        onConfirm={confirmDeleteVisit}
-      />
+                <VisitDeleteConfirmDialog
+                  open={deleteVisitOpen}
+                  onOpenChange={(v) => {
+                    if (deleteVisitLoading) return;
+                    setDeleteVisitOpen(v);
+                    if (!v) setDeleteVisitTarget(null);
+                  }}
+                  visit={deleteVisitTarget}
+                  t={t}
+                  isRTL={isRTL}
+                  isLoading={deleteVisitLoading}
+                  onConfirm={confirmDeleteVisit}
+                />
 
                 <textarea 
                   className="apple-input h-32 py-3 resize-none" 

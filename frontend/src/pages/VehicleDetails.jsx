@@ -1908,6 +1908,10 @@ const VehicleDetails = () => {
                     technicians={technicians}
                     onUpdate={fetchData}
                     onVisitClosed={handleVisitClosed}
+                    onShowWhatsAppPreview={(notification) => {
+                      setWaPreview(notification);
+                      setWaPreviewOpen(true);
+                    }}
                     approvals={visitApprovals}
                     onDelete={requestDeleteVisit}
                     servicesCatalog={servicesCatalog}

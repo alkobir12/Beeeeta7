@@ -1929,7 +1929,6 @@ const VehicleDetails = () => {
               </div>
             </div>
 
-            {/* Grid Layout for remaining sections */}
             <div className="grid lg:grid-cols-2 gap-6">
               <div className="lg:col-span-1 space-y-6 hidden">
               <div className="flex items-center justify-between">

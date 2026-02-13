@@ -98,6 +98,13 @@ const Login = () => {
             name: fallbackUser.name,
             phone: fallbackUser.phone,
             email: fallbackUser.email,
+
+          try {
+            document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
+          } catch (e) {
+            // ignore
+          }
+
             role: fallbackUser.role,
             permissions: fallbackUser.permissions,
             guidanceEnabled: fallbackUser.guidanceEnabled !== false,

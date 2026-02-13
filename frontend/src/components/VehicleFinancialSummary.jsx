@@ -66,7 +66,11 @@ const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
       </div>
       {subtitle ? (
         <div className="mt-1 text-xs" style={{ color: 'rgba(226,232,240,0.65)' }}>{subtitle}</div>
-      ) : null}
+      ) : (
+        <div className="mt-1 text-[11px]" style={{ color: 'rgba(226,232,240,0.55)' }}>
+          {title}
+        </div>
+      )}
     </div>
   );
 };

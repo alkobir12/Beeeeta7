@@ -271,19 +271,37 @@ const VisitCard = ({ visit, technicians, onUpdate, onDelete, onVisitClosed, appr
         notes: JSON.stringify({ text: notes, items: items })
       };
       const response = await axios.put(`${API_URL}/visits/${visit.id}`, payload);
+      const whatsappUrl = response.data?.whatsappNotificationUrl;
+      if (whatsappUrl) {
+        const customerName = vehicle?.customerName || vehicle?.customer_name || 'العميل';
+        // Extract message text from WhatsApp URL for preview
+        let messageText = '';
+        try {
+          const u = new URL(whatsappUrl);
+          messageText = decodeURIComponent(u.searchParams.get('text') || '');
+        } catch (e) {
+          messageText = '';
+        }
+
+        const notification = {
+          url: whatsappUrl,
+          customerName,
+          message: messageText,
+        };
+
+        // Show preview modal before sending
+        setWaPreview(notification);
+        setWaPreviewOpen(true);
+
+        // Keep banner as fallback (user can still send later)
+        setWhatsappNotification(notification);
+        whatsappNotificationRef.current = notification;
+        onVisitClosed?.(notification);
+      }
+      
       setStatus('completed');
       setIsEditing(false);
-      
-      // Check for WhatsApp notification
-      if (response.data?.whatsappNotification) {
-        setWhatsappNotification(response.data.whatsappNotification);
-        whatsappNotificationRef.current = response.data.whatsappNotification;
-        setIsExpanded(true);
-        // Also notify parent to show page-level notification
-        onVisitClosed?.(response.data.whatsappNotification);
-      } else {
-        onUpdate?.();
-      }
+      onUpdate?.();
       
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {

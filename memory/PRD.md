@@ -111,7 +111,7 @@
 ## Test Credentials
 - Username: مدير
 - Workshop ID: finmodule-sync
-- API URL: https://visit-notify-2.preview.emergentagent.com
+- API URL: https://carfix-admin-2.preview.emergentagent.com
 - Groq API Key: configured in backend/.env
 
 ## Key Files

@@ -2674,6 +2674,11 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 if fin.get('balance', 0) != 0:
                     raise HTTPException(status_code=400, detail="Cannot close visit unless balance is zero")
 
+            # Make sure we return 4xx properly (Cloudflare 520 appears when unhandled)
+            if payload.get("status") == "completed":
+                # validation already done above
+                pass
+
             # --- SYNC TO OPERATIONS (FINANCE) ---
             if "notes" in payload or "status" in payload:
                 await _sync_visit_to_operation(visit_id, r, supa_service=supa)

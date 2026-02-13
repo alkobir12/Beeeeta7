@@ -1802,7 +1802,7 @@ const VehicleDetails = () => {
                     )}
                   </div>
                   <div className="flex flex-col py-2">
-                    <span className="text-gray-500 text-xs mb-1">{t('vehicle_details.color')}</span>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicle_details.color')}</span>
                     {isEditingVehicle ? (
                       <input
                         className="text-sm border rounded p-1 w-full"

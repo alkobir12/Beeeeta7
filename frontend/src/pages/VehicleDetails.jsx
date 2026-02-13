@@ -27,14 +27,14 @@ const FILE_BASE = process.env.NODE_ENV === 'production' ? '' : (process.env.REAC
 const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
   if (!isEditing) {
     return (
-      <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors">
-        <td className="py-2 px-3 text-xs text-gray-600 font-medium">
+      <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
+        <td className="py-2 px-3 text-xs" style={{ color: 'rgba(226,232,240,0.72)' }}>
           {item.itemType === 'part' ? 'قطعة' : 'خدمة'}
         </td>
-        <td className="py-2 px-3 text-xs text-gray-800">{item.name}</td>
-        <td className="py-2 px-3 text-xs text-gray-800 text-center">{item.quantity}</td>
-        <td className="py-2 px-3 text-xs text-gray-800 text-center">{item.price}</td>
-        <td className="py-2 px-3 text-xs font-bold text-gray-900 text-right">
+        <td className="py-2 px-3 text-xs" style={{ color: 'rgba(248,250,252,0.92)' }}>{item.name}</td>
+        <td className="py-2 px-3 text-xs text-center" style={{ color: 'rgba(248,250,252,0.86)' }}>{item.quantity}</td>
+        <td className="py-2 px-3 text-xs text-center" style={{ color: 'rgba(248,250,252,0.86)' }}>{item.price}</td>
+        <td className="py-2 px-3 text-xs font-bold text-right tabular-nums" style={{ color: 'rgba(186,230,253,0.95)' }}>
           {formatCurrency(item.quantity * item.price)}
         </td>
       </tr>
@@ -45,12 +45,17 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
   const listId = `${item.itemType}-list-${rowId}`;
 
   return (
-    <tr className="border-b border-blue-100 bg-blue-50/30">
+    <tr className="border-b" style={{ borderColor: 'rgba(56,189,248,0.18)', background: 'rgba(56,189,248,0.06)' }}>
       <td className="p-2 min-w-[90px]">
         <select
           value={item.itemType}
           onChange={(e) => onChange('itemType', e.target.value)}
-          className="w-full text-xs sm:text-sm border border-gray-300 rounded p-2"
+          className="w-full text-xs sm:text-sm rounded-lg p-2"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
           data-testid={`visit-item-type-${rowId}`}
         >
           <option value="service">خدمة</option>
@@ -71,7 +76,12 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
               onChange('price', Number(price) || 0);
             }
           }}
-          className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm border border-gray-300 rounded p-2"
+          className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
           placeholder="اسم البند"
           data-testid={`visit-item-name-${rowId}`}
         />
@@ -86,7 +96,12 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
           type="number"
           value={item.quantity}
           onChange={(e) => onChange('quantity', Number(e.target.value))}
-          className="w-16 sm:w-20 text-xs sm:text-sm border border-gray-300 rounded p-2 text-center"
+          className="w-16 sm:w-20 text-xs sm:text-sm rounded-lg p-2 text-center"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
           min="1"
           data-testid={`visit-item-quantity-${rowId}`}
         />
@@ -96,7 +111,12 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
           type="number"
           value={item.price}
           onChange={(e) => onChange('price', Number(e.target.value))}
-          className="w-20 sm:w-24 text-xs sm:text-sm border border-gray-300 rounded p-2 text-center"
+          className="w-20 sm:w-24 text-xs sm:text-sm rounded-lg p-2 text-center"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
           min="0"
           data-testid={`visit-item-price-${rowId}`}
         />
@@ -104,7 +124,8 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
       <td className="p-2 text-right">
         <button
           onClick={onDelete}
-          className="p-1 text-red-500 hover:bg-red-100 rounded"
+          className="p-2 rounded-lg"
+          style={{ color: 'rgba(254,202,202,0.95)', background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.22)' }}
           title="حذف"
           data-testid={`visit-item-delete-${rowId}`}
         >
@@ -112,6 +133,173 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
         </button>
       </td>
     </tr>
+  );
+};
+
+const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
+  const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
+  const listId = `${item.itemType}-list-card-${rowId}`;
+  const amount = Number(item.quantity || 0) * Number(item.price || 0);
+
+  const typeLabel = item.itemType === 'part' ? 'قطعة' : 'خدمة';
+  const typeAccent = item.itemType === 'part' ? 'rose' : 'violet';
+  const typeStyle =
+    typeAccent === 'rose'
+      ? {
+          background: 'rgba(244,63,94,0.10)',
+          border: '1px solid rgba(244,63,94,0.22)',
+          color: 'rgba(254,202,202,0.95)',
+        }
+      : {
+          background: 'rgba(168,85,247,0.10)',
+          border: '1px solid rgba(168,85,247,0.22)',
+          color: 'rgba(233,213,255,0.95)',
+        };
+
+  return (
+    <div
+      className="liquid-surface"
+      style={{
+        borderRadius: 18,
+        padding: 12,
+        background:
+          'radial-gradient(circle at 14% 18%, rgba(168,85,247,0.10), transparent 55%), rgba(255,255,255,0.05)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full text-[11px]" style={typeStyle}>
+              {typeLabel}
+            </span>
+            <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>
+              {isEditing ? 'تعديل بند' : 'بند'}
+            </div>
+          </div>
+          {!isEditing ? (
+            <div className="mt-2 text-sm font-semibold truncate" style={{ color: 'rgba(248,250,252,0.92)' }}>
+              {item.name || '—'}
+            </div>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <select
+                value={item.itemType}
+                onChange={(e) => onChange('itemType', e.target.value)}
+                className="w-full text-sm rounded-lg p-2"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
+                }}
+                data-testid={`visit-item-type-card-${rowId}`}
+              >
+                <option value="service">خدمة</option>
+                <option value="part">قطعة</option>
+              </select>
+
+              <input
+                type="text"
+                list={listId}
+                value={item.name}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  onChange('name', value);
+                  const match = options.find((opt) => (opt.name || '').trim() === value.trim());
+                  if (match) {
+                    const price = match.price ?? match.sellingPrice ?? match.selling_price ?? 0;
+                    onChange('price', Number(price) || 0);
+                  }
+                }}
+                className="w-full text-sm rounded-lg p-2"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
+                }}
+                placeholder="اسم البند"
+                data-testid={`visit-item-name-card-${rowId}`}
+              />
+              <datalist id={listId}>
+                {options.map((opt) => (
+                  <option key={opt.id || opt.name} value={opt.name} />
+                ))}
+              </datalist>
+            </div>
+          )}
+        </div>
+
+        {isEditing && (
+          <button
+            onClick={onDelete}
+            className="p-2 rounded-lg shrink-0"
+            style={{
+              color: 'rgba(254,202,202,0.95)',
+              background: 'rgba(244,63,94,0.10)',
+              border: '1px solid rgba(244,63,94,0.22)',
+            }}
+            title="حذف"
+            data-testid={`visit-item-delete-card-${rowId}`}
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div>
+          <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>الكمية</div>
+          {!isEditing ? (
+            <div className="mt-1 text-sm font-semibold tabular-nums" style={{ color: 'rgba(248,250,252,0.92)' }}>
+              {item.quantity}
+            </div>
+          ) : (
+            <input
+              type="number"
+              value={item.quantity}
+              onChange={(e) => onChange('quantity', Number(e.target.value))}
+              className="mt-1 w-full text-sm rounded-lg p-2"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
+              min="1"
+              data-testid={`visit-item-quantity-card-${rowId}`}
+            />
+          )}
+        </div>
+
+        <div>
+          <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>السعر</div>
+          {!isEditing ? (
+            <div className="mt-1 text-sm font-semibold tabular-nums" style={{ color: 'rgba(248,250,252,0.92)' }}>
+              {item.price}
+            </div>
+          ) : (
+            <input
+              type="number"
+              value={item.price}
+              onChange={(e) => onChange('price', Number(e.target.value))}
+              className="mt-1 w-full text-sm rounded-lg p-2"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
+              min="0"
+              data-testid={`visit-item-price-card-${rowId}`}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>الإجمالي</div>
+        <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(186,230,253,0.95)' }}>
+          {formatCurrency(amount)}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -125,21 +313,19 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
   const [techId, setTechId] = useState(visit.technicianId || visit.technician_id || '');
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');
-  
+
   // Ref to preserve whatsapp notification across re-renders
   const whatsappNotificationRef = useRef(null);
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
-    // Parse items from visit.notes if strictly JSON structure, else empty or try legacy
     let parsedItems = [];
     try {
       if (visit.notes && visit.notes.trim().startsWith('{')) {
         const obj = JSON.parse(visit.notes);
         if (obj.items) parsedItems = obj.items;
-        // If notes was just JSON, clear plain text notes for UI to avoid showing JSON
-        if (!obj.text) setNotes(''); 
+        if (!obj.text) setNotes('');
         else setNotes(obj.text);
       } else {
         setNotes(visit.notes || '');
@@ -147,13 +333,13 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
     } catch (e) {
       setNotes(visit.notes || '');
     }
+
     setItems(parsedItems);
     setStatus(visit.status);
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
-    setIsEditing(visit.status === 'in_progress');
-    
-    // Restore whatsapp notification if it was set before re-render
+    setIsEditing((visit.status || '').toLowerCase() === 'in_progress');
+
     if (whatsappNotificationRef.current) {
       setWhatsappNotification(whatsappNotificationRef.current);
     }
@@ -224,16 +410,16 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
     try {
       await persistCatalogEntries();
       const payload = {
-        status: status,
+        status,
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: items })
+        notes: JSON.stringify({ text: notes, items }),
       };
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
-      
+
       setIsEditing(false);
-      onUpdate();
+      onUpdate?.();
       toast({ title: 'تم الحفظ', description: `تم حفظ ${items.length} بند بنجاح` });
     } catch (e) {
       console.error('Save visit error:', e);
@@ -249,7 +435,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
       setStatus('in_progress');
       setIsEditing(true);
       setIsExpanded(true);
-      onUpdate();
+      onUpdate?.();
       toast({ title: 'تم', description: 'تم إعادة فتح الزيارة للتعديل' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل إعادة فتح الزيارة', variant: 'destructive' });
@@ -269,18 +455,17 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
         exitDate: new Date().toISOString(),
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: items })
+        notes: JSON.stringify({ text: notes, items }),
       };
       const response = await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       const whatsappUrl = response.data?.whatsappNotificationUrl;
       if (whatsappUrl) {
         const customerName = vehicle?.customerName || vehicle?.customer_name || 'العميل';
-        // Extract message text from WhatsApp URL for preview
         let messageText = '';
         try {
           const u = new URL(whatsappUrl);
           messageText = decodeURIComponent(u.searchParams.get('text') || '');
-        } catch (e) {
+        } catch {
           messageText = '';
         }
 
@@ -290,20 +475,18 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
           message: messageText,
         };
 
-        // Show preview modal before sending
         setWaPreview(notification);
         setWaPreviewOpen(true);
 
-        // Keep banner as fallback (user can still send later)
         setWhatsappNotification(notification);
         whatsappNotificationRef.current = notification;
         onVisitClosed?.(notification);
       }
-      
+
       setStatus('completed');
       setIsEditing(false);
       onUpdate?.();
-      
+
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {
       console.error('Close visit error:', e);
@@ -318,133 +501,354 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
   };
 
   const updateItem = (index, field, value) => {
-    const newItems = [...items];
-    newItems[index][field] = value;
-    setItems(newItems);
+    const next = [...items];
+    next[index][field] = value;
+    setItems(next);
   };
 
   const deleteItem = (index) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalAmount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+
+  const openLabel = status === 'in_progress' ? 'جارية' : 'مكتملة';
+  const statusPill =
+    status === 'in_progress'
+      ? {
+          background: 'rgba(56,189,248,0.10)',
+          border: '1px solid rgba(56,189,248,0.22)',
+          color: 'rgba(186,230,253,0.95)',
+        }
+      : {
+          background: 'rgba(16,185,129,0.10)',
+          border: '1px solid rgba(16,185,129,0.22)',
+          color: 'rgba(167,243,208,0.95)',
+        };
+
+  const entry = visit.entryDate || visit.entry_date || visit.createdAt || visit.created_at;
+
+  const workshopDue = Number(visit.total_workshop ?? visit.totalWorkshop ?? 0);
+  const suppliersDue = Number(visit.total_suppliers ?? visit.totalSuppliers ?? 0);
+  const paid = Number(visit.total_paid ?? visit.totalPaid ?? 0);
+  const balance = Number(visit.balance ?? 0);
+
+  const statItems = [
+    {
+      k: 'workshop',
+      label: 'ورشة',
+      value: workshopDue,
+      style: {
+        background: 'rgba(168,85,247,0.10)',
+        border: '1px solid rgba(168,85,247,0.22)',
+        color: 'rgba(233,213,255,0.95)',
+      },
+    },
+    {
+      k: 'suppliers',
+      label: 'مورد',
+      value: suppliersDue,
+      style: {
+        background: 'rgba(244,63,94,0.10)',
+        border: '1px solid rgba(244,63,94,0.22)',
+        color: 'rgba(254,202,202,0.95)',
+      },
+    },
+    {
+      k: 'paid',
+      label: 'مدفوع',
+      value: paid,
+      style: {
+        background: 'rgba(16,185,129,0.10)',
+        border: '1px solid rgba(16,185,129,0.22)',
+        color: 'rgba(167,243,208,0.95)',
+      },
+    },
+    {
+      k: 'balance',
+      label: 'متبقي',
+      value: balance,
+      style: {
+        background: balance === 0 ? 'rgba(16,185,129,0.10)' : 'rgba(56,189,248,0.10)',
+        border: `1px solid ${balance === 0 ? 'rgba(16,185,129,0.22)' : 'rgba(56,189,248,0.22)'}`,
+        color: balance === 0 ? 'rgba(167,243,208,0.95)' : 'rgba(186,230,253,0.95)',
+      },
+    },
+  ];
 
   return (
-    <div className={`border rounded-xl transition-all duration-200 ${isExpanded ? 'border-blue-200 shadow-md bg-white' : 'border-gray-200 bg-gray-50 hover:bg-white'}`}>
+    <div
+      className="dash-widget-shell"
+      data-expanded={isExpanded ? 'true' : 'false'}
+      style={{
+        cursor: 'default',
+        background:
+          'radial-gradient(circle at 12% 18%, rgba(56,189,248,0.10), transparent 55%), rgba(255,255,255,0.05)',
+        border: `1px solid ${isExpanded ? 'rgba(56,189,248,0.22)' : 'rgba(148,163,184,0.16)'}`,
+        boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        padding: 0,
+      }}
+    >
       {/* Header */}
-      <div 
-        className="p-4 flex items-center justify-between cursor-pointer select-none"
-        onClick={() => setIsExpanded(!isExpanded)}
+      <button
+        type="button"
+        className="w-full text-right px-4 py-4 flex items-start justify-between gap-3"
+        onClick={() => setIsExpanded((v) => !v)}
+        data-testid={`visit-card-toggle-${visit.id}`}
+        style={{ background: 'transparent' }}
       >
-        <div className="flex items-center gap-4">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === 'in_progress' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
+        <div className="flex items-start gap-3 min-w-0">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+            style={{
+              background:
+                status === 'in_progress'
+                  ? 'rgba(56,189,248,0.10)'
+                  : 'rgba(16,185,129,0.10)',
+              border:
+                status === 'in_progress'
+                  ? '1px solid rgba(56,189,248,0.22)'
+                  : '1px solid rgba(16,185,129,0.22)',
+              color:
+                status === 'in_progress'
+                  ? 'rgba(186,230,253,0.95)'
+                  : 'rgba(167,243,208,0.95)',
+            }}
+          >
             <Calendar size={18} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-sm">
-                {new Date(visit.entryDate || visit.entry_date).toLocaleDateString('ar-SA')}
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                {status === 'in_progress' ? 'تحت الإصلاح' : 'مكتملة'}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(248,250,252,0.95)' }}>
+                {entry ? new Date(entry).toLocaleDateString('ar-SA') : '—'}
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[11px]" style={statusPill}>
+                {openLabel}
               </span>
             </div>
-            <div className="text-xs text-gray-500 mt-0.5 flex gap-3">
-              <span>{mileage ? `${mileage.toLocaleString()} كم` : 'بدون عداد'}</span>
+
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]" style={{ color: 'rgba(226,232,240,0.62)' }}>
+              <span>{mileage ? `${Number(mileage).toLocaleString()} كم` : 'بدون عداد'}</span>
               {items.length > 0 && <span>• {items.length} بنود</span>}
-              {totalAmount > 0 && <span className="font-semibold text-green-600">• {formatCurrency(totalAmount)}</span>}
+              {totalAmount > 0 && (
+                <span style={{ color: 'rgba(167,243,208,0.92)' }} className="font-semibold tabular-nums">
+                  • {formatCurrency(totalAmount)}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {statItems.map((s) => (
+                <span
+                  key={s.k}
+                  className="px-2 py-1 rounded-full text-[11px] tabular-nums"
+                  style={s.style}
+                >
+                  {s.label}: {formatCurrency(s.value)}
+                </span>
+              ))}
             </div>
           </div>
         </div>
-        <div>
-          {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+
+        <div className="shrink-0 pt-1" style={{ color: 'rgba(226,232,240,0.55)' }}>
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
-      </div>
+      </button>
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+        <div className="px-4 pb-4 pt-0" style={{ borderTop: '1px solid rgba(148,163,184,0.12)' }}>
           {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-4" onClick={(e) => e.stopPropagation()}>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">الفني المسؤول</label>
-              <select 
-                className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white disabled:bg-gray-50"
+              <label className="block text-[11px] font-medium mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                الفني المسؤول
+              </label>
+              <select
+                className="w-full text-sm rounded-lg p-2 disabled:opacity-60"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
+                }}
                 value={techId}
                 onChange={(e) => setTechId(e.target.value)}
                 disabled={!isEditing}
+                data-testid={`visit-tech-select-${visit.id}`}
               >
-                <option value="">-- غير محدد --</option>
-                {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                <option value="">— غير محدد —</option>
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">قراءة العداد</label>
-              <input 
+              <label className="block text-[11px] font-medium mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                قراءة العداد
+              </label>
+              <input
                 type="number"
-                className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white disabled:bg-gray-50"
+                className="w-full text-sm rounded-lg p-2 disabled:opacity-60"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
+                }}
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
                 disabled={!isEditing}
+                data-testid={`visit-mileage-input-${visit.id}`}
               />
             </div>
           </div>
 
-          {/* Items Table */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 w-24">النوع</th>
-                  <th className="py-2 px-3 text-right text-xs font-medium text-gray-500">البند</th>
-                  <th className="py-2 px-3 text-center text-xs font-medium text-gray-500 w-16">الكمية</th>
-                  <th className="py-2 px-3 text-center text-xs font-medium text-gray-500 w-20">السعر</th>
-                  <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 w-24">الإجمالي</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {items.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="py-6 text-center text-xs text-gray-400">لا توجد بنود مسجلة لهذه الزيارة</td>
-                  </tr>
-                ) : (
-                  items.map((item, idx) => (
-                    <VisitItemRow 
-                      key={idx} 
-                      item={item} 
-                      isEditing={isEditing} 
-                      onChange={(f, v) => updateItem(idx, f, v)}
-                      onDelete={() => deleteItem(idx)}
-                      servicesCatalog={servicesCatalog}
-                      partsCatalog={partsCatalog}
-                      rowId={idx}
-                    />
-                  ))
-                )}
-              </tbody>
-              <tfoot className="bg-gray-50 border-t border-gray-200">
-                <tr>
-                  <td colSpan="4" className="py-2 px-3 text-left text-xs font-bold text-gray-700">المجموع الكلي:</td>
-                  <td className="py-2 px-3 text-right text-xs font-bold text-blue-600">{formatCurrency(totalAmount)}</td>
-                </tr>
-              </tfoot>
-            </table>
-            {isEditing && (
-              <button 
-                onClick={addItem}
-                className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium flex items-center justify-center gap-1 transition-colors border-t border-blue-100"
-                data-testid={`visit-add-item-button-${visit.id}`}
-              >
-                <Plus size={14} /> إضافة بند جديد
-              </button>
-            )}
+          {/* Items */}
+          <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div>
+                <div className="text-sm font-bold" style={{ color: 'rgba(248,250,252,0.95)' }}>
+                  البنود
+                </div>
+                <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>
+                  خدمات / قطع — إضافة وتعديل بسهولة
+                </div>
+              </div>
+              <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(186,230,253,0.95)' }}>
+                {formatCurrency(totalAmount)}
+              </div>
+            </div>
+
+            {/* Mobile: cards */}
+            <div className="space-y-2 sm:hidden">
+              {items.length === 0 ? (
+                <div
+                  className="liquid-surface"
+                  style={{
+                    borderRadius: 18,
+                    padding: 14,
+                    textAlign: 'center',
+                    color: 'rgba(226,232,240,0.62)',
+                    background: 'rgba(255,255,255,0.04)',
+                  }}
+                >
+                  لا توجد بنود مسجلة لهذه الزيارة
+                </div>
+              ) : (
+                items.map((item, idx) => (
+                  <VisitItemCard
+                    key={idx}
+                    item={item}
+                    isEditing={isEditing}
+                    onChange={(f, v) => updateItem(idx, f, v)}
+                    onDelete={() => deleteItem(idx)}
+                    servicesCatalog={servicesCatalog}
+                    partsCatalog={partsCatalog}
+                    rowId={idx}
+                  />
+                ))
+              )}
+
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="w-full rounded-2xl px-4 py-3 text-sm font-bold flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgba(56,189,248,0.10)',
+                    border: '1px solid rgba(56,189,248,0.22)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
+                  data-testid={`visit-add-item-button-mobile-${visit.id}`}
+                >
+                  <Plus size={16} /> إضافة بند
+                </button>
+              )}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block liquid-surface" style={{ borderRadius: 20, overflow: 'hidden' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px]">
+                  <thead style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(148,163,184,0.12)' }}>
+                    <tr>
+                      <th className="py-2 px-3 text-right text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>النوع</th>
+                      <th className="py-2 px-3 text-right text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>البند</th>
+                      <th className="py-2 px-3 text-center text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>الكمية</th>
+                      <th className="py-2 px-3 text-center text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>السعر</th>
+                      <th className="py-2 px-3 text-right text-xs font-medium" style={{ color: 'rgba(226,232,240,0.72)' }}>الإجمالي</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-xs" style={{ color: 'rgba(226,232,240,0.60)' }}>
+                          لا توجد بنود مسجلة لهذه الزيارة
+                        </td>
+                      </tr>
+                    ) : (
+                      items.map((item, idx) => (
+                        <VisitItemRow
+                          key={idx}
+                          item={item}
+                          isEditing={isEditing}
+                          onChange={(f, v) => updateItem(idx, f, v)}
+                          onDelete={() => deleteItem(idx)}
+                          servicesCatalog={servicesCatalog}
+                          partsCatalog={partsCatalog}
+                          rowId={idx}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                  <tfoot style={{ background: 'rgba(255,255,255,0.04)', borderTop: '1px solid rgba(148,163,184,0.12)' }}>
+                    <tr>
+                      <td colSpan="4" className="py-2 px-3 text-left text-xs font-bold" style={{ color: 'rgba(226,232,240,0.72)' }}>
+                        المجموع
+                      </td>
+                      <td className="py-2 px-3 text-right text-xs font-extrabold tabular-nums" style={{ color: 'rgba(186,230,253,0.95)' }}>
+                        {formatCurrency(totalAmount)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="w-full py-2 text-xs font-bold flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgba(56,189,248,0.10)',
+                    borderTop: '1px solid rgba(56,189,248,0.18)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
+                  data-testid={`visit-add-item-button-${visit.id}`}
+                >
+                  <Plus size={14} /> إضافة بند جديد
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
-          <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">ملاحظات الزيارة</label>
-            <textarea 
-              className="w-full text-xs border border-gray-300 rounded-lg p-2 min-h-[60px] bg-white disabled:bg-gray-50 resize-none"
+          <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+            <label className="block text-[11px] font-medium mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
+              ملاحظات الزيارة
+            </label>
+            <textarea
+              className="w-full text-sm rounded-2xl p-3 min-h-[90px] resize-none disabled:opacity-60"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={!isEditing}
@@ -453,18 +857,40 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
             />
           </div>
 
-
           {latestApproval && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              <div className="font-bold mb-1">اعتماد واتساب</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                <div>الحالة: <span className="font-semibold">{latestApproval.status}</span></div>
-                <div>الرمز: <span className="font-mono">{latestApproval.token}</span></div>
+            <div
+              className="liquid-surface"
+              style={{
+                borderRadius: 20,
+                padding: 12,
+                background:
+                  'radial-gradient(circle at 12% 18%, rgba(245,158,11,0.10), transparent 55%), rgba(255,255,255,0.05)',
+                border: '1px solid rgba(245,158,11,0.22)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-sm font-bold" style={{ color: 'rgba(254,243,199,0.95)' }}>
+                اعتماد واتساب
+              </div>
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" style={{ color: 'rgba(254,243,199,0.82)' }}>
+                <div>
+                  الحالة: <span className="font-semibold">{latestApproval.status}</span>
+                </div>
+                <div>
+                  الرمز: <span className="font-mono">{latestApproval.token}</span>
+                </div>
                 {latestApproval.respondedAt && (
-                  <div>وقت الرد: <span className="font-semibold">{String(latestApproval.respondedAt).slice(0, 19).replace('T',' ')}</span></div>
+                  <div>
+                    وقت الرد:{' '}
+                    <span className="font-semibold">
+                      {String(latestApproval.respondedAt).slice(0, 19).replace('T', ' ')}
+                    </span>
+                  </div>
                 )}
                 {latestApproval.responderName && (
-                  <div>المعتمد: <span className="font-semibold">{latestApproval.responderName}</span></div>
+                  <div>
+                    المعتمد: <span className="font-semibold">{latestApproval.responderName}</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -472,32 +898,57 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
 
           {/* WhatsApp Auto-Notification */}
           {whatsappNotification && (
-            <div className="rounded-lg border-2 border-green-400 bg-green-50 px-4 py-3 mb-3 animate-in fade-in slide-in-from-top-2" data-testid={`visit-whatsapp-notification-${visit.id}`}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="font-bold text-green-800 text-sm flex items-center gap-2 mb-1">
+            <div
+              className="liquid-surface mb-3"
+              style={{
+                borderRadius: 20,
+                padding: 12,
+                border: '1px solid rgba(16,185,129,0.22)',
+                background:
+                  'radial-gradient(circle at 12% 18%, rgba(16,185,129,0.10), transparent 55%), rgba(255,255,255,0.05)',
+              }}
+              data-testid={`visit-whatsapp-notification-${visit.id}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm flex items-center gap-2" style={{ color: 'rgba(167,243,208,0.95)' }}>
                     <MessageCircle size={16} />
                     إبلاغ العميل بجاهزية المركبة
                   </div>
-                  <p className="text-xs text-green-700">{whatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب</p>
+                  <p className="mt-1 text-xs truncate" style={{ color: 'rgba(167,243,208,0.82)' }}>
+                    {whatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب
+                  </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <a
                     href={whatsappNotification.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                    className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2"
+                    style={{
+                      background: 'rgba(16,185,129,0.16)',
+                      border: '1px solid rgba(16,185,129,0.28)',
+                      color: 'rgba(167,243,208,0.95)',
+                    }}
                     data-testid={`visit-whatsapp-send-${visit.id}`}
                   >
-                    <MessageCircle size={14} /> إرسال واتساب
+                    <MessageCircle size={14} /> إرسال
                   </a>
                   <button
+                    type="button"
                     onClick={() => {
                       setWhatsappNotification(null);
                       whatsappNotificationRef.current = null;
                     }}
-                    className="px-2 py-2 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                    className="p-2 rounded-xl"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(226,232,240,0.70)',
+                    }}
                     title="إغلاق"
+                    data-testid={`visit-whatsapp-dismiss-${visit.id}`}
                   >
                     <X size={14} />
                   </button>
@@ -506,18 +957,22 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
             </div>
           )}
 
-
-          <div className="flex justify-end gap-2 pb-3">
+          {/* Print */}
+          <div className="flex justify-end gap-2 pb-3" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
+              type="button"
+              onClick={() => {
                 const vId = visit.id;
-                // Map visit status to default doc type
                 const st = (visit.status || '').toLowerCase();
-                const type = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : st === 'in_progress' ? 'invoice' : 'invoice';
+                const type = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : 'invoice';
                 window.location.href = `/print?type=${type}&vehicleId=${visit.vehicleId || visit.vehicle_id}&visitId=${vId}`;
               }}
-              className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
               title="طباعة هذه الزيارة"
               data-testid={`visit-print-button-${visit.id}`}
             >
@@ -525,57 +980,90 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
             </button>
           </div>
 
-          {/* Actions Footer */}
-          <div className="flex flex-wrap justify-end gap-3 pt-2 border-t border-gray-100">
+          {/* Actions */}
+          <div
+            className="flex flex-col sm:flex-row sm:flex-wrap justify-end gap-2 pt-3"
+            style={{ borderTop: '1px solid rgba(148,163,184,0.12)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {isEditing ? (
               <>
-                <button 
+                <button
+                  type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(226,232,240,0.88)',
+                  }}
                   data-testid={`visit-cancel-edit-${visit.id}`}
                   disabled={isSaving}
                 >
                   إلغاء
                 </button>
-                <button 
+
+                <button
+                  type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{
+                    background: 'rgba(56,189,248,0.14)',
+                    border: '1px solid rgba(56,189,248,0.28)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
                   data-testid={`visit-save-button-${visit.id}`}
                 >
-                  <Save size={14} /> {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                  <Save size={14} /> {isSaving ? 'جاري الحفظ...' : 'حفظ'}
                 </button>
-                <button 
+
+                <button
+                  type="button"
                   onClick={handleCloseVisit}
                   disabled={isSaving}
-                  className="px-4 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{
+                    background: 'rgba(16,185,129,0.14)',
+                    border: '1px solid rgba(16,185,129,0.28)',
+                    color: 'rgba(167,243,208,0.95)',
+                  }}
                   data-testid={`visit-close-button-${visit.id}`}
                 >
-                  <CheckCircle size={14} /> {isSaving ? 'جاري الإغلاق...' : 'حفظ وإغلاق الزيارة'}
+                  <CheckCircle size={14} /> {isSaving ? 'جاري الإغلاق...' : 'حفظ وإغلاق'}
                 </button>
               </>
             ) : (
-              <button 
+              <button
+                type="button"
                 onClick={handleReopen}
-                className="px-4 py-2 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors flex items-center gap-2"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                style={{
+                  background: 'rgba(245,158,11,0.14)',
+                  border: '1px solid rgba(245,158,11,0.28)',
+                  color: 'rgba(254,243,199,0.95)',
+                }}
                 data-testid={`visit-reopen-button-${visit.id}`}
               >
                 <Edit2 size={14} /> إعادة فتح للتعديل
               </button>
             )}
 
-          {canDelete && (
-            <div className="flex justify-end pt-2">
+            {canDelete && (
               <button
+                type="button"
                 onClick={() => onDelete?.(visit.id)}
-                className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                style={{
+                  background: 'rgba(244,63,94,0.12)',
+                  border: '1px solid rgba(244,63,94,0.28)',
+                  color: 'rgba(254,202,202,0.95)',
+                }}
                 data-testid={`visit-delete-button-${visit.id}`}
               >
                 <Trash2 size={14} /> حذف الزيارة
               </button>
-            </div>
-          )}
-
+            )}
           </div>
         </div>
       )}

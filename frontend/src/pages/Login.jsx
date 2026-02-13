@@ -126,12 +126,6 @@ const Login = () => {
       }
 
 
-      try {
-        document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
-      } catch (e) {
-        // ignore
-      }
-
       const session = { 
         id: user.id,
         name: user.name,

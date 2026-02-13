@@ -318,6 +318,15 @@ export const englishTexts = {
 
   // Operations extra labels
   'operations.scopeLabel': 'Operation Scope',
+
+  // Vehicle finance
+  'vehicle_finance.workshop_due': 'Workshop Due',
+  'vehicle_finance.suppliers_due': 'Suppliers Due',
+  'vehicle_finance.total_paid': 'Total Paid',
+  'vehicle_finance.advance_paid': 'Advance Payment',
+  'vehicle_finance.balance': 'Balance',
+  'vehicle_finance.credit': 'Customer Credit',
+
   'operations.scopeVehicle': 'Vehicle Operation',
   'operations.scopeWorkshop': 'General Workshop Operation',
   'operations.operationDateLabel': 'Operation Date',

@@ -146,7 +146,7 @@ class TestUserLayouts:
     
     async def test_works_with_different_db_providers(self):
         """Test that endpoints work regardless of DB_PROVIDER (mongo/memory/supabase)"""
-        print(f"\n🧪 Testing DB provider independence")
+        print("\n🧪 Testing DB provider independence")
         
         # Test with a unique user to ensure clean state
         test_user = "db_test_user_789"

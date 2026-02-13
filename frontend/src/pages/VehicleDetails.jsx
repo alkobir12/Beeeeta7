@@ -1779,7 +1779,7 @@ const VehicleDetails = () => {
                         />
                       </div>
                     ) : (
-                      <span className="font-medium">
+                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>
                         {vehicle.brand} {vehicle.model}
                       </span>
                     )}

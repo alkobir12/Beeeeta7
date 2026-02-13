@@ -475,8 +475,12 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
           message: messageText,
         };
 
-        setWaPreview(notification);
-        setWaPreviewOpen(true);
+        if (onShowWhatsAppPreview) {
+          onShowWhatsAppPreview(notification);
+        } else {
+          setWaPreview(notification);
+          setWaPreviewOpen(true);
+        }
 
         setWhatsappNotification(notification);
         whatsappNotificationRef.current = notification;

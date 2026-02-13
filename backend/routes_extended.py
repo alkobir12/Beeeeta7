@@ -151,6 +151,8 @@ async def get_settings():
 
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -207,6 +209,8 @@ async def save_settings(payload: Dict[str, Any] = Body(...)):
         doc = await db.settings.find_one({"id": "app_settings"})
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -287,6 +291,8 @@ async def get_workshop_profile():
             }
             await db.workshop_profile.insert_one(doc)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -315,6 +321,8 @@ async def update_workshop_profile(payload: Dict[str, Any] = Body(...)):
         )
         doc = await db.workshop_profile.find_one({"id": "workshop_profile"}, {"_id": 0})
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -357,6 +365,8 @@ async def upload_workshop_logo(file: UploadFile = File(...)):
             )
 
         return {"success": True, "logo_url": logo_url, "url": logo_url}
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -406,6 +416,8 @@ async def request_otp(payload: Dict[str, Any] = Body(...)):
             "expiresAt": doc["expiresAt"].isoformat(),
         }
         return ret
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -458,6 +470,8 @@ async def list_biz_accounts():
                 }
             )
         return out
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -506,6 +520,8 @@ async def create_biz_account(payload: Dict[str, Any] = Body(...)):
         return doc
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -528,6 +544,8 @@ async def list_budgets(account_id: Optional[str] = None, period: Optional[str] =
         for it in items:
             it.pop("_id", None)
         return items
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -556,6 +574,8 @@ async def create_budget(payload: Dict[str, Any] = Body(...)):
         await db.budgets.insert_one(doc)
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -674,6 +694,8 @@ async def cleanup_biz_accounts(keep: int = 2, mode: str = "hard"):
             "created": created,
             "final": final_docs[:2],
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -740,6 +762,8 @@ async def operations_pending(
                 if d.get(k) and hasattr(d[k], "isoformat"):
                     d[k] = d[k].isoformat()
         return {"count": len(docs), "items": docs}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -801,6 +825,8 @@ async def operations_pending_analytics():
                     overdue += 1
         total = len(docs)
         return {"total": total, "byStatus": by_status, "overdue": overdue}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -853,6 +879,8 @@ async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
         if d.get("updatedAt") and hasattr(d["updatedAt"], "isoformat"):
             d["updatedAt"] = d["updatedAt"].isoformat()
         return d
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -908,6 +936,8 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
         doc = await db.coa.find_one({"id": "root_tree"})
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -1137,6 +1167,8 @@ async def list_operations(
             # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicleId
             o["scope"] = "vehicle" if o.get("vehicleId") else "workshop"
         return ops
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1167,6 +1199,8 @@ async def get_operation(op_id: str):
         if o.get("date") and hasattr(o["date"], "isoformat"):
             o["date"] = o["date"].isoformat()
         return o
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -1206,6 +1240,8 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
         return o
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1237,6 +1273,8 @@ async def delete_operation(op_id: str):
 
         await db.operations.delete_one({"id": op_id})
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1280,6 +1318,8 @@ async def delete_all_operations():
             "success": True,
             "message": f"Deleted {result.deleted_count} operations",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1427,6 +1467,8 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1558,6 +1600,8 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         if hasattr(op["date"], "isoformat"):
             op["date"] = op["date"].isoformat()
         return op
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1647,6 +1691,8 @@ async def operations_analytics(account_id: Optional[str] = None):
                 "expensesCount": mEc,
             },
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1680,6 +1726,8 @@ async def list_transactions(
             if d.get("date") and hasattr(d["date"], "isoformat"):
                 d["date"] = d["date"].isoformat()
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1723,6 +1771,8 @@ async def create_expense(payload: Dict[str, Any] = Body(...)):
         if hasattr(tx["date"], "isoformat"):
             tx["date"] = tx["date"].isoformat()
         return tx
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1781,6 +1831,8 @@ async def get_customer_approval_logs(customer_id: str):
                 if d.get(k) and hasattr(d[k], "isoformat"):
                     d[k] = d[k].isoformat()
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1799,6 +1851,8 @@ async def get_vehicle_approval_logs(vehicle_id: str):
                 if d.get(k) and hasattr(d[k], "isoformat"):
                     d[k] = d[k].isoformat()
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1874,6 +1928,8 @@ async def create_approval(payload: Dict[str, Any] = Body(...)):
         await db.approval_requests.insert_one(doc)
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1934,6 +1990,8 @@ async def list_approvals(vehicle_id: Optional[str] = None, visit_id: Optional[st
                 if d.get(k) and hasattr(d[k], "isoformat"):
                     d[k] = d[k].isoformat()
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2016,6 +2074,8 @@ async def public_approval(token: str):
             if d.get(k) and hasattr(d[k], "isoformat"):
                 d[k] = d[k].isoformat()
         return d
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -2255,6 +2315,8 @@ async def respond_public_approval(token: str, request: Request):
         return nd
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2302,6 +2364,8 @@ async def prepare_notification(payload: Dict[str, Any] = Body(...)):
         # نستخدم endpoint الرسمي الأقدم والأكثر توافقاً
         whatsapp_url = f"https://api.whatsapp.com/send?phone={norm}&text={encoded_msg}"
         return {"whatsappUrl": whatsapp_url, "phone": norm, "message": msg}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2437,6 +2501,8 @@ async def vehicle_financial_summary(vehicle_id: str):
             "balance": round(balance, 2),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2517,6 +2583,8 @@ async def get_vehicle_visits(vehicle_id: str):
             enriched.append(d)
 
         return enriched
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2628,6 +2696,8 @@ async def get_visit_operations(visit_id: str):
             if d.get("date") and hasattr(d["date"], "isoformat"):
                 d["date"] = d["date"].isoformat()
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2772,6 +2842,8 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
             if doc.get(k) and hasattr(doc[k], "isoformat"):
                 doc[k] = doc[k].isoformat()
         return doc or {}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2809,6 +2881,8 @@ async def delete_visit(visit_id: str):
             raise HTTPException(status_code=404, detail="Visit not found")
         return {"success": True}
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3297,6 +3371,8 @@ async def init_database():
             "provider": "mongo",
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3320,6 +3396,8 @@ async def list_accounts():
             await db.accounts.find({}, {"_id": 0}).sort("code", 1).to_list(length=1000)
         )
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3374,6 +3452,8 @@ async def create_account(payload: Dict[str, Any] = Body(...)):
         await db.accounts.insert_one(doc)
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3423,6 +3503,8 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
         await db.accounts.update_one({"id": account_id}, {"$set": upd})
         doc = await db.accounts.find_one({"id": account_id}, {"_id": 0})
         return doc or {}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3480,6 +3562,8 @@ async def delete_account(account_id: str):
 
         await db.accounts.delete_one({"id": account_id})
         return {"success": True}
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4340,6 +4424,8 @@ async def init_default_accounts():
             "message": "تم إنشاء شجرة الحسابات الافتراضية",
             "count": len(default_accounts),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4353,6 +4439,8 @@ async def list_templates():
         for d in docs:
             d.pop("_id", None)
         return docs
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4372,6 +4460,8 @@ async def create_print_template(payload: Dict[str, Any] = Body(...)):
         await db.print_templates.insert_one(doc)
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4384,6 +4474,8 @@ async def delete_template(template_id: str):
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Template not found")
         return {"message": "Template deleted successfully"}
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4412,6 +4504,8 @@ async def make_template_default(template_id: str):
         )
 
         return {"message": "Template set as default", "id": template_id}
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4450,6 +4544,8 @@ async def apply_template_to_all(template_id: str):
         return {"message": "Template applied to all types", "applied": applied}
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4467,6 +4563,8 @@ async def print_render(payload: Dict[str, Any] = Body(...)):
         for k, v in data.items():
             html = html.replace(f"{{{{{k}}}}}", str(v))
         return HTMLResponse(content=html)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4527,6 +4625,8 @@ async def print_resolve_template(payload: Dict[str, Any] = Body(...)):
             "type": override_type,
         }
         return {"type": override_type, "template": tpl}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4613,6 +4713,8 @@ async def create_blank_template(payload: Dict[str, Any] = Body(None)):
         await db.invoice_templates.insert_one(doc)
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4639,6 +4741,8 @@ async def save_design(tid: str, payload: Dict[str, Any] = Body(...)):
             raise HTTPException(status_code=404, detail="Template not found")
         d.pop("_id", None)
         return d
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4704,6 +4808,8 @@ async def save_template_from_json(tid: str, payload: Dict[str, Any] = Body(...))
             },
         )
         return {"status": "ok", "fileId": file_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4720,6 +4826,8 @@ async def make_default_template(tid: str):
             raise HTTPException(status_code=404, detail="Template not found")
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4746,6 +4854,8 @@ async def update_template_mapping(tid: str, payload: Dict[str, Any] = Body(...))
             raise HTTPException(status_code=404, detail="Template not found")
         doc.pop("_id", None)
         return doc
+    except HTTPException:
+        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -4812,6 +4922,8 @@ async def save_named_copy(tid: str, payload: Dict[str, Any] = Body(...)):
         return doc
     except HTTPException:
         raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4865,6 +4977,8 @@ async def auto_save_template(tid: str, payload: Dict[str, Any] = Body(...)):
         doc = await db.invoice_templates.find_one({"id": tid})
         doc.pop("_id", None)
         return {"status": "ok", "template": doc}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -4922,6 +5036,8 @@ async def print_invoice_xlsx(payload: Dict[str, Any] = Body(...)):
                 "Content-Disposition": f"attachment; filename=invoice_{data.get('INVOICE_NO')}.xlsx"
             },
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

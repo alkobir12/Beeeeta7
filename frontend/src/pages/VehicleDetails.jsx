@@ -1788,8 +1788,8 @@ const VehicleDetails = () => {
                 </div>
               </div>
 
-              {/* Customer Info */}
-              <div className="apple-card p-6 relative group">
+            {/* Customer Info */}
+            <div className="apple-card p-6 relative group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3 text-green-600">
                     <User size={20} />

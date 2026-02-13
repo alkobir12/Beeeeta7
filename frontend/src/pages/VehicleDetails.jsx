@@ -1928,20 +1928,7 @@ const VehicleDetails = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <Wrench size={20} className="text-blue-600" />
-                  سجل الزيارات
-                </h2>
-                <button
-                  onClick={handleCreateVisit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1"
-                >
-                  <Plus size={14} /> زيارة جديدة
-                </button>
-              </div>
-
-              <div className="text-[11px] text-gray-500 -mt-2">{t('vehicle_details.items_edit_hint')}</div>
+              {/* header moved to the block title to avoid duplication */}
 
               <div className="flex flex-wrap gap-2 text-xs" data-testid="visit-filter-controls">
                 {[

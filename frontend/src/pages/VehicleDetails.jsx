@@ -210,52 +210,6 @@ const SortableBlock = ({ id, title, children }) => {
   );
 };
 
-      </td>
-      <td className="p-2">
-        <input
-          type="number"
-          value={item.quantity}
-          onChange={(e) => onChange('quantity', Number(e.target.value))}
-          className="w-16 sm:w-20 text-xs sm:text-sm rounded-lg p-2 text-center"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(148,163,184,0.18)',
-            color: 'rgba(248,250,252,0.92)',
-          }}
-          min="1"
-          data-testid={`visit-item-quantity-${rowId}`}
-        />
-      </td>
-      <td className="p-2">
-        <input
-          type="number"
-          value={item.price}
-          onChange={(e) => onChange('price', Number(e.target.value))}
-          className="w-20 sm:w-24 text-xs sm:text-sm rounded-lg p-2 text-center"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(148,163,184,0.18)',
-            color: 'rgba(248,250,252,0.92)',
-          }}
-          min="0"
-          data-testid={`visit-item-price-${rowId}`}
-        />
-      </td>
-      <td className="p-2 text-right">
-        <button
-          onClick={onDelete}
-          className="p-2 rounded-lg"
-          style={{ color: 'rgba(254,202,202,0.95)', background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.22)' }}
-          title="حذف"
-          data-testid={`visit-item-delete-${rowId}`}
-        >
-          <Trash2 size={14} />
-        </button>
-      </td>
-    </tr>
-  );
-};
-
 const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
   const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
   const listId = `${item.itemType}-list-card-${rowId}`;

@@ -2400,7 +2400,26 @@ async def get_vehicle_visits(vehicle_id: str):
                 .order("entry_date", desc=True)
                 .execute()
             )
-            return res.data or []
+            rows = res.data or []
+            enriched = []
+            for r in rows:
+                parsed = _parse_notes_json(r.get('notes'))
+                fin = _calc_visit_financial(parsed)
+
+                out = {
+                    "id": r.get("id"),
+                    "vehicleId": r.get("vehicle_id"),
+                    "entryDate": r.get("entry_date"),
+                    "exitDate": r.get("exit_date"),
+                    "status": r.get("status"),
+                    "mileage": r.get("mileage"),
+                    "notes": r.get("notes"),
+                    "technicianId": r.get("technician_id"),
+                    "createdAt": r.get("created_at"),
+                    **fin,
+                }
+                enriched.append(out)
+            return enriched
 
         # MongoDB fallback
         docs = (
@@ -2408,11 +2427,39 @@ async def get_vehicle_visits(vehicle_id: str):
             .sort("entryDate", -1)
             .to_list(length=1000)
         )
+        enriched = []
         for d in docs:
             for k in ("entryDate", "exitDate", "createdAt"):
                 if d.get(k) and hasattr(d[k], "isoformat"):
                     d[k] = d[k].isoformat()
-        return docs
+            parsed = _parse_notes_json(d.get('notes'))
+            fin = _calc_visit_financial(parsed)
+            d.update(fin)
+
+            # previous unpaid (older open visit with positive balance)
+            try:
+                vn = int(d.get('visitNumber') or d.get('visit_number') or 0)
+            except Exception:
+                vn = 0
+            if vn:
+                prev = await db.vehicle_visits.find_one(
+                    {
+                        "vehicleId": vehicle_id,
+                        "$expr": {"$lt": ["$visitNumber", vn]},
+                    },
+                    {"_id": 0},
+                )
+                if prev:
+                    prev_parsed = _parse_notes_json(prev.get('notes'))
+                    prev_fin = _calc_visit_financial(prev_parsed)
+                    if prev_fin.get('balance', 0) > 0:
+                        d['previous_unpaid'] = {
+                            'visit_number': prev.get('visitNumber') or prev.get('visit_number'),
+                            'balance': prev_fin.get('balance'),
+                        }
+            enriched.append(d)
+
+        return enriched
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

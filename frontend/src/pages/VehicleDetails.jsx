@@ -2832,6 +2832,7 @@ const VehicleDetails = () => {
         </div>
 
       </div>
+      </div>
 
       {/* Modals */}
       {scannerOpen && (

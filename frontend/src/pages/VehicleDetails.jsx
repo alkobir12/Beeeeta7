@@ -2362,6 +2362,7 @@ const VehicleDetails = () => {
         select { color: rgba(248,250,252,0.92); }
         option { color: #0f172a; }
       `}</style>
+
       {/* Header */}
       <div className="flex items-center gap-4 pt-4 px-4 sm:px-0">
         <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">

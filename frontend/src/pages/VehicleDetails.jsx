@@ -1687,16 +1687,13 @@ const VehicleDetails = () => {
   }
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
-  const blockTitles = useMemo(
-    () => ({
-      vehicle_info: 'معلومات المركبة',
-      visits: 'الزيارات',
-      financial_summary: 'الملخص المالي',
-      guidance: 'إرشادات الملف',
-      status_actions: 'الحالة والإجراءات',
-    }),
-    []
-  );
+  const blockTitles = {
+    vehicle_info: 'معلومات المركبة',
+    visits: 'الزيارات',
+    financial_summary: 'الملخص المالي',
+    guidance: 'إرشادات الملف',
+    status_actions: 'الحالة والإجراءات',
+  };
 
   const renderBlock = (blockId) => {
     switch (blockId) {

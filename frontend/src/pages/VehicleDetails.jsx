@@ -1798,7 +1798,7 @@ const VehicleDetails = () => {
                         onChange={(e) => setVehicleForm({ ...vehicleForm, vin: e.target.value })}
                       />
                     ) : (
-                      <span className="font-medium font-mono">{vehicle.vin || '-'}</span>
+                      <span className="text-sm font-semibold font-mono" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.vin || '-'}</span>
                     )}
                   </div>
                   <div className="flex flex-col py-2">

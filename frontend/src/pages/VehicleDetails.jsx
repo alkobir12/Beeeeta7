@@ -190,16 +190,16 @@ const SortableBlock = ({ id, title, children }) => {
       <div
         className="liquid-surface"
         style={{
-          borderRadius: 24,
-          padding: 14,
+          borderRadius: 22,
+          padding: 12,
           background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(148,163,184,0.14)',
           boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
         }}
       >
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center justify-between gap-3 mb-2">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold truncate" style={{ color: 'rgba(248,250,252,0.95)' }}>
+            <div className="text-[13px] font-extrabold truncate" style={{ color: 'rgba(248,250,252,0.95)' }}>
               {title}
             </div>
           </div>
@@ -2401,7 +2401,7 @@ const VehicleDetails = () => {
       {/* Draggable Layout Blocks */}
       {layoutLoaded ? (
         <div className="px-4 sm:px-0">
-          <div className="text-[11px] mb-2" style={{ color: 'rgba(226,232,240,0.58)' }}>
+          <div className="hidden md:block text-[11px] mb-2" style={{ color: 'rgba(226,232,240,0.58)' }}>
             اسحب البلوكات من زر (⋮⋮) لترتيب الصفحة كما تريد — يتم الحفظ تلقائياً.
           </div>
           <DndContext

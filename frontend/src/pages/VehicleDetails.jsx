@@ -787,6 +787,13 @@ const VehicleDetails = () => {
       setTechnicians(techniciansRes.data);
       setVisits(visitsRes.data || []);
       
+
+      // Vehicle financial summary (async, non-blocking)
+      vehicleFinanceAPI
+        .summary(id)
+        .then((r) => setFinanceSummary(r.data))
+        .catch(() => setFinanceSummary(null));
+
       // Show loading state as false for core UI
       setLoadingProgress(85);
       setLoading(false);

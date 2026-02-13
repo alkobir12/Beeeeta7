@@ -39,7 +39,6 @@ const vehicleFinanceAPI = {
   summary: (vehicleId) => axios.get(`${API_BASE}/vehicles/${vehicleId}/financial-summary`),
 };
 
-};
 
 export const visitAPI = {
   delete: (visitId) => api.delete(`/visits/${visitId}`),

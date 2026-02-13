@@ -1928,7 +1928,7 @@ const VehicleDetails = () => {
                 )}
               </div>
             </div>
-            <>
+
             <div className="lg:col-span-1 space-y-6 hidden">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">

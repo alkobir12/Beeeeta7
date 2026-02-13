@@ -2667,6 +2667,13 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
             r = res.data[0]
             print(f"   Visit updated in DB: status={r.get('status')} notes_len={len(r.get('notes','') or '')}")
             
+            # --- Prevent closing visit unless balance == 0 (financial rule) ---
+            if payload.get("status") == "completed":
+                parsed_notes = _parse_notes_json(upd.get("notes") or r.get("notes"))
+                fin = _calc_visit_financial(parsed_notes)
+                if fin.get('balance', 0) != 0:
+                    raise HTTPException(status_code=400, detail="Cannot close visit unless balance is zero")
+
             # --- SYNC TO OPERATIONS (FINANCE) ---
             if "notes" in payload or "status" in payload:
                 await _sync_visit_to_operation(visit_id, r, supa_service=supa)
@@ -2682,13 +2689,6 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                 "notes": r.get("notes"),
                 "technicianId": r.get("technician_id"),
             }
-
-            # --- Prevent closing visit unless balance == 0 (financial rule) ---
-            if payload.get("status") == "completed":
-                parsed_notes = _parse_notes_json(upd.get("notes") or r.get("notes"))
-                fin = _calc_visit_financial(parsed_notes)
-                if fin.get('balance', 0) != 0:
-                    raise HTTPException(status_code=400, detail="Cannot close visit unless balance is zero")
 
             # --- AUTO WHATSAPP NOTIFICATION on completion ---
             if payload.get("status") == "completed":

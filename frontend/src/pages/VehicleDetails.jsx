@@ -1158,8 +1158,6 @@ const VehicleDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const userId = session?.id || session?.name || 'default';
-
   const DEFAULT_BLOCKS = useMemo(
     () => [
       'vehicle_info',

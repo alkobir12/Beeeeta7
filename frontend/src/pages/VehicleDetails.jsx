@@ -2127,7 +2127,11 @@ const VehicleDetails = () => {
         );
 
       case 'financial_summary':
-        return <VehicleFinancialSummary summary={financeSummary || {}} t={t} />;
+        return (
+          <div className="liquid-surface liquid-section" style={{ padding: 0, background: 'transparent', border: '0' }}>
+            <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+          </div>
+        );
 
       case 'guidance':
         return (

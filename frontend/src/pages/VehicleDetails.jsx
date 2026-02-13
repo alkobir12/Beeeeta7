@@ -1105,7 +1105,13 @@ const VehicleDetails = () => {
 
 
       {/* Financial Summary */}
-      <div className="px-4 sm:px-0">
+      <div className="px-4 sm:px-0 liquid-surface liquid-section">
+        <div className="flex items-end justify-between gap-3 mb-3">
+          <div>
+            <div className="liquid-title">{t('finance.summary') || 'ملخص مالي'}</div>
+            <div className="liquid-subtitle">{t('finance.summary_subtitle') || 'تكاليف المركبة عبر جميع الزيارات'}</div>
+          </div>
+        </div>
         <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
       </div>
 

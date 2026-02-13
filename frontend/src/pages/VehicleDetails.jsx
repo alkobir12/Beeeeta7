@@ -1697,6 +1697,7 @@ const VehicleDetails = () => {
   };
 
   const renderBlock = (blockId) => {
+    // On mobile we use lighter internal headings because the block already has a title.
     switch (blockId) {
       case 'vehicle_info':
         return (

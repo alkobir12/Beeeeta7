@@ -143,6 +143,14 @@ const Login = () => {
 
       // Update last login
       try {
+
+
+      try {
+        document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
+      } catch (e) {
+        // ignore
+      }
+
         await fetch(`${API_URL}/users/${user.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },

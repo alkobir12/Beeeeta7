@@ -1733,9 +1733,9 @@ const VehicleDetails = () => {
                   </button>
                 </div>
 
-                <div className="space-y-3 text-sm">
-                  <div className="flex flex-col py-2 border-b border-gray-50">
-                    <span className="text-gray-500 text-xs mb-1">{t('vehicles.plate_number')}</span>
+                <div className="space-y-3">
+                  <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicles.plate_number')}</span>
                     {isEditingVehicle ? (
                       <input
                         className="text-sm border rounded p-1 w-full"

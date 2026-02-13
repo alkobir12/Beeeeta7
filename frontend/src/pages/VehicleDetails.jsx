@@ -2414,7 +2414,7 @@ const VehicleDetails = () => {
               </button>
             </div>
           </div>
-
+        </div>
 
       {/* Financial Summary (moved into draggable layout) */}
 

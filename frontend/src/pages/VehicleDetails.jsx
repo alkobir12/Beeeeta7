@@ -165,6 +165,7 @@ const DragHandle = ({ listeners, attributes }) => {
         border: '1px solid rgba(148,163,184,0.16)',
         color: 'rgba(226,232,240,0.85)',
         cursor: 'grab',
+        touchAction: 'none',
       }}
       title="سحب لتغيير المكان"
       {...attributes}

@@ -79,34 +79,40 @@ export default function VehicleFinancialSummary({ summary, t }) {
   const s = summary || {};
   const balance = Number(s.balance || 0);
 
+  const safeT = (key, fallback) => {
+    const v = t?.(key);
+    if (!v || v === key) return fallback;
+    return v;
+  };
+
   const balanceAccent = balance === 0 ? 'emerald' : balance > 0 ? 'rose' : 'sky';
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
       <StatCard
-        title={t?.('vehicle_finance.workshop_due') || 'ذمم الورشة'}
+        title={safeT('vehicle_finance.workshop_due', 'ذمم الورشة')}
         value={s.total_workshop}
         accent="violet"
       />
       <StatCard
-        title={t?.('vehicle_finance.suppliers_due') || 'ذمم الموردين'}
+        title={safeT('vehicle_finance.suppliers_due', 'ذمم الموردين')}
         value={s.total_suppliers}
         accent="rose"
       />
       <StatCard
-        title={t?.('vehicle_finance.total_paid') || 'المدفوع'}
+        title={safeT('vehicle_finance.total_paid', 'المدفوع')}
         value={s.total_paid}
         accent="emerald"
       />
       <StatCard
-        title={t?.('vehicle_finance.advance_paid') || 'دفعة مقدمة'}
+        title={safeT('vehicle_finance.advance_paid', 'دفعة مقدمة')}
         value={s.advance_paid}
         accent="sky"
       />
       <StatCard
-        title={t?.('vehicle_finance.balance') || 'المتبقي'}
+        title={safeT('vehicle_finance.balance', 'المتبقي')}
         value={s.balance}
-        subtitle={balance < 0 ? (t?.('vehicle_finance.credit') || 'رصيد للعميل') : ''}
+        subtitle={balance < 0 ? safeT('vehicle_finance.credit', 'رصيد للعميل') : ''}
         accent={balanceAccent}
       />
     </div>

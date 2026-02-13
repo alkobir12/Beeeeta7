@@ -368,6 +368,52 @@ body[data-theme="dashPro"] .sidebar-item {
     @apply border-primary/30 shadow-glow-sm;
   }
   
+
+
+/* =====================
+   Liquid Dark Glass System (v1)
+   ===================== */
+
+:root {
+  --liquid-radius-lg: 28px;
+  --liquid-radius-md: 20px;
+  --liquid-surface: rgba(255, 255, 255, 0.06);
+  --liquid-border: rgba(148, 163, 184, 0.18);
+  --liquid-shadow: 0 18px 60px rgba(2, 6, 23, 0.55);
+  --liquid-blur: 14px;
+}
+
+.liquid-surface {
+  background: var(--liquid-surface);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-shadow);
+  backdrop-filter: blur(var(--liquid-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-blur));
+  border-radius: var(--liquid-radius-lg);
+}
+
+.liquid-section {
+  border-radius: var(--liquid-radius-lg);
+  padding: 16px;
+}
+
+@media (max-width: 640px) {
+  .liquid-section {
+    padding: 12px;
+  }
+}
+
+.liquid-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(248, 250, 252, 0.95);
+}
+
+.liquid-subtitle {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.68);
+}
+
   /* Dark mode cards */
   body.dark-mode .apple-card * {
     color: #C8C8C8 !important;

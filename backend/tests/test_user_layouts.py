@@ -5,7 +5,18 @@ import os
 from typing import Dict, Any
 
 # Base URL from frontend .env
-BASE_URL = "https://carfix-admin-2.preview.emergentagent.com/api"
+API_URL = os.environ.get("API_URL")
+if not API_URL:
+    try:
+        with open("/app/frontend/.env", "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("REACT_APP_BACKEND_URL="):
+                    API_URL = line.split("=", 1)[1].strip()
+                    break
+    except Exception:
+        API_URL = ""
+
+BASE_URL = f"{API_URL}/api" if API_URL else "http://localhost:8001/api"
 
 class TestUserLayouts:
     """Test suite for user layouts API endpoints"""

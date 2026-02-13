@@ -1855,6 +1855,7 @@ const VehicleDetails = () => {
               </div>
 
               <div>
+
               {/* Files Section (Load on demand) */}
               <div className="apple-card p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-3">

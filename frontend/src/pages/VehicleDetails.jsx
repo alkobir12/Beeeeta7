@@ -114,7 +114,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
   );
 };
 
-const VisitCard = ({ visit, technicians, onUpdate, onDelete, onVisitClosed, approvals = [], servicesCatalog = [], partsCatalog = [], onServiceAdded, onPartAdded, canDelete = false }) => {
+const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClosed, approvals = [], servicesCatalog = [], partsCatalog = [], onServiceAdded, onPartAdded, canDelete = false }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(visit.status);

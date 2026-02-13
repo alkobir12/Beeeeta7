@@ -633,6 +633,9 @@ const VehicleDetails = () => {
 
   const [waPreviewOpen, setWaPreviewOpen] = useState(false);
   const [waPreview, setWaPreview] = useState(null);
+
+  const [financeSummary, setFinanceSummary] = useState(null);
+
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);

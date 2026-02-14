@@ -2414,11 +2414,11 @@ const VehicleDetails = () => {
           </button>
           <div className="flex-1">
             <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{vehicle.plateNumber}</h1>
-            <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(vehicle.status)} text-white`}>
-              {getStatusLabel(vehicle.status)}
-            </span>
-          </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{vehicle.plateNumber}</h1>
+              <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(vehicle.status)} text-white`}>
+                {getStatusLabel(vehicle.status)}
+              </span>
+            </div>
             <p className="text-gray-500 mt-1">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
           </div>
 

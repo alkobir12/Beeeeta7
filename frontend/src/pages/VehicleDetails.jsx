@@ -514,9 +514,11 @@ const VisitCard = ({
         else setNotes(obj.text);
       } else {
         setNotes(visit.notes || '');
+        parsedPayments = [];
       }
     } catch (e) {
       setNotes(visit.notes || '');
+      parsedPayments = [];
     }
 
     setItems(parsedItems);

@@ -474,7 +474,7 @@ const PartsInventory = () => {
       ) : (
         <div data-testid="parts-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredParts.map(part => (
-            <div data-testid="part-card" key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
+            <div data-testid={`part-card-${part.id}`} key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
               <div className="h-40 bg-gray-100 relative">
                 {part.image ? (
                   <img src={part.image} alt={part.name} className="w-full h-full object-cover" />
@@ -516,10 +516,18 @@ const PartsInventory = () => {
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t border-gray-50">
-                  <button onClick={() => openEditDialog(part)} className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => openEditDialog(part)}
+                    className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    data-testid={`part-edit-${part.id}`}
+                  >
                     <Edit size={14} /> {"Edit"}
                   </button>
-                  <button onClick={() => handleDelete(part.id)} className="flex-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => handleDelete(part.id)}
+                    className="flex-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    data-testid={`part-delete-${part.id}`}
+                  >
                     <Trash2 size={14} /> {"Delete"}
                   </button>
                 </div>

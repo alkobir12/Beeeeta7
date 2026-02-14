@@ -306,7 +306,15 @@ async def run_blackbox_task(prompt: str, agents: List[Dict[str, str]]) -> Dict[s
     async with httpx.AsyncClient(timeout=60) as client:
         create_resp = await client.post(f"{BLACKBOX_API_URL}/tasks", json=payload, headers=headers)
         if create_resp.status_code >= 400:
-            raise HTTPException(status_code=500, detail=f"Blackbox create error: {create_resp.text}")
+            try:
+                err_data = create_resp.json()
+            except Exception:
+                err_data = {}
+            error_code = err_data.get("code")
+            error_message = err_data.get("error") or err_data.get("message") or create_resp.text
+            if error_code == "EXT_AUTO_TOPUP_FAILED":
+                error_message = "رصيد Blackbox غير كافٍ. يرجى شحن الحساب أو إضافة وسيلة دفع."
+            raise HTTPException(status_code=502, detail=error_message)
         create_data = create_resp.json()
         task = create_data.get("task") or create_data
         task_id = task.get("id") if isinstance(task, dict) else None

@@ -14,10 +14,10 @@
     "userId": "local-admin",
     "page": "vehicleDetails",
     "blocks": [
-      "visits",
       "financial_summary",
-      "guidance",
       "vehicle_info",
+      "visits",
+      "guidance",
       "status_actions"
     ]
   },

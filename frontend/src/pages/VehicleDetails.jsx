@@ -509,7 +509,12 @@ const VisitCard = ({
       if (visit.notes && visit.notes.trim().startsWith('{')) {
         const obj = JSON.parse(visit.notes);
         if (obj.items) parsedItems = obj.items;
-        if (obj.payments) parsedPayments = obj.payments;
+        if (obj.payments) {
+          parsedPayments = obj.payments.map((p, idx) => ({
+            id: p.id || `pay-${idx}-${p.date || Date.now()}`,
+            ...p,
+          }));
+        }
         if (!obj.text) setNotes('');
         else setNotes(obj.text);
       } else {

@@ -153,3 +153,4 @@
 | 14 Feb 2026 | Supplier item type + suppliers add/edit modal + suppliers CRUD API |
 | 14 Feb 2026 | Visit payments section (advance/under account) added |
 | 14 Feb 2026 | Workshop bot multi-model (Blackbox) integration |
+| 14 Feb 2026 | Deployment fix: CORS_ORIGINS set to * for production domain |

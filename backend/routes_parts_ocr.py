@@ -26,6 +26,7 @@ class PartsOcrResponse(BaseModel):
     currency: Optional[str] = None
     totals: Dict[str, Any] = {}
     items: List[Dict[str, Any]] = []
+    ocr_text: Optional[str] = None
     raw_text: Optional[str] = None
     success: bool = True
 
@@ -60,24 +61,42 @@ async def ocr_parts(request: PartsOcrRequest):
     if not image_b64:
         raise HTTPException(status_code=400, detail="image_base64 is required")
 
-    system_message = (
-        "You are an expert OCR assistant for auto spare-parts invoices. "
-        "Extract Arabic/English text and return ONLY valid JSON with this schema: "
-        "{vendor, invoice_number, date, tax_number, items:[{part_number, description, quantity, unit_price, total}], "
-        "totals:{subtotal, tax, grand_total}, currency}. "
-        "Keep part numbers exactly as-is. If a field is missing, return null."
+    ocr_system_message = (
+        "Extract all text from the invoice image exactly as written. "
+        "Preserve Arabic/English characters and numbers. "
+        "Do NOT summarize or invent. Return plain text only."
     )
 
-    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr", system_message=system_message)
-    chat.model = "gpt-4o-mini"
-    user_message = UserMessage(text="Extract the invoice data.", file_contents=[ImageContent(image_base64=image_b64)])
+    parse_system_message = (
+        "You are an expert invoice parser. Use ONLY the provided OCR text. "
+        "Do not invent part names or codes. If missing, set null. "
+        "Return ONLY valid JSON with schema: {vendor, invoice_number, date, tax_number, currency, "
+        "items:[{part_number, description, quantity, unit_price, total}], totals:{subtotal, tax, grand_total}}."
+    )
+
+    ocr_chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr-text", system_message=ocr_system_message)
+    ocr_chat.model = "gpt-4o-mini"
+    ocr_message = UserMessage(text="Extract invoice text.", file_contents=[ImageContent(image_base64=image_b64)])
     try:
-        response = await chat.send_message(user_message)
+        ocr_text = await ocr_chat.send_message(ocr_message)
     except Exception as e:
         print(f"OCR request failed: {e}")
         raise HTTPException(status_code=500, detail=f"OCR request failed: {e}")
 
-    response_text = response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)
+    ocr_text_value = ocr_text if isinstance(ocr_text, str) else json.dumps(ocr_text, ensure_ascii=False)
+    if not ocr_text_value or len(ocr_text_value.strip()) < 20:
+        raise HTTPException(status_code=500, detail="OCR text extraction too short")
+
+    parse_chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr-parse", system_message=parse_system_message)
+    parse_chat.model = "gpt-4o-mini"
+    parse_message = UserMessage(text=f"OCR TEXT:\n{ocr_text_value}")
+    try:
+        parsed_response = await parse_chat.send_message(parse_message)
+    except Exception as e:
+        print(f"OCR parse failed: {e}")
+        raise HTTPException(status_code=500, detail=f"OCR parse failed: {e}")
+
+    response_text = parsed_response if isinstance(parsed_response, str) else json.dumps(parsed_response, ensure_ascii=False)
     parsed = parse_json_response(response_text)
 
     items = parsed.get("items") or []

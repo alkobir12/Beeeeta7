@@ -43,12 +43,23 @@ import { userLayoutsAPI } from '../services/userLayoutsAPI';
 
 // --- Helper Components ---
 
-const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId, visitId }) => {
+const VisitItemRow = ({
+  item,
+  isEditing,
+  onChange,
+  onDelete,
+  servicesCatalog = [],
+  partsCatalog = [],
+  suppliersCatalog = [],
+  rowId,
+  visitId,
+}) => {
   if (!isEditing) {
+    const typeLabel = item.itemType === 'part' ? 'قطعة' : item.itemType === 'supplier' ? 'مورد' : 'خدمة';
     return (
       <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
         <td className="py-2 px-3 text-xs" style={{ color: 'rgba(226,232,240,0.72)' }}>
-          {item.itemType === 'part' ? 'قطعة' : 'خدمة'}
+          {typeLabel}
         </td>
         <td className="py-2 px-3 text-xs" style={{ color: 'rgba(248,250,252,0.92)' }}>{item.name}</td>
         <td className="py-2 px-3 text-xs text-center" style={{ color: 'rgba(248,250,252,0.86)' }}>{item.quantity}</td>
@@ -60,8 +71,22 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
     );
   }
 
-  const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
+  const options = item.itemType === 'part'
+    ? partsCatalog
+    : item.itemType === 'supplier'
+    ? suppliersCatalog
+    : servicesCatalog;
   const listId = `${item.itemType}-list-${rowId}`;
+
+  const handleNameChange = (value) => {
+    onChange('name', value);
+    if (item.itemType === 'supplier') return;
+    const match = options.find((opt) => (opt.name || '').trim() === value.trim());
+    if (match) {
+      const price = match.price ?? match.sellingPrice ?? match.selling_price ?? match.purchasePrice ?? 0;
+      onChange('price', Number(price) || 0);
+    }
+  };
 
   return (
     <tr className="border-b" style={{ borderColor: 'rgba(56,189,248,0.18)', background: 'rgba(56,189,248,0.06)' }}>

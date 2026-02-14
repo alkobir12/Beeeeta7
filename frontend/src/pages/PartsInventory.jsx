@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { partAPI, fileAPI } from '../services/api';
+import { partAPI, fileAPI, api } from '../services/api';
 import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as ImageIcon, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -20,6 +20,11 @@ const PartsInventory = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [ocrImage, setOcrImage] = useState('');
+  const [ocrPreview, setOcrPreview] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const [ocrError, setOcrError] = useState('');
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

@@ -1688,6 +1688,8 @@ const VehicleDetails = () => {
   }
   if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
 
+  // MARKER: VehicleDetails content begins
+
   const blockTitles = {
     vehicle_info: 'معلومات المركبة',
     visits: 'الزيارات',

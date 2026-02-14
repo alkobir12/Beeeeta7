@@ -347,7 +347,14 @@ async def respond(req: BotRequest):
         if not agents:
             raise HTTPException(status_code=400, detail="Unknown model")
         prompt = build_blackbox_prompt(req, engine)
-        status_data = await run_blackbox_task(prompt, agents)
+        try:
+            status_data = await run_blackbox_task(prompt, agents)
+        except HTTPException as exc:
+            return BotResponse(
+                status="error",
+                reply=f"تعذر تشغيل Blackbox AI الآن. {exc.detail}",
+                model_used=model_id,
+            )
         agent_execs = (status_data.get("task") or status_data).get("agentExecutions") or []
 
         responses = []

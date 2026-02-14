@@ -119,6 +119,7 @@ const WorkshopAIBot = () => {
                   ? 'bg-[#007AFF] text-white shadow-sm'
                   : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
               }`}
+              data-testid="workshop-bot-mode-client"
             >
               <User size={16} className="inline mr-1" />
               عميل
@@ -130,6 +131,7 @@ const WorkshopAIBot = () => {
                   ? 'bg-[#007AFF] text-white shadow-sm'
                   : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
               }`}
+              data-testid="workshop-bot-mode-tech"
             >
               <Wrench size={16} className="inline mr-1" />
               فني
@@ -141,6 +143,7 @@ const WorkshopAIBot = () => {
                   ? 'bg-[#007AFF] text-white shadow-sm'
                   : 'bg-[#F5F5F7] text-[#1D1D1F] hover:bg-[#E8E8ED]'
               }`}
+              data-testid="workshop-bot-mode-admin"
             >
               <Shield size={16} className="inline mr-1" />
               إداري

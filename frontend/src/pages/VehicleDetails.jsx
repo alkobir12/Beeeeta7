@@ -1684,11 +1684,17 @@ const VehicleDetails = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-        <div className="text-xs text-gray-400">جاري التحميل... {loadingProgress}%</div>
+        <div className="text-xs" style={{ color: 'rgba(226,232,240,0.65)' }} data-testid="vehicle-loading-status">
+          جاري التحميل... {loadingProgress}%
+        </div>
       </div>
     );
   }
-  if (!vehicle) return <div className="text-center py-20">المركبة غير موجودة</div>;
+  if (!vehicle) return (
+    <div className="text-center py-20" style={{ color: 'rgba(226,232,240,0.8)' }} data-testid="vehicle-not-found">
+      المركبة غير موجودة
+    </div>
+  );
 
   // MARKER: VehicleDetails content begins
 

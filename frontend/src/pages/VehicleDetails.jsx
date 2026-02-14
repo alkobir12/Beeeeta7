@@ -950,6 +950,7 @@ const VisitCard = ({
                     onDelete={() => deleteItem(idx)}
                     servicesCatalog={servicesCatalog}
                     partsCatalog={partsCatalog}
+                    suppliersCatalog={suppliersCatalog}
                     rowId={idx}
                     visitId={visit.id}
                   />
@@ -1003,6 +1004,7 @@ const VisitCard = ({
                           onDelete={() => deleteItem(idx)}
                           servicesCatalog={servicesCatalog}
                           partsCatalog={partsCatalog}
+                          suppliersCatalog={suppliersCatalog}
                           rowId={idx}
                           visitId={visit.id}
                         />

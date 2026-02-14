@@ -155,7 +155,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
   );
 };
 
-const DragHandle = ({ listeners, attributes }) => {
+const DragHandle = ({ listeners, attributes, blockId }) => {
   return (
     <button
       type="button"
@@ -170,7 +170,7 @@ const DragHandle = ({ listeners, attributes }) => {
       title="سحب لتغيير المكان"
       {...attributes}
       {...listeners}
-      data-testid="layout-drag-handle"
+      data-testid={`layout-drag-handle-${blockId}`}
     >
       <span className="text-lg leading-none">⋮⋮</span>
     </button>
@@ -203,7 +203,7 @@ const SortableBlock = ({ id, title, children }) => {
               {title}
             </div>
           </div>
-          <DragHandle listeners={listeners} attributes={attributes} />
+          <DragHandle listeners={listeners} attributes={attributes} blockId={id} />
         </div>
         <div>{children}</div>
       </div>
@@ -211,7 +211,7 @@ const SortableBlock = ({ id, title, children }) => {
   );
 };
 
-const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
+const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId, visitId }) => {
   const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
   const listId = `${item.itemType}-list-card-${rowId}`;
   const amount = Number(item.quantity || 0) * Number(item.price || 0);
@@ -266,7 +266,7 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
                   border: '1px solid rgba(148,163,184,0.18)',
                   color: 'rgba(248,250,252,0.92)',
                 }}
-                data-testid={`visit-item-type-card-${rowId}`}
+                data-testid={`visit-item-type-card-${visitId}-${rowId}`}
               >
                 <option value="service">خدمة</option>
                 <option value="part">قطعة</option>
@@ -292,7 +292,7 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
                   color: 'rgba(248,250,252,0.92)',
                 }}
                 placeholder="اسم البند"
-                data-testid={`visit-item-name-card-${rowId}`}
+                data-testid={`visit-item-name-card-${visitId}-${rowId}`}
               />
               <datalist id={listId}>
                 {options.map((opt) => (
@@ -313,7 +313,7 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
               border: '1px solid rgba(244,63,94,0.22)',
             }}
             title="حذف"
-            data-testid={`visit-item-delete-card-${rowId}`}
+            data-testid={`visit-item-delete-card-${visitId}-${rowId}`}
           >
             <Trash2 size={16} />
           </button>
@@ -339,7 +339,7 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
                 color: 'rgba(248,250,252,0.92)',
               }}
               min="1"
-              data-testid={`visit-item-quantity-card-${rowId}`}
+              data-testid={`visit-item-quantity-card-${visitId}-${rowId}`}
             />
           )}
         </div>
@@ -362,7 +362,7 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
                 color: 'rgba(248,250,252,0.92)',
               }}
               min="0"
-              data-testid={`visit-item-price-card-${rowId}`}
+              data-testid={`visit-item-price-card-${visitId}-${rowId}`}
             />
           )}
         </div>

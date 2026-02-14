@@ -2541,12 +2541,8 @@ const VehicleDetails = () => {
         />
       </div>
 
-      {/* Legacy duplicate layout kept hidden but removed from DOM to avoid duplication issues */}
-      {false && (
-        <>
-        
-        {/* Left Column: Info */}
-        <div className="space-y-6">
+      {/* Legacy duplicate layout removed (was causing duplication/inconsistency) */}
+
           
           {/* Vehicle Info Card */}
           <div className="apple-card p-6 relative group">

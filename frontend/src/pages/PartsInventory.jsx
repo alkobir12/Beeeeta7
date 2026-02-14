@@ -95,6 +95,65 @@ const PartsInventory = () => {
     }
   };
 
+  const handleOcrFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result?.toString() || '';
+      setOcrImage(base64);
+      setOcrPreview(base64);
+      setOcrResult(null);
+      setOcrError('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const runOcr = async () => {
+    if (!ocrImage) {
+      toast({ title: 'تنبيه', description: 'يرجى رفع صورة الفاتورة أولاً', variant: 'destructive' });
+      return;
+    }
+    setOcrLoading(true);
+    setOcrError('');
+    try {
+      const { data } = await api.post('/parts/ocr', { image_base64: ocrImage });
+      setOcrResult(data);
+    } catch (error) {
+      console.error('OCR error:', error);
+      setOcrError('تعذر قراءة الفاتورة. حاول بصورة أوضح.');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const importOcrItems = async () => {
+    if (!ocrResult?.items?.length) return;
+    setOcrImporting(true);
+    try {
+      for (const item of ocrResult.items) {
+        if (!item?.name) continue;
+        const qty = Number(item.quantity || 1);
+        const unitPrice = Number(item.unit_price || (item.total && qty ? item.total / qty : 0));
+        await partAPI.create({
+          name: item.name,
+          purchasePrice: unitPrice || 0,
+          sellingPrice: unitPrice || 0,
+          quantity: qty || 1,
+          minQuantity: 1,
+          supplier: ocrResult?.supplier || '',
+        });
+      }
+      await loadParts();
+      toast({ title: 'تم الاستيراد', description: 'تم إضافة البنود للمخزون بنجاح' });
+    } catch (error) {
+      console.error('Import OCR items error:', error);
+      toast({ title: 'خطأ', description: 'تعذر استيراد البنود', variant: 'destructive' });
+    } finally {
+      setOcrImporting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {

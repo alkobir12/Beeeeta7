@@ -2397,6 +2397,7 @@ const VehicleDetails = () => {
                       onDelete={requestDeleteVisit}
                       servicesCatalog={servicesCatalog}
                       partsCatalog={partsCatalog}
+                      suppliersCatalog={suppliersCatalog}
                       onServiceAdded={appendService}
                       onPartAdded={appendPart}
                       canDelete={canDeleteVisit}

@@ -608,7 +608,7 @@ const VisitCard = ({
         status,
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: itemsForSave }),
+        notes: JSON.stringify({ text: notes, items: itemsForSave, payments }),
       };
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
@@ -657,7 +657,7 @@ const VisitCard = ({
         exitDate: new Date().toISOString(),
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: itemsForSave }),
+        notes: JSON.stringify({ text: notes, items: itemsForSave, payments }),
       };
       const response = await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       const whatsappUrl = response.data?.whatsappNotificationUrl;

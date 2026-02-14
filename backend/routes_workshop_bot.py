@@ -250,6 +250,84 @@ def ask_question():
     return "الصوت وش هو؟ أو علمني نوع المكينة لو تقدر."
 
 
+def ensure_blackbox_config():
+    missing = [
+        key
+        for key, value in {
+            "BLACKBOX_API_URL": BLACKBOX_API_URL,
+            "BLACKBOX_API_KEY": BLACKBOX_API_KEY,
+            "BLACKBOX_REPO_URL": BLACKBOX_REPO_URL,
+            "BLACKBOX_BRANCH": BLACKBOX_BRANCH,
+        }.items()
+        if not value
+    ]
+    if missing:
+        raise HTTPException(status_code=500, detail=f"Blackbox config missing: {', '.join(missing)}")
+
+
+def build_blackbox_prompt(req: BotRequest, engine: Optional[str]) -> str:
+    return (
+        "أنت مساعد ورشة سيارات ثنائي اللغة (عربي ثم إنجليزي).\n"
+        "قدّم إجابة عملية مختصرة مع خطوات فحص مقترحة ونصيحة أمان إن لزم.\n"
+        f"وضع المستخدم: {req.mode}.\n"
+        f"نوع المكينة: {engine or 'غير محدد'}.\n"
+        f"رسالة المستخدم: {req.message}\n"
+        "أجب بالعربية أولًا ثم بالإنجليزية في فقرة منفصلة."
+    )
+
+
+def extract_agent_text(execution: Dict[str, Any]) -> str:
+    for key in ["output", "response", "message", "content", "text"]:
+        if isinstance(execution.get(key), str) and execution.get(key).strip():
+            return execution.get(key).strip()
+    result = execution.get("result")
+    if isinstance(result, dict):
+        for key in ["output", "response", "message", "content", "text", "final"]:
+            if isinstance(result.get(key), str) and result.get(key).strip():
+                return result.get(key).strip()
+    if isinstance(result, str) and result.strip():
+        return result.strip()
+    return ""
+
+
+async def run_blackbox_task(prompt: str, agents: List[Dict[str, str]]) -> Dict[str, Any]:
+    ensure_blackbox_config()
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {BLACKBOX_API_KEY}",
+    }
+    payload = {
+        "prompt": prompt,
+        "repoUrl": BLACKBOX_REPO_URL,
+        "selectedBranch": BLACKBOX_BRANCH,
+        "selectedAgents": agents,
+    }
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        create_resp = await client.post(f"{BLACKBOX_API_URL}/tasks", json=payload, headers=headers)
+        if create_resp.status_code >= 400:
+            raise HTTPException(status_code=500, detail=f"Blackbox create error: {create_resp.text}")
+        create_data = create_resp.json()
+        task = create_data.get("task") or create_data
+        task_id = task.get("id") if isinstance(task, dict) else None
+        if not task_id:
+            raise HTTPException(status_code=500, detail="Blackbox task id not found")
+
+        status_data = {}
+        for _ in range(15):
+            await asyncio.sleep(2)
+            status_resp = await client.get(f"{BLACKBOX_API_URL}/tasks/{task_id}", headers=headers)
+            if status_resp.status_code >= 400:
+                status_data = {"error": status_resp.text}
+                continue
+            status_data = status_resp.json()
+            agent_execs = (status_data.get("task") or status_data).get("agentExecutions") or []
+            if agent_execs and all(exec.get("status") in ["completed", "failed"] for exec in agent_execs):
+                break
+
+    return status_data
+
+
 # Endpoints
 @router.post("/respond", response_model=BotResponse)
 def respond(req: BotRequest):

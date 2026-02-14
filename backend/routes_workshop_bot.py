@@ -423,6 +423,17 @@ def get_engines():
     }
 
 
+@router.get("/models")
+def get_models():
+    models = [
+        {"id": "kb", "label": "قاعدة الورشة", "type": "rule"},
+        {"id": "multi", "label": "متعدد النماذج", "type": "multi"},
+    ]
+    for key, config in BLACKBOX_MODEL_REGISTRY.items():
+        models.append({"id": key, "label": config["label"], "type": "single"})
+    return {"models": models}
+
+
 @router.get("/health")
 def health_check():
     return {

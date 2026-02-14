@@ -161,3 +161,4 @@
 | 14 Feb 2026 | Workshop bot multi-model (Blackbox) integration |
 | 14 Feb 2026 | Deployment fix: CORS_ORIGINS set to * for production domain |
 | 14 Feb 2026 | Suppliers migration endpoint for Supabase |
+| 14 Feb 2026 | Parts OCR (OpenAI Vision) integration + UI | 

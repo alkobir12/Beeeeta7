@@ -54,6 +54,7 @@ from routes_injectors import router as injectors_router, set_db as set_db_inject
 # Import User Routes
 from routes_users import router as users_router, set_db as set_db_users
 from routes_user_layouts import router as user_layouts_router, set_db as set_db_user_layouts
+from routes_parts_ocr import router as parts_ocr_router
 
 # Import Gemini Chat Routes
 from routes_gemini_chat import (

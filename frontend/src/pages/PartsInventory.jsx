@@ -133,16 +133,18 @@ const PartsInventory = () => {
     setOcrImporting(true);
     try {
       for (const item of ocrResult.items) {
-        if (!item?.name) continue;
+        const description = item.description || item.name;
+        if (!description) continue;
         const qty = Number(item.quantity || 1);
         const unitPrice = Number(item.unit_price || (item.total && qty ? item.total / qty : 0));
         await partAPI.create({
-          name: item.name,
+          partNumber: item.part_number || '',
+          name: description,
           purchasePrice: unitPrice || 0,
           sellingPrice: unitPrice || 0,
           quantity: qty || 1,
           minQuantity: 1,
-          supplier: ocrResult?.supplier || '',
+          supplier: ocrResult?.vendor || '',
         });
       }
       await loadParts();

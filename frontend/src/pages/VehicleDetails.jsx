@@ -1088,6 +1088,123 @@ const VisitCard = ({
             </div>
           </div>
 
+          {/* Payments */}
+          <div
+            className="mb-4 liquid-surface"
+            style={{
+              borderRadius: 20,
+              padding: 12,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(148,163,184,0.14)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+            data-testid={`visit-payments-${visit.id}`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div>
+                <div className="text-sm font-bold" style={{ color: 'rgba(248,250,252,0.95)' }}>
+                  المدفوعات
+                </div>
+                <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>
+                  تحت الحساب / دفعة مقدمة
+                </div>
+              </div>
+              <div className="text-[11px] font-semibold" style={{ color: 'rgba(186,230,253,0.95)' }} data-testid={`visit-payments-summary-${visit.id}`}>
+                إجمالي الدفعات: {formatCurrency(paymentsTotal)} • المقدّم: {formatCurrency(advanceTotal)}
+              </div>
+            </div>
+
+            {payments.length === 0 ? (
+              <div className="text-xs" style={{ color: 'rgba(226,232,240,0.6)' }} data-testid={`visit-payments-empty-${visit.id}`}>
+                لا توجد دفعات مسجلة لهذه الزيارة
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {payments.map((payment, idx) => {
+                  const kindLabel = (payment.kind || '').toLowerCase() === 'advance' ? 'دفعة مقدمة' : 'تحت الحساب';
+                  return (
+                    <div
+                      key={payment.id || idx}
+                      className="flex items-center justify-between gap-2 rounded-xl px-3 py-2"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                      }}
+                      data-testid={`visit-payment-row-${visit.id}-${idx}`}
+                    >
+                      <div className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.85)' }} data-testid={`visit-payment-kind-${visit.id}-${idx}`}>
+                        {kindLabel}
+                      </div>
+                      <div className="text-xs font-extrabold tabular-nums" style={{ color: 'rgba(167,243,208,0.95)' }} data-testid={`visit-payment-amount-${visit.id}-${idx}`}>
+                        {formatCurrency(payment.amount || 0)}
+                      </div>
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => removePayment(payment.id)}
+                          className="p-2 rounded-lg"
+                          style={{
+                            background: 'rgba(244,63,94,0.14)',
+                            border: '1px solid rgba(244,63,94,0.28)',
+                            color: 'rgba(254,202,202,0.95)',
+                          }}
+                          data-testid={`visit-payment-remove-${visit.id}-${idx}`}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {isEditing && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+                <select
+                  value={paymentDraft.kind}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, kind: e.target.value })}
+                  className="w-full text-xs rounded-lg p-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  data-testid={`visit-payment-kind-select-${visit.id}`}
+                >
+                  <option value="advance">دفعة مقدمة</option>
+                  <option value="payment">تحت الحساب</option>
+                </select>
+                <input
+                  type="number"
+                  value={paymentDraft.amount}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, amount: e.target.value })}
+                  className="w-full text-xs rounded-lg p-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  placeholder="المبلغ"
+                  data-testid={`visit-payment-amount-input-${visit.id}`}
+                />
+                <button
+                  type="button"
+                  onClick={addPayment}
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold"
+                  style={{
+                    background: 'rgba(56,189,248,0.14)',
+                    border: '1px solid rgba(56,189,248,0.28)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
+                  data-testid={`visit-payment-add-${visit.id}`}
+                >
+                  إضافة دفعة
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="mb-4" onClick={(e) => e.stopPropagation()}>
             <label className="block text-[11px] font-medium mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>

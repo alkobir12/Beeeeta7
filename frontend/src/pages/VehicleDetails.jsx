@@ -2905,6 +2905,20 @@ const VehicleDetails = () => {
 
       {/* Disabled legacy duplicate layout removed */}
 
+      <VisitDeleteConfirmDialog
+        open={deleteVisitOpen}
+        onOpenChange={(v) => {
+          if (deleteVisitLoading) return;
+          setDeleteVisitOpen(v);
+          if (!v) setDeleteVisitTarget(null);
+        }}
+        visit={deleteVisitTarget}
+        t={t}
+        isRTL={isRTL}
+        isLoading={deleteVisitLoading}
+        onConfirm={confirmDeleteVisit}
+      />
+
       <WhatsAppPreviewDialog
         open={waPreviewOpen}
         onOpenChange={setWaPreviewOpen}

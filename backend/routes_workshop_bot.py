@@ -213,6 +213,7 @@ class BotRequest(BaseModel):
     sound: Optional[str] = None
     smoke: Optional[str] = None
     engine: Optional[str] = None
+    model: Optional[str] = "kb"
 
 
 class BotResponse(BaseModel):
@@ -221,6 +222,8 @@ class BotResponse(BaseModel):
     probable: Optional[List[Dict[str, Any]]] = None
     next_question: Optional[str] = None
     confidence: Optional[int] = None
+    model_used: Optional[str] = None
+    agent_results: Optional[List[Dict[str, Any]]] = None
 
 
 # Logic

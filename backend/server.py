@@ -1417,6 +1417,25 @@ async def delete_supplier(supplier_id: str):
     return {"status": "success"}
 
 
+@api_router.post("/suppliers/migrate")
+async def migrate_suppliers():
+    if DB_PROVIDER != "supabase":
+        raise HTTPException(status_code=400, detail="Migration requires DB_PROVIDER=supabase")
+    if not supabase_service.client or supabase_service.mock_mode:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    local_suppliers = _mem_read("suppliers")
+    if not local_suppliers:
+        return {"migrated": 0, "message": "No local suppliers to migrate"}
+
+    try:
+        res = supabase_service.client.table("suppliers").insert(local_suppliers).execute()
+        migrated = len(res.data or [])
+        return {"migrated": migrated}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/stats")
 async def get_stats():
     """Get dashboard statistics"""

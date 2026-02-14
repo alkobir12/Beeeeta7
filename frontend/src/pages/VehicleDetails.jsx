@@ -1709,6 +1709,7 @@ const VehicleDetails = () => {
             {/* Vehicle Info Card */}
             <div
               className="liquid-surface relative"
+              data-testid="vehicle-info-card"
               style={{
                 borderRadius: 20,
                 padding: 14,
@@ -1732,6 +1733,7 @@ const VehicleDetails = () => {
                       border: '1px solid rgba(148,163,184,0.16)',
                       color: 'rgba(226,232,240,0.85)',
                     }}
+                    data-testid="vehicle-edit-toggle"
                   >
                     {isEditingVehicle ? <X size={16} /> : <Edit2 size={16} />}
                   </button>
@@ -1750,9 +1752,16 @@ const VehicleDetails = () => {
                         }}
                         value={vehicleForm.plateNumber}
                         onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value })}
+                        data-testid="vehicle-plate-input"
                       />
                     ) : (
-                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.plateNumber}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="vehicle-plate-value"
+                      >
+                        {vehicle.plateNumber}
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
@@ -1769,6 +1778,7 @@ const VehicleDetails = () => {
                           value={vehicleForm.brand}
                           onChange={(e) => setVehicleForm({ ...vehicleForm, brand: e.target.value })}
                           placeholder="الماركة"
+                          data-testid="vehicle-brand-input"
                         />
                         <input
                           className="text-sm rounded-xl px-3 py-2 w-1/2"
@@ -1780,10 +1790,15 @@ const VehicleDetails = () => {
                           value={vehicleForm.model}
                           onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
                           placeholder="الموديل"
+                          data-testid="vehicle-model-input"
                         />
                       </div>
                     ) : (
-                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="vehicle-brand-model-value"
+                      >
                         {vehicle.brand} {vehicle.model}
                       </span>
                     )}
@@ -1800,9 +1815,16 @@ const VehicleDetails = () => {
                         }}
                         value={vehicleForm.vin}
                         onChange={(e) => setVehicleForm({ ...vehicleForm, vin: e.target.value })}
+                        data-testid="vehicle-vin-input"
                       />
                     ) : (
-                      <span className="text-sm font-semibold font-mono" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.vin || '-'}</span>
+                      <span
+                        className="text-sm font-semibold font-mono"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="vehicle-vin-value"
+                      >
+                        {vehicle.vin || '-'}
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col py-2">
@@ -1817,9 +1839,16 @@ const VehicleDetails = () => {
                         }}
                         value={vehicleForm.color}
                         onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
+                        data-testid="vehicle-color-input"
                       />
                     ) : (
-                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.color || '-'}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="vehicle-color-value"
+                      >
+                        {vehicle.color || '-'}
+                      </span>
                     )}
                   </div>
 
@@ -1832,6 +1861,7 @@ const VehicleDetails = () => {
                         border: '1px solid rgba(56,189,248,0.28)',
                         color: 'rgba(186,230,253,0.95)',
                       }}
+                      data-testid="vehicle-save-button"
                     >
                       حفظ التعديلات
                     </button>
@@ -1842,6 +1872,7 @@ const VehicleDetails = () => {
             {/* Customer Info */}
             <div
               className="liquid-surface relative"
+              data-testid="customer-info-card"
               style={{
                 borderRadius: 20,
                 padding: 14,
@@ -1865,6 +1896,7 @@ const VehicleDetails = () => {
                       border: '1px solid rgba(148,163,184,0.16)',
                       color: 'rgba(226,232,240,0.85)',
                     }}
+                    data-testid="customer-edit-toggle"
                   >
                     {isEditingCustomer ? <X size={16} /> : <Edit2 size={16} />}
                   </button>
@@ -1883,42 +1915,78 @@ const VehicleDetails = () => {
                         }}
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                        data-testid="customer-name-input"
                       />
                     ) : (
-                      <span className="text-sm font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }}>{vehicle.customerName}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="customer-name-value"
+                      >
+                        {vehicle.customerName}
+                      </span>
                     )}
                   </div>
-                  <div className="flex flex-col py-2 border-b border-gray-50">
-                    <span className="text-gray-500 text-xs mb-1">رقم الجوال</span>
+                  <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم الجوال</span>
                     {isEditingCustomer ? (
                       <input
-                        className="text-sm border rounded p-1 w-full"
+                        className="w-full text-sm rounded-xl px-3 py-2"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          color: 'rgba(248,250,252,0.92)',
+                        }}
                         value={customerForm.phone}
                         onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                        data-testid="customer-phone-input"
                       />
                     ) : (
-                      <span className="font-medium" dir="ltr">
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        dir="ltr"
+                        data-testid="customer-phone-value"
+                      >
                         {vehicle.customerPhone}
                       </span>
                     )}
                   </div>
                   <div className="flex flex-col py-2">
-                    <span className="text-gray-500 text-xs mb-1">البريد الإلكتروني</span>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>البريد الإلكتروني</span>
                     {isEditingCustomer ? (
                       <input
-                        className="text-sm border rounded p-1 w-full"
+                        className="w-full text-sm rounded-xl px-3 py-2"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          color: 'rgba(248,250,252,0.92)',
+                        }}
                         value={customerForm.email}
                         onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                        data-testid="customer-email-input"
                       />
                     ) : (
-                      <span className="font-medium">{vehicle.customerEmail || '-'}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(248,250,252,0.92)' }}
+                        data-testid="customer-email-value"
+                      >
+                        {vehicle.customerEmail || '-'}
+                      </span>
                     )}
                   </div>
 
                   {isEditingCustomer && (
                     <button
                       onClick={handleUpdateCustomerInfo}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-2 rounded mt-2 font-bold"
+                      className="w-full rounded-2xl px-4 py-3 text-sm font-extrabold mt-2"
+                      style={{
+                        background: 'rgba(16,185,129,0.14)',
+                        border: '1px solid rgba(16,185,129,0.28)',
+                        color: 'rgba(167,243,208,0.95)',
+                      }}
+                      data-testid="customer-save-button"
                     >
                       حفظ التعديلات
                     </button>

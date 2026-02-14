@@ -41,10 +41,8 @@ const Suppliers = () => {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
-      const response = await fetch(`${API_URL}/suppliers`);
-      const data = await response.json();
-      setSuppliers(data || []);
+      const response = await supplierAPI.getAll();
+      setSuppliers(response.data || []);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       setSuppliers([]);

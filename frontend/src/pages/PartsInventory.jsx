@@ -449,14 +449,16 @@ const PartsInventory = () => {
             placeholder={"Search..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="parts-search-input"
           />
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadParts} variant="outline">{"Refresh"}</Button>
+          <Button onClick={loadParts} variant="outline" data-testid="parts-refresh-button">{"Refresh"}</Button>
           <Button
             variant={showLowStock ? 'default' : 'outline'}
             onClick={() => setShowLowStock(!showLowStock)}
             className={showLowStock ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+            data-testid="parts-low-stock-toggle"
           >
             <AlertTriangle className="ml-2" size={18} />
             {"Low Stock"}

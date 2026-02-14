@@ -71,13 +71,15 @@ const WorkshopAIBot = () => {
       const { data } = await axios.post(`${API_URL}/workshop-bot/respond`, {
         mode,
         message: userMessage,
-        engine: engine || undefined
+        engine: engine || undefined,
+        model: selectedModel,
       });
 
       // Add bot response
       setConversation(prev => [...prev, {
         type: 'bot',
         text: data.reply,
+        modelUsed: data.model_used,
         probable: data.probable,
         nextQuestion: data.next_question,
         confidence: data.confidence,

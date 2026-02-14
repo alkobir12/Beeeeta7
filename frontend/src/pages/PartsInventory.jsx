@@ -121,7 +121,8 @@ const PartsInventory = () => {
       setOcrResult(data);
     } catch (error) {
       console.error('OCR error:', error);
-      setOcrError('تعذر قراءة الفاتورة. حاول بصورة أوضح.');
+      const detail = error?.response?.data?.detail;
+      setOcrError(detail || 'تعذر قراءة الفاتورة. حاول بصورة أوضح.');
     } finally {
       setOcrLoading(false);
     }

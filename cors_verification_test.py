@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Configuration from frontend/.env
-BACKEND_URL = "https://carfix-admin-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://liquid-fleet.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 # CORS Origins to test

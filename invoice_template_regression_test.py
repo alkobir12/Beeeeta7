@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Backend URL from environment
-BACKEND_URL = "https://carfix-admin-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://liquid-fleet.preview.emergentagent.com/api"
 
 class InvoiceTemplateRegressionTest:
     def __init__(self):

@@ -2542,7 +2542,8 @@ const VehicleDetails = () => {
       </div>
 
       {/* Legacy duplicate layout removed (was causing duplication/inconsistency) */}
-
+      {false && (
+        <div>
           
           {/* Vehicle Info Card */}
           <div className="apple-card p-6 relative group">

@@ -67,7 +67,7 @@ async def ocr_parts(request: PartsOcrRequest):
         "If a field is missing, return null. Respond in Arabic+English labels inside values if available."
     )
 
-    chat = LlmChat(api_key=EMERGENT_LLM_KEY, provider="openai", model="gpt-4o")
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, provider="openai", model="gpt-4o-mini", session_id="parts-ocr")
     user_message = UserMessage(text=prompt, file_contents=[ImageContent(image_base64=image_b64)])
     try:
         response = await chat.send_message(user_message)

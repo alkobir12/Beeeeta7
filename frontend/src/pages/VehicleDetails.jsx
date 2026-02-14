@@ -1371,6 +1371,7 @@ const VehicleDetails = () => {
   const [visits, setVisits] = useState([]);
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [partsCatalog, setPartsCatalog] = useState([]);
+  const [suppliersCatalog, setSuppliersCatalog] = useState([]);
   const [visitFilter, setVisitFilter] = useState('all');
   const [createVisitConfirmAt, setCreateVisitConfirmAt] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -23,6 +23,7 @@ const PartsInventory = () => {
   const [ocrImage, setOcrImage] = useState('');
   const [ocrPreview, setOcrPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrImporting, setOcrImporting] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
 

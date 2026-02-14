@@ -1731,7 +1731,7 @@ const VehicleDetails = () => {
     switch (blockId) {
       case 'vehicle_info':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3" data-testid="vehicle-info-block">
             {/* Vehicle Info Card */}
             <div
               className="liquid-surface relative"
@@ -2141,7 +2141,11 @@ const VehicleDetails = () => {
 
       case 'financial_summary':
         return (
-          <div className="liquid-surface liquid-section" style={{ padding: 0, background: 'transparent', border: '0' }}>
+          <div
+            className="liquid-surface liquid-section"
+            style={{ padding: 0, background: 'transparent', border: '0' }}
+            data-testid="vehicle-financial-summary-block"
+          >
             <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
           </div>
         );
@@ -2161,7 +2165,7 @@ const VehicleDetails = () => {
 
       case 'visits':
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" data-testid="vehicle-visits-block">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <button
                 onClick={handleCreateVisit}
@@ -2302,7 +2306,7 @@ const VehicleDetails = () => {
 
       case 'status_actions':
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" data-testid="vehicle-status-block">
             <div
               className="liquid-surface"
               style={{

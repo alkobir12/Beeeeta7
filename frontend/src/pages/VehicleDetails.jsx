@@ -104,36 +104,52 @@ const VisitItemRow = ({
         >
           <option value="service">خدمة</option>
           <option value="part">قطعة</option>
+          <option value="supplier">مورد</option>
         </select>
       </td>
       <td className="p-2 min-w-[160px]">
-        <input
-          type="text"
-          list={listId}
-          value={item.name}
-          onChange={(e) => {
-            const value = e.target.value;
-            onChange('name', value);
-            const match = options.find((opt) => (opt.name || '').trim() === value.trim());
-            if (match) {
-              const price = match.price ?? match.sellingPrice ?? match.selling_price ?? 0;
-              onChange('price', Number(price) || 0);
-            }
-          }}
-          className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(148,163,184,0.18)',
-            color: 'rgba(248,250,252,0.92)',
-          }}
-          placeholder="اسم البند"
-          data-testid={`visit-item-name-${visitId}-${rowId}`}
-        />
-        <datalist id={listId}>
-          {options.map((opt) => (
-            <option key={opt.id || opt.name} value={opt.name} />
-          ))}
-        </datalist>
+        {item.itemType === 'supplier' ? (
+          <select
+            value={item.name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(148,163,184,0.18)',
+              color: 'rgba(248,250,252,0.92)',
+            }}
+            data-testid={`visit-item-name-${visitId}-${rowId}`}
+          >
+            <option value="">اختر المورد</option>
+            {suppliersCatalog.map((supplier) => (
+              <option key={supplier.id || supplier.name} value={supplier.name}>
+                {supplier.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <>
+            <input
+              type="text"
+              list={listId}
+              value={item.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
+              placeholder={item.itemType === 'part' ? 'اسم القطعة' : 'اسم الخدمة'}
+              data-testid={`visit-item-name-${visitId}-${rowId}`}
+            />
+            <datalist id={listId}>
+              {options.map((opt) => (
+                <option key={opt.id || opt.name} value={opt.name} />
+              ))}
+            </datalist>
+          </>
+        )}
       </td>
       <td className="p-2">
         <input

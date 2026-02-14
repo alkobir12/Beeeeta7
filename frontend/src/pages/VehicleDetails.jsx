@@ -2541,7 +2541,9 @@ const VehicleDetails = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-0 hidden">
+      {/* Legacy duplicate layout kept hidden but removed from DOM to avoid duplication issues */}
+      {false && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-0">
         
         {/* Left Column: Info */}
         <div className="space-y-6">

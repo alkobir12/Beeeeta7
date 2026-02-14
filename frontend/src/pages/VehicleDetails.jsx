@@ -2510,9 +2510,8 @@ const VehicleDetails = () => {
               </div>
               <p className="text-xs text-green-700">{pageWhatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب</p>
             </div>
-          </div>
 
-        <div className="flex gap-2">
+            <div className="flex gap-2">
               <a
                 href={pageWhatsappNotification.url}
                 target="_blank"

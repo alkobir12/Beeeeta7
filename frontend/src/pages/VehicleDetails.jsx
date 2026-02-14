@@ -663,6 +663,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
     <div
       className="dash-widget-shell"
       data-expanded={isExpanded ? 'true' : 'false'}
+      data-testid={`visit-card-${visit.id}`}
       style={{
         cursor: 'default',
         background:
@@ -705,19 +706,33 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(248,250,252,0.95)' }}>
+              <div
+                className="text-sm font-extrabold tabular-nums"
+                style={{ color: 'rgba(248,250,252,0.95)' }}
+                data-testid={`visit-entry-date-${visit.id}`}
+              >
                 {entry ? new Date(entry).toLocaleDateString('ar-SA') : '—'}
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[11px]" style={statusPill}>
+              <span
+                className="px-2 py-0.5 rounded-full text-[11px]"
+                style={statusPill}
+                data-testid={`visit-status-pill-${visit.id}`}
+              >
                 {openLabel}
               </span>
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]" style={{ color: 'rgba(226,232,240,0.62)' }}>
-              <span>{mileage ? `${Number(mileage).toLocaleString()} كم` : 'بدون عداد'}</span>
-              {items.length > 0 && <span>• {items.length} بنود</span>}
+              <span data-testid={`visit-mileage-${visit.id}`}>
+                {mileage ? `${Number(mileage).toLocaleString()} كم` : 'بدون عداد'}
+              </span>
+              {items.length > 0 && <span data-testid={`visit-items-count-${visit.id}`}>• {items.length} بنود</span>}
               {totalAmount > 0 && (
-                <span style={{ color: 'rgba(167,243,208,0.92)' }} className="font-semibold tabular-nums">
+                <span
+                  style={{ color: 'rgba(167,243,208,0.92)' }}
+                  className="font-semibold tabular-nums"
+                  data-testid={`visit-total-amount-${visit.id}`}
+                >
                   • {formatCurrency(totalAmount)}
                 </span>
               )}
@@ -729,6 +744,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
                   key={s.k}
                   className="px-2 py-1 rounded-full text-[11px] tabular-nums"
                   style={s.style}
+                  data-testid={`visit-stat-${visit.id}-${s.k}`}
                 >
                   {s.label}: {formatCurrency(s.value)}
                 </span>

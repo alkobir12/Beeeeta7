@@ -716,6 +716,31 @@ const VisitCard = ({
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const addPayment = () => {
+    const amount = Number(paymentDraft.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({ title: 'تنبيه', description: 'يرجى إدخال مبلغ صحيح', variant: 'destructive' });
+      return;
+    }
+    const entry = {
+      id: `pay-${Date.now()}`,
+      kind: paymentDraft.kind || 'advance',
+      amount,
+      date: new Date().toISOString(),
+    };
+    setPayments([...payments, entry]);
+    setPaymentDraft({ kind: paymentDraft.kind || 'advance', amount: '' });
+  };
+
+  const removePayment = (paymentId) => {
+    setPayments(payments.filter((p) => p.id !== paymentId));
+  };
+
+  const paymentsTotal = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const advanceTotal = payments
+    .filter((p) => (p.kind || '').toLowerCase() === 'advance')
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
   const totalAmount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
 
   const openLabel = status === 'in_progress' ? 'جارية' : 'مكتملة';

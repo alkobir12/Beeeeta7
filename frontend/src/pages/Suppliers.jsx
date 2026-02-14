@@ -347,6 +347,188 @@ const Suppliers = () => {
           ))
         )}
       </div>
+
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+          data-testid="supplier-modal-overlay"
+        >
+          <div
+            className="liquid-surface w-full max-w-2xl p-6 relative"
+            style={{
+              background: 'rgba(15,23,42,0.92)',
+              border: '1px solid rgba(148,163,184,0.18)',
+            }}
+            data-testid="supplier-modal"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setShowModal(false);
+                resetForm();
+              }}
+              className="absolute top-4 left-4 p-2 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(226,232,240,0.85)',
+              }}
+              data-testid="supplier-modal-close"
+            >
+              <X size={18} />
+            </button>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold" style={{ color: 'rgba(248,250,252,0.95)' }} data-testid="supplier-modal-title">
+                {editingSupplier ? 'تعديل المورد' : 'إضافة مورد جديد'}
+              </h2>
+              <p className="text-sm mt-1" style={{ color: 'rgba(226,232,240,0.65)' }}>
+                أدخل بيانات المورد الأساسية وسيتم حفظها مباشرة.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4" data-testid="supplier-modal-form">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>اسم المورد *</label>
+                  <input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full rounded-xl px-3 py-2 text-sm"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    data-testid="supplier-name-input"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>رقم الجوال *</label>
+                  <input
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full rounded-xl px-3 py-2 text-sm"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    data-testid="supplier-phone-input"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>المسؤول</label>
+                  <input
+                    value={formData.contactPerson}
+                    onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                    className="w-full rounded-xl px-3 py-2 text-sm"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    data-testid="supplier-contact-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>المدينة</label>
+                  <input
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full rounded-xl px-3 py-2 text-sm"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    data-testid="supplier-city-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  data-testid="supplier-email-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>العنوان</label>
+                <input
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  data-testid="supplier-address-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>التصنيف</label>
+                <input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  placeholder="مثال: قطع غيار، زيوت"
+                  data-testid="supplier-category-input"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
+                  className="flex-1 rounded-xl py-2.5 text-sm font-semibold"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(226,232,240,0.85)',
+                  }}
+                  data-testid="supplier-modal-cancel"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl py-2.5 text-sm font-semibold"
+                  style={{
+                    background: 'rgba(234,179,8,0.2)',
+                    border: '1px solid rgba(234,179,8,0.35)',
+                    color: 'rgba(254,243,199,0.95)',
+                    opacity: isSaving ? 0.6 : 1,
+                  }}
+                  disabled={isSaving}
+                  data-testid="supplier-modal-save"
+                >
+                  {isSaving ? 'جاري الحفظ...' : editingSupplier ? 'تحديث المورد' : 'حفظ المورد'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

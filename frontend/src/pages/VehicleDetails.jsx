@@ -2716,6 +2716,138 @@ const VehicleDetails = () => {
       )}
 
       {/* Modals */}
+              <button
+                key={filter.key}
+                onClick={() => setVisitFilter(filter.key)}
+                className={`px-3 py-1.5 rounded-full border transition-all ${
+                  visitFilter === filter.key
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+                }`}
+                data-testid={`visit-filter-${filter.key}`}
+              >
+                {filter.label} ({filter.count})
+              </button>
+            ))}
+          </div>
+
+          {visitFilter !== 'all' && filteredVisits.length === 0 && visits.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+              <span>لا توجد زيارات في هذا الفلتر. الزيارات موجودة في فلاتر أخرى.</span>
+              <button onClick={() => setVisitFilter('all')} className="text-amber-700 font-bold underline mr-2">عرض الكل</button>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {filteredVisits.length === 0 && (visitFilter === 'all' || visits.length === 0) ? (
+              <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-xs text-gray-500">لا توجد زيارات بعد</p>
+                <p className="text-[11px] text-gray-400 mt-1">اضغط "زيارة جديدة" لاستقبال المركبة</p>
+              </div>
+            ) : (
+              filteredVisits.map(visit => {
+                const normVisit = {
+                  ...visit,
+                  entryDate: visit.entryDate || visit.entry_date,
+                  exitDate: visit.exitDate || visit.exit_date,
+                  technicianId: visit.technicianId || visit.technician_id,
+                  createdAt: visit.createdAt || visit.created_at,
+                };
+                const visitApprovals = approvals
+                  .filter((a) => (a.visitId || a.visit_id) === normVisit.id)
+                  .sort((x, y) => String(y.createdAt || y.created_at || '').localeCompare(String(x.createdAt || x.created_at || '')));
+
+                return (
+                  <VisitCard
+                    key={normVisit.id}
+                    visit={normVisit}
+                    vehicle={vehicle}
+                    technicians={technicians}
+                    onUpdate={fetchData}
+                    onVisitClosed={handleVisitClosed}
+                    onShowWhatsAppPreview={(notification) => {
+                      setWaPreview(notification);
+                      setWaPreviewOpen(true);
+                    }}
+                    approvals={visitApprovals}
+                    onDelete={requestDeleteVisit}
+                    servicesCatalog={servicesCatalog}
+                    partsCatalog={partsCatalog}
+                    onServiceAdded={appendService}
+                    onPartAdded={appendPart}
+                    canDelete={canDeleteVisit}
+                  />
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Status & Actions */}
+        <div className="space-y-6">
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-6 text-orange-600">
+              <Wrench size={20} />
+              <h3 className="font-bold text-gray-900">{t('vehicle_details.status')}</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t('quick_actions.change_status')}</label>
+                <select className="apple-input" value={status} onChange={e => setStatus(e.target.value)}>
+                  {statusSteps.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">الفني المسؤول</label>
+                <select className="apple-input" value={assignedTech} onChange={e => setAssignedTech(e.target.value)}>
+                  <option value="">اختر الفني...</option>
+                  {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">ملاحظات عامة</label>
+
+                <textarea 
+                  className="apple-input h-32 py-3 resize-none" 
+                  placeholder="ملاحظات..."
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                />
+              </div>
+
+              <button onClick={handleStatusUpdate} className="apple-button w-full mt-2">
+                حفظ التحديثات
+              </button>
+            </div>
+          </div>
+
+          <div className="apple-card p-6">
+            <div className="flex items-center gap-3 mb-4 text-gray-900">
+              <Clock size={20} />
+              <h3 className="font-bold">التواريخ</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">تاريخ الدخول</span>
+                <span className="font-medium">{vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString('ar-SA') : '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">آخر تحديث</span>
+                <span className="font-medium">{vehicle.updatedAt || vehicle.updated_at ? new Date(vehicle.updatedAt || vehicle.updated_at).toLocaleDateString('ar-SA') : '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {scannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-4 relative">
             <button onClick={closeScanner} className="absolute top-4 left-4 p-2 bg-gray-100 rounded-full"><X size={20} /></button>
             <h3 className="text-lg font-bold mb-4 text-center">التقاط صورة</h3>
             {!capturedImage ? (

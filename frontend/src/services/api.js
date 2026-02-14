@@ -102,6 +102,13 @@ const partAPI = {
   delete: (id) => axios.delete(`${API_BASE}/parts/${id}`)
 };
 
+const supplierAPI = {
+  getAll: () => axios.get(`${API_BASE}/suppliers`),
+  create: (data) => axios.post(`${API_BASE}/suppliers`, data),
+  update: (id, data) => axios.put(`${API_BASE}/suppliers/${id}`, data),
+  delete: (id) => axios.delete(`${API_BASE}/suppliers/${id}`),
+};
+
 const fileAPI = {
   upload: (formData) => axios.post(`${API_BASE}/files/upload`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -161,6 +168,7 @@ export {
   serviceAPI, 
   aiAPI, 
   partAPI, 
+  supplierAPI,
   fileAPI, 
   statsAPI, 
   transactionAPI,

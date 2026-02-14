@@ -2277,12 +2277,32 @@ const VehicleDetails = () => {
       case 'status_actions':
         return (
           <div className="space-y-4">
-            <div className="apple-card p-6">
-
+            <div
+              className="liquid-surface"
+              style={{
+                borderRadius: 20,
+                padding: 16,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+              data-testid="vehicle-status-card"
+            >
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">{t('quick_actions.change_status')}</label>
-                  <select className="apple-input" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <label className="text-[11px] font-medium" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                    {t('quick_actions.change_status')}
+                  </label>
+                  <select
+                    className="w-full text-sm rounded-xl p-2"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    data-testid="vehicle-status-select"
+                  >
                     {statusSteps.map((s) => (
                       <option key={s.key} value={s.key}>
                         {s.label}
@@ -2292,8 +2312,20 @@ const VehicleDetails = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">الفني المسؤول</label>
-                  <select className="apple-input" value={assignedTech} onChange={(e) => setAssignedTech(e.target.value)}>
+                  <label className="text-[11px] font-medium" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                    الفني المسؤول
+                  </label>
+                  <select
+                    className="w-full text-sm rounded-xl p-2"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    value={assignedTech}
+                    onChange={(e) => setAssignedTech(e.target.value)}
+                    data-testid="vehicle-assigned-tech-select"
+                  >
                     <option value="">اختر الفني...</option>
                     {technicians.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -2304,47 +2336,58 @@ const VehicleDetails = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">ملاحظات عامة</label>
-
-                  <VisitDeleteConfirmDialog
-                    open={deleteVisitOpen}
-                    onOpenChange={(v) => {
-                      if (deleteVisitLoading) return;
-                      setDeleteVisitOpen(v);
-                      if (!v) setDeleteVisitTarget(null);
-                    }}
-                    visit={deleteVisitTarget}
-                    t={t}
-                    isRTL={isRTL}
-                    isLoading={deleteVisitLoading}
-                    onConfirm={confirmDeleteVisit}
-                  />
-
+                  <label className="text-[11px] font-medium" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                    ملاحظات عامة
+                  </label>
                   <textarea
-                    className="apple-input h-32 py-3 resize-none"
+                    className="w-full text-sm rounded-2xl p-3 min-h-[120px] resize-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
                     placeholder="ملاحظات..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
+                    data-testid="vehicle-notes-textarea"
                   />
                 </div>
 
-                <button onClick={handleStatusUpdate} className="apple-button w-full mt-2">
+                <button
+                  onClick={handleStatusUpdate}
+                  className="w-full rounded-2xl px-4 py-3 text-sm font-extrabold"
+                  style={{
+                    background: 'rgba(56,189,248,0.14)',
+                    border: '1px solid rgba(56,189,248,0.28)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
+                  data-testid="vehicle-status-save-button"
+                >
                   حفظ التحديثات
                 </button>
               </div>
             </div>
 
-            <div className="apple-card p-6">
-              <div className="space-y-3 text-sm">
+            <div
+              className="liquid-surface"
+              style={{
+                borderRadius: 20,
+                padding: 16,
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+              data-testid="vehicle-dates-card"
+            >
+              <div className="space-y-3 text-xs" style={{ color: 'rgba(226,232,240,0.72)' }}>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">تاريخ الدخول</span>
-                  <span className="font-medium">
+                  <span>تاريخ الدخول</span>
+                  <span className="font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }} data-testid="vehicle-entry-date">
                     {vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString('ar-SA') : '-'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">آخر تحديث</span>
-                  <span className="font-medium">
+                  <span>آخر تحديث</span>
+                  <span className="font-semibold" style={{ color: 'rgba(248,250,252,0.92)' }} data-testid="vehicle-updated-date">
                     {vehicle.updatedAt || vehicle.updated_at
                       ? new Date(vehicle.updatedAt || vehicle.updated_at).toLocaleDateString('ar-SA')
                       : '-'}

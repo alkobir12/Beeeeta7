@@ -140,3 +140,4 @@
 | 10 Feb 2026 | MoltBot, Smart Guidance, PDF fixes, Visit UI improvements |
 | 11 Feb 2026 | Operations page UI/UX refresh: dashboard-style cards + expandable details + inline edit items/prices |
 | 14 Feb 2026 | Vehicle Details Liquid System UI unification + unique test IDs |
+| 14 Feb 2026 | Supplier item type + suppliers add/edit modal + suppliers CRUD API |

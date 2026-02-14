@@ -2716,11 +2716,6 @@ const VehicleDetails = () => {
       )}
 
       {/* Modals */}
-            {[
-              { key: 'all', label: 'كل الزيارات', count: visits.length },
-              { key: 'open', label: 'المفتوحة', count: visits.filter(v => (v.status || '').toLowerCase() !== 'completed').length },
-              { key: 'closed', label: 'المغلقة', count: visits.filter(v => (v.status || '').toLowerCase() === 'completed').length },
-            ].map((filter) => (
               <button
                 key={filter.key}
                 onClick={() => setVisitFilter(filter.key)}

@@ -83,6 +83,11 @@
 - إضافة اختيار نموذج (متعدد النماذج/Claude/Blackbox Pro/GPT-5 Codex) داخل بوت الورشة
 - ربط البوت بواجهة Blackbox Tasks API عبر Backend مع رسائل ثنائية اللغة
 
+### OCR قطع الغيار (14 Feb 2026)
+- إضافة واجهة OCR في صفحة قطع الغيار لاستيراد بنود الفاتورة عبر OpenAI Vision
+- إنشاء مسار /api/parts/ocr لاستخراج البنود (اسم/كمية/سعر) وإرجاع JSON
+- Document AI مؤجل حسب طلب المستخدم
+
 ---
 
 ## Architecture

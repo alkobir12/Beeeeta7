@@ -2403,12 +2403,13 @@ def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
     total_workshop = 0.0
     total_suppliers = 0.0
     for it in items:
-        # Backward compatibility: default to workshop
-        billing_type = (it.get('billingType') or it.get('type') or 'workshop').lower()
+        # Backward compatibility: default to workshop (support itemType)
+        raw_type = it.get('billingType') or it.get('type') or it.get('itemType') or 'workshop'
+        billing_type = str(raw_type).lower()
         qty = _num(it.get('quantity', 1), 1.0)
         price = _num(it.get('price', it.get('unit_price', 0)), 0.0)
         line_total = _num(it.get('total'), qty * price)
-        if billing_type == 'supplier':
+        if billing_type in {'supplier', 'part', 'parts'}:
             total_suppliers += line_total
         else:
             total_workshop += line_total

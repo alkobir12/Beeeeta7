@@ -19,13 +19,12 @@ class PartsOcrRequest(BaseModel):
 
 
 class PartsOcrResponse(BaseModel):
-    supplier: Optional[str] = None
+    vendor: Optional[str] = None
     invoice_number: Optional[str] = None
-    invoice_date: Optional[str] = None
+    date: Optional[str] = None
+    tax_number: Optional[str] = None
     currency: Optional[str] = None
-    subtotal: Optional[float] = None
-    tax: Optional[float] = None
-    total: Optional[float] = None
+    totals: Dict[str, Any] = {}
     items: List[Dict[str, Any]] = []
     raw_text: Optional[str] = None
     success: bool = True
@@ -62,9 +61,11 @@ async def ocr_parts(request: PartsOcrRequest):
         raise HTTPException(status_code=400, detail="image_base64 is required")
 
     system_message = (
-        "You are an OCR assistant. Extract spare parts invoice data. Return ONLY valid JSON with this schema: "
-        "{supplier, invoice_number, invoice_date, currency, subtotal, tax, total, items:[{name, quantity, unit_price, total}]}. "
-        "If a field is missing, return null."
+        "You are an expert OCR assistant for auto spare-parts invoices. "
+        "Extract Arabic/English text and return ONLY valid JSON with this schema: "
+        "{vendor, invoice_number, date, tax_number, items:[{part_number, description, quantity, unit_price, total}], "
+        "totals:{subtotal, tax, grand_total}, currency}. "
+        "Keep part numbers exactly as-is. If a field is missing, return null."
     )
 
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr", system_message=system_message)
@@ -84,27 +85,34 @@ async def ocr_parts(request: PartsOcrRequest):
     for item in items:
         if not isinstance(item, dict):
             continue
-        name = item.get("name") or item.get("item") or item.get("description")
+        part_number = item.get("part_number") or item.get("part_no") or item.get("code")
+        description = item.get("description") or item.get("name") or item.get("item")
         quantity = item.get("quantity") or item.get("qty")
         unit_price = item.get("unit_price") or item.get("price")
         total = item.get("total") or item.get("line_total")
         normalized_items.append(
             {
-                "name": name,
+                "part_number": part_number,
+                "description": description,
                 "quantity": quantity,
                 "unit_price": unit_price,
                 "total": total,
             }
         )
 
+    totals = parsed.get("totals") or {
+        "subtotal": parsed.get("subtotal"),
+        "tax": parsed.get("tax"),
+        "grand_total": parsed.get("grand_total") or parsed.get("total"),
+    }
+
     return PartsOcrResponse(
-        supplier=parsed.get("supplier"),
+        vendor=parsed.get("vendor") or parsed.get("supplier"),
         invoice_number=parsed.get("invoice_number"),
-        invoice_date=parsed.get("invoice_date"),
+        date=parsed.get("date") or parsed.get("invoice_date"),
+        tax_number=parsed.get("tax_number") or parsed.get("vat_number"),
         currency=parsed.get("currency"),
-        subtotal=parsed.get("subtotal"),
-        tax=parsed.get("tax"),
-        total=parsed.get("total"),
+        totals=totals,
         items=normalized_items,
         raw_text=response_text,
         success=True,

@@ -401,22 +401,39 @@ const PartsInventory = () => {
         {ocrResult && (
           <div className="mt-4 space-y-3" data-testid="parts-ocr-result">
             <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-              <span data-testid="parts-ocr-supplier">المورد: {ocrResult.supplier || 'غير محدد'}</span>
+              <span data-testid="parts-ocr-vendor">المورد: {ocrResult.vendor || 'غير محدد'}</span>
               <span data-testid="parts-ocr-invoice">الفاتورة: {ocrResult.invoice_number || '—'}</span>
-              <span data-testid="parts-ocr-total">الإجمالي: {ocrResult.total || '—'}</span>
+              <span data-testid="parts-ocr-date">التاريخ: {ocrResult.date || '—'}</span>
+              <span data-testid="parts-ocr-tax">الرقم الضريبي: {ocrResult.tax_number || '—'}</span>
             </div>
-            <div className="space-y-2">
-              {(ocrResult.items || []).map((item, idx) => (
-                <div
-                  key={`${item.name}-${idx}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-sm"
-                  data-testid={`parts-ocr-item-${idx}`}
-                >
-                  <span className="font-semibold text-gray-900">{item.name}</span>
-                  <span className="text-gray-600">الكمية: {item.quantity || 1}</span>
-                  <span className="text-gray-600">السعر: {item.unit_price || item.total || '—'}</span>
-                </div>
-              ))}
+            <div className="overflow-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="p-2 text-right">رقم القطعة</th>
+                    <th className="p-2 text-right">الوصف</th>
+                    <th className="p-2 text-right">الكمية</th>
+                    <th className="p-2 text-right">سعر الوحدة</th>
+                    <th className="p-2 text-right">الإجمالي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(ocrResult.items || []).map((item, idx) => (
+                    <tr key={`${item.part_number}-${idx}`} className="border-b" data-testid={`parts-ocr-item-${idx}`}>
+                      <td className="p-2">{item.part_number || '—'}</td>
+                      <td className="p-2">{item.description || '—'}</td>
+                      <td className="p-2">{item.quantity || 1}</td>
+                      <td className="p-2">{item.unit_price || '—'}</td>
+                      <td className="p-2">{item.total || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+              <span data-testid="parts-ocr-subtotal">المجموع: {ocrResult?.totals?.subtotal || '—'}</span>
+              <span data-testid="parts-ocr-tax-total">الضريبة: {ocrResult?.totals?.tax || '—'}</span>
+              <span data-testid="parts-ocr-grand-total">الإجمالي النهائي: {ocrResult?.totals?.grand_total || '—'}</span>
             </div>
             {!!ocrResult?.items?.length && (
               <Button

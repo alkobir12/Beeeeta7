@@ -98,7 +98,7 @@ async def ocr_parts(request: PartsOcrRequest):
         raise HTTPException(status_code=500, detail="OCR text extraction too short")
 
     parse_chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr-parse", system_message=parse_system_message)
-    parse_chat.model = "gpt-4o-mini"
+    parse_chat.model = "gpt-4o"
     parse_chat.extra_params = {"temperature": 0}
     parse_message = UserMessage(text=f"OCR TEXT:\n{ocr_text_value}")
     try:

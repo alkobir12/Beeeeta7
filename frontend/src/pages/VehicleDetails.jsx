@@ -2750,7 +2750,11 @@ const VehicleDetails = () => {
       )}
 
       {previewImage && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+          data-testid="preview-overlay"
+        >
           <button
             className="absolute top-4 left-4 p-2 rounded-full"
             style={{

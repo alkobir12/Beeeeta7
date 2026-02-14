@@ -2139,12 +2139,17 @@ const VehicleDetails = () => {
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <button
                 onClick={handleCreateVisit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+                className="px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+                style={{
+                  background: 'rgba(56,189,248,0.16)',
+                  border: '1px solid rgba(56,189,248,0.28)',
+                  color: 'rgba(186,230,253,0.95)',
+                }}
                 data-testid="visit-create-button"
               >
                 <Plus size={14} /> زيارة جديدة
               </button>
-              <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }}>
+              <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.60)' }} data-testid="visit-items-edit-hint">
                 {t('vehicle_details.items_edit_hint')}
               </div>
             </div>
@@ -2166,26 +2171,43 @@ const VehicleDetails = () => {
                   label: 'المغلقة',
                   count: visits.filter((v) => (v.status || '').toLowerCase() === 'completed').length,
                 },
-              ].map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setVisitFilter(filter.key)}
-                  className={`px-3 py-1.5 rounded-full border transition-all ${
-                    visitFilter === filter.key
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
-                  }`}
-                  data-testid={`visit-filter-${filter.key}`}
-                >
-                  {filter.label} ({filter.count})
-                </button>
-              ))}
+              ].map((filter) => {
+                const isActive = visitFilter === filter.key;
+                return (
+                  <button
+                    key={filter.key}
+                    onClick={() => setVisitFilter(filter.key)}
+                    className="px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                    style={{
+                      background: isActive ? 'rgba(56,189,248,0.16)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${isActive ? 'rgba(56,189,248,0.28)' : 'rgba(148,163,184,0.18)'}`,
+                      color: isActive ? 'rgba(186,230,253,0.95)' : 'rgba(226,232,240,0.76)',
+                    }}
+                    data-testid={`visit-filter-${filter.key}`}
+                  >
+                    {filter.label} ({filter.count})
+                  </button>
+                );
+              })}
             </div>
 
             {visitFilter !== 'all' && filteredVisits.length === 0 && visits.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+              <div
+                className="rounded-xl px-3 py-2 text-xs flex items-center justify-between"
+                style={{
+                  background: 'rgba(245,158,11,0.08)',
+                  border: '1px solid rgba(245,158,11,0.22)',
+                  color: 'rgba(254,243,199,0.95)',
+                }}
+                data-testid="visit-filter-empty-hint"
+              >
                 <span>لا توجد زيارات في هذا الفلتر. الزيارات موجودة في فلاتر أخرى.</span>
-                <button onClick={() => setVisitFilter('all')} className="text-amber-700 font-bold underline mr-2">
+                <button
+                  onClick={() => setVisitFilter('all')}
+                  className="font-bold underline mr-2"
+                  style={{ color: 'rgba(254,243,199,0.95)' }}
+                  data-testid="visit-filter-show-all"
+                >
                   عرض الكل
                 </button>
               </div>
@@ -2193,10 +2215,20 @@ const VehicleDetails = () => {
 
             <div className="space-y-4">
               {filteredVisits.length === 0 && (visitFilter === 'all' || visits.length === 0) ? (
-                <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                  <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-xs text-gray-500">لا توجد زيارات بعد</p>
-                  <p className="text-[11px] text-gray-400 mt-1">اضغط "زيارة جديدة" لاستقبال المركبة</p>
+                <div
+                  className="text-center py-8 rounded-xl"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px dashed rgba(148,163,184,0.20)',
+                    color: 'rgba(226,232,240,0.72)',
+                  }}
+                  data-testid="visits-empty-state"
+                >
+                  <Calendar size={32} className="mx-auto mb-2" style={{ color: 'rgba(148,163,184,0.55)' }} />
+                  <p className="text-xs" data-testid="visits-empty-title">لا توجد زيارات بعد</p>
+                  <p className="text-[11px] mt-1" style={{ color: 'rgba(226,232,240,0.60)' }} data-testid="visits-empty-subtitle">
+                    اضغط "زيارة جديدة" لاستقبال المركبة
+                  </p>
                 </div>
               ) : (
                 filteredVisits.map((visit) => {

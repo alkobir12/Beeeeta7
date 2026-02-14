@@ -504,10 +504,12 @@ const VisitCard = ({
 
   useEffect(() => {
     let parsedItems = [];
+    let parsedPayments = [];
     try {
       if (visit.notes && visit.notes.trim().startsWith('{')) {
         const obj = JSON.parse(visit.notes);
         if (obj.items) parsedItems = obj.items;
+        if (obj.payments) parsedPayments = obj.payments;
         if (!obj.text) setNotes('');
         else setNotes(obj.text);
       } else {
@@ -518,6 +520,7 @@ const VisitCard = ({
     }
 
     setItems(parsedItems);
+    setPayments(parsedPayments);
     setStatus(visit.status);
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');

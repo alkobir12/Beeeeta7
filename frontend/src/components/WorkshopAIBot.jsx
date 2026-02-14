@@ -199,6 +199,15 @@ const WorkshopAIBot = () => {
                     : 'bg-white border border-[#D2D2D7] text-[#1D1D1F]'
                 }`}>
                   <p className="text-[15px] leading-[1.5] whitespace-pre-line">{msg.text}</p>
+
+                  {msg.type !== 'user' && msg.modelUsed && (
+                    <div
+                      className="mt-2 text-[11px] text-[#007AFF]"
+                      data-testid={`workshop-bot-model-${idx}`}
+                    >
+                      النموذج: {getModelLabel(msg.modelUsed)}
+                    </div>
+                  )}
                   
                   {/* Confidence Badge */}
                   {msg.confidence && (

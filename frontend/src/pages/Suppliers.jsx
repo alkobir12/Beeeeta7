@@ -174,15 +174,18 @@ const Suppliers = () => {
               backgroundColor: styles.cardBg,
               border: `1px solid ${isLight ? '#e2e8f0' : '#334155'}`
             }}
+            data-testid="suppliers-refresh-button"
           >
             <RefreshCw size={18} style={{ color: styles.textSecondary }} />
           </button>
           <button
+            onClick={openNewSupplier}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white transition-all"
             style={{ 
               background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
               boxShadow: '0 4px 14px rgba(234, 179, 8, 0.25)'
             }}
+            data-testid="supplier-add-button"
           >
             <Plus size={18} />
             <span>مورد جديد</span>

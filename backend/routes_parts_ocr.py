@@ -72,6 +72,7 @@ async def ocr_parts(request: PartsOcrRequest):
     try:
         response = await chat.send_message(user_message)
     except Exception as e:
+        print(f"OCR request failed: {e}")
         raise HTTPException(status_code=500, detail=f"OCR request failed: {e}")
 
     response_text = response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)

@@ -74,14 +74,18 @@ async def ocr_parts(request: PartsOcrRequest):
     )
 
     parse_system_message = (
-        "You are an expert invoice parser. Use ONLY the provided OCR text. "
-        "Do not invent part names or codes. If missing, set null. "
+        "You are an expert invoice parser for auto spare parts. Use ONLY the provided OCR text. "
+        "Do NOT invent any part names or codes. Keep part numbers exactly as written. "
+        "Identify table columns (Part No/Description/Qty/Unit Price/Total). "
         "Return ONLY valid JSON with schema: {vendor, invoice_number, date, tax_number, currency, "
-        "items:[{part_number, description, quantity, unit_price, total}], totals:{subtotal, tax, grand_total}}."
+        "items:[{part_number, description, quantity, unit_price, total, confidence}], "
+        "totals:{subtotal, tax, grand_total}}. "
+        "Set confidence between 0 and 1 for each row. If uncertain, use low confidence and keep fields null."
     )
 
     ocr_chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr-text", system_message=ocr_system_message)
     ocr_chat.model = "gpt-4o-mini"
+    ocr_chat.extra_params = {"temperature": 0}
     ocr_message = UserMessage(text="Extract invoice text.", file_contents=[ImageContent(image_base64=image_b64)])
     try:
         ocr_text = await ocr_chat.send_message(ocr_message)
@@ -95,6 +99,7 @@ async def ocr_parts(request: PartsOcrRequest):
 
     parse_chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id="parts-ocr-parse", system_message=parse_system_message)
     parse_chat.model = "gpt-4o-mini"
+    parse_chat.extra_params = {"temperature": 0}
     parse_message = UserMessage(text=f"OCR TEXT:\n{ocr_text_value}")
     try:
         parsed_response = await parse_chat.send_message(parse_message)
@@ -115,6 +120,7 @@ async def ocr_parts(request: PartsOcrRequest):
         quantity = item.get("quantity") or item.get("qty")
         unit_price = item.get("unit_price") or item.get("price")
         total = item.get("total") or item.get("line_total")
+        confidence = item.get("confidence")
         normalized_items.append(
             {
                 "part_number": part_number,
@@ -122,6 +128,7 @@ async def ocr_parts(request: PartsOcrRequest):
                 "quantity": quantity,
                 "unit_price": unit_price,
                 "total": total,
+                "confidence": confidence,
             }
         )
 

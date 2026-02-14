@@ -2916,10 +2916,7 @@ const VehicleDetails = () => {
           <button className="absolute top-4 left-4 text-white p-2" onClick={() => setPreviewImage(null)}><X size={32} /></button>
           <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={e => e.stopPropagation()} />
         </div>
-      )}
-
-      {/* Disabled legacy duplicate layout (pre-liquid). Keeping it off permanently. */}
-      {/* (intentionally left blank) */}
+      {/* Disabled legacy duplicate layout removed */}
 
       <WhatsAppPreviewDialog
         open={waPreviewOpen}

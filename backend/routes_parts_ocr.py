@@ -52,6 +52,12 @@ def parse_json_response(text: str) -> Dict[str, Any]:
     return {}
 
 
+def normalize_optional(value: Any) -> Any:
+    if isinstance(value, str) and value.strip().lower() in {"null", "none", ""}:
+        return None
+    return value
+
+
 @router.post("/parts/ocr", response_model=PartsOcrResponse)
 async def ocr_parts(request: PartsOcrRequest):
     if not EMERGENT_LLM_KEY:
@@ -124,13 +130,14 @@ async def ocr_parts(request: PartsOcrRequest):
         "tax": parsed.get("tax"),
         "grand_total": parsed.get("grand_total") or parsed.get("total"),
     }
+    totals = {k: normalize_optional(v) for k, v in totals.items()}
 
     return PartsOcrResponse(
-        vendor=parsed.get("vendor") or parsed.get("supplier"),
-        invoice_number=parsed.get("invoice_number"),
-        date=parsed.get("date") or parsed.get("invoice_date"),
-        tax_number=parsed.get("tax_number") or parsed.get("vat_number"),
-        currency=parsed.get("currency"),
+        vendor=normalize_optional(parsed.get("vendor") or parsed.get("supplier")),
+        invoice_number=normalize_optional(parsed.get("invoice_number")),
+        date=normalize_optional(parsed.get("date") or parsed.get("invoice_date")),
+        tax_number=normalize_optional(parsed.get("tax_number") or parsed.get("vat_number")),
+        currency=normalize_optional(parsed.get("currency")),
         totals=totals,
         items=normalized_items,
         ocr_text=ocr_text_value,

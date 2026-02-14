@@ -216,7 +216,7 @@ const Suppliers = () => {
       {/* Suppliers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredSuppliers.length === 0 ? (
-          <div className="col-span-full py-16 text-center">
+          <div className="col-span-full py-16 text-center" data-testid="suppliers-empty-state">
             <Package size={48} className="mx-auto mb-4 text-slate-400" />
             <h3 className="text-xl font-semibold mb-2" style={{ color: styles.textPrimary }}>لا يوجد موردين</h3>
             <p style={{ color: styles.textSecondary }}>ابدأ بإضافة مورد جديد</p>
@@ -240,6 +240,7 @@ const Suppliers = () => {
               onClick={() => setExpandedSupplierId(prev => prev === supplier.id ? null : supplier.id)}
               onMouseEnter={() => setExpandedSupplierId(supplier.id)}
               onMouseLeave={() => setExpandedSupplierId(null)}
+              data-testid={`supplier-card-${supplier.id}`}
             >
               {/* النقاط الزخرفية */}
               <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">
@@ -256,7 +257,9 @@ const Suppliers = () => {
                       <Package size={24} className="text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-50">{supplier.name}</h3>
+                      <h3 className="text-xl font-bold text-slate-50" data-testid={`supplier-name-${supplier.id}`}>
+                        {supplier.name}
+                      </h3>
                       <p className="text-xs text-slate-400">مورد #{supplier.id?.slice(0, 8)}</p>
                     </div>
                   </div>
@@ -270,7 +273,9 @@ const Suppliers = () => {
                     </div>
                     <div>
                       <p className="text-xs text-slate-400 font-medium">رقم الهاتف</p>
-                      <p className="text-sm font-bold text-slate-100 font-mono">{supplier.phone || '-'}</p>
+                      <p className="text-sm font-bold text-slate-100 font-mono" data-testid={`supplier-phone-${supplier.id}`}>
+                        {supplier.phone || '-'}
+                      </p>
                     </div>
                   </div>
                   
@@ -281,7 +286,9 @@ const Suppliers = () => {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium">البريد الإلكتروني</p>
-                        <p className="text-sm font-semibold text-slate-100 truncate">{supplier.email}</p>
+                        <p className="text-sm font-semibold text-slate-100 truncate" data-testid={`supplier-email-${supplier.id}`}>
+                          {supplier.email}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -296,7 +303,9 @@ const Suppliers = () => {
                           <MapPin size={14} />
                           العنوان
                         </span>
-                        <span className="text-sm font-semibold text-slate-100">{supplier.address}</span>
+                        <span className="text-sm font-semibold text-slate-100" data-testid={`supplier-address-${supplier.id}`}>
+                          {supplier.address}
+                        </span>
                       </div>
                     )}
                     {supplier.totalPurchases !== undefined && (
@@ -311,9 +320,10 @@ const Suppliers = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Edit action
+                          handleEditSupplier(supplier);
                         }}
                         className="flex-1 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`supplier-edit-${supplier.id}`}
                       >
                         <Edit2 size={14} className="inline ml-1" />
                         تعديل
@@ -321,9 +331,10 @@ const Suppliers = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Delete action
+                          handleDeleteSupplier(supplier);
                         }}
                         className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`supplier-delete-${supplier.id}`}
                       >
                         <Trash2 size={14} className="inline ml-1" />
                         حذف

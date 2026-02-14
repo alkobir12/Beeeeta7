@@ -208,6 +208,7 @@ const Suppliers = () => {
               border: `1px solid ${isLight ? '#e2e8f0' : '#334155'}`,
               color: styles.textPrimary
             }}
+            data-testid="supplier-search-input"
           />
         </div>
       </div>

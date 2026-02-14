@@ -62,6 +62,11 @@
 - WhatsApp bot integration
 - Vehicle files/photos upload
 
+### Vehicle Details Liquid System Unification (14 Feb 2026)
+- توحيد صفحة المركبة بالكامل على تصميم Liquid System (إزالة apple-card وتوحيد الكروت، الأزرار، الحالات، النوافذ)
+- تحسين حالات الفراغ والفلاتر وإعادة تصميم شريط العنوان والطباعة
+- إضافة data-testid فريدة لكل العناصر التفاعلية وأهم البيانات المعروضة
+
 ---
 
 ## Architecture

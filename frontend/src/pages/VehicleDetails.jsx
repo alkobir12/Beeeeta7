@@ -2582,14 +2582,24 @@ const VehicleDetails = () => {
 
       {/* Page-level WhatsApp Notification Banner */}
       {pageWhatsappNotification && (
-        <div className="mx-4 sm:mx-0 mt-4 rounded-lg border-2 border-green-400 bg-green-50 px-4 py-3 animate-in fade-in slide-in-from-top-2" data-testid="page-whatsapp-notification">
+        <div
+          className="mx-4 sm:mx-0 mt-4 rounded-2xl px-4 py-3 animate-in fade-in slide-in-from-top-2"
+          style={{
+            background: 'rgba(16,185,129,0.12)',
+            border: '1px solid rgba(16,185,129,0.28)',
+            color: 'rgba(167,243,208,0.95)',
+          }}
+          data-testid="page-whatsapp-notification"
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
-              <div className="font-bold text-green-800 text-sm flex items-center gap-2 mb-1">
+              <div className="font-bold text-sm flex items-center gap-2 mb-1" style={{ color: 'rgba(167,243,208,0.95)' }}>
                 <MessageCircle size={16} />
                 إبلاغ العميل بجاهزية المركبة
               </div>
-              <p className="text-xs text-green-700">{pageWhatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب</p>
+              <p className="text-xs" style={{ color: 'rgba(167,243,208,0.82)' }}>
+                {pageWhatsappNotification.customerName} - اضغط لإرسال الإشعار عبر واتساب
+              </p>
             </div>
 
             <div className="flex gap-2">
@@ -2597,14 +2607,24 @@ const VehicleDetails = () => {
                 href={pageWhatsappNotification.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
+                style={{
+                  background: 'rgba(16,185,129,0.20)',
+                  border: '1px solid rgba(16,185,129,0.36)',
+                  color: 'rgba(167,243,208,0.95)',
+                }}
                 data-testid="page-whatsapp-send-button"
               >
                 <MessageCircle size={14} /> إرسال واتساب
               </a>
               <button
                 onClick={() => setPageWhatsappNotification(null)}
-                className="px-2 py-2 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                className="px-2 py-2 rounded-xl transition-colors"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(226,232,240,0.7)',
+                }}
                 title="إغلاق"
                 data-testid="page-whatsapp-dismiss-button"
               >
@@ -2629,25 +2649,78 @@ const VehicleDetails = () => {
       {/* Modals */}
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-4 relative">
-            <button onClick={closeScanner} className="absolute top-4 left-4 p-2 bg-gray-100 rounded-full"><X size={20} /></button>
-            <h3 className="text-lg font-bold mb-4 text-center">التقاط صورة</h3>
+          <div
+            className="liquid-surface max-w-lg w-full p-4 relative"
+            style={{
+              background: 'rgba(15,23,42,0.92)',
+              border: '1px solid rgba(148,163,184,0.18)',
+            }}
+            data-testid="scanner-modal"
+          >
+            <button
+              onClick={closeScanner}
+              className="absolute top-4 left-4 p-2 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(226,232,240,0.85)',
+              }}
+              data-testid="scanner-close-button"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-bold mb-4 text-center" style={{ color: 'rgba(248,250,252,0.95)' }} data-testid="scanner-title">
+              التقاط صورة
+            </h3>
             {!capturedImage ? (
               <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
                 <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
               </div>
             ) : (
               <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
-                <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
+                <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" data-testid="scanner-captured-image" />
               </div>
             )}
             <div className="flex gap-3">
               {!capturedImage ? (
-                <button onClick={captureImage} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">التقاط</button>
+                <button
+                  onClick={captureImage}
+                  className="flex-1 py-3 rounded-xl font-bold"
+                  style={{
+                    background: 'rgba(56,189,248,0.18)',
+                    border: '1px solid rgba(56,189,248,0.32)',
+                    color: 'rgba(186,230,253,0.95)',
+                  }}
+                  data-testid="scanner-capture-button"
+                >
+                  التقاط
+                </button>
               ) : (
                 <>
-                  <button onClick={() => setCapturedImage(null)} className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold">إعادة</button>
-                  <button onClick={uploadScannedImage} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold">حفظ</button>
+                  <button
+                    onClick={() => setCapturedImage(null)}
+                    className="flex-1 py-3 rounded-xl font-bold"
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(226,232,240,0.9)',
+                    }}
+                    data-testid="scanner-retake-button"
+                  >
+                    إعادة
+                  </button>
+                  <button
+                    onClick={uploadScannedImage}
+                    className="flex-1 py-3 rounded-xl font-bold"
+                    style={{
+                      background: 'rgba(16,185,129,0.2)',
+                      border: '1px solid rgba(16,185,129,0.32)',
+                      color: 'rgba(167,243,208,0.95)',
+                    }}
+                    data-testid="scanner-save-button"
+                  >
+                    حفظ
+                  </button>
                 </>
               )}
             </div>
@@ -2658,7 +2731,18 @@ const VehicleDetails = () => {
 
       {previewImage && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
-          <button className="absolute top-4 left-4 text-white p-2" onClick={() => setPreviewImage(null)}><X size={32} /></button>
+          <button
+            className="absolute top-4 left-4 p-2 rounded-full"
+            style={{
+              background: 'rgba(15,23,42,0.6)',
+              border: '1px solid rgba(148,163,184,0.18)',
+              color: 'rgba(248,250,252,0.95)',
+            }}
+            onClick={() => setPreviewImage(null)}
+            data-testid="preview-close-button"
+          >
+            <X size={32} />
+          </button>
           <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={e => e.stopPropagation()} />
         </div>
       )}

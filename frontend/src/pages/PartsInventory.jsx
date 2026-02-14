@@ -132,7 +132,13 @@ const PartsInventory = () => {
     if (!ocrResult?.items?.length) return;
     setOcrImporting(true);
     try {
+      let imported = 0;
+      let skipped = 0;
       for (const item of ocrResult.items) {
+        if (typeof item.confidence === 'number' && item.confidence < 0.6) {
+          skipped += 1;
+          continue;
+        }
         const description = item.description || item.name;
         if (!description) continue;
         const qty = Number(item.quantity || 1);
@@ -146,9 +152,13 @@ const PartsInventory = () => {
           minQuantity: 1,
           supplier: ocrResult?.vendor || '',
         });
+        imported += 1;
       }
       await loadParts();
-      toast({ title: 'تم الاستيراد', description: 'تم إضافة البنود للمخزون بنجاح' });
+      toast({
+        title: 'تم الاستيراد',
+        description: `تم إضافة ${imported} بند للمخزون${skipped ? ` (تم تجاهل ${skipped} بند ضعيف الثقة)` : ''}`,
+      });
     } catch (error) {
       console.error('Import OCR items error:', error);
       toast({ title: 'خطأ', description: 'تعذر استيراد البنود', variant: 'destructive' });

@@ -351,8 +351,20 @@ const PartsInventory = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             <label className="apple-button flex items-center gap-2 cursor-pointer">
+              <Camera size={16} />
+              <span>التقاط بالكاميرا</span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleOcrFileChange}
+                data-testid="parts-ocr-camera-input"
+              />
+            </label>
+            <label className="apple-button flex items-center gap-2 cursor-pointer">
               <Upload size={16} />
-              <span>رفع الفاتورة</span>
+              <span>رفع ملف</span>
               <input
                 type="file"
                 accept="image/*"

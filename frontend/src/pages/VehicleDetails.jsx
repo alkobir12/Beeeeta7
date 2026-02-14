@@ -1756,9 +1756,7 @@ const VehicleDetails = () => {
                   <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicle_details.brand_model')}</span>
                     {isEditingVehicle ? (
-                    </div>
-
-        <div className="flex gap-2">
+                      <div className="flex gap-2">
                         <input
                           className="text-sm rounded-xl px-3 py-2 w-1/2"
                           style={{

@@ -159,6 +159,53 @@ KB_RULES: List[Dict[str, Any]] = [
 ]
 
 
+# Blackbox AI Config
+BLACKBOX_API_URL = os.environ.get("BLACKBOX_API_URL")
+BLACKBOX_API_KEY = os.environ.get("BLACKBOX_API_KEY")
+BLACKBOX_REPO_URL = os.environ.get("BLACKBOX_REPO_URL")
+BLACKBOX_BRANCH = os.environ.get("BLACKBOX_BRANCH")
+
+BLACKBOX_MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
+    "blackbox-pro": {
+        "label": "Blackbox Pro",
+        "agent": "blackbox",
+        "model": "blackboxai/blackbox-pro",
+    },
+    "claude-sonnet-4.5": {
+        "label": "Claude Sonnet 4.5",
+        "agent": "claude",
+        "model": "blackboxai/anthropic/claude-sonnet-4.5",
+    },
+    "gpt-5-codex": {
+        "label": "GPT-5 Codex",
+        "agent": "codex",
+        "model": "gpt-5-codex",
+    },
+}
+
+
+def get_blackbox_agents(model_id: str) -> List[Dict[str, str]]:
+    if model_id == "multi":
+        return [
+            {
+                "agent": BLACKBOX_MODEL_REGISTRY["claude-sonnet-4.5"]["agent"],
+                "model": BLACKBOX_MODEL_REGISTRY["claude-sonnet-4.5"]["model"],
+            },
+            {
+                "agent": BLACKBOX_MODEL_REGISTRY["blackbox-pro"]["agent"],
+                "model": BLACKBOX_MODEL_REGISTRY["blackbox-pro"]["model"],
+            },
+            {
+                "agent": BLACKBOX_MODEL_REGISTRY["gpt-5-codex"]["agent"],
+                "model": BLACKBOX_MODEL_REGISTRY["gpt-5-codex"]["model"],
+            },
+        ]
+    if model_id in BLACKBOX_MODEL_REGISTRY:
+        config = BLACKBOX_MODEL_REGISTRY[model_id]
+        return [{"agent": config["agent"], "model": config["model"]}]
+    return []
+
+
 # Models
 class BotRequest(BaseModel):
     mode: Optional[str] = "client"

@@ -1995,78 +1995,121 @@ const VehicleDetails = () => {
               </div>
 
             {/* Files Section (Load on demand) */}
-            <div className="apple-card p-4 sm:p-6 lg:col-span-2">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3 text-purple-600">
-                    <FileText size={20} />
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t('vehicle_details.files')}</h3>
-                  </div>
-                  <button
-                    onClick={() => setShowFiles((v) => !v)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+            <div
+              className="liquid-surface lg:col-span-2"
+              style={{
+                borderRadius: 20,
+                padding: 16,
+                background:
+                  'radial-gradient(circle at 12% 18%, rgba(56,189,248,0.10), transparent 55%), rgba(255,255,255,0.05)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+              data-testid="vehicle-files-card"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2" style={{ color: 'rgba(186,230,253,0.95)' }}>
+                  <FileText size={18} />
+                  <h3
+                    className="text-sm font-extrabold"
+                    style={{ color: 'rgba(248,250,252,0.95)' }}
+                    data-testid="vehicle-files-title"
                   >
-                    {showFiles ? 'إخفاء' : 'عرض'}
-                  </button>
+                    {t('vehicle_details.files')}
+                  </h3>
                 </div>
-
-                {showFiles && (
-                  <>
-                    <div className="flex gap-2 mb-4">
-                      <button
-                        onClick={openScanner}
-                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600"
-                      >
-                        <Scan size={16} />
-                      </button>
-                      <label className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 cursor-pointer">
-                        <Upload size={16} />
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              const formData = new FormData();
-                              formData.append('file', file);
-                              await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=other`, {
-                                method: 'POST',
-                                body: formData,
-                              });
-                              fetchData();
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {vehicleFiles.slice(0, 6).map((file, idx) => (
-                        <div
-                          key={idx}
-                          className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 overflow-hidden relative group cursor-pointer"
-                          onClick={() =>
-                            setPreviewImage(`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`)
-                          }
-                        >
-                          {file.filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                            <img
-                              src={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
-                              alt="file"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <FileText size={24} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {!showFiles && (
-                  <div className="text-xs text-gray-400">اضغط “عرض” لتحميل ملفات المركبة</div>
-                )}
+                <button
+                  onClick={() => setShowFiles((v) => !v)}
+                  className="text-xs px-3 py-1.5 rounded-xl"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(226,232,240,0.82)',
+                  }}
+                  data-testid="vehicle-files-toggle"
+                >
+                  {showFiles ? 'إخفاء' : 'عرض'}
+                </button>
               </div>
+
+              {showFiles && (
+                <>
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={openScanner}
+                      className="p-2 rounded-xl"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.18)',
+                        color: 'rgba(226,232,240,0.82)',
+                      }}
+                      data-testid="vehicle-files-scan-button"
+                    >
+                      <Scan size={16} />
+                    </button>
+                    <label
+                      className="p-2 rounded-xl cursor-pointer inline-flex"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.18)',
+                        color: 'rgba(226,232,240,0.82)',
+                      }}
+                      data-testid="vehicle-files-upload-button"
+                    >
+                      <Upload size={16} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            await fetch(`${API_URL}/vehicles/${id}/upload-file?file_type=other`, {
+                              method: 'POST',
+                              body: formData,
+                            });
+                            fetchData();
+                          }
+                        }}
+                        data-testid="vehicle-files-upload-input"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2" data-testid="vehicle-files-grid">
+                    {vehicleFiles.slice(0, 6).map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="aspect-square rounded-xl flex items-center justify-center text-xs overflow-hidden relative group cursor-pointer"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(148,163,184,0.16)',
+                          color: 'rgba(226,232,240,0.72)',
+                        }}
+                        onClick={() => setPreviewImage(`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`)}
+                        data-testid={`vehicle-file-item-${file.id || idx}`}
+                      >
+                        {file.filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img
+                            src={`${FILE_BASE}/api/vehicles/${id}/files/${file.id}`}
+                            alt="file"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <FileText size={24} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {!showFiles && (
+                <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-files-placeholder">
+                  اضغط “عرض” لتحميل ملفات المركبة
+                </div>
+              )}
+            </div>
           </div>
         );
 

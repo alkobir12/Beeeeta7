@@ -829,6 +829,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
                     servicesCatalog={servicesCatalog}
                     partsCatalog={partsCatalog}
                     rowId={idx}
+                    visitId={visit.id}
                   />
                 ))
               )}
@@ -881,6 +882,7 @@ const VisitCard = ({ visit, vehicle, technicians, onUpdate, onDelete, onVisitClo
                           servicesCatalog={servicesCatalog}
                           partsCatalog={partsCatalog}
                           rowId={idx}
+                          visitId={visit.id}
                         />
                       ))
                     )}

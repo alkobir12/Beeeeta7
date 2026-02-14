@@ -1146,7 +1146,7 @@ const VisitCard = ({
                       {isEditing && (
                         <button
                           type="button"
-                          onClick={() => removePayment(payment.id)}
+                          onClick={() => removePayment(payment.id, idx)}
                           className="p-2 rounded-lg"
                           style={{
                             background: 'rgba(244,63,94,0.14)',

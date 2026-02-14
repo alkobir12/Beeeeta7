@@ -325,6 +325,81 @@ const PartsInventory = () => {
         </div>
       </div>
 
+      {/* OCR Invoice */}
+      <div className="apple-card p-5 mb-4" data-testid="parts-ocr-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">OCR فاتورة قطع الغيار</h3>
+            <p className="text-sm text-gray-500">ارفع صورة الفاتورة لاستخراج البنود تلقائياً</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <label className="apple-button flex items-center gap-2 cursor-pointer">
+              <Upload size={16} />
+              <span>رفع الفاتورة</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleOcrFileChange}
+                data-testid="parts-ocr-file-input"
+              />
+            </label>
+            <Button onClick={runOcr} disabled={ocrLoading} data-testid="parts-ocr-run-button">
+              {ocrLoading ? 'جاري القراءة...' : 'تشغيل OCR'}
+            </Button>
+          </div>
+        </div>
+
+        {ocrPreview && (
+          <div className="mt-4">
+            <img
+              src={ocrPreview}
+              alt="OCR Preview"
+              className="max-h-56 rounded-xl border border-gray-200"
+              data-testid="parts-ocr-preview"
+            />
+          </div>
+        )}
+
+        {ocrError && (
+          <div className="mt-3 text-sm text-red-600" data-testid="parts-ocr-error">
+            {ocrError}
+          </div>
+        )}
+
+        {ocrResult && (
+          <div className="mt-4 space-y-3" data-testid="parts-ocr-result">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+              <span data-testid="parts-ocr-supplier">المورد: {ocrResult.supplier || 'غير محدد'}</span>
+              <span data-testid="parts-ocr-invoice">الفاتورة: {ocrResult.invoice_number || '—'}</span>
+              <span data-testid="parts-ocr-total">الإجمالي: {ocrResult.total || '—'}</span>
+            </div>
+            <div className="space-y-2">
+              {(ocrResult.items || []).map((item, idx) => (
+                <div
+                  key={`${item.name}-${idx}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-sm"
+                  data-testid={`parts-ocr-item-${idx}`}
+                >
+                  <span className="font-semibold text-gray-900">{item.name}</span>
+                  <span className="text-gray-600">الكمية: {item.quantity || 1}</span>
+                  <span className="text-gray-600">السعر: {item.unit_price || item.total || '—'}</span>
+                </div>
+              ))}
+            </div>
+            {!!ocrResult?.items?.length && (
+              <Button
+                onClick={importOcrItems}
+                disabled={ocrImporting}
+                data-testid="parts-ocr-import-button"
+              >
+                {ocrImporting ? 'جاري الاستيراد...' : 'استيراد البنود للمخزون'}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="apple-card p-5 flex items-center justify-between">

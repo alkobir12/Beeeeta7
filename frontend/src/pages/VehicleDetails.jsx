@@ -487,6 +487,8 @@ const VisitCard = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [paymentDraft, setPaymentDraft] = useState({ kind: 'advance', amount: '' });
   const [status, setStatus] = useState(visit.status);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

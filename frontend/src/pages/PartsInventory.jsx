@@ -241,9 +241,15 @@ const PartsInventory = () => {
               className="hidden" 
               id="import-excel"
               disabled={importing}
+              data-testid="parts-import-input"
             />
             <label htmlFor="import-excel">
-              <Button variant="outline" asChild className="cursor-pointer bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
+              <Button
+                variant="outline"
+                asChild
+                className="cursor-pointer bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                data-testid="parts-import-button"
+              >
                 <span>
                   <FileSpreadsheet className="ml-2" size={18} />
                   {importing ? "Loading..." : "Import Excel"}
@@ -254,7 +260,11 @@ const PartsInventory = () => {
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="apple-button">
+              <Button
+                onClick={() => { resetForm(); setIsDialogOpen(true); }}
+                className="apple-button"
+                data-testid="parts-add-button"
+              >
                 <Plus className="ml-2" size={18} />
                 {"Add Part"}
               </Button>

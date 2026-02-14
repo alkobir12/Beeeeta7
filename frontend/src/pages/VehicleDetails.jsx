@@ -1589,17 +1589,20 @@ const VehicleDetails = () => {
 
       const servicesPromise = serviceAPI.getAll().catch(() => ({ data: [] }));
       const partsPromise = partAPI.getAll().catch(() => ({ data: [] }));
+      const suppliersPromise = supplierAPI.getAll().catch(() => ({ data: [] }));
 
-      const [filesRes, approvalsRes, servicesRes, partsRes] = await Promise.all([
+      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes] = await Promise.all([
         filesPromise,
         approvalsPromise,
         servicesPromise,
         partsPromise,
+        suppliersPromise,
       ]);
       
       setVehicleFiles(filesRes.files || []);
       setServicesCatalog(servicesRes.data || []);
       setPartsCatalog(partsRes.data || []);
+      setSuppliersCatalog(suppliersRes.data || []);
       
       const approvalsRows = approvalsRes?.data || [];
       const approvalsByVisit = new Map();

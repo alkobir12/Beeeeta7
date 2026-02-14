@@ -133,6 +133,7 @@ async def ocr_parts(request: PartsOcrRequest):
         currency=parsed.get("currency"),
         totals=totals,
         items=normalized_items,
+        ocr_text=ocr_text_value,
         raw_text=response_text,
         success=True,
     )

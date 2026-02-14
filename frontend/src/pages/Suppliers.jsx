@@ -51,6 +51,94 @@ const Suppliers = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      phone: '',
+      contactPerson: '',
+      email: '',
+      address: '',
+      city: '',
+      category: '',
+    });
+    setEditingSupplier(null);
+  };
+
+  const openNewSupplier = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const handleEditSupplier = (supplier) => {
+    setEditingSupplier(supplier);
+    setFormData({
+      name: supplier.name || '',
+      phone: supplier.phone || '',
+      contactPerson: supplier.contactPerson || '',
+      email: supplier.email || '',
+      address: supplier.address || '',
+      city: supplier.city || '',
+      category: supplier.category || '',
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!formData.name.trim()) {
+      toast({ title: 'تنبيه', description: 'يرجى إدخال اسم المورد', variant: 'destructive' });
+      return;
+    }
+    if (!formData.phone.trim()) {
+      toast({ title: 'تنبيه', description: 'يرجى إدخال رقم الجوال', variant: 'destructive' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        contactPerson: formData.contactPerson.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        category: formData.category.trim(),
+      };
+
+      if (editingSupplier?.id) {
+        await supplierAPI.update(editingSupplier.id, payload);
+        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المورد بنجاح' });
+      } else {
+        await supplierAPI.create(payload);
+        toast({ title: 'تم الحفظ', description: 'تم إضافة المورد بنجاح' });
+      }
+      setShowModal(false);
+      resetForm();
+      fetchSuppliers();
+    } catch (error) {
+      console.error('Error saving supplier:', error);
+      toast({ title: 'خطأ', description: 'تعذر حفظ المورد', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSupplier = async (supplier) => {
+    if (!supplier?.id) return;
+    const confirmed = window.confirm(`هل أنت متأكد من حذف المورد "${supplier.name}"؟`);
+    if (!confirmed) return;
+
+    try {
+      await supplierAPI.delete(supplier.id);
+      toast({ title: 'تم الحذف', description: 'تم حذف المورد بنجاح' });
+      fetchSuppliers();
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+      toast({ title: 'خطأ', description: 'تعذر حذف المورد', variant: 'destructive' });
+    }
+  };
+
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     supplier.phone?.includes(searchQuery) ||

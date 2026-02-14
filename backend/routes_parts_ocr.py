@@ -69,7 +69,10 @@ async def ocr_parts(request: PartsOcrRequest):
 
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, provider="openai", model="gpt-4o")
     user_message = UserMessage(text=prompt, file_contents=[ImageContent(image_base64=image_b64)])
-    response = await chat.send_message(user_message)
+    try:
+        response = await chat.send_message(user_message)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR request failed: {e}")
 
     response_text = response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)
     parsed = parse_json_response(response_text)

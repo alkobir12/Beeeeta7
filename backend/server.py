@@ -1302,6 +1302,103 @@ async def delete_part(part_id: str):
     return {"status": "success"}
 
 
+@api_router.get("/suppliers", response_model=List[Supplier])
+async def get_suppliers():
+    if DB_PROVIDER == "supabase":
+        try:
+            if supabase_service.client and not supabase_service.mock_mode:
+                res = supabase_service.client.table("suppliers").select("*").execute()
+                rows = res.data or []
+                return [Supplier(**r) for r in rows]
+        except Exception as e:
+            print(f"Supabase suppliers error: {e}")
+        return []
+
+    if DB_PROVIDER == "memory":
+        return [Supplier(**r) for r in _mem_read("suppliers")]
+
+    suppliers = await db.suppliers.find().to_list(1000)
+    return [Supplier(**s) for s in suppliers]
+
+
+@api_router.post("/suppliers", response_model=Supplier)
+async def create_supplier(supplier: SupplierCreate):
+    payload = supplier.dict()
+    payload["id"] = str(uuid.uuid4())
+    payload["createdAt"] = datetime.utcnow()
+
+    if DB_PROVIDER == "supabase":
+        try:
+            if supabase_service.client and not supabase_service.mock_mode:
+                res = supabase_service.client.table("suppliers").insert(payload).execute()
+                row = (res.data or [payload])[0]
+                return Supplier(**row)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("suppliers")
+        rows.append(payload)
+        _mem_write("suppliers", rows)
+        return Supplier(**payload)
+
+    await db.suppliers.insert_one(payload)
+    return Supplier(**payload)
+
+
+@api_router.put("/suppliers/{supplier_id}", response_model=Supplier)
+async def update_supplier(supplier_id: str, supplier: SupplierUpdate):
+    upd = {k: v for k, v in supplier.dict().items() if v is not None}
+
+    if DB_PROVIDER == "supabase":
+        try:
+            if supabase_service.client and not supabase_service.mock_mode:
+                res = supabase_service.client.table("suppliers").update(upd).eq("id", supplier_id).execute()
+                row = (res.data or [{}])[0]
+                if not row:
+                    raise HTTPException(status_code=404, detail="Supplier not found")
+                return Supplier(**row)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("suppliers")
+        for i, row in enumerate(rows):
+            if row.get("id") == supplier_id:
+                rows[i] = {**row, **upd}
+                _mem_write("suppliers", rows)
+                return Supplier(**rows[i])
+        raise HTTPException(status_code=404, detail="Supplier not found")
+
+    await db.suppliers.update_one({"id": supplier_id}, {"$set": upd})
+    row = await db.suppliers.find_one({"id": supplier_id})
+    if not row:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    return Supplier(**row)
+
+
+@api_router.delete("/suppliers/{supplier_id}")
+async def delete_supplier(supplier_id: str):
+    if DB_PROVIDER == "supabase":
+        try:
+            if supabase_service.client and not supabase_service.mock_mode:
+                supabase_service.client.table("suppliers").delete().eq("id", supplier_id).execute()
+                return {"status": "success"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("suppliers")
+        filtered = [row for row in rows if row.get("id") != supplier_id]
+        _mem_write("suppliers", filtered)
+        return {"status": "success"}
+
+    await db.suppliers.delete_one({"id": supplier_id})
+    return {"status": "success"}
+
+
 @api_router.get("/stats")
 async def get_stats():
     """Get dashboard statistics"""

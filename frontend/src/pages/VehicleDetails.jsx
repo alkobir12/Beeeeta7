@@ -43,7 +43,7 @@ import { userLayoutsAPI } from '../services/userLayoutsAPI';
 
 // --- Helper Components ---
 
-const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId }) => {
+const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId, visitId }) => {
   if (!isEditing) {
     return (
       <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
@@ -75,7 +75,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             border: '1px solid rgba(148,163,184,0.18)',
             color: 'rgba(248,250,252,0.92)',
           }}
-          data-testid={`visit-item-type-${rowId}`}
+          data-testid={`visit-item-type-${visitId}-${rowId}`}
         >
           <option value="service">خدمة</option>
           <option value="part">قطعة</option>
@@ -102,7 +102,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             color: 'rgba(248,250,252,0.92)',
           }}
           placeholder="اسم البند"
-          data-testid={`visit-item-name-${rowId}`}
+          data-testid={`visit-item-name-${visitId}-${rowId}`}
         />
         <datalist id={listId}>
           {options.map((opt) => (
@@ -122,7 +122,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             color: 'rgba(248,250,252,0.92)',
           }}
           min="1"
-          data-testid={`visit-item-quantity-${rowId}`}
+          data-testid={`visit-item-quantity-${visitId}-${rowId}`}
         />
       </td>
       <td className="p-2">
@@ -137,7 +137,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
             color: 'rgba(248,250,252,0.92)',
           }}
           min="0"
-          data-testid={`visit-item-price-${rowId}`}
+          data-testid={`visit-item-price-${visitId}-${rowId}`}
         />
       </td>
       <td className="p-2 text-right">
@@ -146,7 +146,7 @@ const VisitItemRow = ({ item, isEditing, onChange, onDelete, servicesCatalog = [
           className="p-2 rounded-lg"
           style={{ color: 'rgba(254,202,202,0.95)', background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.22)' }}
           title="حذف"
-          data-testid={`visit-item-delete-${rowId}`}
+          data-testid={`visit-item-delete-${visitId}-${rowId}`}
         >
           <Trash2 size={14} />
         </button>

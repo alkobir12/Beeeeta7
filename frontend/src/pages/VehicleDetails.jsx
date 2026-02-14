@@ -199,7 +199,11 @@ const SortableBlock = ({ id, title, children }) => {
       >
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="min-w-0">
-            <div className="text-[13px] font-extrabold truncate" style={{ color: 'rgba(248,250,252,0.95)' }}>
+            <div
+              className="text-[13px] font-extrabold truncate"
+              style={{ color: 'rgba(248,250,252,0.95)' }}
+              data-testid={`layout-block-title-${id}`}
+            >
               {title}
             </div>
           </div>

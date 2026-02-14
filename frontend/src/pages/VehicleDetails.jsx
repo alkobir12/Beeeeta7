@@ -2922,6 +2922,9 @@ const VehicleDetails = () => {
         </div>
       )}
 
+      {/* Disabled legacy duplicate layout (pre-liquid). Keeping it off permanently. */}
+      {/* (intentionally left blank) */}
+
       <WhatsAppPreviewDialog
         open={waPreviewOpen}
         onOpenChange={setWaPreviewOpen}

@@ -319,15 +319,21 @@ const PartsInventory = () => {
                     <label className="cursor-pointer apple-button-secondary flex items-center gap-2 px-4 py-2">
                       <Upload size={16} />
                       <span>{uploading ? "Loading..." : "Upload"}</span>
-                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        data-testid="part-image-input"
+                      />
                     </label>
                     {formData.image && <img src={formData.image} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-gray-200" />}
                   </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">{"Cancel"}</Button>
-                  <Button type="submit" className="flex-1 apple-button">{"Save"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" data-testid="part-dialog-cancel">{"Cancel"}</Button>
+                  <Button type="submit" className="flex-1 apple-button" data-testid="part-dialog-save">{"Save"}</Button>
                 </div>
               </form>
             </DialogContent>

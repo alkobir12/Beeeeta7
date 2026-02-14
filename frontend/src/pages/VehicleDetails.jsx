@@ -2412,64 +2412,128 @@ const VehicleDetails = () => {
       `}</style>
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 pt-4 px-4 sm:px-0">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowRight size={24} className="text-gray-600" />
-          </button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{vehicle.plateNumber}</h1>
-              <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(vehicle.status)} text-white`}>
-                {getStatusLabel(vehicle.status)}
-              </span>
+      <div
+        className="liquid-surface"
+        style={{
+          padding: 16,
+          borderRadius: 24,
+          background:
+            'radial-gradient(circle at 12% 18%, rgba(56,189,248,0.12), transparent 55%), rgba(255,255,255,0.05)',
+          border: '1px solid rgba(148,163,184,0.18)',
+        }}
+        data-testid="vehicle-header"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <button
+              onClick={() => navigate('/')}
+              className="p-2 rounded-xl transition-colors"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(226,232,240,0.85)',
+              }}
+              data-testid="vehicle-back-button"
+            >
+              <ArrowRight size={22} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1
+                  className="text-xl sm:text-3xl font-extrabold"
+                  style={{ color: 'rgba(248,250,252,0.95)' }}
+                  data-testid="vehicle-plate-header"
+                >
+                  {vehicle.plateNumber}
+                </h1>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${getStatusColor(vehicle.status)}`}
+                  style={{ color: 'white' }}
+                  data-testid="vehicle-status-badge"
+                >
+                  {getStatusLabel(vehicle.status)}
+                </span>
+              </div>
+              <p
+                className="mt-1 text-sm"
+                style={{ color: 'rgba(226,232,240,0.68)' }}
+                data-testid="vehicle-brand-model-header"
+              >
+                {vehicle.brand} {vehicle.model} - {vehicle.year}
+              </p>
             </div>
-            <p className="text-gray-500 mt-1">{vehicle.brand} {vehicle.model} - {vehicle.year}</p>
           </div>
 
-        </div>
-
-        <div className="flex gap-2">
-          <div className="relative group">
-            <button className="apple-button flex items-center gap-2">
-              <Printer size={18} />
-              <span className="hidden sm:inline">طباعة / PDF</span>
-            </button>
-            {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden hidden group-hover:block z-50">
-              <button 
-                onClick={() => {
-                  const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
-                  const vid = active?.id;
-                  navigate(`/print?type=invoice&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+          <div className="flex gap-2">
+            <div className="relative group">
+              <button
+                className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
                 }}
-                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors"
+                data-testid="vehicle-print-menu-button"
               >
-                <Receipt size={16} className="text-green-500" />
-                فاتورة مبيعات
+                <Printer size={16} />
+                <span className="hidden sm:inline">طباعة / PDF</span>
               </button>
-              <button 
-                onClick={() => {
-                  const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
-                  const vid = active?.id;
-                  navigate(`/print?type=quote&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+              {/* Dropdown Menu */}
+              <div
+                className="absolute top-full left-0 mt-2 w-48 rounded-xl shadow-xl overflow-hidden hidden group-hover:block z-50"
+                style={{
+                  background: 'rgba(15,23,42,0.92)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  backdropFilter: 'blur(16px)',
                 }}
-                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors border-t border-slate-100 dark:border-slate-700"
+                data-testid="vehicle-print-menu"
               >
-                <FileCheck size={16} className="text-blue-500" />
-                عرض سعر
-              </button>
-              <button 
-                onClick={() => {
-                  const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
-                  const vid = active?.id;
-                  navigate(`/print?type=diagnosis&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
-                }}
-                className="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 transition-colors border-t border-slate-100 dark:border-slate-700"
-              >
-                <ClipboardList size={16} className="text-orange-500" />
-                تقرير تشخيص
-              </button>
+                <button
+                  onClick={() => {
+                    const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
+                    const vid = active?.id;
+                    navigate(`/print?type=invoice&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                  }}
+                  className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
+                  style={{ color: 'rgba(226,232,240,0.9)' }}
+                  data-testid="vehicle-print-invoice"
+                >
+                  <Receipt size={16} style={{ color: 'rgba(167,243,208,0.95)' }} />
+                  فاتورة مبيعات
+                </button>
+                <button
+                  onClick={() => {
+                    const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
+                    const vid = active?.id;
+                    navigate(`/print?type=quote&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                  }}
+                  className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
+                  style={{
+                    borderTop: '1px solid rgba(148,163,184,0.12)',
+                    color: 'rgba(226,232,240,0.9)',
+                  }}
+                  data-testid="vehicle-print-quote"
+                >
+                  <FileCheck size={16} style={{ color: 'rgba(186,230,253,0.95)' }} />
+                  عرض سعر
+                </button>
+                <button
+                  onClick={() => {
+                    const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
+                    const vid = active?.id;
+                    navigate(`/print?type=diagnosis&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                  }}
+                  className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
+                  style={{
+                    borderTop: '1px solid rgba(148,163,184,0.12)',
+                    color: 'rgba(226,232,240,0.9)',
+                  }}
+                  data-testid="vehicle-print-diagnosis"
+                >
+                  <ClipboardList size={16} style={{ color: 'rgba(253,230,138,0.95)' }} />
+                  تقرير تشخيص
+                </button>
+              </div>
             </div>
           </div>
         </div>

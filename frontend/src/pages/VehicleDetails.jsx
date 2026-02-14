@@ -299,8 +299,8 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
                   <option key={opt.id || opt.name} value={opt.name} />
                 ))}
               </datalist>
-            </div>
-          )}
+        </>
+      )}
         </div>
 
         {isEditing && (

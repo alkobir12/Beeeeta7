@@ -277,39 +277,39 @@ const PartsInventory = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{"Part Number"} *</Label>
-                    <Input required value={formData.partNumber} onChange={e => setFormData({...formData, partNumber: e.target.value})} />
+                    <Input required value={formData.partNumber} onChange={e => setFormData({...formData, partNumber: e.target.value})} data-testid="part-number-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Part Name"} *</Label>
-                    <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} data-testid="part-name-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Category"} *</Label>
-                    <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
+                    <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} data-testid="part-category-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Supplier"}</Label>
-                    <Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="A-12" />
+                    <Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="A-12" data-testid="part-location-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Quantity"} *</Label>
-                    <Input required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} />
+                    <Input required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} data-testid="part-quantity-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Min Quantity"}</Label>
-                    <Input type="number" value={formData.minQuantity} onChange={e => setFormData({...formData, minQuantity: e.target.value})} />
+                    <Input type="number" value={formData.minQuantity} onChange={e => setFormData({...formData, minQuantity: e.target.value})} data-testid="part-min-quantity-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Purchase Price"} *</Label>
-                    <Input required type="number" value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: e.target.value})} />
+                    <Input required type="number" value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: e.target.value})} data-testid="part-purchase-price-input" />
                   </div>
                   <div className="space-y-2">
                     <Label>{"Selling Price"} *</Label>
-                    <Input required type="number" value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: e.target.value})} />
+                    <Input required type="number" value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: e.target.value})} data-testid="part-selling-price-input" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <Label>{"Supplier"}</Label>
-                    <Input value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} />
+                    <Input value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} data-testid="part-supplier-input" />
                   </div>
                 </div>
 

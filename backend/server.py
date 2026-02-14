@@ -28,6 +28,9 @@ from models import (
     Part,
     PartCreate,
     PartUpdate,
+    Supplier,
+    SupplierCreate,
+    SupplierUpdate,
     ChatRequest,
     ChatResponse,
 )

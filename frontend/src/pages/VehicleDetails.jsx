@@ -737,8 +737,8 @@ const VisitCard = ({
     setPaymentDraft({ kind: paymentDraft.kind || 'advance', amount: '' });
   };
 
-  const removePayment = (paymentId) => {
-    setPayments(payments.filter((p) => p.id !== paymentId));
+  const removePayment = (paymentId, index) => {
+    setPayments(payments.filter((p, i) => (paymentId ? p.id !== paymentId : i !== index)));
   };
 
   const paymentsTotal = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);

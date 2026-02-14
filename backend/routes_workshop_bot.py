@@ -4,9 +4,12 @@ Engines: 1KD / 2KD / 1GD / 1VD-FTV / FJA300 (LC300)
 Modes: client / tech / admin
 """
 
-from fastapi import APIRouter
+import os
+import asyncio
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+import httpx
 
 router = APIRouter(prefix="/api/workshop-bot")
 

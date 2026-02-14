@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Plus, RefreshCw, User, Phone, Mail, MapPin, Edit2, Trash2 } from 'lucide-react';
+import { Package, Search, Plus, RefreshCw, User, Phone, Mail, MapPin, Edit2, Trash2, X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../hooks/use-toast';
+import { supplierAPI } from '../services/api';
 
 const Suppliers = () => {
   const { themeName } = useTheme();

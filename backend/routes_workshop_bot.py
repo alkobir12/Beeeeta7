@@ -330,9 +330,38 @@ async def run_blackbox_task(prompt: str, agents: List[Dict[str, str]]) -> Dict[s
 
 # Endpoints
 @router.post("/respond", response_model=BotResponse)
-def respond(req: BotRequest):
-    text = normalize(req.message)
+async def respond(req: BotRequest):
+    model_id = (req.model or "kb").strip().lower()
     engine = normalize_engine(req.engine)
+
+    if model_id != "kb":
+        agents = get_blackbox_agents(model_id)
+        if not agents:
+            raise HTTPException(status_code=400, detail="Unknown model")
+        prompt = build_blackbox_prompt(req, engine)
+        status_data = await run_blackbox_task(prompt, agents)
+        agent_execs = (status_data.get("task") or status_data).get("agentExecutions") or []
+
+        responses = []
+        for exec in agent_execs:
+            text = extract_agent_text(exec)
+            if text:
+                label = exec.get("model") or exec.get("agent") or "model"
+                responses.append({"label": label, "text": text})
+
+        if model_id == "multi" and responses:
+            reply = "\n\n".join([f"— {r['label']}:\n{r['text']}" for r in responses])
+        else:
+            reply = responses[0]["text"] if responses else "لم نحصل على رد واضح. حاول مرة أخرى."
+
+        return BotResponse(
+            status="ok",
+            reply=reply,
+            model_used=model_id,
+            agent_results=agent_execs,
+        )
+
+    text = normalize(req.message)
     rule = choose_rule(text, engine)
 
     if not rule:
@@ -341,9 +370,9 @@ def respond(req: BotRequest):
             reply="خلنا نكمّل الصورة شوي. 🤔",
             next_question=ask_question(),
             confidence=0,
+            model_used="kb",
         )
 
-    # Calculate confidence
     confidence = min(95, 50 + len([t for t in rule["triggers"] if t in text]) * 15)
 
     if req.mode == "tech":
@@ -355,6 +384,7 @@ def respond(req: BotRequest):
             reply=f"🔧 تشخيص فني:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n**خطوات الفحص:**\n{steps_text}",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
+            model_used="kb",
         )
 
     if req.mode == "admin":
@@ -365,9 +395,9 @@ def respond(req: BotRequest):
             reply=f"📊 ملخص إداري:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n💡 نقترح فحص مبدئي قبل أي اعتماد للعميل.",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
+            model_used="kb",
         )
 
-    # Client mode (default)
     top_cause = rule["causes"][0][0] if rule["causes"] else "غير محدد"
 
     return BotResponse(
@@ -375,6 +405,7 @@ def respond(req: BotRequest):
         reply=f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍",
         probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"][:3]],
         confidence=confidence,
+        model_used="kb",
     )
 
 

@@ -256,13 +256,27 @@ const SortableBlock = ({ id, title, children }) => {
   );
 };
 
-const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = [], partsCatalog = [], rowId, visitId }) => {
-  const options = item.itemType === 'part' ? partsCatalog : servicesCatalog;
+const VisitItemCard = ({
+  item,
+  isEditing,
+  onChange,
+  onDelete,
+  servicesCatalog = [],
+  partsCatalog = [],
+  suppliersCatalog = [],
+  rowId,
+  visitId,
+}) => {
+  const options = item.itemType === 'part'
+    ? partsCatalog
+    : item.itemType === 'supplier'
+    ? suppliersCatalog
+    : servicesCatalog;
   const listId = `${item.itemType}-list-card-${rowId}`;
   const amount = Number(item.quantity || 0) * Number(item.price || 0);
 
-  const typeLabel = item.itemType === 'part' ? 'قطعة' : 'خدمة';
-  const typeAccent = item.itemType === 'part' ? 'rose' : 'violet';
+  const typeLabel = item.itemType === 'part' ? 'قطعة' : item.itemType === 'supplier' ? 'مورد' : 'خدمة';
+  const typeAccent = item.itemType === 'part' ? 'rose' : item.itemType === 'supplier' ? 'amber' : 'violet';
   const typeStyle =
     typeAccent === 'rose'
       ? {
@@ -270,11 +284,27 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
           border: '1px solid rgba(244,63,94,0.22)',
           color: 'rgba(254,202,202,0.95)',
         }
+      : typeAccent === 'amber'
+      ? {
+          background: 'rgba(245,158,11,0.12)',
+          border: '1px solid rgba(245,158,11,0.24)',
+          color: 'rgba(254,243,199,0.95)',
+        }
       : {
           background: 'rgba(168,85,247,0.10)',
           border: '1px solid rgba(168,85,247,0.22)',
           color: 'rgba(233,213,255,0.95)',
         };
+
+  const handleNameChange = (value) => {
+    onChange('name', value);
+    if (item.itemType === 'supplier') return;
+    const match = options.find((opt) => (opt.name || '').trim() === value.trim());
+    if (match) {
+      const price = match.price ?? match.sellingPrice ?? match.selling_price ?? match.purchasePrice ?? 0;
+      onChange('price', Number(price) || 0);
+    }
+  };
 
   return (
     <div
@@ -315,35 +345,51 @@ const VisitItemCard = ({ item, isEditing, onChange, onDelete, servicesCatalog = 
               >
                 <option value="service">خدمة</option>
                 <option value="part">قطعة</option>
+                <option value="supplier">مورد</option>
               </select>
 
-              <input
-                type="text"
-                list={listId}
-                value={item.name}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  onChange('name', value);
-                  const match = options.find((opt) => (opt.name || '').trim() === value.trim());
-                  if (match) {
-                    const price = match.price ?? match.sellingPrice ?? match.selling_price ?? 0;
-                    onChange('price', Number(price) || 0);
-                  }
-                }}
-                className="w-full text-sm rounded-lg p-2"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(148,163,184,0.18)',
-                  color: 'rgba(248,250,252,0.92)',
-                }}
-                placeholder="اسم البند"
-                data-testid={`visit-item-name-card-${visitId}-${rowId}`}
-              />
-              <datalist id={listId}>
-                {options.map((opt) => (
-                  <option key={opt.id || opt.name} value={opt.name} />
-                ))}
-              </datalist>
+              {item.itemType === 'supplier' ? (
+                <select
+                  value={item.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  className="w-full text-sm rounded-lg p-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  data-testid={`visit-item-name-card-${visitId}-${rowId}`}
+                >
+                  <option value="">اختر المورد</option>
+                  {suppliersCatalog.map((supplier) => (
+                    <option key={supplier.id || supplier.name} value={supplier.name}>
+                      {supplier.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    list={listId}
+                    value={item.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    className="w-full text-sm rounded-lg p-2"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    placeholder={item.itemType === 'part' ? 'اسم القطعة' : 'اسم الخدمة'}
+                    data-testid={`visit-item-name-card-${visitId}-${rowId}`}
+                  />
+                  <datalist id={listId}>
+                    {options.map((opt) => (
+                      <option key={opt.id || opt.name} value={opt.name} />
+                    ))}
+                  </datalist>
+                </>
+              )}
             </div>
           )}
         </div>

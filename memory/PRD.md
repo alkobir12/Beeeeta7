@@ -152,3 +152,4 @@
 | 14 Feb 2026 | Vehicle Details Liquid System UI unification + unique test IDs |
 | 14 Feb 2026 | Supplier item type + suppliers add/edit modal + suppliers CRUD API |
 | 14 Feb 2026 | Visit payments section (advance/under account) added |
+| 14 Feb 2026 | Workshop bot multi-model (Blackbox) integration |

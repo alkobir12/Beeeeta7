@@ -2655,16 +2655,6 @@ const VehicleDetails = () => {
         </div>
       )}
 
-      <div className="px-4 sm:px-0 hidden" data-testid="vehicle-guidance-stepper">
-        <GuidanceStepper
-          title="إرشادات ملف المركبة"
-          subtitle="خطوات سريعة لتجنب التكرار والأخطاء الإملائية والمالية."
-          steps={guidanceSteps}
-          enabled={guidanceEnabled}
-          storageKey={`guidance-vehicle-${session?.id || session?.name || 'default'}`}
-        />
-      </div>
-
 
       {/* Modals */}
       {scannerOpen && (

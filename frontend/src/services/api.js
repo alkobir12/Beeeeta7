@@ -187,6 +187,7 @@ export default {
   service: serviceAPI, 
   ai: aiAPI, 
   part: partAPI, 
+  supplier: supplierAPI,
   file: fileAPI, 
   stats: statsAPI, 
   transaction: transactionAPI 

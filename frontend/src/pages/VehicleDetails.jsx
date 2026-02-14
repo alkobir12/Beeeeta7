@@ -590,11 +590,18 @@ const VisitCard = ({
     setIsSaving(true);
     try {
       await persistCatalogEntries();
+      const itemsForSave = items.map((item) => ({
+        ...item,
+        billingType:
+          item.itemType === 'supplier' || item.itemType === 'part'
+            ? 'supplier'
+            : 'workshop',
+      }));
       const payload = {
         status,
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items }),
+        notes: JSON.stringify({ text: notes, items: itemsForSave }),
       };
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
@@ -631,12 +638,19 @@ const VisitCard = ({
     setIsSaving(true);
     try {
       await persistCatalogEntries();
+      const itemsForSave = items.map((item) => ({
+        ...item,
+        billingType:
+          item.itemType === 'supplier' || item.itemType === 'part'
+            ? 'supplier'
+            : 'workshop',
+      }));
       const payload = {
         status: 'completed',
         exitDate: new Date().toISOString(),
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items }),
+        notes: JSON.stringify({ text: notes, items: itemsForSave }),
       };
       const response = await axios.put(`${API_URL}/visits/${visit.id}`, payload);
       const whatsappUrl = response.data?.whatsappNotificationUrl;

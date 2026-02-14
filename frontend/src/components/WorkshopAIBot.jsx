@@ -9,11 +9,14 @@ const WorkshopAIBot = () => {
   const [message, setMessage] = useState('');
   const [engine, setEngine] = useState('');
   const [engines, setEngines] = useState([]);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState('multi');
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadEngines();
+    loadModels();
     addSystemMessage('مرحباً! أنا مساعدك الذكي للورشة. وش المشكلة في السيارة؟ 🚗');
   }, []);
 
@@ -23,6 +26,20 @@ const WorkshopAIBot = () => {
       setEngines(data.engines || []);
     } catch (error) {
       console.error('Error loading engines:', error);
+    }
+  };
+
+  const loadModels = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/workshop-bot/models`);
+      const list = data.models || [];
+      setModels(list);
+      if (list.length > 0) {
+        const multi = list.find((m) => m.id === 'multi');
+        setSelectedModel(multi ? multi.id : list[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading models:', error);
     }
   };
 

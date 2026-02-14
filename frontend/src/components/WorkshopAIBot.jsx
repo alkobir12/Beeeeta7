@@ -282,18 +282,21 @@ const WorkshopAIBot = () => {
             <button
               onClick={() => setMessage('السيارة تنتع وما تشد')}
               className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+              data-testid="workshop-bot-example-1"
             >
               السيارة تنتع وما تشد
             </button>
             <button
               onClick={() => setMessage('فيه صفير من المحرك')}
               className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+              data-testid="workshop-bot-example-2"
             >
               فيه صفير من المحرك
             </button>
             <button
               onClick={() => setMessage('المحرك يحمو')}
               className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-[#E8E8ED] rounded-full text-[12px] text-[#1D1D1F] transition-all"
+              data-testid="workshop-bot-example-3"
             >
               المحرك يحمو
             </button>

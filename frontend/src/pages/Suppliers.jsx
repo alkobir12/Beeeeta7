@@ -7,10 +7,23 @@ import { supplierAPI } from '../services/api';
 const Suppliers = () => {
   const { themeName } = useTheme();
   const isLight = themeName === 'light' || themeName === 'dashPro';
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedSupplierId, setExpandedSupplierId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    contactPerson: '',
+    email: '',
+    address: '',
+    city: '',
+    category: '',
+  });
 
   const styles = {
     bg: isLight ? '#f5f7fb' : '#0b1120',

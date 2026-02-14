@@ -415,18 +415,28 @@ const PartsInventory = () => {
                     <th className="p-2 text-right">الكمية</th>
                     <th className="p-2 text-right">سعر الوحدة</th>
                     <th className="p-2 text-right">الإجمالي</th>
+                    <th className="p-2 text-right">الثقة</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(ocrResult.items || []).map((item, idx) => (
-                    <tr key={`${item.part_number}-${idx}`} className="border-b" data-testid={`parts-ocr-item-${idx}`}>
-                      <td className="p-2">{item.part_number || '—'}</td>
-                      <td className="p-2">{item.description || '—'}</td>
-                      <td className="p-2">{item.quantity || 1}</td>
-                      <td className="p-2">{item.unit_price || '—'}</td>
-                      <td className="p-2">{item.total || '—'}</td>
-                    </tr>
-                  ))}
+                  {(ocrResult.items || []).map((item, idx) => {
+                    const confidence = typeof item.confidence === 'number' ? item.confidence : null;
+                    const isLow = confidence !== null && confidence < 0.6;
+                    return (
+                      <tr
+                        key={`${item.part_number}-${idx}`}
+                        className={`border-b ${isLow ? 'bg-red-50' : ''}`}
+                        data-testid={`parts-ocr-item-${idx}`}
+                      >
+                        <td className="p-2">{item.part_number || '—'}</td>
+                        <td className="p-2">{item.description || '—'}</td>
+                        <td className="p-2">{item.quantity || 1}</td>
+                        <td className="p-2">{item.unit_price || '—'}</td>
+                        <td className="p-2">{item.total || '—'}</td>
+                        <td className="p-2">{confidence !== null ? `${Math.round(confidence * 100)}%` : '—'}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

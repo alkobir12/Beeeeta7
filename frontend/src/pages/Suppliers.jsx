@@ -147,7 +147,7 @@ const Suppliers = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
+      <div className="flex items-center justify-center h-[50vh]" data-testid="suppliers-loading">
         <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );

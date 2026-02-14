@@ -261,11 +261,13 @@ const WorkshopAIBot = () => {
               onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
               disabled={loading}
               className="flex-1 px-4 py-3 bg-[#F5F5F7] border-0 rounded-[12px] text-[15px] text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-all disabled:opacity-50"
+              data-testid="workshop-bot-message-input"
             />
             <button
               onClick={sendMessage}
               disabled={loading || !message.trim()}
               className="px-6 py-3 bg-[#007AFF] hover:bg-[#0051D5] text-white rounded-[12px] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              data-testid="workshop-bot-send-button"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

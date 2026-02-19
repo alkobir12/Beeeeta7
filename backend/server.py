@@ -1647,7 +1647,8 @@ async def financial_analysis(request: FinancialAnalysisRequest):
         - إجمالي الالتزامات: {request.financial_data.get('liabilities', 0):,.0f} ريال
         - حقوق الملكية: {request.financial_data.get('equity', 0):,.0f} ريال
         
-        أجب باللغة العربية واستخدم تنسيق Markdown مع عناوين وقوائم نقطية.
+        التزم برد مختصر جداً: سطر ملخص + 3 نقاط ملاحظات + توصيتين فقط.
+        أجب باللغة العربية بتنسيق Markdown خفيف.
         """
 
         response = client.chat.completions.create(
@@ -1656,8 +1657,8 @@ async def financial_analysis(request: FinancialAnalysisRequest):
                 {"role": "system", "content": context},
                 {"role": "user", "content": request.query},
             ],
-            temperature=0.7,
-            max_tokens=1500,
+            temperature=0.4,
+            max_tokens=400,
         )
 
         return {"analysis": response.choices[0].message.content}

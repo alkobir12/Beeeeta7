@@ -186,3 +186,4 @@
 | 14 Feb 2026 | AI Financial page cards redesign + shorter Abu Fahad analysis |
 | 14 Feb 2026 | Audit blocks expanded + account lookup fix (business_accounts fallback) |
 | 14 Feb 2026 | Finance bot context enrichment + expandable audit cards |
+| 14 Feb 2026 | Default Accounts Receivable (1103) seeded in chart response |

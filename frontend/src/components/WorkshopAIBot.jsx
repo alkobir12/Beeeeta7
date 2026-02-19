@@ -137,6 +137,10 @@ const WorkshopAIBot = () => {
 
   const getModelLabel = (modelId) => models.find((m) => m.id === modelId)?.label || modelId || '';
 
+  const promptPreview = developerMode
+    ? `${developerPrompt}\n\nUSER REQUEST:\n${message || ''}`
+    : '';
+
   const addSystemMessage = (text) => {
     setConversation(prev => [...prev, {
       type: 'bot',

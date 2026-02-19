@@ -346,7 +346,7 @@ export default function AIFinancial() {
       const payload = {
         message:
           `${summaryParts.join('\n\n')}\n\n` +
-          'حلّل تقرير التدقيق أعلاه، واذكر الأخطاء المحاسبية المحتملة، مستوى خطورتها، وخطوات عملية للتصحيح.',
+          'حلّل تقرير التدقيق أعلاه بإيجاز شديد: سطر ملخص، ثم 3 نقاط مخاطر، ثم توصيتين كحد أقصى.',
         workshop_id: workshopId,
       };
 

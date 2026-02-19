@@ -331,7 +331,11 @@ async def run_openai_chat(req: BotRequest, engine: Optional[str], session_id: st
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=system_prompt)
     chat = chat.with_model("openai", "gpt-5.1")
     chat.extra_params = {"temperature": 0.2}
-    response = await chat.send_message(UserMessage(text=req.message))
+    try:
+        response = await chat.send_message(UserMessage(text=req.message))
+    except Exception as e:
+        print(f"GPT-5.1 error: {e}")
+        raise HTTPException(status_code=500, detail=f"GPT-5.1 error: {e}")
     return response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)
 
 

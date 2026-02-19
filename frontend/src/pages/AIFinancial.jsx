@@ -659,24 +659,26 @@ export default function AIFinancial() {
         </div>
       </div>
 
-      {/* Quick Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <QuickCard title="إجمالي الإيرادات" value={formatCurrency(summary.revenue)} icon={DollarSign} variant="default" />
-        <QuickCard
-          title="صافي الربح"
-          value={formatCurrency(summary.netProfit)}
-          subtitle={`هامش ${summary.profitMargin.toFixed(1)}%`}
-          icon={summary.netProfit >= 0 ? TrendingUp : TrendingDown}
-          variant={getProfitVariant()}
-        />
-        <QuickCard title="إجمالي المصروفات" value={formatCurrency(summary.expenses)} icon={Receipt} variant="warning" />
-        <QuickCard
-          title="ميزان المراجعة"
-          value={trialBalance.accounts?.length ? `${trialBalance.accounts.length} حساب` : 'بدون بيانات'}
-          subtitle={trialBalance.totals ? `مدين ${formatCurrency(trialBalance.totals.total_debit)} | دائن ${formatCurrency(trialBalance.totals.total_credit)}` : ''}
-          icon={Scale}
-          variant={trialBalance.accounts?.length ? 'success' : 'warning'}
-        />
+        {summaryCards.map((card, idx) => (
+          <FinancialCard
+            key={idx}
+            title={card.title}
+            subtitle={card.subtitle}
+            icon={card.icon}
+            variant={card.variant}
+            expandable
+            details={card.details}
+          >
+            <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              {card.value}
+            </div>
+            <div className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+              اضغط لعرض التفاصيل
+            </div>
+          </FinancialCard>
+        ))}
       </div>
 
       {/* Alerts */}

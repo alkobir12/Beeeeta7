@@ -282,6 +282,41 @@ const WorkshopAIBot = () => {
             ))}
           </select>
         </div>
+
+        <div className="mt-4 rounded-[16px] bg-[#F5F5F7] p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[14px] font-semibold text-[#1D1D1F]">وضع المطوّر</div>
+              <div className="text-[12px] text-[#6E6E73]">اكتب البرومبت الأساسي وسيتم دمجه مع طلب المستخدم</div>
+            </div>
+            <label className="flex items-center gap-2 text-[12px] text-[#1D1D1F]">
+              <input
+                type="checkbox"
+                checked={developerMode}
+                onChange={(e) => setDeveloperMode(e.target.checked)}
+                data-testid="workshop-bot-developer-toggle"
+              />
+              تفعيل
+            </label>
+          </div>
+
+          {developerMode && (
+            <div className="mt-3 space-y-3">
+              <textarea
+                value={developerPrompt}
+                onChange={(e) => setDeveloperPrompt(e.target.value)}
+                className="w-full min-h-[160px] rounded-[12px] p-3 text-[12px] text-[#1D1D1F] border border-[#E5E5EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                data-testid="workshop-bot-developer-prompt"
+              />
+              <textarea
+                value={promptPreview}
+                readOnly
+                className="w-full min-h-[140px] rounded-[12px] p-3 text-[12px] text-[#1D1D1F] border border-[#E5E5EA] bg-[#FAFAFA]"
+                data-testid="workshop-bot-prompt-preview"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chat Area */}

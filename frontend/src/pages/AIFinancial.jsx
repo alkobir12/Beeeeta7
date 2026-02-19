@@ -741,8 +741,13 @@ export default function AIFinancial() {
             subtitle={vehicleLoading ? 'جاري التحميل...' : vehicle ? `${vehicle.plateNumber || '-'} | ${vehicle.brand || ''} ${vehicle.model || ''}` : 'تعذر جلب بيانات المركبة'}
             icon={Car}
             variant={vehicle ? 'default' : 'warning'}
-            expandable={false}
-            details={vehicle ? [{ label: 'معرّف المركبة', value: vehicleId }] : []}
+            expandable
+            details={vehicle ? [
+              { label: 'معرّف المركبة', value: vehicleId },
+              { label: 'الحالة', value: getStatusLabel(vehicle.status) },
+              { label: 'الدخول', value: vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString('ar-SA') : '—' },
+              { label: 'الخروج', value: vehicle.exitDate ? new Date(vehicle.exitDate).toLocaleDateString('ar-SA') : '—' },
+            ] : []}
           />
         </div>
       ) : null}

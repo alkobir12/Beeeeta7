@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import httpx
 from motor.motor_asyncio import AsyncIOMotorClient
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 router = APIRouter(prefix="/api/workshop-bot")
 

@@ -127,24 +127,28 @@ async def _build_account_context(workshop_id: str, account_code: str) -> str:
 
     try:
         # جلب بيانات الحساب من دليل الحسابات
-        coa_res = (
-            supabase.table("chart_of_accounts")
-            .select("id, code, name_ar, name, type, balance")
-            .eq("workshop_id", workshop_id)
-            .eq("code", account_code)
-            .execute()
-        )
-        account = (coa_res.data or [None])[0]
-
-        if not account:
-            coa_res = (
-                supabase.table("chart_of_accounts")
+        def lookup_account(table_name: str, field: str):
+            return (
+                supabase.table(table_name)
                 .select("id, code, name_ar, name, type, balance")
                 .eq("workshop_id", workshop_id)
-                .eq("id", account_code)
+                .eq(field, account_code)
                 .execute()
             )
-            account = (coa_res.data or [None])[0]
+
+        account = None
+        for table_name in ["chart_of_accounts", "business_accounts"]:
+            try:
+                coa_res = lookup_account(table_name, "code")
+                account = (coa_res.data or [None])[0]
+                if not account:
+                    coa_res = lookup_account(table_name, "id")
+                    account = (coa_res.data or [None])[0]
+                if account:
+                    break
+            except Exception as e:
+                print(f"Account lookup error ({table_name}): {e}")
+                continue
 
         # جلب إجمالي المدين والدائن من قيود اليومية لهذا الحساب
         je_res = (

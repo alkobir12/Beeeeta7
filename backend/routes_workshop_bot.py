@@ -518,6 +518,7 @@ def get_engines():
 def get_models():
     models = [
         {"id": "kb", "label": "قاعدة الورشة", "type": "rule"},
+        {"id": "gpt-5.1", "label": "GPT-5.1", "type": "openai"},
         {"id": "multi", "label": "متعدد النماذج", "type": "multi"},
     ]
     for key, config in BLACKBOX_MODEL_REGISTRY.items():

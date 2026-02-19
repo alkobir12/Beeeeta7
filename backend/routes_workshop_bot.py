@@ -269,13 +269,16 @@ def ask_question():
 async def store_bot_message(session_id: str, role: str, content: str, model: str):
     if not bot_db or not session_id:
         return
-    await bot_db.bot_messages.insert_one({
-        "session_id": session_id,
-        "role": role,
-        "content": content,
-        "model": model,
-        "created_at": datetime.utcnow(),
-    })
+    try:
+        await bot_db.bot_messages.insert_one({
+            "session_id": session_id,
+            "role": role,
+            "content": content,
+            "model": model,
+            "created_at": datetime.utcnow(),
+        })
+    except Exception as e:
+        print(f"Bot message store failed: {e}")
 
 
 def ensure_blackbox_config():

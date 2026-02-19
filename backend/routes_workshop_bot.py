@@ -323,6 +323,17 @@ def extract_agent_text(execution: Dict[str, Any]) -> str:
     return ""
 
 
+async def run_openai_chat(req: BotRequest, engine: Optional[str], session_id: str) -> str:
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY is missing")
+    system_prompt = req.developer_prompt if req.developer_mode and req.developer_prompt else build_workshop_system_prompt(req, engine)
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=system_prompt)
+    chat = chat.with_model("openai", "gpt-5.1")
+    chat.extra_params = {"temperature": 0.2}
+    response = await chat.send_message(UserMessage(text=req.message))
+    return response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)
+
+
 async def run_blackbox_task(prompt: str, agents: List[Dict[str, str]]) -> Dict[str, Any]:
     ensure_blackbox_config()
     headers = {

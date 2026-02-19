@@ -168,6 +168,7 @@ BLACKBOX_API_URL = os.environ.get("BLACKBOX_API_URL")
 BLACKBOX_API_KEY = os.environ.get("BLACKBOX_API_KEY")
 BLACKBOX_REPO_URL = os.environ.get("BLACKBOX_REPO_URL")
 BLACKBOX_BRANCH = os.environ.get("BLACKBOX_BRANCH")
+EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
 
 MONGO_URL = os.environ.get("MONGO_URL")
 DB_NAME = os.environ.get("DB_NAME")

@@ -393,7 +393,15 @@ async def respond(req: BotRequest):
     session_id = req.session_id or str(uuid.uuid4())
 
     if model_id == "gpt-5.1":
-        reply = await run_openai_chat(req, engine, session_id)
+        try:
+            reply = await run_openai_chat(req, engine, session_id)
+        except HTTPException as exc:
+            return BotResponse(
+                status="error",
+                reply=f"تعذر تشغيل GPT‑5.1 الآن. {exc.detail}",
+                model_used=model_id,
+                session_id=session_id,
+            )
         await store_bot_message(session_id, "user", req.message, model_id)
         await store_bot_message(session_id, "assistant", reply, model_id)
         return BotResponse(

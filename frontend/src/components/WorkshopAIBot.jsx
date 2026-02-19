@@ -181,6 +181,7 @@ const WorkshopAIBot = () => {
         model: selectedModel,
         developer_mode: developerMode,
         developer_prompt: developerMode ? developerPrompt : undefined,
+        session_id: sessionId || undefined,
       });
 
       // Add bot response

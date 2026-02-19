@@ -268,6 +268,8 @@ def ensure_blackbox_config():
 
 
 def build_blackbox_prompt(req: BotRequest, engine: Optional[str]) -> str:
+    if req.developer_mode and req.developer_prompt:
+        return f"{req.developer_prompt}\n\nUSER REQUEST:\n{req.message}"
     return (
         "أنت مساعد ورشة سيارات ثنائي اللغة (عربي ثم إنجليزي).\n"
         "قدّم إجابة عملية مختصرة مع خطوات فحص مقترحة ونصيحة أمان إن لزم.\n"

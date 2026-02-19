@@ -101,6 +101,19 @@ def abu_fahad_safe_analysis(financial_data: Dict[str, Any]) -> Dict[str, List[st
     return {"notes": notes}
 
 
+def build_financial_context(financial_data: Optional[Dict[str, Any]]) -> str:
+    if not financial_data:
+        return ""
+    return (
+        "ملخص مالي مختصر:\n"
+        f"- الإيرادات: {financial_data.get('revenue', 0)}\n"
+        f"- المصروفات: {financial_data.get('expenses', 0)}\n"
+        f"- صافي الربح: {financial_data.get('netProfit', financial_data.get('net_profit', 0))}\n"
+        f"- هامش الربح: {financial_data.get('profitMargin', financial_data.get('net_margin', 0))}%\n"
+        f"- السيولة الحالية: {financial_data.get('current_ratio', '—')}\n"
+    )
+
+
 def _get_llm_chat(conversation_id: Optional[str]) -> LlmChat:
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:

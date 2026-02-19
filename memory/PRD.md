@@ -167,3 +167,4 @@
 | 14 Feb 2026 | Deployment fix: CORS_ORIGINS set to * for production domain |
 | 14 Feb 2026 | Suppliers migration endpoint for Supabase |
 | 14 Feb 2026 | Parts OCR (OpenAI Vision) integration + UI |
+| 14 Feb 2026 | Molt bot developer mode prompt builder |

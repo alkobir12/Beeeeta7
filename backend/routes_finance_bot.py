@@ -191,17 +191,19 @@ async def _build_account_context(workshop_id: str, account_code: str) -> str:
         if not account and entries_count == 0:
             return f"لا توجد بيانات محاسبية متاحة للحساب {account_code}."
 
+        account_name = (
+            account.get("name_ar") or account.get("name") if account else f"الحساب {account_code}"
+        )
+        account_type = account.get("type") if account else "غير محدد"
+
         parts = [
             f"ملخص الحساب المحاسبي {account_code}:",
         ]
 
-        if account:
-            parts.append(
-                f"- الاسم: {account.get('name_ar') or account.get('name') or 'غير معروف'}"
-            )
-            parts.append(f"- النوع: {account.get('type') or 'غير محدد'}")
-            if account.get("balance") is not None:
-                parts.append(f"- الرصيد المسجّل: {account.get('balance')}")
+        parts.append(f"- الاسم: {account_name or 'غير معروف'}")
+        parts.append(f"- النوع: {account_type or 'غير محدد'}")
+        if account and account.get("balance") is not None:
+            parts.append(f"- الرصيد المسجّل: {account.get('balance')}")
 
         parts.append(
             f"- إجمالي المدين من القيود: {total_debit:.2f} | إجمالي الدائن: {total_credit:.2f} | عدد الحركات: {entries_count}"

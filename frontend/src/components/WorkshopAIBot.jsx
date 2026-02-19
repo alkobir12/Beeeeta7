@@ -101,6 +101,8 @@ const WorkshopAIBot = () => {
   const [engines, setEngines] = useState([]);
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('multi');
+  const [developerMode, setDeveloperMode] = useState(false);
+  const [developerPrompt, setDeveloperPrompt] = useState(DEFAULT_DEV_PROMPT);
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
 

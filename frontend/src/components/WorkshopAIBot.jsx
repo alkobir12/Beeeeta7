@@ -184,6 +184,11 @@ const WorkshopAIBot = () => {
         session_id: sessionId || undefined,
       });
 
+      if (data.session_id && data.session_id !== sessionId) {
+        setSessionId(data.session_id);
+        localStorage.setItem('workshop-bot-session', data.session_id);
+      }
+
       // Add bot response
       setConversation(prev => [...prev, {
         type: 'bot',

@@ -214,6 +214,8 @@ class BotRequest(BaseModel):
     smoke: Optional[str] = None
     engine: Optional[str] = None
     model: Optional[str] = "kb"
+    developer_mode: Optional[bool] = False
+    developer_prompt: Optional[str] = None
 
 
 class BotResponse(BaseModel):

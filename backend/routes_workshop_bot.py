@@ -457,12 +457,13 @@ async def respond(req: BotRequest):
     if req.mode == "tech":
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
         steps_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(rule["steps"])])
+        reply_text = f"🔧 تشخيص فني:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n**خطوات الفحص:**\n{steps_text}"
 
         await store_bot_message(session_id, "user", req.message, model_id)
-        await store_bot_message(session_id, "assistant", "🔧 تشخيص فني", model_id)
+        await store_bot_message(session_id, "assistant", reply_text, model_id)
         return BotResponse(
             status="ok",
-            reply=f"🔧 تشخيص فني:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n**خطوات الفحص:**\n{steps_text}",
+            reply=reply_text,
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
             model_used="kb",
@@ -471,12 +472,13 @@ async def respond(req: BotRequest):
 
     if req.mode == "admin":
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
+        reply_text = f"📊 ملخص إداري:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n💡 نقترح فحص مبدئي قبل أي اعتماد للعميل."
 
         await store_bot_message(session_id, "user", req.message, model_id)
-        await store_bot_message(session_id, "assistant", "📊 ملخص إداري", model_id)
+        await store_bot_message(session_id, "assistant", reply_text, model_id)
         return BotResponse(
             status="ok",
-            reply=f"📊 ملخص إداري:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n💡 نقترح فحص مبدئي قبل أي اعتماد للعميل.",
+            reply=reply_text,
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
             model_used="kb",
@@ -485,11 +487,12 @@ async def respond(req: BotRequest):
 
     top_cause = rule["causes"][0][0] if rule["causes"] else "غير محدد"
 
+    reply_text = f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍"
     await store_bot_message(session_id, "user", req.message, model_id)
-    await store_bot_message(session_id, "assistant", f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍", model_id)
+    await store_bot_message(session_id, "assistant", reply_text, model_id)
     return BotResponse(
         status="ok",
-        reply=f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍",
+        reply=reply_text,
         probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"][:3]],
         confidence=confidence,
         model_used="kb",

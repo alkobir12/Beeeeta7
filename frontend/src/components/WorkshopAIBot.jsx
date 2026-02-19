@@ -103,6 +103,7 @@ const WorkshopAIBot = () => {
   const [selectedModel, setSelectedModel] = useState('multi');
   const [developerMode, setDeveloperMode] = useState(false);
   const [developerPrompt, setDeveloperPrompt] = useState(DEFAULT_DEV_PROMPT);
+  const [sessionId, setSessionId] = useState('');
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -110,6 +111,13 @@ const WorkshopAIBot = () => {
     loadEngines();
     loadModels();
     addSystemMessage('مرحباً! أنا مساعدك الذكي للورشة. وش المشكلة في السيارة؟ 🚗');
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('workshop-bot-session');
+    const id = stored || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    if (!stored) localStorage.setItem('workshop-bot-session', id);
+    setSessionId(id);
   }, []);
 
   const loadEngines = async () => {

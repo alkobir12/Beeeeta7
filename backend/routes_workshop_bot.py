@@ -267,7 +267,7 @@ def ask_question():
 
 
 async def store_bot_message(session_id: str, role: str, content: str, model: str):
-    if not bot_db or not session_id:
+    if bot_db is None or not session_id:
         return
     try:
         await bot_db.bot_messages.insert_one({

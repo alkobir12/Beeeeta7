@@ -6,10 +6,13 @@ Modes: client / tech / admin
 
 import os
 import asyncio
+import uuid
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import httpx
+from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/workshop-bot")
 

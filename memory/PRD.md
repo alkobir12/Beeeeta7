@@ -169,3 +169,4 @@
 | 14 Feb 2026 | Suppliers migration endpoint for Supabase |
 | 14 Feb 2026 | Parts OCR (OpenAI Vision) integration + UI |
 | 14 Feb 2026 | Molt bot developer mode prompt builder |
+| 14 Feb 2026 | GPT-5.1 workshop bot responses + session storage |

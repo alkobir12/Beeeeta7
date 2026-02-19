@@ -225,6 +225,7 @@ class BotRequest(BaseModel):
     model: Optional[str] = "kb"
     developer_mode: Optional[bool] = False
     developer_prompt: Optional[str] = None
+    session_id: Optional[str] = None
 
 
 class BotResponse(BaseModel):
@@ -235,6 +236,7 @@ class BotResponse(BaseModel):
     confidence: Optional[int] = None
     model_used: Optional[str] = None
     agent_results: Optional[List[Dict[str, Any]]] = None
+    session_id: Optional[str] = None
 
 
 # Logic

@@ -689,14 +689,26 @@ export default function AIFinancial() {
       {riskQuickCards.length ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {riskQuickCards.map((c, idx) => (
-            <QuickCard
+            <FinancialCard
               key={idx}
               title={c.title}
-              value={c.value}
               subtitle={c.subtitle}
               icon={c.icon}
               variant={c.variant}
-            />
+              expandable
+              details={c.subtitle ? [{ label: 'تفاصيل', value: c.subtitle }] : []}
+            >
+              <div
+                className="text-2xl font-bold"
+                style={{ color: 'var(--text-primary)' }}
+                data-testid={`financial-risk-value-${idx}`}
+              >
+                {c.value}
+              </div>
+              <div className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+                اضغط لعرض التفاصيل
+              </div>
+            </FinancialCard>
           ))}
         </div>
       ) : null}

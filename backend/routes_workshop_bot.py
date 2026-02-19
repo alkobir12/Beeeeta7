@@ -386,6 +386,18 @@ async def run_blackbox_task(prompt: str, agents: List[Dict[str, str]]) -> Dict[s
 async def respond(req: BotRequest):
     model_id = (req.model or "kb").strip().lower()
     engine = normalize_engine(req.engine)
+    session_id = req.session_id or str(uuid.uuid4())
+
+    if model_id == "gpt-5.1":
+        reply = await run_openai_chat(req, engine, session_id)
+        await store_bot_message(session_id, "user", req.message, model_id)
+        await store_bot_message(session_id, "assistant", reply, model_id)
+        return BotResponse(
+            status="ok",
+            reply=reply,
+            model_used=model_id,
+            session_id=session_id,
+        )
 
     if model_id != "kb":
         agents = get_blackbox_agents(model_id)
@@ -399,6 +411,7 @@ async def respond(req: BotRequest):
                 status="error",
                 reply=f"تعذر تشغيل Blackbox AI الآن. {exc.detail}",
                 model_used=model_id,
+                session_id=session_id,
             )
         agent_execs = (status_data.get("task") or status_data).get("agentExecutions") or []
 
@@ -414,23 +427,29 @@ async def respond(req: BotRequest):
         else:
             reply = responses[0]["text"] if responses else "لم نحصل على رد واضح. حاول مرة أخرى."
 
+        await store_bot_message(session_id, "user", req.message, model_id)
+        await store_bot_message(session_id, "assistant", reply, model_id)
         return BotResponse(
             status="ok",
             reply=reply,
             model_used=model_id,
             agent_results=agent_execs,
+            session_id=session_id,
         )
 
     text = normalize(req.message)
     rule = choose_rule(text, engine)
 
     if not rule:
+        await store_bot_message(session_id, "user", req.message, model_id)
+        await store_bot_message(session_id, "assistant", "خلنا نكمّل الصورة شوي. 🤔", model_id)
         return BotResponse(
             status="need_info",
             reply="خلنا نكمّل الصورة شوي. 🤔",
             next_question=ask_question(),
             confidence=0,
             model_used="kb",
+            session_id=session_id,
         )
 
     confidence = min(95, 50 + len([t for t in rule["triggers"] if t in text]) * 15)
@@ -439,33 +458,42 @@ async def respond(req: BotRequest):
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
         steps_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(rule["steps"])])
 
+        await store_bot_message(session_id, "user", req.message, model_id)
+        await store_bot_message(session_id, "assistant", "🔧 تشخيص فني", model_id)
         return BotResponse(
             status="ok",
             reply=f"🔧 تشخيص فني:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n**خطوات الفحص:**\n{steps_text}",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
             model_used="kb",
+            session_id=session_id,
         )
 
     if req.mode == "admin":
         causes_text = "\n".join([f"• {c[0]}: {c[1]}%" for c in rule["causes"]])
 
+        await store_bot_message(session_id, "user", req.message, model_id)
+        await store_bot_message(session_id, "assistant", "📊 ملخص إداري", model_id)
         return BotResponse(
             status="ok",
             reply=f"📊 ملخص إداري:\n\n**الأسباب المحتملة:**\n{causes_text}\n\n💡 نقترح فحص مبدئي قبل أي اعتماد للعميل.",
             probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"]],
             confidence=confidence,
             model_used="kb",
+            session_id=session_id,
         )
 
     top_cause = rule["causes"][0][0] if rule["causes"] else "غير محدد"
 
+    await store_bot_message(session_id, "user", req.message, model_id)
+    await store_bot_message(session_id, "assistant", f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍", model_id)
     return BotResponse(
         status="ok",
         reply=f"من اللي يبان، المشكلة غالباً من **{top_cause}**. نحتاج فحص بسيط للتأكيد. 👍",
         probable=[{"cause": c[0], "probability": c[1]} for c in rule["causes"][:3]],
         confidence=confidence,
         model_used="kb",
+        session_id=session_id,
     )
 
 

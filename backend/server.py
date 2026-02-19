@@ -1334,7 +1334,8 @@ async def create_supplier(supplier: SupplierCreate):
     if DB_PROVIDER == "supabase":
         try:
             if supabase_service.client and not supabase_service.mock_mode:
-                res = supabase_service.client.table("suppliers").insert(payload).execute()
+                supabase_payload = {**payload, "createdAt": payload["createdAt"].isoformat()}
+                res = supabase_service.client.table("suppliers").insert(supabase_payload).execute()
                 row = (res.data or [payload])[0]
                 return Supplier(**row)
         except Exception as e:
@@ -1431,7 +1432,12 @@ async def migrate_suppliers():
         return {"migrated": 0, "message": "No local suppliers to migrate"}
 
     try:
-        res = supabase_service.client.table("suppliers").insert(local_suppliers).execute()
+        prepared = []
+        for row in local_suppliers:
+            if isinstance(row.get("createdAt"), datetime):
+                row = {**row, "createdAt": row["createdAt"].isoformat()}
+            prepared.append(row)
+        res = supabase_service.client.table("suppliers").insert(prepared).execute()
         migrated = len(res.data or [])
         return {"migrated": migrated}
     except Exception as e:

@@ -1007,7 +1007,8 @@ export default function AIFinancial() {
             subtitle="شرح المخاطر وخطوات التصحيح"
             icon={Brain}
             variant="default"
-            expandable={false}
+            expandable
+            details={auditAnalysisDetails}
           >
             <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200">
               <summary className="cursor-pointer text-slate-300">

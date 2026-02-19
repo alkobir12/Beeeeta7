@@ -330,7 +330,6 @@ async def run_openai_chat(req: BotRequest, engine: Optional[str], session_id: st
     system_prompt = req.developer_prompt if req.developer_mode and req.developer_prompt else build_workshop_system_prompt(req, engine)
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=system_prompt)
     chat = chat.with_model("openai", "gpt-5.1")
-    chat.extra_params = {"temperature": 0.2}
     try:
         response = await chat.send_message(UserMessage(text=req.message))
     except Exception as e:

@@ -178,3 +178,4 @@
 | 14 Feb 2026 | GPT-5.1 workshop bot responses + session storage |
 | 14 Feb 2026 | Supabase suppliers insert + customers_find_by_phone guard |
 | 14 Feb 2026 | AI Financial page cards redesign + shorter Abu Fahad analysis |
+| 14 Feb 2026 | Audit blocks expanded + account lookup fix in finance bot |

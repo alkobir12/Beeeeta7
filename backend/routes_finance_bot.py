@@ -136,6 +136,16 @@ async def _build_account_context(workshop_id: str, account_code: str) -> str:
         )
         account = (coa_res.data or [None])[0]
 
+        if not account:
+            coa_res = (
+                supabase.table("chart_of_accounts")
+                .select("id, code, name_ar, name, type, balance")
+                .eq("workshop_id", workshop_id)
+                .eq("id", account_code)
+                .execute()
+            )
+            account = (coa_res.data or [None])[0]
+
         # جلب إجمالي المدين والدائن من قيود اليومية لهذا الحساب
         je_res = (
             supabase.table("journal_entries")
@@ -150,8 +160,13 @@ async def _build_account_context(workshop_id: str, account_code: str) -> str:
 
         for row in (je_res.data or []):
             for line in row.get("lines", []) or []:
-                code = line.get("account_code") or line.get("account")
-                if str(code) == str(account_code):
+                code = (
+                    line.get("account_code")
+                    or line.get("account")
+                    or line.get("account_id")
+                    or line.get("accountId")
+                )
+                if str(code) == str(account_code) or (account and str(code) == str(account.get("id"))):
                     total_debit += float(line.get("debit", 0) or 0)
                     total_credit += float(line.get("credit", 0) or 0)
                     entries_count += 1

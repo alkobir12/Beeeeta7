@@ -742,7 +742,13 @@ export default function AIFinancial() {
             variant="default"
             expandable={false}
           >
-            <div className="rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden">
+            <div className="flex flex-wrap gap-4 text-xs text-slate-300 mb-3">
+              <span data-testid="trial-balance-count">عدد الحسابات: {trialBalance.accounts?.length || 0}</span>
+              <span data-testid="trial-balance-debit">إجمالي المدين: {formatCurrency(trialBalance.totals?.total_debit || 0)}</span>
+              <span data-testid="trial-balance-credit">إجمالي الدائن: {formatCurrency(trialBalance.totals?.total_credit || 0)}</span>
+            </div>
+            <details className="rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden">
+              <summary className="cursor-pointer px-4 py-2 text-xs text-slate-300">عرض تفاصيل الحسابات</summary>
               <div className="max-h-[320px] overflow-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-slate-950/90">
@@ -772,14 +778,7 @@ export default function AIFinancial() {
                   </tbody>
                 </table>
               </div>
-
-              {trialBalance.totals ? (
-                <div className="border-t border-slate-800 p-3 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div>إجمالي مدين: {formatCurrency(trialBalance.totals.total_debit || 0)}</div>
-                  <div>إجمالي دائن: {formatCurrency(trialBalance.totals.total_credit || 0)}</div>
-                </div>
-              ) : null}
-            </div>
+            </details>
           </FinancialCard>
         </div>
 

@@ -422,6 +422,57 @@ export default function AIFinancial() {
     return cards.slice(0, 4);
   }, [summary, trialBalance.accounts]);
 
+  const summaryCards = useMemo(() => ([
+    {
+      title: 'إجمالي الإيرادات',
+      value: formatCurrency(summary.revenue),
+      subtitle: 'ملخص الإيرادات للفترة المختارة',
+      icon: DollarSign,
+      variant: 'default',
+      details: [
+        { label: 'صافي الربح', value: formatCurrency(summary.netProfit) },
+        { label: 'المصروفات', value: formatCurrency(summary.expenses) },
+        { label: 'هامش الربح', value: `${summary.profitMargin.toFixed(1)}%` },
+      ],
+    },
+    {
+      title: 'صافي الربح',
+      value: formatCurrency(summary.netProfit),
+      subtitle: `هامش ${summary.profitMargin.toFixed(1)}%`,
+      icon: summary.netProfit >= 0 ? TrendingUp : TrendingDown,
+      variant: getProfitVariant(),
+      details: [
+        { label: 'الإيرادات', value: formatCurrency(summary.revenue) },
+        { label: 'المصروفات', value: formatCurrency(summary.expenses) },
+      ],
+    },
+    {
+      title: 'إجمالي المصروفات',
+      value: formatCurrency(summary.expenses),
+      subtitle: 'المدفوعات والتكاليف التشغيلية',
+      icon: Receipt,
+      variant: 'warning',
+      details: [
+        { label: 'صافي الربح', value: formatCurrency(summary.netProfit) },
+        { label: 'هامش الربح', value: `${summary.profitMargin.toFixed(1)}%` },
+      ],
+    },
+    {
+      title: 'ميزان المراجعة',
+      value: trialBalance.accounts?.length ? `${trialBalance.accounts.length} حساب` : 'بدون بيانات',
+      subtitle: trialBalance.totals
+        ? `مدين ${formatCurrency(trialBalance.totals.total_debit)} | دائن ${formatCurrency(trialBalance.totals.total_credit)}`
+        : 'لا توجد حركة',
+      icon: Scale,
+      variant: trialBalance.accounts?.length ? 'success' : 'warning',
+      details: [
+        { label: 'إجمالي المدين', value: formatCurrency(trialBalance.totals?.total_debit || 0) },
+        { label: 'إجمالي الدائن', value: formatCurrency(trialBalance.totals?.total_credit || 0) },
+        { label: 'عدد الحسابات', value: trialBalance.accounts?.length || 0 },
+      ],
+    },
+  ]), [summary, trialBalance]);
+
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatQuery.trim()) return;

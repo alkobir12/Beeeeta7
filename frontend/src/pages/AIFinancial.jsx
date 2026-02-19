@@ -422,6 +422,11 @@ export default function AIFinancial() {
     return cards.slice(0, 4);
   }, [summary, trialBalance.accounts]);
 
+  const auditPreview = useMemo(() => {
+    if (!auditBotResponse) return '';
+    return auditBotResponse.split('\n').slice(0, 4).join('\n');
+  }, [auditBotResponse]);
+
   const summaryCards = useMemo(() => ([
     {
       title: 'إجمالي الإيرادات',

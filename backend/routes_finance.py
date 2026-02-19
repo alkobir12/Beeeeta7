@@ -108,6 +108,15 @@ def _fetch_accounts():
         except Exception as e:
             print(f"Secondary chart_of_accounts fetch failed: {e}")
 
+        if not secondary_accounts:
+            try:
+                res3 = (
+                    supabase_1.table("business_accounts").select("*").order("code").execute()
+                )
+                secondary_accounts = res3.data or []
+            except Exception as e:
+                print(f"Secondary business_accounts fetch failed: {e}")
+
     merged = []
     seen_codes = set()
 

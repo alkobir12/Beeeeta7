@@ -261,6 +261,18 @@ def ask_question():
     return "الصوت وش هو؟ أو علمني نوع المكينة لو تقدر."
 
 
+async def store_bot_message(session_id: str, role: str, content: str, model: str):
+    if not bot_db or not session_id:
+        return
+    await bot_db.bot_messages.insert_one({
+        "session_id": session_id,
+        "role": role,
+        "content": content,
+        "model": model,
+        "created_at": datetime.utcnow(),
+    })
+
+
 def ensure_blackbox_config():
     missing = [
         key

@@ -243,6 +243,9 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
         if account_context:
             context_parts.append(account_context)
 
+    if payload.financial_data:
+        context_parts.append(build_financial_context(payload.financial_data))
+
     # يمكن لاحقاً تمرير نتائج تدقيق النظام أو القوائم المالية هنا
 
     context_text = "\n\n".join(context_parts) if context_parts else ""

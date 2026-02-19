@@ -292,17 +292,21 @@ def ensure_blackbox_config():
         raise HTTPException(status_code=500, detail=f"Blackbox config missing: {', '.join(missing)}")
 
 
-def build_blackbox_prompt(req: BotRequest, engine: Optional[str]) -> str:
-    if req.developer_mode and req.developer_prompt:
-        return f"{req.developer_prompt}\n\nUSER REQUEST:\n{req.message}"
+def build_workshop_system_prompt(req: BotRequest, engine: Optional[str]) -> str:
     return (
         "أنت مساعد ورشة سيارات ثنائي اللغة (عربي ثم إنجليزي).\n"
         "قدّم إجابة عملية مختصرة مع خطوات فحص مقترحة ونصيحة أمان إن لزم.\n"
         f"وضع المستخدم: {req.mode}.\n"
         f"نوع المكينة: {engine or 'غير محدد'}.\n"
-        f"رسالة المستخدم: {req.message}\n"
         "أجب بالعربية أولًا ثم بالإنجليزية في فقرة منفصلة."
     )
+
+
+def build_blackbox_prompt(req: BotRequest, engine: Optional[str]) -> str:
+    if req.developer_mode and req.developer_prompt:
+        return f"{req.developer_prompt}\n\nUSER REQUEST:\n{req.message}"
+    system_prompt = build_workshop_system_prompt(req, engine)
+    return f"{system_prompt}\n\nرسالة المستخدم: {req.message}"
 
 
 def extract_agent_text(execution: Dict[str, Any]) -> str:

@@ -127,8 +127,8 @@ const WorkshopAIBot = () => {
       const list = data.models || [];
       setModels(list);
       if (list.length > 0) {
-        const multi = list.find((m) => m.id === 'multi');
-        setSelectedModel(multi ? multi.id : list[0].id);
+        const preferred = list.find((m) => m.id === 'gpt-5.1') || list.find((m) => m.id === 'multi') || list[0];
+        setSelectedModel(preferred.id);
       }
     } catch (error) {
       console.error('Error loading models:', error);

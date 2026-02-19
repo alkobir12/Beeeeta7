@@ -844,6 +844,23 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
                 }
             )
 
+        default_accounts = [
+            {
+                "id": "1103",
+                "code": "1103",
+                "name": "Accounts Receivable",
+                "name_ar": "ذمم العملاء (أجل)",
+                "type": "asset",
+                "balance": 0,
+            }
+        ]
+        existing_codes = {acc.get("code") for acc in results}
+        for acc in default_accounts:
+            if acc["code"] not in existing_codes:
+                results.append(acc)
+
+        results = sorted(results, key=lambda x: str(x.get("code", "")))
+
         return {"success": True, "data": results, "source": "journal_entries"}
 
     except Exception as e:

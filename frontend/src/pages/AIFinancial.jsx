@@ -427,6 +427,21 @@ export default function AIFinancial() {
     return auditBotResponse.split('\n').slice(0, 4).join('\n');
   }, [auditBotResponse]);
 
+  const auditSummaryDetails = useMemo(() => {
+    if (!auditReport) return [];
+    return [
+      { label: 'الأخطاء', value: auditReport.summary?.total_issues ?? 0 },
+      { label: 'التصحيحات', value: auditReport.summary?.corrections_needed ?? 0 },
+      { label: 'النواقص', value: auditReport.summary?.missing_items ?? 0 },
+      { label: 'السجل', value: auditReport.summary?.audit_log_entries ?? 0 },
+    ];
+  }, [auditReport]);
+
+  const auditAnalysisDetails = useMemo(() => {
+    if (!auditBotResponse) return [];
+    return [{ label: 'ملخص سريع', value: auditPreview }];
+  }, [auditBotResponse, auditPreview]);
+
   const summaryCards = useMemo(() => ([
     {
       title: 'إجمالي الإيرادات',

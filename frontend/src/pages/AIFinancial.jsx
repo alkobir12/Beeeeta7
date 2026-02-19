@@ -920,12 +920,61 @@ export default function AIFinancial() {
                   </div>
                 </div>
 
-              <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200">
-                <summary className="cursor-pointer text-slate-300">عرض ملخص تقرير التدقيق</summary>
-                <div className="mt-3 whitespace-pre-wrap max-h-[220px] overflow-auto" data-testid="audit-report-details">
-                  {JSON.stringify(auditReport.summary || auditReport, null, 2)}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { label: 'الأخطاء', value: auditReport.summary?.total_issues || 0, icon: AlertTriangle },
+                    { label: 'التصحيحات', value: auditReport.summary?.corrections_needed || 0, icon: CheckCircle },
+                    { label: 'النواقص', value: auditReport.summary?.missing_items || 0, icon: FileText },
+                    { label: 'السجل', value: auditReport.summary?.audit_log_entries || 0, icon: ListChecks },
+                  ].map((item, idx) => (
+                    <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <item.icon size={14} />
+                        {item.label}
+                      </div>
+                      <div className="text-lg font-bold text-slate-100 mt-1" data-testid={`audit-summary-${idx}`}>
+                        {item.value}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </details>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200" data-testid="audit-corrections-block">
+                    <summary className="cursor-pointer text-slate-300">التصحيحات المطلوبة</summary>
+                    <div className="mt-2 space-y-2 max-h-[200px] overflow-auto">
+                      {(auditReport.corrections_needed || []).length ? (
+                        (auditReport.corrections_needed || []).map((item, idx) => (
+                          <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/60 p-2">
+                            <div className="font-semibold text-slate-100">{item.issue || 'تصحيح'}</div>
+                            <div className="text-slate-300">{item.details || item.correction || item.suggestion || '—'}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-slate-400">لا توجد تصحيحات مسجلة.</div>
+                      )}
+                    </div>
+                  </details>
+                  <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200" data-testid="audit-log-block">
+                    <summary className="cursor-pointer text-slate-300">سجل التدقيق</summary>
+                    <div className="mt-2 space-y-2 max-h-[200px] overflow-auto">
+                      {(auditReport.audit_log || []).length ? (
+                        (auditReport.audit_log || []).map((item, idx) => (
+                          <div key={idx} className="text-slate-300">{item}</div>
+                        ))
+                      ) : (
+                        <div className="text-slate-400">لا يوجد سجل بعد.</div>
+                      )}
+                    </div>
+                  </details>
+                </div>
+
+                <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200">
+                  <summary className="cursor-pointer text-slate-300">عرض ملخص تقرير التدقيق</summary>
+                  <div className="mt-3 whitespace-pre-wrap max-h-[220px] overflow-auto" data-testid="audit-report-details">
+                    {JSON.stringify(auditReport.summary || auditReport, null, 2)}
+                  </div>
+                </details>
               </div>
             )}
           </FinancialCard>

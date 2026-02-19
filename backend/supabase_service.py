@@ -459,7 +459,7 @@ class SupabaseService:
         }
 
     def customers_find_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
-        if self.mock_mode:
+        if self.mock_mode or not self.client:
             return None
         try:
             res = (

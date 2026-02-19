@@ -671,7 +671,11 @@ export default function AIFinancial() {
             expandable
             details={card.details}
           >
-            <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: 'var(--text-primary)' }}
+              data-testid={`financial-summary-value-${idx}`}
+            >
               {card.value}
             </div>
             <div className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>

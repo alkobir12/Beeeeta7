@@ -168,6 +168,12 @@ BLACKBOX_API_KEY = os.environ.get("BLACKBOX_API_KEY")
 BLACKBOX_REPO_URL = os.environ.get("BLACKBOX_REPO_URL")
 BLACKBOX_BRANCH = os.environ.get("BLACKBOX_BRANCH")
 
+MONGO_URL = os.environ.get("MONGO_URL")
+DB_NAME = os.environ.get("DB_NAME")
+bot_db = None
+if MONGO_URL and DB_NAME:
+    bot_db = AsyncIOMotorClient(MONGO_URL)[DB_NAME]
+
 BLACKBOX_MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
     "blackbox-pro": {
         "label": "Blackbox Pro",

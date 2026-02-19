@@ -913,7 +913,8 @@ export default function AIFinancial() {
             subtitle="فحص الاتساق والتوازن واكتشاف الأخطاء المحتملة"
             icon={Shield}
             variant="default"
-            expandable={false}
+            expandable
+            details={auditSummaryDetails}
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
               <Button onClick={runAudit} disabled={auditLoading} className="bg-blue-600 hover:bg-blue-700">

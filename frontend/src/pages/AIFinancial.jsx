@@ -920,9 +920,12 @@ export default function AIFinancial() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200 whitespace-pre-wrap max-h-[220px] overflow-auto">
+              <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200">
+                <summary className="cursor-pointer text-slate-300">عرض ملخص تقرير التدقيق</summary>
+                <div className="mt-3 whitespace-pre-wrap max-h-[220px] overflow-auto" data-testid="audit-report-details">
                   {JSON.stringify(auditReport.summary || auditReport, null, 2)}
                 </div>
+              </details>
               </div>
             )}
           </FinancialCard>

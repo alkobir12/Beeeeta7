@@ -936,11 +936,25 @@ export default function AIFinancial() {
             variant="default"
             expandable={false}
           >
-            <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200 whitespace-pre-wrap min-h-[140px] max-h-[320px] overflow-auto">
-              {auditBotLoading
-                ? 'جاري التحليل...'
-                : auditBotResponse || 'بعد تشغيل التدقيق اضغط (اطلب من أبوفهد تحليل التقرير).'}
-            </div>
+            <details className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200">
+              <summary className="cursor-pointer text-slate-300">
+                {auditBotLoading
+                  ? 'جاري التحليل...'
+                  : auditBotResponse
+                  ? 'عرض التحليل الكامل'
+                  : 'بعد تشغيل التدقيق اضغط (اطلب من أبوفهد تحليل التقرير).'}
+              </summary>
+              {!auditBotLoading && auditBotResponse ? (
+                <div className="mt-3 whitespace-pre-wrap max-h-[320px] overflow-auto" data-testid="audit-analysis-full">
+                  {auditBotResponse}
+                </div>
+              ) : null}
+            </details>
+            {!auditBotLoading && auditBotResponse ? (
+              <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200 whitespace-pre-wrap" data-testid="audit-analysis-preview">
+                {auditPreview}
+              </div>
+            ) : null}
           </FinancialCard>
         </div>
       </div>

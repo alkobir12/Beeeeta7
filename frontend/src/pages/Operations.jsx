@@ -819,6 +819,58 @@ const Operations = () => {
                 </div>
               </div>
 
+            {/* OCR Invoice */}
+            <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: styles.textPrimary }}>مسح فاتورة (Scanner)</div>
+                  <div className="text-xs" style={{ color: styles.textSecondary }}>التقط صورة أو ارفع ملف لملء البنود تلقائياً</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
+                    <Camera size={14} /> التقاط
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFileChange} data-testid="operation-ocr-camera-input" />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
+                    <Upload size={14} /> رفع ملف
+                    <input type="file" accept="image/*" className="hidden" onChange={handleOcrFileChange} data-testid="operation-ocr-file-input" />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={runOcr}
+                    disabled={ocrLoading}
+                    className="text-xs px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                    data-testid="operation-ocr-run"
+                  >
+                    {ocrLoading ? 'جاري القراءة...' : 'تشغيل OCR'}
+                  </button>
+                  {ocrResult && (
+                    <button
+                      type="button"
+                      onClick={applyOcrToItems}
+                      className="text-xs px-3 py-2 rounded-lg"
+                      style={{ backgroundColor: '#10b981', color: '#fff' }}
+                      data-testid="operation-ocr-apply"
+                    >
+                      تطبيق البنود
+                    </button>
+                  )}
+                </div>
+              </div>
+              {ocrPreview && (
+                <img src={ocrPreview} alt="OCR" className="mt-2 max-h-40 rounded-lg" data-testid="operation-ocr-preview" />
+              )}
+              {ocrError && (
+                <div className="mt-2 text-xs text-red-500" data-testid="operation-ocr-error">{ocrError}</div>
+              )}
+              {ocrResult && (
+                <div className="mt-2 text-xs" style={{ color: styles.textSecondary }} data-testid="operation-ocr-summary">
+                  المورد: {ocrResult.vendor || 'غير محدد'} | الإجمالي: {ocrResult.totals?.grand_total || '—'}
+                </div>
+              )}
+            </div>
+
               {/* Section 4: Items */}
 
             {/* Items Section */}

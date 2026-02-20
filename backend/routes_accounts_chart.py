@@ -60,6 +60,13 @@ async def get_accounts():
     return {"accounts": accounts_db}
 
 
+@router.post("/init-defaults")
+async def init_default_accounts():
+    """تهيئة الحسابات الافتراضية"""
+    _initialize_accounts()
+    return {"accounts": accounts_db}
+
+
 @router.get("/{account_id}")
 async def get_account(account_id: str):
     """الحصول على حساب معين"""

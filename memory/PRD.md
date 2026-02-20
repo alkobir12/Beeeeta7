@@ -192,3 +192,4 @@
 | 14 Feb 2026 | Default Accounts Receivable (1103) seeded in chart response |
 | 14 Feb 2026 | Frontend fallback for accounts receivable in accounts list |
 | 14 Feb 2026 | Auto-settle credit ops on vehicle delivery (A/R 1103) |
+| 14 Feb 2026 | Accounts manual add fixes (accounts-chart) + defaults |

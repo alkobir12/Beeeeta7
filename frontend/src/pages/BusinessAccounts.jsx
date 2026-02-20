@@ -53,13 +53,13 @@ const BusinessAccounts = () => {
 
   const loadAccounts = async () => {
     try {
-      const res = await axios.get(`${API_URL}/accounts`);
+      const res = await axios.get(`${API_URL}/accounts-chart`);
       if (res.data && res.data.length > 0) {
         setAccounts(res.data);
       } else {
         // Initialize default accounts
-        await axios.post(`${API_URL}/accounts/init-defaults`);
-        const res2 = await axios.get(`${API_URL}/accounts`);
+        await axios.post(`${API_URL}/accounts-chart/init-defaults`);
+        const res2 = await axios.get(`${API_URL}/accounts-chart`);
         setAccounts(res2.data || DEFAULT_ACCOUNTS);
       }
     } catch (e) { 
@@ -95,10 +95,10 @@ const BusinessAccounts = () => {
   const saveAccount = async () => {
     try {
       if (editingAccount) {
-        await axios.put(`${API_URL}/accounts/${editingAccount.id}`, accountForm);
+        await axios.put(`${API_URL}/accounts-chart/${editingAccount.id}`, accountForm);
         toast({ title: 'تم', description: 'تم تحديث الحساب بنجاح' });
       } else {
-        await axios.post(`${API_URL}/accounts`, { 
+        await axios.post(`${API_URL}/accounts-chart`, { 
           ...accountForm, 
           isSystem: false 
         });
@@ -120,7 +120,7 @@ const BusinessAccounts = () => {
     }
     if (window.confirm('هل تريد حذف هذا الحساب؟')) {
       try {
-        await axios.delete(`${API_URL}/accounts/${account.id}`);
+        await axios.delete(`${API_URL}/accounts-chart/${account.id}`);
         await loadAccounts();
         toast({ title: 'تم', description: 'تم حذف الحساب' });
       } catch (e) {

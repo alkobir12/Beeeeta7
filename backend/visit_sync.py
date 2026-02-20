@@ -42,35 +42,26 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                 pass
 
         op_data = {
+            "id": visit_id,
             "type": "service",
             "items": items,
             "total": total,
             "subtotal": total,
-            "visit_id": visit_id,
             "vehicle_id": vehicle_id,
             "partner_name": partner_name,
             "partner_type": "customer",
-            "payment_method": "credit", # Default to credit so it appears as unpaid
-            "notes": f"عملية من الزيارة {visit_id[:8]}"
+            "payment_method": "credit",  # Default to credit so it appears as unpaid
+            "notes": f"عملية من الزيارة {visit_id[:8]}",
+            "op_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         # 4. Upsert Operation
         if supa_service:
-            # Check if exists
-            existing = supa_service.client.table("operations").select("id").eq("visit_id", visit_id).execute()
-            if existing.data:
-                # Update
-                op_id = existing.data[0]["id"]
-                supa_service.client.table("operations").update(op_data).eq("id", op_id).execute()
-                print(f"✅ Synced Visit {visit_id} -> Updated Operation {op_id}")
-            else:
-                # Insert
-                op_data["id"] = str(uuid.uuid4())
-                op_data["op_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                op_data["created_at"] = datetime.now(timezone.utc).isoformat()
-                op_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-                supa_service.client.table("operations").insert(op_data).execute()
-                print(f"✅ Synced Visit {visit_id} -> Created Operation {op_data['id']}")
+            # Upsert using visit_id as operation id
+            supa_service.client.table("operations").upsert(op_data).execute()
+            print(f"✅ Synced Visit {visit_id} -> Upsert Operation {visit_id}")
         
         # MongoDB support (Legacy)
         else:

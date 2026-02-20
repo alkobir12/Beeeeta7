@@ -676,6 +676,12 @@ const Dashboard = () => {
                             {vehicle.year}
                           </span>
                         )}
+                      <span
+                        className="px-2.5 py-0.5 rounded-full bg-slate-800/50 text-slate-200 text-[11px] font-semibold"
+                        data-testid={`vehicle-service-type-${vehicle.id}`}
+                      >
+                        نوع الخدمة: {serviceType}
+                      </span>
                       </div>
                       {isUrgent && (
                         <span className="px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[11px] font-bold border border-red-500/30">

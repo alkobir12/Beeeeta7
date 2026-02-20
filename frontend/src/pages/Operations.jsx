@@ -103,6 +103,12 @@ const Operations = () => {
     price: 0 
   });
 
+  const [ocrImage, setOcrImage] = useState('');
+  const [ocrPreview, setOcrPreview] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const [ocrError, setOcrError] = useState('');
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
 

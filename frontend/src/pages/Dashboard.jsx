@@ -588,6 +588,10 @@ const Dashboard = () => {
               const statusConfig = getStatusConfigForVehicle(vehicle.status);
               const progress = typeof vehicle.progress === 'number' ? vehicle.progress : 65;
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
+              const summary = vehicleSummaries[vehicle.id] || {};
+              const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
+              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
+              const serviceType = summary.serviceType || 'غير محدد';
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

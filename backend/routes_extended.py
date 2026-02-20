@@ -2762,7 +2762,24 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
 
             # --- SYNC TO OPERATIONS (FINANCE) ---
             if "notes" in payload or "status" in payload:
-                await _sync_visit_to_operation(visit_id, r, supa_service=supa)
+                sync_payload = {**payload, "id": visit_id}
+                if r:
+                    sync_payload = {**sync_payload, **r}
+                if not sync_payload.get("vehicle_id") and not sync_payload.get("vehicleId"):
+                    try:
+                        existing = (
+                            supa.client.table("vehicle_visits")
+                            .select("vehicle_id")
+                            .eq("id", visit_id)
+                            .limit(1)
+                            .execute()
+                        )
+                        row = (existing.data or [None])[0]
+                        if row and row.get("vehicle_id"):
+                            sync_payload["vehicle_id"] = row.get("vehicle_id")
+                    except Exception:
+                        pass
+                await _sync_visit_to_operation(visit_id, sync_payload, supa_service=supa)
             # ------------------------------------
 
             result = {

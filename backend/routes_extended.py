@@ -1456,6 +1456,11 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         except Exception:
             pass
 
+        try:
+            supa.client.table("operations").update({"payment_method": "cash"}).eq("id", op_id).execute()
+        except Exception:
+            pass
+
         # Cleanup legacy rows that might have been inserted without workshop_id (fallback insert)
         try:
             supa.client.table("journal_entries").delete().is_("workshop_id", "null").execute()

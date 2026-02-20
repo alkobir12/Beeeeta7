@@ -149,6 +149,8 @@ const Dashboard = () => {
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
+  const [vehicleSummaries, setVehicleSummaries] = useState({});
+  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
   const filteredVehicles = vehicles.filter(vehicle => {
     // إخفاء السيارات "تم التسليم" من لوحة التحكم (تظهر في الأرشيف)

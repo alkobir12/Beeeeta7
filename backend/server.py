@@ -670,6 +670,8 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
         v = supabase_service.vehicles_update(vehicle_id, upd)
         if not v:
             raise HTTPException(status_code=404, detail="Vehicle not found")
+        if upd.get("status") == "delivered":
+            await settle_vehicle_credit_operations(vehicle_id)
         return Vehicle(**v)
 
     if DB_PROVIDER == "memory":

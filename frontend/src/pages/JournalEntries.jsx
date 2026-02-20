@@ -671,6 +671,12 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     ]
   });
 
+  const [ocrImage, setOcrImage] = useState('');
+  const [ocrPreview, setOcrPreview] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const [ocrError, setOcrError] = useState('');
+
   const totalDebit = formData.lines.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0);
   const totalCredit = formData.lines.reduce((sum, l) => sum + (parseFloat(l.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;

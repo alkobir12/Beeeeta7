@@ -264,6 +264,56 @@ const Operations = () => {
     setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
   };
 
+  const handleOcrFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result?.toString() || '';
+      setOcrImage(base64);
+      setOcrPreview(base64);
+      setOcrResult(null);
+      setOcrError('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const runOcr = async () => {
+    if (!ocrImage) return;
+    setOcrLoading(true);
+    setOcrError('');
+    try {
+      const { data } = await axios.post(`${API_URL}/parts/ocr`, { image_base64: ocrImage });
+      setOcrResult(data);
+    } catch (error) {
+      setOcrError(error?.response?.data?.detail || 'تعذر قراءة الفاتورة');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const applyOcrToItems = () => {
+    if (!ocrResult?.items?.length) return;
+    const mappedItems = ocrResult.items.map((ocrItem) => {
+      const qty = Number(ocrItem.quantity || 1);
+      const price = Number(ocrItem.unit_price || 0);
+      return {
+        itemType: 'part',
+        itemId: ocrItem.part_number || '',
+        name: ocrItem.description || ocrItem.part_number || 'بند',
+        quantity: qty || 1,
+        price: price || 0,
+        total: (qty || 1) * (price || 0),
+      };
+    });
+    setForm(prev => ({
+      ...prev,
+      items: mappedItems,
+      partnerName: prev.partnerName || ocrResult.vendor || '',
+      invoiceNumber: prev.invoiceNumber || ocrResult.invoice_number || ''
+    }));
+  };
+
   const getErrorMessage = (e) => {
     const detail = e?.response?.data?.detail;
     if (Array.isArray(detail)) {

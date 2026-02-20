@@ -136,15 +136,30 @@ const Dashboard = () => {
     try {
       if (typeof notes === 'string') {
         const parsed = JSON.parse(notes);
-        return parsed.items || [];
+        if (Array.isArray(parsed.items)) return parsed.items;
+        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+          return [...(parsed.services || []), ...(parsed.parts || [])];
+        }
+        return [];
       }
       if (typeof notes === 'object') {
-        return notes.items || [];
+        if (Array.isArray(notes.items)) return notes.items;
+        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+          return [...(notes.services || []), ...(notes.parts || [])];
+        }
+        return [];
       }
     } catch (e) {
       return [];
     }
     return [];
+  };
+
+  const getVisitItems = (visit) => {
+    if (!visit) return [];
+    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+    return parseVisitItems(visit.notes);
   };
 
   const getServiceTypeLabel = (items = []) => {
@@ -164,10 +179,13 @@ const Dashboard = () => {
       const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
       const visits = res.data || [];
       const visitsCount = visits.length;
-      const currentVisit =
-        visits.find((v) => v.status === 'in_progress') ||
-        visits.sort((a, b) => new Date(b.entryDate || b.entry_date || b.created_at || 0) - new Date(a.entryDate || a.entry_date || a.created_at || 0))[0];
-      const items = currentVisit ? parseVisitItems(currentVisit.notes) : [];
+      const sortedVisits = [...visits].sort(
+        (a, b) => new Date(b.entryDate || b.entry_date || b.created_at || 0) - new Date(a.entryDate || a.entry_date || a.created_at || 0)
+      );
+      const inProgress = sortedVisits.find((v) => v.status === 'in_progress');
+      const withItems = sortedVisits.find((v) => getVisitItems(v).length);
+      const currentVisit = inProgress || withItems || sortedVisits[0];
+      const items = getVisitItems(currentVisit);
       const estimatedTotal = items.reduce((sum, item) => {
         const qty = Number(item.quantity || 1);
         const price = Number(item.price || 0);

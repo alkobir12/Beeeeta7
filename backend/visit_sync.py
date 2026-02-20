@@ -41,6 +41,9 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
             except:
                 pass
 
+        payment_status = visit_data.get("payment_status") or visit_data.get("paymentStatus")
+        payment_method = "cash" if str(payment_status).lower() == "paid" else "credit"
+
         op_data = {
             "id": visit_id,
             "type": "service",
@@ -50,7 +53,7 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
             "vehicle_id": vehicle_id,
             "partner_name": partner_name,
             "partner_type": "customer",
-            "payment_method": "credit",  # Default to credit so it appears as unpaid
+            "payment_method": payment_method,
             "notes": f"عملية من الزيارة {visit_id[:8]}",
             "op_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "created_at": datetime.now(timezone.utc).isoformat(),

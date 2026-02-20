@@ -203,3 +203,4 @@
 | 14 Feb 2026 | Frontend fallback for accounts receivable in accounts list |
 | 14 Feb 2026 | Auto-settle credit ops on vehicle delivery (A/R 1103) |
 | 14 Feb 2026 | Accounts manual add fixes (accounts-chart) + defaults |
+| 14 Feb 2026 | OCR scanner for journal entries + manual operations |

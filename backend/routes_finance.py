@@ -849,7 +849,7 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
                 "id": "1103",
                 "code": "1103",
                 "name": "Accounts Receivable",
-                "name_ar": "ذمم العملاء (أجل)",
+                "name_ar": "حساب العملاء (ذمم)",
                 "type": "asset",
                 "balance": 0,
             }

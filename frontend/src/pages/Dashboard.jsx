@@ -131,6 +131,81 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
+  const parseVisitItems = (notes) => {
+    if (!notes) return [];
+    try {
+      if (typeof notes === 'string') {
+        const parsed = JSON.parse(notes);
+        return parsed.items || [];
+      }
+      if (typeof notes === 'object') {
+        return notes.items || [];
+      }
+    } catch (e) {
+      return [];
+    }
+    return [];
+  };
+
+  const getServiceTypeLabel = (items = []) => {
+    const types = new Set();
+    items.forEach((item) => {
+      const type = item.itemType || item.type || item.category;
+      if (!type) return;
+      if (type === 'service') types.add('خدمة');
+      if (type === 'part') types.add('قطع');
+      if (type === 'supplier') types.add('مورد');
+    });
+    if (types.size === 0) return 'غير محدد';
+    return Array.from(types).join(' + ');
+  };
+
+  const loadVehicleSummary = async (vehicleId) => {
+    if (!vehicleId) return;
+    if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
+    setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: true }));
+    try {
+      const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
+      const visits = res.data || [];
+      const visitsCount = visits.length;
+      const currentVisit =
+        visits.find((v) => v.status === 'in_progress') ||
+        visits.sort((a, b) => new Date(b.entryDate || b.entry_date || b.created_at || 0) - new Date(a.entryDate || a.entry_date || a.created_at || 0))[0];
+      const items = currentVisit ? parseVisitItems(currentVisit.notes) : [];
+      const estimatedTotal = items.reduce((sum, item) => {
+        const qty = Number(item.quantity || 1);
+        const price = Number(item.price || 0);
+        return sum + qty * price;
+      }, 0);
+
+      setVehicleSummaries((prev) => ({
+        ...prev,
+        [vehicleId]: {
+          visitsCount,
+          estimatedTotal,
+          serviceType: getServiceTypeLabel(items),
+        }
+      }));
+    } catch (e) {
+      setVehicleSummaries((prev) => ({
+        ...prev,
+        [vehicleId]: {
+          visitsCount: 0,
+          estimatedTotal: 0,
+          serviceType: 'غير محدد',
+        }
+      }));
+    } finally {
+      setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: false }));
+    }
+  };
+
+  useEffect(() => {
+    if (vehicles.length) {
+      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    }
+  }, [vehicles]);
+
   const stats = {
     totalVehicles: vehicles.length,
     inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check', 'repair', 'quotation', 'approved', 'waiting_for_parts'].includes(v.status)).length,

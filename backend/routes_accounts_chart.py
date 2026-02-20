@@ -18,7 +18,7 @@ accounts_db = []
 DEFAULT_ACCOUNTS = [
     {"code": "1001", "name": "الصندوق", "type": "asset", "balance": 50000},
     {"code": "1002", "name": "البنك", "type": "asset", "balance": 100000},
-    {"code": "2001", "name": "حسابات العملاء", "type": "asset", "balance": 25000},
+    {"code": "1103", "name": "حساب العملاء (ذمم)", "type": "asset", "balance": 25000},
     {"code": "3001", "name": "مخزون قطع الغيار", "type": "asset", "balance": 75000},
     {"code": "4001", "name": "إيرادات خدمات الصيانة", "type": "revenue", "balance": 0},
     {"code": "4002", "name": "إيرادات بيع قطع الغيار", "type": "revenue", "balance": 0},

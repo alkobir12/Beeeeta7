@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, CreditCard, User, Building2, Car, Clock } from 'lucide-react';
+import { Plus, Trash2, FileText, CreditCard, User, Building2, Car, Clock, Camera, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../hooks/use-toast';
 import GuidanceStepper from '../components/GuidanceStepper';

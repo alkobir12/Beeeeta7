@@ -883,6 +883,58 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
             </div>
           </div>
 
+        {/* OCR Invoice */}
+        <div className="rounded-xl p-4 mb-4" style={{ border: `1px solid ${styles.cardBorder}`, backgroundColor: styles.cardBg }}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold" style={{ color: styles.textPrimary }}>مسح فاتورة مشتريات</div>
+              <div className="text-xs" style={{ color: styles.textSecondary }}>التقط صورة أو ارفع ملف لملء القيد تلقائياً</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <label className="text-xs px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: styles.inputBg, border: `1px solid ${styles.inputBorder}`, color: styles.textPrimary }}>
+                التقاط بالكاميرا
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFileChange} data-testid="journal-ocr-camera-input" />
+              </label>
+              <label className="text-xs px-3 py-2 rounded-lg cursor-pointer" style={{ backgroundColor: styles.inputBg, border: `1px solid ${styles.inputBorder}`, color: styles.textPrimary }}>
+                رفع ملف
+                <input type="file" accept="image/*" className="hidden" onChange={handleOcrFileChange} data-testid="journal-ocr-file-input" />
+              </label>
+              <button
+                type="button"
+                onClick={runOcr}
+                disabled={ocrLoading}
+                className="text-xs px-3 py-2 rounded-lg"
+                style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                data-testid="journal-ocr-run"
+              >
+                {ocrLoading ? 'جاري القراءة...' : 'تشغيل OCR'}
+              </button>
+              {ocrResult && (
+                <button
+                  type="button"
+                  onClick={applyOcrToEntry}
+                  className="text-xs px-3 py-2 rounded-lg"
+                  style={{ backgroundColor: '#10b981', color: '#fff' }}
+                  data-testid="journal-ocr-apply"
+                >
+                  تطبيق على القيد
+                </button>
+              )}
+            </div>
+          </div>
+          {ocrPreview && (
+            <img src={ocrPreview} alt="OCR" className="mt-3 max-h-48 rounded-xl" data-testid="journal-ocr-preview" />
+          )}
+          {ocrError && (
+            <div className="mt-2 text-xs text-red-500" data-testid="journal-ocr-error">{ocrError}</div>
+          )}
+          {ocrResult && (
+            <div className="mt-2 text-xs" style={{ color: styles.textSecondary }} data-testid="journal-ocr-summary">
+              المورد: {ocrResult.vendor || 'غير محدد'} | الإجمالي: {ocrResult.totals?.grand_total || '—'}
+            </div>
+          )}
+        </div>
+
           {/* Entry Lines */}
           <div>
             <div className="flex items-center justify-between mb-3">

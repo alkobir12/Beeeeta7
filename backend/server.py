@@ -593,6 +593,75 @@ async def get_vehicle(vehicle_id: str):
     return Vehicle(**vehicle)
 
 
+async def settle_vehicle_credit_operations(vehicle_id: str):
+    if DB_PROVIDER != "supabase":
+        return
+    if not supabase_service.client or supabase_service.mock_mode:
+        return
+
+    try:
+        ops_res = (
+            supabase_service.client.table("operations")
+            .select("id, total_amount, amount, total, workshop_id, payment_method")
+            .eq("vehicle_id", vehicle_id)
+            .eq("payment_method", "credit")
+            .execute()
+        )
+        operations = ops_res.data or []
+    except Exception:
+        return
+
+    for op in operations:
+        amount = float(op.get("total_amount") or op.get("amount") or op.get("total") or 0)
+        if amount <= 0:
+            continue
+
+        try:
+            exists = (
+                supabase_service.client.table("journal_entries")
+                .select("id")
+                .eq("operation_id", op.get("id"))
+                .eq("status", "paid")
+                .limit(1)
+                .execute()
+            )
+            if exists.data:
+                continue
+        except Exception:
+            pass
+
+        entry = {
+            "id": str(uuid.uuid4()),
+            "workshop_id": op.get("workshop_id"),
+            "entry_date": datetime.utcnow().isoformat(),
+            "description": f"تحصيل دفعة للفاتورة {op.get('id')}",
+            "total_debit": amount,
+            "total_credit": amount,
+            "lines": [
+                {
+                    "account": "1101",
+                    "account_name": "الصندوق",
+                    "debit": amount,
+                    "credit": 0,
+                },
+                {
+                    "account": "1103",
+                    "account_name": "العملاء (ذمم مدينة)",
+                    "debit": 0,
+                    "credit": amount,
+                },
+            ],
+            "status": "paid",
+            "operation_id": op.get("id"),
+        }
+
+        try:
+            supabase_service.client.table("journal_entries").insert(entry).execute()
+            supabase_service.client.table("operations").update({"payment_method": "cash"}).eq("id", op.get("id")).execute()
+        except Exception:
+            continue
+
+
 @api_router.put("/vehicles/{vehicle_id}", response_model=Vehicle)
 async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
     upd = {k: v for k, v in update_data.dict().items() if v is not None}

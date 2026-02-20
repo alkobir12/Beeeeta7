@@ -148,16 +148,12 @@ const Dashboard = () => {
   };
 
   const getServiceTypeLabel = (items = []) => {
-    const types = new Set();
-    items.forEach((item) => {
-      const type = item.itemType || item.type || item.category;
-      if (!type) return;
-      if (type === 'service') types.add('خدمة');
-      if (type === 'part') types.add('قطع');
-      if (type === 'supplier') types.add('مورد');
-    });
-    if (types.size === 0) return 'غير محدد';
-    return Array.from(types).join(' + ');
+    const names = items
+      .map((item) => item.name || item.description)
+      .filter(Boolean)
+      .slice(0, 3);
+    if (!names.length) return 'غير محدد';
+    return names.join('، ');
   };
 
   const loadVehicleSummary = async (vehicleId) => {

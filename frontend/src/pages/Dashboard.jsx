@@ -775,8 +775,8 @@ const Dashboard = () => {
                           <span className="font-mono text-slate-100 text-sm font-semibold truncate">{vehicle.vin || t('common.not_specified')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-400 font-medium">{t('dashboard.visitsLabel')}</span>
-                          <span className="font-bold text-sm text-slate-100">{vehicle.visitsCount || 0} {t('dashboard.visitUnit')}</span>
+                        <span className="text-xs text-slate-400 font-medium">{t('dashboard.visitsLabel')}</span>
+                        <span className="font-bold text-sm text-slate-100" data-testid={`vehicle-visits-count-${vehicle.id}`}>{visitsCount} {t('dashboard.visitUnit')}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.lastUpdateLabel')}</span>
@@ -786,11 +786,15 @@ const Dashboard = () => {
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.estimatedCostLabel')}</span>
-                          <span className="text-emerald-400 text-sm font-bold">
-                            {vehicle.estimatedTotal
-                              ? vehicle.estimatedTotal.toLocaleString(isRTL ? 'ar-SA' : 'en-US') + ` ${t('common.currency')}`
-                              : `0 ${t('common.currency')}`}
-                          </span>
+                        <span className="text-emerald-400 text-sm font-bold" data-testid={`vehicle-estimated-total-${vehicle.id}`}>
+                          {estimatedTotal
+                            ? estimatedTotal.toLocaleString(isRTL ? 'ar-SA' : 'en-US') + ` ${t('common.currency')}`
+                            : `0 ${t('common.currency')}`}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-slate-400 font-medium">نوع الخدمة</span>
+                        <span className="text-slate-100 text-sm font-semibold" data-testid={`vehicle-service-type-expanded-${vehicle.id}`}>{serviceType}</span>
                         </div>
                       </div>
                     )}

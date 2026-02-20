@@ -713,6 +713,53 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     });
   };
 
+  const handleOcrFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result?.toString() || '';
+      setOcrImage(base64);
+      setOcrPreview(base64);
+      setOcrResult(null);
+      setOcrError('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const runOcr = async () => {
+    if (!ocrImage) return;
+    setOcrLoading(true);
+    setOcrError('');
+    try {
+      const { data } = await axios.post(`${API_URL}/parts/ocr`, { image_base64: ocrImage });
+      setOcrResult(data);
+    } catch (error) {
+      setOcrError(error?.response?.data?.detail || 'تعذر قراءة الفاتورة');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const applyOcrToEntry = () => {
+    if (!ocrResult) return;
+    const total = Number(ocrResult?.totals?.grand_total || 0);
+    const description = [
+      'فاتورة مشتريات',
+      ocrResult.vendor,
+      ocrResult.invoice_number ? `#${ocrResult.invoice_number}` : ''
+    ].filter(Boolean).join(' ');
+
+    setFormData(prev => ({
+      ...prev,
+      description: description || prev.description,
+      lines: [
+        { account_code: '', account_name: '', debit: total || 0, credit: 0 },
+        { account_code: '', account_name: '', debit: 0, credit: total || 0 }
+      ]
+    }));
+  };
+
   const handleSubmit = () => {
     if (!formData.description.trim()) {
       alert('يرجى إدخال وصف القيد');

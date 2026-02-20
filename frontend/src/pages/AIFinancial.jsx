@@ -286,7 +286,7 @@ export default function AIFinancial() {
         list.push({
           id: '1103',
           code: '1103',
-          name_ar: 'ذمم العملاء (أجل)',
+          name_ar: 'حساب العملاء (ذمم)',
           name: 'Accounts Receivable',
           type: 'asset',
         });

@@ -112,6 +112,17 @@ async def update_account(account_id: str, updates: dict):
     return {"success": True, "account": account}
 
 
+@router.delete("/{account_id}")
+async def delete_account(account_id: str):
+    """حذف حساب"""
+    _initialize_accounts()
+    idx = next((i for i, a in enumerate(accounts_db) if a["id"] == account_id), None)
+    if idx is None:
+        raise HTTPException(status_code=404, detail="الحساب غير موجود")
+    accounts_db.pop(idx)
+    return {"success": True}
+
+
 @router.post("/{account_id}/adjust")
 async def adjust_balance(account_id: str, amount: float, description: str):
     """

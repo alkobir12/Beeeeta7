@@ -404,7 +404,7 @@ const PartsInventory = () => {
             </div>
           </div>
 
-          <div className="apple-card p-4">
+          <div className="glass-card p-4">
             <h3 className="text-lg font-semibold mb-3">أحدث القطع</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {parts.slice(0, 6).map(part => (
@@ -423,7 +423,7 @@ const PartsInventory = () => {
       )}
 
       {activeTab === 'alerts' && (
-        <div className="apple-card p-4 mb-6">
+        <div className="glass-card p-4 mb-6">
           <h3 className="text-lg font-semibold mb-3">تنبيهات المخزون</h3>
           {!alertsParts.length ? (
             <div className="text-sm text-slate-400">لا توجد تنبيهات حالياً.</div>

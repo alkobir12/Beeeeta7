@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageParts',
       children: [
-        { path: '/catalog', label: t('inventory.spare_parts'), enabled: true },
+        { path: '/parts', label: t('inventory.spare_parts'), enabled: true },
         { path: '/parts', label: t('inventory.inventory'), enabled: true },
       ]
     },

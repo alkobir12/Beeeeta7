@@ -267,7 +267,15 @@ const PartsInventory = () => {
         (p.category || '').toLowerCase().includes(q)
       );
     })
-    .filter(p => !showLowStock || p.quantity <= p.minQuantity);
+    .filter(p => !selectedCategory || p.category === selectedCategory)
+    .filter(p => !selectedBrand || p.brand === selectedBrand)
+    .filter(p => {
+      if (!stockStatus) return true;
+      if (stockStatus === 'low') return p.quantity > 0 && p.quantity <= p.minQuantity;
+      if (stockStatus === 'out') return p.quantity === 0;
+      if (stockStatus === 'good') return p.quantity > p.minQuantity;
+      return true;
+    });
 
   const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
   const outOfStockCount = parts.filter(p => p.quantity <= 0).length;

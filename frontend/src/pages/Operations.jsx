@@ -836,6 +836,16 @@ const Operations = () => {
                   <div className="text-xs" style={{ color: styles.textSecondary }}>التقط صورة أو ارفع ملف لملء البنود تلقائياً</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <select
+                    value={ocrInvoiceType}
+                    onChange={(e) => setOcrInvoiceType(e.target.value)}
+                    className="text-xs px-3 py-2 rounded-lg border"
+                    style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}
+                    data-testid="operation-ocr-invoice-type"
+                  >
+                    <option value="purchase">فاتورة شراء</option>
+                    <option value="sale">فاتورة بيع</option>
+                  </select>
                   <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
                     <Camera size={14} /> التقاط
                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFileChange} data-testid="operation-ocr-camera-input" />

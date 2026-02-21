@@ -14,7 +14,9 @@ const PartsInventory = () => {
   const { toast } = useToast();
   const [parts, setParts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showLowStock, setShowLowStock] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [stockStatus, setStockStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingPart, setEditingPart] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -26,14 +28,13 @@ const PartsInventory = () => {
   const [ocrImporting, setOcrImporting] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
-  const [activeTab, setActiveTab] = useState('dashboard');
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',
     quantity: '', minQuantity: '5', supplier: '', image: '', location: ''
   });
 
-  useEffect(() => { loadParts(); }, [showLowStock]);
+  useEffect(() => { loadParts(); }, []);
 
   const loadParts = async () => {
     try {

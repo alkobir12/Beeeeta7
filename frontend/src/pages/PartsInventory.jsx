@@ -306,11 +306,13 @@ const PartsInventory = () => {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{"Parts Management"}</h1>
-          <p className="text-gray-500 mt-1">{"Parts Management"}</p>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold text-white">🔧 نظام إدارة قطع الغيار</h1>
+          <p className="text-slate-400">إدارة المخزون والبيع والشراء للقطع</p>
         </div>
-        {activeTab === 'inventory' && (
+        <div className="px-4 py-2 rounded-lg bg-white/10 text-sm text-white" data-testid="inventory-date-badge">
+          {currentDate}
+        </div>
         <div className="flex gap-2">
           <div className="relative">
             <input 
@@ -418,7 +420,6 @@ const PartsInventory = () => {
             </DialogContent>
           </Dialog>
         </div>
-        )}
       </div>
 
 

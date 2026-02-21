@@ -211,6 +211,32 @@ const PartsInventory = () => {
     }
   };
 
+  const handleSellPart = async (part) => {
+    const qty = Number(prompt('أدخل كمية البيع', '1'));
+    if (!qty || qty <= 0) return;
+    try {
+      await axios.post(`${API_URL}/parts/${part.id}/sell`, null, { params: { quantity: qty } });
+      toast({ title: 'تم البيع', description: `تم خصم ${qty} من المخزون` });
+      await loadParts();
+    } catch (error) {
+      const detail = error?.response?.data?.detail || 'تعذر تنفيذ عملية البيع';
+      toast({ title: 'خطأ', description: detail, variant: 'destructive' });
+    }
+  };
+
+  const handleRestockPart = async (part) => {
+    const qty = Number(prompt('أدخل كمية الشراء/الإضافة', '1'));
+    if (!qty || qty <= 0) return;
+    try {
+      await axios.post(`${API_URL}/parts/${part.id}/restock`, null, { params: { quantity: qty } });
+      toast({ title: 'تم التحديث', description: `تمت إضافة ${qty} للمخزون` });
+      await loadParts();
+    } catch (error) {
+      const detail = error?.response?.data?.detail || 'تعذر تنفيذ عملية الشراء';
+      toast({ title: 'خطأ', description: detail, variant: 'destructive' });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

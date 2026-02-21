@@ -578,30 +578,55 @@ const PartsInventory = () => {
         </div>
       </div>
 
-      {/* Search & Filter */}
-      <div className="apple-card p-4 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            className="apple-input pr-10"
-            placeholder={"Search..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            data-testid="parts-search-input"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={loadParts} variant="outline" data-testid="parts-refresh-button">{"Refresh"}</Button>
-          <Button
-            variant={showLowStock ? 'default' : 'outline'}
-            onClick={() => setShowLowStock(!showLowStock)}
-            className={showLowStock ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
-            data-testid="parts-low-stock-toggle"
-          >
-            <AlertTriangle className="ml-2" size={18} />
-            {"Low Stock"}
-          </Button>
-        </div>
+      {/* Filter Bar */}
+      <div className="filter-bar mb-6">
+        <input
+          className="filter-input flex-1"
+          placeholder="🔍 بحث عن قطعة..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          data-testid="parts-search-input"
+        />
+        <select
+          className="filter-select"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          data-testid="parts-category-filter"
+        >
+          <option value="">كل الفئات</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+        <select
+          className="filter-select"
+          value={selectedBrand}
+          onChange={(e) => setSelectedBrand(e.target.value)}
+          data-testid="parts-brand-filter"
+        >
+          <option value="">كل الماركات</option>
+          {brands.map(brand => (
+            <option key={brand} value={brand}>{brand}</option>
+          ))}
+        </select>
+        <select
+          className="filter-select"
+          value={stockStatus}
+          onChange={(e) => setStockStatus(e.target.value)}
+          data-testid="parts-stock-filter"
+        >
+          <option value="">كل الحالات</option>
+          <option value="good">مخزون جيد</option>
+          <option value="low">منخفض المخزون</option>
+          <option value="out">نافد</option>
+        </select>
+        <button
+          className="px-4 py-2 rounded-lg bg-white/10 text-white"
+          onClick={handleResetFilters}
+          data-testid="parts-reset-filters"
+        >
+          إعادة تعيين
+        </button>
       </div>
 
       {/* Grid */}

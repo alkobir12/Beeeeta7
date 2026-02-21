@@ -255,6 +255,7 @@ const PartsInventory = () => {
           <h1 className="text-2xl font-bold text-gray-900">{"Parts Management"}</h1>
           <p className="text-gray-500 mt-1">{"Parts Management"}</p>
         </div>
+        {activeTab === 'inventory' && (
         <div className="flex gap-2">
           <div className="relative">
             <input 
@@ -362,6 +363,7 @@ const PartsInventory = () => {
             </DialogContent>
           </Dialog>
         </div>
+        )}
       </div>
 
       {/* OCR Invoice */}

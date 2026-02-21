@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import "./App.css"
 import "./i18n"; // Initialize i18next
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
@@ -35,7 +35,6 @@ const CustomerTracking = lazy(() => import("./pages/CustomerTracking"));
 const Users = lazy(() => import("./pages/UsersManagement"));
 const QuotationGenerator = lazy(() => import("./pages/QuotationGenerator"));
 const DocumentPrint = lazy(() => import("./pages/DocumentPrint"));
-const PartsCatalog = lazy(() => import("./pages/PartsCatalog"));
 const DensoDiagnostics = lazy(() => import("./pages/DensoDiagnostics"));
 const FaultKnowledge = lazy(() => import("./pages/FaultKnowledge"));
 const TemplatesManager = lazy(() => import("./pages/TemplatesManager"));

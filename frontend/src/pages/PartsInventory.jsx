@@ -28,6 +28,12 @@ const PartsInventory = () => {
   const [ocrImporting, setOcrImporting] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [transactionType, setTransactionType] = useState('sale');
+  const [saleMode, setSaleMode] = useState('instant');
+  const [transactionVehicleId, setTransactionVehicleId] = useState('');
+  const [transactionItems, setTransactionItems] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

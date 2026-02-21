@@ -609,6 +609,41 @@ const PartsInventory = () => {
         </button>
       </div>
 
+      <div className="glass-card p-4 mb-6">
+        <h3 className="text-lg font-semibold mb-3">📊 تصنيف المخزون</h3>
+        <div className="space-y-2">
+          {categoryStats.map(cat => (
+            <button
+              key={cat.name}
+              onClick={() => setSelectedCategory(cat.name)}
+              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
+              data-testid={`inventory-category-${cat.name}`}
+            >
+              <span className="text-white">{cat.name}</span>
+              <span className="text-xs text-slate-300">{cat.count} قطع • {cat.low} منخفض</span>
+            </button>
+          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <button
+              onClick={() => setStockStatus('out')}
+              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
+              data-testid="inventory-filter-out"
+            >
+              <span className="text-white">القطع النافدة</span>
+              <span className="text-xs text-red-300">{outOfStockCount}</span>
+            </button>
+            <button
+              onClick={() => setStockStatus('low')}
+              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
+              data-testid="inventory-filter-low"
+            >
+              <span className="text-white">القطع منخفضة المخزون</span>
+              <span className="text-xs text-yellow-300">{lowStockCount}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Grid */}
       {loading ? (
         <div className="flex justify-center py-12">

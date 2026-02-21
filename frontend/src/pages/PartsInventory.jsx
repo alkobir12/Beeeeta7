@@ -219,16 +219,7 @@ const PartsInventory = () => {
   };
 
   const handleSellPart = async (part) => {
-    const qty = Number(prompt('أدخل كمية البيع', '1'));
-    if (!qty || qty <= 0) return;
-    try {
-      await axios.post(`${API_URL}/parts/${part.id}/sell`, null, { params: { quantity: qty } });
-      toast({ title: 'تم البيع', description: `تم خصم ${qty} من المخزون` });
-      await loadParts();
-    } catch (error) {
-      const detail = error?.response?.data?.detail || 'تعذر تنفيذ عملية البيع';
-      toast({ title: 'خطأ', description: detail, variant: 'destructive' });
-    }
+    openTransactionModal('sale', part);
   };
 
   const handleRestockPart = async (part) => {

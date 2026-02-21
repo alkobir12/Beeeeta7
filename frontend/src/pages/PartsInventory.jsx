@@ -700,7 +700,21 @@ const PartsInventory = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-2 border-t border-gray-50">
+                <div className="flex gap-2 pt-2 border-t border-gray-50 flex-wrap">
+                  <button
+                    onClick={() => handleSellPart(part)}
+                    className="flex-1 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    data-testid={`part-sell-${part.id}`}
+                  >
+                    بيع
+                  </button>
+                  <button
+                    onClick={() => handleRestockPart(part)}
+                    className="flex-1 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    data-testid={`part-restock-${part.id}`}
+                  >
+                    شراء
+                  </button>
                   <button
                     onClick={() => openEditDialog(part)}
                     className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2"

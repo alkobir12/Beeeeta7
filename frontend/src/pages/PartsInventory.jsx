@@ -134,7 +134,7 @@ const PartsInventory = () => {
     try {
       let imported = 0;
       let skipped = 0;
-      for (const item of ocrResult.items) {
+      for (const [index, item] of ocrResult.items.entries()) {
         if (typeof item.confidence === 'number' && item.confidence < 0.6) {
           skipped += 1;
           continue;
@@ -144,8 +144,9 @@ const PartsInventory = () => {
         const qty = Number(item.quantity || 1);
         const unitPrice = Number(item.unit_price || (item.total && qty ? item.total / qty : 0));
         await partAPI.create({
-          partNumber: item.part_number || '',
+          partNumber: item.part_number || `OCR-${Date.now()}-${index + 1}`,
           name: description,
+          category: 'OCR',
           purchasePrice: unitPrice || 0,
           sellingPrice: unitPrice || 0,
           quantity: qty || 1,

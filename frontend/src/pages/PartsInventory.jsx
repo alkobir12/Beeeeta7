@@ -26,6 +26,7 @@ const PartsInventory = () => {
   const [ocrImporting, setOcrImporting] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

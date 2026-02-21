@@ -301,11 +301,12 @@ const Operations = () => {
 
   const applyOcrToItems = () => {
     if (!ocrResult?.items?.length) return;
+    const itemType = ocrInvoiceType === 'sale' ? 'service' : 'part';
     const mappedItems = ocrResult.items.map((ocrItem) => {
       const qty = Number(ocrItem.quantity || 1);
       const price = Number(ocrItem.unit_price || 0);
       return {
-        itemType: 'part',
+        itemType,
         itemId: ocrItem.part_number || '',
         name: ocrItem.description || ocrItem.part_number || 'بند',
         quantity: qty || 1,
@@ -315,6 +316,7 @@ const Operations = () => {
     });
     setForm(prev => ({
       ...prev,
+      type: ocrInvoiceType,
       items: mappedItems,
       partnerName: prev.partnerName || ocrResult.vendor || '',
       invoiceNumber: prev.invoiceNumber || ocrResult.invoice_number || ''

@@ -1361,6 +1361,94 @@ async def update_part(part_id: str, part: PartUpdate):
     return Part(**p)
 
 
+@api_router.post("/parts/{part_id}/sell")
+async def sell_part(part_id: str, quantity: int = 1):
+    if quantity <= 0:
+        raise HTTPException(status_code=400, detail="الكمية غير صحيحة")
+    if DB_PROVIDER == "supabase":
+        res = (
+            supabase_service.client.table("parts")
+            .select("id, quantity")
+            .eq("id", part_id)
+            .limit(1)
+            .execute()
+        )
+        part = (res.data or [None])[0]
+        if not part:
+            raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+        current_qty = int(part.get("quantity") or 0)
+        if current_qty < quantity:
+            raise HTTPException(status_code=400, detail="الكمية المطلوبة غير متوفرة")
+        new_qty = current_qty - quantity
+        supabase_service.client.table("parts").update({
+            "quantity": new_qty,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", part_id).execute()
+        return {"success": True, "new_quantity": new_qty}
+    if DB_PROVIDER == "memory":
+        parts = _mem_read("parts")
+        for p in parts:
+            if p.get("id") == part_id:
+                current_qty = int(p.get("quantity") or 0)
+                if current_qty < quantity:
+                    raise HTTPException(status_code=400, detail="الكمية المطلوبة غير متوفرة")
+                p["quantity"] = current_qty - quantity
+                _mem_write("parts", parts)
+                return {"success": True, "new_quantity": p["quantity"]}
+        raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+    part = await db.parts.find_one({"id": part_id})
+    if not part:
+        raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+    current_qty = int(part.get("quantity") or 0)
+    if current_qty < quantity:
+        raise HTTPException(status_code=400, detail="الكمية المطلوبة غير متوفرة")
+    new_qty = current_qty - quantity
+    await db.parts.update_one({"id": part_id}, {"$set": {"quantity": new_qty, "updatedAt": datetime.utcnow().isoformat()}})
+    part["quantity"] = new_qty
+    return {"success": True, "part": serialize_document(part)}
+
+
+@api_router.post("/parts/{part_id}/restock")
+async def restock_part(part_id: str, quantity: int = 1):
+    if quantity <= 0:
+        raise HTTPException(status_code=400, detail="الكمية غير صحيحة")
+    if DB_PROVIDER == "supabase":
+        res = (
+            supabase_service.client.table("parts")
+            .select("id, quantity")
+            .eq("id", part_id)
+            .limit(1)
+            .execute()
+        )
+        part = (res.data or [None])[0]
+        if not part:
+            raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+        current_qty = int(part.get("quantity") or 0)
+        new_qty = current_qty + quantity
+        supabase_service.client.table("parts").update({
+            "quantity": new_qty,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", part_id).execute()
+        return {"success": True, "new_quantity": new_qty}
+    if DB_PROVIDER == "memory":
+        parts = _mem_read("parts")
+        for p in parts:
+            if p.get("id") == part_id:
+                current_qty = int(p.get("quantity") or 0)
+                p["quantity"] = current_qty + quantity
+                _mem_write("parts", parts)
+                return {"success": True, "new_quantity": p["quantity"]}
+        raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+    part = await db.parts.find_one({"id": part_id})
+    if not part:
+        raise HTTPException(status_code=404, detail="القطعة غير موجودة")
+    current_qty = int(part.get("quantity") or 0)
+    new_qty = current_qty + quantity
+    await db.parts.update_one({"id": part_id}, {"$set": {"quantity": new_qty, "updatedAt": datetime.utcnow().isoformat()}})
+    part["quantity"] = new_qty
+    return {"success": True, "part": serialize_document(part)}
+
+
 @api_router.delete("/parts/{part_id}")
 async def delete_part(part_id: str):
     if DB_PROVIDER == "supabase":

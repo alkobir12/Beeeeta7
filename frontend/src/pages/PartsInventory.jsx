@@ -539,42 +539,22 @@ const PartsInventory = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="apple-card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">{"Total Parts"}</p>
-            <p className="text-2xl font-bold text-gray-900">{parts.length}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-            <Package size={20} />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#33b5e5' }}>
+          <p className="text-sm text-slate-300 mb-1">إجمالي القطع</p>
+          <p className="text-2xl font-bold text-white">{parts.length}</p>
         </div>
-        <div className="apple-card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">{"Low Stock"}</p>
-            <p className="text-2xl font-bold text-red-600">{lowStockCount}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-            <AlertTriangle size={20} />
-          </div>
+        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ffbb33' }}>
+          <p className="text-sm text-slate-300 mb-1">منخفضة المخزون</p>
+          <p className="text-2xl font-bold text-white">{lowStockCount}</p>
         </div>
-        <div className="apple-card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">{"Quantity"}</p>
-            <p className="text-2xl font-bold text-green-600">{parts.reduce((sum, p) => sum + p.quantity, 0)}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-            <Package size={20} />
-          </div>
+        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ff4444' }}>
+          <p className="text-sm text-slate-300 mb-1">نافدة</p>
+          <p className="text-2xl font-bold text-white">{outOfStockCount}</p>
         </div>
-        <div className="apple-card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">{"Inventory Value"}</p>
-            <p className="text-2xl font-bold text-purple-600">{parts.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0).toLocaleString()}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-            <Package size={20} />
-          </div>
+        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#00C851' }}>
+          <p className="text-sm text-slate-300 mb-1">قيمة المخزون</p>
+          <p className="text-2xl font-bold text-white">{inventoryValue.toLocaleString()} ر.س</p>
         </div>
       </div>
 

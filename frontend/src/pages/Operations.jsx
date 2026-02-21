@@ -108,6 +108,7 @@ const Operations = () => {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
+  const [ocrInvoiceType, setOcrInvoiceType] = useState(form.type || 'purchase');
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);

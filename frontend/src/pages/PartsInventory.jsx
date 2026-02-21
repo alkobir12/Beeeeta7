@@ -137,16 +137,26 @@ const PartsInventory = () => {
         const description = item.description || item.name || item.part_number || `بند OCR ${index + 1}`;
         const qty = Number(item.quantity || 1);
         const unitPrice = Number(item.unit_price || (item.total && qty ? item.total / qty : 0));
-        await partAPI.create({
-          partNumber: item.part_number || `OCR-${Date.now()}-${index + 1}`,
-          name: description,
-          category: 'OCR',
-          purchasePrice: unitPrice || 0,
-          sellingPrice: unitPrice || 0,
-          quantity: qty || 1,
-          minQuantity: 1,
-          supplier: ocrResult?.vendor || '',
-        });
+        const partNumber = item.part_number || `OCR-${Date.now()}-${index + 1}`;
+        const existing = parts.find((p) => p.partNumber === partNumber);
+        if (existing) {
+          await partAPI.update(existing.id, {
+            quantity: Number(existing.quantity || 0) + (qty || 1),
+            purchasePrice: unitPrice || existing.purchasePrice || 0,
+            sellingPrice: unitPrice || existing.sellingPrice || 0,
+          });
+        } else {
+          await partAPI.create({
+            partNumber,
+            name: description,
+            category: 'OCR',
+            purchasePrice: unitPrice || 0,
+            sellingPrice: unitPrice || 0,
+            quantity: qty || 1,
+            minQuantity: 1,
+            supplier: ocrResult?.vendor || '',
+          });
+        }
         imported += 1;
       }
       await loadParts();
@@ -156,7 +166,8 @@ const PartsInventory = () => {
       });
     } catch (error) {
       console.error('Import OCR items error:', error);
-      toast({ title: 'خطأ', description: 'تعذر استيراد البنود', variant: 'destructive' });
+      const detail = error?.response?.data?.detail || error?.message;
+      toast({ title: 'خطأ', description: detail || 'تعذر استيراد البنود', variant: 'destructive' });
     } finally {
       setOcrImporting(false);
     }

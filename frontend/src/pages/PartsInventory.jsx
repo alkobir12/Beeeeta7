@@ -281,6 +281,13 @@ const PartsInventory = () => {
   const outOfStockCount = parts.filter(p => p.quantity <= 0).length;
   const inventoryValue = parts.reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.sellingPrice || 0)), 0);
   const alertsParts = parts.filter(p => p.quantity <= p.minQuantity);
+  const categories = Array.from(new Set(parts.map(p => p.category).filter(Boolean)));
+  const brands = Array.from(new Set(parts.map(p => p.brand).filter(Boolean)));
+  const categoryStats = categories.map(cat => {
+    const catParts = parts.filter(p => p.category === cat);
+    const low = catParts.filter(p => p.quantity > 0 && p.quantity <= p.minQuantity).length;
+    return { name: cat, count: catParts.length, low };
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

@@ -383,6 +383,68 @@ const PartsInventory = () => {
         ))}
       </div>
 
+      {activeTab === 'dashboard' && (
+        <div className="space-y-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+              <h3 className="text-lg font-semibold">إجمالي القطع</h3>
+              <p className="text-2xl font-bold">{parts.length}</p>
+            </div>
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-lg text-white">
+              <h3 className="text-lg font-semibold">منخفضة المخزون</h3>
+              <p className="text-2xl font-bold">{lowStockCount}</p>
+            </div>
+            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-4 rounded-lg text-white">
+              <h3 className="text-lg font-semibold">نافدة</h3>
+              <p className="text-2xl font-bold">{outOfStockCount}</p>
+            </div>
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 rounded-lg text-white">
+              <h3 className="text-lg font-semibold">قيمة المخزون</h3>
+              <p className="text-2xl font-bold">{inventoryValue.toLocaleString()} ر.س</p>
+            </div>
+          </div>
+
+          <div className="apple-card p-4">
+            <h3 className="text-lg font-semibold mb-3">أحدث القطع</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {parts.slice(0, 6).map(part => (
+                <div key={part.id} className="flex items-center justify-between bg-slate-800/40 p-3 rounded-lg">
+                  <div>
+                    <div className="font-semibold text-white">{part.name}</div>
+                    <div className="text-xs text-slate-400">{part.partNumber}</div>
+                  </div>
+                  <div className="text-sm text-emerald-300">{part.quantity} قطعة</div>
+                </div>
+              ))}
+              {!parts.length && <div className="text-sm text-slate-400">لا توجد قطع بعد.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'alerts' && (
+        <div className="apple-card p-4 mb-6">
+          <h3 className="text-lg font-semibold mb-3">تنبيهات المخزون</h3>
+          {!alertsParts.length ? (
+            <div className="text-sm text-slate-400">لا توجد تنبيهات حالياً.</div>
+          ) : (
+            <ul className="space-y-2">
+              {alertsParts.map(part => (
+                <li key={part.id} className="flex items-center justify-between bg-slate-800/40 p-3 rounded-lg">
+                  <div>
+                    <div className="font-semibold text-white">{part.name}</div>
+                    <div className="text-xs text-slate-400">{part.partNumber}</div>
+                  </div>
+                  <div className="text-sm text-yellow-300">الكمية: {part.quantity}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: activeTab === 'inventory' ? 'block' : 'none' }}>
+
       {/* OCR Invoice */}
       <div className="apple-card p-5 mb-4" data-testid="parts-ocr-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

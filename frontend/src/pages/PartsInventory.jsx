@@ -232,16 +232,7 @@ const PartsInventory = () => {
   };
 
   const handleRestockPart = async (part) => {
-    const qty = Number(prompt('أدخل كمية الشراء/الإضافة', '1'));
-    if (!qty || qty <= 0) return;
-    try {
-      await axios.post(`${API_URL}/parts/${part.id}/restock`, null, { params: { quantity: qty } });
-      toast({ title: 'تم التحديث', description: `تمت إضافة ${qty} للمخزون` });
-      await loadParts();
-    } catch (error) {
-      const detail = error?.response?.data?.detail || 'تعذر تنفيذ عملية الشراء';
-      toast({ title: 'خطأ', description: detail, variant: 'destructive' });
-    }
+    openTransactionModal('purchase', part);
   };
 
   const handleResetFilters = () => {
@@ -249,6 +240,112 @@ const PartsInventory = () => {
     setSelectedCategory('');
     setSelectedBrand('');
     setStockStatus('');
+  };
+
+  const loadVehicles = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/vehicles`);
+      setVehicles(res.data || []);
+    } catch (error) {
+      setVehicles([]);
+    }
+  };
+
+  const openTransactionModal = (type, part = null) => {
+    setTransactionType(type);
+    setSaleMode(type === 'sale' ? 'instant' : 'instant');
+    setTransactionVehicleId('');
+    if (part) {
+      setTransactionItems([
+        {
+          partId: part.id,
+          name: part.name,
+          quantity: 1,
+          price: type === 'sale' ? Number(part.sellingPrice || 0) : Number(part.purchasePrice || 0),
+        }
+      ]);
+    } else {
+      setTransactionItems([{ partId: '', name: '', quantity: 1, price: 0 }]);
+    }
+    loadVehicles();
+    setShowTransactionModal(true);
+  };
+
+  const updateTransactionItem = (index, field, value) => {
+    setTransactionItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      if (field === 'partId') {
+        const selected = parts.find(p => p.id === value);
+        if (selected) {
+          updated[index].name = selected.name;
+          updated[index].price = transactionType === 'sale'
+            ? Number(selected.sellingPrice || 0)
+            : Number(selected.purchasePrice || 0);
+        }
+      }
+      return updated;
+    });
+  };
+
+  const addTransactionItem = () => {
+    setTransactionItems(prev => [...prev, { partId: '', name: '', quantity: 1, price: 0 }]);
+  };
+
+  const removeTransactionItem = (index) => {
+    setTransactionItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const submitTransaction = async () => {
+    const validItems = transactionItems.filter(item => item.partId && item.quantity > 0);
+    if (!validItems.length) {
+      toast({ title: 'خطأ', description: 'أضف قطعة واحدة على الأقل', variant: 'destructive' });
+      return;
+    }
+    if (transactionType === 'sale' && saleMode === 'vehicle' && !transactionVehicleId) {
+      toast({ title: 'خطأ', description: 'اختر المركبة المرتبطة بالبيع', variant: 'destructive' });
+      return;
+    }
+
+    const itemsPayload = validItems.map(item => ({
+      itemType: 'part',
+      itemId: item.partId,
+      name: item.name,
+      quantity: Number(item.quantity || 1),
+      price: Number(item.price || 0),
+      total: Number(item.quantity || 1) * Number(item.price || 0)
+    }));
+    const total = itemsPayload.reduce((sum, item) => sum + item.total, 0);
+
+    try {
+      await operationsAPI.create({
+        type: transactionType === 'sale' ? 'sale' : 'purchase',
+        items: itemsPayload,
+        subtotal: total,
+        total,
+        paymentMethod: transactionType === 'sale' && saleMode === 'vehicle' ? 'credit' : 'cash',
+        vehicleId: transactionType === 'sale' && saleMode === 'vehicle' ? transactionVehicleId : undefined,
+        notes: transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع'
+      });
+
+      for (const item of itemsPayload) {
+        if (transactionType === 'sale') {
+          await axios.post(`${API_URL}/parts/${item.itemId}/sell`, null, { params: { quantity: item.quantity } });
+        } else {
+          await axios.post(`${API_URL}/parts/${item.itemId}/restock`, null, { params: { quantity: item.quantity } });
+        }
+      }
+
+      toast({
+        title: 'تمت العملية',
+        description: transactionType === 'sale' ? 'تم تسجيل عملية البيع' : 'تم تسجيل عملية الشراء'
+      });
+      setShowTransactionModal(false);
+      await loadParts();
+    } catch (error) {
+      const detail = error?.response?.data?.detail || 'تعذر حفظ العملية';
+      toast({ title: 'خطأ', description: detail, variant: 'destructive' });
+    }
   };
 
   const resetForm = () => {

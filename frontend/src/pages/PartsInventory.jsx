@@ -238,6 +238,13 @@ const PartsInventory = () => {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('');
+    setSelectedBrand('');
+    setStockStatus('');
+  };
+
   const resetForm = () => {
     setFormData({
       partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

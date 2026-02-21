@@ -134,7 +134,7 @@ function App() {
                 <Route path="technicians" element={<Technicians />} />
                 <Route path="suppliers" element={<Suppliers />} />
                 <Route path="parts" element={<PartsInventory />} />
-                <Route path="catalog" element={<PartsCatalog />} />
+                <Route path="catalog" element={<Navigate to="/parts" replace />} />
                 <Route path="services" element={<ServicesManagement />} />
                 <Route path="templates" element={<Templates />} />
                 <Route path="invoice-templates" element={<InvoiceDesignerStudio />} />

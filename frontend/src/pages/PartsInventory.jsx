@@ -39,7 +39,7 @@ const PartsInventory = () => {
   const loadParts = async () => {
     try {
       setLoading(true);
-      const response = await partAPI.getAll(searchQuery, showLowStock);
+      const response = await partAPI.getAll();
       setParts(response.data);
     } catch (error) {
       console.error(error);

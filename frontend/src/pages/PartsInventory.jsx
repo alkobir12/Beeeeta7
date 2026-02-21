@@ -366,6 +366,23 @@ const PartsInventory = () => {
         )}
       </div>
 
+      <div className="flex flex-wrap gap-2 mb-6" data-testid="inventory-tabs">
+        {[
+          { id: 'dashboard', label: 'الرئيسية' },
+          { id: 'inventory', label: 'المخزون' },
+          { id: 'alerts', label: 'التنبيهات' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-full text-sm transition ${activeTab === tab.id ? 'bg-teal-500 text-white' : 'bg-slate-800/60 text-slate-300'}`}
+            data-testid={`inventory-tab-${tab.id}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* OCR Invoice */}
       <div className="apple-card p-5 mb-4" data-testid="parts-ocr-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

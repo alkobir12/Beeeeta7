@@ -258,6 +258,12 @@ const Operations = () => {
     }
   }, [visits, form.visitId]);
 
+  useEffect(() => {
+    if (form.type === 'sale' || form.type === 'purchase') {
+      setOcrInvoiceType(form.type);
+    }
+  }, [form.type]);
+
   const addItem = () => {
     if (!item.name && !item.itemId) return;
     const total = Number(item.quantity) * Number(item.price);

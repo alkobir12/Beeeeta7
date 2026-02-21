@@ -651,73 +651,79 @@ const PartsInventory = () => {
         </div>
       ) : (
         <div data-testid="parts-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredParts.map(part => (
-            <div data-testid={`part-card-${part.id}`} key={part.id} className="apple-card p-0 overflow-hidden group hover:shadow-md transition-all">
-              <div className="h-40 bg-gray-100 relative">
+          {filteredParts.map(part => {
+            const statusColor = part.quantity === 0 ? '#ff4444' : part.quantity <= part.minQuantity ? '#ffbb33' : '#00C851';
+            const statusText = part.quantity === 0 ? 'نافد' : part.quantity <= part.minQuantity ? 'منخفض' : 'جيد';
+            const stockPercent = Math.min((part.quantity / Math.max(part.minQuantity, 1)) * 100, 100);
+            return (
+            <div data-testid={`part-card-${part.id}`} key={part.id} className="glass-card p-0 overflow-hidden group transition-all" style={{ borderColor: statusColor }}>
+              <div className="h-40 bg-white/5 relative">
                 {part.image ? (
                   <img src={part.image} alt={part.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
                     <ImageIcon size={40} />
                   </div>
                 )}
-                {part.quantity <= part.minQuantity && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <AlertTriangle size={12} />
-                    <span>{"Low Stock"}</span>
-                  </div>
-                )}
+                <div className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm" style={{ background: `${statusColor}30`, color: statusColor }}>
+                  <AlertTriangle size={12} />
+                  <span>{statusText}</span>
+                </div>
               </div>
               
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="font-bold text-gray-900 truncate" title={part.name}>{part.name}</h3>
-                    <p className="text-xs text-gray-500 font-mono">{part.partNumber}</p>
+                    <h3 className="font-bold text-white truncate" title={part.name}>{part.name}</h3>
+                    <p className="text-xs text-slate-400 font-mono">{part.partNumber || '-'}</p>
                   </div>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{part.category}</span>
+                  <span className="text-xs bg-white/10 px-2 py-1 rounded text-slate-200">{part.category || '-'}</span>
                 </div>
 
                 <div className="space-y-1 text-sm mb-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">{"Quantity"}</span>
-                    <span className="font-medium">{part.quantity}</span>
+                    <span className="text-slate-400">الكمية</span>
+                    <span className="font-medium text-white">{part.quantity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">{"Purchase Price"}</span>
-                    <span>{part.purchasePrice}</span>
+                    <span className="text-slate-400">سعر الشراء</span>
+                    <span className="text-white">{part.purchasePrice}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">{"Selling Price"}</span>
-                    <span className="font-bold text-green-600">{part.sellingPrice}</span>
+                    <span className="text-slate-400">سعر البيع</span>
+                    <span className="font-bold text-emerald-300">{part.sellingPrice}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-2 border-t border-gray-50 flex-wrap">
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
+                  <div className="h-full" style={{ width: `${stockPercent}%`, background: statusColor }} />
+                </div>
+
+                <div className="flex gap-2 pt-2 border-t border-white/10 flex-wrap">
                   <button
                     onClick={() => handleSellPart(part)}
-                    className="flex-1 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-sell-${part.id}`}
                   >
                     بيع
                   </button>
                   <button
                     onClick={() => handleRestockPart(part)}
-                    className="flex-1 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-restock-${part.id}`}
                   >
                     شراء
                   </button>
                   <button
                     onClick={() => openEditDialog(part)}
-                    className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm text-slate-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-edit-${part.id}`}
                   >
                     <Edit size={14} /> {"Edit"}
                   </button>
                   <button
                     onClick={() => handleDelete(part.id)}
-                    className="flex-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-delete-${part.id}`}
                   >
                     <Trash2 size={14} /> {"Delete"}
@@ -725,7 +731,8 @@ const PartsInventory = () => {
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

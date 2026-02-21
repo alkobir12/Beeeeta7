@@ -695,6 +695,7 @@ const PartsInventory = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

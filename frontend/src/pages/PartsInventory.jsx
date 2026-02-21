@@ -288,6 +288,12 @@ const PartsInventory = () => {
     const low = catParts.filter(p => p.quantity > 0 && p.quantity <= p.minQuantity).length;
     return { name: cat, count: catParts.length, low };
   });
+  const currentDate = useMemo(() => new Date().toLocaleDateString('ar-SA', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }), []);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

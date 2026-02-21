@@ -513,6 +513,130 @@ const PartsInventory = () => {
               </form>
             </DialogContent>
           </Dialog>
+
+      <Dialog open={showTransactionModal} onOpenChange={setShowTransactionModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>عملية بيع/شراء قطع</DialogTitle>
+            <DialogDescription>
+              اختر نوع العملية وأضف البنود المراد بيعها أو شراؤها.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm mb-2">نوع العملية</label>
+                <select
+                  className="apple-input"
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  data-testid="transaction-type-select"
+                >
+                  <option value="sale">بيع</option>
+                  <option value="purchase">شراء</option>
+                </select>
+              </div>
+              {transactionType === 'sale' && (
+                <div>
+                  <label className="block text-sm mb-2">نوع البيع</label>
+                  <select
+                    className="apple-input"
+                    value={saleMode}
+                    onChange={(e) => setSaleMode(e.target.value)}
+                    data-testid="transaction-sale-mode"
+                  >
+                    <option value="instant">بيع فوري</option>
+                    <option value="vehicle">مركبة</option>
+                  </select>
+                </div>
+              )}
+              {transactionType === 'sale' && saleMode === 'vehicle' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm mb-2">المركبة المرتبطة</label>
+                  <select
+                    className="apple-input"
+                    value={transactionVehicleId}
+                    onChange={(e) => setTransactionVehicleId(e.target.value)}
+                    data-testid="transaction-vehicle-select"
+                  >
+                    <option value="">اختر مركبة</option>
+                    {vehicles.map(vehicle => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {transactionItems.map((item, index) => (
+                <div key={`transaction-item-${index}`} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm mb-2">القطعة</label>
+                    <select
+                      className="apple-input"
+                      value={item.partId}
+                      onChange={(e) => updateTransactionItem(index, 'partId', e.target.value)}
+                      data-testid={`transaction-item-part-${index}`}
+                    >
+                      <option value="">اختر قطعة</option>
+                      {parts.map(part => (
+                        <option key={part.id} value={part.id}>{part.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-2">الكمية</label>
+                    <input
+                      type="number"
+                      className="apple-input"
+                      value={item.quantity}
+                      onChange={(e) => updateTransactionItem(index, 'quantity', Number(e.target.value))}
+                      data-testid={`transaction-item-qty-${index}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-2">السعر</label>
+                    <input
+                      type="number"
+                      className="apple-input"
+                      value={item.price}
+                      onChange={(e) => updateTransactionItem(index, 'price', Number(e.target.value))}
+                      data-testid={`transaction-item-price-${index}`}
+                    />
+                  </div>
+                  {transactionItems.length > 1 && (
+                    <button
+                      className="text-sm text-red-500"
+                      type="button"
+                      onClick={() => removeTransactionItem(index)}
+                      data-testid={`transaction-item-remove-${index}`}
+                    >
+                      حذف البند
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-white/10 text-white"
+                onClick={addTransactionItem}
+                data-testid="transaction-add-item"
+              >
+                + إضافة قطعة أخرى
+              </button>
+              <Button onClick={submitTransaction} data-testid="transaction-submit">
+                حفظ العملية
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
         </div>
       </div>
 

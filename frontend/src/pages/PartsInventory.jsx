@@ -135,12 +135,7 @@ const PartsInventory = () => {
       let imported = 0;
       let skipped = 0;
       for (const [index, item] of ocrResult.items.entries()) {
-        if (typeof item.confidence === 'number' && item.confidence < 0.6) {
-          skipped += 1;
-          continue;
-        }
-        const description = item.description || item.name;
-        if (!description) continue;
+        const description = item.description || item.name || item.part_number || `بند OCR ${index + 1}`;
         const qty = Number(item.quantity || 1);
         const unitPrice = Number(item.unit_price || (item.total && qty ? item.total / qty : 0));
         await partAPI.create({

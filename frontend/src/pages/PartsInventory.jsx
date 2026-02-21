@@ -408,6 +408,13 @@ const PartsInventory = () => {
           {currentDate}
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => openTransactionModal('sale')}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            data-testid="inventory-pos-button"
+          >
+            نقطة بيع
+          </Button>
           <div className="relative">
             <input 
               type="file" 

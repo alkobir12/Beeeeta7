@@ -243,6 +243,9 @@ const PartsInventory = () => {
     .filter(p => !showLowStock || p.quantity <= p.minQuantity);
 
   const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
+  const outOfStockCount = parts.filter(p => p.quantity <= 0).length;
+  const inventoryValue = parts.reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.sellingPrice || 0)), 0);
+  const alertsParts = parts.filter(p => p.quantity <= p.minQuantity);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

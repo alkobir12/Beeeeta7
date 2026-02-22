@@ -644,6 +644,36 @@ const PartsInventory = () => {
                   </select>
                 </div>
               )}
+              <div>
+                <label className="block text-sm mb-2">{transactionType === 'sale' ? 'العميل' : 'المورد'}</label>
+                <select
+                  className="apple-input"
+                  value={selectedPartnerId}
+                  onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  data-testid="transaction-partner-select"
+                >
+                  <option value="">اختر</option>
+                  {(transactionType === 'sale' ? customers : suppliers).map(partner => (
+                    <option key={partner.id} value={partner.id}>{partner.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-2">الحساب المحاسبي</label>
+                <select
+                  className="apple-input"
+                  value={selectedAccountCode}
+                  onChange={(e) => setSelectedAccountCode(e.target.value)}
+                  data-testid="transaction-account-select"
+                >
+                  <option value="">اختر الحساب</option>
+                  {accounts
+                    .filter(acc => acc.account_type === (transactionType === 'sale' ? 'revenue' : 'expense'))
+                    .map(acc => (
+                      <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
+                    ))}
+                </select>
+              </div>
             </div>
 
             <div className="space-y-3">

@@ -273,7 +273,7 @@ const PartsInventory = () => {
 
   const loadVehicles = async () => {
     try {
-      const res = await axios.get(`${API_URL}/vehicles`);
+      const res = await api.get('/vehicles');
       setVehicles(res.data || []);
     } catch (error) {
       setVehicles([]);
@@ -282,7 +282,7 @@ const PartsInventory = () => {
 
   const loadCustomers = async () => {
     try {
-      const res = await axios.get(`${API_URL}/customers`);
+      const res = await api.get('/customers');
       setCustomers(res.data || []);
     } catch (error) {
       setCustomers([]);
@@ -291,7 +291,7 @@ const PartsInventory = () => {
 
   const loadSuppliers = async () => {
     try {
-      const res = await axios.get(`${API_URL}/suppliers`);
+      const res = await api.get('/suppliers');
       setSuppliers(res.data || []);
     } catch (error) {
       setSuppliers([]);
@@ -300,7 +300,7 @@ const PartsInventory = () => {
 
   const loadAccounts = async () => {
     try {
-      const res = await axios.get(`${API_URL}/accounts-chart`);
+      const res = await api.get('/accounts-chart');
       setAccounts(res.data?.accounts || []);
     } catch (error) {
       setAccounts([]);

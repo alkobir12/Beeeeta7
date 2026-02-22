@@ -39,6 +39,9 @@ const PartsInventory = () => {
   const [accounts, setAccounts] = useState([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState('');
   const [selectedAccountCode, setSelectedAccountCode] = useState('');
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [loadingPartners, setLoadingPartners] = useState(false);
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

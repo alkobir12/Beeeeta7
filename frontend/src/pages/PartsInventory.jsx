@@ -390,6 +390,7 @@ const PartsInventory = () => {
         total,
         paymentMethod: transactionType === 'sale' && saleMode === 'vehicle' ? 'credit' : 'cash',
         vehicleId: transactionType === 'sale' && saleMode === 'vehicle' ? transactionVehicleId : undefined,
+        partnerType: transactionType === 'sale' ? 'customer' : 'supplier',
         partnerId: selectedPartnerId,
         partnerName: (transactionType === 'sale'
           ? (customers.find(c => c.id === selectedPartnerId)?.name)

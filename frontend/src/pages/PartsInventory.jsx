@@ -649,7 +649,7 @@ const PartsInventory = () => {
           </Dialog>
 
       <Dialog open={showTransactionModal} onOpenChange={setShowTransactionModal}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>عملية بيع/شراء قطع</DialogTitle>
             <DialogDescription>

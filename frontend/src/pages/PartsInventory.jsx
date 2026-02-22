@@ -676,92 +676,99 @@ const PartsInventory = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-2">نوع العملية</label>
-                <select
-                  className="apple-input"
-                  value={transactionType}
-                  onChange={(e) => setTransactionType(e.target.value)}
-                  data-testid="transaction-type-select"
-                >
-                  <option value="sale">بيع</option>
-                  <option value="purchase">شراء</option>
-                </select>
-              </div>
-              {transactionType === 'sale' && (
+              <div className="glass-card p-4 space-y-3">
                 <div>
-                  <label className="block text-sm mb-2">نوع البيع</label>
+                  <label className="block text-sm mb-2">نوع العملية</label>
                   <select
                     className="apple-input"
-                    value={saleMode}
-                    onChange={(e) => setSaleMode(e.target.value)}
-                    data-testid="transaction-sale-mode"
+                    value={transactionType}
+                    onChange={(e) => setTransactionType(e.target.value)}
+                    data-testid="transaction-type-select"
                   >
-                    <option value="instant">بيع فوري</option>
-                    <option value="vehicle">مركبة</option>
+                    <option value="sale">بيع</option>
+                    <option value="purchase">شراء</option>
                   </select>
                 </div>
-              )}
-              {transactionType === 'sale' && saleMode === 'vehicle' && (
-                <div className="md:col-span-2">
-                  <label className="block text-sm mb-2">المركبة المرتبطة</label>
+                {transactionType === 'sale' && (
+                  <div>
+                    <label className="block text-sm mb-2">نوع البيع</label>
+                    <select
+                      className="apple-input"
+                      value={saleMode}
+                      onChange={(e) => setSaleMode(e.target.value)}
+                      data-testid="transaction-sale-mode"
+                    >
+                      <option value="instant">بيع فوري</option>
+                      <option value="vehicle">مركبة</option>
+                    </select>
+                  </div>
+                )}
+                {transactionType === 'sale' && saleMode === 'vehicle' && (
+                  <div>
+                    <label className="block text-sm mb-2">المركبة المرتبطة</label>
+                    <select
+                      className="apple-input"
+                      value={transactionVehicleId}
+                      onChange={(e) => setTransactionVehicleId(e.target.value)}
+                      onFocus={loadVehicles}
+                      data-testid="transaction-vehicle-select"
+                    >
+                      <option value="">اختر مركبة</option>
+                      {loadingVehicles && <option value="">جارٍ التحميل...</option>}
+                      {vehicleOptions.map(vehicle => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
+                        </option>
+                      ))}
+                      {!loadingVehicles && vehicleOptions.length === 0 && (
+                        <option value="">لا توجد مركبات</option>
+                      )}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="glass-card p-4 space-y-3">
+                <div>
+                  <label className="block text-sm mb-2">{transactionType === 'sale' ? 'العميل' : 'المورد'}</label>
                   <select
                     className="apple-input"
-                    value={transactionVehicleId}
-                    onChange={(e) => setTransactionVehicleId(e.target.value)}
-                    onFocus={loadVehicles}
-                    data-testid="transaction-vehicle-select"
+                    value={selectedPartnerId}
+                    onChange={(e) => setSelectedPartnerId(e.target.value)}
+                    onFocus={() => (transactionType === 'sale' ? loadCustomers() : loadSuppliers())}
+                    data-testid="transaction-partner-select"
                   >
-                    <option value="">اختر مركبة</option>
-                    {loadingVehicles && <option value="">جارٍ التحميل...</option>}
-                    {vehicleOptions.map(vehicle => (
-                      <option key={vehicle.id} value={vehicle.id}>
-                        {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
-                      </option>
+                    <option value="">اختر</option>
+                    {loadingPartners && <option value="">جارٍ التحميل...</option>}
+                    {(transactionType === 'sale' ? customers : suppliers).map(partner => (
+                      <option key={partner.id} value={partner.id}>{partner.name}</option>
                     ))}
-                    {!loadingVehicles && vehicleOptions.length === 0 && (
-                      <option value="">لا توجد مركبات</option>
+                    {!loadingPartners && (transactionType === 'sale' ? customers : suppliers).length === 0 && (
+                      <option value="">لا توجد بيانات</option>
                     )}
                   </select>
                 </div>
-              )}
-              <div>
-                <label className="block text-sm mb-2">{transactionType === 'sale' ? 'العميل' : 'المورد'}</label>
-                <select
-                  className="apple-input"
-                  value={selectedPartnerId}
-                  onChange={(e) => setSelectedPartnerId(e.target.value)}
-                  onFocus={() => (transactionType === 'sale' ? loadCustomers() : loadSuppliers())}
-                  data-testid="transaction-partner-select"
-                >
-                  <option value="">اختر</option>
-                  {loadingPartners && <option value="">جارٍ التحميل...</option>}
-                  {(transactionType === 'sale' ? customers : suppliers).map(partner => (
-                    <option key={partner.id} value={partner.id}>{partner.name}</option>
-                  ))}
-                  {!loadingPartners && (transactionType === 'sale' ? customers : suppliers).length === 0 && (
-                    <option value="">لا توجد بيانات</option>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-2">الحساب المحاسبي</label>
-                <select
-                  className="apple-input"
-                  value={selectedAccountCode}
-                  onChange={(e) => setSelectedAccountCode(e.target.value)}
-                  onFocus={loadAccounts}
-                  data-testid="transaction-account-select"
-                >
-                  <option value="">اختر الحساب</option>
-                  {loadingAccounts && <option value="">جارٍ التحميل...</option>}
-                  {accountOptions.map(acc => (
+                <div>
+                  <label className="block text-sm mb-2">الحساب المحاسبي</label>
+                  <select
+                    className="apple-input"
+                    value={selectedAccountCode}
+                    onChange={(e) => setSelectedAccountCode(e.target.value)}
+                    onFocus={loadAccounts}
+                    data-testid="transaction-account-select"
+                  >
+                    <option value="">اختر الحساب</option>
+                    {loadingAccounts && <option value="">جارٍ التحميل...</option>}
+                    {accountOptions.map(acc => (
                       <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
                     ))}
-                  {!loadingAccounts && accountOptions.length === 0 && (
-                    <option value="">لا توجد حسابات</option>
-                  )}
-                </select>
+                    {!loadingAccounts && accountOptions.length === 0 && (
+                      <option value="">لا توجد حسابات</option>
+                    )}
+                  </select>
+                </div>
+                <div className="text-sm text-slate-300">
+                  إجمالي العملية: <span className="font-semibold text-white" data-testid="transaction-total">{transactionTotal.toLocaleString()} ر.س</span>
+                </div>
               </div>
             </div>
 

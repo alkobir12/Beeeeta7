@@ -275,38 +275,50 @@ const PartsInventory = () => {
   };
 
   const loadVehicles = async () => {
+    setLoadingVehicles(true);
     try {
       const res = await api.get('/vehicles');
       setVehicles(res.data || []);
     } catch (error) {
       setVehicles([]);
+    } finally {
+      setLoadingVehicles(false);
     }
   };
 
   const loadCustomers = async () => {
+    setLoadingPartners(true);
     try {
       const res = await api.get('/customers');
       setCustomers(res.data || []);
     } catch (error) {
       setCustomers([]);
+    } finally {
+      setLoadingPartners(false);
     }
   };
 
   const loadSuppliers = async () => {
+    setLoadingPartners(true);
     try {
       const res = await api.get('/suppliers');
       setSuppliers(res.data || []);
     } catch (error) {
       setSuppliers([]);
+    } finally {
+      setLoadingPartners(false);
     }
   };
 
   const loadAccounts = async () => {
+    setLoadingAccounts(true);
     try {
       const res = await api.get('/accounts-chart');
       setAccounts(res.data?.accounts || []);
     } catch (error) {
       setAccounts([]);
+    } finally {
+      setLoadingAccounts(false);
     }
   };
 

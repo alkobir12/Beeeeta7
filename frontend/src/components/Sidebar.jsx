@@ -66,7 +66,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       enabled: true,
       permission: 'canManageParts',
       children: [
-        { path: '/parts', label: t('inventory.spare_parts'), enabled: true },
         { path: '/parts-dashboard', label: t('inventory.parts_dashboard') || 'لوحة تحكم القطع', enabled: true },
         { path: '/parts', label: t('inventory.inventory'), enabled: true },
       ]

@@ -667,7 +667,7 @@ const PartsInventory = () => {
                     data-testid="transaction-vehicle-select"
                   >
                     <option value="">اختر مركبة</option>
-                    {vehicles.map(vehicle => (
+                    {activeVehicles.map(vehicle => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
                       </option>

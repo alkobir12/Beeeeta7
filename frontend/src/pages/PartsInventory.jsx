@@ -680,7 +680,7 @@ const PartsInventory = () => {
                 >
                   <option value="">اختر الحساب</option>
                   {accounts
-                    .filter(acc => acc.account_type === (transactionType === 'sale' ? 'revenue' : 'expense'))
+                    .filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'))
                     .map(acc => (
                       <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
                     ))}

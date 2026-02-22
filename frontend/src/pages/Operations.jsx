@@ -701,7 +701,7 @@ const Operations = () => {
                             data-testid="operation-vehicle-select"
                           >
                             <option value="">{t('operations.select_vehicle')}...</option>
-                      {activeVehicles.map(v => (
+                      {vehicleOptions.map(v => (
                               <option key={v.id} value={v.id}>
                                 {v.plateNumber} - {v.brand} {v.model}
                               </option>

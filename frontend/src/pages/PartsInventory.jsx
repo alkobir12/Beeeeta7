@@ -363,8 +363,12 @@ const PartsInventory = () => {
       toast({ title: 'خطأ', description: 'اختر المركبة المرتبطة بالبيع', variant: 'destructive' });
       return;
     }
-    if (!selectedPartnerId) {
-      toast({ title: 'خطأ', description: transactionType === 'sale' ? 'اختر العميل' : 'اختر المورد', variant: 'destructive' });
+    if (transactionType === 'sale' && saleMode !== 'vehicle' && !selectedPartnerId) {
+      toast({ title: 'خطأ', description: 'اختر العميل', variant: 'destructive' });
+      return;
+    }
+    if (transactionType === 'purchase' && !selectedPartnerId) {
+      toast({ title: 'خطأ', description: 'اختر المورد', variant: 'destructive' });
       return;
     }
     if (!selectedAccountCode) {
@@ -393,7 +397,10 @@ const PartsInventory = () => {
         partnerType: transactionType === 'sale' ? 'customer' : 'supplier',
         partnerId: selectedPartnerId,
         partnerName: (transactionType === 'sale'
-          ? (customers.find(c => c.id === selectedPartnerId)?.name)
+          ? (customers.find(c => c.id === selectedPartnerId)?.name
+            || vehicles.find(v => v.id === transactionVehicleId)?.ownerName
+            || vehicles.find(v => v.id === transactionVehicleId)?.owner_name
+          )
           : (suppliers.find(s => s.id === selectedPartnerId)?.name)
         ) || '',
         accountId: selectedAccountCode,

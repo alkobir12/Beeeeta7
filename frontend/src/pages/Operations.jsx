@@ -799,9 +799,9 @@ const Operations = () => {
                         data-testid="operation-account-select"
                       >
                         <option value="">{t('operations.select_account')}</option>
-                        {Array.isArray(accounts) ? (
-                          accounts.length > 0 ? (
-                            accounts.map(a => (
+                        {Array.isArray(filteredAccounts) ? (
+                          filteredAccounts.length > 0 ? (
+                            filteredAccounts.map(a => (
                               <option key={a.id || a.code} value={a.id || a.code}>
                                 {a.name_ar || a.name || a.code}
                               </option>

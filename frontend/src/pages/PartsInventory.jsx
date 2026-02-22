@@ -349,6 +349,7 @@ const PartsInventory = () => {
     } else {
       setTransactionItems([{ partId: '', name: '', quantity: 1, price: 0 }]);
     }
+    loadParts();
     loadVehicles();
     loadAccounts();
     if (type === 'sale') {

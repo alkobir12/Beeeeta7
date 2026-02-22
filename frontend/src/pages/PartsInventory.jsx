@@ -539,6 +539,7 @@ const PartsInventory = () => {
     const filtered = accounts.filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'));
     return filtered.length ? filtered : accounts;
   }, [accounts, transactionType]);
+  const partOptions = useMemo(() => (modalParts.length ? modalParts : parts), [modalParts, parts]);
   const transactionTotal = useMemo(() => {
     return transactionItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)), 0);
   }, [transactionItems]);

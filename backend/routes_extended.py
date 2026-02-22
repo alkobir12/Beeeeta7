@@ -1034,6 +1034,7 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
     if op_type in ("sale", "service"):
         transaction_type = "sale"
         debit_code = "1103" if is_credit else cash_code
+        revenue_code = selected_code or "4100"
         lines = [
             {
                 "account": debit_code,
@@ -1042,8 +1043,8 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
                 "credit": 0,
             },
             {
-                "account": "4100",
-                "account_name": ACCOUNT_NAME_MAP.get("4100", "4100"),
+                "account": revenue_code,
+                "account_name": ACCOUNT_NAME_MAP.get(revenue_code, revenue_code),
                 "debit": 0,
                 "credit": total,
             },

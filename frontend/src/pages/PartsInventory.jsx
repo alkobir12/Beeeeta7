@@ -352,6 +352,14 @@ const PartsInventory = () => {
       toast({ title: 'خطأ', description: 'اختر المركبة المرتبطة بالبيع', variant: 'destructive' });
       return;
     }
+    if (!selectedPartnerId) {
+      toast({ title: 'خطأ', description: transactionType === 'sale' ? 'اختر العميل' : 'اختر المورد', variant: 'destructive' });
+      return;
+    }
+    if (!selectedAccountCode) {
+      toast({ title: 'خطأ', description: 'اختر الحساب المحاسبي للعملية', variant: 'destructive' });
+      return;
+    }
 
     const itemsPayload = validItems.map(item => ({
       itemType: 'part',
@@ -371,6 +379,12 @@ const PartsInventory = () => {
         total,
         paymentMethod: transactionType === 'sale' && saleMode === 'vehicle' ? 'credit' : 'cash',
         vehicleId: transactionType === 'sale' && saleMode === 'vehicle' ? transactionVehicleId : undefined,
+        partnerId: selectedPartnerId,
+        partnerName: (transactionType === 'sale'
+          ? (customers.find(c => c.id === selectedPartnerId)?.name)
+          : (suppliers.find(s => s.id === selectedPartnerId)?.name)
+        ) || '',
+        accountId: selectedAccountCode,
         notes: transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع'
       });
 

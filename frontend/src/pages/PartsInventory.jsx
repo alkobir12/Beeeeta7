@@ -365,6 +365,7 @@ const PartsInventory = () => {
       setTransactionItems([{ partId: '', name: '', quantity: 1, price: 0 }]);
     }
     loadParts();
+    loadModalParts();
     loadVehicles();
     loadAccounts();
     if (type === 'sale') {

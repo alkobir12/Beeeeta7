@@ -158,6 +158,22 @@ const Operations = () => {
     }
   });
 
+  const customersQuery = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/customers`);
+      return res.data || [];
+    }
+  });
+
+  const suppliersQuery = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/suppliers`);
+      return res.data || [];
+    }
+  });
+
   const vehiclesQuery = useQuery({
     queryKey: ['vehicles'],
     queryFn: async () => {
@@ -216,6 +232,8 @@ const Operations = () => {
   const accounts = accountsQuery.data || [];
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
+  const customers = customersQuery.data || [];
+  const suppliers = suppliersQuery.data || [];
   const vehicles = vehiclesQuery.data || [];
   const ops = operationsQuery.data || [];
   const visits = visitsQuery.data || [];

@@ -495,6 +495,11 @@ const PartsInventory = () => {
     const inactiveStatuses = ['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'];
     return vehicles.filter(vehicle => !inactiveStatuses.includes(vehicle.status));
   }, [vehicles]);
+  const accountOptions = useMemo(() => {
+    const filtered = accounts.filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'));
+    return filtered.length ? filtered : accounts;
+  }, [accounts, transactionType]);
+  const vehicleOptions = useMemo(() => (activeVehicles.length ? activeVehicles : vehicles), [activeVehicles, vehicles]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

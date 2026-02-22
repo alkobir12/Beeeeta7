@@ -951,14 +951,14 @@ const PartsInventory = () => {
                     className="flex-1 py-2 text-sm text-slate-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-edit-${part.id}`}
                   >
-                    <Edit size={14} /> {"Edit"}
+                    <Edit size={14} /> تعديل
                   </button>
                   <button
                     onClick={() => handleDelete(part.id)}
                     className="flex-1 py-2 text-sm text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
                     data-testid={`part-delete-${part.id}`}
                   >
-                    <Trash2 size={14} /> {"Delete"}
+                    <Trash2 size={14} /> حذف
                   </button>
                 </div>
               </div>

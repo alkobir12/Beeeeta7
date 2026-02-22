@@ -42,6 +42,13 @@ const PartsInventory = () => {
 
   useEffect(() => { loadParts(); }, []);
 
+  useEffect(() => {
+    if (transactionType !== 'sale') {
+      setSaleMode('instant');
+      setTransactionVehicleId('');
+    }
+  }, [transactionType]);
+
   const loadParts = async () => {
     try {
       setLoading(true);

@@ -333,6 +333,19 @@ const PartsInventory = () => {
     }
   };
 
+  const loadModalParts = async () => {
+    setLoadingModalParts(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
+      const data = await res.json();
+      setModalParts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setModalParts([]);
+    } finally {
+      setLoadingModalParts(false);
+    }
+  };
+
   const openTransactionModal = (type, part = null) => {
     setTransactionType(type);
     setSaleMode(type === 'sale' ? 'instant' : 'instant');

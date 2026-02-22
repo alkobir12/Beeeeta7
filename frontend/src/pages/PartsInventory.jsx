@@ -277,8 +277,9 @@ const PartsInventory = () => {
   const loadVehicles = async () => {
     setLoadingVehicles(true);
     try {
-      const res = await api.get('/vehicles');
-      setVehicles(res.data || []);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/vehicles`);
+      const data = await res.json();
+      setVehicles(Array.isArray(data) ? data : []);
     } catch (error) {
       setVehicles([]);
     } finally {
@@ -289,8 +290,9 @@ const PartsInventory = () => {
   const loadCustomers = async () => {
     setLoadingPartners(true);
     try {
-      const res = await api.get('/customers');
-      setCustomers(res.data || []);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/customers`);
+      const data = await res.json();
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (error) {
       setCustomers([]);
     } finally {
@@ -301,8 +303,9 @@ const PartsInventory = () => {
   const loadSuppliers = async () => {
     setLoadingPartners(true);
     try {
-      const res = await api.get('/suppliers');
-      setSuppliers(res.data || []);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/suppliers`);
+      const data = await res.json();
+      setSuppliers(Array.isArray(data) ? data : []);
     } catch (error) {
       setSuppliers([]);
     } finally {
@@ -313,8 +316,9 @@ const PartsInventory = () => {
   const loadAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const res = await api.get('/accounts-chart');
-      setAccounts(res.data?.accounts || []);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/accounts-chart`);
+      const data = await res.json();
+      setAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
     } catch (error) {
       setAccounts([]);
     } finally {

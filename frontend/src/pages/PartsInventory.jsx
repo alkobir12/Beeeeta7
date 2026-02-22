@@ -34,6 +34,11 @@ const PartsInventory = () => {
   const [transactionVehicleId, setTransactionVehicleId] = useState('');
   const [transactionItems, setTransactionItems] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState('');
+  const [selectedAccountCode, setSelectedAccountCode] = useState('');
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',

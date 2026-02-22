@@ -52,6 +52,14 @@ const PartsInventory = () => {
       setSaleMode('instant');
       setTransactionVehicleId('');
     }
+    if (showTransactionModal) {
+      loadAccounts();
+      if (transactionType === 'sale') {
+        loadCustomers();
+      } else {
+        loadSuppliers();
+      }
+    }
   }, [transactionType]);
 
   const loadParts = async () => {

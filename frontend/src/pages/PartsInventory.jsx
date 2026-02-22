@@ -60,7 +60,7 @@ const PartsInventory = () => {
         loadSuppliers();
       }
     }
-  }, [transactionType]);
+  }, [transactionType, showTransactionModal]);
 
   const loadParts = async () => {
     try {

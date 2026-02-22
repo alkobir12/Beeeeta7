@@ -231,8 +231,8 @@ const Operations = () => {
 
   const accounts = accountsQuery.data || [];
   const filteredAccounts = accounts.filter((account) => {
-    if (form.type === 'sale') return account.account_type === 'revenue';
-    if (form.type === 'purchase') return account.account_type === 'expense';
+    if (form.type === 'sale') return account.type === 'revenue';
+    if (form.type === 'purchase') return account.type === 'expense';
     return true;
   });
   const parts = partsQuery.data || [];

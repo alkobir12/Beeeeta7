@@ -650,6 +650,24 @@ const PartsInventory = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-3 py-1 rounded-lg bg-white/10 text-sm text-white"
+                onClick={() => {
+                  loadVehicles();
+                  loadAccounts();
+                  if (transactionType === 'sale') {
+                    loadCustomers();
+                  } else {
+                    loadSuppliers();
+                  }
+                }}
+                data-testid="transaction-refresh-data"
+              >
+                تحديث القوائم
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm mb-2">نوع العملية</label>

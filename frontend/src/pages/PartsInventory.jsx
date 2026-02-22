@@ -60,6 +60,17 @@ const PartsInventory = () => {
         loadSuppliers();
       }
     }
+    setTransactionItems(prev => prev.map(item => {
+      if (!item.partId) return item;
+      const selected = parts.find(p => p.id === item.partId);
+      if (!selected) return item;
+      return {
+        ...item,
+        price: transactionType === 'sale'
+          ? Number(selected.sellingPrice || item.price || 0)
+          : Number(selected.purchasePrice || item.price || 0)
+      };
+    }));
   }, [transactionType, showTransactionModal]);
 
   const loadParts = async () => {

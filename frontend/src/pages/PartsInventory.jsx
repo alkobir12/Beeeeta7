@@ -254,6 +254,33 @@ const PartsInventory = () => {
     }
   };
 
+  const loadCustomers = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/customers`);
+      setCustomers(res.data || []);
+    } catch (error) {
+      setCustomers([]);
+    }
+  };
+
+  const loadSuppliers = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/suppliers`);
+      setSuppliers(res.data || []);
+    } catch (error) {
+      setSuppliers([]);
+    }
+  };
+
+  const loadAccounts = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/accounts-chart`);
+      setAccounts(res.data?.accounts || []);
+    } catch (error) {
+      setAccounts([]);
+    }
+  };
+
   const openTransactionModal = (type, part = null) => {
     setTransactionType(type);
     setSaleMode(type === 'sale' ? 'instant' : 'instant');

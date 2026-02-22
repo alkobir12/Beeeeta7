@@ -684,14 +684,19 @@ const PartsInventory = () => {
                     className="apple-input"
                     value={transactionVehicleId}
                     onChange={(e) => setTransactionVehicleId(e.target.value)}
+                    onFocus={loadVehicles}
                     data-testid="transaction-vehicle-select"
                   >
                     <option value="">اختر مركبة</option>
+                    {loadingVehicles && <option value="">جارٍ التحميل...</option>}
                     {vehicleOptions.map(vehicle => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
                       </option>
                     ))}
+                    {!loadingVehicles && vehicleOptions.length === 0 && (
+                      <option value="">لا توجد مركبات</option>
+                    )}
                   </select>
                 </div>
               )}
@@ -701,12 +706,17 @@ const PartsInventory = () => {
                   className="apple-input"
                   value={selectedPartnerId}
                   onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  onFocus={() => (transactionType === 'sale' ? loadCustomers() : loadSuppliers())}
                   data-testid="transaction-partner-select"
                 >
                   <option value="">اختر</option>
+                  {loadingPartners && <option value="">جارٍ التحميل...</option>}
                   {(transactionType === 'sale' ? customers : suppliers).map(partner => (
                     <option key={partner.id} value={partner.id}>{partner.name}</option>
                   ))}
+                  {!loadingPartners && (transactionType === 'sale' ? customers : suppliers).length === 0 && (
+                    <option value="">لا توجد بيانات</option>
+                  )}
                 </select>
               </div>
               <div>
@@ -715,12 +725,17 @@ const PartsInventory = () => {
                   className="apple-input"
                   value={selectedAccountCode}
                   onChange={(e) => setSelectedAccountCode(e.target.value)}
+                  onFocus={loadAccounts}
                   data-testid="transaction-account-select"
                 >
                   <option value="">اختر الحساب</option>
+                  {loadingAccounts && <option value="">جارٍ التحميل...</option>}
                   {accountOptions.map(acc => (
                       <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
                     ))}
+                  {!loadingAccounts && accountOptions.length === 0 && (
+                    <option value="">لا توجد حسابات</option>
+                  )}
                 </select>
               </div>
             </div>

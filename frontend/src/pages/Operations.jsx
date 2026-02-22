@@ -724,34 +724,6 @@ const Operations = () => {
                           </select>
                         </div>
                       </div>
-                      {(form.type === 'sale' || form.type === 'purchase') && (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                            {form.type === 'sale' ? 'العميل' : 'المورد'}
-                          </label>
-                          <select
-                            className="apple-input"
-                            value={form.partnerId || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              const list = form.type === 'sale' ? customers : suppliers;
-                              const selected = list.find((item) => item.id === value);
-                              setForm(prev => ({
-                                ...prev,
-                                partnerId: value,
-                                partnerName: selected?.name || '',
-                                partnerType: form.type === 'sale' ? 'customer' : 'supplier'
-                              }));
-                            }}
-                            data-testid="operation-partner-select"
-                          >
-                            <option value="">اختر</option>
-                            {(form.type === 'sale' ? customers : suppliers).map((item) => (
-                              <option key={item.id} value={item.id}>{item.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
                     </>
                   ) : (
                     <div className="text-xs" style={{ color: styles.textMuted }}>
@@ -759,6 +731,34 @@ const Operations = () => {
                     </div>
                   )}
                 </div>
+                {(form.type === 'sale' || form.type === 'purchase') && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                      {form.type === 'sale' ? 'العميل' : 'المورد'}
+                    </label>
+                    <select
+                      className="apple-input"
+                      value={form.partnerId || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const list = form.type === 'sale' ? customers : suppliers;
+                        const selected = list.find((item) => item.id === value);
+                        setForm(prev => ({
+                          ...prev,
+                          partnerId: value,
+                          partnerName: selected?.name || '',
+                          partnerType: form.type === 'sale' ? 'customer' : 'supplier'
+                        }));
+                      }}
+                      data-testid="operation-partner-select"
+                    >
+                      <option value="">اختر</option>
+                      {(form.type === 'sale' ? customers : suppliers).map((item) => (
+                        <option key={item.id} value={item.id}>{item.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Section 3: Payment */}

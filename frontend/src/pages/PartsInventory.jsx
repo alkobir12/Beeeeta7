@@ -48,6 +48,13 @@ const PartsInventory = () => {
   useEffect(() => { loadParts(); }, []);
 
   useEffect(() => {
+    loadVehicles();
+    loadCustomers();
+    loadSuppliers();
+    loadAccounts();
+  }, []);
+
+  useEffect(() => {
     if (transactionType !== 'sale') {
       setSaleMode('instant');
       setTransactionVehicleId('');
@@ -398,6 +405,7 @@ const PartsInventory = () => {
         partnerId: selectedPartnerId,
         partnerName: (transactionType === 'sale'
           ? (customers.find(c => c.id === selectedPartnerId)?.name
+            || vehicles.find(v => v.id === transactionVehicleId)?.customerName
             || vehicles.find(v => v.id === transactionVehicleId)?.ownerName
             || vehicles.find(v => v.id === transactionVehicleId)?.owner_name
           )

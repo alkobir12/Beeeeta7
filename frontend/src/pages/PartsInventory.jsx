@@ -804,12 +804,17 @@ const PartsInventory = () => {
                       className="apple-input"
                       value={item.partId}
                       onChange={(e) => updateTransactionItem(index, 'partId', e.target.value)}
+                    onFocus={loadModalParts}
                       data-testid={`transaction-item-part-${index}`}
                     >
                       <option value="">اختر قطعة</option>
-                      {parts.map(part => (
+                    {loadingModalParts && <option value="">جارٍ التحميل...</option>}
+                    {partOptions.map(part => (
                         <option key={part.id} value={part.id}>{part.name}</option>
                       ))}
+                    {!loadingModalParts && partOptions.length === 0 && (
+                      <option value="">لا توجد قطع</option>
+                    )}
                     </select>
                   </div>
                   <div>

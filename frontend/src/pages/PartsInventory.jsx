@@ -491,6 +491,10 @@ const PartsInventory = () => {
     month: 'long',
     day: 'numeric'
   }), []);
+  const activeVehicles = useMemo(() => {
+    const inactiveStatuses = ['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'];
+    return vehicles.filter(vehicle => !inactiveStatuses.includes(vehicle.status));
+  }, [vehicles]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

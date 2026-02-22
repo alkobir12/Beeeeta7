@@ -417,9 +417,9 @@ const PartsInventory = () => {
 
       for (const item of itemsPayload) {
         if (transactionType === 'sale') {
-          await axios.post(`${API_URL}/parts/${item.itemId}/sell`, null, { params: { quantity: item.quantity } });
+          await api.post(`/parts/${item.itemId}/sell`, null, { params: { quantity: item.quantity } });
         } else {
-          await axios.post(`${API_URL}/parts/${item.itemId}/restock`, null, { params: { quantity: item.quantity } });
+          await api.post(`/parts/${item.itemId}/restock`, null, { params: { quantity: item.quantity } });
         }
       }
 

@@ -20,6 +20,7 @@ const CustomerDetails = lazy(() => import("./pages/CustomerDetails"));
 const Technicians = lazy(() => import("./pages/Technicians"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const PartsInventory = lazy(() => import("./pages/PartsInventory"));
+const PartsDashboard = lazy(() => import("./pages/PartsDashboard"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 const Templates = lazy(() => import("./pages/Templates"));
 const InvoiceDesignerStudio = lazy(() => import("./pages/InvoiceDesignerStudio"));
@@ -134,6 +135,7 @@ function App() {
                 <Route path="technicians" element={<Technicians />} />
                 <Route path="suppliers" element={<Suppliers />} />
                 <Route path="parts" element={<PartsInventory />} />
+                <Route path="parts-dashboard" element={<PartsDashboard />} />
                 <Route path="catalog" element={<Navigate to="/parts" replace />} />
                 <Route path="services" element={<ServicesManagement />} />
                 <Route path="templates" element={<Templates />} />

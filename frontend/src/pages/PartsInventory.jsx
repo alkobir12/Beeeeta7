@@ -672,7 +672,7 @@ const PartsInventory = () => {
                     data-testid="transaction-vehicle-select"
                   >
                     <option value="">اختر مركبة</option>
-                    {activeVehicles.map(vehicle => (
+                    {vehicleOptions.map(vehicle => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.plateNumber || vehicle.license_plate || vehicle.id}
                       </option>
@@ -703,9 +703,7 @@ const PartsInventory = () => {
                   data-testid="transaction-account-select"
                 >
                   <option value="">اختر الحساب</option>
-                  {accounts
-                    .filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'))
-                    .map(acc => (
+                  {accountOptions.map(acc => (
                       <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
                     ))}
                 </select>

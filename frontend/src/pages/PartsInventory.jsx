@@ -285,6 +285,8 @@ const PartsInventory = () => {
     setTransactionType(type);
     setSaleMode(type === 'sale' ? 'instant' : 'instant');
     setTransactionVehicleId('');
+    setSelectedPartnerId('');
+    setSelectedAccountCode('');
     if (part) {
       setTransactionItems([
         {
@@ -298,6 +300,12 @@ const PartsInventory = () => {
       setTransactionItems([{ partId: '', name: '', quantity: 1, price: 0 }]);
     }
     loadVehicles();
+    loadAccounts();
+    if (type === 'sale') {
+      loadCustomers();
+    } else {
+      loadSuppliers();
+    }
     setShowTransactionModal(true);
   };
 

@@ -240,6 +240,7 @@ const Operations = () => {
   const customers = customersQuery.data || [];
   const suppliers = suppliersQuery.data || [];
   const vehicles = vehiclesQuery.data || [];
+  const activeVehicles = vehicles.filter((vehicle) => !['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'].includes(vehicle.status));
   const ops = operationsQuery.data || [];
   const visits = visitsQuery.data || [];
 

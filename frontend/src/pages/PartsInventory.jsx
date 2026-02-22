@@ -86,10 +86,15 @@ const PartsInventory = () => {
   const loadParts = async () => {
     try {
       setLoading(true);
-      const response = await partAPI.getAll();
-      setParts(response.data);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      setParts(list);
+      setFilteredParts(list);
     } catch (error) {
       console.error(error);
+      setParts([]);
+      setFilteredParts([]);
     } finally {
       setLoading(false);
     }

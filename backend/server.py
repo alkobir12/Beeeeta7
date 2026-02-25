@@ -1542,9 +1542,18 @@ async def create_supplier(supplier: SupplierCreate):
 
 @api_router.put("/suppliers/{supplier_id}", response_model=Supplier)
 async def update_supplier(supplier_id: str, supplier: SupplierUpdate):
+    global SUPPLIERS_TABLE_AVAILABLE
     upd = {k: v for k, v in supplier.dict().items() if v is not None}
 
     if DB_PROVIDER == "supabase":
+        if not SUPPLIERS_TABLE_AVAILABLE:
+            rows = _mem_read("suppliers")
+            for i, row in enumerate(rows):
+                if row.get("id") == supplier_id:
+                    rows[i] = {**row, **upd}
+                    _mem_write("suppliers", rows)
+                    return Supplier(**rows[i])
+            raise HTTPException(status_code=404, detail="Supplier not found")
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 res = supabase_service.client.table("suppliers").update(upd).eq("id", supplier_id).execute()
@@ -1555,7 +1564,10 @@ async def update_supplier(supplier_id: str, supplier: SupplierUpdate):
         except HTTPException:
             raise
         except Exception as e:
-            print(f"Supabase suppliers update error: {e}")
+            if _is_suppliers_table_missing(e):
+                SUPPLIERS_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase suppliers update error: {e}")
             rows = _mem_read("suppliers")
             for i, row in enumerate(rows):
                 if row.get("id") == supplier_id:

@@ -9,13 +9,14 @@ import uuid
 import os
 
 from models_financial import Account, AccountBase
-from supabase_service import supabase_service
+from supabase_service import SupabaseService
 
 router = APIRouter(prefix="/api/accounts-chart")
 
 DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
 SUPABASE_ACCOUNTS_TABLE = "chart_of_accounts"
 CHART_TABLE_AVAILABLE = True
+supabase_service = SupabaseService()
 
 # قاعدة بيانات مؤقتة (ستُستبدل بـ MongoDB/Supabase)
 accounts_db = []

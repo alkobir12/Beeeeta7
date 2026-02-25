@@ -349,10 +349,8 @@ const PartsInventory = () => {
   const loadModalParts = async () => {
     setLoadingModalParts(true);
     try {
-      const res = await fetch(`${apiBase}/parts`);
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-      console.log('loadModalParts length', list.length);
+      const response = await partAPI.getAll();
+      const list = Array.isArray(response.data) ? response.data : [];
       setModalParts(list);
       if (!parts.length) {
         setParts(list);

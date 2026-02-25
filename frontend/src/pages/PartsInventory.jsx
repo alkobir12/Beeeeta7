@@ -104,11 +104,8 @@ const PartsInventory = () => {
   const loadParts = async () => {
     try {
       setLoading(true);
-      console.log('loadParts start', apiBase);
-      const res = await fetch(`${apiBase}/parts`);
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-      console.log('loadParts done', list.length);
+      const response = await partAPI.getAll();
+      const list = Array.isArray(response.data) ? response.data : [];
       setParts(list);
     } catch (error) {
       console.error(error);

@@ -9,6 +9,7 @@ import { Label } from '../components/ui/label';
 import { useTranslation } from 'react-i18next';
 
 const PartsInventory = () => {
+  const apiBase = `${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api`;
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
@@ -103,7 +104,7 @@ const PartsInventory = () => {
   const loadParts = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
+      const res = await fetch(`${apiBase}/parts`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
       setParts(list);
@@ -297,7 +298,7 @@ const PartsInventory = () => {
   const loadVehicles = async () => {
     setLoadingVehicles(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/vehicles`);
+      const res = await fetch(`${apiBase}/vehicles`);
       const data = await res.json();
       setVehicles(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -310,7 +311,7 @@ const PartsInventory = () => {
   const loadCustomers = async () => {
     setLoadingPartners(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/customers`);
+      const res = await fetch(`${apiBase}/customers`);
       const data = await res.json();
       setCustomers(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -323,7 +324,7 @@ const PartsInventory = () => {
   const loadSuppliers = async () => {
     setLoadingPartners(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/suppliers`);
+      const res = await fetch(`${apiBase}/suppliers`);
       const data = await res.json();
       setSuppliers(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -336,7 +337,7 @@ const PartsInventory = () => {
   const loadAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/accounts-chart`);
+      const res = await fetch(`${apiBase}/accounts-chart`);
       const data = await res.json();
       setAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
     } catch (error) {
@@ -349,7 +350,7 @@ const PartsInventory = () => {
   const loadModalParts = async () => {
     setLoadingModalParts(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
+      const res = await fetch(`${apiBase}/parts`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
       console.log('loadModalParts length', list.length);

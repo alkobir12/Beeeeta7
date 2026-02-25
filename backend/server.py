@@ -1477,15 +1477,20 @@ async def delete_part(part_id: str):
 
 @api_router.get("/suppliers", response_model=List[Supplier])
 async def get_suppliers():
+    global SUPPLIERS_TABLE_AVAILABLE
     if DB_PROVIDER == "supabase":
+        if not SUPPLIERS_TABLE_AVAILABLE:
+            return [Supplier(**r) for r in _mem_read("suppliers")]
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 res = supabase_service.client.table("suppliers").select("*").execute()
                 rows = res.data or []
                 return [Supplier(**r) for r in rows]
         except Exception as e:
-            print(f"Supabase suppliers error: {e}")
-            # fallback to memory storage when table is missing
+            if _is_suppliers_table_missing(e):
+                SUPPLIERS_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase suppliers error: {e}")
             return [Supplier(**r) for r in _mem_read("suppliers")]
         return [Supplier(**r) for r in _mem_read("suppliers")]
 

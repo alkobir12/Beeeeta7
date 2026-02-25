@@ -60,6 +60,21 @@ const PartsInventory = () => {
   }, []);
 
   useEffect(() => {
+    if (showTransactionModal) {
+      loadModalParts();
+      loadAccounts();
+      if (transactionType === 'sale') {
+        loadCustomers();
+      } else {
+        loadSuppliers();
+      }
+      if (saleMode === 'vehicle') {
+        loadVehicles();
+      }
+    }
+  }, [showTransactionModal, transactionType, saleMode]);
+
+  useEffect(() => {
     if (transactionType !== 'sale') {
       setSaleMode('instant');
       setTransactionVehicleId('');

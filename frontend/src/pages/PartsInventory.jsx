@@ -355,7 +355,6 @@ const PartsInventory = () => {
       setModalParts(list);
       if (!parts.length) {
         setParts(list);
-        setFilteredParts(list);
       }
     } catch (error) {
       setModalParts([]);

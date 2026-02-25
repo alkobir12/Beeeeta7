@@ -798,7 +798,7 @@ const PartsInventory = () => {
                     <option value="">اختر الحساب</option>
                     {loadingAccounts && <option value="">جارٍ التحميل...</option>}
                     {accountOptions.map(acc => (
-                      <option key={acc.code} value={acc.code}>{acc.code} - {acc.name}</option>
+                      <option key={acc.id || acc.code} value={acc.id || acc.code}>{acc.code} - {acc.name}</option>
                     ))}
                     {!loadingAccounts && accountOptions.length === 0 && (
                       <option value="">لا توجد حسابات</option>

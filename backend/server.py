@@ -100,6 +100,7 @@ from routes_alkabeer_bot import router as alkabeer_bot_router
 from routes_moltbot import router as moltbot_router
 # Provider mode
 DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
+SUPPLIERS_TABLE_AVAILABLE = True
 supabase_service = SupabaseService()
 
 # Simple file-based storage for memory mode
@@ -181,6 +182,11 @@ def _mem_write(name: str, items: list):
 
     with open(p, "w", encoding="utf-8") as f:
         json.dump(serializable_items, f, ensure_ascii=False, indent=2)
+
+
+def _is_suppliers_table_missing(err: Exception) -> bool:
+    message = str(err)
+    return "PGRST205" in message and "suppliers" in message
 
 
 # MongoDB connection (used when DB_PROVIDER is 'mongo')

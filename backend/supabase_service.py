@@ -342,15 +342,19 @@ class SupabaseService:
     ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
-        q = self.client.table("operations").select("*")
-        if account_id:
-            q = q.eq("account_id", account_id)
-        if type:
-            q = q.eq("type", type)
-        if vehicle_id:
-            q = q.eq("vehicle_id", vehicle_id)
-        res = q.order("created_at", desc=True).execute()
-        rows = res.data or []
+        try:
+            q = self.client.table("operations").select("*")
+            if account_id:
+                q = q.eq("account_id", account_id)
+            if type:
+                q = q.eq("type", type)
+            if vehicle_id:
+                q = q.eq("vehicle_id", vehicle_id)
+            res = q.order("created_at", desc=True).execute()
+            rows = res.data or []
+        except Exception as e:
+            print(f"Supabase operations list error: {e}")
+            return []
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.
         out = []

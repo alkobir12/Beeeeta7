@@ -175,6 +175,7 @@ async def create_account(account: AccountBase):
 @router.put("/{account_id}")
 async def update_account(account_id: str, updates: dict):
     """تحديث حساب"""
+    global CHART_TABLE_AVAILABLE
     _initialize_accounts()
 
     account = next((a for a in accounts_db if a["id"] == account_id), None)
@@ -187,16 +188,41 @@ async def update_account(account_id: str, updates: dict):
         if field in updates:
             account[field] = updates[field]
 
+    if DB_PROVIDER == "supabase" and supabase_service.client and not supabase_service.mock_mode and CHART_TABLE_AVAILABLE:
+        try:
+            supabase_payload = {
+                "name": account.get("name"),
+                "type": account.get("type"),
+                "parent_account": account.get("parentAccount"),
+                "active": account.get("active", True),
+            }
+            supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).update(supabase_payload).eq("id", account_id).execute()
+        except Exception as e:
+            if _is_chart_table_missing(e):
+                CHART_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase accounts-chart update error: {e}")
+
     return {"success": True, "account": account}
 
 
 @router.delete("/{account_id}")
 async def delete_account(account_id: str):
     """حذف حساب"""
+    global CHART_TABLE_AVAILABLE
     _initialize_accounts()
     idx = next((i for i, a in enumerate(accounts_db) if a["id"] == account_id), None)
     if idx is None:
         raise HTTPException(status_code=404, detail="الحساب غير موجود")
+    if DB_PROVIDER == "supabase" and supabase_service.client and not supabase_service.mock_mode and CHART_TABLE_AVAILABLE:
+        try:
+            supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).delete().eq("id", account_id).execute()
+        except Exception as e:
+            if _is_chart_table_missing(e):
+                CHART_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase accounts-chart delete error: {e}")
+
     accounts_db.pop(idx)
     return {"success": True}
 

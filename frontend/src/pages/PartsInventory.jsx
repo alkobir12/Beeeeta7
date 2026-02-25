@@ -367,7 +367,7 @@ const PartsInventory = () => {
     setSaleMode(type === 'sale' ? 'instant' : 'instant');
     setTransactionVehicleId('');
     setSelectedPartnerId('');
-    setSelectedAccountCode('');
+    setSelectedAccountId('');
     if (part) {
       setTransactionItems([
         {
@@ -791,7 +791,7 @@ const PartsInventory = () => {
                   <select
                     className="apple-input"
                     value={selectedAccountCode}
-                    onChange={(e) => setSelectedAccountCode(e.target.value)}
+                    onChange={(e) => setSelectedAccountId(e.target.value)}
                     onFocus={loadAccounts}
                     data-testid="transaction-account-select"
                   >

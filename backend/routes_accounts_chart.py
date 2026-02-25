@@ -100,6 +100,9 @@ def _initialize_accounts():
 @router.get("")
 async def get_accounts():
     """الحصول على جميع الحسابات"""
+    supabase_rows = _fetch_supabase_accounts()
+    if supabase_rows is not None and len(supabase_rows) > 0:
+        return {"accounts": supabase_rows}
     _initialize_accounts()
     return {"accounts": accounts_db}
 

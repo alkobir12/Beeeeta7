@@ -106,6 +106,7 @@ const PartsInventory = () => {
       setLoading(true);
       const response = await partAPI.getAll();
       const list = Array.isArray(response.data) ? response.data : [];
+      console.log('parts loaded', list.length);
       setParts(list);
     } catch (error) {
       console.error(error);

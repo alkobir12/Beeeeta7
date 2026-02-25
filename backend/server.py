@@ -101,6 +101,7 @@ from routes_moltbot import router as moltbot_router
 # Provider mode
 DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
 SUPPLIERS_TABLE_AVAILABLE = True
+SUPPLIERS_TABLE_AVAILABLE = True
 supabase_service = SupabaseService()
 
 # Simple file-based storage for memory mode

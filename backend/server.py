@@ -1594,13 +1594,22 @@ async def update_supplier(supplier_id: str, supplier: SupplierUpdate):
 
 @api_router.delete("/suppliers/{supplier_id}")
 async def delete_supplier(supplier_id: str):
+    global SUPPLIERS_TABLE_AVAILABLE
     if DB_PROVIDER == "supabase":
+        if not SUPPLIERS_TABLE_AVAILABLE:
+            rows = _mem_read("suppliers")
+            filtered = [row for row in rows if row.get("id") != supplier_id]
+            _mem_write("suppliers", filtered)
+            return {"status": "success"}
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 supabase_service.client.table("suppliers").delete().eq("id", supplier_id).execute()
                 return {"status": "success"}
         except Exception as e:
-            print(f"Supabase suppliers delete error: {e}")
+            if _is_suppliers_table_missing(e):
+                SUPPLIERS_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase suppliers delete error: {e}")
             rows = _mem_read("suppliers")
             filtered = [row for row in rows if row.get("id") != supplier_id]
             _mem_write("suppliers", filtered)

@@ -1503,11 +1503,17 @@ async def get_suppliers():
 
 @api_router.post("/suppliers", response_model=Supplier)
 async def create_supplier(supplier: SupplierCreate):
+    global SUPPLIERS_TABLE_AVAILABLE
     payload = supplier.dict()
     payload["id"] = str(uuid.uuid4())
     payload["createdAt"] = datetime.utcnow()
 
     if DB_PROVIDER == "supabase":
+        if not SUPPLIERS_TABLE_AVAILABLE:
+            rows = _mem_read("suppliers")
+            rows.append(payload)
+            _mem_write("suppliers", rows)
+            return Supplier(**payload)
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 supabase_payload = {**payload, "createdAt": payload["createdAt"].isoformat()}
@@ -1515,8 +1521,10 @@ async def create_supplier(supplier: SupplierCreate):
                 row = (res.data or [payload])[0]
                 return Supplier(**row)
         except Exception as e:
-            print(f"Supabase suppliers insert error: {e}")
-            # fallback to memory storage when table is missing
+            if _is_suppliers_table_missing(e):
+                SUPPLIERS_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase suppliers insert error: {e}")
             rows = _mem_read("suppliers")
             rows.append(payload)
             _mem_write("suppliers", rows)

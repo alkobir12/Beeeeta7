@@ -83,6 +83,10 @@ def _fetch_supabase_accounts():
 def _initialize_accounts():
     """تهيئة الحسابات الافتراضية"""
     if not accounts_db:
+        supabase_rows = _fetch_supabase_accounts()
+        if supabase_rows is not None and len(supabase_rows) > 0:
+            accounts_db.extend(supabase_rows)
+            return
         for acc_data in DEFAULT_ACCOUNTS:
             account = Account(
                 id=str(uuid.uuid4()),

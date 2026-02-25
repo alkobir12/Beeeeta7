@@ -352,6 +352,7 @@ const PartsInventory = () => {
     try {
       const response = await partAPI.getAll();
       const list = Array.isArray(response.data) ? response.data : [];
+      console.log('modal parts loaded', list.length);
       setModalParts(list);
       if (!parts.length) {
         setParts(list);

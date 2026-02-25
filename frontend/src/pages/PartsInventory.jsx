@@ -468,7 +468,8 @@ const PartsInventory = () => {
           )
           : (suppliers.find(s => s.id === selectedPartnerId)?.name)
         ) || '',
-        accountId: selectedAccountId,
+        accountId: null,
+        accountingAccountId: selectedAccountId,
         notes: transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع'
       });
 

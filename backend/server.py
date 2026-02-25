@@ -190,6 +190,11 @@ def _is_suppliers_table_missing(err: Exception) -> bool:
     return "PGRST205" in message and "suppliers" in message
 
 
+def _is_suppliers_table_missing(err: Exception) -> bool:
+    message = str(err)
+    return "PGRST205" in message and "suppliers" in message
+
+
 # MongoDB connection (used when DB_PROVIDER is 'mongo')
 mongo_url = os.environ.get("MONGO_URL") if DB_PROVIDER == "mongo" else None
 client = AsyncIOMotorClient(mongo_url) if mongo_url else None

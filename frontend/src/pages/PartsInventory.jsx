@@ -578,7 +578,7 @@ const PartsInventory = () => {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => openTransactionModal('sale')}
+            onClick={() => openTransactionModal()}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
             data-testid="inventory-pos-button"
           >

@@ -6,10 +6,16 @@ Chart of Accounts Routes
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 import uuid
+import os
 
 from models_financial import Account, AccountBase
+from supabase_service import supabase_service
 
 router = APIRouter(prefix="/api/accounts-chart")
+
+DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
+SUPABASE_ACCOUNTS_TABLE = "chart_of_accounts"
+CHART_TABLE_AVAILABLE = True
 
 # قاعدة بيانات مؤقتة (ستُستبدل بـ MongoDB/Supabase)
 accounts_db = []
@@ -34,6 +40,44 @@ DEFAULT_ACCOUNTS = [
     {"code": "5005", "name": "كهرباء وماء", "type": "expense", "balance": 0},
     {"code": "6001", "name": "حسابات الموردين", "type": "liability", "balance": 15000},
 ]
+
+
+def _is_chart_table_missing(err: Exception) -> bool:
+    message = str(err)
+    return "PGRST205" in message and "chart_of_accounts" in message
+
+
+def _map_supabase_account(row: dict) -> dict:
+    return {
+        "id": row.get("id"),
+        "code": row.get("code"),
+        "name": row.get("name"),
+        "type": row.get("type"),
+        "balance": row.get("balance", 0),
+        "parentAccount": row.get("parent_account") or row.get("parentAccount"),
+        "createdAt": row.get("created_at") or row.get("createdAt"),
+        "active": row.get("active", True),
+    }
+
+
+def _fetch_supabase_accounts():
+    global CHART_TABLE_AVAILABLE
+    if DB_PROVIDER != "supabase":
+        return None
+    if not supabase_service.client or supabase_service.mock_mode:
+        return None
+    if not CHART_TABLE_AVAILABLE:
+        return None
+    try:
+        res = supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).select("*").execute()
+        rows = res.data or []
+        return [_map_supabase_account(r) for r in rows]
+    except Exception as e:
+        if _is_chart_table_missing(e):
+            CHART_TABLE_AVAILABLE = False
+        else:
+            print(f"Supabase accounts-chart fetch error: {e}")
+        return None
 
 
 def _initialize_accounts():

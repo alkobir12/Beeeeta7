@@ -106,13 +106,10 @@ const PartsInventory = () => {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
-      console.log('modal parts loaded', list.length);
       setParts(list);
-      setFilteredParts(list);
     } catch (error) {
       console.error(error);
       setParts([]);
-      setFilteredParts([]);
     } finally {
       setLoading(false);
     }

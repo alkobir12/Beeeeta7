@@ -352,6 +352,7 @@ const PartsInventory = () => {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/parts`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
+      console.log('loadModalParts length', list.length);
       setModalParts(list);
       if (!parts.length) {
         setParts(list);

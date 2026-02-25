@@ -790,7 +790,7 @@ const PartsInventory = () => {
                   <label className="block text-sm mb-2">الحساب المحاسبي</label>
                   <select
                     className="apple-input"
-                    value={selectedAccountCode}
+                    value={selectedAccountId}
                     onChange={(e) => setSelectedAccountId(e.target.value)}
                     onFocus={loadAccounts}
                     data-testid="transaction-account-select"

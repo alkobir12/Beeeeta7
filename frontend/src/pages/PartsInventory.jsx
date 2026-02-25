@@ -435,7 +435,7 @@ const PartsInventory = () => {
       toast({ title: 'خطأ', description: 'اختر المورد', variant: 'destructive' });
       return;
     }
-    if (!selectedAccountCode) {
+    if (!selectedAccountId) {
       toast({ title: 'خطأ', description: 'اختر الحساب المحاسبي للعملية', variant: 'destructive' });
       return;
     }
@@ -468,7 +468,7 @@ const PartsInventory = () => {
           )
           : (suppliers.find(s => s.id === selectedPartnerId)?.name)
         ) || '',
-        accountId: selectedAccountCode,
+        accountId: selectedAccountId,
         notes: transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع'
       });
 

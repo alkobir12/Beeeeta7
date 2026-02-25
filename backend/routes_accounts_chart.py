@@ -127,6 +127,7 @@ async def get_account(account_id: str):
 @router.post("")
 async def create_account(account: AccountBase):
     """إنشاء حساب جديد"""
+    global CHART_TABLE_AVAILABLE
     _initialize_accounts()
 
     # التحقق من عدم تكرار الرمز
@@ -143,6 +144,29 @@ async def create_account(account: AccountBase):
         createdAt=datetime.now(),
         active=True,
     )
+
+    if DB_PROVIDER == "supabase" and supabase_service.client and not supabase_service.mock_mode and CHART_TABLE_AVAILABLE:
+        try:
+            supabase_payload = {
+                "id": new_account.id,
+                "code": new_account.code,
+                "name": new_account.name,
+                "type": new_account.type,
+                "parent_account": new_account.parentAccount,
+                "balance": 0,
+                "created_at": new_account.createdAt.isoformat(),
+                "active": True,
+            }
+            res = supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).insert(supabase_payload).execute()
+            row = (res.data or [supabase_payload])[0]
+            mapped = _map_supabase_account(row)
+            accounts_db.append(mapped)
+            return {"success": True, "account": mapped}
+        except Exception as e:
+            if _is_chart_table_missing(e):
+                CHART_TABLE_AVAILABLE = False
+            else:
+                print(f"Supabase accounts-chart insert error: {e}")
 
     accounts_db.append(new_account.dict())
     return {"success": True, "account": new_account}

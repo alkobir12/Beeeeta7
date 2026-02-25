@@ -39,7 +39,7 @@ const PartsInventory = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState('');
-  const [selectedAccountCode, setSelectedAccountCode] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [loadingPartners, setLoadingPartners] = useState(false);

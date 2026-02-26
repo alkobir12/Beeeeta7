@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const resolveBackendBase = () => {
+export const resolveBackendBase = () => {
   const raw = process.env.REACT_APP_BACKEND_URL;
   if (raw && /^https?:\/\//i.test(raw)) {
     return raw.replace(/\/$/, '');

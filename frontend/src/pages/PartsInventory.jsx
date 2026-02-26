@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { partAPI, fileAPI, api, operationsAPI } from '../services/api';
+import { partAPI, fileAPI, api, operationsAPI, resolveBackendBase } from '../services/api';
 import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as ImageIcon, FileSpreadsheet, Camera } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -9,7 +9,7 @@ import { Label } from '../components/ui/label';
 import { useTranslation } from 'react-i18next';
 
 const PartsInventory = () => {
-  const apiBase = `${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api`;
+  const apiBase = `${resolveBackendBase()}/api`;
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { toast } = useToast();
@@ -139,7 +139,7 @@ const PartsInventory = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/import/parts`, {
+      const res = await fetch(`${resolveBackendBase()}/api/import/parts`, {
         method: 'POST',
         body: formData
       });

@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_BASE = `${resolveBackendBase()}/api`;
 
 export const useStitch = () => {
   const [loading, setLoading] = useState(false);

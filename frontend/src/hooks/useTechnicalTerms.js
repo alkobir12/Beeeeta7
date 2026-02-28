@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
+const API_URL = resolveBackendBase() + '/api';
 
 export const useTechnicalTerms = () => {
   const { i18n } = useTranslation();

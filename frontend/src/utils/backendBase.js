@@ -1,7 +1,6 @@
-import { resolveBackendBase } from './backendBase';
 export const resolveBackendBase = () => {
   const raw =
-    (typeof process !== 'undefined' && process.env && resolveBackendBase()) || '';
+    (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) || '';
   if (raw && /^https?:\/\//i.test(raw)) {
     return raw.replace(/\/$/, '');
   }

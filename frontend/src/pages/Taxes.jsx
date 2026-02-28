@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import { 
 import { resolveBackendBase } from '../utils/backendBase';
-  Calculator, 
-  FileText, 
-  DollarSign,
-  Percent,
-  Building,
-  RefreshCw
-} from 'lucide-react';
+import { Calculator, FileText, DollarSign, Percent, Building, RefreshCw } from 'lucide-react';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'

@@ -1,17 +1,5 @@
 import axios from 'axios';
-
-export const resolveBackendBase = () => {
-  const raw = process.env.REACT_APP_BACKEND_URL;
-  if (raw && /^https?:\/\//i.test(raw)) {
-    return raw.replace(/\/$/, '');
-  }
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
-  }
-  return '';
-};
-
-const API_BASE = `${resolveBackendBase()}/api`;
+import { API_BASE, resolveBackendBase } from '../utils/backendBase';
 
 const api = axios.create({
   baseURL: API_BASE,

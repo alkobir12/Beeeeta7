@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
 import { resolveBackendBase } from '../utils/backendBase';
-  FolderTree, 
-  Plus, 
-  Search, 
-  RefreshCw, 
-  ChevronDown, 
+import {
+  FolderTree,
+  Plus,
+  Search,
+  RefreshCw,
+  ChevronDown,
   ChevronRight,
   Edit2,
   Trash2,
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 
 const API_URL = (

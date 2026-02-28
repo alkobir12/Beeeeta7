@@ -7,6 +7,7 @@ import { useToast } from '../hooks/use-toast';
 import VehicleQuickActions from '../components/VehicleQuickActions';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
@@ -24,7 +25,7 @@ const Dashboard = () => {
   const API_URL = (
     process.env.NODE_ENV === 'production'
       ? '/api'
-      : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
+      : `${resolveBackendBase()}/api`.replace('//api', '/api')
   );
   const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID;
   const [totalAR, setTotalAR] = useState(0);
@@ -838,7 +839,7 @@ const Dashboard = () => {
                     const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
                     const invRes = await axios.get(`${API_URL}/invoices`, { params: { vehicleId: selectedVehicle.id } });
                     const invoices = invRes.data || [];

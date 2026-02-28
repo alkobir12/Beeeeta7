@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
+import { resolveBackendBase } from '../utils/backendBase';
   BookOpen, 
   Plus, 
   Search, 
@@ -30,7 +31,7 @@ import {
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
 

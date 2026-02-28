@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const API_URL = `${resolveBackendBase()}/api`;
       
       // Fetch users to simulate login (as per existing logic) with timeout
       const controller = new AbortController();

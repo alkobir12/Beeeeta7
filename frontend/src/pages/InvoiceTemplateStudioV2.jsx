@@ -9,8 +9,9 @@ import {
   Eye, Trash2, Plus, Type, Image as ImageIcon, Table, QrCode
 } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
+const API_URL = `${resolveBackendBase() || ''}/api`.replace('//api','/api');
 
 const A4_WIDTH = 794;
 const A4_HEIGHT = 1123;

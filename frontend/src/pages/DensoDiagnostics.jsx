@@ -7,8 +7,9 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Search, Activity, AlertTriangle, CheckCircle, Info, Gauge, Zap, Droplets, Settings, RefreshCw } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const DensoDiagnostics = () => {
   const [engines, setEngines] = useState([]);

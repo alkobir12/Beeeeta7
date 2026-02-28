@@ -18,11 +18,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import useStitch from '../hooks/useStitch';
 import { useNavigate } from 'react-router-dom';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const Settings = () => {

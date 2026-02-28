@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const ApprovalPublic = () => {
   const { token } = useParams();

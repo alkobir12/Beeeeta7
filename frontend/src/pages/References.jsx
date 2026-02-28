@@ -7,11 +7,12 @@ import { Label } from '../components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { History, Zap, Database, Globe, Table, FileSpreadsheet, Download, Search } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 export default function References(){

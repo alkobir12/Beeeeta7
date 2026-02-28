@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Plus, Trash2, FileText, Download, Eye, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const QuotationGenerator = () => {
   const { i18n } = useTranslation();

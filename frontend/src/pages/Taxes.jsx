@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { 
+import { resolveBackendBase } from '../utils/backendBase';
   Calculator, 
   FileText, 
   DollarSign,
@@ -11,7 +12,7 @@ import {
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const formatCurrency = (amount) => {

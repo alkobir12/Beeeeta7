@@ -4,11 +4,12 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { MessageCircle, Send, X, Loader2, Bot, User } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const CustomerChatbot = ({ vehicleId, vehicleInfo }) => {

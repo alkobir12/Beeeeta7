@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { MessageCircle, X, Send, Minimize2, Maximize2 } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const FloatingAIAssistant = ({ context = 'general', contextData = {} }) => {
   const [isOpen, setIsOpen] = useState(false);

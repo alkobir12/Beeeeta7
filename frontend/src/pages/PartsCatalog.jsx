@@ -3,12 +3,13 @@ import { Package, Filter, Search } from 'lucide-react';
 import axios from 'axios';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import InjectorDiagnostics from './InjectorDiagnosticsV7';
+import { resolveBackendBase } from '../utils/backendBase';
 // Floating assistant disabled: AbuFahad should appear only in Finance pages
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const PartsCatalog = () => {

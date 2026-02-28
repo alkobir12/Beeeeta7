@@ -9,8 +9,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { Type, Image as ImageIcon, User, QrCode, Barcode, Hash } from 'lucide-react';
 import axios from 'axios';
 import '../styles/invoice-studio.css';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
+const API_URL = `${resolveBackendBase() || ''}/api`.replace('//api','/api');
 
 // A4 canvas size approx at 96dpi
 const A4_WIDTH = 794; // px

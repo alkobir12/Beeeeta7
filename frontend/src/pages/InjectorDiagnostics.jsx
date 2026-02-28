@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Activity, CheckCircle, AlertTriangle, FileText, Printer, Save } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const InjectorDiagnostics = () => {
   const { toast } = useToast();

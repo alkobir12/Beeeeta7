@@ -4,11 +4,12 @@ import { ArrowRight, Save, User, Car, Wrench, Plus, Check, Search } from 'lucide
 import { useToast } from '../hooks/use-toast';
 import { vehicleAPI, serviceAPI, technicianAPI, customerAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const NewVehicle = () => {

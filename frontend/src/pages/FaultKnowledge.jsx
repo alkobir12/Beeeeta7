@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../hooks/use-toast';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const FaultKnowledge = () => {
   const { t, i18n } = useTranslation();

@@ -8,11 +8,12 @@ import { Label } from '../components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Progress } from '../components/ui/progress';
 import { useToast } from '../hooks/use-toast';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const chunkSize = 5 * 1024 * 1024; // 5MB per chunk

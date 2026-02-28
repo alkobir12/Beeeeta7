@@ -16,8 +16,9 @@ import OperationCard from '../components/OperationCard';
 import OperationDeleteConfirmDialog from '../components/OperationDeleteConfirmDialog';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const Operations = () => {
   const { t, i18n } = useTranslation();

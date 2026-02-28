@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { Building2, Phone, MapPin, FileText, Save, Upload, Image, X, Sparkles } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API = process.env.NODE_ENV === 'production'
   ? '/api'
-  : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api');
+  : `${resolveBackendBase()}/api`.replace('//api', '/api');
 
 const WorkshopProfile = () => {
   const { toast } = useToast();

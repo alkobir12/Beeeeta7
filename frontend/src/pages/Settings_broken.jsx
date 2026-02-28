@@ -22,8 +22,9 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import MenuEditor from '../components/MenuEditor';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const Settings = () => {
   const { toast } = useToast();

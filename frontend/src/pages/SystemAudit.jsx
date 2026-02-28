@@ -3,6 +3,7 @@ import { Shield, RefreshCw, CheckCircle, AlertTriangle, XCircle, FileText, Downl
 import FinancialCard from '../components/FinancialCard';
 import { useTheme } from '../contexts/ThemeContext';
 import { aiAPI } from '../services/api';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const SystemAudit = () => {
   const { themeName } = useTheme();
@@ -17,7 +18,7 @@ const SystemAudit = () => {
   const runAudit = async () => {
     try {
       setLoading(true);
-      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const API_URL = `${resolveBackendBase()}/api`;
       
       const response = await fetch(`${API_URL}/finance/audit-system?workshop_id=${workshopId}`, {
         method: 'POST'

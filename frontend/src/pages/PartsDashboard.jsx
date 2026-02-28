@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = resolveBackendBase();
 
 const getMonthLabel = (date) => date.toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' });
 

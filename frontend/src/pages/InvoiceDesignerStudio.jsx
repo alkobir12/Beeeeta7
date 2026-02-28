@@ -4,8 +4,9 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { FileDown, Save, Printer, Plus, Type, Image as ImageIcon, Table, Trash2, Settings, Bold, Italic, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
+const API_URL = `${resolveBackendBase() || ''}/api`.replace('//api','/api');
 const A4_WIDTH = 794;
 const A4_HEIGHT = 1123;
 const GRID_SIZE = 10;

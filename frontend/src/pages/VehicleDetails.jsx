@@ -18,9 +18,9 @@ import { formatCurrency } from '../utils/formatters';
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
+    : `${resolveBackendBase()}/api`.replace('//api', '/api')
 );
-const FILE_BASE = process.env.NODE_ENV === 'production' ? '' : (process.env.REACT_APP_BACKEND_URL || '');
+const FILE_BASE = process.env.NODE_ENV === 'production' ? '' : (resolveBackendBase() || '');
 
 // Drag & drop (Liquid layout)
 import {
@@ -40,6 +40,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { userLayoutsAPI } from '../services/userLayoutsAPI';
+import { resolveBackendBase } from '../utils/backendBase';
 
 // --- Helper Components ---
 
@@ -1584,7 +1585,7 @@ const VehicleDetails = () => {
   const API_URL = (
     process.env.NODE_ENV === 'production'
       ? '/api'
-      : `${process.env.REACT_APP_BACKEND_URL}/api`.replace('//api', '/api')
+      : `${resolveBackendBase()}/api`.replace('//api', '/api')
   );
 
   // session/userId now initialized at top of component for layout saving

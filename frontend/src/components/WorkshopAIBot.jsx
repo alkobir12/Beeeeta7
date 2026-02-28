@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Wrench, User, Shield, Zap, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const DEFAULT_DEV_PROMPT = `You are an Autonomous Full-Stack Startup Builder.
 

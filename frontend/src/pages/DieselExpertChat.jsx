@@ -3,8 +3,9 @@ import { Send, Loader2, X, Paperclip, Minimize2, Database, Search, BookOpen, Ext
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const DieselExpertChat = () => {
   const { t, i18n } = useTranslation();

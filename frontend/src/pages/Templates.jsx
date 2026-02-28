@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api','/api');
+const API_URL = `${resolveBackendBase() || ''}/api`.replace('//api','/api');
 
 const Templates = () => {
   const { toast } = useToast();

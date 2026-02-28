@@ -11,11 +11,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DocumentFormDialog from './DocumentFormDialog';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
     ? '/api'
-    : `${process.env.REACT_APP_BACKEND_URL || ''}/api`.replace('//api', '/api')
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
 const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelete }) => {

@@ -8,8 +8,9 @@ import { Activity, CheckCircle, AlertTriangle, Save, FileText, ListChecks, Gauge
 import DraggableGrid from '../components/DraggableGrid';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const InjectorDiagnostics = () => {
   const { toast } = useToast();

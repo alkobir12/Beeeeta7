@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { resolveBackendBase } from '../utils/backendBase';
 
 const GroqAssistant = () => {
   const { i18n } = useTranslation();
@@ -14,8 +15,8 @@ const GroqAssistant = () => {
   const isRTL = lang === 'ar';
 
   const backendUrl =
-    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_BACKEND_URL) ||
-    (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) ||
+    (typeof import.meta !== 'undefined' && import.meta.env && resolveBackendBase()) ||
+    (typeof process !== 'undefined' && process.env && resolveBackendBase()) ||
     '';
 
   useEffect(() => {

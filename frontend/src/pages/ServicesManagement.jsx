@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Search, Plus, Edit, Trash2, Tag, Clock } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../hooks/use-toast';
+import { resolveBackendBase } from '../utils/backendBase';
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API_URL = `${resolveBackendBase()}/api`;
 
 const ServicesManagement = () => {
   const { toast } = useToast();

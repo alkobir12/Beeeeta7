@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { API_BASE, resolveBackendBase } from '../utils/backendBase';
 
+export { API_BASE, resolveBackendBase };
+
 const api = axios.create({
   baseURL: API_BASE,
 });

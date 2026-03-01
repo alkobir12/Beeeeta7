@@ -60,6 +60,7 @@ const PartsInventory = () => {
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',
     quantity: '', minQuantity: '5', supplier: '', image: '', location: ''
   });
+  const partsById = useMemo(() => new Map(parts.map((part) => [part.id, part])), [parts]);
 
   useEffect(() => { loadParts(); }, []);
 
@@ -617,7 +618,6 @@ const PartsInventory = () => {
     const inactiveStatuses = ['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'];
     return vehicles.filter(vehicle => !inactiveStatuses.includes(vehicle.status));
   }, [vehicles]);
-  const partsById = useMemo(() => new Map(parts.map((part) => [part.id, part])), [parts]);
   const accountOptions = useMemo(() => {
     const filtered = accounts.filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'));
     return filtered.length ? filtered : accounts;

@@ -16,7 +16,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from frontend/.env
-BACKEND_URL = "https://liquid-fleet.preview.emergentagent.com/api"
+BACKEND_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

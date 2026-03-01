@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BASE_URL = "https://liquid-fleet.preview.emergentagent.com/api"
+BASE_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

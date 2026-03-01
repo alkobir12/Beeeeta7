@@ -191,7 +191,7 @@
 ## Test Credentials
 - Username: مدير
 - Workshop ID: finmodule-sync
-- API URL: https://liquid-fleet.preview.emergentagent.com
+- API URL: https://liquid-inventory-1.preview.emergentagent.com
 - Groq API Key: configured in backend/.env
 
 ## Key Files

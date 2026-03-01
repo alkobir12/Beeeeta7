@@ -19,7 +19,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://liquid-fleet.preview.emergentagent.com/api"
+BACKEND_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def test_permanent_monitor():

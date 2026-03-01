@@ -20,7 +20,7 @@ import uuid
 import requests
 
 BASE_URL = os.environ.get(
-    "REACT_APP_BACKEND_URL", "https://liquid-fleet.preview.emergentagent.com"
+    "REACT_APP_BACKEND_URL", "https://liquid-inventory-1.preview.emergentagent.com"
 ).rstrip("/")
 WORKSHOP_ID = "finmodule-sync"
 

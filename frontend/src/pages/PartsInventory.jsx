@@ -104,7 +104,7 @@ const PartsInventory = () => {
     }
     setTransactionItems(prev => prev.map(item => {
       if (!item.partId) return item;
-      const selected = parts.find(p => p.id === item.partId);
+      const selected = partsById.get(item.partId);
       if (!selected) return item;
       return {
         ...item,
@@ -113,7 +113,7 @@ const PartsInventory = () => {
           : Number(selected.purchasePrice || item.price || 0)
       };
     }));
-  }, [transactionType, showTransactionModal]);
+  }, [transactionType, showTransactionModal, partsById]);
 
   const loadParts = async () => {
     try {
@@ -426,15 +426,6 @@ const PartsInventory = () => {
     } else {
       setTransactionItems([{ partId: '', name: '', quantity: 1, price: 0 }]);
     }
-    loadParts();
-    loadModalParts();
-    loadVehicles();
-    loadAccounts();
-    if (type === 'sale') {
-      loadCustomers();
-    } else {
-      loadSuppliers();
-    }
     setShowTransactionModal(true);
   };
 
@@ -443,7 +434,7 @@ const PartsInventory = () => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
       if (field === 'partId') {
-        const selected = parts.find(p => p.id === value);
+        const selected = partsById.get(value);
         if (selected) {
           updated[index].name = selected.name;
           updated[index].price = transactionType === 'sale'

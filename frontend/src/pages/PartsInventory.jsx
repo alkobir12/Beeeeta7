@@ -5,7 +5,7 @@ import { partAPI, fileAPI, api, operationsAPI } from '../services/api';
 import { resolveBackendBase } from '../utils/backendBase';
 import { Plus, Upload, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { useTranslation } from 'react-i18next';
 import { InventorySmartOverview } from '../components/inventory/InventorySmartOverview';
@@ -626,6 +626,7 @@ const PartsInventory = () => {
     const inactiveStatuses = ['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'];
     return vehicles.filter(vehicle => !inactiveStatuses.includes(vehicle.status));
   }, [vehicles]);
+  const partsById = useMemo(() => new Map(parts.map((part) => [part.id, part])), [parts]);
   const accountOptions = useMemo(() => {
     const filtered = accounts.filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'));
     return filtered.length ? filtered : accounts;

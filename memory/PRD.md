@@ -22,6 +22,13 @@
 - التحقق من نجاح البناء الإنتاجي (`yarn build`) بدون أي `SyntaxError` في صفحات الضرائب/دليل الحسابات/القيود.
 - التحقق عبر وكيل الاختبار: اختفاء خطأ `resolveBackendBase is not a function` ونجاح تحميل التطبيق وصفحة `/parts`.
 
+### Smart Inventory System + Parts Control Panel (01 Mar 2026)
+- إنشاء بنية Backend جديدة للمخزون الذكي عبر ملفات مستقلة: `smart_inventory_models.py` + `smart_inventory_service.py` + `routes_smart_inventory.py`.
+- إضافة APIs جديدة: `GET /api/inventory/dashboard` و`GET /api/inventory/alerts` و`GET /api/inventory/control-panel` و`GET/POST/PATCH /api/inventory/backorders`.
+- دمج لوحة Snapshot + مركز التنبيهات الذكي داخل `PartsInventory.jsx` عبر مكوّنات منفصلة قابلة لإعادة الاستخدام.
+- إعادة بناء `PartsDashboard.jsx` إلى **Parts Control Panel** مع تحليلات الفئات، أعلى المبيعات، تحذير الهوامش، سجل عمليات القطع، وإدارة backorders كاملة.
+- التحقق بالاختبار: `/app/test_reports/iteration_13.json` (نجاح backend/frontend بنسبة 100%).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -165,6 +172,10 @@
 - `DELETE /api/visits/{id}` - Visit delete
 - `POST /api/notifications/prepare` - WhatsApp deeplink generator
 - `GET/POST /api/operations` - Financial operations
+- `GET /api/inventory/dashboard` - Smart inventory KPI snapshot
+- `GET /api/inventory/alerts` - Smart low/out-of-stock + margin alerts
+- `GET /api/inventory/control-panel` - Advanced parts analytics and category performance
+- `GET/POST/PATCH /api/inventory/backorders` - Backorder management lifecycle
 - `POST /api/moltbot/chat` - AI chat
 
 ---
@@ -177,12 +188,13 @@
 
 ### P1 - High Priority
 - [ ] Integrate Llama 4 (Scout & Maverick) into MoltBot
-- [ ] بدء تنفيذ Smart Inventory architecture (backend classes + APIs + UI) بعد استقرار البنية
+- [x] تنفيذ Smart Inventory architecture (backend classes + APIs + UI)
 
 ### P2 - Medium Priority
 - [ ] Enhance MoltBot with emergent.sh-like capabilities
 - [ ] Add filter/search to service/part selection in visits
 - [ ] General performance improvements
+- [x] إنشاء Parts Control Panel مع backorders + تحليلات متقدمة
 
 ### P3 - Low Priority
 - [ ] quick_actions.subtitle translation visibility
@@ -202,6 +214,10 @@
 ## Key Files
 - `frontend/src/pages/VehicleDetails.jsx` - Visit management + WhatsApp notification
 - `backend/routes_extended.py` - Visit CRUD + WhatsApp notification logic
+- `frontend/src/pages/PartsInventory.jsx` - Inventory UI + Smart Snapshot + Alerts rail
+- `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
+- `backend/routes_smart_inventory.py` - Smart inventory APIs
+- `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -233,3 +249,4 @@
 | 14 Feb 2026 | Accounts manual add fixes (accounts-chart) + defaults |
 | 14 Feb 2026 | OCR scanner for journal entries + manual operations |
 | 01 Mar 2026 | Hotfix: resolved frontend build/runtime crash (resolveBackendBase) + verified /parts load |
+| 01 Mar 2026 | Smart Inventory APIs + Parts Control Panel + Backorder workflow |

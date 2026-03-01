@@ -12,5 +12,19 @@
     "expected_date": null,
     "created_at": "2026-03-01T03:09:33.728601+00:00",
     "updated_at": "2026-03-01T03:09:34.907758+00:00"
+  },
+  {
+    "id": "2f251392-dbdf-4e3e-b0d1-8d38d74cb3dc",
+    "part_id": null,
+    "part_name": "Test Part a8adb74a",
+    "requested_quantity": 5,
+    "customer_name": "عميل اختبار",
+    "customer_phone": "+966555123456",
+    "vehicle_reference": null,
+    "status": "ordered",
+    "note": "تم طلب القطعة من المورد",
+    "expected_date": null,
+    "created_at": "2026-03-01T03:10:52.540028+00:00",
+    "updated_at": "2026-03-01T03:10:54.026904+00:00"
   }
 ]

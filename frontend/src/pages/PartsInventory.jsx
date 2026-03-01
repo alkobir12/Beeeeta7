@@ -8,6 +8,8 @@ import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { useTranslation } from 'react-i18next';
+import { InventorySmartOverview } from '../components/inventory/InventorySmartOverview';
+import { InventoryAlertsRail } from '../components/inventory/InventoryAlertsRail';
 
 const PartsInventory = () => {
   const apiBase = `${resolveBackendBase()}/api`;
@@ -46,6 +48,9 @@ const PartsInventory = () => {
   const [loadingPartners, setLoadingPartners] = useState(false);
   const [modalParts, setModalParts] = useState([]);
   const [loadingModalParts, setLoadingModalParts] = useState(false);
+  const [inventoryDashboard, setInventoryDashboard] = useState(null);
+  const [inventoryAlerts, setInventoryAlerts] = useState([]);
+  const [loadingInventoryIntelligence, setLoadingInventoryIntelligence] = useState(false);
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',
@@ -59,6 +64,10 @@ const PartsInventory = () => {
     loadCustomers();
     loadSuppliers();
     loadAccounts();
+  }, []);
+
+  useEffect(() => {
+    loadInventoryIntelligence();
   }, []);
 
   useEffect(() => {
@@ -113,6 +122,35 @@ const PartsInventory = () => {
       setParts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadInventoryIntelligence = async () => {
+    try {
+      setLoadingInventoryIntelligence(true);
+      const [dashboardRes, alertsRes] = await Promise.all([
+        api.get('/inventory/dashboard'),
+        api.get('/inventory/alerts', { params: { limit: 20 } }),
+      ]);
+      setInventoryDashboard(dashboardRes.data || null);
+      setInventoryAlerts(Array.isArray(alertsRes.data) ? alertsRes.data : []);
+    } catch (error) {
+      setInventoryDashboard(null);
+      setInventoryAlerts([]);
+    } finally {
+      setLoadingInventoryIntelligence(false);
+    }
+  };
+
+  const handleAlertSelection = (alert) => {
+    if (!alert) return;
+    if (alert.part_name) {
+      setSearchQuery(alert.part_name);
+    }
+    if (alert.alert_type === 'out_of_stock') {
+      setStockStatus('out');
+    } else if (alert.alert_type === 'low_stock' || alert.alert_type === 'fast_moving') {
+      setStockStatus('low');
     }
   };
 
@@ -230,6 +268,7 @@ const PartsInventory = () => {
         imported += 1;
       }
       await loadParts();
+      await loadInventoryIntelligence();
       toast({
         title: 'تم الاستيراد',
         description: `تم إضافة ${imported} بند للمخزون بنجاح`,
@@ -264,6 +303,7 @@ const PartsInventory = () => {
       setIsDialogOpen(false);
       resetForm();
       loadParts();
+      loadInventoryIntelligence();
     } catch (error) {
       toast({ title: "Error", description: "Error", variant: 'destructive' });
     }
@@ -275,6 +315,7 @@ const PartsInventory = () => {
       await partAPI.delete(id);
       toast({ title: "Success", description: "Success" });
       loadParts();
+      loadInventoryIntelligence();
     } catch (error) {
       toast({ title: "Error", description: "Error", variant: 'destructive' });
     }
@@ -488,6 +529,7 @@ const PartsInventory = () => {
       });
       setShowTransactionModal(false);
       await loadParts();
+      await loadInventoryIntelligence();
     } catch (error) {
       const detail = error?.response?.data?.detail || 'تعذر حفظ العملية';
       toast({ title: 'خطأ', description: detail, variant: 'destructive' });
@@ -536,7 +578,6 @@ const PartsInventory = () => {
   const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
   const outOfStockCount = parts.filter(p => p.quantity <= 0).length;
   const inventoryValue = parts.reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.sellingPrice || 0)), 0);
-  const alertsParts = parts.filter(p => p.quantity <= p.minQuantity);
   const categories = Array.from(new Set(parts.map(p => p.category).filter(Boolean)));
   const brands = Array.from(new Set(parts.map(p => p.brand).filter(Boolean)));
   const categoryStats = categories.map(cat => {
@@ -885,6 +926,22 @@ const PartsInventory = () => {
           </div>
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4" data-testid="inventory-smart-intelligence-section">
+        <div className="xl:col-span-2">
+          <InventorySmartOverview
+            summary={inventoryDashboard?.summary}
+            topMovers={inventoryDashboard?.top_movers || []}
+            loading={loadingInventoryIntelligence}
+          />
+        </div>
+        <div>
+          <InventoryAlertsRail
+            alerts={inventoryAlerts}
+            onSelectAlert={handleAlertSelection}
+          />
         </div>
       </div>
 

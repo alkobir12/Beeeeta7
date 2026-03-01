@@ -115,6 +115,7 @@
 - معالجة خطأ الاتصال بـ Supabase في جلب العمليات (GET /api/operations) مع fallback لقائمة فارغة بدلاً من 500
 - توحيد بناء روابط الـ API على الواجهة عبر resolveBackendBase لمنع أخطاء الدومين عند ضبط REACT_APP_BACKEND_URL بدون https
 - إصلاح خطأ (resolveBackendBase is not a function) عبر إعادة تصدير الدالة من api.js ليعمل PartsInventory بدون انهيار
+- إصلاح أخطاء build في Taxes/ChartOfAccounts/JournalEntries بسبب استيرادات مكسورة بعد إضافة resolveBackendBase
 ### لوحة تحكم القطع (14 Feb 2026)
 - صفحة جديدة تجمع تحليلات المبيعات والمشتريات وحالة الفواتير
 - جدول عمليات القطع مع فلترة حسب النوع والنطاق

@@ -29,6 +29,12 @@
 - إعادة بناء `PartsDashboard.jsx` إلى **Parts Control Panel** مع تحليلات الفئات، أعلى المبيعات، تحذير الهوامش، سجل عمليات القطع، وإدارة backorders كاملة.
 - التحقق بالاختبار: `/app/test_reports/iteration_13.json` (نجاح backend/frontend بنسبة 100%).
 
+### تحسين الأداء + تقسيم مكونات المخزون (01 Mar 2026)
+- تفكيك `PartsInventory.jsx` إلى مكونات مستقلة: `InventoryStatsCards`, `InventoryFiltersPanel`, `PartInventoryGrid`, `PartsOcrPanel`, `PartsTransactionModal`.
+- تحسين الأداء عبر `useMemo` و`useDeferredValue` لتقليل إعادة الحسابات أثناء البحث/الفلترة.
+- إزالة طلبات الشبكة المكررة عند فتح نافذة العمليات (POS) لتسريع الاستجابة.
+- التحقق عبر الاختبار: `/app/test_reports/iteration_14.json` (Frontend 100% بدون regressions).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -215,6 +221,11 @@
 - `frontend/src/pages/VehicleDetails.jsx` - Visit management + WhatsApp notification
 - `backend/routes_extended.py` - Visit CRUD + WhatsApp notification logic
 - `frontend/src/pages/PartsInventory.jsx` - Inventory UI + Smart Snapshot + Alerts rail
+- `frontend/src/components/inventory/InventoryStatsCards.jsx` - Inventory KPIs cards
+- `frontend/src/components/inventory/InventoryFiltersPanel.jsx` - Search/filters/category quick filters
+- `frontend/src/components/inventory/PartInventoryGrid.jsx` - Parts cards grid (memoized cards)
+- `frontend/src/components/inventory/PartsOcrPanel.jsx` - OCR UI section
+- `frontend/src/components/inventory/PartsTransactionModal.jsx` - POS sale/purchase modal
 - `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
 - `backend/routes_smart_inventory.py` - Smart inventory APIs
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
@@ -250,3 +261,4 @@
 | 14 Feb 2026 | OCR scanner for journal entries + manual operations |
 | 01 Mar 2026 | Hotfix: resolved frontend build/runtime crash (resolveBackendBase) + verified /parts load |
 | 01 Mar 2026 | Smart Inventory APIs + Parts Control Panel + Backorder workflow |
+| 01 Mar 2026 | PartsInventory performance refactor + component decomposition |

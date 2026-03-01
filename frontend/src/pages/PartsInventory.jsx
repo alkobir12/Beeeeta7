@@ -559,36 +559,63 @@ const PartsInventory = () => {
     setIsDialogOpen(true);
   };
 
-  const filteredParts = parts
-    .filter(p => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.trim().toLowerCase();
-      return (
-        (p.name || '').toLowerCase().includes(q) ||
-        (p.partNumber || '').toLowerCase().includes(q) ||
-        (p.category || '').toLowerCase().includes(q)
-      );
-    })
-    .filter(p => !selectedCategory || p.category === selectedCategory)
-    .filter(p => !selectedBrand || p.brand === selectedBrand)
-    .filter(p => {
-      if (!stockStatus) return true;
-      if (stockStatus === 'low') return p.quantity > 0 && p.quantity <= p.minQuantity;
-      if (stockStatus === 'out') return p.quantity === 0;
-      if (stockStatus === 'good') return p.quantity > p.minQuantity;
-      return true;
-    });
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  const lowStockCount = parts.filter(p => p.quantity <= p.minQuantity).length;
-  const outOfStockCount = parts.filter(p => p.quantity <= 0).length;
-  const inventoryValue = parts.reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.sellingPrice || 0)), 0);
-  const categories = Array.from(new Set(parts.map(p => p.category).filter(Boolean)));
-  const brands = Array.from(new Set(parts.map(p => p.brand).filter(Boolean)));
-  const categoryStats = categories.map(cat => {
-    const catParts = parts.filter(p => p.category === cat);
-    const low = catParts.filter(p => p.quantity > 0 && p.quantity <= p.minQuantity).length;
-    return { name: cat, count: catParts.length, low };
-  });
+  const filteredParts = useMemo(() => {
+    return parts
+      .filter((p) => {
+        if (!deferredSearchQuery.trim()) return true;
+        const q = deferredSearchQuery.trim().toLowerCase();
+        return (
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.partNumber || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q)
+        );
+      })
+      .filter((p) => !selectedCategory || p.category === selectedCategory)
+      .filter((p) => !selectedBrand || p.brand === selectedBrand)
+      .filter((p) => {
+        if (!stockStatus) return true;
+        if (stockStatus === 'low') return p.quantity > 0 && p.quantity <= p.minQuantity;
+        if (stockStatus === 'out') return p.quantity === 0;
+        if (stockStatus === 'good') return p.quantity > p.minQuantity;
+        return true;
+      });
+  }, [parts, deferredSearchQuery, selectedCategory, selectedBrand, stockStatus]);
+
+  const lowStockCount = useMemo(
+    () => parts.filter((p) => p.quantity <= p.minQuantity).length,
+    [parts]
+  );
+
+  const outOfStockCount = useMemo(
+    () => parts.filter((p) => p.quantity <= 0).length,
+    [parts]
+  );
+
+  const inventoryValue = useMemo(
+    () => parts.reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.sellingPrice || 0)), 0),
+    [parts]
+  );
+
+  const categories = useMemo(
+    () => Array.from(new Set(parts.map((p) => p.category).filter(Boolean))),
+    [parts]
+  );
+
+  const brands = useMemo(
+    () => Array.from(new Set(parts.map((p) => p.brand).filter(Boolean))),
+    [parts]
+  );
+
+  const categoryStats = useMemo(
+    () => categories.map((cat) => {
+      const catParts = parts.filter((p) => p.category === cat);
+      const low = catParts.filter((p) => p.quantity > 0 && p.quantity <= p.minQuantity).length;
+      return { name: cat, count: catParts.length, low };
+    }),
+    [categories, parts]
+  );
   const currentDate = useMemo(() => new Date().toLocaleDateString('ar-SA', {
     weekday: 'long',
     year: 'numeric',

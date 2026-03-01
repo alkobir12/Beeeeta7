@@ -1,199 +1,422 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import { resolveBackendBase } from '../utils/backendBase';
+import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
+import { api, partAPI } from '../services/api';
+import { Button } from '../components/ui/button';
 
-const API_URL = resolveBackendBase();
+const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
 
-const getMonthLabel = (date) => date.toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' });
+const backorderStatusOptions = [
+  { value: 'all', label: 'الكل' },
+  { value: 'pending', label: 'قيد الانتظار' },
+  { value: 'ordered', label: 'تم الطلب' },
+  { value: 'arrived', label: 'وصلت' },
+  { value: 'cancelled', label: 'ملغية' },
+];
 
 const PartsDashboard = () => {
-  const [operations, setOperations] = useState([]);
-  const [parts, setParts] = useState([]);
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [scopeFilter, setScopeFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [daysFilter, setDaysFilter] = useState(90);
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [backorders, setBackorders] = useState([]);
+  const [backorderStatusFilter, setBackorderStatusFilter] = useState('all');
+  const [loadingBackorders, setLoadingBackorders] = useState(true);
+  const [savingBackorder, setSavingBackorder] = useState(false);
+  const [partsList, setPartsList] = useState([]);
+  const [formData, setFormData] = useState({
+    part_id: '',
+    part_name: '',
+    requested_quantity: 1,
+    customer_name: '',
+    customer_phone: '',
+    vehicle_reference: '',
+    expected_date: '',
+    note: '',
+  });
+
+  const loadControlPanel = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const { data } = await api.get('/inventory/control-panel', { params: { days: daysFilter } });
+      setAnalytics(data || null);
+    } catch (error) {
+      setAnalytics(null);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const loadBackorders = async () => {
+    setLoadingBackorders(true);
+    try {
+      const params = backorderStatusFilter !== 'all' ? { status: backorderStatusFilter } : undefined;
+      const { data } = await api.get('/inventory/backorders', { params });
+      setBackorders(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setBackorders([]);
+    } finally {
+      setLoadingBackorders(false);
+    }
+  };
+
+  const loadParts = async () => {
+    try {
+      const response = await partAPI.getAll();
+      setPartsList(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      setPartsList([]);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [opsRes, partsRes] = await Promise.all([
-          axios.get(`${API_URL}/operations`),
-          axios.get(`${API_URL}/parts`)
-        ]);
-        setOperations(opsRes.data || []);
-        setParts(partsRes.data || []);
-      } catch (error) {
-        setOperations([]);
-        setParts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    loadControlPanel();
+  }, [daysFilter]);
+
+  useEffect(() => {
+    loadBackorders();
+  }, [backorderStatusFilter]);
+
+  useEffect(() => {
+    loadParts();
   }, []);
 
-  const partOperations = useMemo(() => {
-    return operations.filter(op => (op.items || []).some(item => item.itemType === 'part' || item.type === 'part'));
-  }, [operations]);
+  const handleCreateBackorder = async (event) => {
+    event.preventDefault();
+    if (!formData.customer_name.trim()) return;
 
-  const filteredOperations = useMemo(() => {
-    return partOperations.filter(op => {
-      if (typeFilter !== 'all' && op.type !== typeFilter) return false;
-      if (scopeFilter !== 'all' && op.scope !== scopeFilter) return false;
-      return true;
-    });
-  }, [partOperations, typeFilter, scopeFilter]);
+    const selectedPart = partsList.find((part) => part.id === formData.part_id);
+    const resolvedPartName = formData.part_name || selectedPart?.name || '';
+    if (!resolvedPartName) return;
 
-  const totals = useMemo(() => {
-    const sales = partOperations.filter(op => op.type === 'sale');
-    const purchases = partOperations.filter(op => op.type === 'purchase');
-    const totalSales = sales.reduce((sum, op) => sum + Number(op.total || 0), 0);
-    const totalPurchases = purchases.reduce((sum, op) => sum + Number(op.total || 0), 0);
-    const openInvoices = sales.filter(op => op.paymentMethod === 'credit').length;
-    const pendingOrders = purchases.filter(op => op.paymentMethod === 'credit').length;
-    return { totalSales, totalPurchases, openInvoices, pendingOrders };
-  }, [partOperations]);
+    try {
+      setSavingBackorder(true);
+      await api.post('/inventory/backorders', {
+        part_id: formData.part_id || null,
+        part_name: resolvedPartName,
+        requested_quantity: Number(formData.requested_quantity || 1),
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone || null,
+        vehicle_reference: formData.vehicle_reference || null,
+        expected_date: formData.expected_date || null,
+        note: formData.note || null,
+      });
+      setFormData({
+        part_id: '',
+        part_name: '',
+        requested_quantity: 1,
+        customer_name: '',
+        customer_phone: '',
+        vehicle_reference: '',
+        expected_date: '',
+        note: '',
+      });
+      await Promise.all([loadBackorders(), loadControlPanel()]);
+    } finally {
+      setSavingBackorder(false);
+    }
+  };
 
-  const monthlyTrend = useMemo(() => {
-    const now = new Date();
-    const months = Array.from({ length: 6 }).map((_, idx) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - idx, 1);
-      return {
-        key: `${date.getFullYear()}-${date.getMonth()}`,
-        label: getMonthLabel(date),
-        sales: 0,
-        purchases: 0,
-      };
-    }).reverse();
+  const updateBackorderStatus = async (backorderId, status) => {
+    await api.patch(`/inventory/backorders/${backorderId}/status`, { status });
+    await Promise.all([loadBackorders(), loadControlPanel()]);
+  };
 
-    partOperations.forEach(op => {
-      if (!op.date) return;
-      const date = new Date(op.date);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      const bucket = months.find(m => m.key === key);
-      if (!bucket) return;
-      if (op.type === 'sale') bucket.sales += Number(op.total || 0);
-      if (op.type === 'purchase') bucket.purchases += Number(op.total || 0);
-    });
-
-    return months;
-  }, [partOperations]);
-
-  if (loading) {
-    return (
-      <div className="p-8 text-slate-300" data-testid="parts-dashboard-loading">جارٍ التحميل...</div>
-    );
-  }
+  const overview = analytics?.overview || {};
+  const cards = useMemo(
+    () => [
+      { key: 'sales', label: 'مبيعات القطع', value: formatCurrency(overview.sales_total), icon: TrendingUp, color: '#22c55e' },
+      { key: 'purchases', label: 'مشتريات القطع', value: formatCurrency(overview.purchases_total), icon: ShoppingCart, color: '#f59e0b' },
+      { key: 'profit', label: 'ربح تقديري', value: formatCurrency(overview.gross_profit_estimate), icon: BarChart3, color: '#38bdf8' },
+      { key: 'low', label: 'منخفض المخزون', value: overview.low_stock_count || 0, icon: AlertTriangle, color: '#f97316' },
+      { key: 'out', label: 'نافد المخزون', value: overview.out_of_stock_count || 0, icon: Boxes, color: '#ef4444' },
+      { key: 'parts', label: 'إجمالي الأصناف', value: overview.total_parts || 0, icon: ClipboardList, color: '#a78bfa' },
+    ],
+    [overview]
+  );
 
   return (
-    <div className="p-6 space-y-6" data-testid="parts-dashboard-page">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-6 space-y-6" data-testid="parts-control-panel-page">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">لوحة تحكم القطع</h1>
-          <p className="text-slate-400">عرض عمليات البيع والشراء والطلبات المرتبطة بالقطع</p>
+          <h1 className="text-2xl font-bold text-white" data-testid="parts-control-panel-title">Parts Control Panel</h1>
+          <p className="text-slate-400" data-testid="parts-control-panel-subtitle">
+            تحليلات ذكية للمبيعات والمخزون وإدارة backorders من شاشة واحدة
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             className="filter-select"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            data-testid="parts-dashboard-type-filter"
+            value={daysFilter}
+            onChange={(e) => setDaysFilter(Number(e.target.value))}
+            data-testid="parts-control-days-filter"
           >
-            <option value="all">كل العمليات</option>
-            <option value="sale">مبيعات قطع</option>
-            <option value="purchase">مشتريات قطع</option>
+            <option value={30}>آخر 30 يوم</option>
+            <option value={60}>آخر 60 يوم</option>
+            <option value={90}>آخر 90 يوم</option>
+            <option value={180}>آخر 180 يوم</option>
           </select>
-          <select
-            className="filter-select"
-            value={scopeFilter}
-            onChange={(e) => setScopeFilter(e.target.value)}
-            data-testid="parts-dashboard-scope-filter"
+          <Button
+            type="button"
+            variant="outline"
+            className="bg-white/10 text-white border-white/20"
+            onClick={() => Promise.all([loadControlPanel(), loadBackorders()])}
+            data-testid="parts-control-refresh-button"
           >
-            <option value="all">كل النطاقات</option>
-            <option value="vehicle">مركبة</option>
-            <option value="workshop">ورشة</option>
-          </select>
+            <RefreshCw size={16} className="ml-1" /> تحديث
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#33b5e5' }}>
-          <p className="text-sm text-slate-300">إجمالي المبيعات</p>
-          <p className="text-2xl font-bold text-white" data-testid="parts-dashboard-total-sales">{totals.totalSales.toLocaleString()} ر.س</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ff8800' }}>
-          <p className="text-sm text-slate-300">إجمالي المشتريات</p>
-          <p className="text-2xl font-bold text-white" data-testid="parts-dashboard-total-purchases">{totals.totalPurchases.toLocaleString()} ر.س</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ffbb33' }}>
-          <p className="text-sm text-slate-300">فواتير مفتوحة</p>
-          <p className="text-2xl font-bold text-white" data-testid="parts-dashboard-open-invoices">{totals.openInvoices}</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ff4444' }}>
-          <p className="text-sm text-slate-300">طلبات شراء معلقة</p>
-          <p className="text-2xl font-bold text-white" data-testid="parts-dashboard-pending-orders">{totals.pendingOrders}</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" data-testid="parts-control-overview-cards">
+        {cards.map((card) => (
+          <div key={card.key} className="glass-card p-5 border-t-4" style={{ borderColor: card.color }} data-testid={`parts-control-card-${card.key}`}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-300">{card.label}</p>
+              <card.icon size={18} style={{ color: card.color }} />
+            </div>
+            <p className="text-2xl font-bold text-white" data-testid={`parts-control-card-value-${card.key}`}>{card.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="glass-card p-5">
-        <h2 className="text-lg font-semibold text-white mb-3">تحليل المبيعات والمشتريات (آخر 6 أشهر)</h2>
-        <div className="space-y-3">
-          {monthlyTrend.map(month => (
-            <div key={month.key} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-              <div className="text-slate-300">{month.label}</div>
-              <div className="md:col-span-3">
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-                  <div className="h-full" style={{ width: `${Math.min((month.sales / (totals.totalSales || 1)) * 100, 100)}%`, background: '#33b5e5' }} />
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full" style={{ width: `${Math.min((month.purchases / (totals.totalPurchases || 1)) * 100, 100)}%`, background: '#ff8800' }} />
-                </div>
-                <div className="text-xs text-slate-400 mt-1">مبيعات: {month.sales.toLocaleString()} ر.س | مشتريات: {month.purchases.toLocaleString()} ر.س</div>
+      {loadingAnalytics && (
+        <div className="glass-card p-5 text-slate-300 flex items-center gap-2" data-testid="parts-control-loading">
+          <Loader2 className="animate-spin" size={16} /> جاري تحميل التحليلات...
+        </div>
+      )}
+
+      {!loadingAnalytics && analytics && (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-kpis-section">
+            <div className="glass-card p-4" data-testid="parts-control-top-selling-card">
+              <h2 className="text-white font-semibold mb-3">الأكثر مبيعًا</h2>
+              <div className="space-y-2">
+                {(analytics.top_selling_parts || []).slice(0, 8).map((part) => (
+                  <div key={part.part_id} className="flex items-center justify-between text-sm" data-testid={`parts-control-top-selling-${part.part_id}`}>
+                    <span className="text-slate-200">{part.part_name}</span>
+                    <span className="text-cyan-300">{part.sold_quantity} قطعة</span>
+                  </div>
+                ))}
+                {!(analytics.top_selling_parts || []).length && (
+                  <p className="text-slate-400 text-sm" data-testid="parts-control-top-selling-empty">لا توجد بيانات مبيعات كافية</p>
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="glass-card p-5">
-        <h2 className="text-lg font-semibold text-white mb-3">آخر عمليات القطع</h2>
-        <div className="overflow-auto">
-          <table className="w-full text-sm text-right">
-            <thead className="text-slate-400">
-              <tr>
-                <th className="py-2">التاريخ</th>
-                <th className="py-2">النوع</th>
-                <th className="py-2">النطاق</th>
-                <th className="py-2">الطرف</th>
-                <th className="py-2">الإجمالي</th>
-                <th className="py-2">الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOperations.map(op => (
-                <tr key={op.id} className="border-t border-white/10 text-slate-200" data-testid={`parts-dashboard-operation-${op.id}`}>
-                  <td className="py-2">{op.date || op.createdAt || '-'}</td>
-                  <td className="py-2">{op.type === 'sale' ? 'بيع' : op.type === 'purchase' ? 'شراء' : op.type}</td>
-                  <td className="py-2">{op.scope === 'vehicle' ? 'مركبة' : 'ورشة'}</td>
-                  <td className="py-2">{op.partnerName || '-'}</td>
-                  <td className="py-2">{Number(op.total || 0).toLocaleString()} ر.س</td>
-                  <td className="py-2">
-                    <span className="px-2 py-1 rounded-full text-xs" style={{
-                      background: op.paymentMethod === 'credit' ? '#ffbb3320' : '#00C85120',
-                      color: op.paymentMethod === 'credit' ? '#ffbb33' : '#00C851'
-                    }}>
-                      {op.paymentMethod === 'credit' ? 'بانتظار الدفع' : 'مدفوع'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {!filteredOperations.length && (
+            <div className="glass-card p-4" data-testid="parts-control-margin-watchlist-card">
+              <h2 className="text-white font-semibold mb-3">تحذير الهوامش</h2>
+              <div className="space-y-2">
+                {(analytics.margin_watchlist || []).slice(0, 8).map((part) => (
+                  <div key={part.part_id} className="flex items-center justify-between text-sm" data-testid={`parts-control-margin-item-${part.part_id}`}>
+                    <span className="text-slate-200">{part.part_name}</span>
+                    <span className="text-amber-300">{part.margin_ratio}%</span>
+                  </div>
+                ))}
+                {!(analytics.margin_watchlist || []).length && (
+                  <p className="text-slate-400 text-sm" data-testid="parts-control-margin-empty">لا توجد قطع بهوامش خطرة</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card p-4 overflow-auto" data-testid="parts-control-category-performance-card">
+            <h2 className="text-white font-semibold mb-3">أداء الفئات</h2>
+            <table className="w-full text-sm text-right">
+              <thead className="text-slate-400 border-b border-white/10">
                 <tr>
-                  <td colSpan="6" className="py-4 text-center text-slate-400">لا توجد عمليات</td>
+                  <th className="py-2">الفئة</th>
+                  <th className="py-2">عدد الأصناف</th>
+                  <th className="py-2">المباع</th>
+                  <th className="py-2">الإيراد</th>
+                  <th className="py-2">منخفض المخزون</th>
                 </tr>
+              </thead>
+              <tbody>
+                {(analytics.category_performance || []).map((row) => (
+                  <tr key={row.category} className="border-b border-white/5 text-slate-200" data-testid={`parts-control-category-row-${row.category}`}>
+                    <td className="py-2">{row.category}</td>
+                    <td className="py-2">{row.stock_items}</td>
+                    <td className="py-2">{row.sold_quantity}</td>
+                    <td className="py-2">{formatCurrency(row.revenue)}</td>
+                    <td className="py-2">{row.low_stock_items}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="glass-card p-4 overflow-auto" data-testid="parts-control-recent-operations-card">
+            <h2 className="text-white font-semibold mb-3">آخر عمليات القطع</h2>
+            <table className="w-full text-sm text-right">
+              <thead className="text-slate-400 border-b border-white/10">
+                <tr>
+                  <th className="py-2">التاريخ</th>
+                  <th className="py-2">النوع</th>
+                  <th className="py-2">الشريك</th>
+                  <th className="py-2">الإجمالي</th>
+                  <th className="py-2">الدفع</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(analytics.recent_part_operations || []).map((op) => (
+                  <tr key={op.id} className="border-b border-white/5 text-slate-200" data-testid={`parts-control-recent-op-${op.id}`}>
+                    <td className="py-2">{new Date(op.date).toLocaleDateString('ar-SA')}</td>
+                    <td className="py-2">{op.type === 'sale' ? 'بيع' : 'شراء'}</td>
+                    <td className="py-2">{op.partner_name || '-'}</td>
+                    <td className="py-2">{formatCurrency(op.total)}</td>
+                    <td className="py-2">{op.payment_method === 'credit' ? 'آجل' : 'نقدي'}</td>
+                  </tr>
+                ))}
+                {!(analytics.recent_part_operations || []).length && (
+                  <tr>
+                    <td colSpan={5} className="py-4 text-center text-slate-400" data-testid="parts-control-recent-op-empty">لا توجد عمليات خلال الفترة المحددة</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-backorders-section">
+        <form className="glass-card p-4 space-y-3" onSubmit={handleCreateBackorder} data-testid="parts-control-backorder-form">
+          <h2 className="text-white font-semibold">إنشاء طلب Backorder</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">القطعة</label>
+              <select
+                className="apple-input"
+                value={formData.part_id}
+                onChange={(e) => {
+                  const selected = partsList.find((part) => part.id === e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    part_id: e.target.value,
+                    part_name: selected?.name || prev.part_name,
+                  }));
+                }}
+                data-testid="parts-control-backorder-part-select"
+              >
+                <option value="">اختيار من المخزون (اختياري)</option>
+                {partsList.map((part) => (
+                  <option key={part.id} value={part.id}>{part.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">اسم القطعة</label>
+              <input
+                className="apple-input"
+                value={formData.part_name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, part_name: e.target.value }))}
+                data-testid="parts-control-backorder-part-name-input"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">الكمية المطلوبة</label>
+              <input
+                type="number"
+                min={1}
+                className="apple-input"
+                value={formData.requested_quantity}
+                onChange={(e) => setFormData((prev) => ({ ...prev, requested_quantity: Number(e.target.value) }))}
+                data-testid="parts-control-backorder-quantity-input"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">اسم العميل</label>
+              <input
+                className="apple-input"
+                value={formData.customer_name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, customer_name: e.target.value }))}
+                data-testid="parts-control-backorder-customer-name-input"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">رقم العميل</label>
+              <input
+                className="apple-input"
+                value={formData.customer_phone}
+                onChange={(e) => setFormData((prev) => ({ ...prev, customer_phone: e.target.value }))}
+                data-testid="parts-control-backorder-customer-phone-input"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">تاريخ متوقع للوصول</label>
+              <input
+                type="date"
+                className="apple-input"
+                value={formData.expected_date}
+                onChange={(e) => setFormData((prev) => ({ ...prev, expected_date: e.target.value }))}
+                data-testid="parts-control-backorder-expected-date-input"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">ملاحظات</label>
+            <textarea
+              className="apple-input min-h-[72px]"
+              value={formData.note}
+              onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
+              data-testid="parts-control-backorder-note-input"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={savingBackorder}
+            className="apple-button"
+            data-testid="parts-control-backorder-submit-button"
+          >
+            {savingBackorder ? 'جاري الحفظ...' : 'حفظ الطلب'}
+          </Button>
+        </form>
+
+        <div className="glass-card p-4" data-testid="parts-control-backorders-list-card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-white font-semibold">قائمة طلبات Backorder</h2>
+            <select
+              className="filter-select"
+              value={backorderStatusFilter}
+              onChange={(e) => setBackorderStatusFilter(e.target.value)}
+              data-testid="parts-control-backorder-status-filter"
+            >
+              {backorderStatusOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          {loadingBackorders ? (
+            <p className="text-slate-400 text-sm" data-testid="parts-control-backorders-loading">جاري تحميل الطلبات...</p>
+          ) : (
+            <div className="space-y-2 max-h-[420px] overflow-auto" data-testid="parts-control-backorders-list">
+              {backorders.map((order) => (
+                <div key={order.id} className="rounded-xl bg-white/5 p-3" data-testid={`parts-control-backorder-item-${order.id}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-white text-sm font-medium" data-testid={`parts-control-backorder-part-${order.id}`}>{order.part_name}</p>
+                      <p className="text-xs text-slate-400" data-testid={`parts-control-backorder-meta-${order.id}`}>
+                        {order.customer_name} • كمية {order.requested_quantity}
+                      </p>
+                    </div>
+                    <select
+                      className="apple-input h-9 text-sm"
+                      value={order.status}
+                      onChange={(e) => updateBackorderStatus(order.id, e.target.value)}
+                      data-testid={`parts-control-backorder-status-select-${order.id}`}
+                    >
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="ordered">تم الطلب</option>
+                      <option value="arrived">وصلت</option>
+                      <option value="cancelled">ملغية</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {!backorders.length && (
+                <p className="text-slate-400 text-sm" data-testid="parts-control-backorders-empty">لا توجد طلبات مطابقة</p>
               )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

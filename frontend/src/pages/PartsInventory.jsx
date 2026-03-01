@@ -813,320 +813,52 @@ const PartsInventory = () => {
           />
         </div>
       </div>
+      <PartsOcrPanel
+        ocrPreview={ocrPreview}
+        ocrError={ocrError}
+        ocrResult={ocrResult}
+        ocrLoading={ocrLoading}
+        ocrImporting={ocrImporting}
+        onFileChange={handleOcrFileChange}
+        onRun={runOcr}
+        onImport={importOcrItems}
+      />
 
+      <InventoryStatsCards
+        partsCount={parts.length}
+        lowStockCount={lowStockCount}
+        outOfStockCount={outOfStockCount}
+        inventoryValue={inventoryValue}
+      />
 
+      <InventoryFiltersPanel
+        searchQuery={searchQuery}
+        selectedCategory={selectedCategory}
+        selectedBrand={selectedBrand}
+        stockStatus={stockStatus}
+        categories={categories}
+        brands={brands}
+        categoryStats={categoryStats}
+        outOfStockCount={outOfStockCount}
+        lowStockCount={lowStockCount}
+        onSearchChange={setSearchQuery}
+        onCategoryChange={setSelectedCategory}
+        onBrandChange={setSelectedBrand}
+        onStockStatusChange={setStockStatus}
+        onResetFilters={handleResetFilters}
+        onCategoryQuickFilter={setSelectedCategory}
+        onOutFilter={() => setStockStatus('out')}
+        onLowFilter={() => setStockStatus('low')}
+      />
 
-      {/* OCR Invoice */}
-      <div className="apple-card p-5 mb-4" data-testid="parts-ocr-card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">OCR فاتورة قطع الغيار</h3>
-            <p className="text-sm text-gray-500">ارفع صورة الفاتورة لاستخراج البنود تلقائياً</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <label className="apple-button flex items-center gap-2 cursor-pointer">
-              <Camera size={16} />
-              <span>التقاط بالكاميرا</span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleOcrFileChange}
-                data-testid="parts-ocr-camera-input"
-              />
-            </label>
-            <label className="apple-button flex items-center gap-2 cursor-pointer">
-              <Upload size={16} />
-              <span>رفع ملف</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleOcrFileChange}
-                data-testid="parts-ocr-file-input"
-              />
-            </label>
-            <Button onClick={runOcr} disabled={ocrLoading} data-testid="parts-ocr-run-button">
-              {ocrLoading ? 'جاري القراءة...' : 'تشغيل OCR'}
-            </Button>
-          </div>
-        </div>
-
-        {ocrPreview && (
-          <div className="mt-4">
-            <img
-              src={ocrPreview}
-              alt="OCR Preview"
-              className="max-h-56 rounded-xl border border-gray-200"
-              data-testid="parts-ocr-preview"
-            />
-          </div>
-        )}
-
-        {ocrError && (
-          <div className="mt-3 text-sm text-red-600" data-testid="parts-ocr-error">
-            {ocrError}
-          </div>
-        )}
-
-        {ocrResult && (
-          <div className="mt-4 space-y-3" data-testid="parts-ocr-result">
-            <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-              <span data-testid="parts-ocr-vendor">المورد: {ocrResult.vendor || 'غير محدد'}</span>
-              <span data-testid="parts-ocr-invoice">الفاتورة: {ocrResult.invoice_number || '—'}</span>
-              <span data-testid="parts-ocr-date">التاريخ: {ocrResult.date || '—'}</span>
-              <span data-testid="parts-ocr-tax">الرقم الضريبي: {ocrResult.tax_number || '—'}</span>
-            </div>
-            <div className="overflow-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600">
-                  <tr>
-                    <th className="p-2 text-right">رقم القطعة</th>
-                    <th className="p-2 text-right">الوصف</th>
-                    <th className="p-2 text-right">الكمية</th>
-                    <th className="p-2 text-right">سعر الوحدة</th>
-                    <th className="p-2 text-right">الإجمالي</th>
-                    <th className="p-2 text-right">الثقة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(ocrResult.items || []).map((item, idx) => {
-                    const confidence = typeof item.confidence === 'number' ? item.confidence : null;
-                    const isLow = confidence !== null && confidence < 0.6;
-                    return (
-                      <tr
-                        key={`${item.part_number}-${idx}`}
-                        className={`border-b ${isLow ? 'bg-red-50' : ''}`}
-                        data-testid={`parts-ocr-item-${idx}`}
-                      >
-                        <td className="p-2">{item.part_number || '—'}</td>
-                        <td className="p-2">{item.description || '—'}</td>
-                        <td className="p-2">{item.quantity || 1}</td>
-                        <td className="p-2">{item.unit_price || '—'}</td>
-                        <td className="p-2">{item.total || '—'}</td>
-                        <td className="p-2">{confidence !== null ? `${Math.round(confidence * 100)}%` : '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-              <span data-testid="parts-ocr-subtotal">المجموع: {ocrResult?.totals?.subtotal || '—'}</span>
-              <span data-testid="parts-ocr-tax-total">الضريبة: {ocrResult?.totals?.tax || '—'}</span>
-              <span data-testid="parts-ocr-grand-total">الإجمالي النهائي: {ocrResult?.totals?.grand_total || '—'}</span>
-            </div>
-            {!!ocrResult?.items?.length && (
-              <Button
-                onClick={importOcrItems}
-                disabled={ocrImporting}
-                data-testid="parts-ocr-import-button"
-              >
-                {ocrImporting ? 'جاري الاستيراد...' : 'استيراد البنود للمخزون'}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#33b5e5' }}>
-          <p className="text-sm text-slate-300 mb-1">إجمالي القطع</p>
-          <p className="text-2xl font-bold text-white">{parts.length}</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ffbb33' }}>
-          <p className="text-sm text-slate-300 mb-1">منخفضة المخزون</p>
-          <p className="text-2xl font-bold text-white">{lowStockCount}</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#ff4444' }}>
-          <p className="text-sm text-slate-300 mb-1">نافدة</p>
-          <p className="text-2xl font-bold text-white">{outOfStockCount}</p>
-        </div>
-        <div className="glass-card p-5 border-t-4" style={{ borderColor: '#00C851' }}>
-          <p className="text-sm text-slate-300 mb-1">قيمة المخزون</p>
-          <p className="text-2xl font-bold text-white">{inventoryValue.toLocaleString()} ر.س</p>
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="filter-bar mb-6">
-        <input
-          className="filter-input flex-1"
-          placeholder="🔍 بحث عن قطعة..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          data-testid="parts-search-input"
-        />
-        <select
-          className="filter-select"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          data-testid="parts-category-filter"
-        >
-          <option value="">كل الفئات</option>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <select
-          className="filter-select"
-          value={selectedBrand}
-          onChange={(e) => setSelectedBrand(e.target.value)}
-          data-testid="parts-brand-filter"
-        >
-          <option value="">كل الماركات</option>
-          {brands.map(brand => (
-            <option key={brand} value={brand}>{brand}</option>
-          ))}
-        </select>
-        <select
-          className="filter-select"
-          value={stockStatus}
-          onChange={(e) => setStockStatus(e.target.value)}
-          data-testid="parts-stock-filter"
-        >
-          <option value="">كل الحالات</option>
-          <option value="good">مخزون جيد</option>
-          <option value="low">منخفض المخزون</option>
-          <option value="out">نافد</option>
-        </select>
-        <button
-          className="px-4 py-2 rounded-lg bg-white/10 text-white"
-          onClick={handleResetFilters}
-          data-testid="parts-reset-filters"
-        >
-          إعادة تعيين
-        </button>
-      </div>
-
-      <div className="glass-card p-4 mb-6">
-        <h3 className="text-lg font-semibold mb-3">📊 تصنيف المخزون</h3>
-        <div className="space-y-2">
-          {categoryStats.map(cat => (
-            <button
-              key={cat.name}
-              onClick={() => setSelectedCategory(cat.name)}
-              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
-              data-testid={`inventory-category-${cat.name}`}
-            >
-              <span className="text-white">{cat.name}</span>
-              <span className="text-xs text-slate-300">{cat.count} قطع • {cat.low} منخفض</span>
-            </button>
-          ))}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <button
-              onClick={() => setStockStatus('out')}
-              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
-              data-testid="inventory-filter-out"
-            >
-              <span className="text-white">القطع النافدة</span>
-              <span className="text-xs text-red-300">{outOfStockCount}</span>
-            </button>
-            <button
-              onClick={() => setStockStatus('low')}
-              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-lg px-3 py-2"
-              data-testid="inventory-filter-low"
-            >
-              <span className="text-white">القطع منخفضة المخزون</span>
-              <span className="text-xs text-yellow-300">{lowStockCount}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div data-testid="parts-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredParts.map(part => {
-            const statusColor = part.quantity === 0 ? '#ff4444' : part.quantity <= part.minQuantity ? '#ffbb33' : '#00C851';
-            const statusText = part.quantity === 0 ? 'نافد' : part.quantity <= part.minQuantity ? 'منخفض' : 'جيد';
-            const stockPercent = Math.min((part.quantity / Math.max(part.minQuantity, 1)) * 100, 100);
-            return (
-            <div data-testid={`part-card-${part.id}`} key={part.id} className="glass-card p-0 overflow-hidden group transition-all" style={{ borderColor: statusColor }}>
-              <div className="h-40 bg-white/5 relative">
-                {part.image ? (
-                  <img src={part.image} alt={part.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <ImageIcon size={40} />
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm" style={{ background: `${statusColor}30`, color: statusColor }}>
-                  <AlertTriangle size={12} />
-                  <span>{statusText}</span>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-bold text-white truncate" title={part.name}>{part.name}</h3>
-                    <p className="text-xs text-slate-400 font-mono">{part.partNumber || '-'}</p>
-                  </div>
-                  <span className="text-xs bg-white/10 px-2 py-1 rounded text-slate-200">{part.category || '-'}</span>
-                </div>
-
-                <div className="space-y-1 text-sm mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">الكمية</span>
-                    <span className="font-medium text-white">{part.quantity}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">سعر الشراء</span>
-                    <span className="text-white">{part.purchasePrice}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">سعر البيع</span>
-                    <span className="font-bold text-emerald-300">{part.sellingPrice}</span>
-                  </div>
-                </div>
-
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
-                  <div className="h-full" style={{ width: `${stockPercent}%`, background: statusColor }} />
-                </div>
-
-                <div className="flex gap-2 pt-2 border-t border-white/10 flex-wrap">
-                  <button
-                    onClick={() => handleSellPart(part)}
-                    className="flex-1 py-2 text-sm text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    data-testid={`part-sell-${part.id}`}
-                  >
-                    بيع
-                  </button>
-                  <button
-                    onClick={() => handleRestockPart(part)}
-                    className="flex-1 py-2 text-sm text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    data-testid={`part-restock-${part.id}`}
-                  >
-                    شراء
-                  </button>
-                  <button
-                    onClick={() => openEditDialog(part)}
-                    className="flex-1 py-2 text-sm text-slate-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    data-testid={`part-edit-${part.id}`}
-                  >
-                    <Edit size={14} /> تعديل
-                  </button>
-                  <button
-                    onClick={() => handleDelete(part.id)}
-                    className="flex-1 py-2 text-sm text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    data-testid={`part-delete-${part.id}`}
-                  >
-                    <Trash2 size={14} /> حذف
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-          })}
-        </div>
-      )}
+      <PartInventoryGrid
+        loading={loading}
+        parts={filteredParts}
+        onSell={handleSellPart}
+        onRestock={handleRestockPart}
+        onEdit={openEditDialog}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };

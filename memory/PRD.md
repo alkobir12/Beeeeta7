@@ -17,6 +17,11 @@
 
 ## What's Been Implemented
 
+### إصلاح عاجل لانهيار Frontend Build + Runtime (01 Mar 2026)
+- معالجة سبب الانهيار المرتبط بـ `resolveBackendBase` وتوحيد الاستيراد في صفحة المخزون لاستخدام `utils/backendBase` مباشرة.
+- التحقق من نجاح البناء الإنتاجي (`yarn build`) بدون أي `SyntaxError` في صفحات الضرائب/دليل الحسابات/القيود.
+- التحقق عبر وكيل الاختبار: اختفاء خطأ `resolveBackendBase is not a function` ونجاح تحميل التطبيق وصفحة `/parts`.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -172,7 +177,7 @@
 
 ### P1 - High Priority
 - [ ] Integrate Llama 4 (Scout & Maverick) into MoltBot
-- [ ] Production site fixsa.online sync (blocked on user redeployment)
+- [ ] بدء تنفيذ Smart Inventory architecture (backend classes + APIs + UI) بعد استقرار البنية
 
 ### P2 - Medium Priority
 - [ ] Enhance MoltBot with emergent.sh-like capabilities

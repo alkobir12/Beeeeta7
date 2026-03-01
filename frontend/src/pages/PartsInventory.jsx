@@ -1,20 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { partAPI, fileAPI, api, operationsAPI } from '../services/api';
 import { resolveBackendBase } from '../utils/backendBase';
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Upload, Image as ImageIcon, FileSpreadsheet, Camera } from 'lucide-react';
+import { Plus, Upload, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { useTranslation } from 'react-i18next';
 import { InventorySmartOverview } from '../components/inventory/InventorySmartOverview';
 import { InventoryAlertsRail } from '../components/inventory/InventoryAlertsRail';
+import { PartsOcrPanel } from '../components/inventory/PartsOcrPanel';
+import { InventoryStatsCards } from '../components/inventory/InventoryStatsCards';
+import { InventoryFiltersPanel } from '../components/inventory/InventoryFiltersPanel';
+import { PartInventoryGrid } from '../components/inventory/PartInventoryGrid';
+import { PartsTransactionModal } from '../components/inventory/PartsTransactionModal';
 
 const PartsInventory = () => {
   const apiBase = `${resolveBackendBase()}/api`;
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [parts, setParts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');

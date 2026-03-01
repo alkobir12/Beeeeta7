@@ -232,3 +232,4 @@
 | 14 Feb 2026 | Auto-settle credit ops on vehicle delivery (A/R 1103) |
 | 14 Feb 2026 | Accounts manual add fixes (accounts-chart) + defaults |
 | 14 Feb 2026 | OCR scanner for journal entries + manual operations |
+| 01 Mar 2026 | Hotfix: resolved frontend build/runtime crash (resolveBackendBase) + verified /parts load |

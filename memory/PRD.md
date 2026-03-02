@@ -42,6 +42,11 @@
 - دعم اختيار النوع لجميع الأنواع الخمسة من الواجهة مع إبقاء النوع اختياري (default = `asset`).
 - التحقق عبر الاختبار: `/app/test_reports/iteration_15.json` (Backend/Frontend 100%).
 
+### تنظيف بيانات اختبار دليل الحسابات (02 Mar 2026)
+- تنفيذ تنظيف آمن لبيانات الاختبار التي أُنشئت أثناء الاختبارات (`TEST_*` + حسابات الاختبار اليدوية).
+- حذف 17 حسابًا تجريبيًا عبر API الحذف `/api/accounts/{id}`.
+- التحقق بعد التنظيف: لا توجد حسابات اختبار متبقية في `GET /api/finance/chart-of-accounts`.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -272,3 +277,4 @@
 | 01 Mar 2026 | Smart Inventory APIs + Parts Control Panel + Backorder workflow |
 | 01 Mar 2026 | PartsInventory performance refactor + component decomposition |
 | 02 Mar 2026 | Chart of Accounts: real account creation/save flow with all account types |
+| 02 Mar 2026 | Chart of Accounts test data cleanup completed |

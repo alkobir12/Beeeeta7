@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Query
-from fastapi import Body
+from fastapi import APIRouter, Query, Body, HTTPException
 
 from accounting_auditor import AccountingSystemAuditor
 
@@ -653,6 +652,12 @@ def _merge_by_id(primary_list, secondary_list):
     return merged
 
 
+def _normalize_account_type(account_type: Optional[str]) -> str:
+    allowed = {"asset", "liability", "equity", "revenue", "expense"}
+    normalized = str(account_type or "asset").strip().lower()
+    return normalized if normalized in allowed else "asset"
+
+
 @router.get("/alerts")
 async def get_finance_alerts(
     workshop_id: str = Query(...),
@@ -866,6 +871,92 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
     except Exception as e:
         print(f"Error in get_chart_of_accounts: {str(e)}")
         return {"success": False, "error": str(e), "data": []}
+
+
+@router.post("/chart-of-accounts")
+async def create_chart_of_accounts_account(
+    payload: dict = Body(...), workshop_id: Optional[str] = Query(None)
+):
+    """إنشاء حساب جديد في دليل الحسابات.
+
+    يحفظ مباشرة في جدول accounts (Supabase) إن كان متاحاً،
+    وإلا يستخدم Mongo fallback.
+    """
+    try:
+        code = str((payload or {}).get("code") or "").strip()
+        name = str((payload or {}).get("name") or (payload or {}).get("name_ar") or "").strip()
+        account_type = _normalize_account_type((payload or {}).get("type"))
+        parent_id = (payload or {}).get("parent_id") or (payload or {}).get("parentId")
+
+        if not code:
+            raise HTTPException(status_code=400, detail="رمز الحساب مطلوب")
+        if not name:
+            raise HTTPException(status_code=400, detail="اسم الحساب مطلوب")
+
+        account_id = str(uuid.uuid4())
+        row = {
+            "id": account_id,
+            "code": code,
+            "name": name,
+            "name_en": (payload or {}).get("name_en") or (payload or {}).get("nameEn") or "",
+            "type": account_type,
+            "parent_id": parent_id,
+            "is_system": False,
+            "balance": 0.0,
+            "created_at": datetime.now().isoformat(),
+        }
+
+        if supabase:
+            exists = (
+                supabase.table("accounts")
+                .select("id,code")
+                .eq("code", code)
+                .limit(1)
+                .execute()
+            )
+            if exists.data:
+                raise HTTPException(status_code=400, detail="رمز الحساب موجود مسبقاً")
+
+            inserted = supabase.table("accounts").insert(row).execute()
+            saved = (inserted.data or [row])[0]
+            return {
+                "success": True,
+                "data": {
+                    "id": saved.get("id"),
+                    "code": saved.get("code"),
+                    "name": saved.get("name"),
+                    "name_ar": saved.get("name"),
+                    "type": _normalize_account_type(saved.get("type")),
+                    "parent_id": saved.get("parent_id"),
+                    "balance": float(saved.get("balance") or 0),
+                },
+            }
+
+        if db is not None:
+            duplicate = await db.accounts.find_one({"code": code}, {"_id": 0, "id": 1})
+            if duplicate:
+                raise HTTPException(status_code=400, detail="رمز الحساب موجود مسبقاً")
+
+            doc = {
+                "id": account_id,
+                "code": code,
+                "name": name,
+                "name_ar": (payload or {}).get("name_ar") or name,
+                "type": account_type,
+                "parent_id": parent_id,
+                "is_system": False,
+                "balance": 0.0,
+                "created_at": datetime.now().isoformat(),
+            }
+            await db.accounts.insert_one(doc)
+            return {"success": True, "data": doc}
+
+        raise HTTPException(status_code=503, detail="مصدر البيانات غير متاح حالياً")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"تعذر إنشاء الحساب: {str(e)}")
 
 
 # NOTE: First definition of get_journal_entries removed to fix duplicate function definition

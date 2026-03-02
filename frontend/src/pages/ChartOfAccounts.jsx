@@ -37,6 +37,8 @@ const DEFAULT_ACCOUNTS = [
 export default function ChartOfAccounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [saveAccountError, setSaveAccountError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState(['header-asset', 'header-liability', 'header-equity', 'header-revenue', 'header-expense']);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -67,7 +69,7 @@ export default function ChartOfAccounts() {
         
         // تصنيف الحسابات حسب النوع
         data.data.forEach(acc => {
-          const type = acc.type || 'asset';
+          const type = ['asset', 'liability', 'equity', 'revenue', 'expense'].includes(acc.type) ? acc.type : 'asset';
           if (accountsByType[type]) {
             accountsByType[type].push({
               id: acc.id || acc.code,
@@ -75,7 +77,7 @@ export default function ChartOfAccounts() {
               name_ar: acc.name_ar || acc.name,
               type: type,
               category: acc.category,
-              parent_id: null,
+              parent_id: acc.parent_id || acc.parentAccount || acc.parentId || null,
               current_balance: acc.balance || 0
             });
           }
@@ -89,7 +91,7 @@ export default function ChartOfAccounts() {
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.asset.forEach(acc => {
-            acc.parent_id = 'header-asset';
+            if (!acc.parent_id) acc.parent_id = 'header-asset';
             transformedAccounts.push(acc);
           });
         }
@@ -100,7 +102,7 @@ export default function ChartOfAccounts() {
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.liability.forEach(acc => {
-            acc.parent_id = 'header-liability';
+            if (!acc.parent_id) acc.parent_id = 'header-liability';
             transformedAccounts.push(acc);
           });
         }
@@ -111,7 +113,7 @@ export default function ChartOfAccounts() {
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.equity.forEach(acc => {
-            acc.parent_id = 'header-equity';
+            if (!acc.parent_id) acc.parent_id = 'header-equity';
             transformedAccounts.push(acc);
           });
         }
@@ -122,7 +124,7 @@ export default function ChartOfAccounts() {
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.revenue.forEach(acc => {
-            acc.parent_id = 'header-revenue';
+            if (!acc.parent_id) acc.parent_id = 'header-revenue';
             transformedAccounts.push(acc);
           });
         }
@@ -133,7 +135,7 @@ export default function ChartOfAccounts() {
             category: null, parent_id: null, current_balance: 0, isExpanded: true
           });
           accountsByType.expense.forEach(acc => {
-            acc.parent_id = 'header-expense';
+            if (!acc.parent_id) acc.parent_id = 'header-expense';
             transformedAccounts.push(acc);
           });
         }
@@ -148,6 +150,36 @@ export default function ChartOfAccounts() {
       setAccounts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createAccount = async (payload) => {
+    try {
+      setSavingAccount(true);
+      setSaveAccountError('');
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data?.detail || data?.error || data?.message || 'تعذر حفظ الحساب');
+      }
+
+      await fetchAccounts();
+      if (payload.type) {
+        const headerId = `header-${payload.type}`;
+        setExpandedAccounts((prev) => (prev.includes(headerId) ? prev : [...prev, headerId]));
+      }
+      setShowAddModal(false);
+      setSelectedParent(null);
+    } catch (error) {
+      setSaveAccountError(error?.message || 'تعذر حفظ الحساب');
+    } finally {
+      setSavingAccount(false);
     }
   };
 
@@ -247,13 +279,15 @@ export default function ChartOfAccounts() {
               onClick={() => {
                 setSelectedParent(account);
                 setShowAddModal(true);
+                setSaveAccountError('');
               }}
               className="p-1.5 rounded hover:bg-gray-600 transition-colors"
               title="إضافة حساب فرعي"
+              data-testid={`account-add-child-${account.id}`}
             >
               <Plus size={14} className="text-gray-400" />
             </button>
-            <button className="p-1.5 rounded hover:bg-gray-600 transition-colors" title="تعديل">
+            <button className="p-1.5 rounded hover:bg-gray-600 transition-colors" title="تعديل" data-testid={`account-edit-${account.id}`}>
               <Edit2 size={14} className="text-gray-400" />
             </button>
           </div>
@@ -290,6 +324,7 @@ export default function ChartOfAccounts() {
           <button
             onClick={() => {
               setSelectedParent(null);
+              setSaveAccountError('');
               setShowAddModal(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -297,6 +332,15 @@ export default function ChartOfAccounts() {
           >
             <Plus size={20} />
             <span>حساب جديد</span>
+          </button>
+
+          <button
+            onClick={fetchAccounts}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+            data-testid="refresh-accounts-btn"
+          >
+            <RefreshCw size={18} />
+            <span>تحديث</span>
           </button>
           
           <button
@@ -424,15 +468,14 @@ export default function ChartOfAccounts() {
       {showAddModal && (
         <AddAccountModal
           parentAccount={selectedParent}
+          isSubmitting={savingAccount}
+          submitError={saveAccountError}
           onClose={() => {
             setShowAddModal(false);
             setSelectedParent(null);
+            setSaveAccountError('');
           }}
-          onAdd={(newAccount) => {
-            setAccounts([...accounts, { ...newAccount, id: String(Date.now()) }]);
-            setShowAddModal(false);
-            setSelectedParent(null);
-          }}
+          onAdd={createAccount}
         />
       )}
     </div>
@@ -440,19 +483,23 @@ export default function ChartOfAccounts() {
 }
 
 // Add Account Modal
-function AddAccountModal({ parentAccount, onClose, onAdd }) {
+function AddAccountModal({ parentAccount, onClose, onAdd, isSubmitting, submitError }) {
+  const normalizeParentId = parentAccount?.id?.startsWith('header-') ? null : parentAccount?.id || null;
+  const defaultType = parentAccount?.type || 'asset';
+
   const [formData, setFormData] = useState({
-    code: parentAccount ? `${parentAccount.code}` : '',
+    code: '',
     name_ar: '',
-    type: parentAccount?.type || 'asset',
+    type: defaultType,
     category: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onAdd({
+    await onAdd({
       ...formData,
-      parent_id: parentAccount?.id || null,
+      name: formData.name_ar,
+      parent_id: normalizeParentId,
       current_balance: 0,
     });
   };
@@ -474,8 +521,9 @@ function AddAccountModal({ parentAccount, onClose, onAdd }) {
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-              placeholder="مثال: 1111"
+              placeholder={parentAccount?.code ? `مثال: ${parentAccount.code}01` : 'مثال: 1111'}
               required
+              data-testid="add-account-code-input"
             />
           </div>
 
@@ -488,6 +536,7 @@ function AddAccountModal({ parentAccount, onClose, onAdd }) {
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
               placeholder="اسم الحساب بالعربي"
               required
+              data-testid="add-account-name-input"
             />
           </div>
 
@@ -497,7 +546,7 @@ function AddAccountModal({ parentAccount, onClose, onAdd }) {
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-              disabled={!!parentAccount}
+              data-testid="add-account-type-select"
             >
               <option value="asset">أصول</option>
               <option value="liability">التزامات</option>
@@ -507,19 +556,29 @@ function AddAccountModal({ parentAccount, onClose, onAdd }) {
             </select>
           </div>
 
+          {submitError && (
+            <div className="text-sm text-red-400" data-testid="add-account-error-message">
+              {submitError}
+            </div>
+          )}
+
           <div className="flex gap-3 justify-end pt-4">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 text-white transition-colors"
+              data-testid="add-account-cancel-btn"
+              disabled={isSubmitting}
             >
               إلغاء
             </button>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              data-testid="add-account-submit-btn"
             >
-              إضافة
+              {isSubmitting ? 'جاري الحفظ...' : 'إضافة'}
             </button>
           </div>
         </form>

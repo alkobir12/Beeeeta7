@@ -35,6 +35,13 @@
 - إزالة طلبات الشبكة المكررة عند فتح نافذة العمليات (POS) لتسريع الاستجابة.
 - التحقق عبر الاختبار: `/app/test_reports/iteration_14.json` (Frontend 100% بدون regressions).
 
+### تحسين إضافة الحسابات في دليل الحسابات (02 Mar 2026)
+- إضافة API جديدة: `POST /api/finance/chart-of-accounts` لدعم إنشاء حسابات جديدة مع جميع الأنواع (`asset`, `liability`, `equity`, `revenue`, `expense`).
+- تحديث صفحة `ChartOfAccounts.jsx` لربط مودال الإضافة بالـ API فعلياً بدل الإضافة المحلية فقط.
+- حفظ الحساب الآن يتم فعلياً مع منع تكرار `code` ورسائل خطأ واضحة، مع تحديث القائمة فوراً بدون إعادة تحميل الصفحة.
+- دعم اختيار النوع لجميع الأنواع الخمسة من الواجهة مع إبقاء النوع اختياري (default = `asset`).
+- التحقق عبر الاختبار: `/app/test_reports/iteration_15.json` (Backend/Frontend 100%).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -227,8 +234,10 @@
 - `frontend/src/components/inventory/PartsOcrPanel.jsx` - OCR UI section
 - `frontend/src/components/inventory/PartsTransactionModal.jsx` - POS sale/purchase modal
 - `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
+- `frontend/src/pages/ChartOfAccounts.jsx` - Account add modal connected to backend save flow
 - `backend/routes_smart_inventory.py` - Smart inventory APIs
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
+- `backend/routes_finance.py` - Chart-of-accounts account creation endpoint
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -262,3 +271,4 @@
 | 01 Mar 2026 | Hotfix: resolved frontend build/runtime crash (resolveBackendBase) + verified /parts load |
 | 01 Mar 2026 | Smart Inventory APIs + Parts Control Panel + Backorder workflow |
 | 01 Mar 2026 | PartsInventory performance refactor + component decomposition |
+| 02 Mar 2026 | Chart of Accounts: real account creation/save flow with all account types |

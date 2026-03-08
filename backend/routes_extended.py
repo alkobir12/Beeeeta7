@@ -3407,23 +3407,92 @@ async def init_database():
 
 
 # --------------------- Chart of Accounts APIs ---------------------
+async def _account_status_overrides_map() -> Dict[str, bool]:
+    try:
+        if db is not None:
+            rows = await db.account_status_overrides.find({}, {"_id": 0}).to_list(5000)
+            return {
+                str(row.get("accountId")): bool(row.get("isActive", True))
+                for row in rows
+                if row.get("accountId")
+            }
+
+        rows = _mem_read("account_status_overrides")
+        return {
+            str(row.get("accountId")): bool(row.get("isActive", True))
+            for row in rows
+            if row.get("accountId")
+        }
+    except Exception:
+        return {}
+
+
+async def _set_account_status_override(account_id: str, is_active: bool):
+    doc = {
+        "accountId": account_id,
+        "isActive": bool(is_active),
+        "updatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+    if db is not None:
+        await db.account_status_overrides.update_one(
+            {"accountId": account_id}, {"$set": doc}, upsert=True
+        )
+        return
+
+    rows = _mem_read("account_status_overrides")
+    replaced = False
+    for i, row in enumerate(rows):
+        if row.get("accountId") == account_id:
+            rows[i] = doc
+            replaced = True
+            break
+    if not replaced:
+        rows.append(doc)
+    _mem_write("account_status_overrides", rows)
+
+
+async def _remove_account_status_override(account_id: str):
+    if db is not None:
+        await db.account_status_overrides.delete_one({"accountId": account_id})
+        return
+
+    rows = _mem_read("account_status_overrides")
+    rows = [row for row in rows if row.get("accountId") != account_id]
+    _mem_write("account_status_overrides", rows)
+
+
 @router.get("/accounts")
 async def list_accounts():
     """Get all accounts in the chart of accounts"""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
+        overrides = await _account_status_overrides_map()
+
         if provider == "supabase":
             from supabase_service import SupabaseService
 
             supa = SupabaseService()
             res = supa.client.table("accounts").select("*").order("code").execute()
-            return res.data or []
+            items = res.data or []
+            for item in items:
+                base_active = item.get("is_active")
+                if base_active is None:
+                    base_active = item.get("active")
+                item["active"] = bool(
+                    overrides.get(str(item.get("id")), True if base_active is None else base_active)
+                )
+            return items
 
         # MongoDB fallback
         docs = (
             await db.accounts.find({}, {"_id": 0}).sort("code", 1).to_list(length=1000)
         )
+        for doc in docs:
+            base_active = doc.get("active")
+            doc["active"] = bool(
+                overrides.get(str(doc.get("id")), True if base_active is None else base_active)
+            )
         return docs
     except HTTPException:
         raise
@@ -3492,8 +3561,6 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
     """Update an existing account"""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
-        print(f"[DEBUG] update_account called with id={account_id}, payload={payload}")
-
         if provider == "supabase":
             from supabase_service import SupabaseService
 
@@ -3536,14 +3603,66 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[ERROR] update_account failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/accounts/status-overrides")
+async def get_account_status_overrides():
+    """Returns account active overrides map for UI state merge."""
+    return {"overrides": await _account_status_overrides_map()}
+
+
+@router.patch("/accounts/{account_id}/active")
+async def set_account_active(
+    account_id: str, payload: Dict[str, Any] = Body(...), request: Request = None
+):
+    """Enable/disable account without relying on DB schema columns."""
+    try:
+        role = (request.headers.get("x-user-role", "") if request else "").lower()
+        if role and role not in ["admin", "manager"]:
+            raise HTTPException(status_code=403, detail="هذه العملية متاحة للمدير فقط")
+
+        is_active = bool(payload.get("isActive", True))
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+        # Ensure account exists
+        if provider == "supabase":
+            supa = SupabaseService()
+            acc_res = (
+                supa.client.table("accounts")
+                .select("id,is_system")
+                .eq("id", account_id)
+                .limit(1)
+                .execute()
+            )
+            acc = (acc_res.data or [None])[0]
+            if not acc:
+                raise HTTPException(status_code=404, detail="الحساب غير موجود")
+            if acc.get("is_system") and not is_active:
+                raise HTTPException(status_code=400, detail="لا يمكن تعطيل حساب نظام")
+        else:
+            acc = await db.accounts.find_one({"id": account_id}, {"_id": 0})
+            if not acc:
+                raise HTTPException(status_code=404, detail="الحساب غير موجود")
+            if acc.get("isSystem") and not is_active:
+                raise HTTPException(status_code=400, detail="لا يمكن تعطيل حساب نظام")
+
+        await _set_account_status_override(account_id, is_active)
+        return {"success": True, "accountId": account_id, "isActive": is_active}
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/accounts/{account_id}")
-async def delete_account(account_id: str):
+async def delete_account(account_id: str, request: Request = None):
     """Delete an account (only if not system and has no children)"""
     try:
+        role = (request.headers.get("x-user-role", "") if request else "").lower()
+        if role and role not in ["admin", "manager"]:
+            raise HTTPException(status_code=403, detail="هذه العملية متاحة للمدير فقط")
+
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
         if provider == "supabase":
@@ -3576,6 +3695,8 @@ async def delete_account(account_id: str):
 
             # Delete account
             supa.client.table("accounts").delete().eq("id", account_id).execute()
+            # cleanup status override
+            await _remove_account_status_override(account_id)
             return {"success": True}
 
         # MongoDB fallback
@@ -3592,6 +3713,7 @@ async def delete_account(account_id: str):
             )
 
         await db.accounts.delete_one({"id": account_id})
+        await _remove_account_status_override(account_id)
         return {"success": True}
     except HTTPException:
         raise

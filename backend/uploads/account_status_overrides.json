@@ -1,0 +1,17 @@
+[
+  {
+    "accountId": "2ac738f6-2681-4f5b-ba97-a939b6500662",
+    "isActive": false,
+    "updatedAt": "2026-03-08T02:13:51.906828+00:00"
+  },
+  {
+    "accountId": "acc-1101",
+    "isActive": true,
+    "updatedAt": "2026-03-08T02:15:42.212767+00:00"
+  },
+  {
+    "accountId": "b833f88d-ee38-4e30-8bb9-51d8c3c1d009",
+    "isActive": false,
+    "updatedAt": "2026-03-08T02:22:26.059390+00:00"
+  }
+]

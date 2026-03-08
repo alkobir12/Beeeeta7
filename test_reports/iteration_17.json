@@ -1,0 +1,52 @@
+{
+  "summary": "Tested toggle/delete account features, authorization (x-user-role), and toast notifications. Backend APIs (PATCH /active, DELETE, GET /status-overrides) all pass. Frontend loads correctly with proper role access checking.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "✅ GET /api/accounts/status-overrides returns overrides map correctly",
+    "✅ PATCH /api/accounts/{id}/active - unauthorized (viewer) returns 403",
+    "✅ PATCH /api/accounts/{id}/active - manager role succeeds",
+    "✅ PATCH /api/accounts/{id}/active - admin role succeeds",
+    "✅ PATCH /api/accounts/{id}/active - nonexistent account returns 404",
+    "✅ PATCH /api/accounts/{id}/active - system account toggle blocked (400)",
+    "✅ DELETE /api/accounts/{id} - unauthorized (viewer) returns 403",
+    "✅ DELETE /api/accounts/{id} - manager role succeeds",
+    "✅ DELETE /api/accounts/{id} - cleans up status override after delete",
+    "✅ DELETE /api/accounts/{id} - nonexistent account returns 404",
+    "✅ DELETE /api/accounts/{id} - system account blocked (400)",
+    "✅ Regression: Create account still works",
+    "✅ Regression: Update account still works",
+    "✅ UI: Chart of Accounts page loads correctly",
+    "✅ UI: Role access note shows correct permissions for manager/admin",
+    "✅ UI: Add Account button enabled for manager/admin",
+    "✅ UI: Toggle (Power) buttons visible on account rows",
+    "✅ UI: Delete (Trash) buttons visible on account rows",
+    "✅ UI: Status badges show نشط/معطّل correctly",
+    "✅ UI: Toggle button click calls API and updates state"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_account_toggle_delete.py",
+    "/app/test_reports/pytest/pytest_account_toggle_delete.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_account_toggle_delete.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 pytest tests passed)",
+    "frontend": "100% (UI elements and integration working)"
+  },
+  "seed_data_creation": "Created TEST* prefixed accounts during testing. Test accounts cleaned up after tests.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Account toggle (activate/deactivate) and delete features are fully implemented and tested. Backend APIs PATCH /api/accounts/{id}/active and DELETE /api/accounts/{id} require x-user-role: manager or admin header. Status overrides are stored separately and cleaned up on delete. Toast notifications use @radix-ui/react-toast via useToast hook.",
+  "rca_of_the_issue": null
+}

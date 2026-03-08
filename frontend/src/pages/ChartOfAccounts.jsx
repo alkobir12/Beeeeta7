@@ -13,7 +13,9 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  Power,
 } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -35,6 +37,7 @@ const DEFAULT_ACCOUNTS = [
 ];
 
 export default function ChartOfAccounts() {
+  const { toast } = useToast();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingAccount, setSavingAccount] = useState(false);
@@ -47,6 +50,29 @@ export default function ChartOfAccounts() {
   const [editingAccount, setEditingAccount] = useState(null);
   const [savingEditAccount, setSavingEditAccount] = useState(false);
   const [editAccountError, setEditAccountError] = useState('');
+  const [deletingAccountId, setDeletingAccountId] = useState('');
+  const [togglingAccountId, setTogglingAccountId] = useState('');
+
+  const sessionRole = (() => {
+    try {
+      const session = JSON.parse(localStorage.getItem('session') || '{}');
+      return String(session?.role || '').toLowerCase();
+    } catch {
+      return '';
+    }
+  })();
+  const canManageAccounts = ['admin', 'manager'].includes(sessionRole);
+
+  const ensureManagerAccess = () => {
+    if (canManageAccounts) return true;
+    toast({ title: 'صلاحيات غير كافية', description: 'هذه العملية متاحة للمدير فقط', variant: 'destructive' });
+    return false;
+  };
+
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'x-user-role': sessionRole,
+  });
 
   // جلب الحسابات من الـ API عند تحميل الصفحة
   useEffect(() => {
@@ -57,8 +83,13 @@ export default function ChartOfAccounts() {
     setLoading(true);
     try {
       const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
-      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
-      const data = await response.json();
+      const [chartResponse, statusResponse] = await Promise.all([
+        fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`),
+        fetch(`${API_URL}/accounts/status-overrides`).catch(() => null),
+      ]);
+      const data = await chartResponse.json();
+      const statusPayload = statusResponse ? await statusResponse.json().catch(() => ({})) : {};
+      const statusOverrides = statusPayload?.overrides || {};
       
       if (data.success && data.data) {
         // تحويل البيانات من الـ API إلى format الصفحة
@@ -82,7 +113,8 @@ export default function ChartOfAccounts() {
               type: type,
               category: acc.category,
               parent_id: acc.parent_id || acc.parentAccount || acc.parentId || null,
-              current_balance: acc.balance || 0
+              current_balance: acc.balance || 0,
+              active: statusOverrides[String(acc.id || acc.code)] !== false,
             });
           }
         });
@@ -92,7 +124,7 @@ export default function ChartOfAccounts() {
         if (accountsByType.asset.length > 0) {
           transformedAccounts.push({
             id: 'header-asset', code: '1', name_ar: 'الأصول', type: 'asset', 
-            category: null, parent_id: null, current_balance: 0, isExpanded: true
+            category: null, parent_id: null, current_balance: 0, isExpanded: true, active: true
           });
           accountsByType.asset.forEach(acc => {
             if (!acc.parent_id) acc.parent_id = 'header-asset';
@@ -103,7 +135,7 @@ export default function ChartOfAccounts() {
         if (accountsByType.liability.length > 0) {
           transformedAccounts.push({
             id: 'header-liability', code: '2', name_ar: 'الالتزامات', type: 'liability',
-            category: null, parent_id: null, current_balance: 0, isExpanded: true
+            category: null, parent_id: null, current_balance: 0, isExpanded: true, active: true
           });
           accountsByType.liability.forEach(acc => {
             if (!acc.parent_id) acc.parent_id = 'header-liability';
@@ -114,7 +146,7 @@ export default function ChartOfAccounts() {
         if (accountsByType.equity.length > 0) {
           transformedAccounts.push({
             id: 'header-equity', code: '3', name_ar: 'حقوق الملكية', type: 'equity',
-            category: null, parent_id: null, current_balance: 0, isExpanded: true
+            category: null, parent_id: null, current_balance: 0, isExpanded: true, active: true
           });
           accountsByType.equity.forEach(acc => {
             if (!acc.parent_id) acc.parent_id = 'header-equity';
@@ -125,7 +157,7 @@ export default function ChartOfAccounts() {
         if (accountsByType.revenue.length > 0) {
           transformedAccounts.push({
             id: 'header-revenue', code: '4', name_ar: 'الإيرادات', type: 'revenue',
-            category: null, parent_id: null, current_balance: 0, isExpanded: true
+            category: null, parent_id: null, current_balance: 0, isExpanded: true, active: true
           });
           accountsByType.revenue.forEach(acc => {
             if (!acc.parent_id) acc.parent_id = 'header-revenue';
@@ -136,7 +168,7 @@ export default function ChartOfAccounts() {
         if (accountsByType.expense.length > 0) {
           transformedAccounts.push({
             id: 'header-expense', code: '5', name_ar: 'المصروفات', type: 'expense',
-            category: null, parent_id: null, current_balance: 0, isExpanded: true
+            category: null, parent_id: null, current_balance: 0, isExpanded: true, active: true
           });
           accountsByType.expense.forEach(acc => {
             if (!acc.parent_id) acc.parent_id = 'header-expense';
@@ -158,6 +190,7 @@ export default function ChartOfAccounts() {
   };
 
   const createAccount = async (payload) => {
+    if (!ensureManagerAccess()) return;
     try {
       setSavingAccount(true);
       setSaveAccountError('');
@@ -165,7 +198,7 @@ export default function ChartOfAccounts() {
 
       const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => ({}));
@@ -180,8 +213,10 @@ export default function ChartOfAccounts() {
       }
       setShowAddModal(false);
       setSelectedParent(null);
+      toast({ title: 'تم الحفظ', description: 'تم إنشاء الحساب بنجاح' });
     } catch (error) {
       setSaveAccountError(error?.message || 'تعذر حفظ الحساب');
+      toast({ title: 'فشل الحفظ', description: error?.message || 'تعذر حفظ الحساب', variant: 'destructive' });
     } finally {
       setSavingAccount(false);
     }
@@ -197,7 +232,7 @@ export default function ChartOfAccounts() {
   const updateAccountById = async (accountId, payload) => {
     const response = await fetch(`${API_URL}/accounts/${accountId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
     let data = {};
@@ -262,6 +297,7 @@ export default function ChartOfAccounts() {
 
   const saveEditedAccount = async (formValues) => {
     if (!editingAccount?.id) return;
+    if (!ensureManagerAccess()) return;
 
     try {
       setSavingEditAccount(true);
@@ -281,6 +317,7 @@ export default function ChartOfAccounts() {
       await fetchAccounts();
       setShowEditModal(false);
       setEditingAccount(null);
+      toast({ title: 'تم التحديث', description: 'تم تحديث الحساب بنجاح' });
     } catch (error) {
       const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
       const autoResolved = await trySmartAutoResolveUpdate(
@@ -300,12 +337,82 @@ export default function ChartOfAccounts() {
         await fetchAccounts();
         setShowEditModal(false);
         setEditingAccount(null);
+        toast({ title: 'تم التحديث تلقائياً', description: 'تم حل التعارض وتحديث الحساب بنجاح' });
         return;
       }
 
       setEditAccountError(error?.message || 'تعذر تحديث الحساب');
+      toast({ title: 'فشل التحديث', description: error?.message || 'تعذر تحديث الحساب', variant: 'destructive' });
     } finally {
       setSavingEditAccount(false);
+    }
+  };
+
+  const openAddAccountModal = (parentAccount = null) => {
+    if (!ensureManagerAccess()) return;
+    setSelectedParent(parentAccount);
+    setSaveAccountError('');
+    setShowAddModal(true);
+  };
+
+  const toggleAccountActive = async (account) => {
+    if (!ensureManagerAccess()) return;
+    if (!account?.id || isHeaderAccount(account.id)) return;
+
+    try {
+      setTogglingAccountId(account.id);
+      const response = await fetch(`${API_URL}/accounts/${account.id}/active`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isActive: !(account.active !== false) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.detail || data?.error || data?.message || 'تعذر تحديث حالة الحساب');
+      }
+
+      await fetchAccounts();
+      toast({
+        title: 'تم التحديث',
+        description: account.active === false ? 'تم تفعيل الحساب' : 'تم تعطيل الحساب',
+      });
+    } catch (error) {
+      toast({ title: 'فشل التحديث', description: error?.message || 'تعذر تحديث حالة الحساب', variant: 'destructive' });
+    } finally {
+      setTogglingAccountId('');
+    }
+  };
+
+  const deleteAccountById = async (account) => {
+    if (!ensureManagerAccess()) return;
+    if (!account?.id || isHeaderAccount(account.id)) return;
+
+    const confirmed = window.confirm(`هل أنت متأكد من حذف الحساب "${account.name_ar}"؟`);
+    if (!confirmed) return;
+
+    const finalConfirm = window.prompt('اكتب "حذف" للتأكيد النهائي', '');
+    if (finalConfirm !== 'حذف') {
+      toast({ title: 'تم الإلغاء', description: 'لم يتم حذف الحساب' });
+      return;
+    }
+
+    try {
+      setDeletingAccountId(account.id);
+      const response = await fetch(`${API_URL}/accounts/${account.id}`, {
+        method: 'DELETE',
+        headers: { 'x-user-role': sessionRole },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.detail || data?.error || data?.message || 'تعذر حذف الحساب');
+      }
+
+      await fetchAccounts();
+      toast({ title: 'تم الحذف', description: 'تم حذف الحساب بنجاح' });
+    } catch (error) {
+      toast({ title: 'فشل الحذف', description: error?.message || 'تعذر حذف الحساب', variant: 'destructive' });
+    } finally {
+      setDeletingAccountId('');
     }
   };
 
@@ -363,8 +470,9 @@ export default function ChartOfAccounts() {
     return (
       <div key={account.id}>
         <div 
-          className={`flex items-center gap-3 py-3 px-4 hover:bg-gray-700/30 transition-colors border-b border-gray-700/50 ${level > 0 ? 'bg-gray-800/30' : ''}`}
+          className={`flex items-center gap-3 py-3 px-4 hover:bg-gray-700/30 transition-colors border-b border-gray-700/50 ${level > 0 ? 'bg-gray-800/30' : ''} ${account.active === false ? 'opacity-55' : ''}`}
           style={{ paddingRight: `${level * 24 + 16}px` }}
+          data-testid={`account-row-${account.id}`}
         >
           {/* Expand/Collapse Button */}
           <button
@@ -389,6 +497,13 @@ export default function ChartOfAccounts() {
           {/* Account Name */}
           <span className="flex-1 font-medium text-white">{account.name_ar}</span>
 
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded ${account.active === false ? 'bg-red-900/40 text-red-300' : 'bg-emerald-900/40 text-emerald-300'}`}
+            data-testid={`account-active-status-${account.id}`}
+          >
+            {account.active === false ? 'معطّل' : 'نشط'}
+          </span>
+
           {/* Account Type Badge */}
           <span className={`text-xs px-2 py-0.5 rounded ${typeInfo.bgColor} ${typeInfo.color}`}>
             {typeInfo.label}
@@ -403,18 +518,17 @@ export default function ChartOfAccounts() {
           <div className="flex items-center gap-1">
             <button 
               onClick={() => {
-                setSelectedParent(account);
-                setShowAddModal(true);
-                setSaveAccountError('');
+                openAddAccountModal(account);
               }}
-              className="p-1.5 rounded hover:bg-gray-600 transition-colors"
+              className="p-1.5 rounded hover:bg-gray-600 transition-colors disabled:opacity-50"
               title="إضافة حساب فرعي"
               data-testid={`account-add-child-${account.id}`}
+              disabled={!canManageAccounts}
             >
               <Plus size={14} className="text-gray-400" />
             </button>
             <button
-              className="p-1.5 rounded hover:bg-gray-600 transition-colors"
+              className="p-1.5 rounded hover:bg-gray-600 transition-colors disabled:opacity-50"
               title="تعديل"
               data-testid={`account-edit-${account.id}`}
               onClick={() => {
@@ -423,9 +537,27 @@ export default function ChartOfAccounts() {
                 setEditAccountError('');
                 setShowEditModal(true);
               }}
-              disabled={isHeaderAccount(account.id)}
+              disabled={isHeaderAccount(account.id) || !canManageAccounts}
             >
               <Edit2 size={14} className="text-gray-400" />
+            </button>
+            <button
+              className="p-1.5 rounded hover:bg-gray-600 transition-colors disabled:opacity-50"
+              title={account.active === false ? 'تفعيل' : 'تعطيل'}
+              data-testid={`account-toggle-active-${account.id}`}
+              onClick={() => toggleAccountActive(account)}
+              disabled={isHeaderAccount(account.id) || togglingAccountId === account.id || !canManageAccounts}
+            >
+              <Power size={14} className={account.active === false ? 'text-emerald-400' : 'text-yellow-300'} />
+            </button>
+            <button
+              className="p-1.5 rounded hover:bg-red-900/30 transition-colors disabled:opacity-50"
+              title="حذف"
+              data-testid={`account-delete-${account.id}`}
+              onClick={() => deleteAccountById(account)}
+              disabled={isHeaderAccount(account.id) || deletingAccountId === account.id || !canManageAccounts}
+            >
+              <Trash2 size={14} className="text-red-400" />
             </button>
           </div>
         </div>
@@ -456,17 +588,19 @@ export default function ChartOfAccounts() {
             دليل الحسابات
           </h1>
           <p className="text-gray-400">إدارة الحسابات المحاسبية وفقاً للنظام السعودي</p>
+          <p className={`text-xs mt-1 ${canManageAccounts ? 'text-emerald-400' : 'text-amber-400'}`} data-testid="accounts-role-access-note">
+            {canManageAccounts ? 'لديك صلاحية الإدارة (إضافة/تعديل/تعطيل/حذف)' : 'صلاحية العرض فقط - التعديل متاح للمدير'}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              setSelectedParent(null);
-              setSaveAccountError('');
-              setShowAddModal(true);
+              openAddAccountModal(null);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
             data-testid="add-account-btn"
+            disabled={!canManageAccounts}
           >
             <Plus size={20} />
             <span>حساب جديد</span>
@@ -593,7 +727,7 @@ export default function ChartOfAccounts() {
           <span className="flex-1 text-sm font-semibold text-gray-300">اسم الحساب</span>
           <span className="text-sm text-gray-400 w-20">النوع</span>
           <span className="text-sm text-gray-400 w-32 text-left">الرصيد</span>
-          <span className="w-20"></span>
+          <span className="w-36"></span>
         </div>
 
         {/* Accounts List */}

@@ -70,6 +70,20 @@
 - إضافة auto-recovery في `ErrorBoundary.jsx` لاكتشاف أخطاء chunk وإعادة تحميل الصفحة تلقائياً مرة واحدة (مع حماية من loop عبر `sessionStorage`).
 - التحقق عبر الاختبار: `/app/test_reports/iteration_18.json` (Frontend 100%، بدون أخطاء chunk).
 
+### فصل مالي لعمليات «قطع راكان» في نقطة البيع والعمليات (08 Mar 2026)
+- تحديث POS في `PartsInventory.jsx` ليعرض حسابات دليل الحسابات الخاصة بـ «راكان» حسب النوع:
+  - البيع: حسابات `revenue` لراكان.
+  - الشراء: حسابات `expense` لراكان.
+- اعتماد ربط محاسبي مزدوج عند حفظ العملية:
+  - `accountId` = حساب أعمال مستقل لفرع «قطع راكان» (biz account مستقل).
+  - `accountingAccountId` = حساب الإيراد/المصروف من دليل الحسابات.
+- إنشاء حساب أعمال «قطع راكان» تلقائيًا إن لم يكن موجودًا ضمن `biz-accounts` لضمان استقلال العمليات.
+- وسم عمليات POS بعلامة `[RAKAN_PARTS]` وفصل عرضها داخل صفحة العمليات إلى قسمين واضحين:
+  - `عمليات قطع راكان (مستقلة)`
+  - `عمليات الورشة`
+- إضافة دعم خلفي/قواعد عرض لحقول الفصل (`scope/source/businessUnit`) مع fallback آمن دون كسر مخطط Supabase.
+- التحقق عبر الاختبار: `/app/test_reports/iteration_19.json` (Backend/Frontend 100%).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -271,6 +285,10 @@
 - `backend/routes_extended.py` - Account status override APIs + manager authorization for delete/toggle
 - `frontend/src/App.js` - Eager loading for PartsInventory to avoid chunk failures
 - `frontend/src/components/ErrorBoundary.jsx` - Auto-recovery for chunk loading/runtime script mismatches
+- `frontend/src/pages/PartsInventory.jsx` - Rakan POS account routing + independent business account mapping
+- `frontend/src/pages/Operations.jsx` - Separate sections: Rakan Parts operations vs Workshop operations
+- `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
+- `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -309,3 +327,4 @@
 | 02 Mar 2026 | Chart of Accounts: edit account capability + smart auto-update fallback |
 | 08 Mar 2026 | Chart of Accounts: manager-only delete/toggle + toast notifications + status overrides |
 | 08 Mar 2026 | Fixed /parts ChunkLoadError via eager import + ErrorBoundary auto-recovery |
+| 08 Mar 2026 | Rakan Parts financial separation in POS and Operations sections |

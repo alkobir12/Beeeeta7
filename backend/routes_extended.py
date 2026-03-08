@@ -1135,6 +1135,9 @@ async def list_operations(
                 ops = [o for o in ops if o.get("type") == type]
             if vehicle_id:
                 ops = [o for o in ops if o.get("vehicleId") == vehicle_id]
+            for o in ops:
+                if not o.get("scope"):
+                    o["scope"] = "vehicle" if o.get("vehicleId") else "workshop"
             return ops
 
         q: Dict[str, Any] = {}
@@ -1156,6 +1159,11 @@ async def list_operations(
                     "items": 1,
                     "date": 1,
                     "vehicleId": 1,
+                    "accountId": 1,
+                    "notes": 1,
+                    "scope": 1,
+                    "source": 1,
+                    "businessUnit": 1,
                 },
             )
             .sort("date", -1)
@@ -1165,8 +1173,7 @@ async def list_operations(
             o.pop("_id", None)
             if o.get("date") and hasattr(o["date"], "isoformat"):
                 o["date"] = o["date"].isoformat()
-            # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicleId
-            o["scope"] = "vehicle" if o.get("vehicleId") else "workshop"
+            o["scope"] = o.get("scope") or ("vehicle" if o.get("vehicleId") else "workshop")
         return ops
     except HTTPException:
         raise
@@ -1548,6 +1555,9 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 "total": subtotal,
                 "paymentMethod": payload.get("paymentMethod", "cash"),
                 "notes": payload.get("notes"),
+                "scope": payload.get("scope") or ("vehicle" if payload.get("vehicleId") else "workshop"),
+                "source": payload.get("source"),
+                "businessUnit": payload.get("businessUnit") or payload.get("business_unit"),
                 "date": datetime.utcnow().isoformat(),
                 "createdAt": datetime.utcnow().isoformat(),
             }
@@ -1575,6 +1585,9 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             "paymentMethod": payload.get("paymentMethod", "cash"),
             "paymentStatus": payload.get("paymentStatus", "paid"),
             "notes": payload.get("notes"),
+            "scope": payload.get("scope") or ("vehicle" if payload.get("vehicleId") else "workshop"),
+            "source": payload.get("source"),
+            "businessUnit": payload.get("businessUnit") or payload.get("business_unit"),
             "date": datetime.utcnow(),
             "createdAt": datetime.utcnow(),
         }

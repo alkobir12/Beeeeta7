@@ -20,6 +20,28 @@ import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = `${resolveBackendBase()}/api`;
 
+const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
+
+const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+const isRakanBusinessAccount = (account) => {
+  const haystack = [account?.name, account?.code].map((v) => normalizeText(v)).join(' ');
+  return RAKAN_ACCOUNT_KEYWORDS.some((k) => haystack.includes(k));
+};
+
+const isRakanOperationTagged = (operation = {}) => {
+  const scope = normalizeText(operation.scope);
+  const source = normalizeText(operation.source);
+  const businessUnit = normalizeText(operation.businessUnit || operation.business_unit);
+  const notes = normalizeText(operation.notes);
+  return (
+    scope === 'rakan_parts' ||
+    source === 'rakan_parts_pos' ||
+    businessUnit === 'rakan_parts' ||
+    notes.includes('[rakan_parts]')
+  );
+};
+
 const Operations = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -194,6 +216,14 @@ const Operations = () => {
     }
   });
 
+  const bizAccountsQuery = useQuery({
+    queryKey: ['biz-accounts'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/biz-accounts`);
+      return res.data || [];
+    },
+  });
+
   const updateOperationMutation = useMutation({
     mutationFn: async ({ opId, payload }) => {
       const res = await axios.put(`${API_URL}/operations/${opId}`, payload);
@@ -231,6 +261,11 @@ const Operations = () => {
   });
 
   const accounts = accountsQuery.data || [];
+  const bizAccounts = bizAccountsQuery.data || [];
+  const rakanBizAccountIds = useMemo(
+    () => new Set((bizAccounts || []).filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))),
+    [bizAccounts]
+  );
   const filteredAccounts = accounts.filter((account) => {
     if (form.type === 'sale') return account.type === 'revenue';
     if (form.type === 'purchase') return account.type === 'expense';
@@ -265,6 +300,16 @@ const Operations = () => {
     });
     return arr;
   }, [ops]);
+
+  const rakanOps = useMemo(
+    () => sortedOps.filter((op) => rakanBizAccountIds.has(String(op.accountId || '')) || isRakanOperationTagged(op)),
+    [sortedOps, rakanBizAccountIds]
+  );
+
+  const workshopOps = useMemo(
+    () => sortedOps.filter((op) => !(rakanBizAccountIds.has(String(op.accountId || '')) || isRakanOperationTagged(op))),
+    [sortedOps, rakanBizAccountIds]
+  );
 
   useEffect(() => {
     if (vehicleIdFromUrl) {
@@ -1116,7 +1161,7 @@ const Operations = () => {
         </div>
 
         {/* Recent Operations */}
-        <div className="space-y-4">
+        <div className="space-y-6" data-testid="operations-sections-wrapper">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-50">{t('operations.recentOperations')}</h2>
@@ -1124,39 +1169,95 @@ const Operations = () => {
             </div>
           </div>
 
-          {sortedOps.length === 0 ? (
-            <div className="apple-card p-6 text-center">
-              <div className="text-sm text-slate-500">{t('operations.noOperations') || t('common.no_data') || '-'}</div>
+          <div className="space-y-3" data-testid="operations-rakan-section">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-cyan-200" data-testid="operations-rakan-section-title">
+                عمليات قطع راكان (مستقلة)
+              </h3>
+              <span className="text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-200" data-testid="operations-rakan-count">
+                {rakanOps.length}
+              </span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-              {sortedOps.map((op) => (
-                <OperationCard
-                  key={op.id}
-                  operation={op}
-                  isRTL={isRTL}
-                  t={t}
-                  accounts={accounts}
-                  isSaving={saveOpId === op.id}
-                  isDeleting={deleteOpId === op.id}
-                  onPrint={(o) => {
-                    if (!o?.id) return;
-                    navigate(`/print?type=invoice&operationId=${o.id}`);
-                  }}
-                  onViewVehicle={(o) => {
-                    if (!o?.vehicleId) return;
-                    navigate(`/vehicle/${o.vehicleId}`);
-                  }}
-                  onConfirmCreditPayment={(o) => {
-                    setConfirmTarget(o);
-                    setConfirmOpen(true);
-                  }}
-                  onDelete={(o) => requestDeleteOperation(o)}
-                  onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
-                />
-              ))}
+
+            {rakanOps.length === 0 ? (
+              <div className="apple-card p-4 text-center" data-testid="operations-rakan-empty">
+                <div className="text-sm text-slate-400">لا توجد عمليات قطع راكان حالياً</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4" data-testid="operations-rakan-grid">
+                {rakanOps.map((op) => (
+                  <OperationCard
+                    key={`rakan-${op.id}`}
+                    operation={op}
+                    isRTL={isRTL}
+                    t={t}
+                    accounts={accounts}
+                    isSaving={saveOpId === op.id}
+                    isDeleting={deleteOpId === op.id}
+                    onPrint={(o) => {
+                      if (!o?.id) return;
+                      navigate(`/print?type=invoice&operationId=${o.id}`);
+                    }}
+                    onViewVehicle={(o) => {
+                      if (!o?.vehicleId) return;
+                      navigate(`/vehicle/${o.vehicleId}`);
+                    }}
+                    onConfirmCreditPayment={(o) => {
+                      setConfirmTarget(o);
+                      setConfirmOpen(true);
+                    }}
+                    onDelete={(o) => requestDeleteOperation(o)}
+                    onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3" data-testid="operations-workshop-section">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-amber-200" data-testid="operations-workshop-section-title">
+                عمليات الورشة
+              </h3>
+              <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-200" data-testid="operations-workshop-count">
+                {workshopOps.length}
+              </span>
             </div>
-          )}
+
+            {workshopOps.length === 0 ? (
+              <div className="apple-card p-4 text-center" data-testid="operations-workshop-empty">
+                <div className="text-sm text-slate-400">لا توجد عمليات ورشة حالياً</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4" data-testid="operations-workshop-grid">
+                {workshopOps.map((op) => (
+                  <OperationCard
+                    key={`workshop-${op.id}`}
+                    operation={op}
+                    isRTL={isRTL}
+                    t={t}
+                    accounts={accounts}
+                    isSaving={saveOpId === op.id}
+                    isDeleting={deleteOpId === op.id}
+                    onPrint={(o) => {
+                      if (!o?.id) return;
+                      navigate(`/print?type=invoice&operationId=${o.id}`);
+                    }}
+                    onViewVehicle={(o) => {
+                      if (!o?.vehicleId) return;
+                      navigate(`/vehicle/${o.vehicleId}`);
+                    }}
+                    onConfirmCreditPayment={(o) => {
+                      setConfirmTarget(o);
+                      setConfirmOpen(true);
+                    }}
+                    onDelete={(o) => requestDeleteOperation(o)}
+                    onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <OperationDetailsModal

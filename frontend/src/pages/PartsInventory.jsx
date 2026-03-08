@@ -16,6 +16,27 @@ import { InventoryFiltersPanel } from '../components/inventory/InventoryFiltersP
 import { PartInventoryGrid } from '../components/inventory/PartInventoryGrid';
 import { PartsTransactionModal } from '../components/inventory/PartsTransactionModal';
 
+const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
+
+const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+const isRakanAccount = (account) => {
+  const text = [
+    account?.name,
+    account?.name_ar,
+    account?.code,
+    account?.category,
+  ]
+    .map((v) => normalizeText(v))
+    .join(' ');
+  return RAKAN_ACCOUNT_KEYWORDS.some((k) => text.includes(k));
+};
+
+const isRakanBusinessAccount = (account) => {
+  const text = [account?.name, account?.code].map((v) => normalizeText(v)).join(' ');
+  return RAKAN_ACCOUNT_KEYWORDS.some((k) => text.includes(k));
+};
+
 const PartsInventory = () => {
   const apiBase = `${resolveBackendBase()}/api`;
   const { t } = useTranslation();
@@ -55,6 +76,9 @@ const PartsInventory = () => {
   const [inventoryDashboard, setInventoryDashboard] = useState(null);
   const [inventoryAlerts, setInventoryAlerts] = useState([]);
   const [loadingInventoryIntelligence, setLoadingInventoryIntelligence] = useState(false);
+  const [missingRakanAccounts, setMissingRakanAccounts] = useState(false);
+  const [businessAccounts, setBusinessAccounts] = useState([]);
+  const [rakanBusinessAccountId, setRakanBusinessAccountId] = useState('');
 
   const [formData, setFormData] = useState({
     partNumber: '', name: '', category: '', purchasePrice: '', sellingPrice: '',
@@ -69,6 +93,7 @@ const PartsInventory = () => {
     loadCustomers();
     loadSuppliers();
     loadAccounts();
+    loadBusinessAccounts();
   }, []);
 
   useEffect(() => {
@@ -79,6 +104,7 @@ const PartsInventory = () => {
     if (showTransactionModal) {
       loadModalParts();
       loadAccounts();
+      loadBusinessAccounts();
       if (transactionType === 'sale') {
         loadCustomers();
       } else {
@@ -89,6 +115,25 @@ const PartsInventory = () => {
       }
     }
   }, [showTransactionModal, transactionType, saleMode]);
+
+  // Define accountOptions early so useEffects can reference it
+  const accountOptions = useMemo(() => {
+    const expectedType = transactionType === 'sale' ? 'revenue' : 'expense';
+    const rakanByType = accounts.filter((acc) => isRakanAccount(acc) && acc.type === expectedType);
+    if (rakanByType.length) return rakanByType;
+    return accounts.filter((acc) => acc.type === expectedType);
+  }, [accounts, transactionType]);
+
+  useEffect(() => {
+    if (!showTransactionModal) return;
+    if (!accountOptions.length) {
+      setSelectedAccountId('');
+      return;
+    }
+    if (!selectedAccountId || !accountOptions.some((acc) => (acc.id || acc.code) === selectedAccountId)) {
+      setSelectedAccountId(accountOptions[0].id || accountOptions[0].code || '');
+    }
+  }, [showTransactionModal, accountOptions, selectedAccountId]);
 
   useEffect(() => {
     if (transactionType !== 'sale') {
@@ -383,13 +428,75 @@ const PartsInventory = () => {
   const loadAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const res = await fetch(`${apiBase}/accounts-chart`);
-      const data = await res.json();
-      setAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const financeRes = await fetch(`${apiBase}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const financeData = await financeRes.json().catch(() => ({}));
+
+      let loaded = [];
+      if (financeRes.ok && financeData?.success && Array.isArray(financeData.data)) {
+        loaded = financeData.data.map((acc) => ({
+          id: acc.id || acc.code,
+          code: acc.code,
+          name: acc.name_ar || acc.name,
+          name_ar: acc.name_ar || acc.name,
+          type: acc.type,
+          category: acc.category,
+          parent_id: acc.parent_id || null,
+        }));
+      } else {
+        const res = await fetch(`${apiBase}/accounts-chart`);
+        const data = await res.json().catch(() => ({}));
+        loaded = Array.isArray(data?.accounts) ? data.accounts : [];
+      }
+
+      setAccounts(loaded);
+
+      const hasRakanRevenue = loaded.some((acc) => isRakanAccount(acc) && acc.type === 'revenue');
+      const hasRakanExpense = loaded.some((acc) => isRakanAccount(acc) && acc.type === 'expense');
+      setMissingRakanAccounts(!(hasRakanRevenue && hasRakanExpense));
     } catch (error) {
       setAccounts([]);
+      setMissingRakanAccounts(true);
     } finally {
       setLoadingAccounts(false);
+    }
+  };
+
+  const loadBusinessAccounts = async () => {
+    try {
+      const res = await fetch(`${apiBase}/biz-accounts`);
+      const data = await res.json().catch(() => ([]));
+      let list = Array.isArray(data) ? data : [];
+      let rakanBranch = list.find((acc) => isRakanBusinessAccount(acc));
+
+      if (!rakanBranch) {
+        const createRes = await fetch(`${apiBase}/biz-accounts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'قطع راكان',
+            code: 'RAKAN_PARTS',
+            currency: 'SAR',
+          }),
+        });
+        const created = await createRes.json().catch(() => null);
+        if (createRes.ok && created?.id) {
+          list = [created, ...list];
+          rakanBranch = created;
+          toast({
+            title: 'تهيئة الحسابات',
+            description: 'تم إنشاء حساب أعمال مستقل لقطع راكان تلقائياً',
+          });
+        }
+      }
+
+      setBusinessAccounts(list);
+      setRakanBusinessAccountId(rakanBranch?.id || '');
+      if (!rakanBranch) setMissingRakanAccounts(true);
+    } catch (error) {
+      setBusinessAccounts([]);
+      setRakanBusinessAccountId('');
+      setMissingRakanAccounts(true);
     }
   };
 
@@ -477,6 +584,24 @@ const PartsInventory = () => {
       toast({ title: 'خطأ', description: 'اختر الحساب المحاسبي للعملية', variant: 'destructive' });
       return;
     }
+    if (!rakanBusinessAccountId) {
+      toast({
+        title: 'خطأ',
+        description: 'حساب الأعمال "قطع راكان" غير موجود ضمن حسابات الفروع',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedAccount = accounts.find((acc) => (acc.id || acc.code) === selectedAccountId);
+    if (!selectedAccount || !isRakanAccount(selectedAccount)) {
+      toast({
+        title: 'خطأ',
+        description: 'يجب اختيار حسابات قطع راكان فقط لنقطة البيع',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const itemsPayload = validItems.map(item => ({
       itemType: 'part',
@@ -494,6 +619,9 @@ const PartsInventory = () => {
         items: itemsPayload,
         subtotal: total,
         total,
+        scope: 'rakan_parts',
+        source: 'rakan_parts_pos',
+        businessUnit: 'rakan_parts',
         paymentMethod: transactionType === 'sale' && saleMode === 'vehicle' ? 'credit' : 'cash',
         vehicleId: transactionType === 'sale' && saleMode === 'vehicle' ? transactionVehicleId : undefined,
         partnerType: transactionType === 'sale' ? 'customer' : 'supplier',
@@ -506,9 +634,9 @@ const PartsInventory = () => {
           )
           : (suppliers.find(s => s.id === selectedPartnerId)?.name)
         ) || '',
-        accountId: null,
+        accountId: rakanBusinessAccountId,
         accountingAccountId: selectedAccountId,
-        notes: transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع'
+        notes: `[RAKAN_PARTS] ${transactionType === 'sale' ? 'عملية بيع قطع راكان' : 'عملية شراء قطع راكان'}`
       });
 
       for (const item of itemsPayload) {
@@ -618,15 +746,16 @@ const PartsInventory = () => {
     const inactiveStatuses = ['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'];
     return vehicles.filter(vehicle => !inactiveStatuses.includes(vehicle.status));
   }, [vehicles]);
-  const accountOptions = useMemo(() => {
-    const filtered = accounts.filter(acc => acc.type === (transactionType === 'sale' ? 'revenue' : 'expense'));
-    return filtered.length ? filtered : accounts;
-  }, [accounts, transactionType]);
+  // accountOptions is defined earlier in the component (before useEffects that need it)
   const partOptions = useMemo(() => (modalParts.length ? modalParts : parts), [modalParts, parts]);
   const transactionTotal = useMemo(() => {
     return transactionItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)), 0);
   }, [transactionItems]);
   const vehicleOptions = useMemo(() => (activeVehicles.length ? activeVehicles : vehicles), [activeVehicles, vehicles]);
+  const rakanBusinessAccount = useMemo(
+    () => businessAccounts.find((acc) => acc.id === rakanBusinessAccountId) || null,
+    [businessAccounts, rakanBusinessAccountId]
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -787,6 +916,21 @@ const PartsInventory = () => {
         loadSuppliers={loadSuppliers}
         loadModalParts={loadModalParts}
       />
+
+      {showTransactionModal && missingRakanAccounts && (
+        <div
+          className="glass-card p-3 border border-amber-400/50 bg-amber-500/10 text-amber-200 text-sm"
+          data-testid="transaction-rakan-accounts-warning"
+        >
+          تنبيه: لم يتم العثور على حسابَي إيراد/مصروف لقطع راكان بشكل كامل. يرجى التأكد من وجودهما في دليل الحسابات.
+        </div>
+      )}
+
+      {showTransactionModal && rakanBusinessAccount && (
+        <div className="text-xs text-cyan-200" data-testid="transaction-rakan-business-account-note">
+          سيتم تسجيل العملية ضمن حساب الأعمال المستقل: <strong>{rakanBusinessAccount.name}</strong>
+        </div>
+      )}
         </div>
       </div>
 

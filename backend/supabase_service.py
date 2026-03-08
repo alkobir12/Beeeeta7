@@ -376,8 +376,9 @@ class SupabaseService:
                     "date": r.get("op_date"),
                     "createdAt": r.get("created_at"),
                     "invoiceNumber": r.get("invoice_number"),
-                    # استنتاج نوع العملية (مركبة / ورشة) بناءً على وجود vehicle_id
-                    "scope": "vehicle" if r.get("vehicle_id") else "workshop",
+                    "scope": r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
+                    "source": r.get("source"),
+                    "businessUnit": r.get("business_unit"),
                 }
             )
 
@@ -748,7 +749,6 @@ class SupabaseService:
             "payment_method": payload.get("paymentMethod", "cash"),
             "notes": payload.get("notes"),
             "op_date": op_date or datetime.utcnow().isoformat(),
-            # Note: scope field is inferred dynamically in operations_list based on vehicle_id presence
         }
         try:
             res = self.client.table("operations").insert(row).execute()
@@ -762,7 +762,6 @@ class SupabaseService:
                 row.pop("visit_id", None)
             if "workshop_id" in error_msg:
                 row.pop("workshop_id", None)
-                
             res = self.client.table("operations").insert(row).execute()
         r = (res.data or [{}])[0]
         return {
@@ -782,7 +781,9 @@ class SupabaseService:
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),
             "invoiceNumber": r.get("invoice_number"),
-            "scope": r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
+            "scope": payload.get("scope") or r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
+            "source": payload.get("source") or r.get("source"),
+            "businessUnit": payload.get("businessUnit") or payload.get("business_unit") or r.get("business_unit"),
         }
 
     def operations_update(self, op_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:

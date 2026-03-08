@@ -149,6 +149,12 @@ const Operations = () => {
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+  const freshQueryOptions = {
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: 2,
+  };
 
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
@@ -167,7 +173,8 @@ const Operations = () => {
         }
       }
       return accountsData || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const partsQuery = useQuery({
@@ -175,7 +182,8 @@ const Operations = () => {
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/parts`);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const servicesQuery = useQuery({
@@ -183,7 +191,8 @@ const Operations = () => {
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/services`);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const customersQuery = useQuery({
@@ -191,7 +200,8 @@ const Operations = () => {
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/customers`);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const suppliersQuery = useQuery({
@@ -199,7 +209,8 @@ const Operations = () => {
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/suppliers`);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const vehiclesQuery = useQuery({
@@ -207,7 +218,8 @@ const Operations = () => {
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/vehicles`);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const operationsQuery = useQuery({
@@ -218,7 +230,8 @@ const Operations = () => {
         : `${API_URL}/operations`;
       const res = await axios.get(operationsUrl);
       return res.data || [];
-    }
+    },
+    ...freshQueryOptions,
   });
 
   const bizAccountsQuery = useQuery({
@@ -227,6 +240,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/biz-accounts`);
       return res.data || [];
     },
+    ...freshQueryOptions,
   });
 
   const updateOperationMutation = useMutation({

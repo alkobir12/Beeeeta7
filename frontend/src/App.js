@@ -11,6 +11,7 @@ import { queryClient } from './queryClient';
 // Eager load critical pages
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import PartsInventory from "./pages/PartsInventory";
 
 // Lazy load other pages for better performance
 const Customers = lazy(() => import("./pages/Customers"));
@@ -19,7 +20,6 @@ const VehicleDetails = lazy(() => import("./pages/VehicleDetails"));
 const CustomerDetails = lazy(() => import("./pages/CustomerDetails"));
 const Technicians = lazy(() => import("./pages/Technicians"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
-const PartsInventory = lazy(() => import("./pages/PartsInventory"));
 const PartsDashboard = lazy(() => import("./pages/PartsDashboard"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 const Templates = lazy(() => import("./pages/Templates"));

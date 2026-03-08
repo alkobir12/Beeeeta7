@@ -11,11 +11,30 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    const message = error?.message || '';
+
+    // Auto-recover stale/missing lazy chunks once
+    const isChunkError =
+      message.includes('Loading chunk') ||
+      message.includes('ChunkLoadError') ||
+      message.includes("Unexpected token '<'");
+
+    if (isChunkError) {
+      const reloadKey = 'chunk-reload-attempted';
+      const alreadyRetried = sessionStorage.getItem(reloadKey) === '1';
+
+      if (!alreadyRetried) {
+        sessionStorage.setItem(reloadKey, '1');
+        window.location.reload();
+        return;
+      }
+    }
+
     // Ignore translation-related errors
-    if (error.message && (
-      error.message.includes('removeChild') ||
-      error.message.includes('Maximum call stack') ||
-      error.message.includes('NotFoundError')
+    if (message && (
+      message.includes('removeChild') ||
+      message.includes('Maximum call stack') ||
+      message.includes('NotFoundError')
     )) {
       console.log('Translation error caught and ignored');
       this.setState({ hasError: false });
@@ -29,7 +48,13 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{ padding: 20, textAlign: 'center' }}>
           <h2>Something went wrong</h2>
-          <button onClick={() => window.location.reload()}>Reload</button>
+          <p style={{ color: '#666', marginBottom: 12 }}>
+            حصل تعارض مؤقت في ملفات الصفحة. اضغط إعادة التحميل للمتابعة.
+          </p>
+          <button onClick={() => {
+            try { sessionStorage.removeItem('chunk-reload-attempted'); } catch (e) {}
+            window.location.reload();
+          }}>Reload</button>
         </div>
       );
     }

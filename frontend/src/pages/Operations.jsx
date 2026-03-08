@@ -19,6 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = `${resolveBackendBase()}/api`;
+const OPERATIONS_PAGE_SIZE = 15;
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
 
@@ -138,6 +139,9 @@ const Operations = () => {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [activeOperationsTab, setActiveOperationsTab] = useState('rakan');
+  const [rakanPage, setRakanPage] = useState(1);
+  const [workshopPage, setWorkshopPage] = useState(1);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -309,6 +313,53 @@ const Operations = () => {
   const workshopOps = useMemo(
     () => sortedOps.filter((op) => !(rakanBizAccountIds.has(String(op.accountId || '')) || isRakanOperationTagged(op))),
     [sortedOps, rakanBizAccountIds]
+  );
+
+  const rakanTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(rakanOps.length / OPERATIONS_PAGE_SIZE)),
+    [rakanOps.length]
+  );
+
+  const workshopTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(workshopOps.length / OPERATIONS_PAGE_SIZE)),
+    [workshopOps.length]
+  );
+
+  useEffect(() => {
+    setRakanPage((prev) => Math.min(Math.max(prev, 1), rakanTotalPages));
+  }, [rakanTotalPages]);
+
+  useEffect(() => {
+    setWorkshopPage((prev) => Math.min(Math.max(prev, 1), workshopTotalPages));
+  }, [workshopTotalPages]);
+
+  const paginatedRakanOps = useMemo(() => {
+    const start = (rakanPage - 1) * OPERATIONS_PAGE_SIZE;
+    return rakanOps.slice(start, start + OPERATIONS_PAGE_SIZE);
+  }, [rakanOps, rakanPage]);
+
+  const paginatedWorkshopOps = useMemo(() => {
+    const start = (workshopPage - 1) * OPERATIONS_PAGE_SIZE;
+    return workshopOps.slice(start, start + OPERATIONS_PAGE_SIZE);
+  }, [workshopOps, workshopPage]);
+
+  const isRakanTabActive = activeOperationsTab === 'rakan';
+  const activeOps = isRakanTabActive ? paginatedRakanOps : paginatedWorkshopOps;
+  const activeOpsTotalCount = isRakanTabActive ? rakanOps.length : workshopOps.length;
+  const activePage = isRakanTabActive ? rakanPage : workshopPage;
+  const activeTotalPages = isRakanTabActive ? rakanTotalPages : workshopTotalPages;
+
+  const setActivePage = (nextPage) => {
+    if (isRakanTabActive) {
+      setRakanPage(nextPage);
+    } else {
+      setWorkshopPage(nextPage);
+    }
+  };
+
+  const activePageNumbers = useMemo(
+    () => Array.from({ length: activeTotalPages }, (_, i) => i + 1),
+    [activeTotalPages]
   );
 
   useEffect(() => {
@@ -1169,25 +1220,51 @@ const Operations = () => {
             </div>
           </div>
 
-          <div className="space-y-3" data-testid="operations-rakan-section">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-cyan-200" data-testid="operations-rakan-section-title">
-                عمليات قطع راكان (مستقلة)
-              </h3>
-              <span className="text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-200" data-testid="operations-rakan-count">
-                {rakanOps.length}
-              </span>
+          <div className="glass-card p-2" data-testid="operations-tabs-container">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="operations-tabs-list">
+              <button
+                type="button"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${isRakanTabActive ? 'bg-cyan-500/25 text-cyan-100 border border-cyan-300/40' : 'bg-white/5 text-slate-300 border border-white/10'}`}
+                onClick={() => setActiveOperationsTab('rakan')}
+                data-testid="operations-tab-rakan"
+              >
+                عمليات قطع راكان (مستقلة) • {rakanOps.length}
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${!isRakanTabActive ? 'bg-amber-500/25 text-amber-100 border border-amber-300/40' : 'bg-white/5 text-slate-300 border border-white/10'}`}
+                onClick={() => setActiveOperationsTab('workshop')}
+                data-testid="operations-tab-workshop"
+              >
+                عمليات الورشة • {workshopOps.length}
+              </button>
             </div>
+          </div>
 
-            {rakanOps.length === 0 ? (
-              <div className="apple-card p-4 text-center" data-testid="operations-rakan-empty">
-                <div className="text-sm text-slate-400">لا توجد عمليات قطع راكان حالياً</div>
+          <div className="flex items-center justify-between" data-testid="operations-active-tab-summary">
+            <h3 className="text-lg font-bold text-slate-100" data-testid="operations-active-tab-title">
+              {isRakanTabActive ? 'عمليات قطع راكان (مستقلة)' : 'عمليات الورشة'}
+            </h3>
+            <span className="text-xs px-2 py-1 rounded bg-white/10 text-slate-200" data-testid="operations-active-tab-count">
+              {activeOpsTotalCount} عملية
+            </span>
+          </div>
+
+          {activeOpsTotalCount === 0 ? (
+            <div className="apple-card p-4 text-center" data-testid="operations-active-tab-empty">
+              <div className="text-sm text-slate-400">
+                {isRakanTabActive ? 'لا توجد عمليات قطع راكان حالياً' : 'لا توجد عمليات ورشة حالياً'}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4" data-testid="operations-rakan-grid">
-                {rakanOps.map((op) => (
+            </div>
+          ) : (
+            <>
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4"
+                data-testid="operations-active-tab-grid"
+              >
+                {activeOps.map((op) => (
                   <OperationCard
-                    key={`rakan-${op.id}`}
+                    key={`${isRakanTabActive ? 'rakan' : 'workshop'}-${op.id}`}
                     operation={op}
                     isRTL={isRTL}
                     t={t}
@@ -1211,53 +1288,52 @@ const Operations = () => {
                   />
                 ))}
               </div>
-            )}
-          </div>
 
-          <div className="space-y-3" data-testid="operations-workshop-section">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-amber-200" data-testid="operations-workshop-section-title">
-                عمليات الورشة
-              </h3>
-              <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-200" data-testid="operations-workshop-count">
-                {workshopOps.length}
-              </span>
-            </div>
+              <div className="glass-card p-3" data-testid="operations-pagination-wrapper">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <span className="text-sm text-slate-300" data-testid="operations-pagination-label">
+                    صفحة {activePage} من {activeTotalPages} صفحات
+                  </span>
 
-            {workshopOps.length === 0 ? (
-              <div className="apple-card p-4 text-center" data-testid="operations-workshop-empty">
-                <div className="text-sm text-slate-400">لا توجد عمليات ورشة حالياً</div>
+                  <div className="flex flex-wrap items-center gap-2" data-testid="operations-pagination-controls">
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 disabled:opacity-50"
+                      disabled={activePage <= 1}
+                      onClick={() => setActivePage(activePage - 1)}
+                      data-testid="operations-pagination-prev-button"
+                    >
+                      السابق
+                    </button>
+
+                    <div className="flex flex-wrap items-center gap-1" data-testid="operations-pagination-numbers">
+                      {activePageNumbers.map((pageNumber) => (
+                        <button
+                          key={`operations-page-${isRakanTabActive ? 'rakan' : 'workshop'}-${pageNumber}`}
+                          type="button"
+                          className={`w-9 h-9 rounded-lg text-sm border transition-colors ${pageNumber === activePage ? 'bg-cyan-500/30 border-cyan-300/40 text-cyan-100' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                          onClick={() => setActivePage(pageNumber)}
+                          data-testid={`operations-pagination-page-button-${pageNumber}`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 disabled:opacity-50"
+                      disabled={activePage >= activeTotalPages}
+                      onClick={() => setActivePage(activePage + 1)}
+                      data-testid="operations-pagination-next-button"
+                    >
+                      التالي
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4" data-testid="operations-workshop-grid">
-                {workshopOps.map((op) => (
-                  <OperationCard
-                    key={`workshop-${op.id}`}
-                    operation={op}
-                    isRTL={isRTL}
-                    t={t}
-                    accounts={accounts}
-                    isSaving={saveOpId === op.id}
-                    isDeleting={deleteOpId === op.id}
-                    onPrint={(o) => {
-                      if (!o?.id) return;
-                      navigate(`/print?type=invoice&operationId=${o.id}`);
-                    }}
-                    onViewVehicle={(o) => {
-                      if (!o?.vehicleId) return;
-                      navigate(`/vehicle/${o.vehicleId}`);
-                    }}
-                    onConfirmCreditPayment={(o) => {
-                      setConfirmTarget(o);
-                      setConfirmOpen(true);
-                    }}
-                    onDelete={(o) => requestDeleteOperation(o)}
-                    onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         <OperationDetailsModal

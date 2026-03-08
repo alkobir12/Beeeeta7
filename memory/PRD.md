@@ -54,6 +54,16 @@
 - إصلاح مشكلة parsing في استجابة التحديث (Response body used) ومنع إرسال `header-*` كـ `parentId` (تحويله إلى `null`).
 - إزالة debug logs التجريبية من backend endpoint وتأكيد نجاح build والاختبار اليدوي (create→edit→verify→cleanup).
 
+### Next Actions مكتملة: Toast + حذف + تعطيل/تفعيل بصلاحية المدير (08 Mar 2026)
+- إضافة إشعارات `toast` لعمليات الإضافة/التعديل/الحذف/التفعيل-التعطيل في صفحة دليل الحسابات.
+- إضافة إمكانيتي **تعطيل/تفعيل الحساب** و**حذف الحساب** من نفس الصف مع `data-testid` واضحة.
+- تطبيق صلاحيات المدير فقط (`admin/manager`) عبر Header `x-user-role` في Backend لعمليات الحذف والتفعيل/التعطيل.
+- إنشاء وتخزين status overrides بشكل مستقل عبر APIs:
+  - `GET /api/accounts/status-overrides`
+  - `PATCH /api/accounts/{id}/active`
+  - تنظيف override تلقائيًا عند حذف الحساب.
+- التحقق عبر الاختبار: `/app/test_reports/iteration_17.json` (Backend/Frontend 100%).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -248,9 +258,11 @@
 - `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
 - `frontend/src/pages/ChartOfAccounts.jsx` - Account add modal connected to backend save flow
 - `frontend/src/pages/ChartOfAccounts.jsx` - Add/Edit account full save flow + smart auto-resolve + parent normalization
+- `frontend/src/pages/ChartOfAccounts.jsx` - Manager-only delete/enable-disable + toast notifications
 - `backend/routes_smart_inventory.py` - Smart inventory APIs
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
 - `backend/routes_finance.py` - Chart-of-accounts account creation endpoint
+- `backend/routes_extended.py` - Account status override APIs + manager authorization for delete/toggle
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -287,3 +299,4 @@
 | 02 Mar 2026 | Chart of Accounts: real account creation/save flow with all account types |
 | 02 Mar 2026 | Chart of Accounts test data cleanup completed |
 | 02 Mar 2026 | Chart of Accounts: edit account capability + smart auto-update fallback |
+| 08 Mar 2026 | Chart of Accounts: manager-only delete/toggle + toast notifications + status overrides |

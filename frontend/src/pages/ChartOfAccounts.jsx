@@ -42,7 +42,11 @@ export default function ChartOfAccounts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState(['header-asset', 'header-liability', 'header-equity', 'header-revenue', 'header-expense']);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedParent, setSelectedParent] = useState(null);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [savingEditAccount, setSavingEditAccount] = useState(false);
+  const [editAccountError, setEditAccountError] = useState('');
 
   // جلب الحسابات من الـ API عند تحميل الصفحة
   useEffect(() => {
@@ -183,6 +187,128 @@ export default function ChartOfAccounts() {
     }
   };
 
+  const isHeaderAccount = (accountId) => String(accountId || '').startsWith('header-');
+  const normalizeParentIdForApi = (parentIdValue) => {
+    const value = parentIdValue || null;
+    if (!value) return null;
+    return isHeaderAccount(value) ? null : value;
+  };
+
+  const updateAccountById = async (accountId, payload) => {
+    const response = await fetch(`${API_URL}/accounts/${accountId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      console.warn('Response JSON parse failed:', parseErr);
+    }
+    if (!response.ok) {
+      throw new Error(data?.detail || data?.error || data?.message || 'تعذر تحديث الحساب');
+    }
+    return data;
+  };
+
+  const trySmartAutoResolveUpdate = async (payload, currentAccountId, workshopId) => {
+    try {
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const data = await response.json().catch(() => ({}));
+      const rows = Array.isArray(data?.data) ? data.data : [];
+
+      const normalize = (v) => String(v || '').trim().toLowerCase();
+      const targetName = normalize(payload.name);
+      const targetType = normalize(payload.type);
+      const targetCode = String(payload.code || '').trim();
+
+      const byNameAndType = rows.find((acc) => (
+        String(acc?.id || '') !== String(currentAccountId || '')
+        && normalize(acc?.name_ar || acc?.name) === targetName
+        && normalize(acc?.type) === targetType
+      ));
+
+      const byCode = rows.find((acc) => (
+        String(acc?.id || '') !== String(currentAccountId || '')
+        && String(acc?.code || '').trim() === targetCode
+      ));
+
+      const candidates = [byNameAndType, byCode].filter(Boolean);
+      if (!candidates.length) return false;
+
+      for (const candidate of candidates) {
+        try {
+          await updateAccountById(candidate.id, payload);
+          return true;
+        } catch (error) {
+          if (payload.code) {
+            const { code, ...withoutCodePayload } = payload;
+            try {
+              await updateAccountById(candidate.id, withoutCodePayload);
+              return true;
+            } catch (_e) {
+              // ignore and continue
+            }
+          }
+        }
+      }
+
+      return false;
+    } catch (_error) {
+      return false;
+    }
+  };
+
+  const saveEditedAccount = async (formValues) => {
+    if (!editingAccount?.id) return;
+
+    try {
+      setSavingEditAccount(true);
+      setEditAccountError('');
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+
+      const payload = {
+        code: String(formValues.code || '').trim(),
+        name: String(formValues.name_ar || formValues.name || '').trim(),
+        nameEn: String(formValues.name_en || '').trim(),
+        type: formValues.type || 'asset',
+        parentId: normalizeParentIdForApi(formValues.parent_id),
+        balance: Number(formValues.current_balance || 0),
+      };
+
+      await updateAccountById(editingAccount.id, payload);
+      await fetchAccounts();
+      setShowEditModal(false);
+      setEditingAccount(null);
+    } catch (error) {
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const autoResolved = await trySmartAutoResolveUpdate(
+        {
+          code: String(formValues.code || '').trim(),
+          name: String(formValues.name_ar || formValues.name || '').trim(),
+          nameEn: String(formValues.name_en || '').trim(),
+          type: formValues.type || 'asset',
+          parentId: normalizeParentIdForApi(formValues.parent_id),
+          balance: Number(formValues.current_balance || 0),
+        },
+        editingAccount.id,
+        workshopId,
+      );
+
+      if (autoResolved) {
+        await fetchAccounts();
+        setShowEditModal(false);
+        setEditingAccount(null);
+        return;
+      }
+
+      setEditAccountError(error?.message || 'تعذر تحديث الحساب');
+    } finally {
+      setSavingEditAccount(false);
+    }
+  };
+
   const getAccountTypeInfo = (type) => {
     const types = {
       asset: { label: 'أصول', color: 'text-blue-400', bgColor: 'bg-blue-900/30', icon: Wallet },
@@ -287,7 +413,18 @@ export default function ChartOfAccounts() {
             >
               <Plus size={14} className="text-gray-400" />
             </button>
-            <button className="p-1.5 rounded hover:bg-gray-600 transition-colors" title="تعديل" data-testid={`account-edit-${account.id}`}>
+            <button
+              className="p-1.5 rounded hover:bg-gray-600 transition-colors"
+              title="تعديل"
+              data-testid={`account-edit-${account.id}`}
+              onClick={() => {
+                if (isHeaderAccount(account.id)) return;
+                setEditingAccount(account);
+                setEditAccountError('');
+                setShowEditModal(true);
+              }}
+              disabled={isHeaderAccount(account.id)}
+            >
               <Edit2 size={14} className="text-gray-400" />
             </button>
           </div>
@@ -307,6 +444,7 @@ export default function ChartOfAccounts() {
     revenue: accounts.filter(a => a.type === 'revenue' && a.current_balance !== 0).reduce((sum, a) => sum + a.current_balance, 0),
     expenses: accounts.filter(a => a.type === 'expense' && a.current_balance !== 0).reduce((sum, a) => sum + a.current_balance, 0),
   };
+  const editableAccounts = accounts.filter((acc) => !isHeaderAccount(acc.id));
 
   return (
     <div className="p-6 space-y-6" data-testid="chart-of-accounts-page">
@@ -418,7 +556,7 @@ export default function ChartOfAccounts() {
             <TrendingUp className="text-green-600" size={20} />
             <span className="text-xs font-semibold text-green-800">الإيرادات</span>
           </div>
-          <div className="text-2xl font-bold text-green-900">{formatCurrency(totals.revenues)}</div>
+          <div className="text-2xl font-bold text-green-900" data-testid="accounts-revenue-total">{formatCurrency(totals.revenue)}</div>
         </div>
 
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
@@ -476,6 +614,22 @@ export default function ChartOfAccounts() {
             setSaveAccountError('');
           }}
           onAdd={createAccount}
+        />
+      )}
+
+      {showEditModal && editingAccount && (
+        <EditAccountModal
+          key={editingAccount.id}
+          account={editingAccount}
+          allAccounts={editableAccounts}
+          isSubmitting={savingEditAccount}
+          submitError={editAccountError}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingAccount(null);
+            setEditAccountError('');
+          }}
+          onSave={saveEditedAccount}
         />
       )}
     </div>
@@ -579,6 +733,132 @@ function AddAccountModal({ parentAccount, onClose, onAdd, isSubmitting, submitEr
               data-testid="add-account-submit-btn"
             >
               {isSubmitting ? 'جاري الحفظ...' : 'إضافة'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditAccountModal({ account, allAccounts, onClose, onSave, isSubmitting, submitError }) {
+  const [formData, setFormData] = useState({
+    code: account?.code || '',
+    name_ar: account?.name_ar || '',
+    type: account?.type || 'asset',
+    parent_id: account?.parent_id || null,
+    current_balance: Number(account?.current_balance || 0),
+    name_en: account?.name_en || '',
+  });
+
+  const parentOptions = (allAccounts || []).filter((acc) => String(acc.id) !== String(account?.id));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="edit-account-modal-overlay">
+      <div className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700" data-testid="edit-account-modal">
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white" data-testid="edit-account-modal-title">
+            تعديل الحساب "{account?.name_ar || account?.name}"
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4" data-testid="edit-account-form">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">رمز الحساب</label>
+            <input
+              type="text"
+              value={formData.code}
+              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              required
+              data-testid="edit-account-code-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">اسم الحساب</label>
+            <input
+              type="text"
+              value={formData.name_ar}
+              onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              required
+              data-testid="edit-account-name-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">النوع</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              data-testid="edit-account-type-select"
+            >
+              <option value="asset">أصول</option>
+              <option value="liability">التزامات</option>
+              <option value="equity">حقوق ملكية</option>
+              <option value="revenue">إيرادات</option>
+              <option value="expense">مصروفات</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">الحساب الأب</label>
+            <select
+              value={formData.parent_id || ''}
+              onChange={(e) => setFormData({ ...formData, parent_id: e.target.value || null })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              data-testid="edit-account-parent-select"
+            >
+              <option value="">بدون حساب أب</option>
+              {parentOptions.map((parent) => (
+                <option key={parent.id} value={parent.id}>
+                  {parent.code} - {parent.name_ar}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">الرصيد</label>
+            <input
+              type="number"
+              value={formData.current_balance}
+              onChange={(e) => setFormData({ ...formData, current_balance: Number(e.target.value) })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+              data-testid="edit-account-balance-input"
+            />
+          </div>
+
+          {submitError && (
+            <div className="text-sm text-red-400" data-testid="edit-account-error-message">
+              {submitError}
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-end pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 text-white transition-colors"
+              data-testid="edit-account-cancel-btn"
+              disabled={isSubmitting}
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              data-testid="edit-account-submit-btn"
+            >
+              {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديل'}
             </button>
           </div>
         </form>

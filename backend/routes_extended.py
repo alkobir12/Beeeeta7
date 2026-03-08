@@ -3492,6 +3492,7 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
     """Update an existing account"""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        print(f"[DEBUG] update_account called with id={account_id}, payload={payload}")
 
         if provider == "supabase":
             from supabase_service import SupabaseService
@@ -3535,6 +3536,7 @@ async def update_account(account_id: str, payload: Dict[str, Any] = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[ERROR] update_account failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

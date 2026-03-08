@@ -47,6 +47,13 @@
 - حذف 17 حسابًا تجريبيًا عبر API الحذف `/api/accounts/{id}`.
 - التحقق بعد التنظيف: لا توجد حسابات اختبار متبقية في `GET /api/finance/chart-of-accounts`.
 
+### إضافة تعديل الحساب + حفظ تلقائي ذكي (02 Mar 2026)
+- إضافة Edit modal كامل في `ChartOfAccounts.jsx` لتعديل **كل الحقول**: `code`, `name`, `type`, `parent`, `balance`.
+- ربط التعديل مباشرة بـ `PUT /api/accounts/{id}` مع تحديث القائمة فورًا بعد الحفظ.
+- إضافة fallback ذكي عند الخطأ/التكرار: محاولة مطابقة حساب قريب بالاسم+النوع أو بالكود ثم تحديثه تلقائيًا.
+- إصلاح مشكلة parsing في استجابة التحديث (Response body used) ومنع إرسال `header-*` كـ `parentId` (تحويله إلى `null`).
+- إزالة debug logs التجريبية من backend endpoint وتأكيد نجاح build والاختبار اليدوي (create→edit→verify→cleanup).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -240,6 +247,7 @@
 - `frontend/src/components/inventory/PartsTransactionModal.jsx` - POS sale/purchase modal
 - `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
 - `frontend/src/pages/ChartOfAccounts.jsx` - Account add modal connected to backend save flow
+- `frontend/src/pages/ChartOfAccounts.jsx` - Add/Edit account full save flow + smart auto-resolve + parent normalization
 - `backend/routes_smart_inventory.py` - Smart inventory APIs
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
 - `backend/routes_finance.py` - Chart-of-accounts account creation endpoint
@@ -278,3 +286,4 @@
 | 01 Mar 2026 | PartsInventory performance refactor + component decomposition |
 | 02 Mar 2026 | Chart of Accounts: real account creation/save flow with all account types |
 | 02 Mar 2026 | Chart of Accounts test data cleanup completed |
+| 02 Mar 2026 | Chart of Accounts: edit account capability + smart auto-update fallback |

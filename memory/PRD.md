@@ -64,6 +64,12 @@
   - تنظيف override تلقائيًا عند حذف الحساب.
 - التحقق عبر الاختبار: `/app/test_reports/iteration_17.json` (Backend/Frontend 100%).
 
+### إصلاح ChunkLoadError في صفحة المخزون /parts (08 Mar 2026)
+- معالجة خطأ `Loading chunk src_pages_PartsInventory_jsx failed` و`Unexpected token '<'`.
+- تحويل `PartsInventory` من lazy import إلى eager import في `App.js` لمنع الاعتماد على chunk ديناميكي لهذه الصفحة الحرجة.
+- إضافة auto-recovery في `ErrorBoundary.jsx` لاكتشاف أخطاء chunk وإعادة تحميل الصفحة تلقائياً مرة واحدة (مع حماية من loop عبر `sessionStorage`).
+- التحقق عبر الاختبار: `/app/test_reports/iteration_18.json` (Frontend 100%، بدون أخطاء chunk).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -263,6 +269,8 @@
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
 - `backend/routes_finance.py` - Chart-of-accounts account creation endpoint
 - `backend/routes_extended.py` - Account status override APIs + manager authorization for delete/toggle
+- `frontend/src/App.js` - Eager loading for PartsInventory to avoid chunk failures
+- `frontend/src/components/ErrorBoundary.jsx` - Auto-recovery for chunk loading/runtime script mismatches
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -300,3 +308,4 @@
 | 02 Mar 2026 | Chart of Accounts test data cleanup completed |
 | 02 Mar 2026 | Chart of Accounts: edit account capability + smart auto-update fallback |
 | 08 Mar 2026 | Chart of Accounts: manager-only delete/toggle + toast notifications + status overrides |
+| 08 Mar 2026 | Fixed /parts ChunkLoadError via eager import + ErrorBoundary auto-recovery |

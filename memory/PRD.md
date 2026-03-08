@@ -84,6 +84,15 @@
 - إضافة دعم خلفي/قواعد عرض لحقول الفصل (`scope/source/businessUnit`) مع fallback آمن دون كسر مخطط Supabase.
 - التحقق عبر الاختبار: `/app/test_reports/iteration_19.json` (Backend/Frontend 100%).
 
+### تبويب مستقل لعمليات راكان + Pagination لكل تبويب (08 Mar 2026)
+- تحويل عرض العمليات في `Operations.jsx` إلى تبويبات مستقلة:
+  - `عمليات قطع راكان (مستقلة)`
+  - `عمليات الورشة`
+- إضافة Pagination مستقل لكل تبويب بحد `15` عملية لكل صفحة.
+- إضافة أزرار تنقل كاملة (السابق/التالي + جميع أرقام الصفحات) مع حالة فعالة واضحة.
+- إضافة صيغة العدّاد المطلوبة: `صفحة X من Y صفحات`.
+- التحقق عبر الاختبار: `/app/test_reports/iteration_20.json` (Frontend 100%).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -287,6 +296,7 @@
 - `frontend/src/components/ErrorBoundary.jsx` - Auto-recovery for chunk loading/runtime script mismatches
 - `frontend/src/pages/PartsInventory.jsx` - Rakan POS account routing + independent business account mapping
 - `frontend/src/pages/Operations.jsx` - Separate sections: Rakan Parts operations vs Workshop operations
+- `frontend/src/pages/Operations.jsx` - Tabbed operations view + independent pagination per tab (15/page)
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/visit_sync.py` - Visit-to-operation sync
@@ -328,3 +338,4 @@
 | 08 Mar 2026 | Chart of Accounts: manager-only delete/toggle + toast notifications + status overrides |
 | 08 Mar 2026 | Fixed /parts ChunkLoadError via eager import + ErrorBoundary auto-recovery |
 | 08 Mar 2026 | Rakan Parts financial separation in POS and Operations sections |
+| 08 Mar 2026 | Operations page: Rakan tab + independent 15-item pagination with full page numbers |

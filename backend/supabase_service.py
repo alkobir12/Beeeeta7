@@ -364,6 +364,7 @@ class SupabaseService:
                     "id": r.get("id"),
                     "type": r.get("type"),
                     "accountId": r.get("account_id"),
+                    "accountingAccountId": r.get("accounting_account_id"),
                     "vehicleId": r.get("vehicle_id"),
                     "visitId": r.get("visit_id"),
                     "partnerType": r.get("partner_type"),
@@ -396,6 +397,7 @@ class SupabaseService:
             "id": r.get("id"),
             "type": r.get("type"),
             "accountId": r.get("account_id"),
+            "accountingAccountId": r.get("accounting_account_id"),
             "vehicleId": r.get("vehicle_id"),
             "visitId": r.get("visit_id"),
             "partnerType": r.get("partner_type"),
@@ -739,6 +741,7 @@ class SupabaseService:
             "type": payload.get("type", "service"),
             "workshop_id": workshop_id,
             "account_id": account_id,
+            "accounting_account_id": accounting_account_id,
             "vehicle_id": vehicle_id,
             "visit_id": visit_id,
             "partner_type": payload.get("partnerType"),
@@ -750,19 +753,25 @@ class SupabaseService:
             "notes": payload.get("notes"),
             "op_date": op_date or datetime.utcnow().isoformat(),
         }
-        try:
-            res = self.client.table("operations").insert(row).execute()
-        except Exception as insert_error:
-            # إذا كان جدول العمليات لا يحتوي على visit_id أو workshop_id، أعد المحاولة بدونها
-            error_msg = str(insert_error)
-            print(f"Operations insert error, retrying without problematic fields: {insert_error}")
-            
-            # Remove fields that might not exist in the schema
-            if "visit_id" in error_msg:
-                row.pop("visit_id", None)
-            if "workshop_id" in error_msg:
-                row.pop("workshop_id", None)
-            res = self.client.table("operations").insert(row).execute()
+        retry_fields = ["visit_id", "workshop_id", "accounting_account_id", "scope", "source", "business_unit"]
+        last_error = None
+        for _ in range(len(retry_fields) + 1):
+            try:
+                res = self.client.table("operations").insert(row).execute()
+                last_error = None
+                break
+            except Exception as insert_error:
+                last_error = insert_error
+                error_msg = str(insert_error)
+                removed_any = False
+                for field in retry_fields:
+                    if field in row and field in error_msg:
+                        row.pop(field, None)
+                        removed_any = True
+                if not removed_any:
+                    break
+        if last_error is not None:
+            raise last_error
         r = (res.data or [{}])[0]
         return {
             "id": r.get("id"),
@@ -799,6 +808,7 @@ class SupabaseService:
             "type": payload.get("type"),
             "workshop_id": workshop_id,
             "account_id": payload.get("accountId"),
+            "accounting_account_id": payload.get("accountingAccountId") or payload.get("accounting_account_id"),
             "vehicle_id": payload.get("vehicleId"),
             "partner_type": payload.get("partnerType"),
             "partner_name": payload.get("partnerName"),
@@ -812,23 +822,31 @@ class SupabaseService:
         # إزالة القيم الفارغة
         row = {k: v for k, v in row.items() if v is not None}
         
-        try:
-            res = self.client.table("operations").update(row).eq("id", op_id).execute()
-        except Exception as update_error:
-            # إذا كان جدول العمليات لا يحتوي على workshop_id، أعد المحاولة بدونها
-            error_msg = str(update_error)
-            print(f"Operations update error, retrying without problematic fields: {update_error}")
-            
-            # Remove fields that might not exist in the schema
-            if "workshop_id" in error_msg:
-                row.pop("workshop_id", None)
-                
-            res = self.client.table("operations").update(row).eq("id", op_id).execute()
+        retry_fields = ["visit_id", "workshop_id", "accounting_account_id", "scope", "source", "business_unit"]
+        last_error = None
+        for _ in range(len(retry_fields) + 1):
+            try:
+                res = self.client.table("operations").update(row).eq("id", op_id).execute()
+                last_error = None
+                break
+            except Exception as update_error:
+                last_error = update_error
+                error_msg = str(update_error)
+                removed_any = False
+                for field in retry_fields:
+                    if field in row and field in error_msg:
+                        row.pop(field, None)
+                        removed_any = True
+                if not removed_any:
+                    break
+        if last_error is not None:
+            raise last_error
         r = (res.data or [{}])[0]
         return {
             "id": r.get("id"),
             "type": r.get("type"),
             "accountId": r.get("account_id"),
+            "accountingAccountId": r.get("accounting_account_id"),
             "vehicleId": r.get("vehicle_id"),
             "partnerType": r.get("partner_type"),
             "partnerName": r.get("partner_name"),

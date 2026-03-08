@@ -636,7 +636,7 @@ const PartsInventory = () => {
         ) || '',
         accountId: rakanBusinessAccountId,
         accountingAccountId: selectedAccountId,
-        notes: `[RAKAN_PARTS] ${transactionType === 'sale' ? 'عملية بيع قطع راكان' : 'عملية شراء قطع راكان'}`
+        notes: `[RAKAN_PARTS] ${transactionType === 'sale' ? 'عملية بيع قطع راكان' : 'عملية شراء قطع راكان'} | ACCOUNTING_TARGET:${selectedAccount?.name_ar || selectedAccount?.name || selectedAccountId}`
       });
 
       for (const item of itemsPayload) {

@@ -142,6 +142,7 @@ const Operations = () => {
   const [activeOperationsTab, setActiveOperationsTab] = useState('rakan');
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
+  const [expandedOperationId, setExpandedOperationId] = useState(null);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -333,6 +334,10 @@ const Operations = () => {
     setWorkshopPage((prev) => Math.min(Math.max(prev, 1), workshopTotalPages));
   }, [workshopTotalPages]);
 
+  useEffect(() => {
+    setExpandedOperationId(null);
+  }, [activeOperationsTab, rakanPage, workshopPage]);
+
   const paginatedRakanOps = useMemo(() => {
     const start = (rakanPage - 1) * OPERATIONS_PAGE_SIZE;
     return rakanOps.slice(start, start + OPERATIONS_PAGE_SIZE);
@@ -361,6 +366,12 @@ const Operations = () => {
     () => Array.from({ length: activeTotalPages }, (_, i) => i + 1),
     [activeTotalPages]
   );
+
+  useEffect(() => {
+    if (!expandedOperationId) return;
+    const exists = sortedOps.some((op) => op.id === expandedOperationId);
+    if (!exists) setExpandedOperationId(null);
+  }, [expandedOperationId, sortedOps]);
 
   useEffect(() => {
     if (vehicleIdFromUrl) {
@@ -564,6 +575,11 @@ const Operations = () => {
     }
 
     try {
+      const selectedVehicle = (vehicleOptions || []).find((v) => v.id === activeVehicleId);
+      const vehicleDetailsNote = (form.scope === 'vehicle' && selectedVehicle)
+        ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${form.visitId || '-'}`
+        : '';
+
       const cleanPayload = {
         ...form,
         workshopId: workshopId || null,
@@ -575,6 +591,7 @@ const Operations = () => {
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
+        notes: `${form.notes || ''}${vehicleDetailsNote}`.trim(),
       };
 
       await createOperationMutation.mutateAsync(cleanPayload);
@@ -1262,15 +1279,27 @@ const Operations = () => {
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4"
                 data-testid="operations-active-tab-grid"
               >
-                {activeOps.map((op) => (
+                {activeOps.map((op, index) => {
+                  const opRenderKey = op.id || `${isRakanTabActive ? 'rakan' : 'workshop'}-${op.invoiceNumber || 'op'}-${activePage}-${index}`;
+                  return (
                   <OperationCard
-                    key={`${isRakanTabActive ? 'rakan' : 'workshop'}-${op.id}`}
+                    key={opRenderKey}
                     operation={op}
                     isRTL={isRTL}
                     t={t}
                     accounts={accounts}
+                    businessAccounts={bizAccounts}
+                    vehicles={vehicleOptions}
                     isSaving={saveOpId === op.id}
                     isDeleting={deleteOpId === op.id}
+                    expanded={expandedOperationId === (op.id || opRenderKey)}
+                    onExpandedChange={(next) => {
+                      if (next) {
+                        setExpandedOperationId(op.id || opRenderKey);
+                      } else {
+                        setExpandedOperationId((prev) => (prev === op.id || prev === opRenderKey ? null : prev));
+                      }
+                    }}
                     onPrint={(o) => {
                       if (!o?.id) return;
                       navigate(`/print?type=invoice&operationId=${o.id}`);
@@ -1286,7 +1315,8 @@ const Operations = () => {
                     onDelete={(o) => requestDeleteOperation(o)}
                     onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
                   />
-                ))}
+                  );
+                })}
               </div>
 
               <div className="glass-card p-3" data-testid="operations-pagination-wrapper">

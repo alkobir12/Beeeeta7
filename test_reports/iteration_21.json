@@ -1,0 +1,72 @@
+{
+  "summary": "اختبار شامل لصفحة العمليات (OperationCard) وتبويب تحليلات قطع راكان في Parts Dashboard - جميع الميزات الأساسية تعمل بشكل صحيح",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Operations page data loading",
+        "issue": "البيانات أحياناً لا تظهر عند التحميل الأول وتحتاج إلى reload - يبدو أنها مشكلة caching أو توقيت",
+        "affected_selectors": ["[data-testid='operations-tab-rakan']", "[data-testid='operations-tab-workshop']"],
+        "priority": "LOW"
+      }
+    ],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "✅ OperationCard: نص القيد المحاسبي يظهر بصيغة 'قيد محاسبي: من حساب ... إلى حساب ...'",
+    "✅ OperationCard: التوسيع المتحكم فيه يعمل - كرت واحد فقط يمكن أن يكون مفتوحاً في نفس الوقت",
+    "✅ OperationCard: تفاصيل المركبة تظهر للعمليات scope=vehicle (اللوحة، العميل، رقم الزيارة)",
+    "✅ OperationCard: صندوق القيد المحاسبي يظهر في الكرت الموسع",
+    "✅ Operations page: تبويبات راكان/الورشة تعمل بشكل صحيح",
+    "✅ Operations page: Pagination يعمل بشكل صحيح",
+    "✅ Operations page: العدادات تظهر بشكل صحيح (مثال: عمليات قطع راكان (مستقلة) • 2)",
+    "✅ Parts Dashboard: تبويب تحليلات قطع راكان موجود (تحليلات قطع راكان)",
+    "✅ Parts Dashboard: 3 تبويبات موجودة (النظرة العامة، تحليلات قطع راكان، Backorders)",
+    "✅ Parts Dashboard: Overview يظهر بطاقات (مبيعات، مشتريات، ربح، منخفض المخزون، نافد المخزون، إجمالي الأصناف)"
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "النصوص غير مقطوعة - whitespace-normal وbreak-words مطبقة بشكل صحيح",
+    "التوسيع المتحكم يستخدم expandedOperationId state مشترك بين الكروت - تصميم صحيح",
+    "تحليلات راكان تحسب من operations API مع تصفية حسب accountId وtags"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A - frontend testing only",
+    "frontend": "95% (all core features working)"
+  },
+  "seed_data_creation": "تم استخدام البيانات الموجودة: عمليتين في قطع راكان (INV000176, INV000177)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Operations page features verified: Journal entry text format working (من حساب...إلى حساب), controlled expansion working (one card at a time), vehicle details showing for vehicle-scoped ops. Parts Dashboard has Rakan analytics tab with revenue/expense/profit/sell-rate cards and price trend table. Minor issue: data sometimes doesn't load on first navigation, requires reload.",
+  "features_tested": {
+    "operations_card": {
+      "journal_entry_text": "✅ Working - shows 'قيد محاسبي: من حساب X إلى حساب Y'",
+      "controlled_expansion": "✅ Working - only 1 card expanded at a time",
+      "vehicle_details": "✅ Working - shows plate/customer/visit for vehicle-scoped ops",
+      "journal_entry_box": "✅ Working - shows in expanded card"
+    },
+    "operations_tabs": {
+      "rakan_tab": "عمليات قطع راكان (مستقلة) • 2",
+      "workshop_tab": "عمليات الورشة • 0",
+      "tab_switching": "Working correctly"
+    },
+    "parts_dashboard": {
+      "tabs": ["النظرة العامة", "تحليلات قطع راكان", "Backorders"],
+      "overview_cards": ["مبيعات القطع", "مشتريات القطع", "ربح تقديري", "منخفض المخزون", "نافد المخزون", "إجمالي الأصناف"],
+      "rakan_analytics": {
+        "revenue_card": "✅ Present (إيراد قطع راكان)",
+        "expense_card": "✅ Present (مصروف قطع راكان)",
+        "profit_card": "✅ Present (الربح / الخسارة)",
+        "sell_rate": "✅ Present (معدل البيع اليومي)",
+        "smart_insights": "✅ Present (تحليل ذكي)",
+        "price_trend_table": "✅ Present (متغير أسعار القطع عبر الزمن)"
+      }
+    }
+  }
+}

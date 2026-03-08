@@ -1160,6 +1160,7 @@ async def list_operations(
                     "date": 1,
                     "vehicleId": 1,
                     "accountId": 1,
+                    "accountingAccountId": 1,
                     "notes": 1,
                     "scope": 1,
                     "source": 1,
@@ -1547,6 +1548,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 "id": str(uuid.uuid4()),
                 "type": payload.get("type", "service"),
                 "accountId": payload.get("accountId"),
+                "accountingAccountId": payload.get("accountingAccountId"),
                 "vehicleId": payload.get("vehicleId"),
                 "partnerType": payload.get("partnerType"),
                 "partnerName": payload.get("partnerName"),
@@ -1575,6 +1577,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         op = {
             "id": str(uuid.uuid4()),
             "accountId": payload.get("accountId", ""),
+            "accountingAccountId": payload.get("accountingAccountId"),
             "vehicleId": payload.get("vehicleId"),
             "type": payload.get("type", "purchase"),
             "partnerType": payload.get("partnerType", "supplier"),

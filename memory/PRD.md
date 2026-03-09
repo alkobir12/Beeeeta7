@@ -334,6 +334,9 @@
 - `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
 - `frontend/src/translations.js` - Added missing Arabic keys for parts dashboard + common details/view
 - `frontend/src/constants/englishTexts.js` - Added missing English keys for parts dashboard + common details/view
+- `frontend/src/index.css` - Global default font set to Parastoo across app
+- `frontend/public/index.html` - Parastoo font preconnect + stylesheet loading
+- `frontend/src/godaddy-theme.css` - Parastoo fallback for GoDaddy theme pages
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -377,3 +380,4 @@
 | 08 Mar 2026 | Operation cards UX fix + accounting entry clarity + Rakan analytics tab with smart price insights |
 | 09 Mar 2026 | Parts Control Panel advanced Rakan analytics (expandable KPI cards + full spend trace + last 3 buy/sell prices) |
 | 09 Mar 2026 | Fixed save-operation FK blocker + implemented 3 operation kinds with strict validation and automatic customer/vehicle linking |
+| 09 Mar 2026 | Global font migration: switched full frontend typography to Parastoo |

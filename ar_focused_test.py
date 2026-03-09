@@ -7,7 +7,7 @@ Focused test to check AR calculation issue
 import requests
 import json
 
-BACKEND_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def test_ar_calculation_issue():

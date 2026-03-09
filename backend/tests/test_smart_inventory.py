@@ -120,6 +120,64 @@ class TestSmartInventoryControlPanel:
         print(f"✅ Control panel for 90 days: total_parts={data['overview']['total_parts']}")
 
 
+class TestSmartInventoryArchitecture:
+    """Test replenishment architecture endpoint"""
+
+    def test_get_inventory_architecture(self):
+        """GET /api/inventory/architecture should return blueprint and planning tables"""
+        response = requests.get(
+            f"{BASE_URL}/api/inventory/architecture", params={"days": 90}, timeout=30
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+
+        data = response.json()
+        assert "blueprint" in data, "Architecture should include blueprint"
+        assert "replenishment_plan" in data, "Architecture should include replenishment_plan"
+        assert "supplier_health" in data, "Architecture should include supplier_health"
+        assert "stock_segments" in data, "Architecture should include stock_segments"
+        assert data["blueprint"]["period_days"] == 90
+        assert isinstance(data["replenishment_plan"], list)
+        assert isinstance(data["supplier_health"], list)
+        assert isinstance(data["stock_segments"], list)
+        print(
+            f"✅ Architecture blueprint: urgent={data['blueprint']['urgent_reorders_count']}, supplier_coverage={data['blueprint']['supplier_coverage_pct']}%"
+        )
+
+
+class TestRakanAnalytics:
+    """Test dedicated Rakan analytics endpoint"""
+
+    def test_get_rakan_analytics(self):
+        """GET /api/inventory/rakan-analytics should return normalized financial analytics"""
+        response = requests.get(
+            f"{BASE_URL}/api/inventory/rakan-analytics", params={"days": 90}, timeout=30
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+
+        data = response.json()
+        for key in [
+            "period_days",
+            "revenue",
+            "expense",
+            "profit",
+            "period_comparison",
+            "expense_breakdown",
+            "expense_reasons",
+            "price_trend",
+            "insights",
+        ]:
+            assert key in data, f"Rakan analytics should include '{key}'"
+
+        assert data["period_days"] == 90
+        assert isinstance(data["expense_breakdown"], list)
+        assert isinstance(data["expense_reasons"], list)
+        assert isinstance(data["price_trend"], list)
+        assert isinstance(data["insights"], list)
+        print(
+            f"✅ Rakan analytics: revenue={data['revenue']}, expense={data['expense']}, profit={data['profit']}"
+        )
+
+
 class TestSmartInventoryBackorders:
     """Test backorders CRUD operations"""
     

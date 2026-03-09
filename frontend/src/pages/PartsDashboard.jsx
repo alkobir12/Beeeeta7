@@ -2,43 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
 import { api, partAPI } from '../services/api';
 import { Button } from '../components/ui/button';
+import { InventoryPlannerTab } from '../components/parts-dashboard/InventoryPlannerTab';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
-const normalizeText = (value) => String(value || '').trim().toLowerCase();
-const RAKAN_KEYWORDS = ['راكان', 'rakan'];
-
-const isRakanBusinessAccount = (account = {}) => {
-  const text = [account.name, account.code].map((v) => normalizeText(v)).join(' ');
-  return RAKAN_KEYWORDS.some((k) => text.includes(k));
-};
-
-const isRakanOperation = (operation = {}, rakanBizIds = new Set()) => {
-  const scope = normalizeText(operation.scope);
-  const source = normalizeText(operation.source);
-  const businessUnit = normalizeText(operation.businessUnit || operation.business_unit);
-  const notes = normalizeText(operation.notes);
-  return (
-    rakanBizIds.has(String(operation.accountId || '')) ||
-    scope === 'rakan_parts' ||
-    source === 'rakan_parts_pos' ||
-    businessUnit === 'rakan_parts' ||
-    notes.includes('[rakan_parts]')
-  );
-};
-
-const isRakanChartAccount = (account = {}) => {
-  const text = [account.name_ar, account.name, account.code, account.category]
-    .map((v) => normalizeText(v))
-    .join(' ');
-  return RAKAN_KEYWORDS.some((k) => text.includes(k));
-};
-
-const getOperationDate = (operation = {}) => {
-  const value = operation.date || operation.op_date || operation.createdAt || operation.created_at;
-  const parsed = value ? new Date(value) : null;
-  if (!parsed || Number.isNaN(parsed.getTime())) return null;
-  return parsed;
-};
 
 const backorderStatusOptions = [
   { value: 'all', label: 'الكل' },
@@ -58,6 +24,8 @@ const PartsDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [rakanAnalytics, setRakanAnalytics] = useState(null);
   const [loadingRakanAnalytics, setLoadingRakanAnalytics] = useState(true);
+  const [inventoryArchitecture, setInventoryArchitecture] = useState(null);
+  const [loadingInventoryArchitecture, setLoadingInventoryArchitecture] = useState(true);
   const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
   const [savingBackorder, setSavingBackorder] = useState(false);
   const [partsList, setPartsList] = useState([]);
@@ -109,175 +77,8 @@ const PartsDashboard = () => {
   const loadRakanAnalytics = async () => {
     setLoadingRakanAnalytics(true);
     try {
-      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
-      const [opsRes, bizRes, partsRes, chartRes] = await Promise.all([
-        api.get('/operations'),
-        api.get('/biz-accounts'),
-        partAPI.getAll(),
-        api.get('/finance/chart-of-accounts', { params: { workshop_id: workshopId } }),
-      ]);
-
-      const operations = Array.isArray(opsRes.data) ? opsRes.data : [];
-      const bizAccounts = Array.isArray(bizRes.data) ? bizRes.data : [];
-      const parts = Array.isArray(partsRes.data) ? partsRes.data : [];
-      const chartRows = chartRes?.data?.success && Array.isArray(chartRes?.data?.data)
-        ? chartRes.data.data
-        : [];
-
-      const partMap = new Map(parts.map((part) => [String(part.id), part]));
-      const rakanBizIds = new Set(
-        bizAccounts.filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))
-      );
-      const chartById = new Map(chartRows.map((acc) => [String(acc.id || acc.code || ''), acc]));
-      const rakanChartIds = new Set(
-        chartRows.filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))
-      );
-
-      const now = new Date();
-      const start = new Date(now.getTime() - (daysFilter * 24 * 60 * 60 * 1000));
-
-      const withinPeriod = operations.filter((op) => {
-        const date = getOperationDate(op);
-        if (!date) return false;
-        return date >= start;
-      });
-
-      const rakanOps = withinPeriod
-        .filter((op) => {
-          const accountingId = String(op.accountingAccountId || '');
-          return isRakanOperation(op, rakanBizIds) || rakanChartIds.has(accountingId);
-        })
-        .sort((a, b) => {
-          const db = getOperationDate(b);
-          const da = getOperationDate(a);
-          return (db?.getTime() || 0) - (da?.getTime() || 0);
-        });
-
-      const sales = rakanOps.filter((op) => op.type === 'sale');
-      const purchases = rakanOps.filter((op) => op.type === 'purchase');
-      let soldQty = 0;
-      let revenue = 0;
-      let purchaseExpense = 0;
-      let otherExpense = 0;
-      const expenseBreakdownMap = new Map();
-      const ledger = [];
-      const priceTimeline = new Map();
-
-      for (const op of rakanOps) {
-        const amount = Number(op.total || 0);
-        const accountRef = String(op.accountingAccountId || op.accountId || '');
-        const chartAccount = chartById.get(accountRef);
-        const accountType = normalizeText(chartAccount?.type || op.type || '');
-        const accountName = chartAccount?.name_ar || chartAccount?.name || chartAccount?.code || op.accountingAccountId || op.accountId || '-';
-        const operationDate = getOperationDate(op) || now;
-
-        const isRevenue = accountType === 'revenue' || op.type === 'sale';
-        const isPurchase = op.type === 'purchase';
-        const isExpense = accountType === 'expense' || isPurchase || ['expense', 'payroll', 'salary'].includes(op.type);
-
-        if (isRevenue) revenue += amount;
-        if (isExpense) {
-          if (isPurchase) {
-            purchaseExpense += amount;
-          } else {
-            otherExpense += amount;
-          }
-          const current = expenseBreakdownMap.get(accountName) || 0;
-          expenseBreakdownMap.set(accountName, current + amount);
-        }
-
-        ledger.push({
-          id: op.id,
-          type: op.type,
-          date: operationDate.toISOString(),
-          account_name: accountName,
-          account_type: accountType,
-          amount,
-          partner_name: op.partnerName || '-',
-          reason: op.notes || '-',
-          direction: isRevenue ? 'in' : (isExpense ? 'out' : 'neutral'),
-        });
-
-        for (const item of (op.items || [])) {
-          const partId = String(item.itemId || item.partId || item.item_id || '');
-          if (!partId) continue;
-          const qty = Number(item.quantity || 0);
-          const price = Number(item.price || 0);
-          if (op.type === 'sale') soldQty += qty;
-
-          if (!priceTimeline.has(partId)) {
-            priceTimeline.set(partId, { sale: [], purchase: [] });
-          }
-          const bucket = priceTimeline.get(partId);
-          if (op.type === 'sale') {
-            bucket.sale.push({ price, date: operationDate.toISOString() });
-          } else if (op.type === 'purchase') {
-            bucket.purchase.push({ price, date: operationDate.toISOString() });
-          }
-        }
-      }
-
-      const priceTrend = [];
-      for (const [partId, bucket] of priceTimeline.entries()) {
-        const sortDesc = (arr) => (arr || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-        const saleSorted = sortDesc(bucket.sale);
-        const purchaseSorted = sortDesc(bucket.purchase);
-        const latestSale = saleSorted.slice(0, 3).map((row) => Number(row.price || 0));
-        const latestPurchase = purchaseSorted.slice(0, 3).map((row) => Number(row.price || 0));
-        if (!latestSale.length && !latestPurchase.length) continue;
-
-        const saleChange = latestSale.length >= 2 ? latestSale[0] - latestSale[latestSale.length - 1] : 0;
-        const purchaseChange = latestPurchase.length >= 2 ? latestPurchase[0] - latestPurchase[latestPurchase.length - 1] : 0;
-
-        priceTrend.push({
-          part_id: partId,
-          part_name: partMap.get(partId)?.name || `قطعة ${partId.slice(0, 6)}`,
-          latest_sale_prices: latestSale,
-          latest_purchase_prices: latestPurchase,
-          sale_change: Number(saleChange.toFixed(2)),
-          purchase_change: Number(purchaseChange.toFixed(2)),
-        });
-      }
-      priceTrend.sort((a, b) => (
-        (Math.abs(b.sale_change) + Math.abs(b.purchase_change))
-        - (Math.abs(a.sale_change) + Math.abs(a.purchase_change))
-      ));
-
-      const sellRate = daysFilter > 0 ? soldQty / daysFilter : 0;
-      const totalExpense = purchaseExpense + otherExpense;
-      const profit = revenue - totalExpense;
-      const expenseBreakdown = Array.from(expenseBreakdownMap.entries())
-        .map(([account_name, amount]) => ({ account_name, amount: Number(amount.toFixed(2)) }))
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 12);
-
-      const insights = [];
-      if (profit < 0) insights.push('تنبيه: صافي نتيجة حسابات قطع راكان سالب في الفترة المحددة، راجع المصروفات التشغيلية والمشتريات.');
-      if (otherExpense > 0 && otherExpense > purchaseExpense) insights.push('المصروفات غير المرتبطة بالمخزون أعلى من المشتريات، يلزم ضبط بند المصروفات الشخصية/التشغيلية.');
-      if (sellRate < 1) insights.push('معدل البيع اليومي منخفض، يوصى بحملات تنشيط أو مراجعة تشكيلة القطع.');
-      if (priceTrend.some((row) => row.sale_change <= -10)) insights.push('بعض القطع تراجع سعر بيعها في آخر 3 تسعيرات، تحقق من أثر ذلك على الهامش.');
-      if (priceTrend.some((row) => row.purchase_change >= 10)) insights.push('تكلفة شراء بعض القطع ارتفعت في آخر 3 تسعيرات، راجع التسعير النهائي.');
-      if (!insights.length) insights.push('الأداء مستقر؛ استمر في مراقبة تغيّر الأسعار والهامش أسبوعيًا.');
-
-      setRakanAnalytics({
-        period_days: daysFilter,
-        operations_count: rakanOps.length,
-        sales_count: sales.length,
-        purchases_count: purchases.length,
-        expense_ops_count: ledger.filter((row) => row.direction === 'out').length,
-        revenue,
-        purchase_expense: purchaseExpense,
-        other_expense: otherExpense,
-        expense: totalExpense,
-        profit,
-        sold_qty: soldQty,
-        sell_rate_per_day: Number(sellRate.toFixed(2)),
-        expense_breakdown: expenseBreakdown,
-        ledger: ledger.slice(0, 30),
-        price_trend: priceTrend.slice(0, 12),
-        recent_ops: rakanOps.slice(0, 16),
-        insights,
-      });
+      const { data } = await api.get('/inventory/rakan-analytics', { params: { days: daysFilter } });
+      setRakanAnalytics(data || null);
     } catch (error) {
       setRakanAnalytics(null);
     } finally {
@@ -285,9 +86,22 @@ const PartsDashboard = () => {
     }
   };
 
+  const loadInventoryArchitecture = async () => {
+    setLoadingInventoryArchitecture(true);
+    try {
+      const { data } = await api.get('/inventory/architecture', { params: { days: daysFilter } });
+      setInventoryArchitecture(data || null);
+    } catch (error) {
+      setInventoryArchitecture(null);
+    } finally {
+      setLoadingInventoryArchitecture(false);
+    }
+  };
+
   useEffect(() => {
     loadControlPanel();
     loadRakanAnalytics();
+    loadInventoryArchitecture();
   }, [daysFilter]);
 
   useEffect(() => {
@@ -377,7 +191,7 @@ const PartsDashboard = () => {
             type="button"
             variant="outline"
             className="bg-white/10 text-white border-white/20"
-            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadRakanAnalytics()])}
+            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadRakanAnalytics(), loadInventoryArchitecture()])}
             data-testid="parts-control-refresh-button"
           >
             <RefreshCw size={16} className="ml-1" /> تحديث
@@ -385,7 +199,7 @@ const PartsDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2" data-testid="parts-control-tabs">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2" data-testid="parts-control-tabs">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
@@ -401,6 +215,14 @@ const PartsDashboard = () => {
           data-testid="parts-control-tab-rakan"
         >
           تحليلات قطع راكان
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('planner')}
+          className={`px-4 py-2.5 rounded-xl text-sm border ${activeTab === 'planner' ? 'bg-sky-500/20 border-sky-400/40 text-sky-100' : 'bg-white/5 border-white/10 text-slate-300'}`}
+          data-testid="parts-control-tab-planner"
+        >
+          معمارية المخزون
         </button>
         <button
           type="button"
@@ -551,6 +373,25 @@ const PartsDashboard = () => {
                 </button>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="parts-control-rakan-period-comparison">
+                {[
+                  { key: 'revenue', label: 'تغير الإيراد', value: rakanAnalytics?.period_comparison?.revenue },
+                  { key: 'expense', label: 'تغير المصروفات', value: rakanAnalytics?.period_comparison?.expense },
+                  { key: 'profit', label: 'تغير الربحية', value: rakanAnalytics?.period_comparison?.profit },
+                  { key: 'sold-qty', label: 'تغير الكميات المباعة', value: rakanAnalytics?.period_comparison?.sold_qty, suffix: 'قطعة' },
+                ].map((item) => (
+                  <div key={item.key} className="glass-card p-4" data-testid={`parts-control-rakan-comparison-${item.key}`}>
+                    <p className="text-xs text-slate-400">{item.label}</p>
+                    <p className="text-lg font-bold text-white mt-2">
+                      {item.suffix ? `${Number(item.value?.delta || 0).toLocaleString('ar-SA')} ${item.suffix}` : formatCurrency(item.value?.delta)}
+                    </p>
+                    <p className={`text-xs mt-2 ${(item.value?.delta || 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                      {(item.value?.delta || 0) >= 0 ? '▲' : '▼'} {Number(item.value?.pct || 0).toLocaleString('ar-SA')}% مقارنة بالفترة السابقة
+                    </p>
+                  </div>
+                ))}
+              </div>
+
               {expandedRakanCard === 'revenue' && (
                 <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-revenue">
                   <h3 className="text-white font-semibold mb-3">تفاصيل الإيرادات</h3>
@@ -660,6 +501,23 @@ const PartsDashboard = () => {
                 </div>
               </div>
 
+              <div className="glass-card p-4" data-testid="parts-control-rakan-expense-reasons">
+                <h2 className="text-white font-semibold mb-3">أكثر أسباب الصرف تكرارًا</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                  {(rakanAnalytics?.expense_reasons || []).map((row, index) => (
+                    <div key={`${row.reason}-${index}`} className="rounded-xl bg-white/5 p-3" data-testid={`parts-control-rakan-expense-reason-${index}`}>
+                      <p className="text-sm text-white">{row.reason}</p>
+                      <p className="text-xs text-amber-300 mt-2">{formatCurrency(row.amount)}</p>
+                    </div>
+                  ))}
+                  {!(rakanAnalytics?.expense_reasons || []).length && (
+                    <p className="text-sm text-slate-400" data-testid="parts-control-rakan-expense-reasons-empty">
+                      لا توجد أسباب صرف موثقة بما يكفي في الفترة الحالية.
+                    </p>
+                  )}
+                </div>
+              </div>
+
               <div className="glass-card p-4 overflow-auto" data-testid="parts-control-rakan-price-trend">
                 <h2 className="text-white font-semibold mb-3">متغير أسعار القطع عبر الزمن (آخر 3 تسعيرات بيع/شراء)</h2>
                 <table className="w-full text-sm text-right">
@@ -693,6 +551,13 @@ const PartsDashboard = () => {
             </>
           )}
         </>
+      )}
+
+      {activeTab === 'planner' && (
+        <InventoryPlannerTab
+          architecture={inventoryArchitecture}
+          loading={loadingInventoryArchitecture}
+        />
       )}
 
       {activeTab === 'backorders' && (

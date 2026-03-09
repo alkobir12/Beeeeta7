@@ -26,5 +26,47 @@
     "expected_date": null,
     "created_at": "2026-03-01T03:10:52.540028+00:00",
     "updated_at": "2026-03-01T03:10:54.026904+00:00"
+  },
+  {
+    "id": "1c08b645-db08-4b09-b64e-4d20e2c35e11",
+    "part_id": null,
+    "part_name": "Test Part 39651666",
+    "requested_quantity": 5,
+    "customer_name": "عميل اختبار",
+    "customer_phone": "+966555123456",
+    "vehicle_reference": null,
+    "status": "ordered",
+    "note": "تم طلب القطعة من المورد",
+    "expected_date": null,
+    "created_at": "2026-03-09T19:27:02.633753+00:00",
+    "updated_at": "2026-03-09T19:27:04.262679+00:00"
+  },
+  {
+    "id": "d82ec00f-1ebf-43e7-86ab-9472c3abb549",
+    "part_id": null,
+    "part_name": "Test Part 4c9c569f",
+    "requested_quantity": 5,
+    "customer_name": "عميل اختبار",
+    "customer_phone": "+966555123456",
+    "vehicle_reference": null,
+    "status": "ordered",
+    "note": "تم طلب القطعة من المورد",
+    "expected_date": null,
+    "created_at": "2026-03-09T19:28:27.501208+00:00",
+    "updated_at": "2026-03-09T19:28:28.497001+00:00"
+  },
+  {
+    "id": "688975cd-53ac-40fa-8af9-f9f84a291f02",
+    "part_id": null,
+    "part_name": "قطعة اختبار UI",
+    "requested_quantity": 1,
+    "customer_name": "عميل اختبار Playwright",
+    "customer_phone": null,
+    "vehicle_reference": null,
+    "status": "pending",
+    "note": null,
+    "expected_date": null,
+    "created_at": "2026-03-09T19:31:18.297125+00:00",
+    "updated_at": "2026-03-09T19:31:18.297125+00:00"
   }
 ]

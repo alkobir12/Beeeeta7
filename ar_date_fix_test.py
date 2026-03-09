@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 import time
 
 # Configuration
-BACKEND_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

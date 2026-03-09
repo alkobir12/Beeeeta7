@@ -10,7 +10,7 @@ from datetime import datetime
 from io import BytesIO
 
 # Backend URL
-BASE_URL = "https://liquid-inventory-1.preview.emergentagent.com/api"
+BASE_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
 
 # Test results storage
 test_results = []

@@ -26,6 +26,20 @@ const isRakanOperation = (operation = {}, rakanBizIds = new Set()) => {
   );
 };
 
+const isRakanChartAccount = (account = {}) => {
+  const text = [account.name_ar, account.name, account.code, account.category]
+    .map((v) => normalizeText(v))
+    .join(' ');
+  return RAKAN_KEYWORDS.some((k) => text.includes(k));
+};
+
+const getOperationDate = (operation = {}) => {
+  const value = operation.date || operation.op_date || operation.createdAt || operation.created_at;
+  const parsed = value ? new Date(value) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
 const backorderStatusOptions = [
   { value: 'all', label: 'الكل' },
   { value: 'pending', label: 'قيد الانتظار' },
@@ -44,6 +58,7 @@ const PartsDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [rakanAnalytics, setRakanAnalytics] = useState(null);
   const [loadingRakanAnalytics, setLoadingRakanAnalytics] = useState(true);
+  const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
   const [savingBackorder, setSavingBackorder] = useState(false);
   const [partsList, setPartsList] = useState([]);
   const [formData, setFormData] = useState({
@@ -94,88 +109,154 @@ const PartsDashboard = () => {
   const loadRakanAnalytics = async () => {
     setLoadingRakanAnalytics(true);
     try {
-      const [opsRes, bizRes, partsRes] = await Promise.all([
+      const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+      const [opsRes, bizRes, partsRes, chartRes] = await Promise.all([
         api.get('/operations'),
         api.get('/biz-accounts'),
         partAPI.getAll(),
+        api.get('/finance/chart-of-accounts', { params: { workshop_id: workshopId } }),
       ]);
 
       const operations = Array.isArray(opsRes.data) ? opsRes.data : [];
       const bizAccounts = Array.isArray(bizRes.data) ? bizRes.data : [];
       const parts = Array.isArray(partsRes.data) ? partsRes.data : [];
+      const chartRows = chartRes?.data?.success && Array.isArray(chartRes?.data?.data)
+        ? chartRes.data.data
+        : [];
 
       const partMap = new Map(parts.map((part) => [String(part.id), part]));
       const rakanBizIds = new Set(
         bizAccounts.filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))
+      );
+      const chartById = new Map(chartRows.map((acc) => [String(acc.id || acc.code || ''), acc]));
+      const rakanChartIds = new Set(
+        chartRows.filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))
       );
 
       const now = new Date();
       const start = new Date(now.getTime() - (daysFilter * 24 * 60 * 60 * 1000));
 
       const withinPeriod = operations.filter((op) => {
-        const dateValue = op.date || op.op_date || op.createdAt || op.created_at;
-        const date = dateValue ? new Date(dateValue) : null;
-        if (!date || Number.isNaN(date.getTime())) return false;
+        const date = getOperationDate(op);
+        if (!date) return false;
         return date >= start;
       });
 
-      const rakanOps = withinPeriod.filter((op) => isRakanOperation(op, rakanBizIds));
+      const rakanOps = withinPeriod
+        .filter((op) => {
+          const accountingId = String(op.accountingAccountId || '');
+          return isRakanOperation(op, rakanBizIds) || rakanChartIds.has(accountingId);
+        })
+        .sort((a, b) => {
+          const db = getOperationDate(b);
+          const da = getOperationDate(a);
+          return (db?.getTime() || 0) - (da?.getTime() || 0);
+        });
+
       const sales = rakanOps.filter((op) => op.type === 'sale');
       const purchases = rakanOps.filter((op) => op.type === 'purchase');
-
-      const revenue = sales.reduce((sum, op) => sum + Number(op.total || 0), 0);
-      const expense = purchases.reduce((sum, op) => sum + Number(op.total || 0), 0);
-      const profit = revenue - expense;
-
       let soldQty = 0;
-      const priceBuckets = new Map();
-      const halfPoint = new Date(start.getTime() + ((now.getTime() - start.getTime()) / 2));
+      let revenue = 0;
+      let purchaseExpense = 0;
+      let otherExpense = 0;
+      const expenseBreakdownMap = new Map();
+      const ledger = [];
+      const priceTimeline = new Map();
 
-      for (const op of sales) {
-        const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || now);
+      for (const op of rakanOps) {
+        const amount = Number(op.total || 0);
+        const accountRef = String(op.accountingAccountId || op.accountId || '');
+        const chartAccount = chartById.get(accountRef);
+        const accountType = normalizeText(chartAccount?.type || op.type || '');
+        const accountName = chartAccount?.name_ar || chartAccount?.name || chartAccount?.code || op.accountingAccountId || op.accountId || '-';
+        const operationDate = getOperationDate(op) || now;
+
+        const isRevenue = accountType === 'revenue' || op.type === 'sale';
+        const isPurchase = op.type === 'purchase';
+        const isExpense = accountType === 'expense' || isPurchase || ['expense', 'payroll', 'salary'].includes(op.type);
+
+        if (isRevenue) revenue += amount;
+        if (isExpense) {
+          if (isPurchase) {
+            purchaseExpense += amount;
+          } else {
+            otherExpense += amount;
+          }
+          const current = expenseBreakdownMap.get(accountName) || 0;
+          expenseBreakdownMap.set(accountName, current + amount);
+        }
+
+        ledger.push({
+          id: op.id,
+          type: op.type,
+          date: operationDate.toISOString(),
+          account_name: accountName,
+          account_type: accountType,
+          amount,
+          partner_name: op.partnerName || '-',
+          reason: op.notes || '-',
+          direction: isRevenue ? 'in' : (isExpense ? 'out' : 'neutral'),
+        });
+
         for (const item of (op.items || [])) {
-          const itemPartId = String(item.itemId || item.partId || item.item_id || '');
-          if (!itemPartId) continue;
+          const partId = String(item.itemId || item.partId || item.item_id || '');
+          if (!partId) continue;
           const qty = Number(item.quantity || 0);
           const price = Number(item.price || 0);
-          soldQty += qty;
+          if (op.type === 'sale') soldQty += qty;
 
-          if (!priceBuckets.has(itemPartId)) {
-            priceBuckets.set(itemPartId, { first: [], second: [] });
+          if (!priceTimeline.has(partId)) {
+            priceTimeline.set(partId, { sale: [], purchase: [] });
           }
-          const bucket = priceBuckets.get(itemPartId);
-          if (opDate <= halfPoint) {
-            bucket.first.push(price);
-          } else {
-            bucket.second.push(price);
+          const bucket = priceTimeline.get(partId);
+          if (op.type === 'sale') {
+            bucket.sale.push({ price, date: operationDate.toISOString() });
+          } else if (op.type === 'purchase') {
+            bucket.purchase.push({ price, date: operationDate.toISOString() });
           }
         }
       }
 
       const priceTrend = [];
-      for (const [partId, bucket] of priceBuckets.entries()) {
-        const firstAvg = bucket.first.length ? bucket.first.reduce((a, b) => a + b, 0) / bucket.first.length : 0;
-        const secondAvg = bucket.second.length ? bucket.second.reduce((a, b) => a + b, 0) / bucket.second.length : 0;
-        if (!firstAvg && !secondAvg) continue;
-        const delta = secondAvg - firstAvg;
-        const pct = firstAvg ? (delta / firstAvg) * 100 : 0;
+      for (const [partId, bucket] of priceTimeline.entries()) {
+        const sortDesc = (arr) => (arr || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+        const saleSorted = sortDesc(bucket.sale);
+        const purchaseSorted = sortDesc(bucket.purchase);
+        const latestSale = saleSorted.slice(0, 3).map((row) => Number(row.price || 0));
+        const latestPurchase = purchaseSorted.slice(0, 3).map((row) => Number(row.price || 0));
+        if (!latestSale.length && !latestPurchase.length) continue;
+
+        const saleChange = latestSale.length >= 2 ? latestSale[0] - latestSale[latestSale.length - 1] : 0;
+        const purchaseChange = latestPurchase.length >= 2 ? latestPurchase[0] - latestPurchase[latestPurchase.length - 1] : 0;
+
         priceTrend.push({
           part_id: partId,
           part_name: partMap.get(partId)?.name || `قطعة ${partId.slice(0, 6)}`,
-          first_avg: Number(firstAvg.toFixed(2)),
-          second_avg: Number(secondAvg.toFixed(2)),
-          delta: Number(delta.toFixed(2)),
-          change_pct: Number(pct.toFixed(2)),
+          latest_sale_prices: latestSale,
+          latest_purchase_prices: latestPurchase,
+          sale_change: Number(saleChange.toFixed(2)),
+          purchase_change: Number(purchaseChange.toFixed(2)),
         });
       }
-      priceTrend.sort((a, b) => Math.abs(b.change_pct) - Math.abs(a.change_pct));
+      priceTrend.sort((a, b) => (
+        (Math.abs(b.sale_change) + Math.abs(b.purchase_change))
+        - (Math.abs(a.sale_change) + Math.abs(a.purchase_change))
+      ));
 
       const sellRate = daysFilter > 0 ? soldQty / daysFilter : 0;
+      const totalExpense = purchaseExpense + otherExpense;
+      const profit = revenue - totalExpense;
+      const expenseBreakdown = Array.from(expenseBreakdownMap.entries())
+        .map(([account_name, amount]) => ({ account_name, amount: Number(amount.toFixed(2)) }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 12);
+
       const insights = [];
-      if (profit < 0) insights.push('تنبيه: ربحية قطع راكان سلبية خلال الفترة المحددة، يلزم مراجعة الأسعار وتكلفة الشراء.');
+      if (profit < 0) insights.push('تنبيه: صافي نتيجة حسابات قطع راكان سالب في الفترة المحددة، راجع المصروفات التشغيلية والمشتريات.');
+      if (otherExpense > 0 && otherExpense > purchaseExpense) insights.push('المصروفات غير المرتبطة بالمخزون أعلى من المشتريات، يلزم ضبط بند المصروفات الشخصية/التشغيلية.');
       if (sellRate < 1) insights.push('معدل البيع اليومي منخفض، يوصى بحملات تنشيط أو مراجعة تشكيلة القطع.');
-      if (priceTrend.some((row) => row.change_pct <= -10)) insights.push('بعض القطع انخفض سعر بيعها بأكثر من 10%، تحقق من تأثير ذلك على الهامش.');
-      if (priceTrend.some((row) => row.change_pct >= 10)) insights.push('هناك قطع ارتفع سعرها بأكثر من 10%، راقب تقبل العملاء ومعدل التحويل.');
+      if (priceTrend.some((row) => row.sale_change <= -10)) insights.push('بعض القطع تراجع سعر بيعها في آخر 3 تسعيرات، تحقق من أثر ذلك على الهامش.');
+      if (priceTrend.some((row) => row.purchase_change >= 10)) insights.push('تكلفة شراء بعض القطع ارتفعت في آخر 3 تسعيرات، راجع التسعير النهائي.');
       if (!insights.length) insights.push('الأداء مستقر؛ استمر في مراقبة تغيّر الأسعار والهامش أسبوعيًا.');
 
       setRakanAnalytics({
@@ -183,16 +264,18 @@ const PartsDashboard = () => {
         operations_count: rakanOps.length,
         sales_count: sales.length,
         purchases_count: purchases.length,
+        expense_ops_count: ledger.filter((row) => row.direction === 'out').length,
         revenue,
-        expense,
+        purchase_expense: purchaseExpense,
+        other_expense: otherExpense,
+        expense: totalExpense,
         profit,
         sold_qty: soldQty,
         sell_rate_per_day: Number(sellRate.toFixed(2)),
+        expense_breakdown: expenseBreakdown,
+        ledger: ledger.slice(0, 30),
         price_trend: priceTrend.slice(0, 12),
-        recent_ops: rakanOps
-          .slice()
-          .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0))
-          .slice(0, 12),
+        recent_ops: rakanOps.slice(0, 16),
         insights,
       });
     } catch (error) {
@@ -259,14 +342,14 @@ const PartsDashboard = () => {
   const overview = analytics?.overview || {};
   const cards = useMemo(
     () => [
-      { key: 'sales', label: 'مبيعات القطع', value: formatCurrency(overview.sales_total), icon: TrendingUp, color: '#22c55e' },
-      { key: 'purchases', label: 'مشتريات القطع', value: formatCurrency(overview.purchases_total), icon: ShoppingCart, color: '#f59e0b' },
-      { key: 'profit', label: 'ربح تقديري', value: formatCurrency(overview.gross_profit_estimate), icon: BarChart3, color: '#38bdf8' },
+      { key: 'inventory-cost', label: 'قيمة المخزون (تكلفة)', value: formatCurrency(overview.inventory_cost_value), icon: ShoppingCart, color: '#22c55e' },
+      { key: 'inventory-retail', label: 'قيمة المخزون (بيع)', value: formatCurrency(overview.inventory_retail_value), icon: BarChart3, color: '#38bdf8' },
+      { key: 'period-ops', label: 'عمليات الفترة', value: Number((analytics?.recent_part_operations || []).length).toLocaleString('ar-SA'), icon: TrendingUp, color: '#8b5cf6' },
       { key: 'low', label: 'منخفض المخزون', value: overview.low_stock_count || 0, icon: AlertTriangle, color: '#f97316' },
       { key: 'out', label: 'نافد المخزون', value: overview.out_of_stock_count || 0, icon: Boxes, color: '#ef4444' },
       { key: 'parts', label: 'إجمالي الأصناف', value: overview.total_parts || 0, icon: ClipboardList, color: '#a78bfa' },
     ],
-    [overview]
+    [overview, analytics]
   );
 
   return (
@@ -422,23 +505,151 @@ const PartsDashboard = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="parts-control-rakan-cards">
-                <div className="glass-card p-4 border-t-4" style={{ borderColor: '#22c55e' }}>
+                <button
+                  type="button"
+                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'revenue' ? 'ring-2 ring-emerald-300/40' : ''}`}
+                  style={{ borderColor: '#22c55e' }}
+                  onClick={() => setExpandedRakanCard((prev) => (prev === 'revenue' ? '' : 'revenue'))}
+                  data-testid="parts-control-rakan-card-revenue"
+                >
                   <p className="text-xs text-slate-300">إيراد قطع راكان</p>
                   <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-revenue">{formatCurrency(rakanAnalytics?.revenue)}</p>
-                </div>
-                <div className="glass-card p-4 border-t-4" style={{ borderColor: '#f97316' }}>
-                  <p className="text-xs text-slate-300">مصروف قطع راكان</p>
+                  <p className="text-[11px] text-slate-400 mt-1">عمليات البيع المرتبطة بحسابات راكان</p>
+                </button>
+                <button
+                  type="button"
+                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'expense' ? 'ring-2 ring-amber-300/40' : ''}`}
+                  style={{ borderColor: '#f59e0b' }}
+                  onClick={() => setExpandedRakanCard((prev) => (prev === 'expense' ? '' : 'expense'))}
+                  data-testid="parts-control-rakan-card-expense"
+                >
+                  <p className="text-xs text-slate-300">إجمالي المصروفات</p>
                   <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-expense">{formatCurrency(rakanAnalytics?.expense)}</p>
-                </div>
-                <div className="glass-card p-4 border-t-4" style={{ borderColor: '#38bdf8' }}>
+                  <p className="text-[11px] text-slate-400 mt-1">مشتريات قطع + مصروفات تشغيل/شخصية</p>
+                </button>
+                <button
+                  type="button"
+                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'profitability' ? 'ring-2 ring-sky-300/40' : ''}`}
+                  style={{ borderColor: '#38bdf8' }}
+                  onClick={() => setExpandedRakanCard((prev) => (prev === 'profitability' ? '' : 'profitability'))}
+                  data-testid="parts-control-rakan-card-profit"
+                >
                   <p className="text-xs text-slate-300">الربح / الخسارة</p>
                   <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-profit">{formatCurrency(rakanAnalytics?.profit)}</p>
-                </div>
-                <div className="glass-card p-4 border-t-4" style={{ borderColor: '#a78bfa' }}>
+                  <p className="text-[11px] text-slate-400 mt-1">الإيراد - (المشتريات + المصروفات)</p>
+                </button>
+                <button
+                  type="button"
+                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'velocity' ? 'ring-2 ring-purple-300/40' : ''}`}
+                  style={{ borderColor: '#a78bfa' }}
+                  onClick={() => setExpandedRakanCard((prev) => (prev === 'velocity' ? '' : 'velocity'))}
+                  data-testid="parts-control-rakan-card-velocity"
+                >
                   <p className="text-xs text-slate-300">معدل البيع اليومي</p>
                   <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-sell-rate">{Number(rakanAnalytics?.sell_rate_per_day || 0).toFixed(2)} قطعة/يوم</p>
-                </div>
+                  <p className="text-[11px] text-slate-400 mt-1">إجمالي المبيعات: {Number(rakanAnalytics?.sold_qty || 0).toLocaleString('ar-SA')} قطعة</p>
+                </button>
               </div>
+
+              {expandedRakanCard === 'revenue' && (
+                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-revenue">
+                  <h3 className="text-white font-semibold mb-3">تفاصيل الإيرادات</h3>
+                  <div className="overflow-auto">
+                    <table className="w-full text-sm text-right">
+                      <thead className="text-slate-400 border-b border-white/10">
+                        <tr>
+                          <th className="py-2">التاريخ</th>
+                          <th className="py-2">الحساب</th>
+                          <th className="py-2">الشريك</th>
+                          <th className="py-2">المبلغ</th>
+                          <th className="py-2">السبب</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(rakanAnalytics?.ledger || []).filter((row) => row.direction === 'in').slice(0, 12).map((row) => (
+                          <tr key={`rakan-ledger-in-${row.id}`} className="border-b border-white/5 text-slate-200">
+                            <td className="py-2">{new Date(row.date).toLocaleDateString('ar-SA')}</td>
+                            <td className="py-2">{row.account_name}</td>
+                            <td className="py-2">{row.partner_name || '-'}</td>
+                            <td className="py-2">{formatCurrency(row.amount)}</td>
+                            <td className="py-2">{row.reason || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {expandedRakanCard === 'expense' && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-rakan-expanded-expense">
+                  <div className="glass-card p-4">
+                    <h3 className="text-white font-semibold mb-3">تفصيل المصروفات حسب الحساب</h3>
+                    <div className="space-y-2">
+                      {(rakanAnalytics?.expense_breakdown || []).map((row) => (
+                        <div key={`expense-breakdown-${row.account_name}`} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-200">{row.account_name}</span>
+                          <span className="text-amber-300">{formatCurrency(row.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="glass-card p-4">
+                    <h3 className="text-white font-semibold mb-3">مصروفات آخر العمليات</h3>
+                    <div className="space-y-2 max-h-[280px] overflow-auto">
+                      {(rakanAnalytics?.ledger || []).filter((row) => row.direction === 'out').slice(0, 12).map((row) => (
+                        <div key={`expense-ledger-${row.id}`} className="rounded-lg bg-white/5 p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-white">{row.account_name}</p>
+                            <p className="text-sm text-amber-300">{formatCurrency(row.amount)}</p>
+                          </div>
+                          <p className="text-xs text-slate-300 mt-1">{row.reason || 'بدون سبب'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {expandedRakanCard === 'profitability' && (
+                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-profitability">
+                  <h3 className="text-white font-semibold mb-3">تحليل الربحية</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">الإيراد</p>
+                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.revenue)}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">المشتريات</p>
+                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.purchase_expense)}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">مصروفات أخرى</p>
+                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.other_expense)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {expandedRakanCard === 'velocity' && (
+                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-velocity">
+                  <h3 className="text-white font-semibold mb-3">مؤشرات سرعة البيع</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">عدد عمليات راكان</p>
+                      <p className="text-white font-semibold">{Number(rakanAnalytics?.operations_count || 0).toLocaleString('ar-SA')}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">عمليات البيع</p>
+                      <p className="text-white font-semibold">{Number(rakanAnalytics?.sales_count || 0).toLocaleString('ar-SA')}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">عمليات الشراء/المصروف</p>
+                      <p className="text-white font-semibold">{Number(rakanAnalytics?.expense_ops_count || 0).toLocaleString('ar-SA')}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="glass-card p-4" data-testid="parts-control-rakan-insights">
                 <h2 className="text-white font-semibold mb-3">تحليل ذكي</h2>
@@ -450,25 +661,25 @@ const PartsDashboard = () => {
               </div>
 
               <div className="glass-card p-4 overflow-auto" data-testid="parts-control-rakan-price-trend">
-                <h2 className="text-white font-semibold mb-3">متغير أسعار القطع عبر الزمن</h2>
+                <h2 className="text-white font-semibold mb-3">متغير أسعار القطع عبر الزمن (آخر 3 تسعيرات بيع/شراء)</h2>
                 <table className="w-full text-sm text-right">
                   <thead className="text-slate-400 border-b border-white/10">
                     <tr>
                       <th className="py-2">القطعة</th>
-                      <th className="py-2">متوسط أول المدة</th>
-                      <th className="py-2">متوسط آخر المدة</th>
-                      <th className="py-2">التغير</th>
-                      <th className="py-2">النسبة</th>
+                      <th className="py-2">آخر 3 أسعار بيع</th>
+                      <th className="py-2">تغير البيع</th>
+                      <th className="py-2">آخر 3 أسعار شراء</th>
+                      <th className="py-2">تغير الشراء</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(rakanAnalytics?.price_trend || []).map((row) => (
                       <tr key={row.part_id} className="border-b border-white/5 text-slate-200" data-testid={`parts-control-rakan-trend-row-${row.part_id}`}>
                         <td className="py-2">{row.part_name}</td>
-                        <td className="py-2">{formatCurrency(row.first_avg)}</td>
-                        <td className="py-2">{formatCurrency(row.second_avg)}</td>
-                        <td className="py-2">{formatCurrency(row.delta)}</td>
-                        <td className="py-2">{row.change_pct}%</td>
+                        <td className="py-2">{(row.latest_sale_prices || []).length ? row.latest_sale_prices.map((p) => formatCurrency(p)).join(' | ') : '-'}</td>
+                        <td className="py-2">{formatCurrency(row.sale_change)}</td>
+                        <td className="py-2">{(row.latest_purchase_prices || []).length ? row.latest_purchase_prices.map((p) => formatCurrency(p)).join(' | ') : '-'}</td>
+                        <td className="py-2">{formatCurrency(row.purchase_change)}</td>
                       </tr>
                     ))}
                     {!(rakanAnalytics?.price_trend || []).length && (

@@ -30,6 +30,13 @@ const isRakanBusinessAccount = (account) => {
   return RAKAN_ACCOUNT_KEYWORDS.some((k) => haystack.includes(k));
 };
 
+const isRakanChartAccount = (account) => {
+  const haystack = [account?.name_ar, account?.name, account?.code, account?.category]
+    .map((v) => normalizeText(v))
+    .join(' ');
+  return RAKAN_ACCOUNT_KEYWORDS.some((k) => haystack.includes(k));
+};
+
 const isRakanOperationTagged = (operation = {}) => {
   const scope = normalizeText(operation.scope);
   const source = normalizeText(operation.source);
@@ -285,6 +292,10 @@ const Operations = () => {
     () => new Set((bizAccounts || []).filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))),
     [bizAccounts]
   );
+  const rakanChartAccountIds = useMemo(
+    () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
+    [accounts]
+  );
   const filteredAccounts = accounts.filter((account) => {
     if (form.type === 'sale') return account.type === 'revenue';
     if (form.type === 'purchase') return account.type === 'expense';
@@ -321,13 +332,21 @@ const Operations = () => {
   }, [ops]);
 
   const rakanOps = useMemo(
-    () => sortedOps.filter((op) => rakanBizAccountIds.has(String(op.accountId || '')) || isRakanOperationTagged(op)),
-    [sortedOps, rakanBizAccountIds]
+    () => sortedOps.filter((op) => (
+      rakanBizAccountIds.has(String(op.accountId || ''))
+      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+      || isRakanOperationTagged(op)
+    )),
+    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
   const workshopOps = useMemo(
-    () => sortedOps.filter((op) => !(rakanBizAccountIds.has(String(op.accountId || '')) || isRakanOperationTagged(op))),
-    [sortedOps, rakanBizAccountIds]
+    () => sortedOps.filter((op) => !(
+      rakanBizAccountIds.has(String(op.accountId || ''))
+      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+      || isRakanOperationTagged(op)
+    )),
+    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
   const rakanTotalPages = useMemo(

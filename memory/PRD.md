@@ -120,6 +120,20 @@
 - إصلاح الترجمة الناقصة للمفاتيح: `inventory.parts_dashboard` و `common.details` و `common.view` (عربي/إنجليزي).
 - التحقق عبر الاختبار: `/app/test_reports/iteration_23.json` (Backend/Frontend 100%) + اختبار ذاتي بعد إصلاح مفاتيح الترجمة.
 
+### معمارية مخزون P1 + Planner ذكي + تحليلات راكان خلفية (09 Mar 2026)
+- إضافة APIs خلفية جديدة ضمن `routes_smart_inventory.py`:
+  - `GET /api/inventory/architecture`
+  - `GET /api/inventory/rakan-analytics`
+- نقل تحليل «قطع راكان» من الواجهة إلى Backend داخل `smart_inventory_service.py` لتوحيد المنطق وإرجاع:
+  - `period_comparison`
+  - `expense_reasons`
+  - `price_trend`
+  - `insights`
+- تطوير معمارية التخطيط للمخزون بإرجاع `blueprint` + `stock_segments` + `replenishment_plan` + `supplier_health` مع توصيات إعادة التزويد بحسب الطلب، الغطاء المخزني، والطلبات المعلقة.
+- إنشاء مكوّن واجهة جديد `InventoryPlannerTab.jsx` وإضافة تبويب `معمارية المخزون` داخل `PartsDashboard` لعرض خطة التزويد وصحة الموردين.
+- تعزيز تبويب «تحليلات قطع راكان» بإظهار مقارنة الفترة الحالية مقابل السابقة، وأسباب الصرف الأكثر تكرارًا.
+- التحقق عبر الاختبار: `/app/test_reports/iteration_29.json` + `pytest /app/backend/tests/test_smart_inventory.py` (12/12 ناجح).
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -280,6 +294,7 @@
 ### P1 - High Priority
 - [ ] Integrate Llama 4 (Scout & Maverick) into MoltBot
 - [x] تنفيذ Smart Inventory architecture (backend classes + APIs + UI)
+- [x] تنفيذ Planner ذكي للمخزون + نقل تحليلات راكان إلى Backend API مخصص
 
 ### P2 - Medium Priority
 - [ ] Enhance MoltBot with emergent.sh-like capabilities
@@ -329,6 +344,11 @@
 - `frontend/src/pages/Operations.jsx` - 3 operation kinds (Workshop/Vehicle/Rakan) with strict validation and smart linking UX
 - `frontend/src/pages/PartsDashboard.jsx` - Dedicated Rakan analytics tab + smart insights + price trend + non-duplicated tabs
 - `frontend/src/pages/PartsDashboard.jsx` - Expandable smart KPI cards + full Rakan spend tracking + 3x sell/3x purchase price trend
+- `frontend/src/pages/PartsDashboard.jsx` - Added Inventory Architecture tab + period comparison + expense reasons for Rakan analytics
+- `frontend/src/components/parts-dashboard/InventoryPlannerTab.jsx` - Inventory planner UI (blueprint cards + replenishment plan + supplier health)
+- `backend/routes_smart_inventory.py` - Added `/api/inventory/architecture` + `/api/inventory/rakan-analytics`
+- `backend/smart_inventory_service.py` - Added replenishment blueprint engine + supplier health + backend Rakan analytics summary
+- `backend/tests/test_smart_inventory.py` - Added regression coverage for architecture + Rakan analytics endpoints
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
@@ -385,3 +405,4 @@
 | 09 Mar 2026 | Global font migration: switched full frontend typography to Parastoo |
 | 09 Mar 2026 | Parastoo typography refinement (weights/line-height tuning) validated frontend 100% |
 | 09 Mar 2026 | Global font size increase completed (html root 20px) with no layout regressions |
+| 09 Mar 2026 | Added P1 inventory architecture planner + backend Rakan analytics APIs + dashboard enhancements |

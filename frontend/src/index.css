@@ -306,7 +306,30 @@ body[data-theme="dashPro"] .sidebar-item {
     background-color: var(--bg-primary, #121314);
     font-size: 1rem;
     line-height: 1.6;
+    font-weight: 400;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  p, li, label, span, a, td, th {
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  button {
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  input,
+  select,
+  textarea {
+    font-weight: 400;
   }
   
   /* Dark mode text colors */

@@ -111,6 +111,7 @@ const translations = {
 
   inventory: {
     inventory: "المخزون",
+    parts_dashboard: "لوحة تحكم القطع",
     spare_parts: "قطع الغيار",
     suppliers: "الموردون",
     add_item: "إضافة صنف",
@@ -501,6 +502,8 @@ const translations = {
     error: "حدث خطأ",
     confirm_delete: "هل أنت متأكد من الحذف؟",
     print: "طباعة",
+    details: "التفاصيل",
+    view: "عرض",
     total: "الإجمالي",
     currency: "ر.س",
 

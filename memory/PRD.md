@@ -107,6 +107,19 @@
 - تحسين تحميل بيانات صفحة العمليات عند الدخول الأول عبر fresh query options وإعادة جلب محدثة.
 - التحقق عبر الاختبار: `/app/test_reports/iteration_22.json` (Backend 100% + Frontend 100%).
 
+### تطوير ذكي إضافي لـ Parts Control Panel وفصل راكان المالي الكامل (09 Mar 2026)
+- إزالة تكرار كروت البيع/الشراء من النظرة العامة في `PartsDashboard` وجعل تبويب راكان هو مركز التحليل المالي المستقل.
+- توسيع تحليلات راكان لتشمل **كل** العمليات المرتبطة بحسابات راكان (مشتريات + مصروفات تشغيل/شخصية + إيرادات) مع تتبع سبب الصرف من `notes`.
+- جعل كروت KPI في تبويب راكان قابلة للتوسيع (click-to-expand) لإظهار تفاصيل أعمق:
+  - تفاصيل الإيرادات
+  - تفصيل المصروفات حسب الحساب + آخر المصروفات والأسباب
+  - تحليل الربحية
+  - مؤشرات سرعة البيع
+- ترقية جدول `متغير الأسعار عبر الزمن` ليعرض **آخر 3 تسعيرات بيع + آخر 3 تسعيرات شراء لكل قطعة** مع فروقات التغير.
+- تعزيز فصل العمليات في صفحة العمليات ليشمل أيضًا `accountingAccountId` الخاص بحسابات راكان (ليس فقط حساب الأعمال أو التاج).
+- إصلاح الترجمة الناقصة للمفاتيح: `inventory.parts_dashboard` و `common.details` و `common.view` (عربي/إنجليزي).
+- التحقق عبر الاختبار: `/app/test_reports/iteration_23.json` (Backend/Frontend 100%) + اختبار ذاتي بعد إصلاح مفاتيح الترجمة.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -314,8 +327,11 @@
 - `frontend/src/components/OperationCard.jsx` - Compact operation card + accounting journal line + vehicle details + controlled expand
 - `frontend/src/pages/Operations.jsx` - Expanded-state control + fresh queries + single-card-open behavior
 - `frontend/src/pages/PartsDashboard.jsx` - Dedicated Rakan analytics tab + smart insights + price trend + non-duplicated tabs
+- `frontend/src/pages/PartsDashboard.jsx` - Expandable smart KPI cards + full Rakan spend tracking + 3x sell/3x purchase price trend
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
+- `frontend/src/translations.js` - Added missing Arabic keys for parts dashboard + common details/view
+- `frontend/src/constants/englishTexts.js` - Added missing English keys for parts dashboard + common details/view
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -357,3 +373,4 @@
 | 08 Mar 2026 | Rakan Parts financial separation in POS and Operations sections |
 | 08 Mar 2026 | Operations page: Rakan tab + independent 15-item pagination with full page numbers |
 | 08 Mar 2026 | Operation cards UX fix + accounting entry clarity + Rakan analytics tab with smart price insights |
+| 09 Mar 2026 | Parts Control Panel advanced Rakan analytics (expandable KPI cards + full spend trace + last 3 buy/sell prices) |

@@ -149,6 +149,8 @@ export const englishTexts = {
   'common.error': 'Error',
   'common.confirm_delete': 'Are you sure you want to delete?',
   'common.print': 'Print',
+  'common.details': 'Details',
+  'common.view': 'View',
   'common.total': 'Total',
   'common.currency': 'SAR',
   'common.unknown': 'Unknown',
@@ -157,6 +159,7 @@ export const englishTexts = {
 
   'inventory.spare_parts': 'Spare Parts',
   'inventory.inventory': 'Inventory',
+  'inventory.parts_dashboard': 'Parts Dashboard',
   'inventory.suppliers': 'Suppliers',
   'inventory.add_item': 'Add Item',
   'inventory.edit_item': 'Edit Item',

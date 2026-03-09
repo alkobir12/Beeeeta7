@@ -1,0 +1,109 @@
+{
+  "summary": "Retest after fixes for operation save FK issue + operation kinds workflow + UX improvements. Backend: 16/16 tests passed. Frontend: All critical user flows verified - WORKSHOP_OPERATION, VEHICLE_OPERATION saves succeed without FK errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "✅ Backend: WORKSHOP_OPERATION accepts without customer and without vehicle",
+    "✅ Backend: WORKSHOP_OPERATION accepts with partner name only (optional)",
+    "✅ Backend: VEHICLE_OPERATION rejects without vehicle (returns 400 error)",
+    "✅ Backend: VEHICLE_OPERATION accepts with vehicle",
+    "✅ Backend: VEHICLE_OPERATION auto-fills customer NAME from vehicle",
+    "✅ Backend: RAKAN_PARTS_OPERATION rejects without customer OR vehicle (returns 400)",
+    "✅ Backend: RAKAN_PARTS_OPERATION accepts with customer only",
+    "✅ Backend: RAKAN_PARTS_OPERATION accepts with vehicle only",
+    "✅ Backend: RAKAN_PARTS_OPERATION accepts with partner name only",
+    "✅ Backend: FK error fix - Invalid accountId gets resolved to valid business account",
+    "✅ Backend: FK error fix - Empty accountId gets resolved to valid business account",
+    "✅ Backend: RAKAN_PARTS_OPERATION auto-selects Rakan business account",
+    "✅ Backend: WORKSHOP_OPERATION auto-selects Workshop (non-Rakan) business account",
+    "✅ Backend: GET /api/operations returns all operations",
+    "✅ Backend: Operations have scope field (workshop/vehicle/rakan_parts)",
+    "✅ Backend: Filter operations by vehicle_id works correctly",
+    "✅ Frontend: Login with مدير works",
+    "✅ Frontend: Operations page loads with 3 operation kind buttons visible",
+    "✅ Frontend: WORKSHOP_OPERATION save succeeds - Toast shows 'تم بنجاح تم حفظ العملية'",
+    "✅ Frontend: VEHICLE_OPERATION - Vehicle selector visible when kind selected",
+    "✅ Frontend: VEHICLE_OPERATION - Customer auto-filled from vehicle data ('عميل نقدي')",
+    "✅ Frontend: VEHICLE_OPERATION save succeeds with vehicleId and visitId",
+    "✅ Frontend: RAKAN_PARTS_OPERATION - Customer selector visible",
+    "✅ Frontend: RAKAN_PARTS_OPERATION - Rule note visible: 'ملاحظة: عملية قطع راكان يجب أن ترتبط بعميل أو مركبة.'",
+    "✅ Frontend: Operations tabs show correct counts (Rakan vs Workshop)",
+    "✅ Frontend: No FK errors when saving operations - accountId auto-resolved"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_operation_kinds_validation.py",
+    "/app/test_reports/pytest/pytest_operation_kinds_retest.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FK error fix implemented correctly - _pick_business_account() auto-resolves accountId based on operationKind",
+    "Frontend form dynamically shows/hides fields based on selected operationKind",
+    "Vehicle->Customer auto-linking working via _apply_operation_kind_defaults()",
+    "Operations saved with correct scope values (workshop/vehicle/rakan_parts)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% - all critical flows verified"
+  },
+  "test_credentials": "Username: مدير (no password required)",
+  "seed_data_creation": "Used existing vehicles, customers, and business accounts",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Operation kinds validation fully tested and working. Critical user flow (save operation) succeeds for all 3 operation kinds. FK error fixed - invalid/empty accountId auto-resolved to valid business account. Frontend UX improvements verified - dynamic form fields, customer auto-fill, rule notes visible.",
+  "features_verified": {
+    "fk_error_fix": {
+      "status": "FIXED",
+      "description": "accountId is now auto-resolved from business accounts based on operationKind",
+      "tested_scenarios": ["invalid accountId", "empty accountId", "valid accountId"]
+    },
+    "operation_kinds": {
+      "WORKSHOP_OPERATION": {
+        "validation": "No customer/vehicle required - WORKING",
+        "save": "SUCCESS",
+        "scope": "workshop"
+      },
+      "VEHICLE_OPERATION": {
+        "validation": "Requires vehicleId - WORKING",
+        "auto_linking": "Customer auto-filled from vehicle - WORKING",
+        "save": "SUCCESS with vehicleId and visitId",
+        "scope": "vehicle"
+      },
+      "RAKAN_PARTS_OPERATION": {
+        "validation": "Requires customer OR vehicle - WORKING",
+        "rule_note": "Visible in UI",
+        "scope": "rakan_parts"
+      }
+    },
+    "frontend_ux": {
+      "operation_kind_selector": "3 buttons visible and selectable",
+      "dynamic_form_fields": "Fields show/hide based on operationKind",
+      "vehicle_customer_linking": "Vehicle selection auto-fills customer",
+      "save_button": "Disabled until items added, enabled after",
+      "success_toast": "Shows 'تم بنجاح تم حفظ العملية'"
+    }
+  },
+  "verified_operations_created": [
+    {
+      "type": "WORKSHOP_OPERATION",
+      "accountId": "40b024d7-260d-4b45-94fb-20c1c594c76f",
+      "scope": "workshop",
+      "total": 150.00
+    },
+    {
+      "type": "VEHICLE_OPERATION",
+      "accountId": "40b024d7-260d-4b45-94fb-20c1c594c76f",
+      "vehicleId": "f58df376-b5aa-4c10-bfe0-fd38aa55b186",
+      "partnerName": "عميل نقدي",
+      "scope": "vehicle",
+      "total": 200.00
+    }
+  ]
+}

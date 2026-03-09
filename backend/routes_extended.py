@@ -1161,6 +1161,7 @@ async def list_operations(
                     "vehicleId": 1,
                     "accountId": 1,
                     "accountingAccountId": 1,
+                    "partnerId": 1,
                     "notes": 1,
                     "scope": 1,
                     "source": 1,

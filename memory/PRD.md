@@ -337,6 +337,7 @@
 - `frontend/src/index.css` - Global default font set to Parastoo across app
 - `frontend/public/index.html` - Parastoo font preconnect + stylesheet loading
 - `frontend/src/godaddy-theme.css` - Parastoo fallback for GoDaddy theme pages
+- `frontend/src/index.css` - Typography tuning (heading/body/button weights & line-heights) with Parastoo
 - `backend/visit_sync.py` - Visit-to-operation sync
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
@@ -381,3 +382,4 @@
 | 09 Mar 2026 | Parts Control Panel advanced Rakan analytics (expandable KPI cards + full spend trace + last 3 buy/sell prices) |
 | 09 Mar 2026 | Fixed save-operation FK blocker + implemented 3 operation kinds with strict validation and automatic customer/vehicle linking |
 | 09 Mar 2026 | Global font migration: switched full frontend typography to Parastoo |
+| 09 Mar 2026 | Parastoo typography refinement (weights/line-height tuning) validated frontend 100% |

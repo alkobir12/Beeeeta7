@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Parastoo:wght@400;500;600;700&display=swap');
+
 /* Set default LTR direction */
 html {
   direction: ltr;
@@ -277,10 +279,26 @@ body[data-theme="dashPro"] .sidebar-item {
 
   html {
     direction: rtl;
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: 18px; /* زيادة الحجم الأساسي */
+  }
+
+  body,
+  #root,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 
   body {

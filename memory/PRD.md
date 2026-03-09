@@ -326,10 +326,12 @@
 - `frontend/src/pages/Operations.jsx` - Tabbed operations view + independent pagination per tab (15/page)
 - `frontend/src/components/OperationCard.jsx` - Compact operation card + accounting journal line + vehicle details + controlled expand
 - `frontend/src/pages/Operations.jsx` - Expanded-state control + fresh queries + single-card-open behavior
+- `frontend/src/pages/Operations.jsx` - 3 operation kinds (Workshop/Vehicle/Rakan) with strict validation and smart linking UX
 - `frontend/src/pages/PartsDashboard.jsx` - Dedicated Rakan analytics tab + smart insights + price trend + non-duplicated tabs
 - `frontend/src/pages/PartsDashboard.jsx` - Expandable smart KPI cards + full Rakan spend tracking + 3x sell/3x purchase price trend
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
+- `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
 - `frontend/src/translations.js` - Added missing Arabic keys for parts dashboard + common details/view
 - `frontend/src/constants/englishTexts.js` - Added missing English keys for parts dashboard + common details/view
 - `backend/visit_sync.py` - Visit-to-operation sync
@@ -374,3 +376,4 @@
 | 08 Mar 2026 | Operations page: Rakan tab + independent 15-item pagination with full page numbers |
 | 08 Mar 2026 | Operation cards UX fix + accounting entry clarity + Rakan analytics tab with smart price insights |
 | 09 Mar 2026 | Parts Control Panel advanced Rakan analytics (expandable KPI cards + full spend trace + last 3 buy/sell prices) |
+| 09 Mar 2026 | Fixed save-operation FK blocker + implemented 3 operation kinds with strict validation and automatic customer/vehicle linking |

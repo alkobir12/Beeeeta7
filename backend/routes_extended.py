@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import asyncio
 import json
 import uuid
@@ -1495,10 +1495,198 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 # ============ AutoProfit Pro Integration: Apply Accounting Entries ============
 
 
+def _normalize_operation_kind(payload: Dict[str, Any]) -> str:
+    raw = str(payload.get("operationKind") or payload.get("scope") or "").strip().upper()
+    if raw in ["WORKSHOP_OPERATION", "WORKSHOP"]:
+        return "WORKSHOP_OPERATION"
+    if raw in ["VEHICLE_OPERATION", "VEHICLE"]:
+        return "VEHICLE_OPERATION"
+    if raw in ["RAKAN_PARTS_OPERATION", "RAKAN_PARTS", "RAKAN"]:
+        return "RAKAN_PARTS_OPERATION"
+
+    scope = str(payload.get("scope") or "").strip().lower()
+    if scope == "vehicle":
+        return "VEHICLE_OPERATION"
+    if scope == "rakan_parts":
+        return "RAKAN_PARTS_OPERATION"
+    return "WORKSHOP_OPERATION"
+
+
+def _is_rakan_text(value: Any) -> bool:
+    txt = str(value or "").strip().lower()
+    return "راكان" in txt or "rakan" in txt
+
+
+def _pick_business_account(
+    kind: str,
+    provided_id: Optional[str],
+    biz_accounts: List[Dict[str, Any]],
+) -> Optional[str]:
+    if not biz_accounts:
+        return None
+
+    by_id = {str(b.get("id")): b for b in biz_accounts if b.get("id")}
+    if provided_id and str(provided_id) in by_id:
+        return str(provided_id)
+
+    if kind == "RAKAN_PARTS_OPERATION":
+        rakan = next(
+            (b for b in biz_accounts if _is_rakan_text(b.get("name")) or _is_rakan_text(b.get("code"))),
+            None,
+        )
+        return str(rakan.get("id")) if rakan else None
+
+    non_rakan = [
+        b for b in biz_accounts if not (_is_rakan_text(b.get("name")) or _is_rakan_text(b.get("code")))
+    ]
+    if non_rakan:
+        preferred = next(
+            (
+                b
+                for b in non_rakan
+                if any(
+                    key in f"{str(b.get('name') or '').lower()} {str(b.get('code') or '').lower()}"
+                    for key in ["main", "workshop", "الرئيس", "الرئيسي", "default"]
+                )
+            ),
+            None,
+        )
+        return str((preferred or non_rakan[0]).get("id"))
+
+    return str(biz_accounts[0].get("id"))
+
+
+def _apply_operation_kind_defaults(
+    payload: Dict[str, Any],
+    kind: str,
+    vehicle_doc: Optional[Dict[str, Any]],
+) -> None:
+    payload["operationKind"] = kind
+
+    if kind == "WORKSHOP_OPERATION":
+        payload["scope"] = "workshop"
+        payload["source"] = payload.get("source") or "workshop_operation"
+        payload["businessUnit"] = payload.get("businessUnit") or "workshop"
+        payload["vehicleId"] = None
+        payload["visitId"] = None
+        payload["partnerType"] = payload.get("partnerType") or (
+            "supplier" if payload.get("type") == "purchase" else "customer"
+        )
+        return
+
+    if kind == "VEHICLE_OPERATION":
+        if not payload.get("vehicleId"):
+            raise HTTPException(status_code=400, detail="VEHICLE_OPERATION requires vehicleId")
+        payload["scope"] = "vehicle"
+        payload["source"] = payload.get("source") or "vehicle_operation"
+        payload["businessUnit"] = payload.get("businessUnit") or "workshop"
+        payload["partnerType"] = "customer"
+        if vehicle_doc:
+            payload["partnerId"] = (
+                vehicle_doc.get("customerId")
+                or vehicle_doc.get("customer_id")
+                or payload.get("partnerId")
+            )
+            payload["partnerName"] = (
+                vehicle_doc.get("customerName")
+                or vehicle_doc.get("customer_name")
+                or payload.get("partnerName")
+            )
+        return
+
+    if kind == "RAKAN_PARTS_OPERATION":
+        has_link = bool(
+            payload.get("vehicleId")
+            or payload.get("partnerId")
+            or str(payload.get("partnerName") or "").strip()
+        )
+        if not has_link:
+            raise HTTPException(status_code=400, detail="RAKAN_PARTS_OPERATION requires customer or vehicle")
+        payload["scope"] = "rakan_parts"
+        payload["source"] = payload.get("source") or "rakan_parts_operation"
+        payload["businessUnit"] = payload.get("businessUnit") or "rakan_parts"
+        if payload.get("vehicleId") and vehicle_doc:
+            payload["partnerType"] = "customer"
+            payload["partnerId"] = (
+                vehicle_doc.get("customerId")
+                or vehicle_doc.get("customer_id")
+                or payload.get("partnerId")
+            )
+            payload["partnerName"] = (
+                vehicle_doc.get("customerName")
+                or vehicle_doc.get("customer_name")
+                or payload.get("partnerName")
+            )
+        return
+
+
 @router.post("/operations")
 async def create_operation(payload: Dict[str, Any] = Body(...)):
     try:
+        payload = dict(payload or {})
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        kind = _normalize_operation_kind(payload)
+
+        vehicle_doc = None
+        biz_accounts: List[Dict[str, Any]] = []
+
+        if provider == "supabase":
+            supa_for_meta = SupabaseService()
+            try:
+                biz_accounts = supa_for_meta.accounts_list() or []
+            except Exception:
+                biz_accounts = []
+
+            if kind == "RAKAN_PARTS_OPERATION" and not any(
+                _is_rakan_text(x.get("name")) or _is_rakan_text(x.get("code"))
+                for x in biz_accounts
+            ):
+                try:
+                    created_rakan = supa_for_meta.accounts_create(
+                        name="قطع راكان", code="RAKAN_PARTS", currency="SAR"
+                    )
+                    if created_rakan:
+                        biz_accounts = [created_rakan, *biz_accounts]
+                except Exception:
+                    pass
+
+            if payload.get("vehicleId"):
+                try:
+                    vehicles = supa_for_meta.vehicles_list() or []
+                    vehicle_doc = next(
+                        (v for v in vehicles if str(v.get("id")) == str(payload.get("vehicleId"))),
+                        None,
+                    )
+                except Exception:
+                    vehicle_doc = None
+
+        elif provider == "memory" or db is None:
+            biz_accounts = _mem_read("business_accounts")
+            if payload.get("vehicleId"):
+                vehicles = _mem_read("vehicles")
+                vehicle_doc = next(
+                    (v for v in vehicles if str(v.get("id")) == str(payload.get("vehicleId"))),
+                    None,
+                )
+        else:
+            biz_accounts = await db.business_accounts.find({}, {"_id": 0}).to_list(1000)
+            if payload.get("vehicleId"):
+                vehicle_doc = await db.vehicles.find_one(
+                    {"id": str(payload.get("vehicleId"))}, {"_id": 0}
+                )
+
+        _apply_operation_kind_defaults(payload, kind, vehicle_doc)
+
+        resolved_account_id = _pick_business_account(
+            kind, payload.get("accountId"), biz_accounts
+        )
+        if not resolved_account_id:
+            raise HTTPException(
+                status_code=400,
+                detail="تعذر تحديد حساب الأعمال المناسب للعملية. تحقق من إعداد حسابات الفروع.",
+            )
+        payload["accountId"] = resolved_account_id
+
         if provider == "supabase":
             supa = SupabaseService()
             workshop_id = payload.get("workshopId") or payload.get("workshop_id")

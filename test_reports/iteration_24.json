@@ -1,0 +1,102 @@
+{
+  "summary": "Comprehensive testing of 3 Operation Kinds validation (WORKSHOP_OPERATION, VEHICLE_OPERATION, RAKAN_PARTS_OPERATION) and FK error fix. Backend: 16/16 tests passed. Frontend: All UI elements verified working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/operations",
+        "issue": "partnerId not returned in response for VEHICLE_OPERATION even when auto-filled (partnerName IS returned correctly)",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "✅ WORKSHOP_OPERATION accepts without customer and without vehicle",
+    "✅ WORKSHOP_OPERATION accepts with partner name only (optional)",
+    "✅ VEHICLE_OPERATION rejects without vehicle (returns 400 error)",
+    "✅ VEHICLE_OPERATION accepts with vehicle",
+    "✅ VEHICLE_OPERATION auto-fills customer NAME from vehicle",
+    "✅ RAKAN_PARTS_OPERATION rejects without customer OR vehicle (returns 400)",
+    "✅ RAKAN_PARTS_OPERATION accepts with customer only",
+    "✅ RAKAN_PARTS_OPERATION accepts with vehicle only",
+    "✅ RAKAN_PARTS_OPERATION accepts with partner name only",
+    "✅ FK error fix: Invalid accountId gets resolved to valid business account",
+    "✅ FK error fix: Empty accountId gets resolved to valid business account",
+    "✅ RAKAN_PARTS_OPERATION auto-selects Rakan business account",
+    "✅ WORKSHOP_OPERATION auto-selects Workshop (non-Rakan) business account",
+    "✅ GET /api/operations returns all operations",
+    "✅ Operations have scope field (workshop/vehicle/rakan_parts)",
+    "✅ Filter operations by vehicle_id works correctly",
+    "✅ Frontend: 3 operation kinds buttons visible (عملية ورشة, عملية مركبة, عملية قطع راكان)",
+    "✅ Frontend: WORKSHOP_OPERATION hides vehicle/customer selectors",
+    "✅ Frontend: VEHICLE_OPERATION shows vehicle selector",
+    "✅ Frontend: VEHICLE_OPERATION shows linked customer readonly display",
+    "✅ Frontend: RAKAN_PARTS_OPERATION shows both vehicle and customer selectors",
+    "✅ Frontend: RAKAN_PARTS_OPERATION shows rule note about required linking",
+    "✅ Frontend: Operations tabs exist (Rakan vs Workshop operations)",
+    "✅ Frontend: Vehicle selection auto-fills customer name from vehicle data"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_operation_kinds_validation.py",
+    "/app/test_reports/pytest/pytest_operation_kinds.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Operation kind validation working correctly per requirements",
+    "FK error fix implemented: _pick_business_account() auto-resolves accountId based on operationKind",
+    "Auto-linking vehicle->customer implemented via _apply_operation_kind_defaults()",
+    "Frontend form dynamically shows/hides fields based on selected operationKind",
+    "Operations tabs correctly filter Rakan vs Workshop operations"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_operation_kinds_validation.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% - all UI elements verified"
+  },
+  "test_credentials": "Username: مدير (no password required)",
+  "seed_data_creation": "Used existing vehicles, customers, and business accounts for testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Operation kinds validation fully tested and working. 3 kinds: WORKSHOP_OPERATION (no customer/vehicle required), VEHICLE_OPERATION (vehicle required, customer auto-filled), RAKAN_PARTS_OPERATION (customer OR vehicle required). FK error fix working - invalid accountId auto-resolved to appropriate business account.",
+  "features_verified": {
+    "operation_kinds": {
+      "WORKSHOP_OPERATION": {
+        "validation": "Accepts without customer/vehicle",
+        "business_account": "Auto-selects non-Rakan workshop account",
+        "scope": "workshop",
+        "source": "workshop_operation"
+      },
+      "VEHICLE_OPERATION": {
+        "validation": "Requires vehicleId",
+        "auto_linking": "Customer name auto-filled from vehicle",
+        "business_account": "Auto-selects workshop account",
+        "scope": "vehicle",
+        "source": "vehicle_operation"
+      },
+      "RAKAN_PARTS_OPERATION": {
+        "validation": "Requires customer OR vehicle",
+        "business_account": "Auto-selects Rakan account (قطع راكان)",
+        "scope": "rakan_parts",
+        "source": "rakan_parts_operation"
+      }
+    },
+    "fk_error_fix": {
+      "invalid_accountId": "Auto-resolved to valid business account",
+      "empty_accountId": "Auto-resolved to valid business account based on operationKind"
+    },
+    "frontend_ui": {
+      "operation_kind_selector": "3 buttons visible and selectable",
+      "dynamic_form_fields": "Fields show/hide based on operationKind",
+      "vehicle_customer_linking": "Vehicle selection auto-fills customer",
+      "rakan_rule_note": "ملاحظة: عملية قطع راكان يجب أن ترتبط بعميل أو مركبة",
+      "operations_tabs": "عمليات قطع راكان (مستقلة) • N / عمليات الورشة • N"
+    }
+  }
+}

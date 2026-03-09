@@ -20,6 +20,15 @@ import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = `${resolveBackendBase()}/api`;
 const OPERATIONS_PAGE_SIZE = 15;
+const OPERATION_KIND_WORKSHOP = 'WORKSHOP_OPERATION';
+const OPERATION_KIND_VEHICLE = 'VEHICLE_OPERATION';
+const OPERATION_KIND_RAKAN = 'RAKAN_PARTS_OPERATION';
+
+const OPERATION_KIND_LABELS = {
+  [OPERATION_KIND_WORKSHOP]: 'عملية ورشة',
+  [OPERATION_KIND_VEHICLE]: 'عملية مركبة',
+  [OPERATION_KIND_RAKAN]: 'عملية قطع راكان',
+};
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
 
@@ -76,12 +85,15 @@ const Operations = () => {
 
   const [form, setForm] = useState({ 
     accountId: '', 
+    accountingAccountId: '',
+    operationKind: OPERATION_KIND_WORKSHOP,
     vehicleId: '',
     visitId: '',
     // scope: يحدد هل العملية مرتبطة بمركبة أم عملية عامة للورشة
     scope: 'workshop', // 'vehicle' | 'workshop'
     type: 'purchase', 
     partnerType: 'supplier', 
+    partnerId: '',
     partnerName: '', 
     items: [], 
     paymentMethod: 'cash', 
@@ -93,11 +105,6 @@ const Operations = () => {
     date: new Date().toISOString().split('T')[0],
 
     paymentReceipt: null,
-
-    // New: For non-UUID account IDs (e.g., acc-1201 from COA), we send both:
-    // - accountId: used by UI and persisted in operations table
-    // - accountingAccountId: used by backend to build journal entry debit account
-    accountingAccountId: ''
   });
 
   const operationsSteps = useMemo(() => (
@@ -106,7 +113,7 @@ const Operations = () => {
         id: 'account',
         title: 'اختيار الحساب والطرف',
         hint: 'اختر الحساب واسم المورد/العميل قبل المتابعة.',
-        done: Boolean(form.accountId && form.partnerName),
+        done: Boolean(form.accountingAccountId),
       },
       {
         id: 'items',
@@ -121,11 +128,13 @@ const Operations = () => {
         done: Boolean(form.paymentMethod),
       },
     ]
-  ), [form.accountId, form.partnerName, form.items.length, form.paymentMethod]);
+  ), [form.accountingAccountId, form.items.length, form.paymentMethod]);
 
-  const operationsSubtitle = form.scope === 'workshop'
-    ? 'أنت تنشئ عملية يدوية. راجع الحساب والبنود لتجنب الخطأ المالي.'
-    : 'اتبع الخطوات التالية لإكمال العملية بدقة.';
+  const operationsSubtitle = form.operationKind === OPERATION_KIND_WORKSHOP
+    ? 'أنت تنشئ عملية ورشة تشغيلية مستقلة عن المركبات. راجع القيد قبل الحفظ.'
+    : form.operationKind === OPERATION_KIND_VEHICLE
+      ? 'عملية مرتبطة بمركبة: سيتم ربط العميل تلقائياً من بيانات المركبة.'
+      : 'عملية قطع راكان: يجب ربطها بعميل أو مركبة وتُفصل ماليًا عن الورشة.';
   const [item, setItem] = useState({ 
     itemType: 'part', 
     itemId: '', 
@@ -272,7 +281,7 @@ const Operations = () => {
     },
   });
 
-  const activeVehicleId = form.scope === 'vehicle'
+  const activeVehicleId = form.operationKind !== OPERATION_KIND_WORKSHOP
     ? (form.vehicleId || vehicleIdFromUrl)
     : '';
 
@@ -288,6 +297,27 @@ const Operations = () => {
 
   const accounts = accountsQuery.data || [];
   const bizAccounts = bizAccountsQuery.data || [];
+  const rakanBizAccount = useMemo(
+    () => bizAccounts.find((account) => isRakanBusinessAccount(account)) || null,
+    [bizAccounts]
+  );
+  const workshopBizAccount = useMemo(() => {
+    const nonRakan = bizAccounts.filter((account) => !isRakanBusinessAccount(account));
+    if (!nonRakan.length) return null;
+    const preferred = nonRakan.find((account) => {
+      const text = `${normalizeText(account.name)} ${normalizeText(account.code)}`;
+      return ['main', 'الرئيس', 'الرئيسي', 'workshop', 'default'].some((k) => text.includes(k));
+    });
+    return preferred || nonRakan[0] || null;
+  }, [bizAccounts]);
+
+  const selectedBusinessAccount = useMemo(() => {
+    if (form.operationKind === OPERATION_KIND_RAKAN) {
+      return rakanBizAccount;
+    }
+    return workshopBizAccount || rakanBizAccount || null;
+  }, [form.operationKind, rakanBizAccount, workshopBizAccount]);
+
   const rakanBizAccountIds = useMemo(
     () => new Set((bizAccounts || []).filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))),
     [bizAccounts]
@@ -300,6 +330,10 @@ const Operations = () => {
     if (form.type === 'sale') return account.type === 'revenue';
     if (form.type === 'purchase') return account.type === 'expense';
     return true;
+  }).filter((account) => {
+    const isRakan = isRakanChartAccount(account);
+    if (form.operationKind === OPERATION_KIND_RAKAN) return isRakan;
+    return !isRakan;
   });
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
@@ -308,6 +342,11 @@ const Operations = () => {
   const vehicles = vehiclesQuery.data || [];
   const activeVehicles = vehicles.filter((vehicle) => !['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'].includes(vehicle.status));
   const vehicleOptions = activeVehicles.length ? activeVehicles : vehicles;
+  const customerVehicles = useMemo(() => {
+    if (!form.partnerId) return vehicleOptions;
+    const list = vehicleOptions.filter((vehicle) => String(vehicle.customerId || '') === String(form.partnerId || ''));
+    return list.length ? list : vehicleOptions;
+  }, [vehicleOptions, form.partnerId]);
   const ops = operationsQuery.data || [];
   const visits = visitsQuery.data || [];
 
@@ -407,14 +446,89 @@ const Operations = () => {
   }, [expandedOperationId, sortedOps]);
 
   useEffect(() => {
+    if (!selectedBusinessAccount?.id) return;
+    setForm((prev) => {
+      if (prev.accountId === selectedBusinessAccount.id) return prev;
+      return { ...prev, accountId: selectedBusinessAccount.id };
+    });
+  }, [selectedBusinessAccount]);
+
+  useEffect(() => {
+    if (!filteredAccounts.length) {
+      setForm((prev) => ({ ...prev, accountingAccountId: '' }));
+      return;
+    }
+    const exists = filteredAccounts.some((acc) => String(acc.id || acc.code) === String(form.accountingAccountId || ''));
+    if (!exists) {
+      setForm((prev) => ({ ...prev, accountingAccountId: String(filteredAccounts[0].id || filteredAccounts[0].code || '') }));
+    }
+  }, [filteredAccounts, form.accountingAccountId]);
+
+  useEffect(() => {
     if (vehicleIdFromUrl) {
-      setForm(prev => ({ 
-        ...prev, 
+      setForm(prev => ({
+        ...prev,
+        operationKind: OPERATION_KIND_VEHICLE,
         scope: 'vehicle',
-        vehicleId: vehicleIdFromUrl 
+        vehicleId: vehicleIdFromUrl,
       }));
     }
   }, [vehicleIdFromUrl]);
+
+  useEffect(() => {
+    if (!form.vehicleId) return;
+    const selectedVehicle = vehicleOptions.find((v) => String(v.id) === String(form.vehicleId));
+    if (!selectedVehicle) return;
+
+    if (form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) {
+      setForm((prev) => ({
+        ...prev,
+        partnerType: 'customer',
+        partnerId: selectedVehicle.customerId || prev.partnerId || '',
+        partnerName: selectedVehicle.customerName || prev.partnerName || '',
+      }));
+    }
+  }, [form.vehicleId, form.operationKind, vehicleOptions]);
+
+  useEffect(() => {
+    if (!form.partnerId) return;
+    if (form.operationKind !== OPERATION_KIND_RAKAN) return;
+    const customer = customers.find((c) => String(c.id) === String(form.partnerId));
+    if (!customer) return;
+    setForm((prev) => ({
+      ...prev,
+      partnerType: 'customer',
+      partnerName: customer.name || prev.partnerName,
+    }));
+  }, [form.partnerId, form.operationKind, customers]);
+
+  useEffect(() => {
+    if (vehicleIdFromUrl) {
+      return;
+    }
+    if (form.operationKind === OPERATION_KIND_WORKSHOP) {
+      setForm((prev) => ({
+        ...prev,
+        scope: 'workshop',
+        vehicleId: '',
+        visitId: '',
+        partnerId: prev.type === 'purchase' ? prev.partnerId : '',
+        partnerType: prev.type === 'purchase' ? 'supplier' : prev.partnerType,
+      }));
+    } else if (form.operationKind === OPERATION_KIND_VEHICLE) {
+      setForm((prev) => ({
+        ...prev,
+        scope: 'vehicle',
+        partnerType: 'customer',
+      }));
+    } else if (form.operationKind === OPERATION_KIND_RAKAN) {
+      setForm((prev) => ({
+        ...prev,
+        scope: 'rakan_parts',
+        partnerType: 'customer',
+      }));
+    }
+  }, [form.operationKind, vehicleIdFromUrl]);
 
   useEffect(() => {
     if (!visits.length || form.visitId) return;
@@ -574,18 +688,7 @@ const Operations = () => {
     // Validate required fields
     setCreateError('');
 
-    if (!form.partnerName) {
-      const msg = t('operations.customer_required') || 'اكتب اسم العميل/المورد';
-      setCreateError(msg);
-      toast({
-        title: t('common.error'),
-        description: msg,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!form.accountId) {
+    if (!form.accountingAccountId) {
       const msg = t('operations.account_required') || 'اختر الحساب';
       setCreateError(msg);
       toast({
@@ -596,8 +699,17 @@ const Operations = () => {
       return;
     }
 
-    if (form.scope === 'vehicle' && !activeVehicleId) {
-      const msg = t('operations.select_vehicle_required') || 'اختر مركبة أولاً';
+    if (!selectedBusinessAccount?.id) {
+      const msg = 'لا يوجد حساب أعمال مناسب لنوع العملية الحالي';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      return;
+    }
+
+    const hasCustomerOrVehicle = Boolean(activeVehicleId || form.partnerId || form.partnerName);
+
+    if (form.operationKind === OPERATION_KIND_VEHICLE && !activeVehicleId) {
+      const msg = 'عملية المركبة تتطلب اختيار مركبة';
       setCreateError(msg);
       toast({
         title: t('common.error'),
@@ -607,20 +719,46 @@ const Operations = () => {
       return;
     }
 
+    if (form.operationKind === OPERATION_KIND_RAKAN && !hasCustomerOrVehicle) {
+      const msg = 'عملية قطع راكان تتطلب تحديد عميل أو مركبة';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      return;
+    }
+
     try {
       const selectedVehicle = (vehicleOptions || []).find((v) => v.id === activeVehicleId);
-      const vehicleDetailsNote = (form.scope === 'vehicle' && selectedVehicle)
+      const vehicleDetailsNote = ((form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && selectedVehicle)
         ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${form.visitId || '-'}`
         : '';
+
+      const normalizedScope = form.operationKind === OPERATION_KIND_WORKSHOP
+        ? 'workshop'
+        : form.operationKind === OPERATION_KIND_VEHICLE
+          ? 'vehicle'
+          : 'rakan_parts';
+
+      const normalizedSource = form.operationKind === OPERATION_KIND_WORKSHOP
+        ? 'workshop_operation'
+        : form.operationKind === OPERATION_KIND_VEHICLE
+          ? 'vehicle_operation'
+          : 'rakan_parts_operation';
 
       const cleanPayload = {
         ...form,
         workshopId: workshopId || null,
-        accountId: form.accountId || null,
-        accountingAccountId: form.accountId || null,
+        operationKind: form.operationKind,
+        accountId: selectedBusinessAccount.id,
+        accountingAccountId: form.accountingAccountId || null,
         opDate: form.date,
-        vehicleId: form.scope === 'workshop' ? null : (activeVehicleId || null),
-        visitId: form.scope === 'workshop' ? null : (form.visitId || null),
+        scope: normalizedScope,
+        source: normalizedSource,
+        businessUnit: form.operationKind === OPERATION_KIND_RAKAN ? 'rakan_parts' : 'workshop',
+        vehicleId: form.operationKind === OPERATION_KIND_WORKSHOP ? null : (activeVehicleId || null),
+        visitId: form.operationKind === OPERATION_KIND_WORKSHOP ? null : (form.visitId || null),
+        partnerType: form.operationKind === OPERATION_KIND_WORKSHOP
+          ? (form.type === 'purchase' ? 'supplier' : (form.partnerType || 'supplier'))
+          : 'customer',
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
@@ -631,12 +769,15 @@ const Operations = () => {
       setCreateError('');
 
       setForm({
-        accountId: '',
+        accountId: selectedBusinessAccount?.id || '',
+        accountingAccountId: '',
+        operationKind: vehicleIdFromUrl ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP,
         vehicleId: vehicleIdFromUrl || '',
         visitId: '',
         scope: vehicleIdFromUrl ? 'vehicle' : 'workshop',
         type: 'purchase',
         partnerType: 'supplier',
+        partnerId: '',
         partnerName: '',
         items: [],
         paymentMethod: 'cash',
@@ -646,7 +787,6 @@ const Operations = () => {
         notes: '',
         date: new Date().toISOString().split('T')[0],
         paymentReceipt: null,
-        accountingAccountId: ''
       });
       setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
     } catch (e) {
@@ -661,6 +801,15 @@ const Operations = () => {
   };
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
+  const missingVehicleForVehicleKind = form.operationKind === OPERATION_KIND_VEHICLE && !activeVehicleId;
+  const missingCustomerOrVehicleForRakan = form.operationKind === OPERATION_KIND_RAKAN && !(activeVehicleId || form.partnerId || form.partnerName);
+  const submitDisabled = (
+    form.items.length === 0
+    || !selectedBusinessAccount?.id
+    || !form.accountingAccountId
+    || missingVehicleForVehicleKind
+    || missingCustomerOrVehicleForRakan
+  );
 
   // Theme-based styles (align with dashboard glass look)
   const styles = {
@@ -748,19 +897,29 @@ const Operations = () => {
               <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
                 <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.basic_info') || 'المعلومات الأساسية'}</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                      {form.partnerType === 'supplier' ? t('operations.supplierName') : t('operations.customerName')}
-                    </label>
-                    <div className="relative">
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        className="apple-input pr-10"
-                        placeholder={t('operations.customName')} 
-                        value={form.partnerName} 
-                        onChange={e => setForm({ ...form, partnerName: e.target.value })} 
-                        data-testid="operation-partner-name-input"
-                      />
+                  <div className="space-y-2 md:col-span-2 lg:col-span-4">
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>نوع العملية في النظام</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" data-testid="operation-kind-selector">
+                      {[OPERATION_KIND_WORKSHOP, OPERATION_KIND_VEHICLE, OPERATION_KIND_RAKAN].map((kind) => (
+                        <button
+                          key={kind}
+                          type="button"
+                          className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm border transition ${form.operationKind === kind ? 'bg-cyan-500/20 border-cyan-300/40 text-cyan-100' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              operationKind: kind,
+                              partnerId: kind === OPERATION_KIND_WORKSHOP ? '' : prev.partnerId,
+                              partnerName: kind === OPERATION_KIND_WORKSHOP ? '' : prev.partnerName,
+                              vehicleId: kind === OPERATION_KIND_WORKSHOP ? '' : prev.vehicleId,
+                              visitId: kind === OPERATION_KIND_WORKSHOP ? '' : prev.visitId,
+                            }));
+                          }}
+                          data-testid={`operation-kind-${kind}`}
+                        >
+                          {OPERATION_KIND_LABELS[kind]}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -768,9 +927,9 @@ const Operations = () => {
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.operation_type')}</label>
                     <div className="relative">
                       <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <select 
+                      <select
                         className="apple-input pr-10"
-                        value={form.type} 
+                        value={form.type}
                         onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
                         data-testid="operation-type-select"
                       >
@@ -790,7 +949,7 @@ const Operations = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 lg:col-span-2">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('common.description') || 'الوصف'}</label>
                     <textarea
                       className="apple-input h-[44px] py-2"
@@ -809,108 +968,120 @@ const Operations = () => {
                 <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.linking') || 'الربط'}</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.scopeLabel')}</label>
-                    <div className="relative">
-                      <FileText className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <select
-                        className="apple-input pr-10"
-                        value={form.scope}
-                        onChange={(e) => {
-                          const scope = e.target.value;
-                          setForm(prev => ({
-                            ...prev,
-                            scope,
-                            vehicleId: scope === 'workshop' ? '' : prev.vehicleId,
-                            visitId: scope === 'workshop' ? '' : prev.visitId,
-                          }));
-                        }}
-                        data-testid="operation-scope-select"
-                      >
-                        <option value="vehicle">{t('operations.scopeVehicle')}</option>
-                        <option value="workshop">{t('operations.scopeWorkshop')}</option>
-                      </select>
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>حساب الأعمال</label>
+                    <div className="apple-input text-sm" data-testid="operation-business-account-readonly">
+                      {selectedBusinessAccount?.name || '---'}
                     </div>
+                    <p className="text-[11px]" style={{ color: styles.textMuted }}>
+                      {form.operationKind === OPERATION_KIND_RAKAN ? 'سيتم التسجيل ضمن حساب أعمال قطع راكان المستقل' : 'سيتم التسجيل ضمن حساب أعمال الورشة'}
+                    </p>
                   </div>
 
-                  {form.scope === 'vehicle' ? (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
-                        <div className="relative">
-                          <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                          <select 
-                            className="apple-input pr-10"
-                            value={form.vehicleId} 
-                            onChange={(e) => {
-                              const vehicleId = e.target.value;
-                              setForm({ ...form, vehicleId, visitId: '' });
-                            }}
-                            data-testid="operation-vehicle-select"
-                          >
-                            <option value="">{t('operations.select_vehicle')}...</option>
-                      {vehicleOptions.map(v => (
-                              <option key={v.id} value={v.id}>
-                                {v.plateNumber} - {v.brand} {v.model}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                  {(form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
+                      <div className="relative">
+                        <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <select
+                          className="apple-input pr-10"
+                          value={form.vehicleId}
+                          onChange={(e) => {
+                            const vehicleId = e.target.value;
+                            setForm((prev) => ({ ...prev, vehicleId, visitId: '' }));
+                          }}
+                          data-testid="operation-vehicle-select"
+                        >
+                          <option value="">{t('operations.select_vehicle')}...</option>
+                          {(form.operationKind === OPERATION_KIND_RAKAN ? customerVehicles : vehicleOptions).map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.plateNumber} - {v.brand} {v.model}
+                            </option>
+                          ))}
+                        </select>
                       </div>
+                    </div>
+                  )}
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.visit') || t('operations.date')}</label>
-                        <div className="relative">
-                          <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                          <select 
-                            className="apple-input pr-10"
-                            value={form.visitId || ''} 
-                            onChange={e => setForm({ ...form, visitId: e.target.value })}
-                            disabled={!form.vehicleId}
-                            data-testid="operation-visit-select"
-                          >
-                            <option value="">---</option>
-                            {visits.map(v => (
-                              <option key={v.id} value={v.id}>
-                                {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')} 
-                                {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
-                              </option>
-                            ))}
-                          </select>
+                  {(form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{form.operationKind === OPERATION_KIND_VEHICLE ? 'العميل المرتبط بالمركبة' : 'العميل'}</label>
+                      {form.operationKind === OPERATION_KIND_VEHICLE ? (
+                        <div className="apple-input text-sm" data-testid="operation-linked-customer-readonly">
+                          {form.partnerName || '---'}
                         </div>
+                      ) : (
+                        <select
+                          className="apple-input"
+                          value={form.partnerId || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const selected = customers.find((item) => item.id === value);
+                            setForm((prev) => ({
+                              ...prev,
+                              partnerId: value,
+                              partnerName: selected?.name || '',
+                              partnerType: 'customer',
+                              vehicleId: value ? prev.vehicleId : '',
+                              visitId: '',
+                            }));
+                          }}
+                          data-testid="operation-partner-select"
+                        >
+                          <option value="">اختر عميل</option>
+                          {customers.map((item) => (
+                            <option key={item.id} value={item.id}>{item.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {form.operationKind === OPERATION_KIND_VEHICLE && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.visit') || t('operations.date')}</label>
+                      <div className="relative">
+                        <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <select
+                          className="apple-input pr-10"
+                          value={form.visitId || ''}
+                          onChange={e => setForm({ ...form, visitId: e.target.value })}
+                          disabled={!form.vehicleId}
+                          data-testid="operation-visit-select"
+                        >
+                          <option value="">---</option>
+                          {visits.map(v => (
+                            <option key={v.id} value={v.id}>
+                              {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                              {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    </>
-                  ) : (
-                    <div className="text-xs" style={{ color: styles.textMuted }}>
-                      {t('operations.scopeWorkshop')}
+                    </div>
+                  )}
+
+                  {form.operationKind === OPERATION_KIND_WORKSHOP && (
+                    <div className="space-y-2 md:col-span-2 lg:col-span-3">
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                        الجهة/المستفيد (اختياري)
+                      </label>
+                      <div className="relative">
+                        <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          className="apple-input pr-10"
+                          placeholder="مثال: شركة الكهرباء / مورد أدوات"
+                          value={form.partnerName}
+                          onChange={e => setForm({ ...form, partnerName: e.target.value, partnerType: form.type === 'purchase' ? 'supplier' : 'customer' })}
+                          data-testid="operation-partner-name-input"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-                {(form.type === 'sale' || form.type === 'purchase') && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                      {form.type === 'sale' ? 'العميل' : 'المورد'}
-                    </label>
-                    <select
-                      className="apple-input"
-                      value={form.partnerId || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const list = form.type === 'sale' ? customers : suppliers;
-                        const selected = list.find((item) => item.id === value);
-                        setForm(prev => ({
-                          ...prev,
-                          partnerId: value,
-                          partnerName: selected?.name || '',
-                          partnerType: form.type === 'sale' ? 'customer' : 'supplier'
-                        }));
-                      }}
-                      data-testid="operation-partner-select"
-                    >
-                      <option value="">اختر</option>
-                      {(form.type === 'sale' ? customers : suppliers).map((item) => (
-                        <option key={item.id} value={item.id}>{item.name}</option>
-                      ))}
-                    </select>
+
+                {form.operationKind === OPERATION_KIND_RAKAN && (
+                  <div className="mt-3 text-xs text-cyan-200" data-testid="operation-rakan-rule-note">
+                    ملاحظة: عملية قطع راكان يجب أن ترتبط بعميل أو مركبة.
                   </div>
                 )}
               </div>
@@ -938,13 +1109,13 @@ const Operations = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.account')}</label>
+                    <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>الحساب المحاسبي (القيد)</label>
                     <div className="relative">
                       <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                       <select 
                         className="apple-input pr-10"
-                        value={form.accountId} 
-                        onChange={e => setForm({ ...form, accountId: e.target.value })}
+                        value={form.accountingAccountId} 
+                        onChange={e => setForm({ ...form, accountingAccountId: e.target.value })}
                         data-testid="operation-account-select"
                       >
                         <option value="">{t('operations.select_account')}</option>
@@ -1242,7 +1413,7 @@ const Operations = () => {
               </div>
               <button 
                 type="submit" 
-                disabled={form.items.length === 0 || (form.scope === 'vehicle' && !activeVehicleId)}
+                disabled={submitDisabled}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
                 data-testid="operation-save-button"
               >
@@ -1253,8 +1424,12 @@ const Operations = () => {
                 <div className="text-xs text-slate-500">{t('operations.items_required') || 'أضف عنصر واحد على الأقل قبل الحفظ'}</div>
               )}
 
-              {form.scope === 'vehicle' && !activeVehicleId && (
+              {missingVehicleForVehicleKind && (
                 <div className="text-xs text-slate-500">{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
+              )}
+
+              {missingCustomerOrVehicleForRakan && (
+                <div className="text-xs text-slate-500">حدد عميل أو مركبة لعملية قطع راكان قبل الحفظ</div>
               )}
             </div>
             </div>

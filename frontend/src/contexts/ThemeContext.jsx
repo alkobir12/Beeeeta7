@@ -2,6 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+const FONT_SIZE_PRESETS = {
+  small: { label: 'A-', px: '18px' },
+  medium: { label: 'A', px: '20px' },
+  large: { label: 'A+', px: '22px' },
+};
+
 // تعريف الثيمات المتاحة
 export const themes = {
   // الثيم الداكن (الحالي)
@@ -172,7 +178,7 @@ export const themes = {
 
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'dashPro');
-  const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'large');
   const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem('layoutMode') || 'comfortable');
 
   const applyTheme = (themeName) => {
@@ -203,12 +209,9 @@ export const ThemeProvider = ({ children }) => {
 
   const applyFontSize = (size) => {
     const root = document.documentElement;
-    const sizes = {
-      small: '14px',
-      medium: '16px',
-      large: '18px'
-    };
-    root.style.setProperty('--base-font-size', sizes[size]);
+    const selectedSize = FONT_SIZE_PRESETS[size] || FONT_SIZE_PRESETS.large;
+    root.style.setProperty('--app-font-size', selectedSize.px);
+    root.setAttribute('data-font-size', size);
   };
 
   useEffect(() => {
@@ -252,6 +255,7 @@ export const ThemeProvider = ({ children }) => {
       isDark: (themes[currentTheme] || themes.dark).mode === 'dark',
       isLight: (themes[currentTheme] || themes.dark).mode === 'light',
       fontSize,
+      fontSizePresets: FONT_SIZE_PRESETS,
       layoutMode,
       changeTheme,
       setTheme,

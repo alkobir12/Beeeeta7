@@ -282,7 +282,8 @@ body[data-theme="dashPro"] .sidebar-item {
     font-family: 'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 20px; /* تكبير شامل لأحجام الخطوط */
+    font-size: var(--app-font-size, 22px); /* تكبير شامل قابل للتحكم */
+    transition: font-size 0.2s ease;
   }
 
   body,
@@ -524,10 +525,18 @@ body[data-theme="dashPro"] .sidebar-item {
   
   /* Sidebar Styles - Emergent Theme */
   .sidebar-modern {
-    @apply fixed top-0 bottom-0 left-0 w-[280px] backdrop-blur-xl border-r border-border z-50 transition-transform duration-300 ease-in-out overflow-hidden;
+    @apply fixed left-0 z-50 overflow-hidden border border-white/10 backdrop-blur-2xl transition-all duration-300 ease-in-out;
     display: flex;
     flex-direction: column;
-    background-color: var(--sidebar-bg, rgba(30, 41, 59, 0.95));
+    top: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: var(--sidebar-shell-width, 286px);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 38%),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.92) 0%, rgba(15, 23, 42, 0.94) 100%);
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.48);
   }
   
 /* Light mode - complete override */
@@ -673,11 +682,21 @@ body[data-theme="dashPro"] .sidebar-item.active {
 }
   
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground mb-1;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 mb-1;
+    color: rgba(226, 232, 240, 0.84);
+  }
+
+  .sidebar-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    transform: translateX(2px);
   }
   
   .sidebar-item-active {
-    @apply bg-primary text-primary-foreground shadow-glow-sm;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3) 0%, rgba(99, 102, 241, 0.35) 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(125, 211, 252, 0.25);
+    box-shadow: 0 16px 40px rgba(14, 165, 233, 0.18);
   }
   
   /* Layout Styles */
@@ -693,7 +712,7 @@ body[data-theme="dashPro"] .sidebar-item.active {
   
   @media (min-width: 1024px) {
     .content-area {
-      margin-left: 280px;
+      margin-left: var(--content-offset, 322px);
     }
   }
   

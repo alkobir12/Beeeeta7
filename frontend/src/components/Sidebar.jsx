@@ -24,11 +24,9 @@ import {
   BookOpen,
   Truck,
   Bot,
-  Calculator,
-  TrendingUp,
-  Wallet,
-  FolderTree,
-  ClipboardList
+  ChevronsLeft,
+  EyeOff,
+  Sparkles
 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
@@ -41,12 +39,19 @@ const API_URL = (
     : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({
+  isOpen,
+  onClose,
+  isCollapsed = false,
+  isHidden = false,
+  onToggleCollapse,
+  onHide,
+}) => {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [activeCollapsedGroup, setActiveCollapsedGroup] = useState('');
   const [workshopName, setWorkshopName] = useState('');
 
   // Lint rule in this repo discourages setState inside useEffect.
@@ -132,14 +137,24 @@ const Sidebar = ({ isOpen, onClose }) => {
   // If you want workshop name dynamic, we can rework this with a user-triggered refresh.
   useEffect(() => {
     if (!canLoadSettings) return;
+    loadSettings();
   }, [canLoadSettings]);
 
+  useEffect(() => {
+    setActiveCollapsedGroup('');
+  }, [location.pathname, isCollapsed]);
+
   const toggleGroup = (label) => {
+    if (isCollapsed) {
+      setActiveCollapsedGroup((prev) => (prev === label ? '' : label));
+      return;
+    }
     setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
   const handleNavigate = (path) => {
     navigate(path);
+    setActiveCollapsedGroup('');
     if (window.innerWidth < 1024) onClose?.();
   };
 
@@ -176,26 +191,34 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
 
     if (item.group && item.children) {
-      const isCollapsed = collapsedGroups[item.label];
+      const groupCollapsed = collapsedGroups[item.label];
+      const hasFloatingMenu = activeCollapsedGroup === item.label;
       const hasActiveChild = item.children.some(child => location.pathname === child.path);
       const Icon = item.icon || FileText;
 
       return (
-        <div key={index} className="mb-1">
+        <div key={index} className="relative mb-1">
           <button
             onClick={() => toggleGroup(item.label)}
-            className={`sidebar-item w-full justify-between ${hasActiveChild ? 'bg-gray-100 text-gray-900' : ''}`}
+            className={`sidebar-item w-full justify-between ${hasActiveChild ? 'sidebar-item-active active' : ''} ${isCollapsed ? '!justify-center !px-0' : ''}`}
             data-testid={`sidebar-group-${String(item.label).replace(/\s+/g, '-')}`}
+            title={item.label}
           >
-            <span className="flex items-center gap-3">
-              <Icon size={18} className={hasActiveChild ? 'text-[#0071E3]' : 'text-gray-500'} />
-              <span>{item.label}</span>
-            </span>
-            {isCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
+            {isCollapsed ? (
+              <Icon size={18} className={hasActiveChild ? 'text-white' : 'text-slate-300'} />
+            ) : (
+              <>
+                <span className="flex items-center gap-3">
+                  <Icon size={18} className={hasActiveChild ? 'text-white' : 'text-slate-400'} />
+                  <span className="truncate">{item.label}</span>
+                </span>
+                {groupCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
+              </>
+            )}
           </button>
 
-          {!isCollapsed && (
-            <div className="ml-9 space-y-1 mt-1">
+          {!isCollapsed && !groupCollapsed && (
+            <div className="ms-9 mt-1 space-y-1">
               {item.children.map((child, childIndex) => {
                 if (!child.enabled) return null;
                 const isActive = location.pathname === child.path;
@@ -203,13 +226,40 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <button
                     key={childIndex}
                     onClick={() => handleNavigate(child.path)}
-                    className={`sidebar-item w-full text-sm ${isActive ? 'active' : '!bg-transparent hover:!bg-gray-100 !text-gray-600'}`}
+                    className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'}`}
                     data-testid={`sidebar-item-${child.path.replace(/\//g, '-')}`}
+                    title={child.label}
                   >
                     <span>{child.label}</span>
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {isCollapsed && hasFloatingMenu && (
+            <div className="absolute left-[calc(100%+12px)] top-0 z-50 w-64 rounded-[24px] border border-white/10 bg-slate-950/95 p-3 shadow-2xl shadow-black/40 backdrop-blur-2xl" data-testid={`sidebar-collapsed-group-panel-${index}`}>
+              <div className="mb-2 flex items-center gap-2 px-2 text-slate-100">
+                <Icon size={16} className="text-sky-300" />
+                <span className="text-sm font-semibold">{item.label}</span>
+              </div>
+              <div className="space-y-1">
+                {item.children.map((child, childIndex) => {
+                  if (!child.enabled) return null;
+                  const isActive = location.pathname === child.path;
+                  return (
+                    <button
+                      key={childIndex}
+                      type="button"
+                      onClick={() => handleNavigate(child.path)}
+                      className={`sidebar-item w-full ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-200'}`}
+                      data-testid={`sidebar-collapsed-item-${child.path.replace(/\//g, '-')}`}
+                    >
+                      <span className="truncate">{child.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -223,21 +273,29 @@ const Sidebar = ({ isOpen, onClose }) => {
       <button
         key={index}
         onClick={() => handleNavigate(item.path)}
-        className={`sidebar-item w-full rounded-2xl px-3 py-2 text-[0.9rem] flex items-center gap-3 transition-colors ${
+        className={`sidebar-item w-full rounded-2xl px-3 py-2 text-[0.9rem] flex items-center gap-3 transition-colors ${isCollapsed ? '!justify-center !px-0' : ''} ${
           isActive
-            ? 'bg-sky-500/10 text-sky-100'
-            : 'text-slate-300 hover:bg-slate-800/60 hover:text-slate-50'
+            ? 'sidebar-item-active active'
+            : 'text-slate-300 hover:bg-white/8 hover:text-slate-50'
         }`}
         data-testid={`sidebar-item-${item.path.replace(/\//g, '-') || 'dashboard'}`}
+        title={item.label}
       >
         <Icon
           size={18}
-          className={isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-100'}
+          className={isActive ? 'text-white' : 'text-slate-400'}
         />
-        <span className="truncate">{item.label}</span>
+        {!isCollapsed && <span className="truncate">{item.label}</span>}
       </button>
     );
   };
+
+  const sidebarPositionClass = isOpen
+    ? 'translate-x-0'
+    : '-translate-x-full';
+  const desktopVisibilityClass = isHidden
+    ? 'lg:-translate-x-[120%] lg:opacity-0 lg:pointer-events-none'
+    : 'lg:translate-x-0 lg:opacity-100';
 
   return (
     <>
@@ -245,40 +303,78 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div
         className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
+        data-testid="mobile-sidebar-overlay"
       />
 
-      <aside className={`sidebar-modern flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-5 flex items-center justify-between border-b border-white/5 bg-gradient-to-br from-[#020617] via-[#020617] to-[#020617]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0ea5e9] to-[#6366f1] flex items-center justify-center text-white shadow-lg shadow-sky-500/30">
+      <aside
+        className={`sidebar-modern flex flex-col ${sidebarPositionClass} ${desktopVisibilityClass}`}
+        style={{ '--sidebar-shell-width': isCollapsed ? '96px' : '286px' }}
+        data-testid="app-sidebar"
+        data-collapsed={isCollapsed ? 'true' : 'false'}
+      >
+        <div className={`border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 ${isCollapsed ? 'px-3 py-4' : 'p-5'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-3`}>
+            <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#0ea5e9] via-[#38bdf8] to-[#6366f1] text-white shadow-lg shadow-sky-500/30">
               <Car size={20} />
             </div>
-            <div>
-              <h2 className="font-semibold text-sm text-slate-50 leading-tight truncate max-w-[180px]">
-                {workshopName || t('nav.workshop_system')}
-              </h2>
-              <p className="text-[11px] text-slate-400">{t('nav.workshop_system')}</p>
+              {!isCollapsed && (
+                <div>
+                  <h2 className="max-w-[150px] truncate text-sm font-semibold leading-tight text-slate-50" data-testid="sidebar-workshop-name">
+                    {workshopName || t('nav.workshop_system')}
+                  </h2>
+                  <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                    <Sparkles size={12} className="text-sky-300" />
+                    <span>{t('nav.workshop_system')}</span>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {!isCollapsed && (
+              <div className="hidden items-center gap-2 lg:flex">
+                <button
+                  type="button"
+                  onClick={onToggleCollapse}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-200 transition-colors hover:bg-white/12"
+                  data-testid="sidebar-collapse-toggle"
+                  title="تصغير القائمة"
+                >
+                  <ChevronsLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onHide}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-200 transition-colors hover:bg-white/12"
+                  data-testid="sidebar-hide-toggle"
+                  title="إخفاء القائمة"
+                >
+                  <EyeOff size={16} />
+                </button>
+              </div>
+            )}
           </div>
-          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white">
+          <button onClick={onClose} className="mt-3 text-slate-400 hover:text-white lg:hidden" data-testid="mobile-sidebar-close-button">
             <X size={20} />
           </button>
         </div>
 
-        <nav className="px-3 pt-3 overflow-y-auto flex-1 min-h-0">
+        <nav className={`overflow-y-auto flex-1 min-h-0 ${isCollapsed ? 'px-2 pt-3' : 'px-3 pt-3'}`}>
           <div className="space-y-1.5 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>
         </nav>
 
-        <div className="flex-shrink-0 p-4 pb-20 border-t border-border bg-card space-y-2">
-          <LanguageToggleButton />
+        <div className={`flex-shrink-0 border-t border-white/10 bg-black/10 ${isCollapsed ? 'px-2 py-3 pb-6' : 'p-4 pb-6'} space-y-2`}>
+          <LanguageToggleButton collapsed={isCollapsed} />
           <button
             onClick={handleLogout}
-            className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-600"
+            className={`sidebar-item w-full text-red-300 hover:!bg-red-500/15 hover:!text-red-100 ${isCollapsed ? '!justify-center !px-0' : ''}`}
+            data-testid="sidebar-logout-button"
+            title={t('app.logout')}
           >
             <LogOut size={18} />
-            <span>{t('app.logout')}</span>
+            {!isCollapsed && <span>{t('app.logout')}</span>}
           </button>
         </div>
       </aside>

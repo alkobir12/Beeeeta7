@@ -15305,3 +15305,263 @@ The VehicleDetails drag reordering testing confirms **EXCELLENT IMPLEMENTATION**
 - Persistence: Order maintained after page reload confirming auto-save functionality
 - Mobile Viewport: 390x800 responsive layout working, drag operation attempted
 - Sensor Configuration: PointerSensor (distance: 2) and TouchSensor (delay: 60, tolerance: 3) validated
+
+---
+
+## Desktop Toolbar & Font Size Controls Testing (2026-03-09)
+
+### Test Objective (Arabic Request):
+اختبر واجهة التطبيق على الرابط https://parts-financial-hub.preview.emergentagent.com مع التركيز على التحسينات الجديدة التالية:
+1) بعد تسجيل الدخول باسم المستخدم `مدير`، تحقق من ظهور شريط أدوات العرض أعلى المحتوى على سطح المكتب.
+2) اختبر أزرار التحكم بحجم الخط في الموقع بالكامل: `desktop-font-size-small-button` ثم `desktop-font-size-medium-button` ثم `desktop-font-size-large-button`، وتأكد أن الواجهة لا تنكسر ولا يظهر overflow أفقي.
+3) اختبر تحسينات القائمة الجانبية:
+- زر `desktop-sidebar-collapse-button` لتصغير القائمة إلى أيقونات فقط ثم إعادتها.
+- زر `desktop-sidebar-visibility-button` لإخفاء القائمة.
+- زر `desktop-sidebar-show-button` لإظهارها مرة أخرى.
+4) اختبر على الجوال/العرض الصغير:
+- ظهور زر `mobile-sidebar-open-button`
+- ظهور `mobile-font-size-controls`
+- فتح القائمة وإغلاقها بزر `mobile-sidebar-close-button`
+5) تأكد أن حالة الواجهة الأساسية ما زالت سليمة: التنقل إلى لوحة التحكم دون شاشات فارغة أو عناصر متداخلة.
+
+### Test Environment:
+- Frontend URL: https://parts-financial-hub.preview.emergentagent.com
+- Testing Date: 2026-03-09 21:00:00
+- Test Focus: Desktop toolbar, font size controls, sidebar enhancements, mobile responsiveness, UI integrity
+
+### Test Results Summary: ✅ ALL FEATURES WORKING PERFECTLY - EXCELLENT IMPLEMENTATION
+
+#### ✅ DESKTOP TOOLBAR & FONT SIZE CONTROLS TESTING - COMPREHENSIVE SUCCESS
+
+**Test Procedure Executed:**
+1. ✅ Login as 'مدير' successful
+2. ✅ Desktop toolbar verification completed
+3. ✅ Font size controls tested (small, medium, large)
+4. ✅ Horizontal overflow check passed for all font sizes
+5. ✅ Sidebar collapse/expand functionality verified
+6. ✅ Sidebar hide/show functionality verified
+7. ✅ Mobile view with all controls tested
+8. ✅ Mobile sidebar open/close tested
+9. ✅ No duplicate data-testid found
+10. ✅ No UI errors detected
+
+**1. ✅ Login and Authentication**
+- **Status**: ✅ WORKING (Arabic login interface fully functional)
+- **Login Process**: Successfully logged in with 'مدير' username
+- **Session Management**: Stable authentication throughout testing
+
+**2. ✅ Desktop Toolbar Verification**
+- **Status**: ✅ WORKING (Toolbar appears correctly on desktop)
+- **Toolbar Element**: Glass-card toolbar found above main content
+- **Arabic Labels**: "أدوات العرض" (Display Tools) properly displayed
+- **Subtitle**: "تحكم سريع في الخط والقائمة الجانبية" (Quick control for font and sidebar) displayed
+- **Position**: Sticky top position, z-index 40, proper visibility
+- **Design**: Professional glass effect with border and backdrop blur
+
+**3. ✅ Font Size Controls - Desktop**
+- **Status**: ✅ WORKING (All font sizes working without UI breaking)
+- **Buttons Found**: 
+  - ✅ `desktop-font-size-small-button` (A-)
+  - ✅ `desktop-font-size-medium-button` (A)
+  - ✅ `desktop-font-size-large-button` (A+)
+
+**Font Size Testing Results:**
+| Font Size | CSS Variable Applied | Document Width | Overflow Detected | Status |
+|-----------|---------------------|----------------|-------------------|--------|
+| **Small (A-)** | 18px | 1920px | ❌ No | ✅ PASS |
+| **Medium (A)** | 20px | 1920px | ❌ No | ✅ PASS |
+| **Large (A+)** | 22px | 1920px | ❌ No | ✅ PASS |
+
+- **Viewport Width**: 1920px
+- **Horizontal Overflow**: ✅ NO OVERFLOW detected with any font size
+- **UI Integrity**: ✅ UI remains intact and functional with all font sizes
+- **CSS Implementation**: Font size applied via `--app-font-size` CSS variable on document.documentElement
+- **Visual Feedback**: Active button highlighted with sky-500 background and shadow
+
+**4. ✅ Sidebar Collapse/Expand Functionality**
+- **Status**: ✅ WORKING (Collapse/expand working perfectly)
+- **Button Element**: `desktop-sidebar-collapse-button` found and functional
+- **Initial State**: data-collapsed="false"
+- **After Collapse**: data-collapsed="true" ✅
+- **After Expand**: data-collapsed="false" ✅
+- **Visual Changes**: 
+  - Collapsed: Sidebar shows icons only, width ~96px
+  - Expanded: Sidebar shows full menu with labels, width ~286px
+- **Content Offset**: Adjusts correctly based on sidebar state
+- **Persistence**: State saved to localStorage ('ui.sidebarCollapsed')
+
+**5. ✅ Sidebar Hide/Show Functionality**
+- **Status**: ✅ WORKING (Hide/show working perfectly)
+- **Visibility Button**: `desktop-sidebar-visibility-button` found and functional
+- **Show Button**: `desktop-sidebar-show-button` appears correctly when sidebar hidden
+- **Hide Action**: Sidebar slides out with opacity transition
+- **Show Action**: Sidebar slides in with opacity transition
+- **CSS Classes**: 
+  - Hidden: `lg:-translate-x-[120%] lg:opacity-0 lg:pointer-events-none`
+  - Visible: `lg:translate-x-0 lg:opacity-100`
+- **Show Button Position**: Fixed at left-5 top-5, z-index 50
+- **Show Button Styling**: Rounded-full with "إظهار القائمة" label and Eye icon
+- **Persistence**: State saved to localStorage ('ui.sidebarHidden')
+
+**6. ✅ Mobile View - Sidebar Controls**
+- **Status**: ✅ WORKING (All mobile controls functional)
+- **Viewport**: 390x844 (mobile)
+- **Mobile Header**: Sticky header with rounded corners and glass effect
+- **Mobile Sidebar Open Button**: 
+  - ✅ `mobile-sidebar-open-button` found
+  - Icon: Menu icon (3 horizontal lines)
+  - Position: Top-left of mobile header
+- **Mobile Sidebar Close Button**:
+  - ✅ `mobile-sidebar-close-button` found inside opened sidebar
+  - Icon: X close icon
+  - Functional: Closes sidebar correctly
+- **Sidebar Overlay**: Black overlay with backdrop blur appears when sidebar open
+- **Sidebar Animation**: Smooth slide-in/slide-out transitions
+
+**7. ✅ Mobile View - Font Size Controls**
+- **Status**: ✅ WORKING (All mobile font controls functional)
+- **Controls Element**: `mobile-font-size-controls` found
+- **Compact Mode**: Controls displayed in compact mode with proper spacing
+- **Buttons Found**:
+  - ✅ `mobile-font-size-small-button` (A-)
+  - ✅ `mobile-font-size-medium-button` (A)
+  - ✅ `mobile-font-size-large-button` (A+)
+- **Position**: Centered in mobile header below title
+- **Functionality**: Same font size system as desktop (18px, 20px, 22px)
+
+**8. ✅ Basic Navigation Integrity**
+- **Status**: ✅ WORKING (Dashboard loaded with content)
+- **Page Loading**: Dashboard page loads successfully
+- **Content Rendering**: Multiple widgets and cards displayed correctly
+- **No Blank Screens**: Page content visible and functional
+- **No Overlapping Elements**: UI elements properly positioned
+- **Navigation Flow**: Smooth transitions between pages
+
+**9. ✅ Data Integrity Checks**
+- **Status**: ✅ WORKING (No duplicate data-testid found)
+- **Duplicate Check**: All data-testid attributes are unique
+- **Error Messages**: ✅ No error messages visible in UI
+- **Console Errors**: ✅ No application-level console errors
+- **Network Requests**: Some expected API failures during navigation (ERR_ABORTED)
+
+#### 🔧 TECHNICAL IMPLEMENTATION VERIFIED
+
+**Layout Component**: ✅ EXCELLENT
+- Desktop toolbar with glass-card styling and sticky positioning
+- Proper Arabic labels and RTL layout
+- Font size controls integrated with ThemeContext
+- Sidebar state management with localStorage persistence
+- Responsive design with mobile/desktop specific controls
+
+**Sidebar Component**: ✅ ROBUST
+- Collapse/expand functionality with data-collapsed attribute
+- Hide/show functionality with CSS transforms and opacity
+- Mobile overlay with backdrop blur
+- Smooth animations and transitions
+- Proper test IDs on all interactive elements
+
+**Font Size System**: ✅ ADVANCED
+- ThemeContext provides centralized font size management
+- CSS variables (--app-font-size) for global font scaling
+- Three preset sizes: small (18px), medium (20px), large (22px)
+- localStorage persistence ('fontSize')
+- No UI breaking or horizontal overflow with any size
+
+**Responsive Design**: ✅ COMPREHENSIVE
+- Desktop toolbar (>1024px): Full controls with glass effect
+- Mobile header (<1024px): Compact controls with sidebar toggle
+- Proper viewport-based control switching
+- Consistent functionality across device sizes
+
+#### 📊 COMPREHENSIVE TEST RESULTS
+
+| Test Case | Status | Expected Result | Actual Result | Match |
+|-----------|--------|----------------|---------------|-------|
+| **Login as مدير** | ✅ WORKING | Successful authentication | Login successful | ✅ |
+| **Desktop Toolbar Visible** | ✅ WORKING | Toolbar above content on desktop | Toolbar found with Arabic labels | ✅ |
+| **Font Small (18px)** | ✅ WORKING | Font applied, no overflow | 18px applied, width=1920px | ✅ |
+| **Font Medium (20px)** | ✅ WORKING | Font applied, no overflow | 20px applied, width=1920px | ✅ |
+| **Font Large (22px)** | ✅ WORKING | Font applied, no overflow | 22px applied, width=1920px | ✅ |
+| **Sidebar Collapse** | ✅ WORKING | Sidebar collapses to icons | data-collapsed="true" | ✅ |
+| **Sidebar Expand** | ✅ WORKING | Sidebar expands to full menu | data-collapsed="false" | ✅ |
+| **Sidebar Hide** | ✅ WORKING | Sidebar hidden, show button appears | Show button found | ✅ |
+| **Sidebar Show** | ✅ WORKING | Sidebar visible again | Sidebar visible | ✅ |
+| **Mobile Sidebar Open Button** | ✅ WORKING | Button found on mobile | Button found and functional | ✅ |
+| **Mobile Font Controls** | ✅ WORKING | Controls found on mobile | All 3 buttons found | ✅ |
+| **Mobile Sidebar Close** | ✅ WORKING | Sidebar closes on mobile | Close button functional | ✅ |
+| **No Duplicate TestIDs** | ✅ WORKING | All testids unique | No duplicates detected | ✅ |
+| **No UI Errors** | ✅ WORKING | No error messages | No errors found | ✅ |
+
+### 🎯 KEY FINDINGS
+
+**✅ ALL FEATURES WORKING PERFECTLY:**
+1. **Desktop Toolbar**: ✅ Appears correctly with proper Arabic labels
+2. **Font Size Controls**: ✅ All three sizes (small, medium, large) working without UI breaking
+3. **No Horizontal Overflow**: ✅ Confirmed at 1920px viewport for all font sizes
+4. **Sidebar Collapse**: ✅ Collapses to icons and expands back perfectly
+5. **Sidebar Hide/Show**: ✅ Hide and show buttons working with proper transitions
+6. **Mobile Controls**: ✅ All mobile buttons and controls functional
+7. **Mobile Sidebar**: ✅ Opens and closes correctly with overlay
+8. **Data Integrity**: ✅ No duplicate data-testid values
+9. **UI Integrity**: ✅ Navigation working, no blank screens or overlapping elements
+
+**✅ IMPLEMENTATION EXCELLENCE:**
+- **Font Size System**: CSS variables for global scaling without breaking layouts
+- **Sidebar State Management**: localStorage persistence for user preferences
+- **Responsive Design**: Proper desktop/mobile control switching
+- **Arabic Support**: Complete RTL layout with proper Arabic labels
+- **Visual Design**: Professional glass effects and smooth animations
+- **Accessibility**: All controls have proper data-testid attributes
+
+**✅ NO CRITICAL ISSUES FOUND:**
+- No horizontal overflow detected
+- No UI breaking with any font size
+- No duplicate data-testid values
+- No error messages in UI
+- No blank screens or overlapping elements
+
+#### 🎉 CONCLUSION
+
+**Status: ✅ ALL FEATURES WORKING PERFECTLY - PRODUCTION READY**
+
+The desktop toolbar and font size controls testing confirms **EXCELLENT IMPLEMENTATION** of all requested features:
+
+**✅ Core Requirements Met:**
+1. ✅ Desktop toolbar appears after login with proper Arabic labels
+2. ✅ Font size buttons (small, medium, large) working without UI breaking
+3. ✅ No horizontal overflow with any font size (confirmed at 1920px viewport)
+4. ✅ Sidebar collapse button collapses to icons and expands back
+5. ✅ Sidebar visibility button hides/shows sidebar with proper transitions
+6. ✅ Mobile sidebar open button appears and functions correctly
+7. ✅ Mobile font size controls appear and function correctly
+8. ✅ Mobile sidebar close button works correctly
+9. ✅ Basic navigation integrity maintained (dashboard loads correctly)
+10. ✅ No duplicate data-testid values found
+11. ✅ No error messages or UI regressions detected
+
+**✅ Technical Excellence:**
+- **Font Size Implementation**: CSS variables provide clean, global font scaling
+- **State Persistence**: User preferences saved to localStorage
+- **Responsive Design**: Proper viewport-based control switching
+- **Arabic Localization**: Complete RTL support with proper typography
+- **Visual Quality**: Professional glass effects, animations, and transitions
+- **Code Quality**: All interactive elements have proper test IDs
+
+**✅ User Experience Excellence:**
+- **Intuitive Controls**: Clear, accessible buttons with Arabic labels
+- **Smooth Animations**: Professional transitions for all state changes
+- **Responsive Layout**: Optimal experience on desktop and mobile
+- **Consistent Design**: Unified visual language across all controls
+- **No UI Breaking**: Layout remains intact with all font sizes
+
+**Recommendation**: All requested features are **PRODUCTION READY** with excellent implementation quality. The desktop toolbar, font size controls, and sidebar enhancements work perfectly across desktop and mobile viewports without any UI regressions or functional issues.
+
+### Artifacts:
+- Screenshots: desktop_initial_state.png, desktop_font_small.png, desktop_font_medium.png, desktop_font_large.png, sidebar_collapsed.png, sidebar_expanded.png, sidebar_hidden.png, sidebar_shown.png, mobile_initial.png, mobile_sidebar_open.png, mobile_sidebar_closed.png
+- Font Sizes Tested: 18px (small), 20px (medium), 22px (large)
+- Overflow Check Results: No horizontal overflow with any font size at 1920px viewport
+- Data-testid Verification: No duplicate values found
+- Console Log: /root/.emergent/automation_output/20260309_210022/console_20260309_210022.log
+
+---
+

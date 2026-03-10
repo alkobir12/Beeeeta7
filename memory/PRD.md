@@ -29,6 +29,10 @@
 - احتساب الذمم عبر مطابقة أسماء العملاء في لوحة التحكم مع قائمة أرصدة العملاء من تقارير الذمم.
 - إضافة data-testid لقيمة الذمم والعنوان لضمان سهولة الاختبار.
 
+### إعادة زر عائم لإظهار/إخفاء القائمة (11 Mar 2026)
+- استرجاع زر عائم مخصص لإظهار/إخفاء القائمة الجانبية بدون إعادة التحكم بحجم الخط.
+- تثبيت الزر أسفل يسار الشاشة لسطح المكتب مع data-testid واضح.
+
 ### إصلاح عاجل لانهيار Frontend Build + Runtime (01 Mar 2026)
 - معالجة سبب الانهيار المرتبط بـ `resolveBackendBase` وتوحيد الاستيراد في صفحة المخزون لاستخدام `utils/backendBase` مباشرة.
 - التحقق من نجاح البناء الإنتاجي (`yarn build`) بدون أي `SyntaxError` في صفحات الضرائب/دليل الحسابات/القيود.
@@ -494,6 +498,7 @@
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
 | 11 Mar 2026 | Moved font size + sidebar visibility controls to Settings only, removed floating dock, and kept mobile menu in header (no overlay on buttons). |
 | 11 Mar 2026 | Added dashboard total vehicles expanded view showing current receivables for dashboard vehicles |
+| 11 Mar 2026 | Restored floating sidebar show/hide button on desktop |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
 | 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |
 | 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |

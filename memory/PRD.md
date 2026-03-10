@@ -151,6 +151,24 @@
 - ضبط تموضع الجوال بحيث لا يحدث تداخل بين الشريط الثابت وعنوان الصفحة، مع ترك مسافة آمنة أسفل الـ dock.
 - التحقق عبر `auto_frontend_testing_agent`: تم تأكيد اختفاء التداخل على الجوال وعدم وجود regressions على سطح المكتب.
 
+### بحث أرشيفي سريع داخل بوت الورشة العائم (10 Mar 2026)
+- إضافة endpoint جديد: `GET /api/vehicles/archive-search` للبحث عن **آخر زيارة** عبر:
+  - رقم اللوحة
+  - اسم العميل
+  - وصف المركبة
+  - أو عبارة طبيعية مثل: `سياره ا ر س 7576 ماهي تفاصيل آخر زياره`
+- بناء خوارزمية مطابقة ذكية تعتمد على تطبيع النص العربي/الأرقام، وتقييم النتائج بالأولوية: اللوحة ثم العميل ثم المركبة.
+- إرجاع `bestMatch` و`results` مع تفاصيل آخر زيارة: ما تم إصلاحه، القيمة، وطريقة/حالة الدفع.
+- إضافة `ArchiveSearchPanel` داخل **تبويب المحادثة** في `ChatWidget` مع:
+  - بحث فوري أثناء الكتابة (debounced)
+  - زر بحث يدوي
+  - معاينة سريعة لآخر زيارة داخل نفس نافذة البوت
+- جعل حقل المحادثة نفسه يفهم نية البحث الأرشيفي ويعرض النتيجة مباشرة بدل الرجوع للأرشيف الرئيسي.
+- إضافة `sessionId` محفوظ للمحادثة داخل البوت العائم بما يتوافق مع متطلبات multi-turn chat.
+- التحقق عبر:
+  - `pytest /app/backend/tests/test_workshop_bot_archive_search.py` (2/2 ناجح)
+  - `/app/test_reports/iteration_30.json` (Frontend/Backend 100%)
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -371,6 +389,12 @@
 - `frontend/src/components/FontSizeControls.jsx` - New reusable global A-/A/A+ controls
 - `frontend/src/contexts/ThemeContext.jsx` - Global font presets and persisted app-wide font size state
 - `frontend/src/index.css` - Converted root font sizing and content/sidebar layout offsets to CSS variables
+- `backend/routes_extended.py` - Added `/api/vehicles/archive-search` with Arabic-aware normalization and latest visit summary building
+- `backend/tests/test_workshop_bot_archive_search.py` - Added regression tests for archive search and natural-language lookup
+- `frontend/src/components/ChatWidget.jsx` - Added archive search flow inside chat tab + persisted session id for bot conversation
+- `frontend/src/components/workshop-bot/ArchiveSearchPanel.jsx` - New quick archive search field with live suggestions and preview
+- `frontend/src/components/workshop-bot/ArchiveVisitResultCard.jsx` - New visit summary card for quick last-visit details
+- `frontend/src/services/api.js` - Added `vehicleAPI.archiveSearch()`
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
@@ -430,3 +454,4 @@
 | 09 Mar 2026 | Added P1 inventory architecture planner + backend Rakan analytics APIs + dashboard enhancements |
 | 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
+| 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |

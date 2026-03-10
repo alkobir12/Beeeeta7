@@ -13,6 +13,7 @@ import { Toaster } from './ui/toaster';
 
 const Layout = ({ pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 1024);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
     try {
       return localStorage.getItem('ui.sidebarCollapsed') === 'true';
@@ -36,6 +37,12 @@ const Layout = ({ pageTitle }) => {
   useEffect(() => {
     localStorage.setItem('ui.sidebarHidden', String(desktopSidebarHidden));
   }, [desktopSidebarHidden]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileViewport(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const handleSidebarPrefs = (event) => {
@@ -68,6 +75,10 @@ const Layout = ({ pageTitle }) => {
   }, [desktopSidebarCollapsed, desktopSidebarHidden]);
 
   const toggleSidebarVisibility = () => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen((prev) => !prev);
+      return;
+    }
     setDesktopSidebarHidden((prev) => !prev);
   };
 
@@ -95,19 +106,16 @@ const Layout = ({ pageTitle }) => {
         isHidden={desktopSidebarHidden}
       />
 
-      <div
-        className="hidden lg:flex fixed bottom-6 left-6 z-50"
-        data-testid="floating-sidebar-visibility-wrapper"
-      >
+      <div className="fixed bottom-4 left-4 z-50 lg:bottom-6 lg:left-6" data-testid="floating-sidebar-visibility-wrapper">
         <button
           type="button"
           onClick={toggleSidebarVisibility}
           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/85 text-slate-100 shadow-2xl shadow-black/35 backdrop-blur-2xl transition-all hover:bg-white/12"
           data-testid={desktopSidebarHidden ? 'floating-sidebar-show-button' : 'floating-sidebar-hide-button'}
-          title={desktopSidebarHidden ? 'إظهار القائمة' : 'إخفاء القائمة'}
-          aria-label={desktopSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}
+          title={isMobileViewport ? 'القائمة' : desktopSidebarHidden ? 'إظهار القائمة' : 'إخفاء القائمة'}
+          aria-label={isMobileViewport ? 'Toggle Menu' : desktopSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}
         >
-          {desktopSidebarHidden ? <Eye size={18} /> : <EyeOff size={18} />}
+          {isMobileViewport ? <Menu size={18} /> : desktopSidebarHidden ? <Eye size={18} /> : <EyeOff size={18} />}
         </button>
       </div>
       

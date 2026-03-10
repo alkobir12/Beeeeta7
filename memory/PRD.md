@@ -134,6 +134,17 @@
 - تعزيز تبويب «تحليلات قطع راكان» بإظهار مقارنة الفترة الحالية مقابل السابقة، وأسباب الصرف الأكثر تكرارًا.
 - التحقق عبر الاختبار: `/app/test_reports/iteration_29.json` + `pytest /app/backend/tests/test_smart_inventory.py` (12/12 ناجح).
 
+### تحسين القراءة العالمية + تطوير القائمة الجانبية (09 Mar 2026)
+- إضافة تحكم عالمي بحجم الخط عبر أزرار `A- / A / A+` على مستوى الموقع بالكامل، مع حفظ الاختيار في `localStorage` داخل `ThemeContext`.
+- رفع الحجم الافتراضي للقراءة وتحويل التطبيق لاستخدام المتغير `--app-font-size` بدل قيمة ثابتة، بحيث يشمل العناوين والقوائم والأزرار والجداول والنماذج.
+- تحسين `Layout` بإضافة شريط أدوات عرض مكتبي وأدوات مقابلة على الجوال للتحكم بحجم الخط.
+- إعادة تصميم `Sidebar` ليتماشى مع الشكل الزجاجي/الداكن للموقع مع دعم:
+  - تصغير القائمة إلى أيقونات فقط
+  - إخفاء القائمة بالكامل ثم إظهارها بزر مستقل
+  - حفظ حالة التصغير/الإخفاء بعد إعادة تحميل الصفحة
+- تحديث `LanguageToggleButton` ليدعم وضع القائمة المصغّرة بدون كسر التصميم.
+- التحقق عبر الاختبار: smoke test بصري + `auto_frontend_testing_agent` ناجح بالكامل + `testing_agent` frontend pass كامل مع التحقق من persistence بعد reload.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -349,6 +360,11 @@
 - `backend/routes_smart_inventory.py` - Added `/api/inventory/architecture` + `/api/inventory/rakan-analytics`
 - `backend/smart_inventory_service.py` - Added replenishment blueprint engine + supplier health + backend Rakan analytics summary
 - `backend/tests/test_smart_inventory.py` - Added regression coverage for architecture + Rakan analytics endpoints
+- `frontend/src/components/Layout.jsx` - Added desktop/mobile display controls for font size and sidebar state
+- `frontend/src/components/Sidebar.jsx` - Redesigned sidebar shell + collapse/hide/show behavior with persistence
+- `frontend/src/components/FontSizeControls.jsx` - New reusable global A-/A/A+ controls
+- `frontend/src/contexts/ThemeContext.jsx` - Global font presets and persisted app-wide font size state
+- `frontend/src/index.css` - Converted root font sizing and content/sidebar layout offsets to CSS variables
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
@@ -406,3 +422,4 @@
 | 09 Mar 2026 | Parastoo typography refinement (weights/line-height tuning) validated frontend 100% |
 | 09 Mar 2026 | Global font size increase completed (html root 20px) with no layout regressions |
 | 09 Mar 2026 | Added P1 inventory architecture planner + backend Rakan analytics APIs + dashboard enhancements |
+| 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |

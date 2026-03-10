@@ -453,7 +453,11 @@ const Dashboard = () => {
             {expandedStatWidget === 'total' && (
               <div className="mt-3 border-t pt-3" style={{ borderColor: styles.cardBorder }}>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{ color: styles.textSecondary }}
+                    data-testid="dashboard-stat-total-vehicles-ar-label"
+                  >
                     إجمالي الذمم الحالية للمركبات
                   </span>
                   <span

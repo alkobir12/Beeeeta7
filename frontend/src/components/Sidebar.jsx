@@ -24,8 +24,6 @@ import {
   BookOpen,
   Truck,
   Bot,
-  ChevronsLeft,
-  EyeOff,
   Sparkles
 } from 'lucide-react';
 import axios from 'axios';
@@ -44,8 +42,6 @@ const Sidebar = ({
   onClose,
   isCollapsed = false,
   isHidden = false,
-  onToggleCollapse,
-  onHide,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -331,28 +327,6 @@ const Sidebar = ({
               )}
             </div>
 
-            {!isCollapsed && (
-              <div className="hidden items-center gap-2 lg:flex">
-                <button
-                  type="button"
-                  onClick={onToggleCollapse}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-200 transition-colors hover:bg-white/12"
-                  data-testid="sidebar-collapse-toggle"
-                  title="تصغير القائمة"
-                >
-                  <ChevronsLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={onHide}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-200 transition-colors hover:bg-white/12"
-                  data-testid="sidebar-hide-toggle"
-                  title="إخفاء القائمة"
-                >
-                  <EyeOff size={16} />
-                </button>
-              </div>
-            )}
           </div>
           <button onClick={onClose} className="mt-3 text-slate-400 hover:text-white lg:hidden" data-testid="mobile-sidebar-close-button">
             <X size={20} />

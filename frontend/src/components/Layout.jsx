@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Sidebar from './Sidebar';
-import { ChevronsLeft, ChevronsRight, Eye, EyeOff, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,6 @@ import AbuFahadFloatingChat from './AbuFahadFloatingChat';
 import FinanceAlertsWidget from './FinanceAlertsWidget';
 import ChatWidget from './ChatWidget';
 import { Toaster } from './ui/toaster';
-import { FontSizeControls } from './FontSizeControls';
 
 
 
@@ -38,21 +37,35 @@ const Layout = ({ pageTitle }) => {
     localStorage.setItem('ui.sidebarHidden', String(desktopSidebarHidden));
   }, [desktopSidebarHidden]);
 
+  useEffect(() => {
+    const handleSidebarPrefs = (event) => {
+      const detail = event?.detail;
+      if (detail && typeof detail === 'object') {
+        if (typeof detail.collapsed === 'boolean') {
+          setDesktopSidebarCollapsed(detail.collapsed);
+        }
+        if (typeof detail.hidden === 'boolean') {
+          setDesktopSidebarHidden(detail.hidden);
+        }
+        return;
+      }
+
+      try {
+        setDesktopSidebarCollapsed(localStorage.getItem('ui.sidebarCollapsed') === 'true');
+        setDesktopSidebarHidden(localStorage.getItem('ui.sidebarHidden') === 'true');
+      } catch (error) {
+        return;
+      }
+    };
+
+    window.addEventListener('ui-sidebar-preferences-changed', handleSidebarPrefs);
+    return () => window.removeEventListener('ui-sidebar-preferences-changed', handleSidebarPrefs);
+  }, []);
+
   const contentOffset = useMemo(() => {
     if (desktopSidebarHidden) return '0px';
     return desktopSidebarCollapsed ? '132px' : '322px';
   }, [desktopSidebarCollapsed, desktopSidebarHidden]);
-
-  const toggleDesktopCollapse = () => {
-    if (desktopSidebarHidden) {
-      setDesktopSidebarHidden(false);
-    }
-    setDesktopSidebarCollapsed((prev) => !prev);
-  };
-
-  const showDesktopSidebar = () => setDesktopSidebarHidden(false);
-  const hideDesktopSidebar = () => setDesktopSidebarHidden(true);
-  const desktopDockLeft = desktopSidebarHidden ? '16px' : desktopSidebarCollapsed ? '148px' : '338px';
 
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
@@ -76,61 +89,25 @@ const Layout = ({ pageTitle }) => {
         onClose={() => setSidebarOpen(false)} 
         isCollapsed={desktopSidebarCollapsed}
         isHidden={desktopSidebarHidden}
-        onToggleCollapse={toggleDesktopCollapse}
-        onHide={hideDesktopSidebar}
       />
-
-      <div
-        className="fixed top-3 left-3 z-50 flex items-center gap-2 rounded-[22px] border border-white/10 bg-slate-950/82 px-2 py-2 shadow-2xl shadow-black/35 backdrop-blur-2xl lg:hidden"
-        data-testid="mobile-display-dock"
-      >
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-100 transition-colors hover:bg-white/12"
-          aria-label="Open Menu"
-          data-testid="mobile-sidebar-open-button"
-        >
-          <Menu size={18} className="text-foreground" />
-        </button>
-        <FontSizeControls compact minimal testIdPrefix="mobile-font-size" />
-      </div>
-
-      <div
-        className="hidden lg:flex fixed top-4 z-50 items-center gap-2 rounded-[22px] border border-white/10 bg-slate-950/80 px-2 py-2 shadow-2xl shadow-black/35 backdrop-blur-2xl"
-        style={{ left: desktopDockLeft }}
-        data-testid="desktop-display-dock"
-      >
-        {!desktopSidebarHidden && (
-          <button
-            type="button"
-            onClick={toggleDesktopCollapse}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-100 transition-all hover:bg-white/12"
-            data-testid="desktop-sidebar-collapse-button"
-            title={desktopSidebarCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
-          >
-            {desktopSidebarCollapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={desktopSidebarHidden ? showDesktopSidebar : hideDesktopSidebar}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-100 transition-all hover:bg-white/12"
-          data-testid={desktopSidebarHidden ? 'desktop-sidebar-show-button' : 'desktop-sidebar-visibility-button'}
-          title={desktopSidebarHidden ? 'إظهار القائمة' : 'إخفاء القائمة'}
-        >
-          {desktopSidebarHidden ? <Eye size={16} /> : <EyeOff size={16} />}
-        </button>
-
-        <FontSizeControls compact minimal testIdPrefix="desktop-font-size" />
-      </div>
       
       {/* Main Content */}
       <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10, '--content-offset': contentOffset }}>
         {/* Mobile Header - Fixed at top */}
-        <div className="lg:hidden sticky top-0 z-40 mt-20 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-16 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
-          <div className="min-w-0 text-center">
-            <h1 className="truncate text-sm font-bold text-white">{pageTitle || t('app.dashboard')}</h1>
+        <div className="lg:hidden sticky top-0 z-40 mt-8 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-4 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-slate-100 transition-colors hover:bg-white/12"
+              aria-label="Open Menu"
+              data-testid="mobile-sidebar-open-button"
+            >
+              <Menu size={18} className="text-foreground" />
+            </button>
+            <div className="min-w-0 flex-1 text-center">
+              <h1 className="truncate text-sm font-bold text-white">{pageTitle || t('app.dashboard')}</h1>
+            </div>
+            <span className="h-9 w-9" aria-hidden="true" />
           </div>
         </div>
 

@@ -418,6 +418,14 @@
 - `backend/whatsapp_service.py` - WhatsApp service (Twilio + deeplink)
 - `frontend/src/pages/MoltBot.jsx` - AI code editor
 - `backend/routes_moltbot.py` - MoltBot backend
+- `backend/routes_extended.py` - Enforced account-code routing: any `5000*` accounting account forces Rakan flow + journal source tagging + safer business account selection
+- `backend/routes_finance.py` - Workshop reports now exclude Rakan journal entries by default, support `include_rakan=true`, and normalize legacy UUID account refs back to true account codes
+- `backend/routes_accounts_chart.py` - Added `DELETE /api/accounts-chart/reset` with stable fallback reset and noisy-account cleanup logic
+- `backend/smart_inventory_service.py` - Rakan detection upgraded to account-code prefix (`5000`) + note/account-ref fallback detection
+- `frontend/src/pages/Operations.jsx` - Account-based routing UI improvements, direct/open operation type, and automatic operation-kind/type inference from selected chart account
+- `frontend/src/pages/PartsInventory.jsx` - POS supports direct/open accounting operations and routes flow by selected account code (5000 => Rakan, otherwise default workshop)
+- `frontend/src/components/inventory/PartsTransactionModal.jsx` - Added direct operation mode inputs (amount/description) and account-driven guidance
+- `backend/tests/test_rakan_5000_routing.py` - Added backend regression tests for 5000 routing, journal filtering, and reset endpoint stability
 
 ## Update History
 | Date | Description |
@@ -465,3 +473,6 @@
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
 | 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |
+| 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |
+| 10 Mar 2026 | Finance reports hardened: default workshop journal/chart views exclude Rakan entries unless `include_rakan=true` |
+| 10 Mar 2026 | Added stable `DELETE /api/accounts-chart/reset` endpoint and validated no-crash reset behavior |

@@ -24,6 +24,11 @@
 - إزالة أزرار التصغير/الإخفاء من رأس القائمة الجانبية لتوحيد التحكم داخل الإعدادات.
 - الحفاظ على زر فتح القائمة في الهيدر على الجوال بدون تداخل مع المحتوى (بدون Dock عائم على الشاشة نهائياً).
 
+### ذمم المركبات في كرت لوحة التحكم (11 Mar 2026)
+- إضافة إجمالي الذمم الحالية للمركبات الظاهرة في لوحة التحكم عند توسيع كرت «إجمالي المركبات».
+- احتساب الذمم عبر مطابقة أسماء العملاء في لوحة التحكم مع قائمة أرصدة العملاء من تقارير الذمم.
+- إضافة data-testid لقيمة الذمم والعنوان لضمان سهولة الاختبار.
+
 ### إصلاح عاجل لانهيار Frontend Build + Runtime (01 Mar 2026)
 - معالجة سبب الانهيار المرتبط بـ `resolveBackendBase` وتوحيد الاستيراد في صفحة المخزون لاستخدام `utils/backendBase` مباشرة.
 - التحقق من نجاح البناء الإنتاجي (`yarn build`) بدون أي `SyntaxError` في صفحات الضرائب/دليل الحسابات/القيود.
@@ -488,6 +493,7 @@
 | 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
 | 11 Mar 2026 | Moved font size + sidebar visibility controls to Settings only, removed floating dock, and kept mobile menu in header (no overlay on buttons). |
+| 11 Mar 2026 | Added dashboard total vehicles expanded view showing current receivables for dashboard vehicles |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
 | 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |
 | 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |

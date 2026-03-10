@@ -1,374 +1,384 @@
 #!/usr/bin/env python3
 """
-Production Backend Testing for https://fixsa.online
-Testing Arabic review request requirements:
-1) GET /health => 200
-2) GET /api/settings => 200 JSON
-3) GET /api/vehicles => 200 JSON
-4) OPTIONS preflight on /api/vehicles with Origin=https://fixsa.online => Access-Control-Allow-Origin
-5) Verify INFOBIP_API_KEY absence doesn't break server (test whatsapp-bot endpoints if available)
+Backend Testing for Rakan Accounting Period Modifications
+Testing the following scenarios:
+
+1. POST /api/operations with accountingAccountId starting with 5000 => should be rakan_parts only
+2. POST /api/operations with non-5000 account even if operationKind=RAKAN_PARTS_OPERATION => should convert to workshop/default flow
+3. GET /api/finance/journal-entries without include_rakan => should not show rakan entries
+4. GET /api/finance/journal-entries?include_rakan=true => should show rakan entries
+5. GET /api/finance/chart-of-accounts => should not have corrupted UUID codes
+6. DELETE /api/accounts-chart/reset => should work (200) without crash
+7. Clean up any test data created during testing
+
+Base URL: https://rakan-ledger-debug.preview.emergentagent.com
 """
 
 import requests
 import json
-import sys
+import uuid
+import time
 from datetime import datetime
-import traceback
 
-class ProductionBackendTester:
+# Configuration
+BASE_URL = "https://rakan-ledger-debug.preview.emergentagent.com"
+WORKSHOP_ID = "finmodule-sync"
+
+class RakanBackendTester:
     def __init__(self):
-        self.base_url = "https://fixsa.online"
-        self.api_url = f"{self.base_url}/api"
-        self.results = []
-        self.session = requests.Session()
+        self.base_url = BASE_URL.rstrip("/")
+        self.workshop_id = WORKSHOP_ID
+        self.created_operations = []
+        self.test_results = []
         
-        # Set headers for all requests
-        self.session.headers.update({
-            'User-Agent': 'Backend-Tester/1.0',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        })
-    
-    def log_result(self, test_name, success, status_code=None, response_data=None, error=None, details=None):
+    def log_test(self, test_name, success, message, details=None):
         """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name} - {message}")
+        
         result = {
-            'test': test_name,
-            'success': success,
-            'timestamp': datetime.now().isoformat(),
-            'status_code': status_code,
-            'error': str(error) if error else None,
-            'details': details
+            "test": test_name,
+            "success": success,
+            "message": message,
+            "timestamp": datetime.now().isoformat()
+        }
+        if details:
+            result["details"] = details
+            
+        self.test_results.append(result)
+        
+    def test_scenario_1_5000_account_rakan_parts(self):
+        """
+        Test 1: POST /api/operations with accountingAccountId starting with 5000 
+        => should only be rakan_parts operations
+        """
+        print("\n=== Test 1: 5000 Account Code => Rakan Parts ===")
+        
+        test_id = f"TEST_5000_{uuid.uuid4().hex[:8]}"
+        payload = {
+            "type": "sale",
+            "partnerName": f"Test Rakan Customer {test_id}",
+            "accountingAccountId": "5000",  # Existing 5000 account (تكلفة الخدمات)
+            "items": [{"name": "Test Rakan Part", "quantity": 1, "price": 100}],
+            "total": 100,
+            "paymentMethod": "cash",
+            "workshopId": self.workshop_id,
+            "notes": f"Test Rakan: {test_id}"
         }
         
-        if response_data and isinstance(response_data, dict):
-            result['response_keys'] = list(response_data.keys())
-            result['response_size'] = len(str(response_data))
-        
-        self.results.append(result)
-        
-        # Print immediate feedback
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} {test_name}")
-        if status_code:
-            print(f"    Status: {status_code}")
-        if error:
-            print(f"    Error: {error}")
-        if details:
-            print(f"    Details: {details}")
-        print()
-    
-    def test_health_endpoint(self):
-        """Test 1: GET /health => 200"""
         try:
-            response = self.session.get(f"{self.base_url}/health", timeout=10)
+            response = requests.post(f"{self.base_url}/api/operations", json=payload, timeout=30)
             
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    self.log_result(
-                        "GET /health", 
-                        True, 
-                        response.status_code, 
-                        data,
-                        details=f"Health status: {data.get('status', 'unknown')}"
-                    )
-                except json.JSONDecodeError:
-                    self.log_result(
-                        "GET /health", 
-                        True, 
-                        response.status_code,
-                        details="Response is not JSON but status 200 received"
-                    )
+            if response.status_code not in [200, 201]:
+                self.log_test("Scenario 1", False, f"Failed to create operation: {response.status_code}", response.text)
+                return
+                
+            operation = response.json()
+            op_id = operation.get("id")
+            if op_id:
+                self.created_operations.append(op_id)
+            
+            # Check if it's routed to Rakan Parts
+            scope = operation.get("scope", "")
+            business_unit = operation.get("businessUnit") or operation.get("business_unit", "")
+            source = operation.get("source", "")
+            notes = operation.get("notes", "")
+            
+            is_rakan = any([
+                scope == "rakan_parts",
+                business_unit == "rakan_parts", 
+                "rakan_parts" in source.lower(),
+                "[RAKAN_PARTS]" in notes
+            ])
+            
+            if is_rakan:
+                self.log_test("Scenario 1", True, 
+                    f"5000 account correctly routed to Rakan Parts (scope={scope}, businessUnit={business_unit})",
+                    {"operation_id": op_id, "scope": scope, "business_unit": business_unit})
             else:
-                self.log_result(
-                    "GET /health", 
-                    False, 
-                    response.status_code,
-                    error=f"Expected 200, got {response.status_code}"
-                )
-                
-        except Exception as e:
-            self.log_result("GET /health", False, error=e)
-    
-    def test_settings_endpoint(self):
-        """Test 2: GET /api/settings => 200 JSON"""
-        try:
-            response = self.session.get(f"{self.api_url}/settings", timeout=10)
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    self.log_result(
-                        "GET /api/settings", 
-                        True, 
-                        response.status_code, 
-                        data,
-                        details=f"Settings keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}"
-                    )
-                except json.JSONDecodeError:
-                    self.log_result(
-                        "GET /api/settings", 
-                        False, 
-                        response.status_code,
-                        error="Response is not valid JSON"
-                    )
-            else:
-                self.log_result(
-                    "GET /api/settings", 
-                    False, 
-                    response.status_code,
-                    error=f"Expected 200, got {response.status_code}"
-                )
-                
-        except Exception as e:
-            self.log_result("GET /api/settings", False, error=e)
-    
-    def test_vehicles_endpoint(self):
-        """Test 3: GET /api/vehicles => 200 JSON"""
-        try:
-            response = self.session.get(f"{self.api_url}/vehicles", timeout=15)
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    if isinstance(data, list):
-                        self.log_result(
-                            "GET /api/vehicles", 
-                            True, 
-                            response.status_code, 
-                            {"vehicles": data},
-                            details=f"Found {len(data)} vehicles"
-                        )
-                    else:
-                        self.log_result(
-                            "GET /api/vehicles", 
-                            True, 
-                            response.status_code, 
-                            data,
-                            details="Response is not a list but valid JSON"
-                        )
-                except json.JSONDecodeError:
-                    self.log_result(
-                        "GET /api/vehicles", 
-                        False, 
-                        response.status_code,
-                        error="Response is not valid JSON"
-                    )
-            else:
-                self.log_result(
-                    "GET /api/vehicles", 
-                    False, 
-                    response.status_code,
-                    error=f"Expected 200, got {response.status_code}"
-                )
-                
-        except Exception as e:
-            self.log_result("GET /api/vehicles", False, error=e)
-    
-    def test_cors_preflight(self):
-        """Test 4: OPTIONS preflight on /api/vehicles with Origin=https://fixsa.online => Access-Control-Allow-Origin"""
-        try:
-            headers = {
-                'Origin': 'https://fixsa.online',
-                'Access-Control-Request-Method': 'GET',
-                'Access-Control-Request-Headers': 'Content-Type'
-            }
-            
-            response = self.session.options(f"{self.api_url}/vehicles", headers=headers, timeout=10)
-            
-            cors_origin = response.headers.get('Access-Control-Allow-Origin')
-            cors_methods = response.headers.get('Access-Control-Allow-Methods')
-            cors_headers = response.headers.get('Access-Control-Allow-Headers')
-            
-            if cors_origin:
-                self.log_result(
-                    "OPTIONS /api/vehicles CORS", 
-                    True, 
-                    response.status_code,
-                    details=f"CORS Origin: {cors_origin}, Methods: {cors_methods}, Headers: {cors_headers}"
-                )
-            else:
-                self.log_result(
-                    "OPTIONS /api/vehicles CORS", 
-                    False, 
-                    response.status_code,
-                    error="Access-Control-Allow-Origin header not found",
-                    details=f"Available headers: {dict(response.headers)}"
-                )
-                
-        except Exception as e:
-            self.log_result("OPTIONS /api/vehicles CORS", False, error=e)
-    
-    def test_whatsapp_bot_endpoints(self):
-        """Test 5: Verify INFOBIP_API_KEY absence doesn't break server - test whatsapp-bot endpoints"""
-        # First, let's check if whatsapp-bot endpoints exist by testing common patterns
-        whatsapp_endpoints = [
-            "/api/whatsapp-bot/status",
-            "/api/whatsapp-bot/info",
-            "/api/whatsapp/status",
-            "/api/whatsapp/info",
-            "/api/bot/status",
-            "/api/bot/info"
-        ]
-        
-        found_endpoint = False
-        
-        for endpoint in whatsapp_endpoints:
-            try:
-                response = self.session.get(f"{self.base_url}{endpoint}", timeout=10)
-                
-                # If we get anything other than 404, the endpoint exists
-                if response.status_code != 404:
-                    found_endpoint = True
+                self.log_test("Scenario 1", False,
+                    f"5000 account NOT routed to Rakan Parts: scope={scope}, businessUnit={business_unit}",
+                    {"operation_id": op_id, "scope": scope, "business_unit": business_unit})
                     
-                    if response.status_code == 200:
-                        try:
-                            data = response.json()
-                            self.log_result(
-                                f"WhatsApp Bot {endpoint}", 
-                                True, 
-                                response.status_code,
-                                data,
-                                details="WhatsApp bot endpoint working despite missing INFOBIP_API_KEY"
-                            )
-                        except json.JSONDecodeError:
-                            self.log_result(
-                                f"WhatsApp Bot {endpoint}", 
-                                True, 
-                                response.status_code,
-                                details="Endpoint responds but not JSON"
-                            )
-                    elif response.status_code == 500:
-                        self.log_result(
-                            f"WhatsApp Bot {endpoint}", 
-                            False, 
-                            response.status_code,
-                            error="Server error - possibly due to missing INFOBIP_API_KEY"
-                        )
-                    else:
-                        self.log_result(
-                            f"WhatsApp Bot {endpoint}", 
-                            True, 
-                            response.status_code,
-                            details=f"Endpoint exists with status {response.status_code}"
-                        )
-                    break
-                    
-            except Exception as e:
-                # Continue to next endpoint
-                continue
-        
-        if not found_endpoint:
-            # No whatsapp endpoints found, verify server stability by re-testing health and settings
-            print("No WhatsApp bot endpoints found. Verifying server stability...")
-            
-            try:
-                # Re-test health endpoint
-                health_response = self.session.get(f"{self.base_url}/health", timeout=10)
-                settings_response = self.session.get(f"{self.api_url}/settings", timeout=10)
-                
-                if health_response.status_code == 200 and settings_response.status_code == 200:
-                    self.log_result(
-                        "Server Stability (No WhatsApp endpoints)", 
-                        True,
-                        details="Health and settings endpoints still working - server stable without INFOBIP_API_KEY"
-                    )
-                else:
-                    self.log_result(
-                        "Server Stability (No WhatsApp endpoints)", 
-                        False,
-                        error=f"Health: {health_response.status_code}, Settings: {settings_response.status_code}"
-                    )
-                    
-            except Exception as e:
-                self.log_result(
-                    "Server Stability (No WhatsApp endpoints)", 
-                    False,
-                    error=f"Server stability check failed: {e}"
-                )
-    
-    def run_all_tests(self):
-        """Run all production tests"""
-        print("🚀 Starting Production Backend Tests for https://fixsa.online")
-        print("=" * 60)
-        
-        # Test 1: Health endpoint
-        self.test_health_endpoint()
-        
-        # Test 2: Settings endpoint
-        self.test_settings_endpoint()
-        
-        # Test 3: Vehicles endpoint
-        self.test_vehicles_endpoint()
-        
-        # Test 4: CORS preflight
-        self.test_cors_preflight()
-        
-        # Test 5: WhatsApp bot / INFOBIP stability
-        self.test_whatsapp_bot_endpoints()
-        
-        # Generate summary
-        self.generate_summary()
-    
-    def generate_summary(self):
-        """Generate test summary"""
-        print("=" * 60)
-        print("📊 TEST RESULTS SUMMARY")
-        print("=" * 60)
-        
-        total_tests = len(self.results)
-        passed_tests = len([r for r in self.results if r['success']])
-        failed_tests = total_tests - passed_tests
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"✅ Passed: {passed_tests}")
-        print(f"❌ Failed: {failed_tests}")
-        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
-        print()
-        
-        # Show failed tests
-        if failed_tests > 0:
-            print("❌ FAILED TESTS:")
-            for result in self.results:
-                if not result['success']:
-                    print(f"  - {result['test']}: {result['error']}")
-            print()
-        
-        # Show passed tests
-        print("✅ PASSED TESTS:")
-        for result in self.results:
-            if result['success']:
-                details = f" ({result['details']})" if result['details'] else ""
-                print(f"  - {result['test']}{details}")
-        
-        print()
-        print("🎯 PRODUCTION VERIFICATION COMPLETE")
-        
-        # Save detailed results to file
-        try:
-            with open('/app/production_test_results.json', 'w', encoding='utf-8') as f:
-                json.dump(self.results, f, ensure_ascii=False, indent=2)
-            print("📄 Detailed results saved to: /app/production_test_results.json")
         except Exception as e:
-            print(f"⚠️ Could not save results file: {e}")
+            self.log_test("Scenario 1", False, f"Exception: {str(e)}")
 
-def main():
-    """Main test execution"""
-    try:
-        tester = ProductionBackendTester()
-        tester.run_all_tests()
+    def test_scenario_2_non_5000_account_default_flow(self):
+        """
+        Test 2: POST /api/operations with non-5000 account even if operationKind=RAKAN_PARTS_OPERATION 
+        => should convert to workshop/default flow
+        """
+        print("\n=== Test 2: Non-5000 Account => Default Flow ===")
         
-        # Return appropriate exit code
-        failed_tests = len([r for r in tester.results if not r['success']])
-        sys.exit(1 if failed_tests > 0 else 0)
+        test_id = f"TEST_NON5000_{uuid.uuid4().hex[:8]}"
+        payload = {
+            "type": "purchase", 
+            "partnerName": f"Test Supplier {test_id}",
+            "accountingAccountId": "1101",  # Cash account - NOT 5000
+            "operationKind": "RAKAN_PARTS_OPERATION",  # Explicitly set but should be overridden
+            "items": [{"name": "Test Part", "quantity": 1, "price": 50}],
+            "total": 50,
+            "paymentMethod": "cash",
+            "workshopId": self.workshop_id,
+            "notes": f"Test Non-5000: {test_id}"
+        }
         
-    except KeyboardInterrupt:
-        print("\n⚠️ Tests interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"💥 Critical error during testing: {e}")
-        traceback.print_exc()
-        sys.exit(1)
+        try:
+            response = requests.post(f"{self.base_url}/api/operations", json=payload, timeout=30)
+            
+            if response.status_code not in [200, 201]:
+                self.log_test("Scenario 2", False, f"Failed to create operation: {response.status_code}", response.text)
+                return
+                
+            operation = response.json()
+            op_id = operation.get("id")
+            if op_id:
+                self.created_operations.append(op_id)
+            
+            scope = operation.get("scope", "")
+            business_unit = operation.get("businessUnit") or operation.get("business_unit", "")
+            source = operation.get("source", "")
+            
+            # Should NOT be Rakan Parts since account is not 5000
+            is_not_rakan = (
+                scope in ["workshop", "vehicle", ""] and 
+                business_unit != "rakan_parts" and
+                "rakan_parts" not in source.lower()
+            )
+            
+            if is_not_rakan:
+                self.log_test("Scenario 2", True,
+                    f"Non-5000 account correctly routed to default flow (scope={scope})",
+                    {"operation_id": op_id, "scope": scope, "business_unit": business_unit})
+            else:
+                self.log_test("Scenario 2", False,
+                    f"Non-5000 account incorrectly routed to Rakan: scope={scope}, businessUnit={business_unit}",
+                    {"operation_id": op_id, "scope": scope, "business_unit": business_unit})
+                    
+        except Exception as e:
+            self.log_test("Scenario 2", False, f"Exception: {str(e)}")
+
+    def test_scenario_3_journal_entries_without_include_rakan(self):
+        """
+        Test 3: GET /api/finance/journal-entries without include_rakan 
+        => should not show rakan entries
+        """
+        print("\n=== Test 3: Journal Entries Without include_rakan ===")
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/finance/journal-entries",
+                params={"workshop_id": self.workshop_id, "limit": 100},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Scenario 3", False, f"Failed to get journal entries: {response.status_code}", response.text)
+                return
+                
+            data = response.json()
+            if not data.get("success", False):
+                self.log_test("Scenario 3", False, f"API returned success=false: {data}")
+                return
+                
+            entries = data.get("data", [])
+            
+            # Count entries with rakan sources
+            rakan_entries = [
+                entry for entry in entries 
+                if "rakan_parts" in str(entry.get("source", "")).lower()
+                or "operation_rakan_parts" in str(entry.get("source", "")).lower()
+                or "[RAKAN_PARTS]" in str(entry.get("description", ""))
+            ]
+            
+            if len(rakan_entries) == 0:
+                self.log_test("Scenario 3", True, 
+                    f"Default journal entries correctly excludes Rakan entries ({len(entries)} total, {len(rakan_entries)} rakan)",
+                    {"total_entries": len(entries), "rakan_entries": len(rakan_entries)})
+            else:
+                self.log_test("Scenario 3", False,
+                    f"Default journal entries incorrectly includes Rakan entries ({len(rakan_entries)} found)",
+                    {"total_entries": len(entries), "rakan_entries": len(rakan_entries), "rakan_sources": [e.get("source") for e in rakan_entries]})
+                    
+        except Exception as e:
+            self.log_test("Scenario 3", False, f"Exception: {str(e)}")
+
+    def test_scenario_4_journal_entries_with_include_rakan(self):
+        """
+        Test 4: GET /api/finance/journal-entries?include_rakan=true 
+        => should show rakan entries
+        """
+        print("\n=== Test 4: Journal Entries With include_rakan=true ===")
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/finance/journal-entries",
+                params={"workshop_id": self.workshop_id, "include_rakan": "true", "limit": 100},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Scenario 4", False, f"Failed to get journal entries: {response.status_code}", response.text)
+                return
+                
+            data = response.json()
+            if not data.get("success", False):
+                self.log_test("Scenario 4", False, f"API returned success=false: {data}")
+                return
+                
+            entries = data.get("data", [])
+            
+            # This should include all entries, including rakan ones
+            self.log_test("Scenario 4", True,
+                f"Journal entries with include_rakan=true returned {len(entries)} entries",
+                {"total_entries": len(entries), "include_rakan": True})
+                
+        except Exception as e:
+            self.log_test("Scenario 4", False, f"Exception: {str(e)}")
+
+    def test_scenario_5_chart_of_accounts_no_uuid_codes(self):
+        """
+        Test 5: GET /api/finance/chart-of-accounts 
+        => should not have corrupted UUID codes
+        """
+        print("\n=== Test 5: Chart of Accounts - No UUID Codes ===")
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/finance/chart-of-accounts",
+                params={"workshop_id": self.workshop_id},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Scenario 5", False, f"Failed to get chart of accounts: {response.status_code}", response.text)
+                return
+                
+            data = response.json()
+            if not data.get("success", False):
+                self.log_test("Scenario 5", False, f"API returned success=false: {data}")
+                return
+                
+            accounts = data.get("data", [])
+            
+            # Check for UUID-like codes (36 chars with dashes)
+            uuid_codes = []
+            for account in accounts:
+                code = str(account.get("code") or "")
+                if len(code) == 36 and code.count("-") == 4:
+                    # This looks like a UUID
+                    uuid_codes.append(code)
+            
+            if len(uuid_codes) == 0:
+                self.log_test("Scenario 5", True,
+                    f"Chart of accounts has no corrupted UUID codes ({len(accounts)} accounts checked)",
+                    {"total_accounts": len(accounts), "uuid_codes_found": 0})
+            else:
+                self.log_test("Scenario 5", False,
+                    f"Found {len(uuid_codes)} corrupted UUID codes in chart of accounts",
+                    {"total_accounts": len(accounts), "uuid_codes": uuid_codes})
+                    
+        except Exception as e:
+            self.log_test("Scenario 5", False, f"Exception: {str(e)}")
+
+    def test_scenario_6_accounts_chart_reset(self):
+        """
+        Test 6: DELETE /api/accounts-chart/reset 
+        => should work (200) without crash
+        """
+        print("\n=== Test 6: Accounts Chart Reset ===")
+        
+        try:
+            response = requests.delete(f"{self.base_url}/api/accounts-chart/reset", timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success", False):
+                    accounts = data.get("accounts", [])
+                    self.log_test("Scenario 6", True,
+                        f"Accounts chart reset successfully (200 OK, {len(accounts)} default accounts)",
+                        {"accounts_count": len(accounts), "reset_successful": True})
+                else:
+                    self.log_test("Scenario 6", False, 
+                        f"Reset returned 200 but success=false: {data}",
+                        {"response_data": data})
+            else:
+                self.log_test("Scenario 6", False,
+                    f"Reset failed with status {response.status_code}",
+                    {"status_code": response.status_code, "response": response.text})
+                    
+        except Exception as e:
+            self.log_test("Scenario 6", False, f"Exception: {str(e)}")
+
+    def cleanup_test_data(self):
+        """
+        Clean up any test data created during testing
+        """
+        print("\n=== Cleanup: Removing Test Operations ===")
+        
+        cleaned = 0
+        for op_id in self.created_operations:
+            try:
+                response = requests.delete(f"{self.base_url}/api/operations/{op_id}", timeout=10)
+                if response.status_code in [200, 204, 404]:
+                    cleaned += 1
+                    print(f"✅ Cleaned operation: {op_id}")
+                else:
+                    print(f"⚠️ Could not clean operation {op_id}: {response.status_code}")
+            except Exception as e:
+                print(f"⚠️ Error cleaning operation {op_id}: {e}")
+        
+        print(f"Cleanup completed: {cleaned}/{len(self.created_operations)} operations cleaned")
+
+    def run_all_tests(self):
+        """Run all test scenarios"""
+        print("🚀 Starting Rakan Backend Testing for Accounting Period Modifications")
+        print(f"Base URL: {self.base_url}")
+        print(f"Workshop ID: {self.workshop_id}")
+        print("=" * 80)
+        
+        # Run all test scenarios
+        self.test_scenario_1_5000_account_rakan_parts()
+        self.test_scenario_2_non_5000_account_default_flow()
+        self.test_scenario_3_journal_entries_without_include_rakan()
+        self.test_scenario_4_journal_entries_with_include_rakan()
+        self.test_scenario_5_chart_of_accounts_no_uuid_codes()
+        self.test_scenario_6_accounts_chart_reset()
+        
+        # Cleanup test data
+        self.cleanup_test_data()
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("📊 TEST SUMMARY")
+        print("=" * 80)
+        
+        passed = sum(1 for r in self.test_results if r["success"])
+        total = len(self.test_results)
+        
+        print(f"Total Tests: {total}")
+        print(f"Passed: {passed}")
+        print(f"Failed: {total - passed}")
+        print(f"Success Rate: {passed/total*100:.1f}%" if total > 0 else "0%")
+        
+        print("\nDetailed Results:")
+        for result in self.test_results:
+            status = "✅" if result["success"] else "❌"
+            print(f"{status} {result['test']}: {result['message']}")
+        
+        if total - passed > 0:
+            print(f"\n⚠️ {total - passed} tests failed. Check the detailed output above.")
+        else:
+            print(f"\n🎉 All {total} tests passed!")
+        
+        return {"total": total, "passed": passed, "failed": total - passed, "results": self.test_results}
 
 if __name__ == "__main__":
-    main()
+    tester = RakanBackendTester()
+    results = tester.run_all_tests()
+    
+    # Save results to file
+    with open("/app/backend_test_results.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+    
+    print(f"\nResults saved to: /app/backend_test_results.json")

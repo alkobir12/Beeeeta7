@@ -42,6 +42,8 @@ DEFAULT_ACCOUNTS = [
     {"code": "6001", "name": "حسابات الموردين", "type": "liability", "balance": 15000},
 ]
 
+NOISE_ACCOUNT_TOKENS = ["test", "raw", "experimental", "تجريبي", "اختبار", "خام"]
+
 
 def _is_chart_table_missing(err: Exception) -> bool:
     message = str(err)
@@ -59,6 +61,11 @@ def _map_supabase_account(row: dict) -> dict:
         "createdAt": row.get("created_at") or row.get("createdAt"),
         "active": row.get("active", True),
     }
+
+
+def _is_noise_account(name: str, code: str) -> bool:
+    text = f"{name} {code}".lower()
+    return any(token in text for token in NOISE_ACCOUNT_TOKENS)
 
 
 def _fetch_supabase_accounts():
@@ -117,6 +124,76 @@ async def init_default_accounts():
     """تهيئة الحسابات الافتراضية"""
     _initialize_accounts()
     return {"accounts": accounts_db}
+
+
+@router.delete("/reset")
+async def reset_accounts_chart():
+    """إعادة تهيئة دليل الحسابات الافتراضي مع تنظيف السجلات التجريبية."""
+    global CHART_TABLE_AVAILABLE
+    try:
+        if DB_PROVIDER == "supabase" and supabase_service.client and not supabase_service.mock_mode and CHART_TABLE_AVAILABLE:
+            try:
+                # delete all rows then seed defaults
+                supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).delete().neq("id", "").execute()
+
+                defaults_payload = []
+                now_iso = datetime.now().isoformat()
+                for acc in DEFAULT_ACCOUNTS:
+                    defaults_payload.append(
+                        {
+                            "id": str(uuid.uuid4()),
+                            "code": acc["code"],
+                            "name": acc["name"],
+                            "type": acc["type"],
+                            "balance": acc.get("balance", 0),
+                            "parent_account": None,
+                            "created_at": now_iso,
+                            "active": True,
+                        }
+                    )
+                supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).insert(defaults_payload).execute()
+
+                # remove noisy accounts if any were re-added externally
+                rows = (
+                    supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).select("id,name,code").execute().data
+                    or []
+                )
+                for row in rows:
+                    if _is_noise_account(str(row.get("name") or ""), str(row.get("code") or "")):
+                        supabase_service.client.table(SUPABASE_ACCOUNTS_TABLE).delete().eq("id", row.get("id")).execute()
+
+                refreshed = _fetch_supabase_accounts() or []
+                accounts_db.clear()
+                accounts_db.extend(refreshed)
+                return {"success": True, "message": "تمت إعادة ضبط دليل الحسابات", "accounts": refreshed}
+            except Exception as supa_error:
+                if _is_chart_table_missing(supa_error):
+                    CHART_TABLE_AVAILABLE = False
+                else:
+                    raise
+
+        accounts_db.clear()
+        for acc_data in DEFAULT_ACCOUNTS:
+            account = Account(
+                id=str(uuid.uuid4()),
+                code=acc_data["code"],
+                name=acc_data["name"],
+                type=acc_data["type"],
+                balance=acc_data["balance"],
+                parentAccount=None,
+                createdAt=datetime.now(),
+                active=True,
+            )
+            accounts_db.append(account.dict())
+
+        accounts_db[:] = [
+            a
+            for a in accounts_db
+            if not _is_noise_account(str(a.get("name") or ""), str(a.get("code") or ""))
+        ]
+        return {"success": True, "message": "تمت إعادة ضبط دليل الحسابات", "accounts": accounts_db}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في إعادة ضبط الحسابات: {str(e)}")
 
 
 @router.get("/{account_id}")

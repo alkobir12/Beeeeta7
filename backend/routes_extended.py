@@ -973,6 +973,121 @@ ACCOUNT_ID_TO_CODE = {
     "acc-6100": "6100",
 }
 
+RAKAN_ACCOUNT_CODE_PREFIX = "5000"
+
+
+def _normalize_account_code(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    if raw in ACCOUNT_ID_TO_CODE:
+        return ACCOUNT_ID_TO_CODE[raw]
+    if raw.startswith("acc-") and raw[4:].isdigit():
+        return raw[4:]
+    return raw
+
+
+def _is_rakan_account_code(value: Any) -> bool:
+    return _normalize_account_code(value).startswith(RAKAN_ACCOUNT_CODE_PREFIX)
+
+
+def _is_rakan_business_account_doc(account: Dict[str, Any]) -> bool:
+    return (
+        _is_rakan_text(account.get("name"))
+        or _is_rakan_text(account.get("code"))
+        or _is_rakan_account_code(account.get("code"))
+    )
+
+
+def _build_chart_account_ref_map(chart_accounts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    ref_map: Dict[str, Dict[str, Any]] = {}
+    for account in chart_accounts or []:
+        code = _normalize_account_code(account.get("code"))
+        if not code:
+            continue
+        account_type = str(account.get("type") or "").strip().lower()
+        account_name = (
+            account.get("name_ar")
+            or account.get("name")
+            or account.get("name_en")
+            or code
+        )
+        meta = {
+            "code": code,
+            "type": account_type,
+            "name": account_name,
+            "is_rakan": _is_rakan_account_code(code),
+        }
+        refs = {
+            str(account.get("id") or "").strip(),
+            str(account.get("code") or "").strip(),
+            code,
+        }
+        for ref in refs:
+            if ref:
+                ref_map[ref] = meta
+    return ref_map
+
+
+def _resolve_chart_account_meta(
+    account_ref: Optional[str],
+    chart_account_ref_map: Dict[str, Dict[str, Any]],
+) -> Dict[str, Any]:
+    ref = str(account_ref or "").strip()
+    if not ref:
+        return {"code": "", "type": "", "name": "", "is_rakan": False}
+    normalized = _normalize_account_code(ref)
+    return (
+        chart_account_ref_map.get(ref)
+        or chart_account_ref_map.get(normalized)
+        or {
+            "code": normalized or ref,
+            "type": "",
+            "name": normalized or ref,
+            "is_rakan": _is_rakan_account_code(normalized or ref),
+        }
+    )
+
+
+def _infer_operation_type_from_account(
+    requested_type: Optional[str],
+    account_type: Optional[str],
+) -> str:
+    req = str(requested_type or "").strip().lower()
+    acc_type = str(account_type or "").strip().lower()
+    if acc_type == "revenue":
+        return "sale"
+    if acc_type == "expense":
+        return "purchase" if req == "purchase" else "expense"
+    if acc_type in {"asset", "liability"}:
+        return "purchase"
+    if acc_type == "equity":
+        return "expense"
+    return req or "purchase"
+
+
+def _append_note_token(notes: str, token: str) -> str:
+    base = str(notes or "").strip()
+    if token in base:
+        return base
+    return f"{base} {token}".strip()
+
+
+def _enrich_operation_notes(
+    notes: Any,
+    is_rakan: bool,
+    accounting_code: Optional[str],
+    accounting_name: Optional[str] = None,
+) -> str:
+    enriched = str(notes or "").strip()
+    if accounting_code:
+        enriched = _append_note_token(enriched, f"ACCOUNT_CODE:{accounting_code}")
+    if accounting_name:
+        enriched = _append_note_token(enriched, f"ACCOUNTING_TARGET:{accounting_name}")
+    if is_rakan:
+        enriched = _append_note_token(enriched, "[RAKAN_PARTS]")
+    return enriched
+
 
 def _safe_amount(value: Any) -> float:
     try:
@@ -981,7 +1096,11 @@ def _safe_amount(value: Any) -> float:
         return 0.0
 
 
-def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str]):
+def _build_operation_journal_entry(
+    op: Dict[str, Any],
+    workshop_id: Optional[str],
+    chart_account_ref_map: Optional[Dict[str, Dict[str, Any]]] = None,
+):
     """Build an accrual journal entry for an operation.
 
     Rules (Accrual basis):
@@ -1010,23 +1129,35 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
     if payment_method in ("transfer", "bank"):
         cash_code = "1102"
 
-    def _to_code(account_ref: Optional[str]) -> Optional[str]:
+    chart_account_ref_map = chart_account_ref_map or {}
+
+    def _to_meta(account_ref: Optional[str]) -> Dict[str, Any]:
         if not account_ref:
-            return None
+            return {"code": "", "type": "", "name": "", "is_rakan": False}
         v = str(account_ref).strip()
         if not v:
-            return None
-        # Map acc-XXXX to XXXX when possible
-        if v in ACCOUNT_ID_TO_CODE:
-            return ACCOUNT_ID_TO_CODE[v]
-        # allow numeric codes directly
-        return v
+            return {"code": "", "type": "", "name": "", "is_rakan": False}
+        return _resolve_chart_account_meta(v, chart_account_ref_map)
 
-    selected_code = _to_code(
+    selected_meta = _to_meta(
         op.get("accountingAccountId")
         or op.get("accounting_account_id")
         or op.get("accountId")
         or op.get("account_id")
+    )
+    selected_code = selected_meta.get("code") or ""
+
+    scope = str(op.get("scope") or "").strip().lower()
+    business_unit = str(op.get("businessUnit") or op.get("business_unit") or "").strip().lower()
+    source = str(op.get("source") or "").strip().lower()
+    notes_text = str(op.get("notes") or "")
+    notes_lower = notes_text.lower()
+    is_rakan_operation = (
+        selected_meta.get("is_rakan")
+        or scope == "rakan_parts"
+        or business_unit == "rakan_parts"
+        or "rakan_parts" in source
+        or "[rakan_parts]" in notes_lower
     )
 
     lines = []
@@ -1076,15 +1207,21 @@ def _build_operation_journal_entry(op: Dict[str, Any], workshop_id: Optional[str
     else:
         return None
 
+    description = (
+        op.get("notes")
+        or f"عملية {transaction_type} - {op.get('partnerName') or op.get('partner_name') or ''}"
+    )
+    if is_rakan_operation and "[RAKAN_PARTS]" not in str(description):
+        description = f"[RAKAN_PARTS] {description}".strip()
+
     return {
         "id": str(uuid.uuid4()),
         "workshop_id": workshop_id,
         "date": op.get("date") or op.get("op_date") or datetime.utcnow().isoformat(),
-        "description": op.get("notes")
-        or f"عملية {transaction_type} - {op.get('partnerName') or op.get('partner_name') or ''}",
+        "description": description,
         "lines": lines,
         "total": total,
-        "source": "operation",
+        "source": "operation_rakan_parts" if is_rakan_operation else "operation",
         "transaction_type": transaction_type,
         "reference_id": op.get("id"),
     }
@@ -1529,17 +1666,22 @@ def _pick_business_account(
 
     by_id = {str(b.get("id")): b for b in biz_accounts if b.get("id")}
     if provided_id and str(provided_id) in by_id:
-        return str(provided_id)
+        provided = by_id[str(provided_id)]
+        provided_is_rakan = _is_rakan_business_account_doc(provided)
+        if (kind == "RAKAN_PARTS_OPERATION" and provided_is_rakan) or (
+            kind != "RAKAN_PARTS_OPERATION" and not provided_is_rakan
+        ):
+            return str(provided_id)
 
     if kind == "RAKAN_PARTS_OPERATION":
         rakan = next(
-            (b for b in biz_accounts if _is_rakan_text(b.get("name")) or _is_rakan_text(b.get("code"))),
+            (b for b in biz_accounts if _is_rakan_business_account_doc(b)),
             None,
         )
         return str(rakan.get("id")) if rakan else None
 
     non_rakan = [
-        b for b in biz_accounts if not (_is_rakan_text(b.get("name")) or _is_rakan_text(b.get("code")))
+        b for b in biz_accounts if not _is_rakan_business_account_doc(b)
     ]
     if non_rakan:
         preferred = next(
@@ -1597,12 +1739,13 @@ def _apply_operation_kind_defaults(
         return
 
     if kind == "RAKAN_PARTS_OPERATION":
+        op_type = str(payload.get("type") or "").strip().lower()
         has_link = bool(
             payload.get("vehicleId")
             or payload.get("partnerId")
             or str(payload.get("partnerName") or "").strip()
         )
-        if not has_link:
+        if op_type in {"sale", "service"} and not has_link:
             raise HTTPException(status_code=400, detail="RAKAN_PARTS_OPERATION requires customer or vehicle")
         payload["scope"] = "rakan_parts"
         payload["source"] = payload.get("source") or "rakan_parts_operation"
@@ -1631,6 +1774,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
 
         vehicle_doc = None
         biz_accounts: List[Dict[str, Any]] = []
+        chart_accounts: List[Dict[str, Any]] = []
 
         if provider == "supabase":
             supa_for_meta = SupabaseService()
@@ -1639,18 +1783,15 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             except Exception:
                 biz_accounts = []
 
-            if kind == "RAKAN_PARTS_OPERATION" and not any(
-                _is_rakan_text(x.get("name")) or _is_rakan_text(x.get("code"))
-                for x in biz_accounts
-            ):
-                try:
-                    created_rakan = supa_for_meta.accounts_create(
-                        name="قطع راكان", code="RAKAN_PARTS", currency="SAR"
-                    )
-                    if created_rakan:
-                        biz_accounts = [created_rakan, *biz_accounts]
-                except Exception:
-                    pass
+            try:
+                chart_res = (
+                    supa_for_meta.client.table("accounts")
+                    .select("*")
+                    .execute()
+                )
+                chart_accounts = chart_res.data or []
+            except Exception:
+                chart_accounts = []
 
             if payload.get("vehicleId"):
                 try:
@@ -1664,6 +1805,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
 
         elif provider == "memory" or db is None:
             biz_accounts = _mem_read("business_accounts")
+            chart_accounts = _mem_read("accounts") or _mem_read("chart_of_accounts")
             if payload.get("vehicleId"):
                 vehicles = _mem_read("vehicles")
                 vehicle_doc = next(
@@ -1672,10 +1814,53 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 )
         else:
             biz_accounts = await db.business_accounts.find({}, {"_id": 0}).to_list(1000)
+            chart_accounts = await db.accounts.find({}, {"_id": 0}).to_list(5000)
             if payload.get("vehicleId"):
                 vehicle_doc = await db.vehicles.find_one(
                     {"id": str(payload.get("vehicleId"))}, {"_id": 0}
                 )
+
+        chart_account_ref_map = _build_chart_account_ref_map(chart_accounts)
+        accounting_ref = (
+            payload.get("accountingAccountId")
+            or payload.get("accounting_account_id")
+            or payload.get("accountId")
+            or payload.get("account_id")
+        )
+        accounting_meta = _resolve_chart_account_meta(accounting_ref, chart_account_ref_map)
+        accounting_code = accounting_meta.get("code") or ""
+        is_rakan_by_account = _is_rakan_account_code(accounting_code)
+
+        if is_rakan_by_account:
+            kind = "RAKAN_PARTS_OPERATION"
+        elif kind == "RAKAN_PARTS_OPERATION":
+            kind = "VEHICLE_OPERATION" if payload.get("vehicleId") else "WORKSHOP_OPERATION"
+
+        payload["type"] = _infer_operation_type_from_account(
+            payload.get("type"), accounting_meta.get("type")
+        )
+        payload["notes"] = _enrich_operation_notes(
+            payload.get("notes"),
+            is_rakan=is_rakan_by_account,
+            accounting_code=accounting_code,
+            accounting_name=accounting_meta.get("name"),
+        )
+        if accounting_code:
+            payload["accountingAccountCode"] = accounting_code
+
+        if kind == "RAKAN_PARTS_OPERATION" and not any(
+            _is_rakan_business_account_doc(x) for x in biz_accounts
+        ):
+            if provider == "supabase":
+                try:
+                    supa_for_meta = SupabaseService()
+                    created_rakan = supa_for_meta.accounts_create(
+                        name="قطع راكان", code="RAKAN_PARTS", currency="SAR"
+                    )
+                    if created_rakan:
+                        biz_accounts = [created_rakan, *biz_accounts]
+                except Exception:
+                    pass
 
         _apply_operation_kind_defaults(payload, kind, vehicle_doc)
 
@@ -1721,7 +1906,11 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             # - Credit operations will hit AR/AP
             # - Cash/transfer operations will hit Cash/Bank
             try:
-                entry = _build_operation_journal_entry(op, workshop_id)
+                entry = _build_operation_journal_entry(
+                    op,
+                    workshop_id,
+                    chart_account_ref_map=chart_account_ref_map,
+                )
                 _safe_insert_journal_entry(supa, entry)
             except Exception as je_error:
                 print(f"Failed to create journal entry for operation: {je_error}")

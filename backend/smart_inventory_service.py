@@ -85,6 +85,18 @@ class SmartInventoryService:
     def _normalize_text(value: Any) -> str:
         return str(value or "").strip().lower()
 
+    @staticmethod
+    def _normalize_account_code(value: Any) -> str:
+        raw = str(value or "").strip()
+        if not raw:
+            return ""
+        if raw.startswith("acc-") and raw[4:].isdigit():
+            return raw[4:]
+        return raw
+
+    def _is_rakan_account_code(self, value: Any) -> bool:
+        return self._normalize_account_code(value).startswith("5000")
+
     def _is_rakan_business_account(self, account: Dict[str, Any]) -> bool:
         text = " ".join(
             [
@@ -92,9 +104,15 @@ class SmartInventoryService:
                 self._normalize_text(account.get("code")),
             ]
         )
-        return "راكان" in text or "rakan" in text
+        return (
+            "راكان" in text
+            or "rakan" in text
+            or self._is_rakan_account_code(account.get("code"))
+        )
 
     def _is_rakan_chart_account(self, account: Dict[str, Any]) -> bool:
+        if self._is_rakan_account_code(account.get("code")):
+            return True
         text = " ".join(
             [
                 self._normalize_text(account.get("name_ar")),
@@ -115,12 +133,26 @@ class SmartInventoryService:
         )
         notes = self._normalize_text(operation.get("notes"))
         account_id = str(operation.get("accountId") or operation.get("account_id") or "")
+        accounting_ref = str(
+            operation.get("accountingAccountId")
+            or operation.get("accounting_account_id")
+            or ""
+        )
+        account_code_in_notes = ""
+        notes_text = str(operation.get("notes") or "")
+        if "ACCOUNT_CODE:" in notes_text:
+            try:
+                account_code_in_notes = notes_text.split("ACCOUNT_CODE:", 1)[1].split()[0].split("|")[0].strip()
+            except Exception:
+                account_code_in_notes = ""
         return (
             account_id in rakan_biz_ids
             or scope == "rakan_parts"
             or source == "rakan_parts_pos"
             or business_unit == "rakan_parts"
             or "[rakan_parts]" in notes
+            or self._is_rakan_account_code(accounting_ref)
+            or self._is_rakan_account_code(account_code_in_notes)
         )
 
     @staticmethod

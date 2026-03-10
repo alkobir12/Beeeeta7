@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, Body, HTTPException
 from accounting_auditor import AccountingSystemAuditor
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict, Any
 import uuid
 import os
 from supabase import create_client
@@ -83,6 +83,48 @@ def _safe_float(value) -> float:
         return float(value or 0)
     except Exception:
         return 0.0
+
+
+RAKAN_ACCOUNT_CODE_PREFIX = "5000"
+
+
+def _normalize_account_code(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    if raw.startswith("acc-") and raw[4:].isdigit():
+        return raw[4:]
+    return raw
+
+
+def _is_rakan_account_code(value: Any) -> bool:
+    return _normalize_account_code(value).startswith(RAKAN_ACCOUNT_CODE_PREFIX)
+
+
+def _line_account_code(line: Dict[str, Any], id_to_code: Dict[str, str]) -> str:
+    account_code = line.get("account") or line.get("account_code") or line.get("code")
+    if not account_code:
+        account_id = line.get("account_id") or line.get("accountId")
+        if account_id:
+            account_code = id_to_code.get(str(account_id)) or account_id
+    return _normalize_account_code(account_code)
+
+
+def _is_rakan_journal_entry(entry: Dict[str, Any], id_to_code: Dict[str, str]) -> bool:
+    source = str(entry.get("source") or "").strip().lower()
+    if "rakan_parts" in source:
+        return True
+
+    description = str(entry.get("description") or "").strip().lower()
+    if "[rakan_parts]" in description or "account_code:5000" in description:
+        return True
+
+    for line in entry.get("lines", []) or []:
+        if not isinstance(line, dict):
+            continue
+        if _is_rakan_account_code(_line_account_code(line, id_to_code)):
+            return True
+    return False
 
 
 def _fetch_accounts():
@@ -169,6 +211,9 @@ def _normalize_line(line, id_to_code, code_to_name):
     if not account_code:
         return None
     account_code = str(account_code)
+    if account_code in id_to_code:
+        account_code = id_to_code[account_code]
+    account_code = _normalize_account_code(account_code)
     account_name = (
         line.get("account_name")
         or line.get("accountName")
@@ -199,6 +244,7 @@ def _fetch_journal_entries(
     end_date: Optional[str] = None,
     skip: int = 0,
     limit: Optional[int] = None,
+    include_rakan: bool = False,
 ):
     if not supabase:
         raise Exception("Supabase not connected")
@@ -215,16 +261,37 @@ def _fetch_journal_entries(
         query = query.lte("date", end_date)
     if limit is not None:
         query = query.range(skip, skip + limit - 1)
-    return (query.order("date", desc=True).execute().data or [])
+    rows = query.order("date", desc=True).execute().data or []
+    if include_rakan:
+        return rows
+
+    try:
+        accounts = _fetch_accounts()
+        id_to_code, _, _ = _build_account_maps(accounts)
+    except Exception:
+        id_to_code = {}
+
+    return [
+        entry
+        for entry in rows
+        if not _is_rakan_journal_entry(entry, id_to_code)
+    ]
 
 
 def _compute_trial_balance_map(
-    workshop_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None
+    workshop_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    include_rakan: bool = False,
 ):
     accounts = _fetch_accounts()
     id_to_code, code_to_name, _ = _build_account_maps(accounts)
     entries = _fetch_journal_entries(
-        workshop_id, start_date=start_date, end_date=end_date, limit=10000
+        workshop_id,
+        start_date=start_date,
+        end_date=end_date,
+        limit=10000,
+        include_rakan=include_rakan,
     )
     accounts_balances = {}
     for entry in entries:
@@ -562,6 +629,7 @@ async def get_trial_balance(
     date: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    include_rakan: bool = False,
 ):
     """
     ميزان المراجعة من البيانات الحقيقية في Supabase
@@ -579,7 +647,10 @@ async def get_trial_balance(
         start_bound = start_date
 
         accounts_balances, _ = _compute_trial_balance_map(
-            workshop_id, start_date=start_bound, end_date=end_bound
+            workshop_id,
+            start_date=start_bound,
+            end_date=end_bound,
+            include_rakan=include_rakan,
         )
 
         accounts_list = []
@@ -802,12 +873,18 @@ async def get_finance_alerts(
 
 
 @router.get("/chart-of-accounts")
-async def get_chart_of_accounts(workshop_id: str = Query(...)):
+async def get_chart_of_accounts(
+    workshop_id: str = Query(...),
+    include_rakan: bool = False,
+):
     """
     دليل الحسابات محسوب من العمليات الحقيقية في Supabase
     """
     try:
-        accounts_balances, merged_accounts = _compute_trial_balance_map(workshop_id)
+        accounts_balances, merged_accounts = _compute_trial_balance_map(
+            workshop_id,
+            include_rakan=include_rakan,
+        )
         _, code_to_name, code_to_type = _build_account_maps(merged_accounts)
 
         merged_by_code = {}
@@ -841,11 +918,16 @@ async def get_chart_of_accounts(workshop_id: str = Query(...)):
             else:
                 balance = debit - credit
 
+            is_rakan = _is_rakan_account_code(code)
             results.append(
                 {
                     **acc,
                     "name_ar": acc.get("name_ar") or acc.get("name"),
                     "balance": round(balance, 2),
+                    "is_rakan": is_rakan,
+                    "business_unit": "rakan_parts" if is_rakan else "workshop",
+                    "module": "parts_dashboard" if is_rakan else "default_accounting_flow",
+                    "department": "Rakan Parts" if is_rakan else "Workshop",
                 }
             )
 
@@ -971,13 +1053,19 @@ async def get_journal_entries(
     limit: int = Query(50),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    include_rakan: bool = False,
 ):
     """
     القيود المحاسبية من Supabase و MongoDB operations
     """
     try:
         entries = _fetch_journal_entries(
-            workshop_id, start_date=start_date, end_date=end_date, skip=skip, limit=limit
+            workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            skip=skip,
+            limit=limit,
+            include_rakan=include_rakan,
         )
 
         formatted = []

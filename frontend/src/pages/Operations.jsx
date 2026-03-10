@@ -23,6 +23,7 @@ const OPERATIONS_PAGE_SIZE = 15;
 const OPERATION_KIND_WORKSHOP = 'WORKSHOP_OPERATION';
 const OPERATION_KIND_VEHICLE = 'VEHICLE_OPERATION';
 const OPERATION_KIND_RAKAN = 'RAKAN_PARTS_OPERATION';
+const RAKAN_ACCOUNT_CODE_PREFIX = '5000';
 
 const OPERATION_KIND_LABELS = {
   [OPERATION_KIND_WORKSHOP]: 'عملية ورشة',
@@ -34,12 +35,22 @@ const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
+const normalizeAccountCode = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('acc-') && /^acc-\d+$/.test(raw)) return raw.replace('acc-', '');
+  return raw;
+};
+
+const isRakanCode = (value) => normalizeAccountCode(value).startsWith(RAKAN_ACCOUNT_CODE_PREFIX);
+
 const isRakanBusinessAccount = (account) => {
   const haystack = [account?.name, account?.code].map((v) => normalizeText(v)).join(' ');
-  return RAKAN_ACCOUNT_KEYWORDS.some((k) => haystack.includes(k));
+  return isRakanCode(account?.code) || RAKAN_ACCOUNT_KEYWORDS.some((k) => haystack.includes(k));
 };
 
 const isRakanChartAccount = (account) => {
+  if (isRakanCode(account?.code)) return true;
   const haystack = [account?.name_ar, account?.name, account?.code, account?.category]
     .map((v) => normalizeText(v))
     .join(' ');
@@ -55,7 +66,8 @@ const isRakanOperationTagged = (operation = {}) => {
     scope === 'rakan_parts' ||
     source === 'rakan_parts_pos' ||
     businessUnit === 'rakan_parts' ||
-    notes.includes('[rakan_parts]')
+    notes.includes('[rakan_parts]') ||
+    notes.includes('account_code:5000')
   );
 };
 
@@ -327,14 +339,17 @@ const Operations = () => {
     [accounts]
   );
   const filteredAccounts = accounts.filter((account) => {
-    if (form.type === 'sale') return account.type === 'revenue';
-    if (form.type === 'purchase') return account.type === 'expense';
+    const accountType = String(account?.type || '').toLowerCase();
+    if (form.type === 'sale') return accountType === 'revenue';
+    if (form.type === 'purchase') return ['expense', 'asset', 'liability'].includes(accountType);
     return true;
-  }).filter((account) => {
-    const isRakan = isRakanChartAccount(account);
-    if (form.operationKind === OPERATION_KIND_RAKAN) return isRakan;
-    return !isRakan;
   });
+  const selectedAccountingAccount = useMemo(
+    () => accounts.find((account) => String(account.id || account.code) === String(form.accountingAccountId || '')) || null,
+    [accounts, form.accountingAccountId]
+  );
+  const selectedAccountingCode = normalizeAccountCode(selectedAccountingAccount?.code || form.accountingAccountId || '');
+  const isSelectedAccountingRakan = isRakanCode(selectedAccountingCode);
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
   const customers = customersQuery.data || [];
@@ -463,6 +478,20 @@ const Operations = () => {
       setForm((prev) => ({ ...prev, accountingAccountId: String(filteredAccounts[0].id || filteredAccounts[0].code || '') }));
     }
   }, [filteredAccounts, form.accountingAccountId]);
+
+  useEffect(() => {
+    if (!form.accountingAccountId) return;
+    if (isSelectedAccountingRakan && form.operationKind !== OPERATION_KIND_RAKAN) {
+      setForm((prev) => ({ ...prev, operationKind: OPERATION_KIND_RAKAN }));
+      return;
+    }
+    if (!isSelectedAccountingRakan && form.operationKind === OPERATION_KIND_RAKAN) {
+      setForm((prev) => ({
+        ...prev,
+        operationKind: prev.vehicleId ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP,
+      }));
+    }
+  }, [form.accountingAccountId, form.operationKind, form.vehicleId, isSelectedAccountingRakan]);
 
   useEffect(() => {
     if (vehicleIdFromUrl) {
@@ -707,8 +736,24 @@ const Operations = () => {
     }
 
     const hasCustomerOrVehicle = Boolean(activeVehicleId || form.partnerId || form.partnerName);
+    const selectedAccountType = String(selectedAccountingAccount?.type || '').toLowerCase();
+    const effectiveOperationKind = isSelectedAccountingRakan
+      ? OPERATION_KIND_RAKAN
+      : (form.operationKind === OPERATION_KIND_RAKAN
+        ? (activeVehicleId ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP)
+        : form.operationKind);
 
-    if (form.operationKind === OPERATION_KIND_VEHICLE && !activeVehicleId) {
+    const effectiveType = selectedAccountType === 'revenue'
+      ? 'sale'
+      : selectedAccountType === 'expense'
+        ? (form.type === 'purchase' ? 'purchase' : 'expense')
+        : ['asset', 'liability'].includes(selectedAccountType)
+          ? 'purchase'
+          : selectedAccountType === 'equity'
+            ? 'expense'
+            : form.type;
+
+    if (effectiveOperationKind === OPERATION_KIND_VEHICLE && !activeVehicleId) {
       const msg = 'عملية المركبة تتطلب اختيار مركبة';
       setCreateError(msg);
       toast({
@@ -719,7 +764,7 @@ const Operations = () => {
       return;
     }
 
-    if (form.operationKind === OPERATION_KIND_RAKAN && !hasCustomerOrVehicle) {
+    if (effectiveOperationKind === OPERATION_KIND_RAKAN && ['sale', 'service'].includes(effectiveType) && !hasCustomerOrVehicle) {
       const msg = 'عملية قطع راكان تتطلب تحديد عميل أو مركبة';
       setCreateError(msg);
       toast({ title: t('common.error'), description: msg, variant: 'destructive' });
@@ -728,37 +773,38 @@ const Operations = () => {
 
     try {
       const selectedVehicle = (vehicleOptions || []).find((v) => v.id === activeVehicleId);
-      const vehicleDetailsNote = ((form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && selectedVehicle)
+      const vehicleDetailsNote = ((effectiveOperationKind === OPERATION_KIND_VEHICLE || effectiveOperationKind === OPERATION_KIND_RAKAN) && selectedVehicle)
         ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${form.visitId || '-'}`
         : '';
 
-      const normalizedScope = form.operationKind === OPERATION_KIND_WORKSHOP
+      const normalizedScope = effectiveOperationKind === OPERATION_KIND_WORKSHOP
         ? 'workshop'
-        : form.operationKind === OPERATION_KIND_VEHICLE
+        : effectiveOperationKind === OPERATION_KIND_VEHICLE
           ? 'vehicle'
           : 'rakan_parts';
 
-      const normalizedSource = form.operationKind === OPERATION_KIND_WORKSHOP
+      const normalizedSource = effectiveOperationKind === OPERATION_KIND_WORKSHOP
         ? 'workshop_operation'
-        : form.operationKind === OPERATION_KIND_VEHICLE
+        : effectiveOperationKind === OPERATION_KIND_VEHICLE
           ? 'vehicle_operation'
           : 'rakan_parts_operation';
 
       const cleanPayload = {
         ...form,
+        type: effectiveType,
         workshopId: workshopId || null,
-        operationKind: form.operationKind,
+        operationKind: effectiveOperationKind,
         accountId: selectedBusinessAccount.id,
         accountingAccountId: form.accountingAccountId || null,
         opDate: form.date,
         scope: normalizedScope,
         source: normalizedSource,
-        businessUnit: form.operationKind === OPERATION_KIND_RAKAN ? 'rakan_parts' : 'workshop',
-        vehicleId: form.operationKind === OPERATION_KIND_WORKSHOP ? null : (activeVehicleId || null),
-        visitId: form.operationKind === OPERATION_KIND_WORKSHOP ? null : (form.visitId || null),
-        partnerType: form.operationKind === OPERATION_KIND_WORKSHOP
-          ? (form.type === 'purchase' ? 'supplier' : (form.partnerType || 'supplier'))
-          : 'customer',
+        businessUnit: effectiveOperationKind === OPERATION_KIND_RAKAN ? 'rakan_parts' : 'workshop',
+        vehicleId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (activeVehicleId || null),
+        visitId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (form.visitId || null),
+        partnerType: effectiveOperationKind === OPERATION_KIND_WORKSHOP
+          ? (effectiveType === 'sale' ? 'customer' : (form.partnerType || 'supplier'))
+          : (effectiveType === 'sale' ? 'customer' : 'supplier'),
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
@@ -801,8 +847,25 @@ const Operations = () => {
   };
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
-  const missingVehicleForVehicleKind = form.operationKind === OPERATION_KIND_VEHICLE && !activeVehicleId;
-  const missingCustomerOrVehicleForRakan = form.operationKind === OPERATION_KIND_RAKAN && !(activeVehicleId || form.partnerId || form.partnerName);
+  const previewAccountType = String(selectedAccountingAccount?.type || '').toLowerCase();
+  const previewEffectiveType = previewAccountType === 'revenue'
+    ? 'sale'
+    : previewAccountType === 'expense'
+      ? (form.type === 'purchase' ? 'purchase' : 'expense')
+      : ['asset', 'liability'].includes(previewAccountType)
+        ? 'purchase'
+        : previewAccountType === 'equity'
+          ? 'expense'
+          : form.type;
+  const previewKind = isSelectedAccountingRakan
+    ? OPERATION_KIND_RAKAN
+    : (form.operationKind === OPERATION_KIND_RAKAN
+      ? (activeVehicleId ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP)
+      : form.operationKind);
+  const missingVehicleForVehicleKind = previewKind === OPERATION_KIND_VEHICLE && !activeVehicleId;
+  const missingCustomerOrVehicleForRakan = previewKind === OPERATION_KIND_RAKAN
+    && ['sale', 'service'].includes(previewEffectiveType)
+    && !(activeVehicleId || form.partnerId || form.partnerName);
   const submitDisabled = (
     form.items.length === 0
     || !selectedBusinessAccount?.id
@@ -930,11 +993,13 @@ const Operations = () => {
                       <select
                         className="apple-input pr-10"
                         value={form.type}
-                        onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'purchase' ? 'supplier' : 'customer' })}
+                        onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'sale' ? 'customer' : 'supplier' })}
                         data-testid="operation-type-select"
                       >
                         <option value="purchase">{t('operations.purchase')}</option>
                         <option value="sale">{t('operations.sale')}</option>
+                        <option value="expense">مصروف مباشر</option>
+                        <option value="direct">عملية مفتوحة/مباشرة</option>
                       </select>
                     </div>
                   </div>
@@ -1081,7 +1146,7 @@ const Operations = () => {
 
                 {form.operationKind === OPERATION_KIND_RAKAN && (
                   <div className="mt-3 text-xs text-cyan-200" data-testid="operation-rakan-rule-note">
-                    ملاحظة: عملية قطع راكان يجب أن ترتبط بعميل أو مركبة.
+                    ملاحظة: عند استخدام حساب يبدأ بـ 5000 تُرحّل العملية تلقائياً إلى وحدة قطع راكان، ويلزم ربط عميل/مركبة فقط في حالات البيع.
                   </div>
                 )}
               </div>

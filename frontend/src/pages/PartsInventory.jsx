@@ -17,10 +17,21 @@ import { PartInventoryGrid } from '../components/inventory/PartInventoryGrid';
 import { PartsTransactionModal } from '../components/inventory/PartsTransactionModal';
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
+const RAKAN_ACCOUNT_CODE_PREFIX = '5000';
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
+const normalizeAccountCode = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('acc-') && /^acc-\d+$/.test(raw)) return raw.replace('acc-', '');
+  return raw;
+};
+
+const isRakanCode = (value) => normalizeAccountCode(value).startsWith(RAKAN_ACCOUNT_CODE_PREFIX);
+
 const isRakanAccount = (account) => {
+  if (isRakanCode(account?.code)) return true;
   const text = [
     account?.name,
     account?.name_ar,
@@ -34,7 +45,20 @@ const isRakanAccount = (account) => {
 
 const isRakanBusinessAccount = (account) => {
   const text = [account?.name, account?.code].map((v) => normalizeText(v)).join(' ');
-  return RAKAN_ACCOUNT_KEYWORDS.some((k) => text.includes(k));
+  return isRakanCode(account?.code) || RAKAN_ACCOUNT_KEYWORDS.some((k) => text.includes(k));
+};
+
+const inferOperationTypeByAccount = (accountType, transactionType) => {
+  const normalizedType = String(accountType || '').toLowerCase();
+  if (normalizedType === 'revenue') return 'sale';
+  if (normalizedType === 'expense') {
+    if (transactionType === 'purchase') return 'purchase';
+    return 'expense';
+  }
+  if (normalizedType === 'liability' || normalizedType === 'asset') return 'purchase';
+  if (normalizedType === 'equity') return 'expense';
+  if (transactionType === 'sale') return 'sale';
+  return 'purchase';
 };
 
 const PartsInventory = () => {
@@ -60,6 +84,8 @@ const PartsInventory = () => {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [transactionType, setTransactionType] = useState('sale');
   const [saleMode, setSaleMode] = useState('instant');
+  const [directAmount, setDirectAmount] = useState('');
+  const [directDescription, setDirectDescription] = useState('');
   const [transactionVehicleId, setTransactionVehicleId] = useState('');
   const [transactionItems, setTransactionItems] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -107,7 +133,10 @@ const PartsInventory = () => {
       loadBusinessAccounts();
       if (transactionType === 'sale') {
         loadCustomers();
+      } else if (transactionType === 'purchase') {
+        loadSuppliers();
       } else {
+        loadCustomers();
         loadSuppliers();
       }
       if (saleMode === 'vehicle') {
@@ -118,10 +147,12 @@ const PartsInventory = () => {
 
   // Define accountOptions early so useEffects can reference it
   const accountOptions = useMemo(() => {
-    const expectedType = transactionType === 'sale' ? 'revenue' : 'expense';
-    const rakanByType = accounts.filter((acc) => isRakanAccount(acc) && acc.type === expectedType);
-    if (rakanByType.length) return rakanByType;
-    return accounts.filter((acc) => acc.type === expectedType);
+    if (transactionType === 'direct') return accounts;
+    const expectedTypes = transactionType === 'sale'
+      ? ['revenue']
+      : ['expense', 'asset', 'liability'];
+    const byType = accounts.filter((acc) => expectedTypes.includes(String(acc.type || '').toLowerCase()));
+    return byType.length ? byType : accounts;
   }, [accounts, transactionType]);
 
   useEffect(() => {
@@ -144,7 +175,10 @@ const PartsInventory = () => {
       loadAccounts();
       if (transactionType === 'sale') {
         loadCustomers();
+      } else if (transactionType === 'purchase') {
+        loadSuppliers();
       } else {
+        loadCustomers();
         loadSuppliers();
       }
     }
@@ -517,8 +551,10 @@ const PartsInventory = () => {
   };
 
   const openTransactionModal = (type, part = null) => {
-    setTransactionType(type);
+    setTransactionType(type || 'sale');
     setSaleMode(type === 'sale' ? 'instant' : 'instant');
+    setDirectAmount('');
+    setDirectDescription('');
     setTransactionVehicleId('');
     setSelectedPartnerId('');
     setSelectedAccountId('');
@@ -563,95 +599,176 @@ const PartsInventory = () => {
   };
 
   const submitTransaction = async () => {
-    const validItems = transactionItems.filter(item => item.partId && item.quantity > 0);
-    if (!validItems.length) {
-      toast({ title: 'خطأ', description: 'أضف قطعة واحدة على الأقل', variant: 'destructive' });
-      return;
-    }
-    if (transactionType === 'sale' && saleMode === 'vehicle' && !transactionVehicleId) {
-      toast({ title: 'خطأ', description: 'اختر المركبة المرتبطة بالبيع', variant: 'destructive' });
-      return;
-    }
-    if (transactionType === 'sale' && saleMode !== 'vehicle' && !selectedPartnerId) {
-      toast({ title: 'خطأ', description: 'اختر العميل', variant: 'destructive' });
-      return;
-    }
-    if (transactionType === 'purchase' && !selectedPartnerId) {
-      toast({ title: 'خطأ', description: 'اختر المورد', variant: 'destructive' });
-      return;
-    }
     if (!selectedAccountId) {
       toast({ title: 'خطأ', description: 'اختر الحساب المحاسبي للعملية', variant: 'destructive' });
       return;
     }
-    if (!rakanBusinessAccountId) {
-      toast({
-        title: 'خطأ',
-        description: 'حساب الأعمال "قطع راكان" غير موجود ضمن حسابات الفروع',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const selectedAccount = accounts.find((acc) => (acc.id || acc.code) === selectedAccountId);
-    if (!selectedAccount || !isRakanAccount(selectedAccount)) {
+    if (!selectedAccount) {
+      toast({ title: 'خطأ', description: 'تعذر قراءة الحساب المحدد', variant: 'destructive' });
+      return;
+    }
+
+    const selectedAccountCode = normalizeAccountCode(selectedAccount.code || selectedAccountId || '');
+    const isRakanTarget = isRakanCode(selectedAccountCode);
+    let currentBusinessAccounts = Array.isArray(businessAccounts) ? [...businessAccounts] : [];
+    let rakanAccount = currentBusinessAccounts.find((acc) => isRakanBusinessAccount(acc)) || null;
+    let workshopAccount = currentBusinessAccounts.find((acc) => !isRakanBusinessAccount(acc)) || null;
+
+    if (isRakanTarget && !rakanAccount) {
       toast({
         title: 'خطأ',
-        description: 'يجب اختيار حسابات قطع راكان فقط لنقطة البيع',
+        description: 'لا يوجد حساب أعمال مستقل لقطع راكان. أعد تحميل الصفحة أو أنشئ الحساب من الإعدادات.',
         variant: 'destructive',
       });
       return;
     }
 
-    const itemsPayload = validItems.map(item => ({
-      itemType: 'part',
-      itemId: item.partId,
-      name: item.name,
-      quantity: Number(item.quantity || 1),
-      price: Number(item.price || 0),
-      total: Number(item.quantity || 1) * Number(item.price || 0)
-    }));
+    if (!isRakanTarget && !workshopAccount) {
+      try {
+        const createRes = await fetch(`${apiBase}/biz-accounts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'الورشة الرئيسية',
+            code: 'MAIN_WORKSHOP',
+            currency: 'SAR',
+          }),
+        });
+        const created = await createRes.json().catch(() => null);
+        if (createRes.ok && created?.id) {
+          currentBusinessAccounts = [created, ...currentBusinessAccounts];
+          workshopAccount = created;
+          setBusinessAccounts(currentBusinessAccounts);
+        }
+      } catch (_error) {
+        // ignore, handled by guard below
+      }
+    }
+
+    const targetBusinessAccountId = isRakanTarget
+      ? (rakanAccount?.id || rakanBusinessAccountId)
+      : (workshopAccount?.id || '');
+
+    if (!targetBusinessAccountId) {
+      toast({
+        title: 'خطأ',
+        description: 'تعذر تحديد حساب الأعمال المناسب للعملية.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    let itemsPayload = [];
+    if (transactionType === 'direct') {
+      const amount = Number(directAmount || 0);
+      if (!(amount > 0)) {
+        toast({ title: 'خطأ', description: 'أدخل مبلغًا صحيحًا للعملية المباشرة', variant: 'destructive' });
+        return;
+      }
+      itemsPayload = [{
+        itemType: 'manual',
+        itemId: '',
+        name: directDescription || selectedAccount?.name_ar || selectedAccount?.name || 'عملية مباشرة',
+        quantity: 1,
+        price: amount,
+        total: amount,
+      }];
+    } else {
+      const validItems = transactionItems.filter((item) => item.partId && item.quantity > 0);
+      if (!validItems.length) {
+        toast({ title: 'خطأ', description: 'أضف قطعة واحدة على الأقل', variant: 'destructive' });
+        return;
+      }
+      if (transactionType === 'sale' && saleMode === 'vehicle' && !transactionVehicleId) {
+        toast({ title: 'خطأ', description: 'اختر المركبة المرتبطة بالبيع', variant: 'destructive' });
+        return;
+      }
+      if (transactionType === 'sale' && saleMode !== 'vehicle' && !selectedPartnerId) {
+        toast({ title: 'خطأ', description: 'اختر العميل', variant: 'destructive' });
+        return;
+      }
+      if (transactionType === 'purchase' && !selectedPartnerId) {
+        toast({ title: 'خطأ', description: 'اختر المورد', variant: 'destructive' });
+        return;
+      }
+      itemsPayload = validItems.map(item => ({
+        itemType: 'part',
+        itemId: item.partId,
+        name: item.name,
+        quantity: Number(item.quantity || 1),
+        price: Number(item.price || 0),
+        total: Number(item.quantity || 1) * Number(item.price || 0)
+      }));
+    }
+
+    const operationType = inferOperationTypeByAccount(selectedAccount?.type, transactionType);
     const total = itemsPayload.reduce((sum, item) => sum + item.total, 0);
+    const isVehicleOperation = transactionType === 'sale' && saleMode === 'vehicle';
+    const operationKind = isRakanTarget
+      ? 'RAKAN_PARTS_OPERATION'
+      : (isVehicleOperation ? 'VEHICLE_OPERATION' : 'WORKSHOP_OPERATION');
+    const scope = isRakanTarget
+      ? 'rakan_parts'
+      : (isVehicleOperation ? 'vehicle' : 'workshop');
+    const businessUnit = isRakanTarget ? 'rakan_parts' : 'workshop';
+    const source = isRakanTarget ? 'rakan_parts_pos' : 'parts_pos';
+
+    const partnerName = transactionType === 'sale'
+      ? (customers.find(c => c.id === selectedPartnerId)?.name
+        || vehicles.find(v => v.id === transactionVehicleId)?.customerName
+        || vehicles.find(v => v.id === transactionVehicleId)?.ownerName
+        || vehicles.find(v => v.id === transactionVehicleId)?.owner_name
+      )
+      : (suppliers.find(s => s.id === selectedPartnerId)?.name);
+
+    const baseNote = transactionType === 'direct'
+      ? (directDescription || 'عملية مباشرة')
+      : (transactionType === 'sale' ? 'عملية بيع قطع' : 'عملية شراء قطع');
+    const notes = `${isRakanTarget ? '[RAKAN_PARTS] ' : ''}${baseNote} | ACCOUNT_CODE:${selectedAccountCode} | ACCOUNTING_TARGET:${selectedAccount?.name_ar || selectedAccount?.name || selectedAccountId}`;
 
     try {
       await operationsAPI.create({
-        type: transactionType === 'sale' ? 'sale' : 'purchase',
+        type: operationType,
+        operationKind,
         items: itemsPayload,
         subtotal: total,
         total,
-        scope: 'rakan_parts',
-        source: 'rakan_parts_pos',
-        businessUnit: 'rakan_parts',
-        paymentMethod: transactionType === 'sale' && saleMode === 'vehicle' ? 'credit' : 'cash',
-        vehicleId: transactionType === 'sale' && saleMode === 'vehicle' ? transactionVehicleId : undefined,
-        partnerType: transactionType === 'sale' ? 'customer' : 'supplier',
+        scope,
+        source,
+        businessUnit,
+        paymentMethod: isVehicleOperation ? 'credit' : 'cash',
+        vehicleId: isVehicleOperation ? transactionVehicleId : undefined,
+        partnerType: operationType === 'sale' ? 'customer' : 'supplier',
         partnerId: selectedPartnerId,
-        partnerName: (transactionType === 'sale'
-          ? (customers.find(c => c.id === selectedPartnerId)?.name
-            || vehicles.find(v => v.id === transactionVehicleId)?.customerName
-            || vehicles.find(v => v.id === transactionVehicleId)?.ownerName
-            || vehicles.find(v => v.id === transactionVehicleId)?.owner_name
-          )
-          : (suppliers.find(s => s.id === selectedPartnerId)?.name)
-        ) || '',
-        accountId: rakanBusinessAccountId,
+        partnerName: partnerName || '',
+        accountId: targetBusinessAccountId,
         accountingAccountId: selectedAccountId,
-        notes: `[RAKAN_PARTS] ${transactionType === 'sale' ? 'عملية بيع قطع راكان' : 'عملية شراء قطع راكان'} | ACCOUNTING_TARGET:${selectedAccount?.name_ar || selectedAccount?.name || selectedAccountId}`
+        notes,
       });
 
-      for (const item of itemsPayload) {
-        if (transactionType === 'sale') {
-          await api.post(`/parts/${item.itemId}/sell`, null, { params: { quantity: item.quantity } });
-        } else {
-          await api.post(`/parts/${item.itemId}/restock`, null, { params: { quantity: item.quantity } });
+      if (transactionType !== 'direct') {
+        for (const item of itemsPayload) {
+          if (transactionType === 'sale') {
+            await api.post(`/parts/${item.itemId}/sell`, null, { params: { quantity: item.quantity } });
+          } else {
+            await api.post(`/parts/${item.itemId}/restock`, null, { params: { quantity: item.quantity } });
+          }
         }
       }
 
       toast({
         title: 'تمت العملية',
-        description: transactionType === 'sale' ? 'تم تسجيل عملية البيع' : 'تم تسجيل عملية الشراء'
+        description: transactionType === 'sale'
+          ? 'تم تسجيل عملية البيع'
+          : transactionType === 'purchase'
+            ? 'تم تسجيل عملية الشراء'
+            : 'تم تسجيل العملية المباشرة'
       });
       setShowTransactionModal(false);
+      setDirectAmount('');
+      setDirectDescription('');
       await loadParts();
       await loadInventoryIntelligence();
     } catch (error) {
@@ -749,13 +866,21 @@ const PartsInventory = () => {
   // accountOptions is defined earlier in the component (before useEffects that need it)
   const partOptions = useMemo(() => (modalParts.length ? modalParts : parts), [modalParts, parts]);
   const transactionTotal = useMemo(() => {
+    if (transactionType === 'direct') {
+      return Number(directAmount || 0);
+    }
     return transactionItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)), 0);
-  }, [transactionItems]);
+  }, [transactionItems, transactionType, directAmount]);
   const vehicleOptions = useMemo(() => (activeVehicles.length ? activeVehicles : vehicles), [activeVehicles, vehicles]);
   const rakanBusinessAccount = useMemo(
     () => businessAccounts.find((acc) => acc.id === rakanBusinessAccountId) || null,
     [businessAccounts, rakanBusinessAccountId]
   );
+  const selectedTransactionAccount = useMemo(
+    () => accounts.find((acc) => (acc.id || acc.code) === selectedAccountId) || null,
+    [accounts, selectedAccountId]
+  );
+  const isSelectedTransactionRakan = isRakanCode(selectedTransactionAccount?.code || selectedAccountId);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -887,6 +1012,8 @@ const PartsInventory = () => {
         onOpenChange={setShowTransactionModal}
         transactionType={transactionType}
         saleMode={saleMode}
+        directAmount={directAmount}
+        directDescription={directDescription}
         transactionVehicleId={transactionVehicleId}
         selectedPartnerId={selectedPartnerId}
         selectedAccountId={selectedAccountId}
@@ -903,6 +1030,8 @@ const PartsInventory = () => {
         transactionTotal={transactionTotal}
         setTransactionType={setTransactionType}
         setSaleMode={setSaleMode}
+        setDirectAmount={setDirectAmount}
+        setDirectDescription={setDirectDescription}
         setTransactionVehicleId={setTransactionVehicleId}
         setSelectedPartnerId={setSelectedPartnerId}
         setSelectedAccountId={setSelectedAccountId}
@@ -917,7 +1046,7 @@ const PartsInventory = () => {
         loadModalParts={loadModalParts}
       />
 
-      {showTransactionModal && missingRakanAccounts && (
+      {showTransactionModal && isSelectedTransactionRakan && missingRakanAccounts && (
         <div
           className="glass-card p-3 border border-amber-400/50 bg-amber-500/10 text-amber-200 text-sm"
           data-testid="transaction-rakan-accounts-warning"
@@ -926,7 +1055,7 @@ const PartsInventory = () => {
         </div>
       )}
 
-      {showTransactionModal && rakanBusinessAccount && (
+      {showTransactionModal && isSelectedTransactionRakan && rakanBusinessAccount && (
         <div className="text-xs text-cyan-200" data-testid="transaction-rakan-business-account-note">
           سيتم تسجيل العملية ضمن حساب الأعمال المستقل: <strong>{rakanBusinessAccount.name}</strong>
         </div>

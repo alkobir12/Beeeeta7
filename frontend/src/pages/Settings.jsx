@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { useTheme, themes } from '../contexts/ThemeContext';
+import { FontSizeControls } from '../components/FontSizeControls';
 import { 
   Building2, 
   Globe, 
@@ -34,6 +35,10 @@ const Settings = () => {
   const { themeName, changeTheme, isDark } = useTheme();
   const { loading: stitchLoading, error: stitchError, result: stitchResult, generateUI, getHistory, resetError } = useStitch();
   const [loading, setLoading] = useState(true);
+  const [sidebarPrefs, setSidebarPrefs] = useState({
+    collapsed: false,
+    hidden: false,
+  });
   const [settings, setSettings] = useState({
     workshopName: 'ورشتي',
     workshopPhone: '',
@@ -77,6 +82,17 @@ const Settings = () => {
   useEffect(() => { fetchSettings(); }, []);
 
   useEffect(() => {
+    try {
+      setSidebarPrefs({
+        collapsed: localStorage.getItem('ui.sidebarCollapsed') === 'true',
+        hidden: localStorage.getItem('ui.sidebarHidden') === 'true',
+      });
+    } catch (error) {
+      setSidebarPrefs({ collapsed: false, hidden: false });
+    }
+  }, []);
+
+  useEffect(() => {
     const loadHistory = async () => {
       const history = await getHistory();
       setStitchHistory(Array.isArray(history) ? history : []);
@@ -102,6 +118,22 @@ const Settings = () => {
   const handleThemeChange = (newTheme) => {
     setSettings({...settings, themeName: newTheme});
     changeTheme(newTheme);
+  };
+
+  const updateSidebarPrefs = (updater) => {
+    setSidebarPrefs((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        localStorage.setItem('ui.sidebarCollapsed', String(next.collapsed));
+        localStorage.setItem('ui.sidebarHidden', String(next.hidden));
+      } catch (error) {
+        return next;
+      }
+      window.dispatchEvent(
+        new CustomEvent('ui-sidebar-preferences-changed', { detail: next })
+      );
+      return next;
+    });
   };
 
   const saveSettings = async () => {
@@ -305,6 +337,68 @@ const Settings = () => {
             ))}
           </div>
         </div>
+      </Section>
+
+      <Section title="التحكم بالعرض" icon={Monitor}>
+        <Row label="حجم الخط">
+          <FontSizeControls compact testIdPrefix="settings-font-size" />
+        </Row>
+        <Row label="عرض القائمة الجانبية">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => updateSidebarPrefs((prev) => ({ ...prev, hidden: false }))}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                !sidebarPrefs.hidden
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
+                  : 'border border-white/10 text-slate-200 hover:bg-white/10'
+              }`}
+              data-testid="settings-sidebar-show-button"
+            >
+              إظهار
+            </button>
+            <button
+              type="button"
+              onClick={() => updateSidebarPrefs((prev) => ({ ...prev, hidden: true }))}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                sidebarPrefs.hidden
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
+                  : 'border border-white/10 text-slate-200 hover:bg-white/10'
+              }`}
+              data-testid="settings-sidebar-hide-button"
+            >
+              إخفاء
+            </button>
+          </div>
+        </Row>
+        <Row label="حجم القائمة الجانبية">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => updateSidebarPrefs((prev) => ({ ...prev, hidden: false, collapsed: false }))}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                !sidebarPrefs.collapsed && !sidebarPrefs.hidden
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
+                  : 'border border-white/10 text-slate-200 hover:bg-white/10'
+              }`}
+              data-testid="settings-sidebar-expanded-button"
+            >
+              موسّعة
+            </button>
+            <button
+              type="button"
+              onClick={() => updateSidebarPrefs((prev) => ({ ...prev, hidden: false, collapsed: true }))}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                sidebarPrefs.collapsed && !sidebarPrefs.hidden
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
+                  : 'border border-white/10 text-slate-200 hover:bg-white/10'
+              }`}
+              data-testid="settings-sidebar-collapsed-button"
+            >
+              مصغّرة
+            </button>
+          </div>
+        </Row>
       </Section>
 
       <Section title="توليد واجهة Stitch" icon={Sparkles}>

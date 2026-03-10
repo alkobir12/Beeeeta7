@@ -79,6 +79,7 @@ export const InventoryPlannerTab = ({ architecture, loading = false }) => {
   const replenishmentPlan = architecture.replenishment_plan || [];
   const supplierHealth = architecture.supplier_health || [];
   const stockSegments = architecture.stock_segments || [];
+  const executionBudget = architecture.execution_budget || {};
 
   return (
     <div className="space-y-4" data-testid="inventory-architecture-tab">
@@ -113,6 +114,25 @@ export const InventoryPlannerTab = ({ architecture, loading = false }) => {
             <p className="text-xs text-slate-300 mt-3">القيمة التقديرية: {formatCurrency(segment.value)}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="inventory-architecture-budget-strip">
+        <div className="glass-card p-4" data-testid="inventory-architecture-budget-urgent">
+          <p className="text-xs text-slate-400">ميزانية التوريد الفوري</p>
+          <p className="text-lg text-red-200 font-semibold mt-2">{formatCurrency(executionBudget.urgent)}</p>
+        </div>
+        <div className="glass-card p-4" data-testid="inventory-architecture-budget-high">
+          <p className="text-xs text-slate-400">ميزانية الأولوية القريبة</p>
+          <p className="text-lg text-amber-200 font-semibold mt-2">{formatCurrency(executionBudget.high)}</p>
+        </div>
+        <div className="glass-card p-4" data-testid="inventory-architecture-budget-planned">
+          <p className="text-xs text-slate-400">ميزانية التخطيط الدوري</p>
+          <p className="text-lg text-cyan-200 font-semibold mt-2">{formatCurrency(executionBudget.planned)}</p>
+        </div>
+        <div className="glass-card p-4" data-testid="inventory-architecture-budget-total">
+          <p className="text-xs text-slate-400">إجمالي التزام الشراء</p>
+          <p className="text-lg text-white font-semibold mt-2">{formatCurrency(executionBudget.total_commitment)}</p>
+        </div>
       </div>
 
       <div className="glass-card p-4 overflow-auto" data-testid="inventory-architecture-replenishment-card">

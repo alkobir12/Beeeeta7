@@ -19,6 +19,16 @@ from smart_inventory_models import (
 )
 
 
+EXPENSE_CATEGORY_LABELS = {
+    "purchases": "مشتريات قطع",
+    "operational": "مصروفات تشغيلية",
+    "personal": "مصاريف شخصية",
+    "fees": "رسوم وعمولات",
+    "fuel": "وقود ونقل",
+    "other": "مصروفات أخرى",
+}
+
+
 class SmartInventoryService:
     def __init__(self, db):
         self.db = db
@@ -164,6 +174,37 @@ class SmartInventoryService:
         cleaned = cleaned.split("ACCOUNTING_TARGET:")[0].strip()
         cleaned = cleaned.split("|")[0].strip(" -|:")
         return cleaned or "بدون توصيف"
+
+    def _categorize_expense(
+        self,
+        account_name: str,
+        reason: str,
+        op_type: str,
+    ) -> str:
+        if op_type == "purchase":
+            return "purchases"
+
+        text = self._normalize_text(f"{account_name} {reason}")
+        if any(token in text for token in ["بنزين", "وقود", "fuel", "نقل", "توصيل"]):
+            return "fuel"
+        if any(token in text for token in ["رسوم", "عمولة", "fee", "charge", "service"]):
+            return "fees"
+        if any(token in text for token in ["شخصي", "سحب", "personal", "owner", "مالك"]):
+            return "personal"
+        if any(token in text for token in ["ايجار", "إيجار", "كهرباء", "ماء", "رواتب", "salary", "تشغيل"]):
+            return "operational"
+        return "other"
+
+    @staticmethod
+    def _week_start_iso(value: datetime) -> str:
+        week_start = value - timedelta(days=value.weekday())
+        return week_start.date().isoformat()
+
+    @staticmethod
+    def _percent_change(current: float, baseline: float) -> float:
+        if baseline == 0:
+            return 100.0 if current else 0.0
+        return ((current - baseline) / abs(baseline)) * 100
 
     def _operation_date(self, op: Dict[str, Any]) -> datetime:
         candidates = [
@@ -742,7 +783,7 @@ class SmartInventoryService:
         alerts = self._build_alerts(parts, sold_last_30_days)
         return [a.dict() for a in alerts[: max(1, min(limit, 500))]]
 
-    async def get_control_panel(self, days: int = 90) -> Dict[str, Any]:
+    async def get_control_panel(self, days: int = 30) -> Dict[str, Any]:
         parts = await self.list_parts()
         operations = await self.list_operations()
         backorders = await self.list_backorders()
@@ -1202,6 +1243,37 @@ class SmartInventoryService:
             sum(coverage_values) / len(coverage_values), 1
         ) if coverage_values else None
 
+        execution_budget = {
+            "urgent": round(
+                sum(
+                    row.get("estimated_purchase_cost", 0)
+                    for row in rows
+                    if row.get("urgency") == "critical"
+                ),
+                2,
+            ),
+            "high": round(
+                sum(
+                    row.get("estimated_purchase_cost", 0)
+                    for row in rows
+                    if row.get("urgency") == "high"
+                ),
+                2,
+            ),
+            "planned": round(
+                sum(
+                    row.get("estimated_purchase_cost", 0)
+                    for row in rows
+                    if row.get("urgency") == "planned"
+                ),
+                2,
+            ),
+            "total_commitment": round(
+                sum(row.get("estimated_purchase_cost", 0) for row in rows),
+                2,
+            ),
+        }
+
         return {
             "blueprint": {
                 "period_days": days,
@@ -1216,6 +1288,7 @@ class SmartInventoryService:
                 "margin_risk_count": margin_risk_count,
                 "average_days_of_cover": average_days_of_cover,
             },
+            "execution_budget": execution_budget,
             "stock_segments": stock_segments,
             "replenishment_plan": rows[:20],
             "supplier_health": supplier_health[:12],
@@ -1249,6 +1322,11 @@ class SmartInventoryService:
         purchases_count = 0
         expense_breakdown_map: Dict[str, float] = defaultdict(float)
         expense_reason_map: Dict[str, float] = defaultdict(float)
+        expense_category_map: Dict[str, Dict[str, Any]] = defaultdict(
+            lambda: {"amount": 0.0, "ops_count": 0}
+        )
+        expense_week_map: Dict[str, float] = defaultdict(float)
+        top_expense_operations: List[Dict[str, Any]] = []
         ledger: List[Dict[str, Any]] = []
         price_timeline: Dict[str, Dict[str, List[Dict[str, Any]]]] = defaultdict(
             lambda: {"sale": [], "purchase": []}
@@ -1300,12 +1378,33 @@ class SmartInventoryService:
             if is_revenue:
                 revenue += amount
             if is_expense:
+                reason = self._clean_note_reason(op.get("notes"))
+                expense_category = self._categorize_expense(account_name, reason, op_type)
                 if is_purchase:
                     purchase_expense += amount
                 else:
                     other_expense += amount
                 expense_breakdown_map[account_name] += amount
-                expense_reason_map[self._clean_note_reason(op.get("notes"))] += amount
+                expense_reason_map[reason] += amount
+                expense_category_map[expense_category]["amount"] += amount
+                expense_category_map[expense_category]["ops_count"] += 1
+                expense_week_map[self._week_start_iso(operation_date)] += amount
+                top_expense_operations.append(
+                    {
+                        "id": op.get("id"),
+                        "date": operation_date.isoformat(),
+                        "amount": round(amount, 2),
+                        "account_name": account_name,
+                        "reason": reason,
+                        "category": expense_category,
+                        "category_label": EXPENSE_CATEGORY_LABELS.get(
+                            expense_category, EXPENSE_CATEGORY_LABELS["other"]
+                        ),
+                        "partner_name": op.get("partnerName")
+                        or op.get("partner_name")
+                        or "-",
+                    }
+                )
 
             ledger.append(
                 {
@@ -1340,6 +1439,7 @@ class SmartInventoryService:
                     )
 
         price_trend = []
+        detailed_price_timeline = []
         for part_id, bucket in price_timeline.items():
             sale_sorted = sorted(
                 bucket.get("sale", []), key=lambda row: row.get("date") or "", reverse=True
@@ -1377,6 +1477,57 @@ class SmartInventoryService:
                 }
             )
 
+            all_prices = [
+                self._safe_float(row.get("price"), 0)
+                for row in (sale_sorted[:6] + purchase_sorted[:6])
+                if self._safe_float(row.get("price"), 0) > 0
+            ]
+            max_price = max(all_prices) if all_prices else 0
+            min_price = min(all_prices) if all_prices else 0
+            volatility = (
+                ((max_price - min_price) / max_price) * 100 if max_price > 0 else 0.0
+            )
+
+            latest_sale_points = [
+                {
+                    "date": row.get("date"),
+                    "price": round(self._safe_float(row.get("price"), 0), 2),
+                }
+                for row in sale_sorted[:6]
+            ]
+            latest_purchase_points = [
+                {
+                    "date": row.get("date"),
+                    "price": round(self._safe_float(row.get("price"), 0), 2),
+                }
+                for row in purchase_sorted[:6]
+            ]
+
+            sale_pct = self._percent_change(
+                latest_sale[0], latest_sale[-1]
+            ) if len(latest_sale) >= 2 else 0.0
+            purchase_pct = self._percent_change(
+                latest_purchase[0], latest_purchase[-1]
+            ) if len(latest_purchase) >= 2 else 0.0
+
+            detailed_price_timeline.append(
+                {
+                    "part_id": part_id,
+                    "part_name": (
+                        parts_map.get(part_id).name
+                        if parts_map.get(part_id)
+                        else f"قطعة {part_id[:6]}"
+                    ),
+                    "latest_sale_points": latest_sale_points,
+                    "latest_purchase_points": latest_purchase_points,
+                    "sale_change": round(sale_change, 2),
+                    "purchase_change": round(purchase_change, 2),
+                    "sale_change_pct": round(sale_pct, 2),
+                    "purchase_change_pct": round(purchase_pct, 2),
+                    "volatility_pct": round(volatility, 2),
+                }
+            )
+
         price_trend.sort(
             key=lambda row: (
                 -(abs(row.get("sale_change", 0)) + abs(row.get("purchase_change", 0))),
@@ -1406,6 +1557,36 @@ class SmartInventoryService:
             key=lambda row: row["amount"],
             reverse=True,
         )
+        expense_by_category = sorted(
+            [
+                {
+                    "category": category,
+                    "category_label": EXPENSE_CATEGORY_LABELS.get(
+                        category, EXPENSE_CATEGORY_LABELS["other"]
+                    ),
+                    "amount": round(payload["amount"], 2),
+                    "ops_count": payload["ops_count"],
+                }
+                for category, payload in expense_category_map.items()
+            ],
+            key=lambda row: row["amount"],
+            reverse=True,
+        )
+        expense_weekly = sorted(
+            [
+                {"week_start": week_key, "amount": round(amount, 2)}
+                for week_key, amount in expense_week_map.items()
+            ],
+            key=lambda row: row["week_start"],
+            reverse=True,
+        )
+        top_expense_operations.sort(key=lambda row: row.get("amount", 0), reverse=True)
+        detailed_price_timeline.sort(
+            key=lambda row: (
+                -(abs(row.get("sale_change", 0)) + abs(row.get("purchase_change", 0))),
+                -row.get("volatility_pct", 0),
+            )
+        )
 
         total_expense = purchase_expense + other_expense
         return {
@@ -1424,19 +1605,25 @@ class SmartInventoryService:
             "sell_rate_per_day": 0,
             "expense_breakdown": expense_breakdown[:12],
             "expense_reasons": expense_reasons[:8],
+            "expense_tracking": {
+                "by_category": expense_by_category[:8],
+                "weekly": expense_weekly[:8],
+                "top_operations": top_expense_operations[:15],
+            },
             "ledger": ledger[:30],
             "price_trend": price_trend[:12],
+            "price_timeline": detailed_price_timeline[:12],
             "recent_ops": sorted_operations[:16],
         }
 
-    async def get_inventory_architecture(self, days: int = 90) -> Dict[str, Any]:
+    async def get_inventory_architecture(self, days: int = 30) -> Dict[str, Any]:
         days = max(7, min(days, 365))
         parts = await self.list_parts()
         operations = await self.list_operations()
         backorders = await self.list_backorders()
         return self._build_replenishment_plan(parts, operations, backorders, days)
 
-    async def get_rakan_analytics(self, days: int = 90) -> Dict[str, Any]:
+    async def get_rakan_analytics(self, days: int = 30) -> Dict[str, Any]:
         days = max(7, min(days, 365))
         now = datetime.now(timezone.utc)
         current_start = now - timedelta(days=days)

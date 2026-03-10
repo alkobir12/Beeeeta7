@@ -32,19 +32,19 @@ async def get_inventory_alerts(limit: int = Query(default=50, ge=1, le=500)):
 
 
 @router.get("/control-panel")
-async def get_inventory_control_panel(days: int = Query(default=90, ge=7, le=365)):
+async def get_inventory_control_panel(days: int = Query(default=30, ge=7, le=365)):
     service = SmartInventoryService(db)
     return await service.get_control_panel(days=days)
 
 
 @router.get("/architecture")
-async def get_inventory_architecture(days: int = Query(default=90, ge=7, le=365)):
+async def get_inventory_architecture(days: int = Query(default=30, ge=7, le=365)):
     service = SmartInventoryService(db)
     return await service.get_inventory_architecture(days=days)
 
 
 @router.get("/rakan-analytics")
-async def get_rakan_inventory_analytics(days: int = Query(default=90, ge=7, le=365)):
+async def get_rakan_inventory_analytics(days: int = Query(default=30, ge=7, le=365)):
     service = SmartInventoryService(db)
     return await service.get_rakan_analytics(days=days)
 

@@ -3,6 +3,8 @@ import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, Sho
 import { api, partAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { InventoryPlannerTab } from '../components/parts-dashboard/InventoryPlannerTab';
+import { RakanExpenseTrackingPanel } from '../components/parts-dashboard/RakanExpenseTrackingPanel';
+import { RakanPriceTimelinePanel } from '../components/parts-dashboard/RakanPriceTimelinePanel';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
 
@@ -15,7 +17,7 @@ const backorderStatusOptions = [
 ];
 
 const PartsDashboard = () => {
-  const [daysFilter, setDaysFilter] = useState(90);
+  const [daysFilter, setDaysFilter] = useState(30);
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const [backorders, setBackorders] = useState([]);
@@ -27,6 +29,7 @@ const PartsDashboard = () => {
   const [inventoryArchitecture, setInventoryArchitecture] = useState(null);
   const [loadingInventoryArchitecture, setLoadingInventoryArchitecture] = useState(true);
   const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
+  const [selectedExpenseCategory, setSelectedExpenseCategory] = useState('all');
   const [savingBackorder, setSavingBackorder] = useState(false);
   const [partsList, setPartsList] = useState([]);
   const [formData, setFormData] = useState({
@@ -518,35 +521,14 @@ const PartsDashboard = () => {
                 </div>
               </div>
 
-              <div className="glass-card p-4 overflow-auto" data-testid="parts-control-rakan-price-trend">
-                <h2 className="text-white font-semibold mb-3">متغير أسعار القطع عبر الزمن (آخر 3 تسعيرات بيع/شراء)</h2>
-                <table className="w-full text-sm text-right">
-                  <thead className="text-slate-400 border-b border-white/10">
-                    <tr>
-                      <th className="py-2">القطعة</th>
-                      <th className="py-2">آخر 3 أسعار بيع</th>
-                      <th className="py-2">تغير البيع</th>
-                      <th className="py-2">آخر 3 أسعار شراء</th>
-                      <th className="py-2">تغير الشراء</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(rakanAnalytics?.price_trend || []).map((row) => (
-                      <tr key={row.part_id} className="border-b border-white/5 text-slate-200" data-testid={`parts-control-rakan-trend-row-${row.part_id}`}>
-                        <td className="py-2">{row.part_name}</td>
-                        <td className="py-2">{(row.latest_sale_prices || []).length ? row.latest_sale_prices.map((p) => formatCurrency(p)).join(' | ') : '-'}</td>
-                        <td className="py-2">{formatCurrency(row.sale_change)}</td>
-                        <td className="py-2">{(row.latest_purchase_prices || []).length ? row.latest_purchase_prices.map((p) => formatCurrency(p)).join(' | ') : '-'}</td>
-                        <td className="py-2">{formatCurrency(row.purchase_change)}</td>
-                      </tr>
-                    ))}
-                    {!(rakanAnalytics?.price_trend || []).length && (
-                      <tr>
-                        <td colSpan={5} className="py-4 text-center text-slate-400" data-testid="parts-control-rakan-trend-empty">لا توجد بيانات كافية لتحليل الأسعار</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <RakanExpenseTrackingPanel
+                analytics={rakanAnalytics}
+                selectedCategory={selectedExpenseCategory}
+                onSelectCategory={setSelectedExpenseCategory}
+              />
+
+              <div data-testid="parts-control-rakan-price-trend">
+                <RakanPriceTimelinePanel analytics={rakanAnalytics} />
               </div>
             </>
           )}

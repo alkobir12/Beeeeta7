@@ -135,10 +135,12 @@ class TestSmartInventoryArchitecture:
         assert "replenishment_plan" in data, "Architecture should include replenishment_plan"
         assert "supplier_health" in data, "Architecture should include supplier_health"
         assert "stock_segments" in data, "Architecture should include stock_segments"
+        assert "execution_budget" in data, "Architecture should include execution_budget"
         assert data["blueprint"]["period_days"] == 90
         assert isinstance(data["replenishment_plan"], list)
         assert isinstance(data["supplier_health"], list)
         assert isinstance(data["stock_segments"], list)
+        assert isinstance(data["execution_budget"], dict)
         print(
             f"✅ Architecture blueprint: urgent={data['blueprint']['urgent_reorders_count']}, supplier_coverage={data['blueprint']['supplier_coverage_pct']}%"
         )
@@ -164,6 +166,8 @@ class TestRakanAnalytics:
             "expense_breakdown",
             "expense_reasons",
             "price_trend",
+            "price_timeline",
+            "expense_tracking",
             "insights",
         ]:
             assert key in data, f"Rakan analytics should include '{key}'"
@@ -172,6 +176,8 @@ class TestRakanAnalytics:
         assert isinstance(data["expense_breakdown"], list)
         assert isinstance(data["expense_reasons"], list)
         assert isinstance(data["price_trend"], list)
+        assert isinstance(data["price_timeline"], list)
+        assert isinstance(data["expense_tracking"], dict)
         assert isinstance(data["insights"], list)
         print(
             f"✅ Rakan analytics: revenue={data['revenue']}, expense={data['expense']}, profit={data['profit']}"

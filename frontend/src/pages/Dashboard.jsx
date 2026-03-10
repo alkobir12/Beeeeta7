@@ -29,6 +29,7 @@ const Dashboard = () => {
   );
   const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID;
   const [totalAR, setTotalAR] = useState(0);
+  const [arCustomers, setArCustomers] = useState([]);
 
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -109,13 +110,16 @@ const Dashboard = () => {
           .then((arRes) => {
             if (!isMountedRef.current) return;
             const arTotal = Number(arRes?.data?.data?.total_ar || 0);
+            const customersList = arRes?.data?.data?.customers || [];
             setTotalAR(arTotal);
+            setArCustomers(customersList);
           })
           .catch(() => {
             // ignore
           });
       } else {
         if (isMountedRef.current) setTotalAR(0);
+        if (isMountedRef.current) setArCustomers([]);
       }
       
 
@@ -171,6 +175,8 @@ const Dashboard = () => {
     if (!names.length) return 'غير محدد';
     return names.join('، ');
   };
+
+  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
@@ -251,6 +257,24 @@ const Dashboard = () => {
         .filter(Boolean)
     );
 
+    const dashboardCustomerKeys = new Set(
+      dashboardVehicles
+        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
+        .filter(Boolean)
+    );
+
+    const arLookup = new Map(
+      (arCustomers || []).map((entry) => [
+        normalizeCustomerName(entry.customer),
+        Number(entry.balance || 0),
+      ])
+    );
+
+    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
+      (sum, key) => sum + (arLookup.get(key) || 0),
+      0
+    );
+
     return {
       totalVehicles: dashboardVehicles.length,
       inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
@@ -263,8 +287,9 @@ const Dashboard = () => {
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
+      dashboardReceivables,
     };
-  }, [dashboardVehicles, technicians, totalAR]);
+  }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
   const filteredVehicles = dashboardVehicles.filter(vehicle => {
     const matchesSearch = 
@@ -425,6 +450,22 @@ const Dashboard = () => {
                 <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-total-vehicles-ready-value">{stats.ready}</span>
               </div>
             </div>
+            {expandedStatWidget === 'total' && (
+              <div className="mt-3 border-t pt-3" style={{ borderColor: styles.cardBorder }}>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>
+                    إجمالي الذمم الحالية للمركبات
+                  </span>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: styles.textPrimary }}
+                    data-testid="dashboard-stat-total-vehicles-ar-value"
+                  >
+                    {(stats.dashboardReceivables || 0).toLocaleString(isRTL ? 'ar-SA' : 'en-US')} {t('common.currency')}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* مركبات قيد العمل */}

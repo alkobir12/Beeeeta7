@@ -323,6 +323,8 @@
 - `GET /api/inventory/dashboard` - Smart inventory KPI snapshot
 - `GET /api/inventory/alerts` - Smart low/out-of-stock + margin alerts
 - `GET /api/inventory/control-panel` - Advanced parts analytics and category performance
+- `GET /api/inventory/architecture` - Inventory architecture blueprint + replenishment plan + execution budget
+- `GET /api/inventory/rakan-analytics` - Dedicated Rakan financial analytics (price timeline + expense tracking)
 - `GET/POST/PATCH /api/inventory/backorders` - Backorder management lifecycle
 - `POST /api/moltbot/chat` - AI chat
 
@@ -338,6 +340,8 @@
 - [ ] Integrate Llama 4 (Scout & Maverick) into MoltBot
 - [x] تنفيذ Smart Inventory architecture (backend classes + APIs + UI)
 - [x] تنفيذ Planner ذكي للمخزون + نقل تحليلات راكان إلى Backend API مخصص
+- [x] تتبع متغير الأسعار زمنيًا داخل لوحة القطع مع نسب تغير وتذبذب
+- [x] تتبع مصروفات راكان التفصيلي (حسب الفئة + أسبوعيًا + أعلى العمليات)
 
 ### P2 - Medium Priority
 - [ ] Enhance MoltBot with emergent.sh-like capabilities
@@ -370,11 +374,15 @@
 - `frontend/src/components/inventory/PartsOcrPanel.jsx` - OCR UI section
 - `frontend/src/components/inventory/PartsTransactionModal.jsx` - POS sale/purchase modal
 - `frontend/src/pages/PartsDashboard.jsx` - Parts Control Panel (analytics + backorders)
+- `frontend/src/components/parts-dashboard/RakanExpenseTrackingPanel.jsx` - Expense categories/weekly trend/top expense operations
+- `frontend/src/components/parts-dashboard/RakanPriceTimelinePanel.jsx` - Part price timeline with sale/purchase change percentages
+- `frontend/src/components/parts-dashboard/InventoryPlannerTab.jsx` - Execution budget strip (urgent/high/planned/total commitment)
 - `frontend/src/pages/ChartOfAccounts.jsx` - Account add modal connected to backend save flow
 - `frontend/src/pages/ChartOfAccounts.jsx` - Add/Edit account full save flow + smart auto-resolve + parent normalization
 - `frontend/src/pages/ChartOfAccounts.jsx` - Manager-only delete/enable-disable + toast notifications
 - `backend/routes_smart_inventory.py` - Smart inventory APIs
 - `backend/smart_inventory_service.py` - Analytics engine + alerts + backorders logic
+- `backend/tests/test_smart_inventory.py` - Regression tests for architecture execution_budget + Rakan expense/price structures
 - `backend/routes_finance.py` - Chart-of-accounts account creation endpoint
 - `backend/routes_extended.py` - Account status override APIs + manager authorization for delete/toggle
 - `frontend/src/App.js` - Eager loading for PartsInventory to avoid chunk failures
@@ -476,3 +484,7 @@
 | 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |
 | 10 Mar 2026 | Finance reports hardened: default workshop journal/chart views exclude Rakan entries unless `include_rakan=true` |
 | 10 Mar 2026 | Added stable `DELETE /api/accounts-chart/reset` endpoint and validated no-crash reset behavior |
+| 10 Mar 2026 | P1 enhancement: default analytics period switched to 30 days for control panel / architecture / Rakan views |
+| 10 Mar 2026 | Added advanced Rakan expense tracking (category buckets + weekly trend + top expense operations) |
+| 10 Mar 2026 | Added detailed part price timeline (sale/purchase points + % change + volatility) |
+| 10 Mar 2026 | Inventory architecture now includes execution budget strip (urgent/high/planned/total commitment) |

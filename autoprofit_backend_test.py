@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

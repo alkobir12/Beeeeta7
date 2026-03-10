@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BASE_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
+BASE_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
 
 def test_endpoint(method, endpoint, data=None, expected_status=200, description=""):
     """Test a single endpoint and return results"""

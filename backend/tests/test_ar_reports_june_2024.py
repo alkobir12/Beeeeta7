@@ -20,7 +20,7 @@ import uuid
 import requests
 
 BASE_URL = os.environ.get(
-    "REACT_APP_BACKEND_URL", "https://parts-financial-hub.preview.emergentagent.com"
+    "REACT_APP_BACKEND_URL", "https://rakan-ledger-debug.preview.emergentagent.com"
 ).rstrip("/")
 WORKSHOP_ID = "finmodule-sync"
 

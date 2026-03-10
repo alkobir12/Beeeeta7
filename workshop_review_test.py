@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://parts-financial-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_USERNAME = "مدير"

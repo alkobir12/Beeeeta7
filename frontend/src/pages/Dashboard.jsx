@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Car, Users, Wrench, CheckCircle, Plus, Search, MoreVertical, Clock, RefreshCw, User, Calendar, ArrowRight, Package } from 'lucide-react';
@@ -221,30 +221,52 @@ const Dashboard = () => {
     }
   }, [vehicles]);
 
-  const stats = {
-    totalVehicles: vehicles.length,
-    inProgress: vehicles.filter(v => ['diagnosis', 'in_progress', 'waiting_approval', 'quality_check', 'repair', 'quotation', 'approved', 'waiting_for_parts'].includes(v.status)).length,
-    ready: vehicles.filter(v => v.status === 'ready' || v.status === 'delivered').length,
-    technicians: technicians.length,
-
-    // تفاصيل إضافية للكروت الموسّعة
-    waitingParts: vehicles.filter(v => v.status === 'waiting_for_parts').length,
-    diagnosis: vehicles.filter(v => v.status === 'diagnosis').length,
-    delivering: vehicles.filter(v => v.status === 'delivering').length,
-
-    // «بانتظار السداد» = إجمالي جميع الذمم للعملاء (AR)
-    waitingPayment: totalAR,
-  };
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
   const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
-  const filteredVehicles = vehicles.filter(vehicle => {
-    // إخفاء السيارات "تم التسليم" من لوحة التحكم (تظهر في الأرشيف)
-    if (vehicle.status === 'delivered') return false;
+  const dashboardVehicles = useMemo(
+    () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
+    [vehicles]
+  );
+
+  const stats = useMemo(() => {
+    const inProgressStatuses = new Set([
+      'diagnosis',
+      'in_progress',
+      'waiting_approval',
+      'quality_check',
+      'repair',
+      'quotation',
+      'approved',
+      'waiting_for_parts',
+    ]);
+
+    const busyTechnicianKeys = new Set(
+      dashboardVehicles
+        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
+        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
+        .filter(Boolean)
+    );
+
+    return {
+      totalVehicles: dashboardVehicles.length,
+      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
+      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      technicians: technicians.length,
+      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
+      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
+      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
+      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      busyTechnicians: busyTechnicianKeys.size,
+      freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
+      waitingPayment: totalAR,
+    };
+  }, [dashboardVehicles, technicians, totalAR]);
+
+  const filteredVehicles = dashboardVehicles.filter(vehicle => {
     const matchesSearch = 
       vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -383,7 +405,7 @@ const Dashboard = () => {
             <div className="dash-widget-top">
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.totalVehicles') || t('dashboard.total_vehicles')}</span>
-                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.totalVehicles}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-total-vehicles-value">{stats.totalVehicles}</span>
               </div>
             </div>
             <div className="dash-widget-main">
@@ -395,12 +417,12 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.activeToday') || 'نشطة اليوم'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
+                <span>{t('dashboard.activeToday') || 'قيد العمل الآن'}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-total-vehicles-active-value">{stats.inProgress}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.deliveredToday') || 'تم التسليم'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.ready}</span>
+                <span>{t('dashboard.ready') || 'جاهزة الآن'}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-total-vehicles-ready-value">{stats.ready}</span>
               </div>
             </div>
           </div>
@@ -428,7 +450,7 @@ const Dashboard = () => {
             <div className="dash-widget-top">
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.inProgress') || t('dashboard.in_progress')}</span>
-                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.inProgress}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-in-progress-value">{stats.inProgress}</span>
               </div>
             </div>
             <div className="dash-widget-main">
@@ -441,11 +463,11 @@ const Dashboard = () => {
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.waitingParts') || 'بانتظار قطع الغيار'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingParts || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-waiting-parts-value">{stats.waitingParts || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.inDiagnosis') || 'قيد التشخيص'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.diagnosis || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-diagnosis-value">{stats.diagnosis || 0}</span>
               </div>
             </div>
           </div>
@@ -473,7 +495,7 @@ const Dashboard = () => {
             <div className="dash-widget-top">
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.ready')}</span>
-                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.ready}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-ready-value">{stats.readyForHandover}</span>
               </div>
             </div>
             <div className="dash-widget-main">
@@ -485,12 +507,12 @@ const Dashboard = () => {
             </div>
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
-                <span>{t('dashboard.waitingPayment') || 'بانتظار السداد'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.waitingPayment || 0}</span>
+                <span>{t('dashboard.ready') || 'بانتظار الاستلام'}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-ready-waiting-value">{stats.ready || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.inDelivery') || 'قيد التسليم'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.delivering || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-delivering-value">{stats.delivering || 0}</span>
               </div>
             </div>
           </div>
@@ -518,7 +540,7 @@ const Dashboard = () => {
             <div className="dash-widget-top">
               <div className="flex flex-col">
                 <span className="text-[10px] font-medium" style={{ color: styles.textSecondary }}>{t('dashboard.technicians')}</span>
-                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }}>{stats.technicians}</span>
+                <span className="text-2xl font-bold" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-technicians-value">{stats.technicians}</span>
               </div>
             </div>
             <div className="dash-widget-main">
@@ -531,11 +553,11 @@ const Dashboard = () => {
             <div className="dash-widget-bottom border-t" style={{ borderColor: styles.cardBorder }}>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.busyTechs') || 'مشغولون'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.busyTechnicians || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-busy-technicians-value">{stats.busyTechnicians || 0}</span>
               </div>
               <div className="flex flex-col text-[9px]" style={{ color: styles.textSecondary }}>
                 <span>{t('dashboard.freeTechs') || 'متاحون'}</span>
-                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }}>{stats.freeTechnicians || 0}</span>
+                <span className="font-semibold text-xs" style={{ color: styles.textPrimary }} data-testid="dashboard-stat-free-technicians-value">{stats.freeTechnicians || 0}</span>
               </div>
             </div>
           </div>

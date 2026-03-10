@@ -128,7 +128,7 @@ const Layout = ({ pageTitle }) => {
       {/* Main Content */}
       <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10, '--content-offset': contentOffset }}>
         {/* Mobile Header - Fixed at top */}
-        <div className="lg:hidden sticky top-0 z-40 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-16 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
+        <div className="lg:hidden sticky top-0 z-40 mt-20 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-16 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
           <div className="min-w-0 text-center">
             <h1 className="truncate text-sm font-bold text-white">{pageTitle || t('app.dashboard')}</h1>
           </div>

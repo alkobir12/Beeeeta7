@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Sidebar from './Sidebar';
-import { Menu } from 'lucide-react';
+import { Eye, EyeOff, Menu } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
@@ -67,6 +67,10 @@ const Layout = ({ pageTitle }) => {
     return desktopSidebarCollapsed ? '132px' : '322px';
   }, [desktopSidebarCollapsed, desktopSidebarHidden]);
 
+  const toggleSidebarVisibility = () => {
+    setDesktopSidebarHidden((prev) => !prev);
+  };
+
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
       {/* Animated Background */}
@@ -90,6 +94,22 @@ const Layout = ({ pageTitle }) => {
         isCollapsed={desktopSidebarCollapsed}
         isHidden={desktopSidebarHidden}
       />
+
+      <div
+        className="hidden lg:flex fixed bottom-6 left-6 z-50"
+        data-testid="floating-sidebar-visibility-wrapper"
+      >
+        <button
+          type="button"
+          onClick={toggleSidebarVisibility}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/85 text-slate-100 shadow-2xl shadow-black/35 backdrop-blur-2xl transition-all hover:bg-white/12"
+          data-testid={desktopSidebarHidden ? 'floating-sidebar-show-button' : 'floating-sidebar-hide-button'}
+          title={desktopSidebarHidden ? 'إظهار القائمة' : 'إخفاء القائمة'}
+          aria-label={desktopSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}
+        >
+          {desktopSidebarHidden ? <Eye size={18} /> : <EyeOff size={18} />}
+        </button>
+      </div>
       
       {/* Main Content */}
       <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10, '--content-offset': contentOffset }}>

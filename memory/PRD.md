@@ -169,6 +169,14 @@
   - `pytest /app/backend/tests/test_workshop_bot_archive_search.py` (2/2 ناجح)
   - `/app/test_reports/iteration_30.json` (Frontend/Backend 100%)
 
+### تصحيح كروت حالات المركبات في لوحة التحكم لتكون لحظية (10 Mar 2026)
+- تعديل `Dashboard.jsx` بحيث تعتمد كروت الإحصائيات على **المركبات الحالية داخل لوحة التحكم فقط** (`status != delivered`) بدل العدد التاريخي الكامل.
+- أصبح كرت `إجمالي المركبات` يعرض عدد المركبات الحالية داخل اللوحة بغض النظر عن الفلاتر أو البحث.
+- فصل منطق `dashboardVehicles` عن `filteredVehicles` بحيث تؤثر الفلاتر والبحث على الشبكة فقط، بينما تبقى الكروت ثابتة على بيانات اللوحة الحالية.
+- تحديث كرت الجاهزية ليعرض `ready + delivering` كمرحلة تسليم حالية، مع تفاصيل فرعية لحظية (`ready` و`delivering`).
+- إضافة `data-testid` واضحة لقيم الكروت الأساسية لتسهيل الاختبار وضمان عدم رجوع المشكلة.
+- التحقق عبر `/app/test_reports/iteration_31.json` (Frontend 100%): القيم بقيت ثابتة بعد الفلترة والبحث.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -395,6 +403,7 @@
 - `frontend/src/components/workshop-bot/ArchiveSearchPanel.jsx` - New quick archive search field with live suggestions and preview
 - `frontend/src/components/workshop-bot/ArchiveVisitResultCard.jsx` - New visit summary card for quick last-visit details
 - `frontend/src/services/api.js` - Added `vehicleAPI.archiveSearch()`
+- `frontend/src/pages/Dashboard.jsx` - Stats cards now compute from current dashboard vehicles only (exclude delivered) and remain stable across filters/search
 - `backend/supabase_service.py` - Safe operation mapping + compatibility fallbacks
 - `backend/routes_extended.py` - Operations payload/list support for business unit metadata
 - `backend/routes_extended.py` - Auto-resolve business account_id to prevent FK failures when saving operations
@@ -455,3 +464,4 @@
 | 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
+| 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |

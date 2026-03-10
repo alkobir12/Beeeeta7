@@ -487,7 +487,7 @@
 | 09 Mar 2026 | Added P1 inventory architecture planner + backend Rakan analytics APIs + dashboard enhancements |
 | 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |
 | 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |
-| 11 Mar 2026 | Moved font size + sidebar visibility controls to Settings only, removed floating dock, and kept mobile menu in header (no overlay on buttons) |
+| 11 Mar 2026 | Moved font size + sidebar visibility controls to Settings only, removed floating dock, and kept mobile menu in header (no overlay on buttons). |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
 | 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |
 | 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |

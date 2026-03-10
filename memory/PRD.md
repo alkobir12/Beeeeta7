@@ -145,6 +145,12 @@
 - تحديث `LanguageToggleButton` ليدعم وضع القائمة المصغّرة بدون كسر التصميم.
 - التحقق عبر الاختبار: smoke test بصري + `auto_frontend_testing_agent` ناجح بالكامل + `testing_agent` frontend pass كامل مع التحقق من persistence بعد reload.
 
+### تثبيت شريط أدوات العرض أعلى اليسار وتخفيف حجمه (10 Mar 2026)
+- تحويل بلوك التحكم الكبير إلى `display dock` صغير وثابت أعلى يسار الصفحة على سطح المكتب والجوال.
+- إزالة الشريط العريض من داخل المحتوى حتى لا يسبب إزعاجًا بصريًا أو يغيّر ارتفاع الهيدر.
+- ضبط تموضع الجوال بحيث لا يحدث تداخل بين الشريط الثابت وعنوان الصفحة، مع ترك مسافة آمنة أسفل الـ dock.
+- التحقق عبر `auto_frontend_testing_agent`: تم تأكيد اختفاء التداخل على الجوال وعدم وجود regressions على سطح المكتب.
+
 ### Auto WhatsApp Notification (11 Feb 2026 - NEW)
 - When a visit is closed (status=completed), backend auto-generates WhatsApp notification
 - Returns whatsappNotification object with url, phone, message, customerName
@@ -423,3 +429,4 @@
 | 09 Mar 2026 | Global font size increase completed (html root 20px) with no layout regressions |
 | 09 Mar 2026 | Added P1 inventory architecture planner + backend Rakan analytics APIs + dashboard enhancements |
 | 09 Mar 2026 | Added global A-/A/A+ font controls and redesigned sidebar with collapse/hide/show + saved preferences |
+| 10 Mar 2026 | Reworked display controls into a compact fixed top-left dock and fixed mobile header overlap |

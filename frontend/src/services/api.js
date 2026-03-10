@@ -27,7 +27,8 @@ const vehicleAPI = {
   create: (data) => axios.post(`${API_BASE}/vehicles`, data),
   update: (id, data) => axios.put(`${API_BASE}/vehicles/${id}`, data),
   delete: (id) => axios.delete(`${API_BASE}/vehicles/${id}`),
-  track: (trackingId) => axios.get(`${API_BASE}/vehicles/track/${trackingId}`)
+  track: (trackingId) => axios.get(`${API_BASE}/vehicles/track/${trackingId}`),
+  archiveSearch: (query, limit = 5) => api.get('/vehicles/archive-search', { params: { query, limit } }),
 };
 
 const vehicleFinanceAPI = {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File
+from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -7,6 +7,7 @@ import json
 import uuid
 import os
 import io
+import re
 
 # Optional deps used in some endpoints
 try:
@@ -2662,6 +2663,495 @@ def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
         'balance': round(balance, 2),
         'payment_status': payment_status,
     }
+
+
+ARCHIVE_SEARCH_DIGITS_MAP = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+ARCHIVE_SEARCH_STOP_WORDS = {
+    "السياره",
+    "سياره",
+    "السيارة",
+    "سيارة",
+    "المركبه",
+    "مركبه",
+    "المركبة",
+    "مركبة",
+    "عميل",
+    "العميل",
+    "لوحه",
+    "لوحة",
+    "زياره",
+    "زيارة",
+    "اخر",
+    "آخر",
+    "تفاصيل",
+    "ماهي",
+    "وش",
+    "ايش",
+    "عن",
+    "ابحث",
+    "بحث",
+    "اريد",
+    "أريد",
+    "اعطني",
+    "اعرض",
+    "متى",
+    "تم",
+}
+
+
+def _normalize_archive_search_text(value: Any, keep_spaces: bool = False) -> str:
+    text = str(value or "").strip().lower().translate(ARCHIVE_SEARCH_DIGITS_MAP)
+    if not text:
+        return ""
+    replacements = {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ٱ": "ا",
+        "ة": "ه",
+        "ى": "ي",
+        "ؤ": "و",
+        "ئ": "ي",
+    }
+    for src, dest in replacements.items():
+        text = text.replace(src, dest)
+    text = re.sub(r"[^0-9a-z\u0600-\u06FF\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text if keep_spaces else text.replace(" ", "")
+
+
+def _extract_archive_search_terms(query: str) -> Dict[str, Any]:
+    spaced = _normalize_archive_search_text(query, keep_spaces=True)
+    raw_tokens = [token for token in spaced.split(" ") if token]
+    filtered_tokens = [
+        token for token in raw_tokens if token not in ARCHIVE_SEARCH_STOP_WORDS
+    ]
+    compact = "".join(filtered_tokens) or _normalize_archive_search_text(query)
+    return {
+        "raw": query,
+        "spaced": spaced,
+        "tokens": filtered_tokens or raw_tokens,
+        "compact": compact,
+    }
+
+
+def _build_archive_vehicle_fields(vehicle: Dict[str, Any]) -> Dict[str, str]:
+    plate = str(vehicle.get("plateNumber") or vehicle.get("plate_number") or "")
+    customer = str(vehicle.get("customerName") or vehicle.get("customer_name") or "")
+    brand = str(vehicle.get("brand") or "")
+    model = str(vehicle.get("model") or "")
+    year = str(vehicle.get("year") or "")
+    file_number = str(vehicle.get("fileNumber") or vehicle.get("file_number") or "")
+    vin = str(vehicle.get("vin") or "")
+    vehicle_title = " ".join(part for part in [brand, model, year] if part).strip()
+    combined = " ".join(
+        part for part in [plate, customer, vehicle_title, file_number, vin] if part
+    )
+    return {
+        "plate": _normalize_archive_search_text(plate),
+        "customer": _normalize_archive_search_text(customer),
+        "vehicle": _normalize_archive_search_text(vehicle_title),
+        "combined": _normalize_archive_search_text(combined),
+    }
+
+
+def _score_archive_vehicle_match(
+    vehicle: Dict[str, Any], compact_query: str, tokens: List[str]
+) -> Dict[str, Any]:
+    fields = _build_archive_vehicle_fields(vehicle)
+    score = 0
+    reasons: List[str] = []
+    matched_tokens = 0
+
+    if compact_query:
+        if fields["plate"] and (compact_query in fields["plate"] or fields["plate"] in compact_query):
+            score += 140
+            reasons.append("مطابقة رقم اللوحة")
+        if fields["customer"] and compact_query in fields["customer"]:
+            score += 110
+            reasons.append("مطابقة اسم العميل")
+        if fields["vehicle"] and compact_query in fields["vehicle"]:
+            score += 95
+            reasons.append("مطابقة المركبة")
+        if fields["combined"] and compact_query in fields["combined"]:
+            score += 70
+
+    for token in tokens:
+        if len(token) < 1:
+            continue
+        if fields["plate"] and token in fields["plate"]:
+            score += 28
+            matched_tokens += 1
+        elif fields["customer"] and token in fields["customer"]:
+            score += 24
+            matched_tokens += 1
+        elif fields["vehicle"] and token in fields["vehicle"]:
+            score += 20
+            matched_tokens += 1
+        elif fields["combined"] and token in fields["combined"]:
+            score += 10
+            matched_tokens += 1
+
+    if tokens and matched_tokens == len(tokens):
+        score += 35
+        reasons.append("مطابقة كل أجزاء البحث")
+    elif matched_tokens:
+        reasons.append(f"مطابقة {matched_tokens} من {len(tokens)} أجزاء البحث")
+
+    return {"score": score, "reasons": reasons}
+
+
+def _payment_method_label(method: Optional[str], payment_status: Optional[str], total_paid: float) -> str:
+    normalized = str(method or "").strip().lower()
+    labels = {
+        "cash": "نقدًا",
+        "credit": "آجل",
+        "transfer": "تحويل",
+        "bank": "تحويل بنكي",
+        "card": "بطاقة",
+        "mada": "مدى",
+    }
+    if payment_status == "unpaid":
+        return "غير مسددة بعد"
+    if payment_status == "partial":
+        return "دفعة جزئية / تحت الحساب"
+    if normalized in labels:
+        label = labels[normalized]
+    elif total_paid > 0:
+        label = "دفعات زيارة"
+    else:
+        label = "غير محددة"
+
+    if normalized == "credit" and payment_status == "paid_full":
+        return "آجل تم سداده"
+    return label
+
+
+def _humanize_archive_date(value: Any) -> str:
+    if not value:
+        return "غير محدد"
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except Exception:
+            return str(value)
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
+def _build_repair_summary(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    cleaned_items: List[Dict[str, Any]] = []
+    for item in items or []:
+        name = str(item.get("name") or item.get("title") or "").strip()
+        if not name:
+            continue
+        quantity = item.get("quantity") or 1
+        try:
+            quantity = int(quantity)
+        except Exception:
+            quantity = 1
+        cleaned_items.append(
+            {
+                "name": name,
+                "quantity": quantity,
+                "price": float(item.get("price") or item.get("unit_price") or 0),
+            }
+        )
+
+    if not cleaned_items:
+        return {
+            "items": [],
+            "summary": "لا توجد بنود إصلاح مسجلة في آخر زيارة",
+        }
+
+    summary_parts = []
+    for item in cleaned_items[:4]:
+        qty_suffix = f" ×{item['quantity']}" if item["quantity"] > 1 else ""
+        summary_parts.append(f"{item['name']}{qty_suffix}")
+    extra_count = max(0, len(cleaned_items) - 4)
+    summary = "، ".join(summary_parts)
+    if extra_count:
+        summary += f" +{extra_count} أخرى"
+
+    return {"items": cleaned_items, "summary": summary}
+
+
+async def _list_archive_search_vehicles(provider: str) -> List[Dict[str, Any]]:
+    if provider == "supabase":
+        supa = SupabaseService()
+        if supa.mock_mode:
+            return _mem_read("vehicles")
+        return supa.vehicles_list()
+
+    if provider == "memory" or db is None:
+        return _mem_read("vehicles")
+
+    return await db.vehicles.find(
+        {},
+        {
+            "_id": 0,
+            "id": 1,
+            "plateNumber": 1,
+            "brand": 1,
+            "model": 1,
+            "year": 1,
+            "customerName": 1,
+            "customerPhone": 1,
+            "fileNumber": 1,
+            "vin": 1,
+        },
+    ).to_list(3000)
+
+
+async def _get_latest_vehicle_visit(provider: str, vehicle_id: str) -> Optional[Dict[str, Any]]:
+    if provider == "supabase":
+        supa = SupabaseService()
+        if supa.mock_mode:
+            visits = [
+                row for row in _mem_read("vehicle_visits") if row.get("vehicleId") == vehicle_id
+            ]
+            visits.sort(
+                key=lambda row: str(
+                    row.get("entryDate") or row.get("exitDate") or row.get("createdAt") or ""
+                ),
+                reverse=True,
+            )
+            return visits[0] if visits else None
+
+        res = (
+            supa.client.table("vehicle_visits")
+            .select("*")
+            .eq("vehicle_id", vehicle_id)
+            .order("entry_date", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = res.data or []
+        if not rows:
+            return None
+        row = rows[0]
+        return {
+            "id": row.get("id"),
+            "vehicleId": row.get("vehicle_id"),
+            "entryDate": row.get("entry_date"),
+            "exitDate": row.get("exit_date"),
+            "status": row.get("status"),
+            "mileage": row.get("mileage"),
+            "notes": row.get("notes"),
+            "createdAt": row.get("created_at"),
+        }
+
+    if provider == "memory" or db is None:
+        visits = [row for row in _mem_read("vehicle_visits") if row.get("vehicleId") == vehicle_id]
+        visits.sort(
+            key=lambda row: str(
+                row.get("entryDate") or row.get("exitDate") or row.get("createdAt") or ""
+            ),
+            reverse=True,
+        )
+        return visits[0] if visits else None
+
+    rows = await db.vehicle_visits.find(
+        {"vehicleId": vehicle_id}, {"_id": 0}
+    ).sort("entryDate", -1).limit(1).to_list(1)
+    if not rows:
+        return None
+    row = rows[0]
+    for key in ("entryDate", "exitDate", "createdAt"):
+        if row.get(key) and hasattr(row[key], "isoformat"):
+            row[key] = row[key].isoformat()
+    return row
+
+
+async def _get_visit_archive_operations(provider: str, visit_id: str) -> List[Dict[str, Any]]:
+    if not visit_id:
+        return []
+
+    if provider == "supabase":
+        supa = SupabaseService()
+        if supa.mock_mode:
+            rows = [row for row in _mem_read("operations") if row.get("visitId") == visit_id]
+            rows.sort(
+                key=lambda row: str(row.get("createdAt") or row.get("date") or ""),
+                reverse=True,
+            )
+            return rows
+        res = (
+            supa.client.table("operations")
+            .select("*")
+            .eq("visit_id", visit_id)
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+        )
+        rows = res.data or []
+        return [
+            {
+                "id": row.get("id"),
+                "items": row.get("items") or [],
+                "paymentMethod": row.get("payment_method"),
+                "total": row.get("total"),
+                "date": row.get("op_date"),
+                "createdAt": row.get("created_at"),
+            }
+            for row in rows
+        ]
+
+    if provider == "memory" or db is None:
+        rows = [row for row in _mem_read("operations") if row.get("visitId") == visit_id]
+        rows.sort(
+            key=lambda row: str(row.get("createdAt") or row.get("date") or ""),
+            reverse=True,
+        )
+        return rows
+
+    rows = await db.operations.find(
+        {"visitId": visit_id}, {"_id": 0}
+    ).sort("createdAt", -1).limit(10).to_list(10)
+    for row in rows:
+        for key in ("date", "createdAt"):
+            if row.get(key) and hasattr(row[key], "isoformat"):
+                row[key] = row[key].isoformat()
+    return rows
+
+
+def _format_archive_response_text(vehicle: Dict[str, Any], latest_visit: Optional[Dict[str, Any]]) -> str:
+    plate = vehicle.get("plateNumber") or vehicle.get("plate_number") or "-"
+    vehicle_name = " ".join(
+        str(part).strip()
+        for part in [vehicle.get("brand"), vehicle.get("model"), vehicle.get("year")]
+        if str(part or "").strip()
+    )
+    customer_name = vehicle.get("customerName") or vehicle.get("customer_name") or "-"
+
+    if not latest_visit:
+        return (
+            f"تم العثور على المركبة {plate} ({vehicle_name or 'بدون وصف'}) للعميل {customer_name}، "
+            "لكن لا توجد زيارة سابقة مسجلة لها."
+        )
+
+    visit_date = _humanize_archive_date(
+        latest_visit.get("entryDate") or latest_visit.get("exitDate") or latest_visit.get("createdAt")
+    )
+    repairs = latest_visit.get("repairsSummary") or "لا توجد بنود إصلاح مسجلة"
+    total_amount = latest_visit.get("totalAmount") or 0
+    payment_method = latest_visit.get("paymentMethodLabel") or "غير محددة"
+    return (
+        f"آخر زيارة للمركبة {plate} ({vehicle_name or 'بدون وصف'}) كانت بتاريخ {visit_date}.\n"
+        f"العميل: {customer_name}.\n"
+        f"ما تم إصلاحه: {repairs}.\n"
+        f"القيمة: {round(float(total_amount), 2)} ر.س.\n"
+        f"طريقة الدفع: {payment_method}."
+    )
+
+
+@router.get("/vehicles/archive-search")
+async def archive_search_latest_visit(
+    query: str = Query(..., min_length=1),
+    limit: int = Query(default=5, ge=1, le=10),
+):
+    """بحث أرشيفي سريع عن آخر زيارة عبر اسم العميل أو المركبة أو اللوحة."""
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        search_terms = _extract_archive_search_terms(query)
+        compact_query = search_terms.get("compact") or ""
+        tokens = search_terms.get("tokens") or []
+
+        if not compact_query and not tokens:
+            return {
+                "query": query,
+                "interpretedQuery": "",
+                "resultsCount": 0,
+                "bestMatch": None,
+                "results": [],
+            }
+
+        vehicles = await _list_archive_search_vehicles(provider)
+        scored = []
+        for vehicle in vehicles:
+            match = _score_archive_vehicle_match(vehicle, compact_query, tokens)
+            if match["score"] <= 0:
+                continue
+            scored.append({**match, "vehicle": vehicle})
+
+        scored.sort(key=lambda row: row["score"], reverse=True)
+        results = []
+        for candidate in scored[: limit * 2]:
+            vehicle = candidate["vehicle"]
+            latest_visit = await _get_latest_vehicle_visit(provider, str(vehicle.get("id") or ""))
+            operations = await _get_visit_archive_operations(
+                provider, str((latest_visit or {}).get("id") or "")
+            )
+            parsed_notes = _parse_notes_json((latest_visit or {}).get("notes"))
+            visit_financial = _calc_visit_financial(parsed_notes)
+
+            repair_source = visit_financial.get("items") or []
+            if not repair_source and operations:
+                repair_source = operations[0].get("items") or []
+            repair_data = _build_repair_summary(repair_source)
+
+            latest_operation = operations[0] if operations else {}
+            total_amount = visit_financial.get("total_amount") or float(
+                latest_operation.get("total") or 0
+            )
+            payment_method = latest_operation.get("paymentMethod")
+            payment_method_label = _payment_method_label(
+                payment_method,
+                visit_financial.get("payment_status"),
+                float(visit_financial.get("total_paid") or 0),
+            )
+
+            latest_visit_payload = None
+            if latest_visit:
+                latest_visit_payload = {
+                    "id": latest_visit.get("id"),
+                    "entryDate": latest_visit.get("entryDate") or latest_visit.get("entry_date"),
+                    "exitDate": latest_visit.get("exitDate") or latest_visit.get("exit_date"),
+                    "status": latest_visit.get("status") or "-",
+                    "repairs": repair_data["items"],
+                    "repairsSummary": repair_data["summary"],
+                    "totalAmount": round(float(total_amount or 0), 2),
+                    "totalPaid": round(float(visit_financial.get("total_paid") or 0), 2),
+                    "balance": round(float(visit_financial.get("balance") or 0), 2),
+                    "paymentStatus": visit_financial.get("payment_status") or "unknown",
+                    "paymentMethod": payment_method or "",
+                    "paymentMethodLabel": payment_method_label,
+                }
+
+            vehicle_payload = {
+                "id": vehicle.get("id"),
+                "plateNumber": vehicle.get("plateNumber") or vehicle.get("plate_number"),
+                "brand": vehicle.get("brand"),
+                "model": vehicle.get("model"),
+                "year": vehicle.get("year"),
+                "customerName": vehicle.get("customerName") or vehicle.get("customer_name"),
+                "customerPhone": vehicle.get("customerPhone") or vehicle.get("customer_phone"),
+                "fileNumber": vehicle.get("fileNumber") or vehicle.get("file_number"),
+            }
+
+            result_item = {
+                "matchScore": candidate["score"],
+                "matchReasons": candidate.get("reasons") or [],
+                "vehicle": vehicle_payload,
+                "latestVisit": latest_visit_payload,
+                "responseText": _format_archive_response_text(vehicle_payload, latest_visit_payload),
+            }
+            results.append(result_item)
+            if len(results) >= limit:
+                break
+
+        return {
+            "query": query,
+            "interpretedQuery": search_terms.get("spaced") or compact_query,
+            "resultsCount": len(results),
+            "bestMatch": results[0] if results else None,
+            "results": results,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/vehicles/{vehicle_id}/financial-summary")

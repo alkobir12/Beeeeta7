@@ -1,12 +1,54 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, X, Loader2, Search, ClipboardList, FileText, Receipt, Send, Wrench, Bot, AlertCircle } from 'lucide-react';
+import { MessageCircle, X, Loader2, ClipboardList, FileText, Receipt, Send, Wrench, Bot, AlertCircle } from 'lucide-react';
 import { aiAPI, vehicleAPI } from '../services/api';
+import { ArchiveSearchPanel } from './workshop-bot/ArchiveSearchPanel';
+import { ArchiveVisitResultCard } from './workshop-bot/ArchiveVisitResultCard';
+
+const INITIAL_CHAT_MESSAGES = [
+  { role: 'assistant', content: 'يا هلا! أنا أبو فهد، مدير خدمة العملاء. آمرني وش بغيت؟' },
+];
+
+const createWorkshopBotSessionId = () => {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `workshop-bot-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const ARCHIVE_INTENT_HINTS = [
+  'آخر زيارة',
+  'اخر زيارة',
+  'تفاصيل آخر زيارة',
+  'تفاصيل الزيارة',
+  'لوحة',
+  'لوحه',
+  'مركبة',
+  'مركبه',
+  'سيارة',
+  'سياره',
+  'العميل',
+  'اسم العميل',
+  'الأرشيف',
+  'الارشيف',
+  'ابحث',
+  'بحث',
+];
+
+const isArchiveIntent = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return false;
+  const hasHint = ARCHIVE_INTENT_HINTS.some((hint) => text.includes(hint));
+  const hasDigits = /[0-9٠-٩]{3,}/.test(text);
+  const hasVehicleWords = /(لوحه|لوحة|مركبه|مركبة|سياره|سيارة|عميل|زيارة|زياره)/.test(text);
+  return hasHint || (hasDigits && hasVehicleWords);
+};
 
 // ويدجت مساعد الورشة الذكي العائم - تصميم Dark/Glass مطابق لثيم الموقع
 const ChatWidget = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+  const archiveLookupTimerRef = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState('chat'); // 'chat' | 'diagnosis' | 'technical' | 'invoice'
@@ -20,9 +62,35 @@ const ChatWidget = () => {
   
   // المحادثة الحرة (أبو فهد)
   const [chatInput, setChatInput] = useState('');
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'يا هلا! أنا أبو فهد، مدير خدمة العملاء. آمرني وش بغيت؟' }
-  ]);
+  const [messages, setMessages] = useState(INITIAL_CHAT_MESSAGES);
+  const [chatSessionId, setChatSessionId] = useState(() => {
+    if (typeof window === 'undefined') return createWorkshopBotSessionId();
+    const existing = window.localStorage.getItem('workshop-bot-session-id');
+    if (existing) return existing;
+    const generated = createWorkshopBotSessionId();
+    window.localStorage.setItem('workshop-bot-session-id', generated);
+    return generated;
+  });
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [archiveError, setArchiveError] = useState('');
+  const [archiveResults, setArchiveResults] = useState([]);
+  const [selectedArchiveResult, setSelectedArchiveResult] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !chatSessionId) return;
+    window.localStorage.setItem('workshop-bot-session-id', chatSessionId);
+  }, [chatSessionId]);
+
+  const resetChatSession = useCallback(() => {
+    const nextSessionId = createWorkshopBotSessionId();
+    setChatSessionId(nextSessionId);
+    setMessages(INITIAL_CHAT_MESSAGES);
+    setArchiveQuery('');
+    setArchiveError('');
+    setArchiveResults([]);
+    setSelectedArchiveResult(null);
+  }, []);
 
   // عند فتح الودجت لأول مرة: جلب قائمة المركبات
   useEffect(() => {
@@ -47,6 +115,83 @@ const ChatWidget = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, mode]);
 
+  const runArchiveLookup = useCallback(async (rawQuery, options = {}) => {
+    const query = String(rawQuery || '').trim();
+    if (!query) {
+      setArchiveResults([]);
+      setSelectedArchiveResult(null);
+      setArchiveError('');
+      return null;
+    }
+
+    const { appendToChat = false, silent = false } = options;
+
+    if (!silent) {
+      setArchiveLoading(true);
+    }
+    setArchiveError('');
+
+    try {
+      const { data } = await vehicleAPI.archiveSearch(query, 5);
+      const results = Array.isArray(data?.results) ? data.results : [];
+      const bestMatch = data?.bestMatch || results[0] || null;
+
+      setArchiveResults(results);
+      setSelectedArchiveResult(bestMatch);
+
+      if (appendToChat) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: bestMatch?.responseText || 'ما لقيت زيارة سابقة مطابقة لهذا البحث. جرّب الاسم أو اللوحة بشكل أقصر.',
+            archiveResult: bestMatch,
+          },
+        ]);
+      }
+
+      if (!bestMatch && !silent) {
+        setArchiveError('ما لقيت نتيجة مطابقة. جرّب اللوحة أو اسم العميل بشكل أقصر.');
+      }
+
+      return bestMatch;
+    } catch (lookupError) {
+      console.error('Archive lookup error', lookupError);
+      const message = 'تعذر تنفيذ البحث الأرشيفي الآن. حاول مرة أخرى بعد قليل.';
+      setArchiveError(message);
+      if (appendToChat) {
+        setMessages((prev) => [...prev, { role: 'assistant', content: message }]);
+      }
+      return null;
+    } finally {
+      setArchiveLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'chat') return undefined;
+    const query = archiveQuery.trim();
+
+    if (query.length < 2) {
+      setArchiveResults([]);
+      setArchiveError('');
+      if (!query) {
+        setSelectedArchiveResult(null);
+      }
+      return undefined;
+    }
+
+    archiveLookupTimerRef.current = window.setTimeout(() => {
+      runArchiveLookup(query, { silent: true });
+    }, 350);
+
+    return () => {
+      if (archiveLookupTimerRef.current) {
+        window.clearTimeout(archiveLookupTimerRef.current);
+      }
+    };
+  }, [archiveQuery, isOpen, mode, runArchiveLookup]);
+
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!chatInput.trim()) return;
@@ -57,11 +202,19 @@ const ChatWidget = () => {
     setLoading(true);
 
     try {
+      if (isArchiveIntent(userMsg)) {
+        await runArchiveLookup(userMsg, { appendToChat: true });
+        return;
+      }
+
       // إرسال الرسالة إلى أبو فهد (AlKabeer Bot)
-      const res = await aiAPI.alkabeerChat({ message: userMsg });
+      const res = await aiAPI.alkabeerChat({ message: userMsg, sessionId: chatSessionId });
       
       const botResponse = res.data.response;
       const isDevMode = res.data.mode === 'dev';
+      if (res.data.sessionId) {
+        setChatSessionId(res.data.sessionId);
+      }
       
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -104,7 +257,10 @@ const ChatWidget = () => {
       
       يرجى تحليل المشكلة واقتراح الحلول وقطع الغيار المناسبة حسب خبرتك يا أبو فهد.`;
 
-      const res = await aiAPI.alkabeerChat({ message });
+      const res = await aiAPI.alkabeerChat({ message, sessionId: chatSessionId });
+      if (res.data.sessionId) {
+        setChatSessionId(res.data.sessionId);
+      }
       setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }]);
       setSymptoms(''); // مسح الحقل بعد الإرسال
     } catch (e) {
@@ -113,6 +269,10 @@ const ChatWidget = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleArchiveSearch = async () => {
+    await runArchiveLookup(archiveQuery, { silent: false });
   };
 
   // تحديد المركبة الحالية من عنوان الصفحة
@@ -151,6 +311,7 @@ const ChatWidget = () => {
         style={{
           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
         }}
+        data-testid="workshop-bot-toggle-button"
       >
         <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors" />
         {isOpen ? (
@@ -190,15 +351,17 @@ const ChatWidget = () => {
             </div>
             <div className="flex items-center gap-1">
               <button 
-                onClick={() => setMessages([])} 
+                onClick={resetChatSession}
                 className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors text-[10px]"
                 title="مسح المحادثة"
+                data-testid="workshop-bot-reset-chat-button"
               >
                 مسح
               </button>
               <button 
                 onClick={() => setIsOpen(false)} 
                 className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"
+                data-testid="workshop-bot-close-button"
               >
                 <X size={18} />
               </button>
@@ -220,6 +383,7 @@ const ChatWidget = () => {
                     ? 'bg-blue-600 text-white shadow-md' 
                     : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
                 }`}
+                data-testid={`workshop-bot-tab-${tab.id}`}
               >
                 <tab.icon size={14} />
                 {tab.label}
@@ -233,7 +397,28 @@ const ChatWidget = () => {
             {/* Mode: CHAT */}
             {mode === 'chat' && (
               <div className="absolute inset-0 flex flex-col">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <ArchiveSearchPanel
+                  query={archiveQuery}
+                  onQueryChange={setArchiveQuery}
+                  onSearch={handleArchiveSearch}
+                  loading={archiveLoading}
+                  error={archiveError}
+                  results={archiveResults}
+                  selectedResult={selectedArchiveResult}
+                  onSelectResult={setSelectedArchiveResult}
+                />
+
+                {selectedArchiveResult && (
+                  <div className="max-h-[220px] overflow-y-auto border-b border-slate-800 bg-slate-950/35 p-3" data-testid="workshop-bot-selected-archive-result-panel">
+                    <ArchiveVisitResultCard
+                      result={selectedArchiveResult}
+                      compact
+                      testIdPrefix="workshop-bot-selected-archive-result"
+                    />
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent" data-testid="workshop-bot-chat-messages-panel">
                   {messages.map((msg, idx) => (
                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div 
@@ -247,6 +432,15 @@ const ChatWidget = () => {
                       >
                         {msg.isDev && <div className="text-[10px] font-bold text-purple-400 mb-1">🛠️ وضع المطور</div>}
                         <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {msg.archiveResult && (
+                          <div className="mt-3">
+                            <ArchiveVisitResultCard
+                              result={msg.archiveResult}
+                              compact
+                              testIdPrefix={`workshop-bot-message-archive-result-${idx}`}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -272,11 +466,13 @@ const ChatWidget = () => {
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder="اكتب رسالتك لأبو فهد..."
                       className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                      data-testid="workshop-bot-chat-input"
                     />
                     <button
                       type="submit"
                       disabled={loading || !chatInput.trim()}
                       className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      data-testid="workshop-bot-chat-send-button"
                     >
                       <Send size={18} />
                     </button>
@@ -303,6 +499,7 @@ const ChatWidget = () => {
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
                       value={selectedVehicleId}
                       onChange={(e) => setSelectedVehicleId(e.target.value)}
+                      data-testid="workshop-bot-diagnosis-vehicle-select"
                     >
                       <option value="">— اختر من القائمة —</option>
                       {vehicles.map((v) => (
@@ -320,6 +517,7 @@ const ChatWidget = () => {
                       placeholder="مثال: السيارة تنتع عند سرعة 80، دخان أسود، صوت طقطقة..."
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
+                      data-testid="workshop-bot-diagnosis-symptoms-input"
                     />
                   </div>
 
@@ -333,6 +531,7 @@ const ChatWidget = () => {
                     onClick={handleRunDiagnosis}
                     disabled={loading}
                     className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"
+                    data-testid="workshop-bot-diagnosis-submit-button"
                   >
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <Wrench size={16} />}
                     تحليل العطل

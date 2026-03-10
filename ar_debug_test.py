@@ -7,7 +7,7 @@ Quick test to verify AR calculation after payments
 import requests
 import json
 
-BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def check_ar_calculation():

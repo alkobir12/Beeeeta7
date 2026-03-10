@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from environment
-BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 # Test results tracking

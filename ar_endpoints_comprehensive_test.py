@@ -15,7 +15,7 @@ import uuid
 from datetime import datetime, timedelta
 
 # Configuration
-BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

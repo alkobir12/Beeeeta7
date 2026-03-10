@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BASE_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

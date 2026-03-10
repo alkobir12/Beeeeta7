@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 # Configuration
-BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://rakan-ledger-debug.preview.emergentagent.com") + "/api"
+BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://dual-ledger-app.preview.emergentagent.com") + "/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class TestAccrualPostingScenarios:

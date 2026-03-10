@@ -361,7 +361,7 @@
 ## Test Credentials
 - Username: مدير
 - Workshop ID: finmodule-sync
-- API URL: https://rakan-ledger-debug.preview.emergentagent.com
+- API URL: https://dual-ledger-app.preview.emergentagent.com
 - Groq API Key: configured in backend/.env
 
 ## Key Files

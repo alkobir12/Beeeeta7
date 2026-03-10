@@ -24,7 +24,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BASE_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class AREndpointsTest:

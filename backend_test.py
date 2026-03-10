@@ -291,7 +291,7 @@ class InventoryAPITester:
 def main():
     """Main function to run the tests"""
     # Use the base URL from frontend/.env
-    BASE_URL = "https://rakan-ledger-debug.preview.emergentagent.com"
+    BASE_URL = "https://dual-ledger-app.preview.emergentagent.com"
     
     if len(sys.argv) > 1:
         BASE_URL = sys.argv[1]

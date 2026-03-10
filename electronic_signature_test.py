@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://rakan-ledger-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
 
 class ApprovalSystemTester:
     def __init__(self):

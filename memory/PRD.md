@@ -50,6 +50,10 @@
 - إصلاح /api/users ليحوّل صلاحيات المستخدمين القديمة إلى هيكل الصلاحيات الجديد.
 - رفع طبقة زر القائمة العائم لضمان النقر بدون تداخل.
 
+### تحسينات لوحة قطع راكان (11 Mar 2026)
+- إضافة ملخص أكبر تحركات الأسعار ومصروفات حسب الحساب داخل تبويب راكان.
+- إبراز مؤشرات التذبذب والتغيّر السعري مع صناديق مصروفات مفصلة.
+
 ### إصلاح عاجل لانهيار Frontend Build + Runtime (01 Mar 2026)
 - معالجة سبب الانهيار المرتبط بـ `resolveBackendBase` وتوحيد الاستيراد في صفحة المخزون لاستخدام `utils/backendBase` مباشرة.
 - التحقق من نجاح البناء الإنتاجي (`yarn build`) بدون أي `SyntaxError` في صفحات الضرائب/دليل الحسابات/القيود.
@@ -520,6 +524,7 @@
 | 11 Mar 2026 | Added advanced role-based permissions and improved dashboard receivables display |
 | 11 Mar 2026 | Updated backend/frontend dependencies and stabilized Tailwind/PostCSS |
 | 11 Mar 2026 | Fixed /api/users legacy permissions and floating menu click issues |
+| 11 Mar 2026 | Enhanced Rakan parts dashboard price/expense insights |
 | 10 Mar 2026 | Added quick archive last-visit search inside floating workshop bot chat with natural-language lookup |
 | 10 Mar 2026 | Fixed dashboard vehicle status cards to use live current dashboard counts instead of historical totals |
 | 10 Mar 2026 | P0 accounting fix: enforced `5000*` => Rakan-only routing (Operations + POS) and blocked workshop contamination |

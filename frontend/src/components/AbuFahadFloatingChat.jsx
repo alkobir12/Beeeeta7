@@ -155,7 +155,10 @@ const AbuFahadFloatingChat = ({
   if (!enabled) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999]" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] sm:bottom-6 sm:left-auto sm:right-6 sm:translate-x-0"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       {/* Floating button */}
       {!isOpen ? (
         <button
@@ -170,7 +173,7 @@ const AbuFahadFloatingChat = ({
 
       {/* Chat panel */}
       {isOpen ? (
-        <div className="w-[340px] sm:w-[380px] h-[520px] rounded-2xl border border-slate-800 bg-slate-950/95 backdrop-blur shadow-2xl overflow-hidden">
+        <div className="w-[92vw] max-w-[380px] sm:w-[380px] h-[70vh] sm:h-[520px] rounded-2xl border border-slate-800 bg-slate-950/95 backdrop-blur shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">

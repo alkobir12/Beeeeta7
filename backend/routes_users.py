@@ -5,7 +5,7 @@ import uuid
 import os
 import json
 
-from models_users import User, UserCreate, UserUpdate, UserPermissions
+from models_users import User, UserCreate, UserUpdate
 from supabase_service import SupabaseService
 
 router = APIRouter(prefix="/api")
@@ -33,7 +33,7 @@ def _ensure_users_file():
                 "email": None,
                 "phone": "0500000000",
                 "role": "admin",
-                "permissions": UserPermissions().dict(),
+                "permissions": {},
                 "isActive": True,
                 "guidanceEnabled": True,
                 "createdAt": datetime.utcnow().isoformat(),
@@ -106,7 +106,7 @@ async def create_user(user_data: UserCreate):
             doc["lastLogin"] = None
             doc["isActive"] = True
             if not doc.get("permissions"):
-                doc["permissions"] = UserPermissions().dict()
+                doc["permissions"] = {}
             users.append(doc)
             _write_users(users)
             return User(**doc)
@@ -120,7 +120,7 @@ async def create_user(user_data: UserCreate):
         user_dict["lastLogin"] = None
         user_dict["isActive"] = True
         if not user_dict.get("permissions"):
-            user_dict["permissions"] = UserPermissions().dict()
+            user_dict["permissions"] = {}
         await _db.users.insert_one(user_dict)
         user_dict.pop("_id", None)
         return User(**user_dict)
@@ -135,7 +135,7 @@ async def create_user(user_data: UserCreate):
         doc["lastLogin"] = None
         doc["isActive"] = True
         if not doc.get("permissions"):
-            doc["permissions"] = UserPermissions().dict()
+            doc["permissions"] = {}
         users.append(doc)
         _write_users(users)
         return User(**doc)

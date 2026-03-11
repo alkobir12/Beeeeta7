@@ -460,13 +460,18 @@ const Dashboard = () => {
                   >
                     إجمالي الذمم الحالية للمركبات
                   </span>
-                  <span
-                    className="text-sm font-bold"
-                    style={{ color: styles.textPrimary }}
-                    data-testid="dashboard-stat-total-vehicles-ar-value"
+                  <div
+                    className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2"
+                    data-testid="dashboard-stat-total-vehicles-ar-box"
                   >
-                    {(stats.dashboardReceivables || 0).toLocaleString(isRTL ? 'ar-SA' : 'en-US')} {t('common.currency')}
-                  </span>
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: styles.textPrimary }}
+                      data-testid="dashboard-stat-total-vehicles-ar-value"
+                    >
+                      {(stats.dashboardReceivables || 0).toLocaleString(isRTL ? 'ar-SA' : 'en-US')} {t('common.currency')}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

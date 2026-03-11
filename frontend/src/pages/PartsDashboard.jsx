@@ -8,6 +8,12 @@ import { RakanPriceTimelinePanel } from '../components/parts-dashboard/RakanPric
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
 
+const pctClass = (value) => {
+  if (value > 0) return 'text-rose-300';
+  if (value < 0) return 'text-emerald-300';
+  return 'text-slate-300';
+};
+
 const backorderStatusOptions = [
   { value: 'all', label: 'الكل' },
   { value: 'pending', label: 'قيد الانتظار' },
@@ -157,6 +163,8 @@ const PartsDashboard = () => {
   };
 
   const overview = analytics?.overview || {};
+  const priceTrendHighlights = rakanAnalytics?.price_trend || [];
+  const expenseBreakdown = rakanAnalytics?.expense_breakdown || [];
   const cards = useMemo(
     () => [
       { key: 'inventory-cost', label: 'قيمة المخزون (تكلفة)', value: formatCurrency(overview.inventory_cost_value), icon: ShoppingCart, color: '#22c55e' },
@@ -526,6 +534,60 @@ const PartsDashboard = () => {
                 selectedCategory={selectedExpenseCategory}
                 onSelectCategory={setSelectedExpenseCategory}
               />
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-rakan-price-expense-summary">
+                <div className="glass-card p-4" data-testid="parts-control-rakan-price-highlights">
+                  <h2 className="text-white font-semibold mb-3">أكبر تحركات الأسعار</h2>
+                  <div className="space-y-2">
+                    {priceTrendHighlights.slice(0, 6).map((row) => (
+                      <div
+                        key={row.part_id}
+                        className="rounded-xl bg-white/5 p-3 flex flex-col gap-2"
+                        data-testid={`parts-control-rakan-price-highlight-${row.part_id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-white">{row.part_name}</p>
+                          <span className="text-xs text-cyan-200">تذبذب {Number(row.volatility_pct || 0).toLocaleString('ar-SA')}%</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 text-xs">
+                          <span className={pctClass(row.sale_change_pct)}>
+                            بيع: {formatCurrency(row.sale_change)} ({Number(row.sale_change_pct || 0).toLocaleString('ar-SA')}%)
+                          </span>
+                          <span className={pctClass(row.purchase_change_pct)}>
+                            شراء: {formatCurrency(row.purchase_change)} ({Number(row.purchase_change_pct || 0).toLocaleString('ar-SA')}%)
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {!priceTrendHighlights.length && (
+                      <p className="text-sm text-slate-400" data-testid="parts-control-rakan-price-highlights-empty">
+                        لا توجد تغيّرات سعرية كافية في الفترة الحالية.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="glass-card p-4" data-testid="parts-control-rakan-expense-breakdown">
+                  <h2 className="text-white font-semibold mb-3">مصروفات حسب الحساب</h2>
+                  <div className="space-y-2">
+                    {expenseBreakdown.map((row, index) => (
+                      <div
+                        key={`${row.account}-${index}`}
+                        className="rounded-xl bg-white/5 p-3 flex items-center justify-between"
+                        data-testid={`parts-control-rakan-expense-breakdown-${index}`}
+                      >
+                        <p className="text-sm text-white">{row.account_name}</p>
+                        <p className="text-sm text-amber-300">{formatCurrency(row.amount)}</p>
+                      </div>
+                    ))}
+                    {!expenseBreakdown.length && (
+                      <p className="text-sm text-slate-400" data-testid="parts-control-rakan-expense-breakdown-empty">
+                        لا توجد مصروفات مصنفة حسب الحساب في الفترة الحالية.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div data-testid="parts-control-rakan-price-trend">
                 <RakanPriceTimelinePanel analytics={rakanAnalytics} />

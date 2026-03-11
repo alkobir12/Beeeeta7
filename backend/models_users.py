@@ -1,19 +1,8 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, Dict
 from datetime import datetime
 
-
-class UserPermissions(BaseModel):
-    canViewDashboard: bool = True
-    canManageVehicles: bool = True
-    canManageCustomers: bool = True
-    canManageParts: bool = False
-    canManageServices: bool = False
-    canViewReports: bool = True
-    canManageFinance: bool = False
-    canManageUsers: bool = False
-    canAccessCEO: bool = False
-    canManageSettings: bool = False
+PermissionsMap = Dict[str, Dict[str, bool]]
 
 
 class User(BaseModel):
@@ -22,7 +11,7 @@ class User(BaseModel):
     email: Optional[str] = None
     phone: str
     role: str = "employee"  # admin, manager, employee
-    permissions: UserPermissions = UserPermissions()
+    permissions: PermissionsMap = Field(default_factory=dict)
     isActive: bool = True
     guidanceEnabled: bool = True
     createdAt: datetime
@@ -34,7 +23,7 @@ class UserCreate(BaseModel):
     email: Optional[str] = None
     phone: str
     role: str = "employee"
-    permissions: Optional[UserPermissions] = None
+    permissions: Optional[PermissionsMap] = None
     guidanceEnabled: Optional[bool] = True
 
 
@@ -43,6 +32,6 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     role: Optional[str] = None
-    permissions: Optional[UserPermissions] = None
+    permissions: Optional[PermissionsMap] = None
     isActive: Optional[bool] = None
     guidanceEnabled: Optional[bool] = None

@@ -30,6 +30,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageToggleButton from './LanguageToggleButton';
 import { resolveBackendBase } from '../utils/backendBase';
+import { hasPermission } from '../utils/permissions';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -56,59 +57,59 @@ const Sidebar = ({
   const canLoadSettings = useMemo(() => true, []);
 
   const MENU_ITEMS = [
-    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: 'canViewDashboard' },
-    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: 'canManageVehicles' },
-    { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: 'canManageCustomers' },
-    { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: 'canManageUsers' },
-    { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: 'canManageParts' },
+    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: { module: 'dashboard', action: 'view' } },
+    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: { module: 'work_orders', action: 'view' } },
+    { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: { module: 'customers', action: 'view' } },
+    { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: { module: 'users', action: 'view' } },
+    { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: { module: 'inventory', action: 'view' } },
     {
       group: true,
       label: t('nav.inventory'),
       icon: BookOpen,
       enabled: true,
-      permission: 'canManageParts',
+      permission: { module: 'inventory', action: 'view' },
       children: [
-        { path: '/parts-dashboard', label: t('inventory.parts_dashboard') || 'لوحة تحكم القطع', enabled: true },
-        { path: '/parts', label: t('inventory.inventory'), enabled: true },
+        { path: '/parts-dashboard', label: t('inventory.parts_dashboard') || 'لوحة تحكم القطع', enabled: true, permission: { module: 'inventory', action: 'view' } },
+        { path: '/parts', label: t('inventory.inventory'), enabled: true, permission: { module: 'inventory', action: 'view' } },
       ]
     },
-    { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: 'canManageServices' },
+    { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: { module: 'work_orders', action: 'view' } },
     {
       group: true,
       label: `💰 ${t('nav.finance_accounting')}`,
       icon: BarChart3,
       enabled: true,
-      permission: 'canManageSettings',
+      permission: { module: 'reports', action: 'view' },
       children: [
-        { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true },
-        { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true },
-        { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true },
-        { path: '/finance/taxes', label: t('nav.taxes'), enabled: true },
-        { path: '/ai-financial', label: `🤖 ${t('nav.abu_fahd_financial_ai')}`, enabled: true },
+        { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/ai-financial', label: `🤖 ${t('nav.abu_fahd_financial_ai')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة
         // { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },
       ]
     },
-    { path: '/fault-knowledge', label: `📚 ${t('nav.fault_knowledge')}`, icon: Archive, enabled: true, permission: 'canManageVehicles' },
-    { path: '/denso-diagnostics', label: `⚡ ${t('nav.denso_diagnostics')}`, icon: Activity, enabled: true, permission: 'canManageVehicles' },
+    { path: '/fault-knowledge', label: `📚 ${t('nav.fault_knowledge')}`, icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
+    { path: '/denso-diagnostics', label: `⚡ ${t('nav.denso_diagnostics')}`, icon: Activity, enabled: true, permission: { module: 'vehicles', action: 'view' } },
     {
       group: true,
       label: t('nav.documents'),
       icon: FileText,
       enabled: true,
-      permission: 'canManageVehicles',
+      permission: { module: 'invoices', action: 'view' },
       children: [
-        { path: '/print', label: t('nav.print_quotes'), enabled: true },
-        { path: '/templates', label: `🎨 ${t('nav.templates_manager')}`, enabled: true },
+        { path: '/print', label: t('nav.print_quotes'), enabled: true, permission: { module: 'invoices', action: 'view' } },
+        { path: '/templates', label: `🎨 ${t('nav.templates_manager')}`, enabled: true, permission: { module: 'invoices', action: 'view' } },
       ]
     },
  
-    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: 'canManageVehicles' },
-    { path: '/import', label: t('nav.import'), icon: Upload, enabled: true, permission: 'canManageSettings' },
-    { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: 'canManageUsers' },
-    { path: '/profile', label: t('nav.profile'), icon: Building2, enabled: true, permission: 'canManageSettings' },
-    { path: '/settings', label: t('nav.settings'), icon: Settings, enabled: true, permission: 'canManageSettings' },
-    { path: '/moltbot', label: `🤖 ${t('nav.moltbot')}`, icon: Bot, enabled: true, allowedRoles: ['manager', 'admin'] },
+    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
+    { path: '/import', label: t('nav.import'), icon: Upload, enabled: true, permission: { module: 'inventory', action: 'create' } },
+    { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: { module: 'users', action: 'view' } },
+    { path: '/profile', label: t('nav.profile'), icon: Building2, enabled: true, permission: { module: 'settings', action: 'view' } },
+    { path: '/settings', label: t('nav.settings'), icon: Settings, enabled: true, permission: { module: 'settings', action: 'view' } },
+    { path: '/moltbot', label: `🤖 ${t('nav.moltbot')}`, icon: Bot, enabled: true, allowedRoles: ['manager', 'admin'], permission: { module: 'reports', action: 'view' } },
   ];
 
   const loadSettings = async () => {
@@ -161,35 +162,53 @@ const Sidebar = ({
     navigate('/login');
   };
 
-  const session = useMemo(() => {
+  const readSession = () => {
     try {
       return JSON.parse(localStorage.getItem('session') || '{}');
     } catch (e) {
       return {};
     }
+  };
+
+  const [session, setSession] = useState(() => readSession());
+
+  useEffect(() => {
+    const sync = () => setSession(readSession());
+    window.addEventListener('storage', sync);
+    window.addEventListener('sessionUpdated', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('sessionUpdated', sync);
+    };
   }, []);
 
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;
 
     const role = session.role;
-    const permissions = session.permissions || {};
 
     if (item.allowedRoles && !item.allowedRoles.includes(role)) {
       return null;
     }
 
-    // Admin sees everything
-    if (role !== 'admin') {
-      if (item.permission && !permissions[item.permission]) {
-        return null;
-      }
+    if (item.permission && !hasPermission(session, item.permission.module, item.permission.action)) {
+      return null;
     }
 
     if (item.group && item.children) {
+      const visibleChildren = item.children.filter((child) => {
+        if (!child.enabled) return false;
+        if (child.permission && !hasPermission(session, child.permission.module, child.permission.action)) {
+          return false;
+        }
+        return true;
+      });
+
+      if (!visibleChildren.length) return null;
+
       const groupCollapsed = collapsedGroups[item.label];
       const hasFloatingMenu = activeCollapsedGroup === item.label;
-      const hasActiveChild = item.children.some(child => location.pathname === child.path);
+      const hasActiveChild = visibleChildren.some(child => location.pathname === child.path);
       const Icon = item.icon || FileText;
 
       return (
@@ -215,8 +234,7 @@ const Sidebar = ({
 
           {!isCollapsed && !groupCollapsed && (
             <div className="ms-9 mt-1 space-y-1">
-              {item.children.map((child, childIndex) => {
-                if (!child.enabled) return null;
+              {visibleChildren.map((child, childIndex) => {
                 const isActive = location.pathname === child.path;
                 return (
                   <button
@@ -240,8 +258,7 @@ const Sidebar = ({
                 <span className="text-sm font-semibold">{item.label}</span>
               </div>
               <div className="space-y-1">
-                {item.children.map((child, childIndex) => {
-                  if (!child.enabled) return null;
+                {visibleChildren.map((child, childIndex) => {
                   const isActive = location.pathname === child.path;
                   return (
                     <button

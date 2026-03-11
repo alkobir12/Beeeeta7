@@ -106,21 +106,37 @@ async def get_users():
     try:
         if DB_PROVIDER == "supabase" and not supabase.mock_mode:
             rows = supabase.users_list()
-            return [User(**r) for r in rows]
+            normalized_rows = []
+            for row in rows:
+                row = dict(row)
+                row["permissions"] = _normalize_permissions(row.get("permissions"))
+                normalized_rows.append(row)
+            return [User(**r) for r in normalized_rows]
         if DB_PROVIDER == "memory":
             rows = _read_users()
-            return [User(**r) for r in rows]
+            normalized_rows = []
+            for row in rows:
+                row = dict(row)
+                row["permissions"] = _normalize_permissions(row.get("permissions"))
+                normalized_rows.append(row)
+            return [User(**r) for r in normalized_rows]
         # Mongo fallback
         users = await _db.users.find({}).to_list(length=1000)
         out = []
         for u in users:
             u.pop("_id", None)
+            u["permissions"] = _normalize_permissions(u.get("permissions"))
             out.append(User(**u))
         return out
     except Exception:
         # Fallback to memory on any error (e.g., Mongo down)
         rows = _read_users()
-        return [User(**r) for r in rows]
+        normalized_rows = []
+        for row in rows:
+            row = dict(row)
+            row["permissions"] = _normalize_permissions(row.get("permissions"))
+            normalized_rows.append(row)
+        return [User(**r) for r in normalized_rows]
 
 
 @router.post("/users", response_model=User)

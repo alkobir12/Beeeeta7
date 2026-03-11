@@ -138,11 +138,11 @@ const Layout = ({ pageTitle }) => {
         isHidden={desktopSidebarHidden}
       />
 
-      <div className="fixed bottom-4 left-4 z-50 lg:bottom-6 lg:left-6" data-testid="floating-sidebar-visibility-wrapper">
+      <div className="fixed bottom-4 left-4 z-[70] lg:bottom-6 lg:left-6" data-testid="floating-sidebar-visibility-wrapper">
         <button
           type="button"
           onClick={toggleSidebarVisibility}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/85 text-slate-100 shadow-2xl shadow-black/35 backdrop-blur-2xl transition-all hover:bg-white/12"
+          className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/85 text-slate-100 shadow-2xl shadow-black/35 backdrop-blur-2xl transition-all hover:bg-white/12"
           data-testid={desktopSidebarHidden ? 'floating-sidebar-show-button' : 'floating-sidebar-hide-button'}
           title={isMobileViewport ? 'القائمة' : desktopSidebarHidden ? 'إظهار القائمة' : 'إخفاء القائمة'}
           aria-label={isMobileViewport ? 'Toggle Menu' : desktopSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}

@@ -164,10 +164,6 @@ async def update_user(user_id: str, update_data: UserUpdate):
             raise HTTPException(status_code=404, detail="المستخدم غير موجود")
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
         if update_dict:
-            if "permissions" in update_dict and isinstance(
-                update_dict["permissions"], UserPermissions
-            ):
-                update_dict["permissions"] = update_dict["permissions"].dict()
             await _db.users.update_one({"id": user_id}, {"$set": update_dict})
             user = await _db.users.find_one({"id": user_id})
         user.pop("_id", None)

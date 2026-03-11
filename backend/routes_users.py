@@ -146,6 +146,7 @@ async def create_user(user_data: UserCreate):
             payload = user_data.dict()
             payload["id"] = str(uuid.uuid4())
             payload["createdAt"] = datetime.utcnow().isoformat()
+            payload["permissions"] = _normalize_permissions(payload.get("permissions") or {})
             created = supabase.users_create(payload)
             return User(**created)
         if DB_PROVIDER == "memory":
@@ -159,8 +160,7 @@ async def create_user(user_data: UserCreate):
             doc["createdAt"] = datetime.utcnow().isoformat()
             doc["lastLogin"] = None
             doc["isActive"] = True
-            if not doc.get("permissions"):
-                doc["permissions"] = {}
+            doc["permissions"] = _normalize_permissions(doc.get("permissions") or {})
             users.append(doc)
             _write_users(users)
             return User(**doc)
@@ -173,8 +173,7 @@ async def create_user(user_data: UserCreate):
         user_dict["createdAt"] = datetime.utcnow()
         user_dict["lastLogin"] = None
         user_dict["isActive"] = True
-        if not user_dict.get("permissions"):
-            user_dict["permissions"] = {}
+        user_dict["permissions"] = _normalize_permissions(user_dict.get("permissions") or {})
         await _db.users.insert_one(user_dict)
         user_dict.pop("_id", None)
         return User(**user_dict)
@@ -188,8 +187,7 @@ async def create_user(user_data: UserCreate):
         doc["createdAt"] = datetime.utcnow().isoformat()
         doc["lastLogin"] = None
         doc["isActive"] = True
-        if not doc.get("permissions"):
-            doc["permissions"] = {}
+        doc["permissions"] = _normalize_permissions(doc.get("permissions") or {})
         users.append(doc)
         _write_users(users)
         return User(**doc)

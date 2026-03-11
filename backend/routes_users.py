@@ -200,6 +200,7 @@ async def update_user(user_id: str, update_data: UserUpdate):
             updated = supabase.users_update(
                 user_id, {k: v for k, v in update_data.dict().items() if v is not None}
             )
+            updated["permissions"] = _normalize_permissions(updated.get("permissions"))
             return User(**updated)
         if DB_PROVIDER == "memory":
             users = _read_users()
@@ -209,6 +210,7 @@ async def update_user(user_id: str, update_data: UserUpdate):
             upd = {k: v for k, v in update_data.dict().items() if v is not None}
             users[idx].update(upd)
             _write_users(users)
+            users[idx]["permissions"] = _normalize_permissions(users[idx].get("permissions"))
             return User(**users[idx])
         # Mongo fallback
         user = await _db.users.find_one({"id": user_id})
@@ -219,6 +221,7 @@ async def update_user(user_id: str, update_data: UserUpdate):
             await _db.users.update_one({"id": user_id}, {"$set": update_dict})
             user = await _db.users.find_one({"id": user_id})
         user.pop("_id", None)
+        user["permissions"] = _normalize_permissions(user.get("permissions"))
         return User(**user)
     except HTTPException:
         raise
@@ -231,6 +234,7 @@ async def update_user(user_id: str, update_data: UserUpdate):
         upd = {k: v for k, v in update_data.dict().items() if v is not None}
         users[idx].update(upd)
         _write_users(users)
+        users[idx]["permissions"] = _normalize_permissions(users[idx].get("permissions"))
         return User(**users[idx])
 
 

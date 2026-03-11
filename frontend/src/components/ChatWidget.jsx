@@ -307,7 +307,7 @@ const ChatWidget = () => {
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="fixed z-50 bottom-6 left-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all hover:scale-110 active:scale-95 group border border-blue-400/30 overflow-hidden"
+        className="fixed z-50 bottom-20 left-4 sm:bottom-8 sm:left-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all hover:scale-110 active:scale-95 group border border-blue-400/30 overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
         }}
@@ -328,10 +328,10 @@ const ChatWidget = () => {
       {/* نافذة المساعد */}
       {isOpen && (
         <div 
-          className="fixed z-50 bottom-24 left-6 w-[360px] sm:w-[400px] rounded-2xl flex flex-col overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-slate-700/50 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-300"
+          className="fixed z-50 bottom-28 left-1/2 -translate-x-1/2 w-[92vw] max-w-[420px] sm:left-6 sm:translate-x-0 sm:w-[400px] rounded-2xl flex flex-col overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-slate-700/50 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-300"
           style={{
             background: 'rgba(15, 23, 42, 0.95)',
-            height: '600px',
+            height: '70vh',
             maxHeight: '80vh'
           }}
         >

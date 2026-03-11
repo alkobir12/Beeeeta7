@@ -17,6 +17,44 @@ supabase = SupabaseService()
 _db = None
 
 
+def _normalize_permissions(raw_permissions):
+    if not isinstance(raw_permissions, dict):
+        return {}
+
+    if not any(key.startswith("can") for key in raw_permissions.keys()):
+        return raw_permissions
+
+    normalized = {}
+
+    def enable(module_key, actions):
+        if module_key not in normalized:
+            normalized[module_key] = {}
+        for action in actions:
+            normalized[module_key][action] = True
+
+    if raw_permissions.get("canViewDashboard"):
+        enable("dashboard", ["view"])
+    if raw_permissions.get("canManageVehicles"):
+        enable("vehicles", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canManageCustomers"):
+        enable("customers", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canManageParts"):
+        enable("inventory", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canManageServices"):
+        enable("work_orders", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canViewReports"):
+        enable("reports", ["view"])
+    if raw_permissions.get("canManageFinance"):
+        enable("debts", ["view", "settle"])
+        enable("invoices", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canManageUsers"):
+        enable("users", ["view", "create", "edit", "delete"])
+    if raw_permissions.get("canManageSettings"):
+        enable("settings", ["view", "edit"])
+
+    return normalized
+
+
 def set_db(database):
     global _db
     _db = database

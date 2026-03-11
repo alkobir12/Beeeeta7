@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { resolveBackendBase } from '../utils/backendBase';
+import { getRolePermissions, normalizePermissions } from '../utils/permissions';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,18 +13,7 @@ const Login = () => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fallbackPermissions = {
-    canViewDashboard: true,
-    canManageVehicles: true,
-    canManageCustomers: true,
-    canManageParts: true,
-    canManageServices: true,
-    canViewReports: true,
-    canManageFinance: true,
-    canManageUsers: true,
-    canAccessCEO: true,
-    canManageSettings: true,
-  };
+  const fallbackPermissions = getRolePermissions('admin');
 
   const handleLogin = async () => {
     if (!name.trim()) {
@@ -127,13 +117,14 @@ const Login = () => {
       }
 
 
+      const resolvedPermissions = normalizePermissions(user.permissions, user.role);
       const session = { 
         id: user.id,
         name: user.name,
         phone: user.phone,
         email: user.email,
         role: user.role,
-        permissions: user.permissions || {},
+        permissions: resolvedPermissions,
         guidanceEnabled: user.guidanceEnabled !== false,
         loginTime: new Date().toISOString()
       };

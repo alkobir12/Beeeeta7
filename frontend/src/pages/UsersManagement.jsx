@@ -2,6 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Users, Shield, Trash2, Edit, Plus, Check } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { resolveBackendBase } from '../utils/backendBase';
+import {
+  ROLE_DEFINITIONS,
+  MODULE_DEFINITIONS,
+  ACTION_LABELS,
+  clonePermissions,
+  normalizePermissions,
+  getRolePermissions,
+  getRoleLabel,
+} from '../utils/permissions';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -9,24 +18,11 @@ const API_URL = (
     : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
 );
 
-const DEFAULT_PERMISSIONS = {
-  canViewDashboard: true, canManageVehicles: true, canManageCustomers: true,
-  canManageParts: false, canManageServices: false, canViewReports: true,
-  canManageFinance: false, canManageUsers: false, canAccessCEO: false, canManageSettings: false
-};
-
-const ROLE_PRESETS = {
-  admin: { canViewDashboard: true, canManageVehicles: true, canManageCustomers: true, canManageParts: true, canManageServices: true, canViewReports: true, canManageFinance: true, canManageUsers: true, canAccessCEO: true, canManageSettings: true },
-  manager: { canViewDashboard: true, canManageVehicles: true, canManageCustomers: true, canManageParts: true, canManageServices: true, canViewReports: true, canManageFinance: true, canManageUsers: false, canAccessCEO: true, canManageSettings: false },
-  technician: { canViewDashboard: true, canManageVehicles: true, canManageCustomers: false, canManageParts: false, canManageServices: false, canViewReports: false, canManageFinance: false, canManageUsers: false, canAccessCEO: false, canManageSettings: false },
-  employee: { canViewDashboard: true, canManageVehicles: false, canManageCustomers: true, canManageParts: false, canManageServices: false, canViewReports: false, canManageFinance: false, canManageUsers: false, canAccessCEO: false, canManageSettings: false }
-};
-
-const PERMISSIONS_LABELS = {
-  canViewDashboard: 'عرض لوحة التحكم', canManageVehicles: 'إدارة المركبات', canManageCustomers: 'إدارة العملاء',
-  canManageParts: 'إدارة المخزون', canManageServices: 'إدارة الخدمات', canViewReports: 'عرض التقارير',
-  canManageFinance: 'المالية والحسابات', canManageUsers: 'إدارة المستخدمين', canAccessCEO: 'لوحة المدير', canManageSettings: 'الإعدادات'
-};
+const DEFAULT_ROLE = 'viewer';
+const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([key, value]) => ({
+  value: key,
+  label: value?.name || key,
+}));
 
 const UsersManagement = () => {
   const { toast } = useToast();
@@ -38,8 +34,8 @@ const UsersManagement = () => {
     name: '',
     phone: '',
     email: '',
-    role: 'employee',
-    permissions: { ...DEFAULT_PERMISSIONS },
+    role: DEFAULT_ROLE,
+    permissions: clonePermissions(getRolePermissions(DEFAULT_ROLE)),
     isActive: true,
     guidanceEnabled: true,
   });
@@ -55,11 +51,27 @@ const UsersManagement = () => {
   };
 
   const handleRoleChange = (role) => {
-    setForm({ ...form, role, permissions: ROLE_PRESETS[role] || DEFAULT_PERMISSIONS });
+    setForm({
+      ...form,
+      role,
+      permissions: clonePermissions(getRolePermissions(role)),
+    });
   };
 
-  const togglePermission = (key) => {
-    setForm({ ...form, permissions: { ...form.permissions, [key]: !form.permissions[key] } });
+  const togglePermission = (moduleKey, action) => {
+    setForm((prev) => {
+      const next = clonePermissions(prev.permissions);
+      if (!next[moduleKey]) next[moduleKey] = {};
+      next[moduleKey][action] = !next[moduleKey][action];
+      return { ...prev, permissions: next };
+    });
+  };
+
+  const getPermissionBadges = (permissions, role) => {
+    const normalized = normalizePermissions(permissions, role);
+    return MODULE_DEFINITIONS.filter((module) =>
+      Object.values(normalized?.[module.key] || {}).some(Boolean)
+    ).map((module) => module.label);
   };
 
   const submit = async (e) => {
@@ -87,8 +99,8 @@ const UsersManagement = () => {
       name: '',
       phone: '',
       email: '',
-      role: 'employee',
-      permissions: { ...DEFAULT_PERMISSIONS },
+      role: DEFAULT_ROLE,
+      permissions: clonePermissions(getRolePermissions(DEFAULT_ROLE)),
       isActive: true,
       guidanceEnabled: true,
     });
@@ -101,8 +113,8 @@ const UsersManagement = () => {
       name: user.name || '',
       phone: user.phone || '',
       email: user.email || '',
-      role: user.role || 'employee',
-      permissions: user.permissions || DEFAULT_PERMISSIONS,
+      role: user.role || DEFAULT_ROLE,
+      permissions: normalizePermissions(user.permissions, user.role || DEFAULT_ROLE),
       isActive: user.isActive !== false,
       guidanceEnabled: user.guidanceEnabled !== false,
     });
@@ -143,13 +155,8 @@ const UsersManagement = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900">{user.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                      user.role === 'manager' ? 'bg-blue-100 text-blue-700' :
-                      user.role === 'technician' ? 'bg-orange-100 text-orange-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {user.role === 'admin' ? 'مدير نظام' : user.role === 'manager' ? 'مدير' : user.role === 'technician' ? 'فني' : 'موظف'}
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                      {getRoleLabel(user.role)}
                     </span>
                     {user.guidanceEnabled && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 ml-2">إرشادات مفعّلة</span>
@@ -170,12 +177,12 @@ const UsersManagement = () => {
               <div className="pt-4 border-t border-gray-50">
                 <p className="text-xs text-gray-400 mb-2">الصلاحيات:</p>
                 <div className="flex flex-wrap gap-1">
-                  {Object.entries(user.permissions || {}).filter(([_, v]) => v).slice(0, 4).map(([key]) => (
-                    <span key={key} className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-600 border border-gray-100">
-                      {PERMISSIONS_LABELS[key]}
+                  {getPermissionBadges(user.permissions, user.role).slice(0, 4).map((label) => (
+                    <span key={label} className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-600 border border-gray-100">
+                      {label}
                     </span>
                   ))}
-                  {Object.values(user.permissions || {}).filter(v => v).length > 4 && (
+                  {getPermissionBadges(user.permissions, user.role).length > 4 && (
                     <span className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-400">+ المزيد</span>
                   )}
                 </div>
@@ -208,10 +215,11 @@ const UsersManagement = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">الدور الوظيفي</label>
                     <select className="apple-input" value={form.role} onChange={e => handleRoleChange(e.target.value)}>
-                      <option value="employee">موظف</option>
-                      <option value="technician">فني</option>
-                      <option value="manager">مدير</option>
-                      <option value="admin">مدير نظام</option>
+                      {ROLE_OPTIONS.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -238,15 +246,36 @@ const UsersManagement = () => {
                     <Shield size={16} />
                     الصلاحيات
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(PERMISSIONS_LABELS).map(([key, label]) => (
-                      <label key={key} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-blue-300 transition-colors">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${form.permissions[key] ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-                          {form.permissions[key] && <Check size={12} className="text-white" />}
+                  <div className="grid grid-cols-1 gap-3">
+                    {MODULE_DEFINITIONS.map((module) => (
+                      <div key={module.key} className="rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-gray-700">{module.label}</span>
+                          <div className="flex flex-wrap gap-2">
+                            {module.actions.map((action) => {
+                              const checked = !!form.permissions?.[module.key]?.[action];
+                              return (
+                                <label
+                                  key={`${module.key}-${action}`}
+                                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 cursor-pointer hover:border-blue-300"
+                                  data-testid={`user-permission-${module.key}-${action}`}
+                                >
+                                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${checked ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                                    {checked && <Check size={10} className="text-white" />}
+                                  </div>
+                                  <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={checked}
+                                    onChange={() => togglePermission(module.key, action)}
+                                  />
+                                  <span>{ACTION_LABELS[action] || action}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <input type="checkbox" className="hidden" checked={form.permissions[key]} onChange={() => togglePermission(key)} />
-                        <span className="text-sm text-gray-700">{label}</span>
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </div>

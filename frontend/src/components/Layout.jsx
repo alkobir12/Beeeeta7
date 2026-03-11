@@ -1,13 +1,14 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Sidebar from './Sidebar';
 import { Eye, EyeOff, Menu } from 'lucide-react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
 import AbuFahadFloatingChat from './AbuFahadFloatingChat';
 import FinanceAlertsWidget from './FinanceAlertsWidget';
 import ChatWidget from './ChatWidget';
 import { Toaster } from './ui/toaster';
+import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 
 
 
@@ -29,6 +30,15 @@ const Layout = ({ pageTitle }) => {
     }
   });
   const { t } = useTranslation();
+  const location = useLocation();
+  const readSession = () => {
+    try {
+      return JSON.parse(localStorage.getItem('session') || '{}');
+    } catch (error) {
+      return {};
+    }
+  };
+  const [session, setSession] = useState(() => readSession());
 
   useEffect(() => {
     localStorage.setItem('ui.sidebarCollapsed', String(desktopSidebarCollapsed));
@@ -42,6 +52,16 @@ const Layout = ({ pageTitle }) => {
     const handleResize = () => setIsMobileViewport(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setSession(readSession());
+    window.addEventListener('storage', sync);
+    window.addEventListener('sessionUpdated', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('sessionUpdated', sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -81,6 +101,18 @@ const Layout = ({ pageTitle }) => {
     }
     setDesktopSidebarHidden((prev) => !prev);
   };
+
+  const permissionRule = resolveRoutePermission(location.pathname);
+  const canAccessRoute = !permissionRule || hasPermission(session, permissionRule.module, permissionRule.action);
+
+  const UnauthorizedPanel = () => (
+    <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-slate-950/70 p-6 text-center shadow-xl shadow-black/20">
+      <h2 className="text-lg font-bold text-white" data-testid="permission-denied-title">غير مصرح بالوصول</h2>
+      <p className="mt-2 text-sm text-slate-300" data-testid="permission-denied-description">
+        لا تملك الصلاحية لعرض هذه الصفحة. إذا كنت تعتقد أن هذا خطأ، تواصل مع مدير النظام.
+      </p>
+    </div>
+  );
 
   return (
     <div className="layout-main" style={{ backgroundColor: '#121314', minHeight: '100vh', position: 'relative' }}>
@@ -158,7 +190,7 @@ const Layout = ({ pageTitle }) => {
               </div>
             }
           >
-            <Outlet />
+            {canAccessRoute ? <Outlet /> : <UnauthorizedPanel />}
           </Suspense>
         </div>
 

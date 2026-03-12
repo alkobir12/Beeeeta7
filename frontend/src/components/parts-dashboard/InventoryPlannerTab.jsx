@@ -244,6 +244,7 @@ export const InventoryPlannerTab = ({ architecture, loading = false }) => {
               <th className="py-2">الكمية المقترحة</th>
               <th className="py-2">التكلفة التقديرية</th>
               <th className="py-2">الأولوية</th>
+              <th className="py-2">إجراءات</th>
             </tr>
           </thead>
           <tbody>
@@ -269,12 +270,32 @@ export const InventoryPlannerTab = ({ architecture, loading = false }) => {
                       {badge.label}
                     </span>
                   </td>
+                  <td className="py-3">
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => addToOrder(row)}
+                        className="rounded-lg bg-cyan-500/20 px-3 py-1 text-xs text-cyan-200 hover:bg-cyan-500/30"
+                        data-testid={`inventory-architecture-add-to-order-${row.part_id}`}
+                      >
+                        إضافة للطلب
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/operations?part=${row.part_id}`)}
+                        className="rounded-lg bg-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/20"
+                        data-testid={`inventory-architecture-view-operations-${row.part_id}`}
+                      >
+                        عرض العمليات
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
             {!replenishmentPlan.length && (
               <tr>
-                <td colSpan={9} className="py-5 text-center text-slate-400" data-testid="inventory-architecture-plan-empty">
+                <td colSpan={10} className="py-5 text-center text-slate-400" data-testid="inventory-architecture-plan-empty">
                   لا توجد توصيات توريد حالياً.
                 </td>
               </tr>

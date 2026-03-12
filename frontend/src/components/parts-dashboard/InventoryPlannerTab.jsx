@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Boxes, Building2, PackageSearch } from 'lucide-react';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;

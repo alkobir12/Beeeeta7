@@ -59,6 +59,92 @@ const architectureCards = (blueprint = {}) => [
 ];
 
 export const InventoryPlannerTab = ({ architecture, loading = false }) => {
+  const navigate = useNavigate();
+  const [orderDrafts, setOrderDrafts] = useState({});
+  const [activeSupplier, setActiveSupplier] = useState('');
+
+  const supplierKeys = useMemo(() => Object.keys(orderDrafts), [orderDrafts]);
+
+  useEffect(() => {
+    if (!activeSupplier && supplierKeys.length) {
+      setActiveSupplier(supplierKeys[0]);
+    }
+  }, [activeSupplier, supplierKeys]);
+
+  const addToOrder = (row) => {
+    const supplierName = row.supplier || 'مورد غير محدد';
+    setOrderDrafts((prev) => {
+      const next = { ...prev };
+      const existing = next[supplierName] || {
+        supplier: supplierName,
+        phone: row.supplier_phone || '',
+        items: [],
+      };
+      const itemIndex = existing.items.findIndex((item) => item.part_id === row.part_id);
+      if (itemIndex >= 0) {
+        existing.items[itemIndex] = {
+          ...existing.items[itemIndex],
+          quantity: existing.items[itemIndex].quantity + row.suggested_order_quantity,
+        };
+      } else {
+        existing.items.push({
+          part_id: row.part_id,
+          part_name: row.part_name,
+          quantity: row.suggested_order_quantity,
+          avg_monthly_usage: row.avg_monthly_usage,
+          suggested_order_quantity: row.suggested_order_quantity,
+          supplier: row.supplier,
+          supplier_phone: row.supplier_phone,
+        });
+      }
+      next[supplierName] = { ...existing };
+      return next;
+    });
+    setActiveSupplier(supplierName);
+  };
+
+  const updateOrderItem = (supplierName, partId, quantity) => {
+    setOrderDrafts((prev) => {
+      const next = { ...prev };
+      const draft = next[supplierName];
+      if (!draft) return prev;
+      draft.items = draft.items.map((item) =>
+        item.part_id === partId ? { ...item, quantity } : item
+      );
+      next[supplierName] = { ...draft };
+      return next;
+    });
+  };
+
+  const removeOrderItem = (supplierName, partId) => {
+    setOrderDrafts((prev) => {
+      const next = { ...prev };
+      const draft = next[supplierName];
+      if (!draft) return prev;
+      draft.items = draft.items.filter((item) => item.part_id !== partId);
+      if (!draft.items.length) {
+        delete next[supplierName];
+      } else {
+        next[supplierName] = { ...draft };
+      }
+      return next;
+    });
+  };
+
+  const buildWhatsappMessage = (draft) => {
+    if (!draft) return '';
+    const lines = [
+      `طلب توريد قطع - ${draft.supplier}`,
+      '—',
+      ...draft.items.map(
+        (item) => `• ${item.part_name} | الكمية: ${item.quantity}`
+      ),
+      '—',
+      'يرجى تأكيد توفر القطع ومدة التوريد.'
+    ];
+    return lines.join('\n');
+  };
+
   if (loading) {
     return (
       <div className="glass-card p-5 text-slate-300" data-testid="inventory-architecture-loading">

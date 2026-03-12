@@ -291,6 +291,21 @@ class SmartInventoryService:
                 parts.append(part)
         return parts
 
+    async def list_suppliers(self) -> List[Dict[str, Any]]:
+        if self.provider == "supabase":
+            try:
+                if self.supabase and self.supabase.client and not self.supabase.mock_mode:
+                    res = self.supabase.client.table("suppliers").select("*").execute()
+                    return res.data or []
+                return []
+            except Exception:
+                return self._mem_read("suppliers")
+
+        if self.provider == "memory" or self.db is None:
+            return self._mem_read("suppliers")
+
+        return await self.db.suppliers.find({}, {"_id": 0}).to_list(5000)
+
     async def list_operations(self) -> List[Dict[str, Any]]:
         if self.provider == "supabase":
             try:

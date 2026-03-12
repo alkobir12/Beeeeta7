@@ -14,6 +14,14 @@ const pctClass = (value) => {
   return 'text-slate-300';
 };
 
+const deltaTone = (value) => {
+  if (value > 0) return 'text-emerald-300';
+  if (value < 0) return 'text-rose-300';
+  return 'text-slate-300';
+};
+
+const HIGH_VOLATILITY_THRESHOLD = 15;
+
 const backorderStatusOptions = [
   { value: 'all', label: 'الكل' },
   { value: 'pending', label: 'قيد الانتظار' },
@@ -165,6 +173,7 @@ const PartsDashboard = () => {
   const overview = analytics?.overview || {};
   const priceTrendHighlights = rakanAnalytics?.price_trend || [];
   const expenseBreakdown = rakanAnalytics?.expense_breakdown || [];
+  const periodDelta = rakanAnalytics?.period_delta || {};
   const cards = useMemo(
     () => [
       { key: 'inventory-cost', label: 'قيمة المخزون (تكلفة)', value: formatCurrency(overview.inventory_cost_value), icon: ShoppingCart, color: '#22c55e' },
@@ -480,6 +489,20 @@ const PartsDashboard = () => {
                       <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.other_expense)}</p>
                     </div>
                   </div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm" data-testid="parts-control-rakan-profit-delta">
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">معدل فرق الربح/الخسارة</p>
+                      <p className={`text-white font-semibold ${deltaTone(periodDelta.profit)}`}>
+                        {formatCurrency(periodDelta.profit)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-slate-400 text-xs">معدل فرق هامش الربح</p>
+                      <p className={`text-white font-semibold ${deltaTone(periodDelta.profit_margin)}`}>
+                        {Number(periodDelta.profit_margin || 0).toLocaleString('ar-SA')}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -540,6 +563,10 @@ const PartsDashboard = () => {
                   <h2 className="text-white font-semibold mb-3">أكبر تحركات الأسعار</h2>
                   <div className="space-y-2">
                     {priceTrendHighlights.slice(0, 6).map((row) => (
+                      (() => {
+                        const volatilityValue = Number(row.volatility_pct || 0);
+                        const isHighVolatility = volatilityValue >= HIGH_VOLATILITY_THRESHOLD;
+                        return (
                       <div
                         key={row.part_id}
                         className="rounded-xl bg-white/5 p-3 flex flex-col gap-2"
@@ -547,7 +574,17 @@ const PartsDashboard = () => {
                       >
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-white">{row.part_name}</p>
-                          <span className="text-xs text-cyan-200">تذبذب {Number(row.volatility_pct || 0).toLocaleString('ar-SA')}%</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-cyan-200">تذبذب {volatilityValue.toLocaleString('ar-SA')}%</span>
+                            {isHighVolatility && (
+                              <span
+                                className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] text-rose-200"
+                                data-testid={`parts-control-rakan-volatility-alert-${row.part_id}`}
+                              >
+                                تنبيه تذبذب عالي
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 text-xs">
                           <span className={pctClass(row.sale_change_pct)}>
@@ -558,6 +595,8 @@ const PartsDashboard = () => {
                           </span>
                         </div>
                       </div>
+                        );
+                      })()
                     ))}
                     {!priceTrendHighlights.length && (
                       <p className="text-sm text-slate-400" data-testid="parts-control-rakan-price-highlights-empty">

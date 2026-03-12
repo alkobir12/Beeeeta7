@@ -1431,11 +1431,19 @@ class SmartInventoryService:
                 if is_sale:
                     sold_qty += qty
                     price_timeline[part_id]["sale"].append(
-                        {"price": price, "date": operation_date.isoformat()}
+                        {
+                            "price": price,
+                            "date": operation_date.isoformat(),
+                            "quantity": qty,
+                        }
                     )
                 elif is_purchase:
                     price_timeline[part_id]["purchase"].append(
-                        {"price": price, "date": operation_date.isoformat()}
+                        {
+                            "price": price,
+                            "date": operation_date.isoformat(),
+                            "quantity": qty,
+                        }
                     )
 
         price_trend = []

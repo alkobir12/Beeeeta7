@@ -1715,7 +1715,15 @@ class SmartInventoryService:
         parts = await self.list_parts()
         operations = await self.list_operations()
         backorders = await self.list_backorders()
-        return self._build_replenishment_plan(parts, operations, backorders, days)
+        suppliers = await self.list_suppliers()
+        supplier_map = {
+            self._normalize_text(supplier.get("name")): supplier
+            for supplier in suppliers
+            if supplier.get("name")
+        }
+        return self._build_replenishment_plan(
+            parts, operations, backorders, days, supplier_map
+        )
 
     async def get_rakan_analytics(self, days: int = 30) -> Dict[str, Any]:
         days = max(7, min(days, 365))

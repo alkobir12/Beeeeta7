@@ -168,6 +168,15 @@ export const InventoryPlannerTab = ({ architecture, loading = false }) => {
   const stockSegments = architecture.stock_segments || [];
   const executionBudget = architecture.execution_budget || {};
 
+  const activeDraft = activeSupplier ? orderDrafts[activeSupplier] : null;
+  const whatsappMessage = buildWhatsappMessage(activeDraft);
+  const whatsappPhone = activeDraft?.phone
+    ? activeDraft.phone.replace(/[^0-9]/g, '')
+    : '';
+  const whatsappUrl = whatsappPhone
+    ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`
+    : '';
+
   return (
     <div className="space-y-4" data-testid="inventory-architecture-tab">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="inventory-architecture-cards">

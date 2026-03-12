@@ -562,42 +562,40 @@ const PartsDashboard = () => {
                 <div className="glass-card p-4" data-testid="parts-control-rakan-price-highlights">
                   <h2 className="text-white font-semibold mb-3">أكبر تحركات الأسعار</h2>
                   <div className="space-y-2">
-                    {priceTrendHighlights.slice(0, 6).map((row) => (
-                      (() => {
-                        const volatilityValue = Number(row.volatility_pct || 0);
-                        const isHighVolatility = volatilityValue >= HIGH_VOLATILITY_THRESHOLD;
-                        return (
-                      <div
-                        key={row.part_id}
-                        className="rounded-xl bg-white/5 p-3 flex flex-col gap-2"
-                        data-testid={`parts-control-rakan-price-highlight-${row.part_id}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-white">{row.part_name}</p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-cyan-200">تذبذب {volatilityValue.toLocaleString('ar-SA')}%</span>
-                            {isHighVolatility && (
-                              <span
-                                className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] text-rose-200"
-                                data-testid={`parts-control-rakan-volatility-alert-${row.part_id}`}
-                              >
-                                تنبيه تذبذب عالي
-                              </span>
-                            )}
+                    {priceTrendHighlights.slice(0, 6).map((row) => {
+                      const volatilityValue = Number(row.volatility_pct || 0);
+                      const isHighVolatility = volatilityValue >= HIGH_VOLATILITY_THRESHOLD;
+                      return (
+                        <div
+                          key={row.part_id}
+                          className="rounded-xl bg-white/5 p-3 flex flex-col gap-2"
+                          data-testid={`parts-control-rakan-price-highlight-${row.part_id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-white">{row.part_name}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-cyan-200">تذبذب {volatilityValue.toLocaleString('ar-SA')}%</span>
+                              {isHighVolatility && (
+                                <span
+                                  className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] text-rose-200"
+                                  data-testid={`parts-control-rakan-volatility-alert-${row.part_id}`}
+                                >
+                                  تنبيه تذبذب عالي
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 text-xs">
+                            <span className={pctClass(row.sale_change_pct)}>
+                              بيع: {formatCurrency(row.sale_change)} ({Number(row.sale_change_pct || 0).toLocaleString('ar-SA')}%)
+                            </span>
+                            <span className={pctClass(row.purchase_change_pct)}>
+                              شراء: {formatCurrency(row.purchase_change)} ({Number(row.purchase_change_pct || 0).toLocaleString('ar-SA')}%)
+                            </span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-xs">
-                          <span className={pctClass(row.sale_change_pct)}>
-                            بيع: {formatCurrency(row.sale_change)} ({Number(row.sale_change_pct || 0).toLocaleString('ar-SA')}%)
-                          </span>
-                          <span className={pctClass(row.purchase_change_pct)}>
-                            شراء: {formatCurrency(row.purchase_change)} ({Number(row.purchase_change_pct || 0).toLocaleString('ar-SA')}%)
-                          </span>
-                        </div>
-                      </div>
-                        );
-                      })()
-                    ))}
+                      );
+                    })}
                     {!priceTrendHighlights.length && (
                       <p className="text-sm text-slate-400" data-testid="parts-control-rakan-price-highlights-empty">
                         لا توجد تغيّرات سعرية كافية في الفترة الحالية.

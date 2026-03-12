@@ -22,6 +22,13 @@ const deltaTone = (value) => {
 
 const HIGH_VOLATILITY_THRESHOLD = 15;
 
+const formatLearningStatus = (value, ready, samples) => {
+  if (ready) {
+    return formatCurrency(value);
+  }
+  return `قيد التعلم (${samples}/5)`;
+};
+
 const backorderStatusOptions = [
   { value: 'all', label: 'الكل' },
   { value: 'pending', label: 'قيد الانتظار' },
@@ -173,6 +180,7 @@ const PartsDashboard = () => {
   const overview = analytics?.overview || {};
   const priceTrendHighlights = rakanAnalytics?.price_trend || [];
   const expenseBreakdown = rakanAnalytics?.expense_breakdown || [];
+  const learnedPricing = rakanAnalytics?.learned_pricing || [];
   const periodDelta = rakanAnalytics?.period_delta || {};
   const cards = useMemo(
     () => [
@@ -623,6 +631,52 @@ const PartsDashboard = () => {
                       </p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              <div className="glass-card p-4" data-testid="parts-control-rakan-learned-pricing">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h2 className="text-white font-semibold">التسعير الذكي (يتعلم ذاتياً)</h2>
+                  <span className="text-xs text-slate-400">يعتمد على جميع العمليات ويُفعّل بعد 5 عمليات</span>
+                </div>
+                <div className="space-y-2">
+                  {learnedPricing.map((row, index) => (
+                    <div
+                      key={`${row.part_id}-${index}`}
+                      className="rounded-xl bg-white/5 p-3 grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs"
+                      data-testid={`parts-control-rakan-learned-row-${index}`}
+                    >
+                      <div>
+                        <p className="text-white text-sm">{row.part_name}</p>
+                        {row.gap_pct !== null && row.gap_pct !== undefined && (
+                          <p className={`mt-1 ${deltaTone(row.gap_pct)}`}>فارق ربح {Number(row.gap_pct).toLocaleString('ar-SA')}%</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-slate-400">سعر بيع متعلم</p>
+                        <p className={`text-white ${row.sale_ready ? 'font-semibold' : 'text-slate-300'}`}>
+                          {formatLearningStatus(row.learned_sale_price, row.sale_ready, row.sale_samples)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">سعر شراء متعلم</p>
+                        <p className={`text-white ${row.purchase_ready ? 'font-semibold' : 'text-slate-300'}`}>
+                          {formatLearningStatus(row.learned_purchase_price, row.purchase_ready, row.purchase_samples)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">فرق الربح/الخسارة</p>
+                        <p className={`text-white ${deltaTone(row.gap_value || 0)}`}>
+                          {row.gap_value !== null && row.gap_value !== undefined ? formatCurrency(row.gap_value) : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {!learnedPricing.length && (
+                    <p className="text-sm text-slate-400" data-testid="parts-control-rakan-learned-pricing-empty">
+                      لا توجد بيانات كافية لتوليد تسعير ذكي حالياً.
+                    </p>
+                  )}
                 </div>
               </div>
 

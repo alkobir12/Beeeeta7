@@ -1119,13 +1119,24 @@ class SmartInventoryService:
             if urgency == "on_track":
                 continue
 
+            supplier_name = part.supplier or "بدون مورد"
+            supplier_info = (
+                supplier_map.get(self._normalize_text(supplier_name))
+                if supplier_map
+                else None
+            )
+            supplier_phone = None
+            if supplier_info:
+                supplier_phone = supplier_info.get("phone") or supplier_info.get("mobile")
+
             rows.append(
                 {
                     "part_id": part.id,
                     "part_number": part.part_number,
                     "part_name": part.name,
                     "category": part.category,
-                    "supplier": part.supplier or "بدون مورد",
+                    "supplier": supplier_name,
+                    "supplier_phone": supplier_phone,
                     "current_quantity": part.quantity,
                     "min_quantity": part.min_quantity,
                     "sold_last_30": sold_last_30,

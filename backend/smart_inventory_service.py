@@ -998,6 +998,7 @@ class SmartInventoryService:
         operations: List[Dict[str, Any]],
         backorders: List[BackorderRecord],
         days: int,
+        supplier_map: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         now = datetime.now(timezone.utc)
         period_start = now - timedelta(days=days)

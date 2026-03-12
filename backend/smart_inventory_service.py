@@ -1596,6 +1596,64 @@ class SmartInventoryService:
             )
         )
 
+        def weighted_average(entries):
+            total_qty = sum(self._safe_float(e.get("quantity"), 1) for e in entries)
+            if total_qty <= 0:
+                return 0
+            weighted_sum = sum(
+                self._safe_float(e.get("price"), 0) * self._safe_float(e.get("quantity"), 1)
+                for e in entries
+            )
+            return weighted_sum / total_qty
+
+        learned_pricing = []
+        for part_id, timeline in price_timeline.items():
+            part_ref = parts_map.get(part_id)
+            sale_entries = timeline.get("sale", [])
+            purchase_entries = timeline.get("purchase", [])
+            sale_samples = len(sale_entries)
+            purchase_samples = len(purchase_entries)
+
+            learned_sale = weighted_average(sale_entries) if sale_samples >= 5 else None
+            learned_purchase = (
+                weighted_average(purchase_entries) if purchase_samples >= 5 else None
+            )
+            gap_value = (
+                learned_sale - learned_purchase
+                if learned_sale is not None and learned_purchase is not None
+                else None
+            )
+            gap_pct = (
+                (gap_value / learned_purchase * 100)
+                if learned_purchase and gap_value is not None
+                else None
+            )
+
+            learned_pricing.append(
+                {
+                    "part_id": part_id,
+                    "part_name": (
+                        part_ref.name if part_ref else f"قطعة {part_id[:6]}"
+                    ),
+                    "sale_samples": sale_samples,
+                    "purchase_samples": purchase_samples,
+                    "learned_sale_price": round(learned_sale, 2)
+                    if learned_sale is not None
+                    else None,
+                    "learned_purchase_price": round(learned_purchase, 2)
+                    if learned_purchase is not None
+                    else None,
+                    "gap_value": round(gap_value, 2) if gap_value is not None else None,
+                    "gap_pct": round(gap_pct, 2) if gap_pct is not None else None,
+                    "sale_ready": sale_samples >= 5,
+                    "purchase_ready": purchase_samples >= 5,
+                }
+            )
+
+        learned_pricing.sort(
+            key=lambda item: (item.get("gap_pct") or 0), reverse=True
+        )
+
         total_expense = purchase_expense + other_expense
         return {
             "operations_count": len(sorted_operations),
@@ -1620,6 +1678,7 @@ class SmartInventoryService:
             },
             "ledger": ledger[:30],
             "price_trend": price_trend[:12],
+            "learned_pricing": learned_pricing[:12],
             "price_timeline": detailed_price_timeline[:12],
             "recent_ops": sorted_operations[:16],
         }

@@ -13,6 +13,19 @@ const Customers = () => {
   const [importing, setImporting] = useState(false);
   const [importSummary, setImportSummary] = useState(null);
   const [importError, setImportError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    vehicleBrand: '',
+    vehiclePlate: '',
+    vehicleKm: '',
+  });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
   const styles = {

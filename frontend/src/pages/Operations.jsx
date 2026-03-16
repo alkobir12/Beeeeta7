@@ -909,7 +909,7 @@ const Operations = () => {
         date: new Date().toISOString().split('T')[0],
         paymentReceipt: null,
       });
-      setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
+      setItem({ itemType: 'part', itemId: '', name: '', customName: '', quantity: 1, price: 0 });
     } catch (e) {
       const msg = getErrorMessage(e);
       setCreateError(msg || t('operations.save_failed') || 'فشل حفظ العملية');

@@ -64,6 +64,16 @@ class CustomerBase(BaseModel):
     vehicleKm: Optional[int] = None  # الكيلومتر
 
 
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    vehicleBrand: Optional[str] = None
+    vehiclePlate: Optional[str] = None
+    vehicleKm: Optional[int] = None
+
+
 class Customer(CustomerBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     vehicles: List[str] = []  # رقم اللوحات

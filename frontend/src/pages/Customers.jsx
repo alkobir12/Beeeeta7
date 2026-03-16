@@ -420,7 +420,7 @@ const Customers = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Edit action
+                          openEditModal(customer);
                         }}
                         className="flex-1 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-sm font-semibold"
                         data-testid={`customer-edit-button-${customer.id}`}
@@ -431,7 +431,7 @@ const Customers = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Delete action
+                          setDeleteTarget(customer);
                         }}
                         className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-sm font-semibold"
                         data-testid={`customer-delete-button-${customer.id}`}

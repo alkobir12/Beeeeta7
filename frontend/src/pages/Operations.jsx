@@ -628,6 +628,32 @@ const Operations = () => {
     setItem({ itemType: 'part', itemId: '', name: '', customName: '', quantity: 1, price: 0 });
   };
 
+  const handleCreateCustomer = async () => {
+    if (!form.partnerName || !form.partnerPhone) {
+      toast({ title: 'يرجى إدخال اسم العميل ورقم الجوال', variant: 'destructive' });
+      return;
+    }
+    try {
+      const payload = {
+        name: form.partnerName,
+        phone: form.partnerPhone,
+        email: '',
+        address: '',
+      };
+      const { data } = await axios.post(`${API_URL}/customers`, payload);
+      setForm(prev => ({
+        ...prev,
+        partnerId: data.id,
+        partnerName: data.name,
+        partnerPhone: data.phone || prev.partnerPhone,
+      }));
+      customersQuery.refetch();
+      toast({ title: 'تمت إضافة العميل بنجاح' });
+    } catch (error) {
+      toast({ title: 'تعذر إضافة العميل', variant: 'destructive' });
+    }
+  };
+
   const handleOcrFileChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;

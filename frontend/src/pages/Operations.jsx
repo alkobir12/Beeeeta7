@@ -1412,7 +1412,13 @@ const Operations = () => {
                       value={item.itemId} 
                       onChange={e => { 
                         const it = parts.find(p=>p.id===e.target.value); 
-                        setItem({...item, itemId: e.target.value, name: it?.name || '', price: it?.sellingPrice || 0}); 
+                        setItem({
+                          ...item,
+                          itemId: e.target.value,
+                          name: it?.name || '',
+                          price: it?.sellingPrice || 0,
+                          customName: '',
+                        }); 
                       }}
                       data-testid="operation-part-select"
                     >
@@ -1425,7 +1431,13 @@ const Operations = () => {
                       value={item.itemId} 
                       onChange={e => { 
                         const s = services.find(s=>s.id===e.target.value); 
-                        setItem({...item, itemId: e.target.value, name: s?.name || '', price: s?.price || 0}); 
+                        setItem({
+                          ...item,
+                          itemId: e.target.value,
+                          name: s?.name || '',
+                          price: s?.price || 0,
+                          customName: '',
+                        }); 
                       }}
                       data-testid="operation-service-select"
                     >
@@ -1433,6 +1445,25 @@ const Operations = () => {
                       {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   )}
+                  <div className="mt-2">
+                    <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>
+                      إدخال صنف/خدمة جديدة (يحفظ تلقائياً)
+                    </label>
+                    <input
+                      type="text"
+                      className="apple-input h-9 text-sm"
+                      value={item.customName}
+                      onChange={e =>
+                        setItem({
+                          ...item,
+                          customName: e.target.value,
+                          name: e.target.value,
+                          itemId: '',
+                        })
+                      }
+                      data-testid="operation-item-custom-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="md:col-span-2">

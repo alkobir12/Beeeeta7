@@ -827,6 +827,7 @@ const Operations = () => {
         partnerType: 'supplier',
         partnerId: '',
         partnerName: '',
+        partnerPhone: '',
         items: [],
         paymentMethod: 'cash',
         paymentStatus: 'paid',

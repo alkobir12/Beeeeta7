@@ -575,11 +575,57 @@ const Operations = () => {
     }
   }, [form.type]);
 
-  const addItem = () => {
-    if (!item.name && !item.itemId) return;
+  const createInlineItem = async (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    try {
+      if (item.itemType === 'service') {
+        const payload = {
+          name: trimmed,
+          category: 'خدمات عامة',
+          price: Number(item.price) || 0,
+          duration: 30,
+        };
+        const { data } = await axios.post(`${API_URL}/services`, payload);
+        servicesQuery.refetch();
+        return data;
+      }
+
+      const payload = {
+        name: trimmed,
+        partNumber: `AUTO-${Date.now().toString().slice(-6)}`,
+        category: 'عام',
+        purchasePrice: form.type === 'purchase' ? Number(item.price) || 0 : 0,
+        sellingPrice: form.type === 'sale' ? Number(item.price) || 0 : Number(item.price) || 0,
+        quantity: 0,
+      };
+      const { data } = await axios.post(`${API_URL}/parts`, payload);
+      partsQuery.refetch();
+      return data;
+    } catch (error) {
+      toast({ title: 'تعذر حفظ الصنف الجديد', variant: 'destructive' });
+      return null;
+    }
+  };
+
+  const addItem = async () => {
+    if (!item.name && !item.itemId && !item.customName) return;
+    let itemId = item.itemId;
+    let itemName = item.name;
+
+    if (!itemId && item.customName) {
+      const created = await createInlineItem(item.customName);
+      if (!created) return;
+      itemId = created.id;
+      itemName = created.name;
+    }
+
     const total = Number(item.quantity) * Number(item.price);
-    setForm(prev => ({ ...prev, items: [...prev.items, { ...item, total }] }));
-    setItem({ itemType: 'part', itemId: '', name: '', quantity: 1, price: 0 });
+    setForm(prev => ({
+      ...prev,
+      items: [...prev.items, { ...item, itemId, name: itemName, total }]
+    }));
+    setItem({ itemType: 'part', itemId: '', name: '', customName: '', quantity: 1, price: 0 });
   };
 
   const handleOcrFileChange = (event) => {

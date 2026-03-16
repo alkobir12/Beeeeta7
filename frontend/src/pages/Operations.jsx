@@ -151,6 +151,7 @@ const Operations = () => {
     itemType: 'part', 
     itemId: '', 
     name: '', 
+    customName: '',
     quantity: 1, 
     price: 0 
   });

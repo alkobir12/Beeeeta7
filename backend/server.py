@@ -23,6 +23,7 @@ from models import (
     VehicleUpdate,
     Customer,
     CustomerBase,
+    CustomerUpdate,
     Technician,
     Service,
     Part,

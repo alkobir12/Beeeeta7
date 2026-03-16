@@ -239,6 +239,7 @@ const Customers = () => {
             <RefreshCw size={18} style={{ color: styles.textSecondary }} />
           </button>
           <button
+            onClick={openCreateModal}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white transition-all"
             style={{ 
               background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',

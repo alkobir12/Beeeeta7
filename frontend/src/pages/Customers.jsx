@@ -53,6 +53,83 @@ const Customers = () => {
     }
   };
 
+  const resetForm = () => {
+    setEditingCustomer(null);
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      vehicleBrand: '',
+      vehiclePlate: '',
+      vehicleKm: '',
+    });
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const openEditModal = (customer) => {
+    setEditingCustomer(customer);
+    setFormData({
+      name: customer.name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || '',
+      vehicleBrand: customer.vehicleBrand || '',
+      vehiclePlate: customer.vehiclePlate || '',
+      vehicleKm: customer.vehicleKm || '',
+    });
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name || !formData.phone) {
+      toast({ title: 'يرجى إدخال اسم العميل ورقم الجوال', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        ...formData,
+        vehicleKm: formData.vehicleKm ? Number(formData.vehicleKm) : null,
+      };
+      if (editingCustomer?.id) {
+        await customerAPI.update(editingCustomer.id, payload);
+        toast({ title: 'تم تحديث بيانات العميل بنجاح' });
+      } else {
+        await customerAPI.create(payload);
+        toast({ title: 'تمت إضافة العميل بنجاح' });
+      }
+      setShowForm(false);
+      resetForm();
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      toast({ title: 'تعذر حفظ بيانات العميل', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget?.id) return;
+    setSaving(true);
+    try {
+      await customerAPI.delete(deleteTarget.id);
+      toast({ title: 'تم حذف العميل بنجاح' });
+      setDeleteTarget(null);
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast({ title: 'تعذر حذف العميل', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleImportClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();

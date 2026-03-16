@@ -1101,6 +1101,35 @@ async def create_customer(customer: CustomerBase):
     return Customer(**customer_dict)
 
 
+@api_router.put("/customers/{customer_id}", response_model=Customer)
+async def update_customer(customer_id: str, customer: CustomerUpdate):
+    update_data = customer.dict(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="لا توجد بيانات للتحديث")
+
+    if DB_PROVIDER == "supabase":
+        updated = supabase_service.customers_update(customer_id, update_data)
+        return Customer(**updated)
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("customers")
+        idx = next((i for i, row in enumerate(rows) if row.get("id") == customer_id), -1)
+        if idx == -1:
+            raise HTTPException(status_code=404, detail="العميل غير موجود")
+        rows[idx].update(update_data)
+        _mem_write("customers", rows)
+        return Customer(**rows[idx])
+
+    result = await db.customers.update_one({"id": customer_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="العميل غير موجود")
+    updated = await db.customers.find_one({"id": customer_id})
+    if not updated:
+        raise HTTPException(status_code=404, detail="العميل غير موجود")
+    updated.pop("_id", None)
+    return Customer(**updated)
+
+
 @api_router.get("/services", response_model=List[Service])
 async def get_services():
     if DB_PROVIDER == "supabase":

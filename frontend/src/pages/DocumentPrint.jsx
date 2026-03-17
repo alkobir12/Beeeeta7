@@ -149,6 +149,7 @@ const DocumentPrint = () => {
 
   useEffect(() => {
     autoRefreshRef.current = false;
+    autoActionRef.current = false;
   }, [vehicleId, visitId, operationId, invoiceId]);
 
   useEffect(() => {

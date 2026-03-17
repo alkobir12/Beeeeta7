@@ -10,6 +10,7 @@ import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DocumentFormDialog from './DocumentFormDialog';
+import QuickPrintDialog from './QuickPrintDialog';
 import { useTranslation } from 'react-i18next';
 import { resolveBackendBase } from '../utils/backendBase';
 

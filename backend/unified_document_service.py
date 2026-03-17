@@ -207,6 +207,11 @@ class UnifiedDocumentGenerator:
         """تخصيص المستند حسب النوع"""
 
         # تعديل عنوان المستند حسب النوع
+        custom_title = settings.get("document_title") if isinstance(settings, dict) else None
+        if custom_title:
+            self.builder.quotation["doc_title"] = custom_title
+            return
+
         title_map = {
             "invoice": "فاتورة مبيعات",
             "diagnosis": "تقرير تشخيص",

@@ -72,6 +72,44 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     setDocumentDialogOpen(true);
   };
 
+  const buildVehiclePayload = (docType) => {
+    const labelMap = {
+      invoice: 'فاتورة',
+      diagnosis: 'تقرير تشخيص',
+      quote: 'عرض سعر',
+      receipt: 'سند قبض',
+    };
+    const items = (approvalItems || []).map((item) => {
+      const quantity = Number(item?.quantity || 1);
+      const price = Number(item?.price || 0);
+      return {
+        name: item?.name || 'عنصر',
+        description: item?.itemType === 'service' ? 'خدمة' : 'قطعة',
+        quantity,
+        price,
+        total: Number(item?.total || quantity * price),
+        unit: item?.unit || 'حبة',
+      };
+    });
+    return {
+      doc_type: docType,
+      items,
+      customer: {
+        name: vehicle?.customerName || vehicle?.ownerName || '',
+        phone: vehicle?.customerPhone || vehicle?.customerPhoneNumber || '',
+      },
+      vehicle: {
+        plate: vehicle?.plateNumber || vehicle?.plate || '',
+        model: vehicle?.vehicleModel || vehicle?.model || '',
+        brand: vehicle?.vehicleBrand || vehicle?.brand || '',
+      },
+      settings: {
+        document_number: '',
+        document_title: labelMap[docType] || 'مستند',
+      },
+    };
+  };
+
   const openPrintDialog = (docType) => {
     const labelMap = {
       invoice: 'فاتورة',
@@ -81,23 +119,10 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     };
     setPrintDialogConfig({
       title: labelMap[docType] || 'طباعة مستند',
-      params: {
-        type: docType,
-        vehicleId: vehicle?.id,
-      },
+      phone: vehicle?.customerPhone || vehicle?.customerPhoneNumber || '',
+      payloadBuilder: () => buildVehiclePayload(docType),
     });
     setPrintDialogOpen(true);
-  };
-
-  const handleQuickPrintAction = (action) => {
-    if (!printDialogConfig?.params?.vehicleId) return;
-    const params = new URLSearchParams({
-      ...printDialogConfig.params,
-      autoClose: '1',
-      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
-    });
-    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
-    setPrintDialogOpen(false);
   };
 
   const handleDocumentSaved = (savedDoc) => {

@@ -82,7 +82,8 @@ const QuickPrintDialog = ({
       setHtml(nextHtml);
       return nextHtml;
     } catch (e) {
-      setError('تعذر إنشاء المعاينة');
+      const message = e?.message === 'timeout' ? 'انتهت مهلة إنشاء المعاينة' : 'تعذر إنشاء المعاينة';
+      setError(message);
       return '';
     } finally {
       setLoading(false);

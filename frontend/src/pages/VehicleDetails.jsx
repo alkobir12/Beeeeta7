@@ -3095,6 +3095,15 @@ const VehicleDetails = () => {
         isRTL={isRTL}
       />
 
+      <QuickPrintDialog
+        open={printDialogOpen}
+        title={printDialogConfig?.title || 'خيارات الطباعة'}
+        description="اختر الطباعة أو إرسال PDF عبر واتس اب"
+        onClose={() => setPrintDialogOpen(false)}
+        onPrint={() => handleQuickPrintAction('print')}
+        onWhatsApp={() => handleQuickPrintAction('whatsapp')}
+      />
+
     </div>
   );
 };

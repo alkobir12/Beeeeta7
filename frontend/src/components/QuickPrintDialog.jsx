@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE } from '../services/api';
 import { downloadPDF } from '../utils/pdfGenerator';
 import { getWhatsAppLink } from '../utils/constants';
@@ -23,11 +23,7 @@ const QuickPrintDialog = ({
     }
   }, [open, initialPhone]);
 
-  useEffect(() => {
-    if (!open || !payloadBuilder) return;
-    let isActive = true;
-
-    const loadWorkshop = async () => {
+  const loadWorkshop = useCallback(async () => {
       try {
         const [settingsRes, profileRes] = await Promise.all([
           fetch(`${API_BASE}/settings`),
@@ -52,45 +48,52 @@ const QuickPrintDialog = ({
           logo_url: '',
         };
       }
-    };
+    }, [loadWorkshop]);
 
-    const generateHtml = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const basePayload = await payloadBuilder();
-        if (!basePayload) {
-          throw new Error('missing-payload');
-        }
-        const workshop = await loadWorkshop();
-        const response = await fetch(`${API_BASE}/documents/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...basePayload, workshop }),
-        });
-        const data = await response.json();
-        if (!data?.success) {
-          throw new Error(data?.error || 'failed');
-        }
-        if (isActive) {
-          setHtml(data?.data?.html || '');
-        }
-      } catch (e) {
-        if (isActive) {
-          setError('تعذر إنشاء المعاينة');
-        }
-      } finally {
-        if (isActive) {
-          setLoading(false);
-        }
+  const generateHtml = useCallback(async () => {
+    if (!payloadBuilder) return '';
+    setLoading(true);
+    setError('');
+    try {
+      const basePayload = await payloadBuilder();
+      if (!basePayload) {
+        throw new Error('missing-payload');
       }
-    };
+      const workshop = await loadWorkshop();
+      const response = await fetch(`${API_BASE}/documents/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...basePayload, workshop }),
+      });
+      const data = await response.json();
+      if (!data?.success) {
+        throw new Error(data?.error || 'failed');
+      }
+      const nextHtml = data?.data?.html || '';
+      setHtml(nextHtml);
+      return nextHtml;
+    } catch (e) {
+      setError('تعذر إنشاء المعاينة');
+      return '';
+    } finally {
+      setLoading(false);
+    }
+  }, [payloadBuilder, loadWorkshop]);
 
-    generateHtml();
+  useEffect(() => {
+    if (!open || !payloadBuilder) return;
+    let isActive = true;
+    (async () => {
+      const nextHtml = await generateHtml();
+      if (!isActive) return;
+      if (nextHtml) {
+        setHtml(nextHtml);
+      }
+    })();
     return () => {
       isActive = false;
     };
-  }, [open, payloadBuilder]);
+  }, [open, payloadBuilder, generateHtml]);
 
   useEffect(() => {
     if (!open || !html || !iframeRef.current) return;
@@ -105,23 +108,25 @@ const QuickPrintDialog = ({
   }, [open, html]);
 
   const handlePrint = async () => {
-    if (!html) return;
+    const htmlContent = html || (await generateHtml());
+    if (!htmlContent) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('يبدو أن المتصفح منع فتح نافذة جديدة. الرجاء السماح بالنوافذ المنبثقة مؤقتًا.');
       return;
     }
     printWindow.document.open();
-    printWindow.document.write(html);
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => printWindow.print(), 600);
   };
 
   const handleWhatsApp = async () => {
-    if (!html) return;
+    const htmlContent = html || (await generateHtml());
+    if (!htmlContent) return;
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = htmlContent;
     await downloadPDF(wrapper, title.replace(/\s+/g, '_'), {
       backgroundColor: '#ffffff',
       scale: 1.4,
@@ -160,7 +165,7 @@ const QuickPrintDialog = ({
             onClick={handlePrint}
             className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400"
             data-testid="quick-print-action-print"
-            disabled={loading || !html}
+            disabled={loading}
           >
             طباعة فورية
           </button>
@@ -169,7 +174,7 @@ const QuickPrintDialog = ({
             onClick={handleWhatsApp}
             className="rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/30"
             data-testid="quick-print-action-whatsapp"
-            disabled={loading || !html}
+            disabled={loading}
           >
             إرسال PDF عبر واتس اب
           </button>

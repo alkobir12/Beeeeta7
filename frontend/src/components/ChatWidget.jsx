@@ -290,10 +290,35 @@ const ChatWidget = () => {
     [vehicles, currentVehicleIdFromPath]
   );
 
-  const goToPrint = (type, vehicleId) => {
+  const openQuickPrintDialog = (docType, vehicleId) => {
     if (!vehicleId) return;
+    const labelMap = {
+      invoice: 'فاتورة',
+      diagnosis: 'تشخيص',
+      quote: 'عرض سعر',
+      receipt: 'سند قبض',
+    };
+    setPrintDialogConfig({
+      title: labelMap[docType] || 'طباعة مستند',
+      params: { type: docType, vehicleId },
+    });
+    setPrintDialogOpen(true);
+  };
+
+  const handleQuickPrintAction = (action) => {
+    if (!printDialogConfig?.params?.vehicleId) return;
+    const params = new URLSearchParams({
+      ...printDialogConfig.params,
+      autoClose: '1',
+      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
+    });
+    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
+    setPrintDialogOpen(false);
     setIsOpen(false);
-    navigate(`/print?type=${encodeURIComponent(type)}&vehicleId=${encodeURIComponent(vehicleId)}`);
+  };
+
+  const goToPrint = (type, vehicleId) => {
+    openQuickPrintDialog(type, vehicleId);
   };
 
   // لا نظهر الودجت داخل شاشات معينة

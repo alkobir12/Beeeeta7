@@ -436,26 +436,26 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
                   <span>{t('quick_actions.send_approval')}</span>
                 </Button>
 
-                {/* Diagnosis Report - Navigate to print page */}
-                <Button onClick={() => navigate(`/print?type=diagnosis&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
+                {/* Diagnosis Report - Quick print dialog */}
+                <Button onClick={() => openPrintDialog('diagnosis')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-blue-500/10 hover:text-blue-400">
                   <FileText size={18} />
                   <span>{t('quick_actions.diagnosis_report')}</span>
                 </Button>
 
-                {/* Quote - Navigate to print page */}
-                <Button onClick={() => navigate(`/print?type=quote&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
+                {/* Quote - Quick print dialog */}
+                <Button onClick={() => openPrintDialog('quote')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-amber-500/10 hover:text-amber-400">
                   <FileText size={18} />
                   <span>{t('quick_actions.print_quotation')}</span>
                 </Button>
 
-                {/* Invoice - Navigate to print page */}
-                <Button onClick={() => navigate(`/print?type=invoice&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
+                {/* Invoice - Quick print dialog */}
+                <Button onClick={() => openPrintDialog('invoice')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-purple-500/10 hover:text-purple-400">
                   <Printer size={18} />
                   <span>{t('quick_actions.print_invoice')}</span>
                 </Button>
 
-                {/* Receipt - Navigate to print page */}
-                <Button onClick={() => navigate(`/print?type=receipt&vehicleId=${vehicle.id}`)} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
+                {/* Receipt - Quick print dialog */}
+                <Button onClick={() => openPrintDialog('receipt')} disabled={loading} variant="outline" className="h-auto py-3 px-2 flex-col gap-1 text-xs hover:bg-emerald-500/10 hover:text-emerald-400">
                   <FileText size={18} />
                   <span>{t('quick_actions.receipt')}</span>
                 </Button>

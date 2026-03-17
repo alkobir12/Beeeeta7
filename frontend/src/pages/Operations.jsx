@@ -1473,7 +1473,7 @@ const Operations = () => {
                   </select>
                 </div>
                 
-                <div className="md:col-span-4">
+                <div className="md:col-span-2">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.items')}</label>
                   {item.itemType === 'part' ? (
                     <select 

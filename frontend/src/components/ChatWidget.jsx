@@ -290,6 +290,64 @@ const ChatWidget = () => {
     [vehicles, currentVehicleIdFromPath]
   );
 
+  const buildChatPayload = async (docType, vehicleId) => {
+    if (!vehicleId) return null;
+    const labelMap = {
+      invoice: 'فاتورة',
+      diagnosis: 'تقرير تشخيص',
+      quote: 'عرض سعر',
+      receipt: 'سند قبض',
+    };
+    const vehicleRes = await fetch(`${API_BASE}/vehicles/${vehicleId}`);
+    const vehicleData = vehicleRes.ok ? await vehicleRes.json() : {};
+    const visitsRes = await fetch(`${API_BASE}/vehicles/${vehicleId}/visits`);
+    const visitsData = visitsRes.ok ? await visitsRes.json() : [];
+    const visit = Array.isArray(visitsData) ? visitsData[0] : visitsData?.visits?.[0];
+    let visitItems = [];
+    if (visit?.items?.length) {
+      visitItems = visit.items;
+    } else if (typeof visit?.notes === 'string' && visit.notes.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(visit.notes);
+        visitItems = parsed?.items || [];
+      } catch (_) {
+        visitItems = [];
+      }
+    }
+    const items = visitItems.map((item) => {
+      const quantity = Number(item?.quantity || item?.qty || 1);
+      const price = Number(item?.price || item?.unitPrice || 0);
+      return {
+        name: item?.name || item?.description || 'عنصر',
+        description: item?.itemType === 'service' ? 'خدمة' : 'قطعة',
+        quantity,
+        price,
+        total: Number(item?.total || quantity * price),
+        unit: item?.unit || 'حبة',
+      };
+    });
+
+    return {
+      doc_type: docType,
+      items,
+      customer: {
+        name: vehicleData?.customerName || vehicleData?.ownerName || '',
+        phone: vehicleData?.customerPhone || vehicleData?.ownerPhone || '',
+      },
+      vehicle: {
+        plate: vehicleData?.plateNumber || vehicleData?.plate || '',
+        model: vehicleData?.vehicleModel || vehicleData?.model || '',
+        brand: vehicleData?.vehicleBrand || vehicleData?.brand || '',
+      },
+      notes: visit?.notes || '',
+      date: visit?.created_at || visit?.createdAt || '',
+      settings: {
+        document_number: visit?.invoiceNumber || visit?.id || '',
+        document_title: labelMap[docType] || 'مستند',
+      },
+    };
+  };
+
   const openQuickPrintDialog = (docType, vehicleId) => {
     if (!vehicleId) return;
     const labelMap = {
@@ -300,21 +358,10 @@ const ChatWidget = () => {
     };
     setPrintDialogConfig({
       title: labelMap[docType] || 'طباعة مستند',
-      params: { type: docType, vehicleId },
+      phone: '',
+      payloadBuilder: () => buildChatPayload(docType, vehicleId),
     });
     setPrintDialogOpen(true);
-  };
-
-  const handleQuickPrintAction = (action) => {
-    if (!printDialogConfig?.params?.vehicleId) return;
-    const params = new URLSearchParams({
-      ...printDialogConfig.params,
-      autoClose: '1',
-      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
-    });
-    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
-    setPrintDialogOpen(false);
-    setIsOpen(false);
   };
 
   const goToPrint = (type, vehicleId) => {

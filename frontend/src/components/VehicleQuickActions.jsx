@@ -31,6 +31,8 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
   // Document form dialogs
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [currentDocType, setCurrentDocType] = useState('');
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printDialogConfig, setPrintDialogConfig] = useState(null);
 
   useEffect(() => {
     setNewStatus(vehicle?.status || 'diagnosis');

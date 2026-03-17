@@ -9,6 +9,7 @@ import { vehicleAPI, technicianAPI, financeAPI, customerAPI, visitAPI, serviceAP
 import VisitDeleteConfirmDialog from '../components/VisitDeleteConfirmDialog';
 import WhatsAppPreviewDialog from '../components/WhatsAppPreviewDialog';
 import VehicleFinancialSummary from '../components/VehicleFinancialSummary';
+import QuickPrintDialog from '../components/QuickPrintDialog';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';

@@ -425,7 +425,8 @@ const DocumentPrint = () => {
       const opType = op.type || op.operation_type || 'sale';
       const normalizedType = String(opType).toLowerCase();
       const isPurchase = ['purchase', 'expense', 'out'].includes(normalizedType);
-      const documentTitle = isPurchase ? (op.accountName || 'فاتورة شراء') : 'فاتورة مبيعات';
+      const accountLabel = op.accountName || op.account_name || op.accountLabel || '';
+      const documentTitle = isPurchase ? (accountLabel || 'فاتورة شراء') : 'فاتورة مبيعات';
 
       setDocType('invoice');
 

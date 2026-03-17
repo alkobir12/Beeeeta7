@@ -192,7 +192,19 @@ const QuickPrintDialog = ({
 
         <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-3">
           {loading && <div className="text-sm text-slate-300" data-testid="quick-print-loading">جارٍ تجهيز المعاينة...</div>}
-          {error && <div className="text-sm text-rose-300" data-testid="quick-print-error">{error}</div>}
+          {error && (
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-rose-300" data-testid="quick-print-error">
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={generateHtml}
+                className="rounded-lg border border-rose-200/30 px-3 py-1 text-xs text-rose-200"
+                data-testid="quick-print-retry"
+              >
+                إعادة المحاولة
+              </button>
+            </div>
+          )}
           {!loading && !error && html && (
             <iframe
               ref={iframeRef}

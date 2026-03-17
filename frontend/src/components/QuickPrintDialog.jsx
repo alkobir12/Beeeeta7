@@ -48,7 +48,7 @@ const QuickPrintDialog = ({
           logo_url: '',
         };
       }
-    }, [loadWorkshop]);
+    }, []);
 
   const generateHtml = useCallback(async () => {
     if (!payloadBuilder) return '';

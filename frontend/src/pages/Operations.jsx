@@ -14,6 +14,7 @@ import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
 import OperationDetailsModal from '../components/OperationDetailsModal';
 import OperationCard from '../components/OperationCard';
 import OperationDeleteConfirmDialog from '../components/OperationDeleteConfirmDialog';
+import QuickPrintDialog from '../components/QuickPrintDialog';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resolveBackendBase } from '../utils/backendBase';

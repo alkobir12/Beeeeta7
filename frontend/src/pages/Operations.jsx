@@ -1577,7 +1577,7 @@ const Operations = () => {
                   <table className="w-full text-sm">
                     <thead style={{ backgroundColor: styles.tableBg, color: styles.textSecondary }}>
                       <tr>
-                        <th className="p-3 text-right font-medium">{t('operations.itemType')}</th>
+                        <th className="p-3 text-right font-medium">نوع العنصر</th>
                         <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>
                         <th className="p-3 text-right font-medium">{t('operations.qty')}</th>
                         <th className="p-3 text-right font-medium">{t('operations.price')}</th>

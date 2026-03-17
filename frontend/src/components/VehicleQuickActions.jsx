@@ -652,6 +652,15 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
           </div>
         </DialogContent>
       </Dialog>
+
+      <QuickPrintDialog
+        open={printDialogOpen}
+        title={printDialogConfig?.title || 'خيارات الطباعة'}
+        description="اختر الطباعة أو إرسال PDF عبر واتس اب"
+        onClose={() => setPrintDialogOpen(false)}
+        onPrint={() => handleQuickPrintAction('print')}
+        onWhatsApp={() => handleQuickPrintAction('whatsapp')}
+      />
     </>
   );
 };

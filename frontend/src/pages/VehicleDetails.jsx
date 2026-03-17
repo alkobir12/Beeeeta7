@@ -2832,7 +2832,7 @@ const VehicleDetails = () => {
                   onClick={() => {
                     const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
                     const vid = active?.id;
-                    navigate(`/print?type=invoice&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                    openQuickPrintDialog({ type: 'invoice', visitId: vid });
                   }}
                   className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
                   style={{ color: 'rgba(226,232,240,0.9)' }}
@@ -2845,7 +2845,7 @@ const VehicleDetails = () => {
                   onClick={() => {
                     const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
                     const vid = active?.id;
-                    navigate(`/print?type=quote&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                    openQuickPrintDialog({ type: 'quote', visitId: vid });
                   }}
                   className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
                   style={{
@@ -2861,7 +2861,7 @@ const VehicleDetails = () => {
                   onClick={() => {
                     const active = visits.find(v => (v.status || '') === 'in_progress') || visits[0];
                     const vid = active?.id;
-                    navigate(`/print?type=diagnosis&vehicleId=${id}${vid ? `&visitId=${vid}` : ''}`);
+                    openQuickPrintDialog({ type: 'diagnosis', visitId: vid });
                   }}
                   className="w-full text-right px-4 py-3 flex items-center gap-2 text-sm transition-colors"
                   style={{

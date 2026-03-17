@@ -422,6 +422,11 @@ const DocumentPrint = () => {
         loadLatestApprovalToken(opVehicleId);
       }
 
+      const opType = op.type || op.operation_type || 'sale';
+      const normalizedType = String(opType).toLowerCase();
+      const isPurchase = ['purchase', 'expense', 'out'].includes(normalizedType);
+      const documentTitle = isPurchase ? (op.accountName || 'فاتورة شراء') : 'فاتورة مبيعات';
+
       setDocType('invoice');
 
       const opCustomerName = op.customerName || op.customer_name || op.partnerName || '';
@@ -440,6 +445,7 @@ const DocumentPrint = () => {
           ...prev.settings,
           date: (op.date || op.op_date || op.createdAt || '').toString().slice(0, 10) || prev.settings.date,
           document_number: op.invoice_number || op.invoiceNumber || prev.settings.document_number || `OP-${op.id}`,
+          document_title: documentTitle,
           notes: op.notes || prev.settings.notes,
         },
       }));

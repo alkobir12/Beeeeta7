@@ -1493,6 +1493,35 @@ const VehicleDetails = () => {
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [printDialogConfig, setPrintDialogConfig] = useState(null);
 
+  const openQuickPrintDialog = ({ type, visitId }) => {
+    const labelMap = {
+      invoice: 'فاتورة',
+      diagnosis: 'تشخيص',
+      quote: 'عرض سعر',
+      receipt: 'سند قبض',
+    };
+    setPrintDialogConfig({
+      title: labelMap[type] || 'طباعة مستند',
+      params: {
+        type,
+        vehicleId: vehicle?.id,
+        ...(visitId ? { visitId } : {}),
+      },
+    });
+    setPrintDialogOpen(true);
+  };
+
+  const handleQuickPrintAction = (action) => {
+    if (!printDialogConfig?.params?.vehicleId) return;
+    const params = new URLSearchParams({
+      ...printDialogConfig.params,
+      autoClose: '1',
+      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
+    });
+    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
+    setPrintDialogOpen(false);
+  };
+
   useEffect(() => {
     let mounted = true;
 

@@ -1830,7 +1830,7 @@ const Operations = () => {
           isRTL={isRTL}
           onPrint={() => {
             if (!selectedOperation?.id) return;
-            navigate(`/print?type=invoice&operationId=${selectedOperation.id}`);
+            openPrintDialogForOperation(selectedOperation);
           }}
           onViewVehicle={() => {
             if (!selectedOperation?.vehicleId) return;

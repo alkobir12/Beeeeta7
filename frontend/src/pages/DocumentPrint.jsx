@@ -33,6 +33,7 @@ const DocumentPrint = () => {
   const [previewHtml, setPreviewHtml] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [workshopSettings, setWorkshopSettings] = useState(null);
+  const [workshopLoaded, setWorkshopLoaded] = useState(false);
   const [pdfSourceHtml, setPdfSourceHtml] = useState('');
   
   // نوع المستند من URL أو افتراضي
@@ -41,6 +42,10 @@ const DocumentPrint = () => {
   const visitId = searchParams.get('visitId');
   const operationId = searchParams.get('operationId');
   const invoiceId = searchParams.get('invoiceId');
+  const autoPrint = searchParams.get('autoPrint') === '1';
+  const autoWhatsApp = searchParams.get('autoWhatsApp') === '1';
+  const autoClose = searchParams.get('autoClose') === '1';
+  const autoActionRef = useRef(false);
   
   const [docType, setDocType] = useState(initialType);
   

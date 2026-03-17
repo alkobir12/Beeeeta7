@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { downloadPDF } from '../utils/pdfGenerator'; // New utility
+import { getWhatsAppLink } from '../utils/constants';
 import { resolveBackendBase } from '../utils/backendBase';
 
 const API_URL = process.env.NODE_ENV === 'production'

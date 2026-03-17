@@ -668,6 +668,48 @@ const DocumentPrint = () => {
     }
   };
 
+  const handleWhatsAppSend = async ({ closeAfter = false } = {}) => {
+    setGeneratingPdf(true);
+    try {
+      const html = previewHtml || (await getDocumentHtml());
+      const { doc, body } = await getPdfBodyFromHtml(html);
+      if (!body) {
+        throw new Error(isArabic ? 'تعذر تجهيز المعاينة للطباعة' : 'Unable to prepare preview');
+      }
+
+      if (doc?.fonts?.ready) {
+        try {
+          await doc.fonts.ready;
+        } catch (_) {
+          // ignore
+        }
+      }
+      await new Promise((r) => setTimeout(r, 120));
+
+      const fileName = `${docType}_${formData.settings.document_number || 'doc'}.pdf`;
+      await downloadPDF(body, fileName, {
+        scale: 1.5,
+        backgroundColor: '#ffffff',
+      });
+
+      const phone = formData.customer?.phone || formData.supplier?.phone || formData.customerPhone || '';
+      if (phone) {
+        const message = `فاتورة ${docType}\nالعميل: ${formData.customer?.name || formData.customerName || ''}\nالإجمالي: ${formatCurrency(totalAmount)}\n${workshop?.name || ''}`;
+        window.open(getWhatsAppLink(phone, message), '_blank');
+      } else {
+        alert(isArabic ? 'يرجى إضافة رقم الجوال للعميل لإرسال واتس اب' : 'Customer phone is missing');
+      }
+    } catch (e) {
+      console.error('PDF WhatsApp Error:', e);
+      alert((isArabic ? 'فشل تجهيز PDF للإرسال: ' : 'Failed to prepare PDF: ') + (e?.message || ''));
+    } finally {
+      setGeneratingPdf(false);
+      if (closeAfter) {
+        setTimeout(() => window.close(), 800);
+      }
+    }
+  };
+
   const generateDocument = async (preview = false) => {
     if (!preview) {
       // If triggered by "Download" button that is not using handleDownloadPDF, use it

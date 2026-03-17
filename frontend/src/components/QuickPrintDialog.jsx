@@ -127,10 +127,16 @@ const QuickPrintDialog = ({
     if (!htmlContent) return;
     const wrapper = document.createElement('div');
     wrapper.innerHTML = htmlContent;
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-10000px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '794px';
+    document.body.appendChild(wrapper);
     await downloadPDF(wrapper, title.replace(/\s+/g, '_'), {
       backgroundColor: '#ffffff',
       scale: 1.4,
     });
+    document.body.removeChild(wrapper);
     if (!phone) {
       alert('يرجى إدخال رقم الجوال لإرسال واتس اب');
       return;

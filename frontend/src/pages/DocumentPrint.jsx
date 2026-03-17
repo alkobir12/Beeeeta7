@@ -49,6 +49,12 @@ const DocumentPrint = () => {
   const autoActionRef = useRef(false);
   
   const [docType, setDocType] = useState(initialType);
+  const isDataReady = Boolean(
+    formData?.items?.length ||
+    formData?.customer?.name ||
+    formData?.customerName ||
+    formData?.settings?.document_number
+  );
   
   const [formData, setFormData] = useState({
     workshop: {

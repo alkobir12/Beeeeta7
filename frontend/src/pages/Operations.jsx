@@ -767,28 +767,60 @@ const Operations = () => {
     }
   };
 
-  const openPrintDialogForOperation = (operation) => {
-    const label = operation.type === 'purchase'
-      ? 'فاتورة شراء'
-      : operation.type === 'sale'
-      ? 'فاتورة بيع'
-      : 'فاتورة';
-    setPrintDialogConfig({
-      title: label,
-      params: { type: 'invoice', operationId: operation.id },
+  const buildOperationPayload = (operation) => {
+    const opType = (operation?.type || '').toLowerCase();
+    const isPurchase = ['purchase', 'expense', 'out'].includes(opType);
+    const partner = {
+      name: operation?.partnerName || operation?.customerName || operation?.supplierName || '',
+      phone: operation?.partnerPhone || operation?.customerPhone || operation?.supplierPhone || '',
+    };
+    const items = (operation?.items || []).map((item) => {
+      const quantity = Number(item?.quantity || 1);
+      const price = Number(item?.price || 0);
+      const total = Number(item?.total || quantity * price);
+      return {
+        name: item?.name || item?.itemName || 'عنصر',
+        description: item?.itemType === 'service' ? 'خدمة' : 'قطعة',
+        quantity,
+        price,
+        total,
+        unit: item?.unit || 'حبة',
+      };
     });
-    setPrintDialogOpen(true);
+
+    const documentTitle = isPurchase
+      ? operation?.accountName || 'فاتورة شراء'
+      : 'فاتورة مبيعات';
+
+    return {
+      doc_type: 'invoice',
+      items,
+      customer: isPurchase ? {} : partner,
+      supplier: isPurchase ? partner : {},
+      vehicle: {
+        plate: operation?.vehiclePlate || operation?.vehicle_plate || '',
+        model: operation?.vehicleModel || operation?.vehicle_model || '',
+        brand: operation?.vehicleBrand || operation?.vehicle_brand || '',
+      },
+      notes: operation?.description || operation?.notes || '',
+      date: operation?.date || operation?.created_at || '',
+      settings: {
+        document_number: operation?.reference || operation?.id?.slice(0, 8) || '',
+        document_title: documentTitle,
+      },
+    };
   };
 
-  const handleQuickPrintAction = (action) => {
-    if (!printDialogConfig?.params) return;
-    const params = new URLSearchParams({
-      ...printDialogConfig.params,
-      autoClose: '1',
-      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
+  const openPrintDialogForOperation = (operation) => {
+    const opType = (operation?.type || '').toLowerCase();
+    const label = ['purchase', 'expense', 'out'].includes(opType) ? 'فاتورة شراء' : 'فاتورة مبيعات';
+    const phone = operation?.partnerPhone || operation?.customerPhone || operation?.supplierPhone || '';
+    setPrintDialogConfig({
+      title: label,
+      phone,
+      payloadBuilder: () => buildOperationPayload(operation),
     });
-    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
-    setPrintDialogOpen(false);
+    setPrintDialogOpen(true);
   };
 
   const requestDeleteOperation = (op) => {

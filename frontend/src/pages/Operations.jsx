@@ -174,6 +174,8 @@ const Operations = () => {
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
   const [expandedOperationId, setExpandedOperationId] = useState(null);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printDialogConfig, setPrintDialogConfig] = useState(null);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);

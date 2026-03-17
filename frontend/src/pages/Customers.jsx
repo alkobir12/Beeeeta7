@@ -359,6 +359,28 @@ const Customers = () => {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(customer);
+                      }}
+                      className="p-2 rounded-lg border border-white/10 text-slate-200 hover:bg-white/10"
+                      data-testid={`customer-edit-inline-${customer.id}`}
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(customer);
+                      }}
+                      className="p-2 rounded-lg border border-rose-400/40 text-rose-300 hover:bg-rose-500/10"
+                      data-testid={`customer-delete-inline-${customer.id}`}
+                    >
+                      حذف
+                    </button>
+                  </div>
                 </div>
 
                 {/* معلومات الاتصال */}

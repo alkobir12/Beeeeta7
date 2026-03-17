@@ -1490,6 +1490,8 @@ const VehicleDetails = () => {
   const [showFiles, setShowFiles] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
   const [technicians, setTechnicians] = useState([]);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printDialogConfig, setPrintDialogConfig] = useState(null);
 
   useEffect(() => {
     let mounted = true;

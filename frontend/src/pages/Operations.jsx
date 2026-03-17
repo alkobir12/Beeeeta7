@@ -1465,7 +1465,7 @@ const Operations = () => {
                   <select 
                     className="apple-input h-9 text-sm"
                     value={item.itemType} 
-                    onChange={e=>setItem({...item, itemType: e.target.value})}
+                    onChange={e=>setItem({ ...item, itemType: e.target.value, itemId: '', name: '', customName: '' })}
                     data-testid="operation-item-type-select"
                   >
                     <option value="part">{t('operations.part')}</option>

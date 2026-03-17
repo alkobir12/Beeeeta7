@@ -1473,7 +1473,7 @@ const Operations = () => {
                   </select>
                 </div>
                 
-                <div className="md:col-span-2">
+                <div className="md:col-span-1">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.items')}</label>
                   {item.itemType === 'part' ? (
                     <select 
@@ -1515,7 +1515,7 @@ const Operations = () => {
                     </select>
                   )}
                 </div>
-                <div className="md:col-span-2">
+                <div className="md:col-span-1">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>
                     إدخال صنف/خدمة جديدة
                   </label>
@@ -1536,7 +1536,7 @@ const Operations = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="md:col-span-1">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.quantity')}</label>
                   <input 
                     type="number" 

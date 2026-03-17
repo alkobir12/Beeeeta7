@@ -172,6 +172,8 @@ const DocumentPrint = () => {
       }));
     } catch (e) {
       console.error('Error loading settings/profile:', e);
+    } finally {
+      setWorkshopLoaded(true);
     }
   };
 

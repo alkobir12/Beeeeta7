@@ -767,12 +767,32 @@ const Operations = () => {
     }
   };
 
+  const resolvePartnerPhone = (operation) => {
+    const partnerId = operation?.partnerId || operation?.customerId || operation?.supplierId;
+    const partnerName = operation?.partnerName || operation?.customerName || operation?.supplierName || '';
+    const customerMatch = customers.find((c) =>
+      (partnerId && String(c.id) === String(partnerId)) || (partnerName && c.name === partnerName)
+    );
+    const supplierMatch = suppliers.find((s) =>
+      (partnerId && String(s.id) === String(partnerId)) || (partnerName && s.name === partnerName)
+    );
+    return (
+      operation?.partnerPhone ||
+      operation?.customerPhone ||
+      operation?.supplierPhone ||
+      customerMatch?.phone ||
+      supplierMatch?.phone ||
+      ''
+    );
+  };
+
   const buildOperationPayload = (operation) => {
     const opType = (operation?.type || '').toLowerCase();
     const isPurchase = ['purchase', 'expense', 'out'].includes(opType);
+    const partnerPhone = resolvePartnerPhone(operation);
     const partner = {
       name: operation?.partnerName || operation?.customerName || operation?.supplierName || '',
-      phone: operation?.partnerPhone || operation?.customerPhone || operation?.supplierPhone || '',
+      phone: partnerPhone,
     };
     const items = (operation?.items || []).map((item) => {
       const quantity = Number(item?.quantity || 1);
@@ -813,7 +833,7 @@ const Operations = () => {
   const openPrintDialogForOperation = (operation) => {
     const opType = (operation?.type || '').toLowerCase();
     const label = ['purchase', 'expense', 'out'].includes(opType) ? 'فاتورة شراء' : 'فاتورة مبيعات';
-    const phone = operation?.partnerPhone || operation?.customerPhone || operation?.supplierPhone || '';
+    const phone = resolvePartnerPhone(operation);
     setPrintDialogConfig({
       title: label,
       phone,

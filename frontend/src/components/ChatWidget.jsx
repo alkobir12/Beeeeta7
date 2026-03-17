@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Loader2, ClipboardList, FileText, Receipt, Send, Wrench, Bot, AlertCircle } from 'lucide-react';
-import { aiAPI, vehicleAPI } from '../services/api';
+import { aiAPI, vehicleAPI, API_BASE } from '../services/api';
 import QuickPrintDialog from './QuickPrintDialog';
 import { ArchiveSearchPanel } from './workshop-bot/ArchiveSearchPanel';
 import { ArchiveVisitResultCard } from './workshop-bot/ArchiveVisitResultCard';

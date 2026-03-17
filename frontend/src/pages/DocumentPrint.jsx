@@ -686,8 +686,8 @@ const DocumentPrint = () => {
     }
   };
 
-  const printDocument = async () => {
-    const printWindow = window.open('', '_blank');
+  const printDocument = async ({ useCurrentWindow = false, closeAfter = false } = {}) => {
+    const printWindow = useCurrentWindow ? window : window.open('', '_blank');
     if (!printWindow) {
       alert(isArabic ? 'تم حظر النافذة المنبثقة' : 'Popup blocked');
       return;
@@ -703,10 +703,15 @@ const DocumentPrint = () => {
         printWindow.focus();
         setTimeout(() => {
           printWindow.print();
-        }, 1000);
+          if (closeAfter) {
+            setTimeout(() => printWindow.close(), 800);
+          }
+        }, 800);
       }
     } catch (error) {
-      printWindow.close();
+      if (!useCurrentWindow) {
+        printWindow.close();
+      }
       alert(isArabic ? 'فشل الطباعة' : 'Print failed');
     } finally {
       setLoading(false);

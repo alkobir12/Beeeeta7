@@ -17,6 +17,15 @@ const QuickPrintDialog = ({
   const [phone, setPhone] = useState(initialPhone || '');
   const iframeRef = useRef(null);
 
+  const runWithTimeout = useCallback((promise, timeoutMs = 15000) => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), timeoutMs)
+      ),
+    ]);
+  }, []);
+
   useEffect(() => {
     if (open) {
       setPhone(initialPhone || '');
@@ -55,16 +64,16 @@ const QuickPrintDialog = ({
     setLoading(true);
     setError('');
     try {
-      const basePayload = await payloadBuilder();
+      const basePayload = await runWithTimeout(payloadBuilder(), 15000);
       if (!basePayload) {
         throw new Error('missing-payload');
       }
       const workshop = await loadWorkshop();
-      const response = await fetch(`${API_BASE}/documents/generate`, {
+      const response = await runWithTimeout(fetch(`${API_BASE}/documents/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...basePayload, workshop }),
-      });
+      }), 15000);
       const data = await response.json();
       if (!data?.success) {
         throw new Error(data?.error || 'failed');

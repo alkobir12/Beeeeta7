@@ -1752,7 +1752,7 @@ const Operations = () => {
                     }}
                     onPrint={(o) => {
                       if (!o?.id) return;
-                      navigate(`/print?type=invoice&operationId=${o.id}`);
+                      openPrintDialogForOperation(o);
                     }}
                     onViewVehicle={(o) => {
                       if (!o?.vehicleId) return;

@@ -767,6 +767,30 @@ const Operations = () => {
     }
   };
 
+  const openPrintDialogForOperation = (operation) => {
+    const label = operation.type === 'purchase'
+      ? 'فاتورة شراء'
+      : operation.type === 'sale'
+      ? 'فاتورة بيع'
+      : 'فاتورة';
+    setPrintDialogConfig({
+      title: label,
+      params: { type: 'invoice', operationId: operation.id },
+    });
+    setPrintDialogOpen(true);
+  };
+
+  const handleQuickPrintAction = (action) => {
+    if (!printDialogConfig?.params) return;
+    const params = new URLSearchParams({
+      ...printDialogConfig.params,
+      autoClose: '1',
+      ...(action === 'print' ? { autoPrint: '1' } : { autoWhatsApp: '1' }),
+    });
+    window.open(`/print?${params.toString()}`, '_blank', 'width=1200,height=800');
+    setPrintDialogOpen(false);
+  };
+
   const requestDeleteOperation = (op) => {
     if (!op?.id) return;
     setDeleteTarget(op);

@@ -55,6 +55,8 @@ const ChatWidget = () => {
   const [mode, setMode] = useState('chat'); // 'chat' | 'diagnosis' | 'technical' | 'invoice'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printDialogConfig, setPrintDialogConfig] = useState(null);
   
   // بيانات التشخيص
   const [selectedVehicleId, setSelectedVehicleId] = useState('');

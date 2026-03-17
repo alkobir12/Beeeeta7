@@ -151,6 +151,19 @@ const DocumentPrint = () => {
     autoRefreshRef.current = false;
   }, [vehicleId, visitId, operationId, invoiceId]);
 
+  useEffect(() => {
+    if (!autoPrint && !autoWhatsApp) return;
+    if (!workshopLoaded || !isDataReady) return;
+    if (autoActionRef.current) return;
+    autoActionRef.current = true;
+
+    if (autoPrint) {
+      printDocument({ useCurrentWindow: true, closeAfter: autoClose });
+    } else if (autoWhatsApp) {
+      handleWhatsAppSend({ closeAfter: autoClose });
+    }
+  }, [autoPrint, autoWhatsApp, autoClose, workshopLoaded, isDataReady]);
+
   const loadWorkshopSettings = async () => {
     try {
       const [settingsRes, profileRes] = await Promise.all([

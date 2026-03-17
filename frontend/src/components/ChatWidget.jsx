@@ -709,10 +709,10 @@ const ChatWidget = () => {
       <QuickPrintDialog
         open={printDialogOpen}
         title={printDialogConfig?.title || 'خيارات الطباعة'}
-        description="اختر الطباعة أو إرسال PDF عبر واتس اب"
+        description="معاينة المستند قبل الطباعة أو الإرسال"
+        payloadBuilder={printDialogConfig?.payloadBuilder}
+        initialPhone={printDialogConfig?.phone}
         onClose={() => setPrintDialogOpen(false)}
-        onPrint={() => handleQuickPrintAction('print')}
-        onWhatsApp={() => handleQuickPrintAction('whatsapp')}
       />
     </>
   );

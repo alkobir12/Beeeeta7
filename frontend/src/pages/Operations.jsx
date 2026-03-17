@@ -788,9 +788,8 @@ const Operations = () => {
       };
     });
 
-    const documentTitle = isPurchase
-      ? operation?.accountName || 'فاتورة شراء'
-      : 'فاتورة مبيعات';
+    const accountLabel = operation?.accountName || operation?.account_name || operation?.accountLabel || '';
+    const documentTitle = isPurchase ? (accountLabel || 'فاتورة شراء') : 'فاتورة مبيعات';
 
     return {
       doc_type: 'invoice',

@@ -23,21 +23,60 @@
     "guidanceEnabled": true
   },
   {
-    "name": "S",
+    "name": "احمد1",
     "email": "",
     "phone": "333",
-    "role": "technician",
+    "role": "supervisor",
     "permissions": {
-      "canViewDashboard": true,
-      "canManageVehicles": true,
-      "canManageCustomers": true,
-      "canManageParts": true,
-      "canManageServices": true,
-      "canViewReports": true,
-      "canManageFinance": false,
-      "canManageUsers": false,
-      "canAccessCEO": false,
-      "canManageSettings": false
+      "dashboard": {
+        "view": true
+      },
+      "vehicles": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "customers": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "invoices": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "debts": {
+        "view": true,
+        "settle": false
+      },
+      "inventory": {
+        "view": false,
+        "create": true,
+        "edit": false,
+        "delete": false
+      },
+      "work_orders": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "reports": {
+        "view": false
+      },
+      "users": {
+        "view": false,
+        "create": false,
+        "edit": false,
+        "delete": false
+      },
+      "settings": {
+        "view": false
+      }
     },
     "id": "522230c4-d47c-438e-8bb2-1d6d2b484ea1",
     "createdAt": "2025-12-03T19:25:16.176554",
@@ -46,21 +85,57 @@
     "guidanceEnabled": true
   },
   {
-    "name": "A",
+    "name": "فرج1",
     "email": "",
     "phone": "75666",
-    "role": "employee",
+    "role": "accountant",
     "permissions": {
-      "canViewDashboard": true,
-      "canManageVehicles": true,
-      "canManageCustomers": true,
-      "canManageParts": true,
-      "canManageServices": true,
-      "canViewReports": true,
-      "canManageFinance": true,
-      "canManageUsers": true,
-      "canAccessCEO": false,
-      "canManageSettings": false
+      "dashboard": {
+        "view": true
+      },
+      "vehicles": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "customers": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "invoices": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
+      },
+      "debts": {
+        "view": true,
+        "settle": true
+      },
+      "inventory": {
+        "view": true,
+        "create": true,
+        "edit": false,
+        "delete": false
+      },
+      "work_orders": {
+        "view": true,
+        "create": false,
+        "edit": false,
+        "delete": false
+      },
+      "reports": {
+        "view": false
+      },
+      "users": {
+        "view": false
+      },
+      "settings": {
+        "view": false
+      }
     },
     "id": "dde5fac4-fa9e-42a1-a16c-4c2bbef61dac",
     "createdAt": "2025-12-08T08:25:06.676970",

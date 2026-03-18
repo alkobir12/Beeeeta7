@@ -82,9 +82,11 @@ const VehicleQuickActions = ({ isOpen, onClose, vehicle, onStatusUpdate, onDelet
     const items = (approvalItems || []).map((item) => {
       const quantity = Number(item?.quantity || 1);
       const price = Number(item?.price || 0);
+      const itemName = item?.name || 'عنصر';
+      const typeLabel = item?.itemType === 'service' ? 'خدمة' : 'قطعة';
       return {
-        name: item?.name || 'عنصر',
-        description: item?.itemType === 'service' ? 'خدمة' : 'قطعة',
+        name: itemName,
+        description: itemName ? `${itemName} (${typeLabel})` : typeLabel,
         quantity,
         price,
         total: Number(item?.total || quantity * price),

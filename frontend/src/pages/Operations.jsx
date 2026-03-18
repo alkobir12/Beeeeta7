@@ -799,10 +799,9 @@ const Operations = () => {
       const price = Number(item?.price || 0);
       const total = Number(item?.total || quantity * price);
       const itemName = item?.name || item?.itemName || 'عنصر';
-      const typeLabel = item?.itemType === 'service' ? 'خدمة' : 'قطعة';
       return {
         name: itemName,
-        description: itemName ? `${itemName} (${typeLabel})` : typeLabel,
+        description: itemName,
         quantity,
         price,
         total,

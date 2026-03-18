@@ -317,9 +317,11 @@ const ChatWidget = () => {
     const items = visitItems.map((item) => {
       const quantity = Number(item?.quantity || item?.qty || 1);
       const price = Number(item?.price || item?.unitPrice || 0);
+      const itemName = item?.name || item?.description || 'عنصر';
+      const typeLabel = item?.itemType === 'service' ? 'خدمة' : 'قطعة';
       return {
-        name: item?.name || item?.description || 'عنصر',
-        description: item?.itemType === 'service' ? 'خدمة' : 'قطعة',
+        name: itemName,
+        description: itemName ? `${itemName} (${typeLabel})` : typeLabel,
         quantity,
         price,
         total: Number(item?.total || quantity * price),

@@ -79,6 +79,9 @@ const QuickPrintDialog = ({
         throw new Error(data?.error || 'failed');
       }
       const nextHtml = data?.html || data?.data?.html || '';
+      if (!nextHtml) {
+        throw new Error('empty');
+      }
       setHtml(nextHtml);
       return nextHtml;
     } catch (e) {

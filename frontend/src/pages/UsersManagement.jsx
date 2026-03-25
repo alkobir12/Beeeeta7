@@ -249,6 +249,23 @@ const UsersManagement = () => {
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <div className="flex items-center justify-between gap-4">
                     <div>
+                      <h3 className="font-medium text-gray-900">حالة المستخدم</h3>
+                      <p className="text-xs text-gray-500">تفعيل أو تعطيل الحساب.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                      className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${form.isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                      data-testid="users-active-toggle"
+                    >
+                      <span className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
                       <h3 className="font-medium text-gray-900">الإرشادات الذكية</h3>
                       <p className="text-xs text-gray-500">تنبيهات خطوة بخطوة لتقليل الأخطاء.</p>
                     </div>

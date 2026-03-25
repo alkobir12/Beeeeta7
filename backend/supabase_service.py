@@ -85,6 +85,40 @@ def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def to_snake_user(api: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": api.get("id"),
+        "name": api.get("name"),
+        "username": api.get("username"),
+        "password": api.get("password"),
+        "role": api.get("role"),
+        "phone": api.get("phone"),
+        "email": api.get("email"),
+        "permissions": api.get("permissions"),
+        "guidance_enabled": api.get("guidanceEnabled"),
+        "created_at": api.get("createdAt"),
+        "last_login": api.get("lastLogin"),
+        "is_active": api.get("isActive"),
+    }
+
+
+def to_camel_user(dbrow: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": dbrow.get("id"),
+        "name": dbrow.get("name"),
+        "username": dbrow.get("username"),
+        "password": dbrow.get("password"),
+        "role": dbrow.get("role"),
+        "phone": dbrow.get("phone"),
+        "email": dbrow.get("email"),
+        "permissions": dbrow.get("permissions"),
+        "guidanceEnabled": dbrow.get("guidance_enabled"),
+        "createdAt": dbrow.get("created_at"),
+        "lastLogin": dbrow.get("last_login"),
+        "isActive": dbrow.get("is_active"),
+    }
+
+
 class SupabaseService:
     """Service for Supabase database operations"""
 

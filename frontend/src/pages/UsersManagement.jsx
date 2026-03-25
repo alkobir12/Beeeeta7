@@ -153,7 +153,7 @@ const UsersManagement = () => {
             <h1 className="text-2xl font-bold text-gray-900">المستخدمين والصلاحيات</h1>
             <p className="text-gray-500 mt-1">إدارة فريق العمل وتحديد الصلاحيات</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="apple-button flex items-center gap-2">
+          <button onClick={() => setShowModal(true)} className="apple-button flex items-center gap-2" data-testid="users-add-button">
             <Plus size={18} />
             <span>مستخدم جديد</span>
           </button>
@@ -168,7 +168,7 @@ const UsersManagement = () => {
                     {user.name?.[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{user.name}</h3>
+                    <h3 className="font-bold text-gray-900" data-testid={`users-card-name-${user.id}`}>{user.name}</h3>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                       {getRoleLabel(user.role)}
                     </span>
@@ -178,14 +178,14 @@ const UsersManagement = () => {
                   </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => editUser(user)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><Edit size={16} /></button>
-                  <button onClick={() => deleteUser(user.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={16} /></button>
+                  <button onClick={() => editUser(user)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500" data-testid={`users-card-edit-${user.id}`}><Edit size={16} /></button>
+                  <button onClick={() => deleteUser(user.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500" data-testid={`users-card-delete-${user.id}`}><Trash2 size={16} /></button>
                 </div>
               </div>
               
               <div className="space-y-1 text-sm text-gray-500 mb-4">
-                <p>{user.phone}</p>
-                <p>{user.email}</p>
+                <p data-testid={`users-card-phone-${user.id}`}>{user.phone}</p>
+                <p data-testid={`users-card-email-${user.id}`}>{user.email}</p>
               </div>
 
               <div className="pt-4 border-t border-gray-50">

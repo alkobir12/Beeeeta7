@@ -142,5 +142,57 @@
     "lastLogin": null,
     "isActive": true,
     "guidanceEnabled": false
+  },
+  {
+    "name": "مستخدم اختبار",
+    "email": "test@example.com",
+    "phone": "0501001220",
+    "role": "technician",
+    "permissions": {
+      "dashboard": {
+        "view": true
+      },
+      "vehicles": {
+        "view": true,
+        "create": false,
+        "edit": false,
+        "delete": false
+      },
+      "customers": {
+        "view": false
+      },
+      "invoices": {
+        "view": false
+      },
+      "debts": {
+        "view": false
+      },
+      "inventory": {
+        "view": true,
+        "create": false,
+        "edit": false,
+        "delete": false
+      },
+      "work_orders": {
+        "view": true,
+        "create": false,
+        "edit": true,
+        "delete": false
+      },
+      "reports": {
+        "view": false
+      },
+      "users": {
+        "view": false
+      },
+      "settings": {
+        "view": false
+      }
+    },
+    "guidanceEnabled": true,
+    "id": "3c6d2584-0ef3-4055-b357-8dafedacce24",
+    "createdAt": "2026-03-25T13:24:32.252294",
+    "lastLogin": null,
+    "isActive": true
   }
 ]

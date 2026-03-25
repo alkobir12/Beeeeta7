@@ -320,8 +320,8 @@ const UsersManagement = () => {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={resetForm} className="flex-1 apple-button-secondary">إلغاء</button>
-                  <button type="submit" disabled={loading} className="flex-1 apple-button">حفظ</button>
+                  <button type="button" onClick={resetForm} className="flex-1 apple-button-secondary" data-testid="users-cancel-button">إلغاء</button>
+                  <button type="submit" disabled={loading} className="flex-1 apple-button" data-testid="users-submit-button">حفظ</button>
                 </div>
               </form>
             </div>

@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
 import { resolveBackendBase } from '../utils/backendBase';
-import permissionsData from '../config/permissions.json';
+import rolePermissions from '../config/rolePermissions.json';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -16,7 +16,7 @@ const API_URL = (
 
 const Users = () => {
   const { toast } = useToast();
-  const roleOptions = Object.entries(permissionsData?.roles || {});
+  const roleOptions = Object.entries(rolePermissions?.roles || {});
   const defaultRoleKey = roleOptions.find(([key]) => key === 'technician')?.[0]
     || roleOptions[0]?.[0]
     || 'technician';
@@ -29,7 +29,7 @@ const Users = () => {
     phone: '', 
     email: '',
     role: defaultRoleKey, 
-    permissions: permissionsData?.roles?.[defaultRoleKey]?.permissions || {},
+    permissions: rolePermissions?.roles?.[defaultRoleKey]?.permissions || {},
     isActive: true 
   });
   const [editingId, setEditingId] = useState(null);
@@ -71,7 +71,7 @@ const Users = () => {
         phone: '',
         email: '',
         role: resetRole,
-        permissions: permissionsData?.roles?.[resetRole]?.permissions || {},
+        permissions: rolePermissions?.roles?.[resetRole]?.permissions || {},
         isActive: true,
       });
       setEditingId(null);
@@ -92,7 +92,7 @@ const Users = () => {
       phone: u.phone || '',
       email: u.email || '',
       role: u.role || defaultRoleKey,
-      permissions: u.permissions || permissionsData?.roles?.[u.role]?.permissions || {},
+      permissions: u.permissions || rolePermissions?.roles?.[u.role]?.permissions || {},
       isActive: u.isActive !== false,
     });
   };
@@ -149,7 +149,7 @@ const Users = () => {
                     setForm({
                       ...form,
                       role: nextRole,
-                      permissions: permissionsData?.roles?.[nextRole]?.permissions || {},
+                      permissions: rolePermissions?.roles?.[nextRole]?.permissions || {},
                     });
                   }}
                 >
@@ -189,7 +189,7 @@ const Users = () => {
                     <tr key={u.id}>
                       <td className="border p-2" data-testid={`users-row-name-${u.id}`}>{u.name || '-'}</td>
                       <td className="border p-2" data-testid={`users-row-phone-${u.id}`}>{u.phone}</td>
-                      <td className="border p-2" data-testid={`users-row-role-${u.id}`}>{permissionsData?.roles?.[u.role]?.name || u.role}</td>
+                      <td className="border p-2" data-testid={`users-row-role-${u.id}`}>{rolePermissions?.roles?.[u.role]?.name || u.role}</td>
                       <td className="border p-2" data-testid={`users-row-active-${u.id}`}>{u.isActive === false ? 'لا' : 'نعم'}</td>
                       <td className="border p-2 space-x-2 space-x-reverse">
                         <Button data-testid={`users-edit-${u.id}`} variant="outline" onClick={()=>edit(u)}>تعديل</Button>

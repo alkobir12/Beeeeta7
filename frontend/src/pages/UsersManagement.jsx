@@ -216,19 +216,27 @@ const UsersManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">الاسم *</label>
-                    <input required className="apple-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                    <input required className="apple-input" data-testid="users-name-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">رقم الجوال *</label>
-                    <input required className="apple-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                    <input required className="apple-input" data-testid="users-phone-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">اسم الدخول *</label>
+                    <input required className="apple-input" data-testid="users-username-input" value={form.username} onChange={e => setForm({...form, username: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">كلمة المرور {editingId ? '' : '*'}</label>
+                    <input type="password" className="apple-input" data-testid="users-password-input" placeholder={editingId ? 'اتركه فارغًا للإبقاء' : ''} value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-                    <input type="email" className="apple-input" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                    <input type="email" className="apple-input" data-testid="users-email-input" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">الدور الوظيفي</label>
-                    <select className="apple-input" value={form.role} onChange={e => handleRoleChange(e.target.value)}>
+                    <select className="apple-input" data-testid="users-role-select" value={form.role} onChange={e => handleRoleChange(e.target.value)}>
                       {ROLE_OPTIONS.map((role) => (
                         <option key={role.value} value={role.value}>
                           {role.label}

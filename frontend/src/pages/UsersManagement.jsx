@@ -123,6 +123,8 @@ const UsersManagement = () => {
   const editUser = (user) => {
     setForm({
       name: user.name || '',
+      username: user.username || '',
+      password: '',
       phone: user.phone || '',
       email: user.email || '',
       role: user.role || DEFAULT_ROLE,

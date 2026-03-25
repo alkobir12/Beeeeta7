@@ -273,7 +273,7 @@ const UsersManagement = () => {
                       type="button"
                       onClick={() => setForm({ ...form, guidanceEnabled: !form.guidanceEnabled })}
                       className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${form.guidanceEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                      data-testid="user-guidance-toggle"
+                      data-testid="users-guidance-toggle"
                     >
                       <span className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${form.guidanceEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>

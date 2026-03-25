@@ -107,6 +107,8 @@ const UsersManagement = () => {
   const resetForm = () => {
     setForm({
       name: '',
+      username: '',
+      password: '',
       phone: '',
       email: '',
       role: DEFAULT_ROLE,

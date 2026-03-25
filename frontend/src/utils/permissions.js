@@ -1,4 +1,4 @@
-import rolePermissions from '../config/permissions.json';
+import rolePermissions from '../config/rolePermissions.json';
 
 export const ROLE_DEFINITIONS = rolePermissions?.roles || {};
 

@@ -32,6 +32,8 @@ const UsersManagement = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     name: '',
+    username: '',
+    password: '',
     phone: '',
     email: '',
     role: DEFAULT_ROLE,

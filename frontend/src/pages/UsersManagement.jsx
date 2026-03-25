@@ -80,10 +80,18 @@ const UsersManagement = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      if (!form.name || !form.username || (!editingId && !form.password)) {
+        toast({ title: 'تنبيه', description: 'الاسم واسم الدخول وكلمة المرور مطلوبة', variant: 'destructive' });
+        return;
+      }
+      const payload = { ...form };
+      if (editingId && !payload.password) {
+        delete payload.password;
+      }
       const res = await fetch(`${API_URL}/users${editingId ? '/' + editingId : ''}`, {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('فشل الحفظ');
       toast({ title: 'تم الحفظ', description: 'تم حفظ بيانات المستخدم بنجاح' });

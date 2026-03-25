@@ -1077,6 +1077,42 @@ class SupabaseService:
         self.client.table("parts").delete().eq("id", pid).execute()
         return True
 
+    # -------------------- Users --------------------
+    def users_list(self) -> List[Dict[str, Any]]:
+        if self.mock_mode:
+            return []
+        res = self.client.table("users").select("*").execute()
+        return [to_camel_user(item) for item in (res.data or [])]
+
+    def users_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        res = self.client.table("users").insert(to_snake_user(payload)).execute()
+        data = res.data or []
+        if not data:
+            return payload
+        return to_camel_user(data[0])
+
+    def users_update(self, user_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mock_mode:
+            return payload
+        res = (
+            self.client.table("users")
+            .update(to_snake_user(payload))
+            .eq("id", user_id)
+            .execute()
+        )
+        data = res.data or []
+        if not data:
+            return payload
+        return to_camel_user(data[0])
+
+    def users_delete(self, user_id: str) -> bool:
+        if self.mock_mode:
+            return True
+        self.client.table("users").delete().eq("id", user_id).execute()
+        return True
+
     # -------------------- Aliases for business_accounts --------------------
     def business_accounts_list(self) -> List[Dict[str, Any]]:
         return self.accounts_list()

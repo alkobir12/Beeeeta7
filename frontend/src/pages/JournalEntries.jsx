@@ -502,134 +502,237 @@ export default function JournalEntries() {
             <p style={{ color: styles.textSecondary }}>أضف قيداً جديداً أو قم بإضافة بنود لملف مركبة</p>
           </div>
         ) : (
-          <div>
-            {/* Table Header */}
-            <div 
-              className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider"
-              style={{ 
-                color: styles.textSecondary,
-                backgroundColor: 'rgba(15, 23, 42, 0.85)'
-              }}
-            >
-              <div className="col-span-4">الوصف</div>
-              <div className="col-span-2">التاريخ</div>
-              <div className="col-span-2">العميل</div>
-              <div className="col-span-2">المبلغ</div>
-              <div className="col-span-1">النوع</div>
-              <div className="col-span-1"></div>
-            </div>
+          <>
+            <div className="block md:hidden px-4 pb-4 space-y-3">
+              {filteredEntries.map((entry) => {
+                const typeConfig = getEntryTypeConfig(entry.reference_type);
+                const TypeIcon = typeConfig.icon;
+                const total = entry.total_debit || 0;
+                const isManual = entry.source === 'manual';
 
-            {/* Table Rows */}
-            {filteredEntries.map((entry) => {
-              const typeConfig = getEntryTypeConfig(entry.reference_type);
-              const TypeIcon = typeConfig.icon;
-              const total = entry.total_debit || 0;
-              const isManual = entry.source === 'manual';
-
-              return (
-                <div 
-                  key={entry.id}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors"
-                  style={{ borderBottom: `1px solid ${styles.cardBorder}` }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.hoverBg}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  data-testid={`entry-row-${entry.id}`}
-                >
-                  <div className="col-span-4 flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${typeConfig.bgColor}`}>
-                      <TypeIcon size={18} className={typeConfig.textColor} />
+                return (
+                  <div
+                    key={entry.id}
+                    className="rounded-2xl border p-4 backdrop-blur-xl"
+                    style={{
+                      backgroundColor: styles.cardBg,
+                      borderColor: styles.cardBorder,
+                      boxShadow: styles.cardShadow,
+                      backdropFilter: styles.cardBlur
+                    }}
+                    data-testid={`entry-card-${entry.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${typeConfig.bgColor}`}>
+                          <TypeIcon size={18} className={typeConfig.textColor} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-100" data-testid={`entry-card-desc-${entry.id}`}>
+                            {entry.description || 'قيد محاسبي'}
+                          </p>
+                          <p className="text-xs text-slate-400" data-testid={`entry-card-number-${entry.id}`}>
+                            {entry.entry_number}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`text-xs px-2.5 py-1 rounded-full ${
+                        isManual ? 'bg-white/10 text-slate-200' : 'bg-blue-500/15 text-blue-200'
+                      }`} data-testid={`entry-card-source-${entry.id}`}>
+                        {isManual ? 'يدوي' : 'آلي'}
+                      </span>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm" style={{ color: styles.textPrimary }}>
-                        {entry.description || 'قيد محاسبي'}
-                      </p>
-                      <p className="text-xs" style={{ color: styles.textMuted }}>
-                        {entry.entry_number}
-                      </p>
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                      <span data-testid={`entry-card-date-${entry.id}`}>{formatDate(entry.entry_date)}</span>
+                      <span data-testid={`entry-card-customer-${entry.id}`}>{entry.customer_name || '-'}</span>
                     </div>
-                  </div>
 
-                  <div className="col-span-2">
-                    <p className="text-sm" style={{ color: styles.textSecondary }}>
-                      {formatDate(entry.entry_date)}
-                    </p>
-                  </div>
-
-                  <div className="col-span-2">
-                    <p className="text-sm truncate" style={{ color: styles.textPrimary }}>
-                      {entry.customer_name || '-'}
-                    </p>
-                    {entry.vehicle_plate && (
-                      <p className="text-xs font-mono" style={{ color: styles.textMuted }}>
-                        {entry.vehicle_plate}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="col-span-2">
-                    <p className="font-semibold" style={{ color: styles.textPrimary }}>
-                      {formatCurrency(total)}
-                    </p>
-                  </div>
-
-                  <div className="col-span-1">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      isManual 
-                        ? 'bg-white/10 text-slate-200' 
-                        : 'bg-blue-500/15 text-blue-200'
-                    }`}>
-                      {isManual ? 'يدوي' : 'آلي'}
-                    </span>
-                  </div>
-
-                  <div className="col-span-1 flex justify-end gap-1">
-                    <button
-                      onClick={() => {
-                        setSelectedEntry(entry);
-                        setShowDetailModal(true);
-                      }}
-                      className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                      title="عرض التفاصيل"
-                      data-testid={`view-btn-${entry.id}`}
-                    >
-                      <Eye size={16} style={{ color: styles.textSecondary }} />
-                    </button>
-                    {isManual && (
-                      <>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-lg font-bold text-slate-100" data-testid={`entry-card-total-${entry.id}`}>
+                        {formatCurrency(total)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePrintInvoice(entry)}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="طباعة"
+                          data-testid={`entry-card-print-${entry.id}`}
+                        >
+                          <Printer size={16} className="text-blue-300" />
+                        </button>
                         <button
                           onClick={() => {
-                            setEditingEntry(entry);
-                            setShowEntryForm(true);
+                            setSelectedEntry(entry);
+                            setShowDetailModal(true);
                           }}
                           className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="تعديل"
-                          data-testid={`edit-btn-${entry.id}`}
+                          title="عرض التفاصيل"
+                          data-testid={`entry-card-view-${entry.id}`}
                         >
-                          <Pencil size={16} className="text-amber-600" />
+                          <Eye size={16} className="text-blue-300" />
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="حذف"
-                          data-testid={`delete-btn-${entry.id}`}
-                        >
-                          <Trash2 size={16} className="text-rose-300" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => handlePrintInvoice(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                      title="طباعة"
-                      data-testid={`print-btn-${entry.id}`}
-                    >
-                      <Printer size={16} style={{ color: styles.textSecondary }} />
-                    </button>
+                        {isManual && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingEntry(entry);
+                                setShowEntryForm(true);
+                              }}
+                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                              title="تعديل"
+                              data-testid={`entry-card-edit-${entry.id}`}
+                            >
+                              <Pencil size={16} className="text-amber-300" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(entry)}
+                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                              title="حذف"
+                              data-testid={`entry-card-delete-${entry.id}`}
+                            >
+                              <Trash2 size={16} className="text-rose-300" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:block">
+              <div>
+                {/* Table Header */}
+                <div 
+                  className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider"
+                  style={{ 
+                    color: styles.textSecondary,
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)'
+                  }}
+                >
+                  <div className="col-span-4">الوصف</div>
+                  <div className="col-span-2">التاريخ</div>
+                  <div className="col-span-2">العميل</div>
+                  <div className="col-span-2">المبلغ</div>
+                  <div className="col-span-1">النوع</div>
+                  <div className="col-span-1"></div>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Table Rows */}
+                {filteredEntries.map((entry) => {
+                  const typeConfig = getEntryTypeConfig(entry.reference_type);
+                  const TypeIcon = typeConfig.icon;
+                  const total = entry.total_debit || 0;
+                  const isManual = entry.source === 'manual';
+
+                  return (
+                    <div 
+                      key={entry.id}
+                      className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors"
+                      style={{ borderBottom: `1px solid ${styles.cardBorder}` }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.hoverBg}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      data-testid={`entry-row-${entry.id}`}
+                    >
+                      <div className="col-span-4 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${typeConfig.bgColor}`}>
+                          <TypeIcon size={18} className={typeConfig.textColor} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm" style={{ color: styles.textPrimary }}>
+                            {entry.description || 'قيد محاسبي'}
+                          </p>
+                          <p className="text-xs" style={{ color: styles.textMuted }}>
+                            {entry.entry_number}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="col-span-2">
+                        <p className="text-sm" style={{ color: styles.textSecondary }}>
+                          {formatDate(entry.entry_date)}
+                        </p>
+                      </div>
+
+                      <div className="col-span-2">
+                        <p className="text-sm truncate" style={{ color: styles.textPrimary }}>
+                          {entry.customer_name || '-'}
+                        </p>
+                        {entry.vehicle_plate && (
+                          <p className="text-xs font-mono" style={{ color: styles.textMuted }}>
+                            {entry.vehicle_plate}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="col-span-2">
+                        <p className="font-semibold" style={{ color: styles.textPrimary }}>
+                          {formatCurrency(total)}
+                        </p>
+                      </div>
+
+                      <div className="col-span-1">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          isManual 
+                            ? 'bg-white/10 text-slate-200' 
+                            : 'bg-blue-500/15 text-blue-200'
+                        }`}>
+                          {isManual ? 'يدوي' : 'آلي'}
+                        </span>
+                      </div>
+
+                      <div className="col-span-1 flex justify-end gap-1">
+                        <button
+                          onClick={() => {
+                            setSelectedEntry(entry);
+                            setShowDetailModal(true);
+                          }}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="عرض التفاصيل"
+                          data-testid={`view-btn-${entry.id}`}
+                        >
+                          <Eye size={16} style={{ color: styles.textSecondary }} />
+                        </button>
+                        {isManual && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingEntry(entry);
+                                setShowEntryForm(true);
+                              }}
+                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                              title="تعديل"
+                              data-testid={`edit-btn-${entry.id}`}
+                            >
+                              <Pencil size={16} className="text-amber-600" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(entry)}
+                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                              title="حذف"
+                              data-testid={`delete-btn-${entry.id}`}
+                            >
+                              <Trash2 size={16} className="text-rose-300" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => handlePrintInvoice(entry)}
+                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="طباعة"
+                          data-testid={`print-btn-${entry.id}`}
+                        >
+                          <Printer size={16} style={{ color: styles.textSecondary }} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
       </div>
 

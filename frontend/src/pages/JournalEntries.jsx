@@ -300,45 +300,56 @@ export default function JournalEntries() {
       data-testid="journal-entries-page"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>
-            القيود المحاسبية والفواتير
-          </h1>
-          <p className="text-sm mt-1" style={{ color: styles.textSecondary }}>
-            إدارة السيولة، الضرائب، وتحليلات النظام المالي
-          </p>
-        </div>
+      <div
+        className="mb-6 rounded-3xl border px-6 py-5 backdrop-blur-xl"
+        style={{
+          backgroundColor: styles.cardBg,
+          borderColor: styles.cardBorder,
+          boxShadow: styles.cardShadow,
+          backdropFilter: styles.cardBlur
+        }}
+        data-testid="journal-header-card"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>
+              دفتر اليومية المحاسبية
+            </h1>
+            <p className="text-sm mt-1" style={{ color: styles.textSecondary }}>
+              إدارة السيولة، الضرائب، وتحليلات النظام المالي
+            </p>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={fetchJournalEntries}
-            className="p-2.5 rounded-xl transition-all"
-            style={{ 
-              backgroundColor: styles.cardBg,
-              border: `1px solid ${styles.cardBorder}`,
-              boxShadow: styles.cardShadow,
-              color: styles.textSecondary
-            }}
-            data-testid="refresh-btn"
-          >
-            <RefreshCw size={18} />
-          </button>
-          <button
-            onClick={() => {
-              setEditingEntry(null);
-              setShowEntryForm(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-white transition-all"
-            style={{ 
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
-            }}
-            data-testid="new-entry-btn"
-          >
-            <Plus size={18} />
-            <span>قيد جديد</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchJournalEntries}
+              className="p-2.5 rounded-xl transition-all"
+              style={{ 
+                backgroundColor: styles.cardBg,
+                border: `1px solid ${styles.cardBorder}`,
+                boxShadow: styles.cardShadow,
+                color: styles.textSecondary
+              }}
+              data-testid="refresh-btn"
+            >
+              <RefreshCw size={18} />
+            </button>
+            <button
+              onClick={() => {
+                setEditingEntry(null);
+                setShowEntryForm(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-white transition-all"
+              style={{ 
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+              }}
+              data-testid="new-entry-btn"
+            >
+              <Plus size={18} />
+              <span>قيد جديد</span>
+            </button>
+          </div>
         </div>
       </div>
 

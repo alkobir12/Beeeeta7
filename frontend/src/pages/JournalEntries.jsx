@@ -112,7 +112,7 @@ export default function JournalEntries() {
           id: entry.id || String(index),
           entry_number: `JE-${String(index + 1).padStart(4, '0')}`,
           entry_date: entry.date,
-          description: entry.description,
+          description: sanitizeEntryText(entry.description || ''),
           reference_type: entry.source === 'operation' ? (entry.description?.includes('بيع') ? 'invoice' : 'purchase') : 'manual',
           status: 'posted',
           total_debit: entry.total,
@@ -1344,7 +1344,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">{entry.entry_number}</h2>
-                <p className="text-white/80 text-sm">{entry.description}</p>
+                <p className="text-white/80 text-sm">{sanitizeEntryText(entry.description || '')}</p>
               </div>
             </div>
             <button 

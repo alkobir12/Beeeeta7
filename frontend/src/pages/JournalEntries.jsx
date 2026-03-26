@@ -280,16 +280,17 @@ export default function JournalEntries() {
   };
 
   const styles = {
-    bg: isLight ? '#f8fafc' : '#0f172a',
-    cardBg: isLight ? '#ffffff' : '#1e293b',
-    cardBorder: isLight ? '#e2e8f0' : '#334155',
-    cardShadow: isLight ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-    textPrimary: isLight ? '#1e293b' : '#f1f5f9',
-    textSecondary: isLight ? '#64748b' : '#94a3b8',
-    textMuted: isLight ? '#94a3b8' : '#64748b',
-    inputBg: isLight ? '#f8fafc' : '#334155',
-    inputBorder: isLight ? '#e2e8f0' : '#475569',
-    hoverBg: isLight ? '#f1f5f9' : '#334155',
+    bg: 'radial-gradient(140% 140% at 10% 0%, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.92) 55%, #0b1120 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.68)',
+    cardBorder: 'rgba(148, 163, 184, 0.2)',
+    cardShadow: '0 18px 40px rgba(15, 23, 42, 0.45)',
+    cardBlur: 'blur(16px)',
+    textPrimary: '#f8fafc',
+    textSecondary: '#cbd5f5',
+    textMuted: '#94a3b8',
+    inputBg: 'rgba(15, 23, 42, 0.6)',
+    inputBorder: 'rgba(148, 163, 184, 0.25)',
+    hoverBg: 'rgba(59, 130, 246, 0.12)',
   };
 
   return (

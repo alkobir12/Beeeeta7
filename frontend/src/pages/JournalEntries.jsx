@@ -61,6 +61,18 @@ const getEntryTypeConfig = (type) => {
   return configs[type] || configs.manual;
 };
 
+const sanitizeEntryText = (value = '') => {
+  if (!value) return '';
+  return String(value)
+    .replace(/ACCOUNT_CODE:\s*\S+/gi, '')
+    .replace(/ACCOUNTING_TARGET:\s*\S+/gi, '')
+    .replace(/ACCOUNTING_SOURCE:\s*\S+/gi, '')
+    .replace(/ACCOUNT_NAME:\s*[^|\n]+/gi, '')
+    .replace(/ACCOUNT_CLASS:\s*\S+/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+};
+
 // Chart of Accounts (loaded from API)
 
 export default function JournalEntries() {

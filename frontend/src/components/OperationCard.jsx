@@ -124,9 +124,9 @@ export default function OperationCard({
   );
 
   const journalEntryText = useMemo(() => {
-    const fromAccount = normalizePaymentSourceAccount(operation, t);
-    const toAccount = resolveTargetAccountName(operation, chartAccount, businessAccount, t);
-    return `قيد محاسبي: من حساب ${fromAccount} إلى حساب ${toAccount}`;
+    const fromAccount = sanitizeAccountingText(normalizePaymentSourceAccount(operation, t));
+    const toAccount = sanitizeAccountingText(resolveTargetAccountName(operation, chartAccount, businessAccount, t));
+    return `قيد محاسبي: من حساب ${fromAccount || t('operations.account') || 'الحساب'} إلى حساب ${toAccount || t('operations.account') || 'الحساب'}`;
   }, [operation, chartAccount, businessAccount, t]);
 
   const itemsView = editing ? itemsDraft : (operation.items || []);

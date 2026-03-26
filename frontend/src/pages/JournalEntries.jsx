@@ -482,7 +482,7 @@ export default function JournalEntries() {
         <div className="px-6 py-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-blue-300" />
-            <h2 className="font-semibold" style={{ color: styles.textPrimary }}>سجل الفواتير والعمليات</h2>
+            <h2 className="font-semibold" style={{ color: styles.textPrimary }} data-testid="journal-entries-title">سجل الفواتير والعمليات</h2>
           </div>
         </div>
 

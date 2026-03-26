@@ -1287,7 +1287,7 @@ function DeleteConfirmModal({ entry, onClose, onConfirm, isLight, styles }) {
           </h3>
           <p className="mb-6" style={{ color: styles.textSecondary }}>
             هل أنت متأكد من حذف القيد
-            <span className="font-semibold"> {entry.description || entry.entry_number} </span>؟
+            <span className="font-semibold"> {sanitizeEntryText(entry.description || entry.entry_number)} </span>؟
             <br />
             <span className="text-rose-300 text-sm">هذا الإجراء لا يمكن التراجع عنه</span>
           </p>

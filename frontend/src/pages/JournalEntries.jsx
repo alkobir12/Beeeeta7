@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 import {
   BookOpen,
@@ -65,7 +64,7 @@ const getEntryTypeConfig = (type) => {
 // Chart of Accounts (loaded from API)
 
 export default function JournalEntries() {
-  const { themeName } = useTheme();
+  const themeName = 'dark';
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,7 +77,7 @@ export default function JournalEntries() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [coaAccounts, setCoaAccounts] = useState([]);
   
-  const isLight = themeName === 'light' || themeName === 'dashPro';
+  const isLight = false;
 
   useEffect(() => { fetchJournalEntries(); }, []);
 

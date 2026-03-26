@@ -52,11 +52,11 @@ const formatDate = (date) => {
 
 const getEntryTypeConfig = (type) => {
   const configs = {
-    invoice: { icon: Receipt, bgColor: 'bg-blue-50', textColor: 'text-blue-600', label: 'فاتورة' },
-    payment: { icon: CreditCard, bgColor: 'bg-emerald-50', textColor: 'text-emerald-600', label: 'محصلة' },
-    purchase: { icon: ShoppingCart, bgColor: 'bg-purple-50', textColor: 'text-purple-600', label: 'مشتريات' },
-    salary: { icon: Briefcase, bgColor: 'bg-orange-50', textColor: 'text-orange-600', label: 'رواتب' },
-    manual: { icon: FileText, bgColor: 'bg-slate-50', textColor: 'text-slate-600', label: 'يدوي' },
+    invoice: { icon: Receipt, bgColor: 'bg-blue-500/15', textColor: 'text-blue-200', label: 'فاتورة' },
+    payment: { icon: CreditCard, bgColor: 'bg-emerald-500/15', textColor: 'text-emerald-200', label: 'محصلة' },
+    purchase: { icon: ShoppingCart, bgColor: 'bg-purple-500/15', textColor: 'text-purple-200', label: 'مشتريات' },
+    salary: { icon: Briefcase, bgColor: 'bg-orange-500/15', textColor: 'text-orange-200', label: 'رواتب' },
+    manual: { icon: FileText, bgColor: 'bg-slate-500/15', textColor: 'text-slate-200', label: 'يدوي' },
   };
   return configs[type] || configs.manual;
 };

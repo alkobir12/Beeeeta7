@@ -357,11 +357,14 @@ export default function JournalEntries() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* AI Assistant Card */}
         <div 
-          className="col-span-2 lg:col-span-1 rounded-2xl p-5"
+          className="col-span-2 lg:col-span-1 rounded-2xl p-5 border backdrop-blur-xl"
           style={{ 
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%)',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.08)'
+            background: 'linear-gradient(135deg, rgba(30, 58, 95, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+            boxShadow: styles.cardShadow,
+            borderColor: styles.cardBorder,
+            backdropFilter: styles.cardBlur
           }}
+          data-testid="journal-ai-card"
         >
           <div className="flex items-center gap-3 mb-4">
             <div 
@@ -375,7 +378,7 @@ export default function JournalEntries() {
               <p className="text-white font-bold">أبو فهد</p>
             </div>
           </div>
-          <div className="bg-white/10 rounded-xl p-3">
+          <div className="bg-white/10 rounded-xl p-3" data-testid="journal-ai-summary">
             <p className="text-white/90 text-sm leading-relaxed">
               لديك {stats.total} قيد محاسبي ({stats.manual} يدوي)، إجمالي الحركات {formatCurrency(stats.totalAmount)}
             </p>

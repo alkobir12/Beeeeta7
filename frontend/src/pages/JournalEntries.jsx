@@ -706,7 +706,7 @@ export default function JournalEntries() {
                               title="تعديل"
                               data-testid={`edit-btn-${entry.id}`}
                             >
-                              <Pencil size={16} className="text-amber-600" />
+                              <Pencil size={16} className="text-amber-300" />
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(entry)}

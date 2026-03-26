@@ -27,6 +27,18 @@ const formatDateTime = (dateLike, isRTL) => {
   }
 };
 
+const sanitizeAccountingText = (value = '') => {
+  if (!value) return '';
+  return String(value)
+    .replace(/ACCOUNT_CODE:\s*\S+/gi, '')
+    .replace(/ACCOUNTING_TARGET:\s*\S+/gi, '')
+    .replace(/ACCOUNTING_SOURCE:\s*\S+/gi, '')
+    .replace(/ACCOUNT_NAME:\s*[^|\n]+/gi, '')
+    .replace(/ACCOUNT_CLASS:\s*\S+/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+};
+
 const normalizePaymentSourceAccount = (operation = {}, t) => {
   const method = String(operation.paymentMethod || '').toLowerCase();
   if (method === 'cash') return 'حساب الصندوق';

@@ -231,9 +231,10 @@ export default function JournalEntries() {
     if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
+    const safeDescription = sanitizeEntryText(entry.description || '');
     return (
       entry.entry_number?.toLowerCase().includes(query) ||
-      entry.description?.toLowerCase().includes(query) ||
+      safeDescription.toLowerCase().includes(query) ||
       entry.customer_name?.toLowerCase().includes(query) ||
       entry.vehicle_plate?.toLowerCase().includes(query)
     );

@@ -961,12 +961,12 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold flex items-center gap-2" style={{ color: styles.textPrimary }}>
-                <ArrowLeftRight size={16} className="text-blue-600" />
+                <ArrowLeftRight size={16} className="text-blue-300" />
                 بنود القيد
               </h3>
               <button
                 onClick={addLine}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                className="text-sm text-blue-300 hover:text-blue-200 font-medium flex items-center gap-1"
                 data-testid="add-line-btn"
               >
                 <Plus size={16} />
@@ -979,7 +979,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
               style={{ border: `1px solid ${styles.cardBorder}` }}
             >
               <table className="w-full">
-                <thead style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
+                <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr>
                     <th className="px-4 py-3 text-right text-xs font-semibold" style={{ color: styles.textSecondary }}>الحساب</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold w-32" style={{ color: styles.textSecondary }}>مدين</th>

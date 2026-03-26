@@ -601,7 +601,7 @@ export default function JournalEntries() {
                             setEditingEntry(entry);
                             setShowEntryForm(true);
                           }}
-                          className="p-2 rounded-lg transition-colors hover:bg-amber-50"
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
                           title="تعديل"
                           data-testid={`edit-btn-${entry.id}`}
                         >
@@ -609,11 +609,11 @@ export default function JournalEntries() {
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-rose-50"
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
                           title="حذف"
                           data-testid={`delete-btn-${entry.id}`}
                         >
-                          <Trash2 size={16} className="text-rose-600" />
+                          <Trash2 size={16} className="text-rose-300" />
                         </button>
                       </>
                     )}
@@ -1142,7 +1142,7 @@ function DeleteConfirmModal({ entry, onClose, onConfirm, isLight, styles }) {
       >
         <div className="p-6 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 flex items-center justify-center">
-            <Trash2 size={32} className="text-rose-600" />
+            <Trash2 size={32} className="text-rose-300" />
           </div>
           <h3 className="text-xl font-bold mb-2" style={{ color: styles.textPrimary }}>
             حذف القيد المحاسبي
@@ -1151,7 +1151,7 @@ function DeleteConfirmModal({ entry, onClose, onConfirm, isLight, styles }) {
             هل أنت متأكد من حذف القيد
             <span className="font-semibold"> {entry.description || entry.entry_number} </span>؟
             <br />
-            <span className="text-rose-600 text-sm">هذا الإجراء لا يمكن التراجع عنه</span>
+            <span className="text-rose-300 text-sm">هذا الإجراء لا يمكن التراجع عنه</span>
           </p>
           
           <div className="flex gap-3">
@@ -1222,7 +1222,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
           {/* Entry Info */}
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'التاريخ', value: formatDate(entry.entry_date), icon: Calendar, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+              { label: 'التاريخ', value: formatDate(entry.entry_date), icon: Calendar, iconBg: 'bg-blue-500/15', iconColor: 'text-blue-200' },
               { label: 'النوع', value: entry.source === 'manual' ? 'يدوي' : 'آلي', icon: FileText, iconBg: 'bg-slate-50', iconColor: 'text-slate-600' },
               entry.customer_name && { label: 'العميل', value: entry.customer_name, icon: User, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
               entry.vehicle_plate && { label: 'رقم اللوحة', value: entry.vehicle_plate, icon: Wrench, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
@@ -1250,7 +1250,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
           {/* Entry Lines */}
           <div>
             <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: styles.textPrimary }}>
-              <ArrowLeftRight size={16} className="text-blue-600" />
+              <ArrowLeftRight size={16} className="text-blue-300" />
               تفاصيل القيد
             </h3>
             <div 
@@ -1269,19 +1269,19 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
                   {entry.lines.map((line, idx) => (
                     <tr key={idx} style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
                       <td className="px-4 py-3" style={{ color: styles.textPrimary }}>
-                        <span className="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded ml-2">
+                        <span className="font-mono text-xs bg-blue-500/15 text-blue-200 px-2 py-0.5 rounded ml-2">
                           {line.account_code}
                         </span>
                         {line.account_name}
                       </td>
                       <td className="px-4 py-3 text-left font-mono">
                         {line.debit > 0 ? (
-                          <span className="text-emerald-600 font-semibold">{formatCurrency(line.debit)}</span>
+                          <span className="text-emerald-300 font-semibold">{formatCurrency(line.debit)}</span>
                         ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                       <td className="px-4 py-3 text-left font-mono">
                         {line.credit > 0 ? (
-                          <span className="text-rose-600 font-semibold">{formatCurrency(line.credit)}</span>
+                          <span className="text-rose-300 font-semibold">{formatCurrency(line.credit)}</span>
                         ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                     </tr>
@@ -1290,8 +1290,8 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
                 <tfoot style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
                   <tr className="font-bold">
                     <td className="px-4 py-3" style={{ color: styles.textPrimary }}>الإجمالي</td>
-                    <td className="px-4 py-3 text-left text-emerald-600">{formatCurrency(entry.total_debit)}</td>
-                    <td className="px-4 py-3 text-left text-rose-600">{formatCurrency(entry.total_credit)}</td>
+                    <td className="px-4 py-3 text-left text-emerald-300">{formatCurrency(entry.total_debit)}</td>
+                    <td className="px-4 py-3 text-left text-rose-300">{formatCurrency(entry.total_credit)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -1301,20 +1301,20 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
           {/* Balance Check */}
           <div className={`rounded-xl p-4 flex items-center gap-3 ${
             entry.total_debit === entry.total_credit 
-              ? 'bg-emerald-50 border border-emerald-200' 
-              : 'bg-rose-50 border border-rose-200'
+              ? 'bg-emerald-500/10 border border-emerald-400/30' 
+              : 'bg-rose-500/10 border border-rose-400/30'
           }`}>
             {entry.total_debit === entry.total_credit ? (
               <>
                 <div className="p-2 bg-emerald-100 rounded-lg">
-                  <CheckCircle size={20} className="text-emerald-600" />
+                  <CheckCircle size={20} className="text-emerald-300" />
                 </div>
                 <span className="text-emerald-700 font-medium">القيد متوازن ✓</span>
               </>
             ) : (
               <>
                 <div className="p-2 bg-rose-100 rounded-lg">
-                  <XCircle size={20} className="text-rose-600" />
+                  <XCircle size={20} className="text-rose-300" />
                 </div>
                 <span className="text-rose-700 font-medium">القيد غير متوازن!</span>
               </>

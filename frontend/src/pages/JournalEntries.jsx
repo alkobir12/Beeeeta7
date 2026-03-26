@@ -92,7 +92,10 @@ export default function JournalEntries() {
   
   const isLight = false;
 
-  useEffect(() => { fetchJournalEntries(); }, []);
+  useEffect(() => {
+    fetchJournalEntries();
+    fetchWorkshopProfile();
+  }, []);
 
   useEffect(() => {
     fetchChartOfAccounts();
@@ -130,6 +133,18 @@ export default function JournalEntries() {
       console.error('Error fetching journal entries:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWorkshopProfile = async () => {
+    try {
+      const response = await fetch(`${API_URL}/profile`);
+      const data = await response.json();
+      if (data?.success && data?.data) {
+        setWorkshopProfile(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching workshop profile:', error);
     }
   };
 

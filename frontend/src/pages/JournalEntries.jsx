@@ -312,10 +312,10 @@ export default function JournalEntries() {
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }}>
+            <h1 className="text-2xl font-bold" style={{ color: styles.textPrimary }} data-testid="journal-header-title">
               دفتر اليومية المحاسبية
             </h1>
-            <p className="text-sm mt-1" style={{ color: styles.textSecondary }}>
+            <p className="text-sm mt-1" style={{ color: styles.textSecondary }} data-testid="journal-header-subtitle">
               إدارة السيولة، الضرائب، وتحليلات النظام المالي
             </p>
           </div>

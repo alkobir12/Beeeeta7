@@ -1167,7 +1167,7 @@ function DeleteConfirmModal({ entry, onClose, onConfirm, isLight, styles }) {
               onClick={onClose}
               className="flex-1 py-3 rounded-xl font-medium transition-all"
               style={{ 
-                backgroundColor: isLight ? '#f1f5f9' : '#334155',
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
                 color: styles.textSecondary
               }}
               data-testid="cancel-delete-btn"
@@ -1230,7 +1230,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
               <div 
                 key={i}
                 className="rounded-xl p-4"
-                style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}
+                style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg ${item.iconBg} flex items-center justify-center`}>
@@ -1258,7 +1258,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
               style={{ border: `1px solid ${styles.cardBorder}` }}
             >
               <table className="w-full">
-                <thead style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
+                <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr>
                     <th className="px-4 py-3 text-right text-xs font-semibold" style={{ color: styles.textSecondary }}>الحساب</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold" style={{ color: styles.textSecondary }}>مدين</th>
@@ -1287,7 +1287,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
+                <tfoot style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr className="font-bold">
                     <td className="px-4 py-3" style={{ color: styles.textPrimary }}>الإجمالي</td>
                     <td className="px-4 py-3 text-left text-emerald-300">{formatCurrency(entry.total_debit)}</td>
@@ -1339,7 +1339,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
             onClick={onClose}
             className="flex-1 py-3 rounded-xl font-medium transition-all"
             style={{ 
-              backgroundColor: isLight ? '#f1f5f9' : '#334155',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
               color: styles.textSecondary
             }}
           >

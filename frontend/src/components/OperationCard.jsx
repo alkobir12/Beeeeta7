@@ -55,12 +55,12 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
   const markerIndex = notes.indexOf(marker);
   if (markerIndex >= 0) {
     const parsed = notes.slice(markerIndex + marker.length).split('|')[0].trim();
-    if (parsed) return parsed;
+    if (parsed) return sanitizeAccountingText(parsed) || parsed;
   }
-  if (chartAccount) return chartAccount.name_ar || chartAccount.name || chartAccount.code;
-  if (businessAccount) return businessAccount.name || businessAccount.code;
-  if (operation.accountingAccountId) return operation.accountingAccountId;
-  if (operation.accountId) return operation.accountId;
+  if (chartAccount) return sanitizeAccountingText(chartAccount.name_ar || chartAccount.name || chartAccount.code) || chartAccount.code;
+  if (businessAccount) return sanitizeAccountingText(businessAccount.name || businessAccount.code) || businessAccount.code;
+  if (operation.accountingAccountId) return sanitizeAccountingText(operation.accountingAccountId) || operation.accountingAccountId;
+  if (operation.accountId) return sanitizeAccountingText(operation.accountId) || operation.accountId;
   return t('operations.account') || 'الحساب';
 };
 

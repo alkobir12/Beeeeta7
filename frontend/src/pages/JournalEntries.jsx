@@ -522,6 +522,7 @@ export default function JournalEntries() {
                 const TypeIcon = typeConfig.icon;
                 const total = entry.total_debit || 0;
                 const isManual = entry.source === 'manual';
+                const safeDescription = sanitizeEntryText(entry.description || 'قيد محاسبي');
 
                 return (
                   <div
@@ -542,7 +543,7 @@ export default function JournalEntries() {
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-slate-100" data-testid={`entry-card-desc-${entry.id}`}>
-                            {entry.description || 'قيد محاسبي'}
+                            {safeDescription || 'قيد محاسبي'}
                           </p>
                           <p className="text-xs text-slate-400" data-testid={`entry-card-number-${entry.id}`}>
                             {entry.entry_number}
@@ -639,6 +640,7 @@ export default function JournalEntries() {
                   const TypeIcon = typeConfig.icon;
                   const total = entry.total_debit || 0;
                   const isManual = entry.source === 'manual';
+                  const safeDescription = sanitizeEntryText(entry.description || 'قيد محاسبي');
 
                   return (
                     <div 
@@ -655,7 +657,7 @@ export default function JournalEntries() {
                         </div>
                         <div>
                           <p className="font-medium text-sm" style={{ color: styles.textPrimary }}>
-                            {entry.description || 'قيد محاسبي'}
+                            {safeDescription || 'قيد محاسبي'}
                           </p>
                           <p className="text-xs" style={{ color: styles.textMuted }}>
                             {entry.entry_number}

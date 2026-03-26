@@ -575,8 +575,8 @@ export default function JournalEntries() {
                   <div className="col-span-1">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                       isManual 
-                        ? 'bg-slate-100 text-slate-700' 
-                        : 'bg-blue-50 text-blue-700'
+                        ? 'bg-white/10 text-slate-200' 
+                        : 'bg-blue-500/15 text-blue-200'
                     }`}>
                       {isManual ? 'يدوي' : 'آلي'}
                     </span>
@@ -588,7 +588,7 @@ export default function JournalEntries() {
                         setSelectedEntry(entry);
                         setShowDetailModal(true);
                       }}
-                      className="p-2 rounded-lg transition-colors hover:bg-blue-50"
+                      className="p-2 rounded-lg transition-colors hover:bg-white/10"
                       title="عرض التفاصيل"
                       data-testid={`view-btn-${entry.id}`}
                     >
@@ -619,7 +619,7 @@ export default function JournalEntries() {
                     )}
                     <button
                       onClick={() => handlePrintInvoice(entry)}
-                      className="p-2 rounded-lg transition-colors hover:bg-blue-50"
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
                       title="طباعة"
                       data-testid={`print-btn-${entry.id}`}
                     >

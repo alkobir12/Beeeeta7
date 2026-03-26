@@ -530,7 +530,7 @@ export default function JournalEntries() {
                 <div 
                   key={entry.id}
                   className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors"
-                  style={{ borderBottom: `1px solid ${isLight ? '#f1f5f9' : '#334155'}` }}
+                  style={{ borderBottom: `1px solid ${styles.cardBorder}` }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.hoverBg}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   data-testid={`entry-row-${entry.id}`}
@@ -989,7 +989,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                 </thead>
                 <tbody>
                   {formData.lines.map((line, idx) => (
-                    <tr key={idx} style={{ borderBottom: `1px solid ${isLight ? '#f1f5f9' : '#334155'}` }}>
+                    <tr key={idx} style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
                       <td className="px-4 py-3">
                         <select
                           value={line.account_code}
@@ -1266,7 +1266,7 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
                 </thead>
                 <tbody>
                   {entry.lines.map((line, idx) => (
-                    <tr key={idx} style={{ borderBottom: `1px solid ${isLight ? '#f1f5f9' : '#334155'}` }}>
+                    <tr key={idx} style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
                       <td className="px-4 py-3" style={{ color: styles.textPrimary }}>
                         <span className="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded ml-2">
                           {line.account_code}

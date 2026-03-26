@@ -402,7 +402,7 @@ export default function OperationCard({
           {operation.notes ? (
             <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70">
               <div className="text-[10px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>
-              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{operation.notes}</div>
+              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{sanitizeAccountingText(operation.notes) || operation.notes}</div>
             </div>
           ) : null}
 

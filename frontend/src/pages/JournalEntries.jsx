@@ -1074,17 +1074,17 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
           }`}>
             {isBalanced && totalDebit > 0 ? (
               <>
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <CheckCircle size={20} className="text-emerald-600" />
+                <div className="p-2 bg-emerald-500/15 rounded-lg">
+                  <CheckCircle size={20} className="text-emerald-300" />
                 </div>
-                <span className="text-emerald-700 font-medium">القيد متوازن ✓</span>
+                <span className="text-emerald-300 font-medium">القيد متوازن ✓</span>
               </>
             ) : (
               <>
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Clock size={20} className="text-amber-600" />
+                <div className="p-2 bg-amber-500/15 rounded-lg">
+                  <Clock size={20} className="text-amber-300" />
                 </div>
-                <span className="text-amber-700 font-medium">
+                <span className="text-amber-300 font-medium">
                   {totalDebit === 0 ? 'أدخل المبالغ' : `فرق: ${formatCurrency(Math.abs(totalDebit - totalCredit))}`}
                 </span>
               </>
@@ -1117,7 +1117,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
             onClick={onClose}
             className="flex-1 py-3 rounded-xl font-medium transition-all"
             style={{ 
-              backgroundColor: isLight ? '#f1f5f9' : '#334155',
+              backgroundColor: styles.inputBg,
+              border: `1px solid ${styles.cardBorder}`,
               color: styles.textSecondary
             }}
           >

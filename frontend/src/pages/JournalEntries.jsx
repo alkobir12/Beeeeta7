@@ -1044,7 +1044,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                         {formData.lines.length > 2 && (
                           <button
                             onClick={() => removeLine(idx)}
-                            className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
+                            className="p-1.5 rounded-lg hover:bg-white/10 text-rose-300"
                             data-testid={`remove-line-${idx}`}
                           >
                             <Trash2 size={16} />
@@ -1054,11 +1054,11 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                     </tr>
                   ))}
                 </tbody>
-                <tfoot style={{ backgroundColor: isLight ? '#f8fafc' : '#334155' }}>
+                <tfoot style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr className="font-bold">
                     <td className="px-4 py-3" style={{ color: styles.textPrimary }}>الإجمالي</td>
-                    <td className="px-4 py-3 text-center text-emerald-600">{formatCurrency(totalDebit)}</td>
-                    <td className="px-4 py-3 text-center text-rose-600">{formatCurrency(totalCredit)}</td>
+                    <td className="px-4 py-3 text-center text-emerald-300">{formatCurrency(totalDebit)}</td>
+                    <td className="px-4 py-3 text-center text-rose-300">{formatCurrency(totalCredit)}</td>
                     <td></td>
                   </tr>
                 </tfoot>
@@ -1067,10 +1067,10 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
           </div>
 
           {/* Balance Check */}
-          <div className={`rounded-xl p-4 flex items-center gap-3 ${
+          <div className={`rounded-xl p-4 flex items-center gap-3 border ${
             isBalanced && totalDebit > 0
-              ? 'bg-emerald-50 border border-emerald-200' 
-              : 'bg-amber-50 border border-amber-200'
+              ? 'bg-emerald-500/10 border-emerald-400/30' 
+              : 'bg-amber-500/10 border-amber-400/30'
           }`}>
             {isBalanced && totalDebit > 0 ? (
               <>

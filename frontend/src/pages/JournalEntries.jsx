@@ -296,7 +296,7 @@ export default function JournalEntries() {
   return (
     <div 
       className="p-4 md:p-6 min-h-screen transition-colors duration-300"
-      style={{ backgroundColor: styles.bg }}
+      style={{ background: styles.bg }}
       data-testid="journal-entries-page"
     >
       {/* Header */}

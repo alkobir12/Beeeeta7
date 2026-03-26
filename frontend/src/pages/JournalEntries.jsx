@@ -407,8 +407,8 @@ export default function JournalEntries() {
                 <stat.icon size={22} className={stat.iconColor} />
               </div>
               <div>
-                <p className="text-xs" style={{ color: styles.textMuted }}>{stat.label}</p>
-                <p className={`font-bold ${stat.small ? 'text-lg' : 'text-2xl'}`} style={{ color: styles.textPrimary }}>
+                <p className="text-xs" style={{ color: styles.textMuted }} data-testid={`journal-stat-${stat.key}-label`}>{stat.label}</p>
+                <p className={`font-bold ${stat.small ? 'text-lg' : 'text-2xl'}`} style={{ color: styles.textPrimary }} data-testid={`journal-stat-${stat.key}-value`}>
                   {stat.value}
                 </p>
               </div>

@@ -419,12 +419,14 @@ export default function JournalEntries() {
 
       {/* Search and Filters */}
       <div 
-        className="rounded-2xl p-4 mb-6"
+        className="rounded-2xl p-4 mb-6 border backdrop-blur-xl"
         style={{ 
           backgroundColor: styles.cardBg,
-          border: `1px solid ${styles.cardBorder}`,
-          boxShadow: styles.cardShadow
+          borderColor: styles.cardBorder,
+          boxShadow: styles.cardShadow,
+          backdropFilter: styles.cardBlur
         }}
+        data-testid="journal-filters-card"
       >
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           <div className="relative flex-1">
@@ -447,6 +449,7 @@ export default function JournalEntries() {
           <div 
             className="flex gap-1.5 p-1 rounded-xl"
             style={{ backgroundColor: styles.inputBg }}
+            data-testid="journal-status-filter"
           >
             {['all', 'posted', 'draft'].map((filter) => (
               <button
@@ -467,16 +470,18 @@ export default function JournalEntries() {
 
       {/* Journal Entries Table */}
       <div 
-        className="rounded-2xl overflow-hidden"
+        className="rounded-2xl overflow-hidden border backdrop-blur-xl"
         style={{ 
           backgroundColor: styles.cardBg,
-          border: `1px solid ${styles.cardBorder}`,
-          boxShadow: styles.cardShadow
+          borderColor: styles.cardBorder,
+          boxShadow: styles.cardShadow,
+          backdropFilter: styles.cardBlur
         }}
+        data-testid="journal-entries-card"
       >
         <div className="px-6 py-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
           <div className="flex items-center gap-2">
-            <FileText size={18} className="text-blue-600" />
+            <FileText size={18} className="text-blue-300" />
             <h2 className="font-semibold" style={{ color: styles.textPrimary }}>سجل الفواتير والعمليات</h2>
           </div>
         </div>

@@ -508,7 +508,7 @@ export default function JournalEntries() {
               className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wider"
               style={{ 
                 color: styles.textSecondary,
-                backgroundColor: isLight ? '#f8fafc' : '#1e293b'
+                backgroundColor: 'rgba(15, 23, 42, 0.85)'
               }}
             >
               <div className="col-span-4">الوصف</div>

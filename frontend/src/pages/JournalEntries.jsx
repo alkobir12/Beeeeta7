@@ -606,29 +606,25 @@ export default function JournalEntries() {
                         >
                           <Eye size={16} className="text-blue-300" />
                         </button>
-                        {isManual && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setEditingEntry(entry);
-                                setShowEntryForm(true);
-                              }}
-                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                              title="تعديل"
-                              data-testid={`entry-card-edit-${entry.id}`}
-                            >
-                              <Pencil size={16} className="text-amber-300" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(entry)}
-                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                              title="حذف"
-                              data-testid={`entry-card-delete-${entry.id}`}
-                            >
-                              <Trash2 size={16} className="text-rose-300" />
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={() => {
+                            setEditingEntry(entry);
+                            setShowEntryForm(true);
+                          }}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="تعديل"
+                          data-testid={`entry-card-edit-${entry.id}`}
+                        >
+                          <Pencil size={16} className="text-amber-300" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(entry)}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="حذف"
+                          data-testid={`entry-card-delete-${entry.id}`}
+                        >
+                          <Trash2 size={16} className="text-rose-300" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -730,29 +726,25 @@ export default function JournalEntries() {
                         >
                           <Eye size={16} style={{ color: styles.textSecondary }} />
                         </button>
-                        {isManual && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setEditingEntry(entry);
-                                setShowEntryForm(true);
-                              }}
-                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                              title="تعديل"
-                              data-testid={`edit-btn-${entry.id}`}
-                            >
-                              <Pencil size={16} className="text-amber-300" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(entry)}
-                              className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                              title="حذف"
-                              data-testid={`delete-btn-${entry.id}`}
-                            >
-                              <Trash2 size={16} className="text-rose-300" />
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={() => {
+                            setEditingEntry(entry);
+                            setShowEntryForm(true);
+                          }}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="تعديل"
+                          data-testid={`edit-btn-${entry.id}`}
+                        >
+                          <Pencil size={16} className="text-amber-300" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(entry)}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="حذف"
+                          data-testid={`delete-btn-${entry.id}`}
+                        >
+                          <Trash2 size={16} className="text-rose-300" />
+                        </button>
                         <button
                           onClick={() => handlePrintInvoice(entry)}
                               className="p-2 rounded-lg transition-colors hover:bg-white/10"

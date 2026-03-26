@@ -384,18 +384,20 @@ export default function JournalEntries() {
 
         {/* Stat Cards */}
         {[
-          { label: 'إجمالي القيود', value: stats.total, icon: FileText, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-          { label: 'القيود اليدوية', value: stats.manual, icon: Pencil, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-          { label: 'إجمالي الحركات', value: formatCurrency(stats.totalAmount), icon: DollarSign, iconBg: 'bg-purple-50', iconColor: 'text-purple-600', small: true },
-        ].map((stat, i) => (
+          { key: 'total', label: 'إجمالي القيود', value: stats.total, icon: FileText, iconBg: 'bg-blue-500/15', iconColor: 'text-blue-200' },
+          { key: 'manual', label: 'القيود اليدوية', value: stats.manual, icon: Pencil, iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-200' },
+          { key: 'amount', label: 'إجمالي الحركات', value: formatCurrency(stats.totalAmount), icon: DollarSign, iconBg: 'bg-purple-500/15', iconColor: 'text-purple-200', small: true },
+        ].map((stat) => (
           <div 
-            key={i}
-            className="rounded-2xl p-5"
+            key={stat.key}
+            className="rounded-2xl p-5 border backdrop-blur-xl"
             style={{ 
               backgroundColor: styles.cardBg,
-              border: `1px solid ${styles.cardBorder}`,
-              boxShadow: styles.cardShadow
+              borderColor: styles.cardBorder,
+              boxShadow: styles.cardShadow,
+              backdropFilter: styles.cardBlur
             }}
+            data-testid={`journal-stat-${stat.key}`}
           >
             <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>

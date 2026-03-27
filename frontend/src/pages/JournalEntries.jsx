@@ -282,9 +282,11 @@ export default function JournalEntries() {
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) return;
     const total = entry.total_debit || 0;
-    const workshopName = workshopProfile?.name || workshopProfile?.workshop_name || 'ورشة الصيانة';
-    const workshopPhone = workshopProfile?.phone || workshopProfile?.phone_number || '';
-    const workshopAddress = workshopProfile?.address || '';
+    const workshopName = workshopSettings?.workshopName || workshopProfile?.business_name || workshopProfile?.name || 'ورشة الصيانة';
+    const workshopPhone = workshopSettings?.workshopPhone || workshopProfile?.phone || workshopProfile?.phone_number || '';
+    const workshopAddress = workshopSettings?.workshopAddress || workshopProfile?.address || '';
+    const workshopTax = workshopSettings?.taxNumber || workshopProfile?.taxNumber || workshopProfile?.tax_number || '';
+    const workshopCR = workshopSettings?.commercialRegister || workshopProfile?.commercialRegister || workshopProfile?.commercial_register || '';
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -309,6 +311,7 @@ export default function JournalEntries() {
       <div>فاتورة: ${entry.entry_number}<br/>التاريخ: ${entry.entry_date || '-'}</div>
     </div>
     <p><strong>العنوان:</strong> ${workshopAddress || '-'} | <strong>الهاتف:</strong> ${workshopPhone || '-'}</p>
+    <p><strong>السجل التجاري:</strong> ${workshopCR || '-'} | <strong>الرقم الضريبي:</strong> ${workshopTax || '-'}</p>
     <p><strong>العميل:</strong> ${sanitizeEntryText(entry.customer_name || '-') || '-'} | <strong>اللوحة:</strong> ${entry.vehicle_plate || '-'}</p>
     <table>
       <thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead>

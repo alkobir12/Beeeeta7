@@ -89,6 +89,7 @@ export default function JournalEntries() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [coaAccounts, setCoaAccounts] = useState([]);
   const [workshopProfile, setWorkshopProfile] = useState(null);
+  const [workshopSettings, setWorkshopSettings] = useState(null);
   
   const isLight = false;
 

@@ -40,12 +40,14 @@ const QuickPrintDialog = ({
         ]);
         const settingsData = settingsRes.ok ? await settingsRes.json() : {};
         const profileData = profileRes.ok ? await profileRes.json() : {};
-        const profile = profileData?.profile || {};
+        const profile = profileData?.profile || profileData?.data || profileData || {};
         return {
           name: settingsData?.workshopName || profile?.business_name || profile?.name || 'ورشتي',
           address: settingsData?.workshopAddress || profile?.address || '',
-          phone: settingsData?.workshopPhone || profile?.phone || '',
-          tax_number: settingsData?.taxNumber || profile?.tax_number || '',
+          phone: settingsData?.workshopPhone || profile?.phone || profile?.phone_number || '',
+          tax_number: settingsData?.taxNumber || profile?.taxNumber || profile?.tax_number || '',
+          commercial_register: settingsData?.commercialRegister || profile?.commercialRegister || profile?.commercial_register || '',
+          business_name: settingsData?.workshopName || profile?.business_name || profile?.name || '',
           logo_url: settingsData?.logoUrl || profile?.logo_url || '',
         };
       } catch (e) {

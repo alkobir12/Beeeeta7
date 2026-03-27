@@ -96,6 +96,7 @@ export default function JournalEntries() {
   useEffect(() => {
     fetchJournalEntries();
     fetchWorkshopProfile();
+    fetchWorkshopSettings();
   }, []);
 
   useEffect(() => {
@@ -146,6 +147,18 @@ export default function JournalEntries() {
       }
     } catch (error) {
       console.error('Error fetching workshop profile:', error);
+    }
+  };
+
+  const fetchWorkshopSettings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/settings`);
+      const data = await response.json();
+      if (data) {
+        setWorkshopSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching workshop settings:', error);
     }
   };
 

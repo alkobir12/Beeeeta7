@@ -1735,8 +1735,9 @@ const Operations = () => {
                 disabled={submitDisabled}
                 className="apple-button w-full sm:w-auto px-8 py-2 text-base"
                 data-testid="operation-save-button"
+                aria-busy={isSaving}
               >
-                {t('operations.submit')}
+                {isSaving ? 'جارٍ الحفظ...' : t('operations.submit')}
               </button>
 
               {form.items.length === 0 && (

@@ -868,6 +868,8 @@ const Operations = () => {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
 
     // Validate required fields
     setCreateError('');
@@ -880,6 +882,7 @@ const Operations = () => {
         description: msg,
         variant: 'destructive',
       });
+      setIsSaving(false);
       return;
     }
 
@@ -887,6 +890,7 @@ const Operations = () => {
       const msg = 'لا يوجد حساب أعمال مناسب لنوع العملية الحالي';
       setCreateError(msg);
       toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
       return;
     }
 
@@ -916,6 +920,7 @@ const Operations = () => {
         description: msg,
         variant: 'destructive',
       });
+      setIsSaving(false);
       return;
     }
 
@@ -923,6 +928,7 @@ const Operations = () => {
       const msg = 'عملية قطع راكان تتطلب تحديد عميل أو مركبة';
       setCreateError(msg);
       toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
       return;
     }
 

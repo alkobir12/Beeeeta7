@@ -1028,6 +1028,7 @@ const Operations = () => {
     || !form.accountingAccountId
     || missingVehicleForVehicleKind
     || missingCustomerOrVehicleForRakan
+    || isSaving
   );
 
   // Theme-based styles (align with dashboard glass look)

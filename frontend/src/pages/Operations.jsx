@@ -93,6 +93,8 @@ const Operations = () => {
 
   const [saveOpId, setSaveOpId] = useState(null);
   const [deleteOpId, setDeleteOpId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const lastSubmitRef = useRef({ hash: '', timestamp: 0 });
 
   const [createError, setCreateError] = useState('');
 

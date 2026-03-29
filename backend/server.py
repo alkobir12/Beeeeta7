@@ -1156,6 +1156,51 @@ async def create_service(service: Service):
     await db.services.insert_one(service.dict())
 
 
+@api_router.post("/admin/reset-inventory")
+async def reset_inventory_data():
+    try:
+        updated_parts = 0
+        updated_services = 0
+
+        if DB_PROVIDER == "supabase":
+            parts = supabase_service.parts_list() or []
+            for part in parts:
+                part_id = part.get("id")
+                if part_id:
+                    supabase_service.parts_update(part_id, {"quantity": 0})
+                    updated_parts += 1
+
+            services = supabase_service.services_list() or []
+            for service in services:
+                service_id = service.get("id")
+                if service_id:
+                    supabase_service.services_update(service_id, {"price": 0})
+                    updated_services += 1
+        elif DB_PROVIDER == "memory":
+            parts = _mem_read("parts", [])
+            for part in parts:
+                part["quantity"] = 0
+            _mem_write("parts", parts)
+            updated_parts = len(parts)
+
+            services = _mem_read("services", [])
+            for service in services:
+                service["price"] = 0
+            _mem_write("services", services)
+            updated_services = len(services)
+        else:
+            updated_parts = db.parts.update_many({}, {"$set": {"quantity": 0}}).modified_count
+            updated_services = db.services.update_many({}, {"$set": {"price": 0}}).modified_count
+
+        return {
+            "success": True,
+            "updated_parts": updated_parts,
+            "updated_services": updated_services
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
+
+
 @api_router.post("/vehicles/{vehicle_id}/upload-file")
 async def upload_vehicle_file(
     vehicle_id: str, file: UploadFile = File(...), file_type: str = "diagnostic"

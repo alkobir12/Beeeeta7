@@ -972,6 +972,20 @@ const Operations = () => {
         notes: `${form.notes || ''}${vehicleDetailsNote}`.trim(),
       };
 
+      const payloadHash = JSON.stringify(cleanPayload);
+      const now = Date.now();
+      if (lastSubmitRef.current.hash === payloadHash && now - lastSubmitRef.current.timestamp < 4000) {
+        setCreateError('تم منع تكرار العملية');
+        toast({
+          title: 'تم منع التكرار',
+          description: 'تم تجاهل حفظ مكرر لنفس العملية. الرجاء الانتظار لحظات.',
+          variant: 'destructive',
+        });
+        setIsSaving(false);
+        return;
+      }
+      lastSubmitRef.current = { hash: payloadHash, timestamp: now };
+
       await createOperationMutation.mutateAsync(cleanPayload);
       setCreateError('');
 
@@ -1005,6 +1019,8 @@ const Operations = () => {
         description: msg || t('operations.save_failed') || 'فشل حفظ العملية',
         variant: 'destructive',
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 

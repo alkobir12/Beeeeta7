@@ -175,6 +175,12 @@ const Operations = () => {
   const [activeOperationsTab, setActiveOperationsTab] = useState('rakan');
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
+  const [creditReminderDays, setCreditReminderDays] = useState(() => {
+    if (typeof window === 'undefined') return 7;
+    const stored = window.localStorage.getItem('creditReminderDays');
+    const parsed = stored ? Number(stored) : 7;
+    return Number.isNaN(parsed) || parsed <= 0 ? 7 : parsed;
+  });
   const [expandedOperationId, setExpandedOperationId] = useState(null);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [printDialogConfig, setPrintDialogConfig] = useState(null);

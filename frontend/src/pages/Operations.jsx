@@ -392,21 +392,30 @@ const Operations = () => {
     return arr;
   }, [ops]);
 
-  const creditReminderOps = useMemo(() => {
+  const getOverdueCreditOps = (opsList) => {
     const now = new Date();
     const msDay = 1000 * 60 * 60 * 24;
-    return sortedOps.filter((op) => {
+    return opsList.filter((op) => {
       const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
       const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
-      const isCredit = ['unpaid', 'credit', 'deferred', 'partial'].includes(paymentStatus)
-        || ['credit', 'deferred'].includes(paymentMethod);
+      const isCredit = paymentStatus === 'unpaid' || ['credit', 'deferred'].includes(paymentMethod);
       if (!isCredit) return false;
       const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
       if (Number.isNaN(opDate.getTime())) return false;
       const diffDays = Math.floor((now - opDate) / msDay);
       return diffDays >= 7;
     });
-  }, [sortedOps]);
+  };
+
+  const workshopCreditReminderOps = useMemo(
+    () => getOverdueCreditOps(workshopOps),
+    [workshopOps]
+  );
+
+  const rakanCreditReminderOps = useMemo(
+    () => getOverdueCreditOps(rakanOps),
+    [rakanOps]
+  );
 
   const rakanOps = useMemo(
     () => sortedOps.filter((op) => (

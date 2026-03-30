@@ -1953,6 +1953,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             }
             rows.append(doc)
             _mem_write("operations", rows)
+            await _append_operation_to_visit(payload, doc, provider, db, visit_data)
             return doc
 
         items = payload.get("items", [])
@@ -2014,6 +2015,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         op.pop("_id", None)
         if hasattr(op["date"], "isoformat"):
             op["date"] = op["date"].isoformat()
+        await _append_operation_to_visit(payload, op, provider, db, visit_data)
         return op
     except HTTPException:
         raise

@@ -1810,21 +1810,34 @@ const Operations = () => {
             </div>
           </div>
 
-          {(workshopCreditReminderOps.length > 0 || rakanCreditReminderOps.length > 0) && (
+          {(workshopCreditSummary.overdue > 0 || rakanCreditSummary.overdue > 0) && (
             <div
               className="glass-card border border-rose-500/30 bg-rose-500/10 p-4 flex flex-col gap-2"
               data-testid="operations-credit-reminder-card"
             >
-              <div className="text-sm text-rose-200">تذكير سداد العمليات الآجل خلال أسبوع</div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-sm text-rose-200">تذكير سداد العمليات الآجل</div>
+                <label className="flex items-center gap-2 text-xs text-rose-200/80">
+                  مدة التذكير (يوم)
+                  <input
+                    type="number"
+                    min="1"
+                    value={creditReminderDays}
+                    onChange={(event) => setCreditReminderDays(Math.max(1, Number(event.target.value) || 1))}
+                    className="w-16 rounded-lg border border-rose-400/40 bg-transparent px-2 py-1 text-center text-rose-100"
+                    data-testid="operations-credit-reminder-days-input"
+                  />
+                </label>
+              </div>
               <div className="text-base text-white space-y-1">
                 <div>
-                  ورشة: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-workshop-count">{workshopCreditReminderOps.length}</span> عملية آجل خلال أسبوع.
+                  ورشة: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-workshop-count">{workshopCreditSummary.total}</span> عملية آجل (متأخرة: {workshopCreditSummary.overdue}).
                 </div>
                 <div>
-                  قطع راكان: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-rakan-count">{rakanCreditReminderOps.length}</span> عملية آجل خلال أسبوع.
+                  قطع راكان: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-rakan-count">{rakanCreditSummary.total}</span> عملية آجل (متأخرة: {rakanCreditSummary.overdue}).
                 </div>
               </div>
-              <div className="text-xs text-rose-200/80">يرجى متابعة التحصيل قبل انتهاء الأسبوع.</div>
+              <div className="text-xs text-rose-200/80">التنبيه يظهر عند تجاوز مدة التذكير المحددة.</div>
             </div>
           )}
 

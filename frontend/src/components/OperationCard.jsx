@@ -156,8 +156,10 @@ export default function OperationCard({
 
   const cardBorder = isIncome ? 'rgba(16,185,129,0.24)' : 'rgba(244,63,94,0.24)';
   const paymentStatus = (operation.paymentStatus || operation.payment_status || '').toString().toLowerCase();
-  const hasPaymentStatus = Boolean(paymentStatus);
-  const isCredit = ['unpaid', 'credit', 'deferred', 'partial'].includes(paymentStatus);
+  const paymentMethod = (operation.paymentMethod || operation.payment_method || '').toString().toLowerCase();
+  const hasPaymentStatus = Boolean(paymentStatus || paymentMethod);
+  const isCredit = ['unpaid', 'credit', 'deferred', 'partial'].includes(paymentStatus)
+    || ['credit', 'deferred'].includes(paymentMethod);
   const paymentBorder = hasPaymentStatus
     ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
     : cardBorder;

@@ -423,7 +423,7 @@ const Operations = () => {
       (acc, op) => {
         const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
         const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
-        const isCredit = paymentStatus === 'unpaid' || ['credit', 'deferred'].includes(paymentMethod);
+        const isCredit = paymentStatus === 'unpaid' || paymentMethod === 'credit';
         if (!isCredit) return acc;
         acc.total += 1;
         const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);

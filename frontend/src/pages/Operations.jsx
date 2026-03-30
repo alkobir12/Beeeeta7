@@ -410,7 +410,7 @@ const Operations = () => {
     [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
-  const getOverdueCreditOps = (opsList) => {
+  const getCreditWithinWeekOps = (opsList) => {
     const now = new Date();
     const msDay = 1000 * 60 * 60 * 24;
     return opsList.filter((op) => {
@@ -421,17 +421,17 @@ const Operations = () => {
       const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
       if (Number.isNaN(opDate.getTime())) return false;
       const diffDays = Math.floor((now - opDate) / msDay);
-      return diffDays >= 7;
+      return diffDays >= 0 && diffDays <= 7;
     });
   };
 
   const workshopCreditReminderOps = useMemo(
-    () => getOverdueCreditOps(workshopOps),
+    () => getCreditWithinWeekOps(workshopOps),
     [workshopOps]
   );
 
   const rakanCreditReminderOps = useMemo(
-    () => getOverdueCreditOps(rakanOps),
+    () => getCreditWithinWeekOps(rakanOps),
     [rakanOps]
   );
 

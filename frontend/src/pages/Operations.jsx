@@ -1781,6 +1781,19 @@ const Operations = () => {
             </div>
           </div>
 
+          {creditReminderOps.length > 0 && (
+            <div
+              className="glass-card border border-rose-500/30 bg-rose-500/10 p-4 flex flex-col gap-2"
+              data-testid="operations-credit-reminder-card"
+            >
+              <div className="text-sm text-rose-200">تذكير سداد العمليات الآجل</div>
+              <div className="text-base text-white">
+                لديك <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-count">{creditReminderOps.length}</span> عملية آجل مرّ عليها أسبوع أو أكثر.
+              </div>
+              <div className="text-xs text-rose-200/80">يرجى متابعة التحصيل لتجنب التأخير.</div>
+            </div>
+          )}
+
           <div className="glass-card p-2" data-testid="operations-tabs-container">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="operations-tabs-list">
               <button

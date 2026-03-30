@@ -3153,6 +3153,90 @@ async def _get_latest_vehicle_visit(provider: str, vehicle_id: str) -> Optional[
     return row
 
 
+async def _get_vehicle_visit_by_id(provider: str, visit_id: str, db=None):
+    if not visit_id:
+        return None
+    if provider == "supabase":
+        supa = SupabaseService()
+        if supa.mock_mode:
+            for visit in _mem_read("vehicle_visits"):
+                if str(visit.get("id")) == str(visit_id):
+                    return visit
+            return None
+        res = supa.client.table("vehicle_visits").select("*").eq("id", visit_id).limit(1).execute()
+        rows = res.data or []
+        return rows[0] if rows else None
+    if provider == "memory" or db is None:
+        visits = _mem_read("vehicle_visits")
+        for visit in visits:
+            if str(visit.get("id")) == str(visit_id):
+                return visit
+        return None
+    row = await db.vehicle_visits.find_one({"id": visit_id}, {"_id": 0})
+    if row:
+        for key in ("entryDate", "exitDate", "createdAt"):
+            if row.get(key) and hasattr(row[key], "isoformat"):
+                row[key] = row[key].isoformat()
+    return row
+
+
+async def _append_operation_to_visit(payload: dict, operation: dict, provider: str, db=None, visit_data: dict = None):
+    vehicle_id = payload.get("vehicleId") or payload.get("vehicle_id") or operation.get("vehicle_id")
+    if not vehicle_id:
+        return
+    visit = visit_data or await _get_vehicle_visit_by_id(provider, payload.get("visitId"), db) or await _get_latest_vehicle_visit(provider, vehicle_id, db)
+    if not visit:
+        return
+
+    notes_payload = _parse_notes_json(visit.get("notes"))
+    items = notes_payload.get("items", [])
+    payment_status = payload.get("paymentStatus") or payload.get("payment_status")
+
+    for item in payload.get("items", []) or []:
+        quantity = float(item.get("quantity") or 1)
+        price = float(item.get("price") or item.get("unit_price") or item.get("unitPrice") or 0)
+        total = float(item.get("total") or item.get("total_price") or (quantity * price))
+        name = item.get("name") or item.get("description") or item.get("label") or item.get("itemName") or "عنصر"
+        items.append({
+            "name": name,
+            "description": item.get("description") or name,
+            "quantity": quantity,
+            "price": price,
+            "total": total,
+            "itemType": item.get("itemType") or item.get("type") or payload.get("itemType"),
+            "paymentStatus": payment_status,
+            "operationId": operation.get("id"),
+            "operationNumber": operation.get("operation_number") or operation.get("operationNumber"),
+            "source": "operation",
+            "createdAt": datetime.utcnow().isoformat(),
+        })
+
+    notes_payload["items"] = items
+    notes_payload.setdefault("payments", [])
+    notes_payload.setdefault("technicians", [])
+    updated_notes = json.dumps(notes_payload, ensure_ascii=False)
+    visit_id = visit.get("id")
+
+    if provider == "supabase":
+        supa = SupabaseService()
+        if supa.mock_mode:
+            visits = _mem_read("vehicle_visits")
+            for row in visits:
+                if str(row.get("id")) == str(visit_id):
+                    row["notes"] = updated_notes
+            _mem_write("vehicle_visits", visits)
+        else:
+            supa.client.table("vehicle_visits").update({"notes": updated_notes}).eq("id", visit_id).execute()
+    elif provider == "memory" or db is None:
+        visits = _mem_read("vehicle_visits")
+        for row in visits:
+            if str(row.get("id")) == str(visit_id):
+                row["notes"] = updated_notes
+        _mem_write("vehicle_visits", visits)
+    else:
+        await db.vehicle_visits.update_one({"id": visit_id}, {"$set": {"notes": updated_notes}})
+
+
 async def _get_visit_archive_operations(provider: str, visit_id: str) -> List[Dict[str, Any]]:
     if not visit_id:
         return []

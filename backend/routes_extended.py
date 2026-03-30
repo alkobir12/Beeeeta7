@@ -1923,7 +1923,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 _safe_insert_journal_entry(supa, entry)
             except Exception as je_error:
                 print(f"Failed to create journal entry for operation: {je_error}")
-
+            await _append_operation_to_visit(payload, op, provider, db, visit_data)
             return op
 
         if provider == "memory" or db is None:

@@ -1795,16 +1795,16 @@ const Operations = () => {
               className="glass-card border border-rose-500/30 bg-rose-500/10 p-4 flex flex-col gap-2"
               data-testid="operations-credit-reminder-card"
             >
-              <div className="text-sm text-rose-200">تذكير سداد العمليات الآجل</div>
+              <div className="text-sm text-rose-200">تذكير سداد العمليات الآجل خلال أسبوع</div>
               <div className="text-base text-white space-y-1">
                 <div>
-                  ورشة: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-workshop-count">{workshopCreditReminderOps.length}</span> عملية آجل.
+                  ورشة: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-workshop-count">{workshopCreditReminderOps.length}</span> عملية آجل خلال أسبوع.
                 </div>
                 <div>
-                  قطع راكان: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-rakan-count">{rakanCreditReminderOps.length}</span> عملية آجل.
+                  قطع راكان: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-rakan-count">{rakanCreditReminderOps.length}</span> عملية آجل خلال أسبوع.
                 </div>
               </div>
-              <div className="text-xs text-rose-200/80">يرجى متابعة التحصيل لتجنب التأخير.</div>
+              <div className="text-xs text-rose-200/80">يرجى متابعة التحصيل قبل انتهاء الأسبوع.</div>
             </div>
           )}
 

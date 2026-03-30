@@ -155,6 +155,12 @@ export default function OperationCard({
     : 'radial-gradient(circle at 12% 18%, rgba(244,63,94,0.20), transparent 52%), radial-gradient(circle at 88% 78%, rgba(168,85,247,0.12), transparent 55%), rgba(255,255,255,0.05)';
 
   const cardBorder = isIncome ? 'rgba(16,185,129,0.24)' : 'rgba(244,63,94,0.24)';
+  const paymentStatus = (operation.paymentStatus || operation.payment_status || '').toString().toLowerCase();
+  const hasPaymentStatus = Boolean(paymentStatus);
+  const isCredit = ['unpaid', 'credit', 'deferred', 'partial'].includes(paymentStatus);
+  const paymentBorder = hasPaymentStatus
+    ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
+    : cardBorder;
   const stop = (e) => e.stopPropagation();
 
   return (
@@ -162,9 +168,9 @@ export default function OperationCard({
       className="dash-widget-shell"
       style={{
         background: cardBackground,
-        border: `1px solid ${cardBorder}`,
+        border: `1px solid ${paymentBorder}`,
         boxShadow: isExpanded
-          ? `0 22px 72px rgba(2,6,23,0.78), 0 0 0 1px ${cardBorder}`
+          ? `0 22px 72px rgba(2,6,23,0.78), 0 0 0 1px ${paymentBorder}`
           : '0 14px 44px rgba(2,6,23,0.56)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',

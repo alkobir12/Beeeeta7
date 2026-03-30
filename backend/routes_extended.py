@@ -1864,6 +1864,15 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
 
         _apply_operation_kind_defaults(payload, kind, vehicle_doc)
 
+        visit_data = None
+        if payload.get("vehicleId"):
+            if payload.get("visitId"):
+                visit_data = await _get_vehicle_visit_by_id(provider, payload.get("visitId"), db)
+            if not visit_data:
+                visit_data = await _get_latest_vehicle_visit(provider, payload.get("vehicleId"), db)
+                if visit_data:
+                    payload["visitId"] = visit_data.get("id")
+
         resolved_account_id = _pick_business_account(
             kind, payload.get("accountId"), biz_accounts
         )

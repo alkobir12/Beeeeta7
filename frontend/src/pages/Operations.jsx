@@ -392,6 +392,24 @@ const Operations = () => {
     return arr;
   }, [ops]);
 
+  const rakanOps = useMemo(
+    () => sortedOps.filter((op) => (
+      rakanBizAccountIds.has(String(op.accountId || ''))
+      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+      || isRakanOperationTagged(op)
+    )),
+    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
+  );
+
+  const workshopOps = useMemo(
+    () => sortedOps.filter((op) => !(
+      rakanBizAccountIds.has(String(op.accountId || ''))
+      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+      || isRakanOperationTagged(op)
+    )),
+    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
+  );
+
   const getOverdueCreditOps = (opsList) => {
     const now = new Date();
     const msDay = 1000 * 60 * 60 * 24;
@@ -415,24 +433,6 @@ const Operations = () => {
   const rakanCreditReminderOps = useMemo(
     () => getOverdueCreditOps(rakanOps),
     [rakanOps]
-  );
-
-  const rakanOps = useMemo(
-    () => sortedOps.filter((op) => (
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
-  );
-
-  const workshopOps = useMemo(
-    () => sortedOps.filter((op) => !(
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
   const rakanTotalPages = useMemo(

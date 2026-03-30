@@ -460,6 +460,12 @@ const Operations = () => {
   );
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('creditReminderDays', String(creditReminderDays));
+    }
+  }, [creditReminderDays]);
+
+  useEffect(() => {
     setRakanPage((prev) => Math.min(Math.max(prev, 1), rakanTotalPages));
   }, [rakanTotalPages]);
 

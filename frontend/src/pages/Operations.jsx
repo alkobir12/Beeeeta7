@@ -410,29 +410,37 @@ const Operations = () => {
     [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
-  const getCreditWithinWeekOps = (opsList) => {
+  const getCreditSummary = (opsList) => {
     const now = new Date();
     const msDay = 1000 * 60 * 60 * 24;
-    return opsList.filter((op) => {
-      const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
-      const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
-      const isCredit = paymentStatus === 'unpaid' || ['credit', 'deferred'].includes(paymentMethod);
-      if (!isCredit) return false;
-      const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
-      if (Number.isNaN(opDate.getTime())) return false;
-      const diffDays = Math.floor((now - opDate) / msDay);
-      return diffDays >= 0 && diffDays <= 7;
-    });
+    return opsList.reduce(
+      (acc, op) => {
+        const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
+        const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
+        const isCredit = paymentStatus === 'unpaid' || ['credit', 'deferred'].includes(paymentMethod);
+        if (!isCredit) return acc;
+        acc.total += 1;
+        const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
+        if (!Number.isNaN(opDate.getTime())) {
+          const diffDays = Math.floor((now - opDate) / msDay);
+          if (diffDays >= creditReminderDays) {
+            acc.overdue += 1;
+          }
+        }
+        return acc;
+      },
+      { total: 0, overdue: 0 }
+    );
   };
 
-  const workshopCreditReminderOps = useMemo(
-    () => getCreditWithinWeekOps(workshopOps),
-    [workshopOps]
+  const workshopCreditSummary = useMemo(
+    () => getCreditSummary(workshopOps),
+    [workshopOps, creditReminderDays]
   );
 
-  const rakanCreditReminderOps = useMemo(
-    () => getCreditWithinWeekOps(rakanOps),
-    [rakanOps]
+  const rakanCreditSummary = useMemo(
+    () => getCreditSummary(rakanOps),
+    [rakanOps, creditReminderDays]
   );
 
   const rakanTotalPages = useMemo(

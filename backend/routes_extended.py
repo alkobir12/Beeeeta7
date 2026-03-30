@@ -1600,7 +1600,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         _safe_insert_journal_entry(supa, entry)
 
         try:
-            supa.client.table("operations").update({"payment_method": "cash"}).eq("id", op_id).execute()
+            supa.client.table("operations").update({"payment_method": "cash", "payment_status": "paid"}).eq("id", op_id).execute()
         except Exception:
             pass
 

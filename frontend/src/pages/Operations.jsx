@@ -1129,12 +1129,17 @@ const Operations = () => {
   const missingCustomerOrVehicleForRakan = previewKind === OPERATION_KIND_RAKAN
     && ['sale', 'service'].includes(previewEffectiveType)
     && !(activeVehicleId || form.partnerId || form.partnerName);
+  const hasRequiredItems = form.type === 'payment_order'
+    ? Number(form.paymentAmount) > 0
+    : form.items.length > 0;
+  const missingPartnerForPayment = form.type === 'payment_order' && !form.partnerId && !form.partnerName;
   const submitDisabled = (
-    form.items.length === 0
+    !hasRequiredItems
     || !selectedBusinessAccount?.id
     || !form.accountingAccountId
     || missingVehicleForVehicleKind
     || missingCustomerOrVehicleForRakan
+    || missingPartnerForPayment
     || isSaving
   );
 

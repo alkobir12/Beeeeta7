@@ -1303,6 +1303,7 @@ const Operations = () => {
                             partnerName: '',
                             items: selectedType === 'payment_order' ? [] : form.items,
                             paymentStatus: selectedType === 'payment_order' ? 'paid' : form.paymentStatus,
+                            paymentAmount: selectedType === 'payment_order' ? '' : form.paymentAmount,
                           });
                         }}
                         data-testid="operation-type-select"

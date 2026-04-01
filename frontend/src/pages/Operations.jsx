@@ -365,10 +365,37 @@ const Operations = () => {
   const isSelectedAccountingRakan = isRakanCode(selectedAccountingCode);
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
-  const itemOptions = useMemo(
-    () => (item.itemType === 'service' ? services : parts),
-    [item.itemType, parts, services]
-  );
+  const normalizeItemId = (it) => it?.id || it?._id || '';
+  const resolveItemPrice = (selectedItem, itemType, operationType) => {
+    if (!selectedItem) return 0;
+    const sellingPrice =
+      selectedItem.sellingPrice ??
+      selectedItem.sell_price ??
+      selectedItem.sale_price ??
+      selectedItem.sellPrice ??
+      selectedItem.price ??
+      0;
+    const purchasePrice =
+      selectedItem.purchasePrice ??
+      selectedItem.purchase_price ??
+      selectedItem.cost_price ??
+      selectedItem.buy_price ??
+      selectedItem.price ??
+      0;
+
+    if (itemType === 'part') {
+      return operationType === 'sale' ? sellingPrice : purchasePrice;
+    }
+    return selectedItem.price ?? sellingPrice ?? purchasePrice ?? 0;
+  };
+  const itemOptions = useMemo(() => {
+    const source = item.itemType === 'service' ? services : parts;
+    return source.map((it) => ({
+      id: normalizeItemId(it),
+      name: it.name,
+      raw: it,
+    }));
+  }, [item.itemType, parts, services]);
   const customers = customersQuery.data || [];
   const suppliers = suppliersQuery.data || [];
   const vehicles = vehiclesQuery.data || [];

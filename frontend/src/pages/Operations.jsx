@@ -1730,25 +1730,44 @@ const Operations = () => {
 
               {/* Items Table */}
               {form.items.length > 0 && (
-                <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: styles.cardBg, borderColor: styles.cardBorder }}>
-                  <table className="w-full text-sm">
-                    <thead style={{ backgroundColor: styles.tableBg, color: styles.textSecondary }}>
-                      <tr>
-                        <th className="p-3 text-right font-medium">نوع العنصر</th>
-                        <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>
-                        <th className="p-3 text-right font-medium">{t('operations.qty')}</th>
-                        <th className="p-3 text-right font-medium">{t('operations.price')}</th>
-                        <th className="p-3 text-right font-medium">{t('operations.total')}</th>
-                        <th className="p-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y" style={{ borderColor: 'rgba(148,163,184,0.14)' }}>
-                      {form.items.map((it, idx)=> (
-                        <tr key={idx}>
-                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
-                          <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{it.name}</td>
-                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.quantity}</td>
-                          <td className="p-3">
+                <>
+                  <div className="md:hidden space-y-3">
+                    {form.items.map((it, idx) => (
+                      <div
+                        key={`mobile-${idx}`}
+                        className="rounded-2xl border p-3"
+                        style={{ backgroundColor: styles.cardBg, borderColor: styles.cardBorder }}
+                        data-testid={`operation-item-card-mobile-${idx}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-xs" style={{ color: styles.textSecondary }} data-testid={`operation-item-type-mobile-${idx}`}>
+                              {it.itemType === 'part' ? t('operations.part') : t('operations.service')}
+                            </div>
+                            <div className="text-sm font-semibold" style={{ color: styles.textPrimary }} data-testid={`operation-item-name-mobile-${idx}`}>
+                              {it.name}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newItems = [...form.items];
+                              newItems.splice(idx, 1);
+                              setForm({ ...form, items: newItems });
+                            }}
+                            className="text-rose-200 hover:text-rose-100 p-1"
+                            data-testid={`operation-remove-item-button-mobile-${idx}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <div style={{ color: styles.textSecondary }}>{t('operations.qty')}</div>
+                            <div className="text-sm" style={{ color: styles.textPrimary }} data-testid={`operation-item-qty-mobile-${idx}`}>{it.quantity}</div>
+                          </div>
+                          <div>
+                            <div style={{ color: styles.textSecondary }}>{t('operations.price')}</div>
                             <input
                               type="number"
                               min="0"
@@ -1765,37 +1784,88 @@ const Operations = () => {
                                 };
                                 setForm({ ...form, items: newItems });
                               }}
-                              className="apple-input h-9 text-sm w-24"
-                              data-testid={`operation-item-price-input-${idx}`}
+                              className="apple-input h-9 text-sm"
+                              data-testid={`operation-item-price-input-mobile-${idx}`}
                             />
-                          </td>
-                          <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
-                          <td className="p-3 text-left">
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                const newItems = [...form.items];
-                                newItems.splice(idx, 1);
-                                setForm({...form, items: newItems});
-                              }}
-                              className="text-rose-200 hover:text-rose-100 p-1"
-                              data-testid={`operation-remove-item-button-${idx}`}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </td>
+                          </div>
+                          <div className="col-span-2">
+                            <div style={{ color: styles.textSecondary }}>{t('operations.total')}</div>
+                            <div className="text-sm font-semibold" style={{ color: styles.textPrimary }} data-testid={`operation-item-total-mobile-${idx}`}>
+                              {(Number(it.quantity) * Number(it.price)).toFixed(2)} {t('operations.SAR')}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden md:block rounded-2xl border overflow-hidden" style={{ backgroundColor: styles.cardBg, borderColor: styles.cardBorder }}>
+                    <table className="w-full text-sm">
+                      <thead style={{ backgroundColor: styles.tableBg, color: styles.textSecondary }}>
+                        <tr>
+                          <th className="p-3 text-right font-medium">نوع العنصر</th>
+                          <th className="p-3 text-right font-medium">{t('operations.itemName')}</th>
+                          <th className="p-3 text-right font-medium">{t('operations.qty')}</th>
+                          <th className="p-3 text-right font-medium">{t('operations.price')}</th>
+                          <th className="p-3 text-right font-medium">{t('operations.total')}</th>
+                          <th className="p-3"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="font-bold" style={{ backgroundColor: styles.tableBg, color: styles.textPrimary }}>
-                      <tr>
-                        <td colSpan="4" className="p-3 text-left">{t('operations.total')}:</td>
-                        <td className="p-3" style={{ color: '#93c5fd' }}>{subtotal.toFixed(2)} {t('operations.SAR')}</td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y" style={{ borderColor: 'rgba(148,163,184,0.14)' }}>
+                        {form.items.map((it, idx)=> (
+                          <tr key={idx}>
+                            <td className="p-3" style={{ color: styles.textSecondary }}>{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
+                            <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{it.name}</td>
+                            <td className="p-3" style={{ color: styles.textSecondary }}>{it.quantity}</td>
+                            <td className="p-3">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={it.price}
+                                onChange={(event) => {
+                                  const newItems = [...form.items];
+                                  const price = Number(event.target.value || 0);
+                                  const quantity = Number(newItems[idx]?.quantity || 1);
+                                  newItems[idx] = {
+                                    ...newItems[idx],
+                                    price: event.target.value,
+                                    total: quantity * price
+                                  };
+                                  setForm({ ...form, items: newItems });
+                                }}
+                                className="apple-input h-9 text-sm w-24"
+                                data-testid={`operation-item-price-input-${idx}`}
+                              />
+                            </td>
+                            <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
+                            <td className="p-3 text-left">
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const newItems = [...form.items];
+                                  newItems.splice(idx, 1);
+                                  setForm({...form, items: newItems});
+                                }}
+                                className="text-rose-200 hover:text-rose-100 p-1"
+                                data-testid={`operation-remove-item-button-${idx}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="font-bold" style={{ backgroundColor: styles.tableBg, color: styles.textPrimary }}>
+                        <tr>
+                          <td colSpan="4" className="p-3 text-left">{t('operations.total')}:</td>
+                          <td className="p-3" style={{ color: '#93c5fd' }}>{subtotal.toFixed(2)} {t('operations.SAR')}</td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
 

@@ -365,6 +365,10 @@ const Operations = () => {
   const isSelectedAccountingRakan = isRakanCode(selectedAccountingCode);
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
+  const itemOptions = useMemo(
+    () => (item.itemType === 'service' ? services : parts),
+    [item.itemType, parts, services]
+  );
   const customers = customersQuery.data || [];
   const suppliers = suppliersQuery.data || [];
   const vehicles = vehiclesQuery.data || [];

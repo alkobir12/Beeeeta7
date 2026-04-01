@@ -398,6 +398,9 @@ const Operations = () => {
     }));
   }, [item.itemType, parts, services]);
 
+  const customers = customersQuery.data || [];
+  const suppliers = suppliersQuery.data || [];
+  const vehicles = vehiclesQuery.data || [];
   const partnerOptions = useMemo(() => {
     const source = form.partnerType === 'supplier' ? suppliers : customers;
     return (source || []).map((it) => ({
@@ -406,9 +409,6 @@ const Operations = () => {
       phone: it.phone || '',
     }));
   }, [form.partnerType, suppliers, customers]);
-  const customers = customersQuery.data || [];
-  const suppliers = suppliersQuery.data || [];
-  const vehicles = vehiclesQuery.data || [];
   const activeVehicles = vehicles.filter((vehicle) => !['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'].includes(vehicle.status));
   const vehicleOptions = activeVehicles.length ? activeVehicles : vehicles;
   const customerVehicles = useMemo(() => {

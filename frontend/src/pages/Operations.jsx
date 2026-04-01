@@ -1678,9 +1678,7 @@ const Operations = () => {
                           itemId: selected.id,
                           name: selected.name,
                           customName: '',
-                          price: item.itemType === 'service'
-                            ? (selected.price || 0)
-                            : (selected.sell_price || selected.purchase_price || 0),
+                          price: resolveItemPrice(selected.raw, item.itemType, form.type),
                         });
                       } else {
                         setItem({

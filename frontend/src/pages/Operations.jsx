@@ -114,6 +114,7 @@ const Operations = () => {
     items: [], 
     paymentMethod: 'cash', 
     paymentStatus: 'paid',
+    paymentAmount: '',
     status: 'issued',
     invoiceNumber: '',
     notes: '',

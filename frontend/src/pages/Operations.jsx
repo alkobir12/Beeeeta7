@@ -1634,67 +1634,44 @@ const Operations = () => {
                   </select>
                 </div>
                 
-                <div className="md:col-span-1">
+                <div className="md:col-span-2">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.items')}</label>
-                  {item.itemType === 'part' ? (
-                    <select 
-                      className="apple-input h-9 text-sm"
-                      value={item.itemId} 
-                      onChange={e => { 
-                        const it = parts.find(p=>p.id===e.target.value); 
-                        setItem({
-                          ...item,
-                          itemId: e.target.value,
-                          name: it?.name || '',
-                          price: it?.sellingPrice || 0,
-                          customName: '',
-                        }); 
-                      }}
-                      data-testid="operation-part-select"
-                    >
-                      <option value="">{t('operations.selectPart')}</option>
-                      {parts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  ) : (
-                    <select 
-                      className="apple-input h-9 text-sm"
-                      value={item.itemId} 
-                      onChange={e => { 
-                        const s = services.find(s=>s.id===e.target.value); 
-                        setItem({
-                          ...item,
-                          itemId: e.target.value,
-                          name: s?.name || '',
-                          price: s?.price || 0,
-                          customName: '',
-                        }); 
-                      }}
-                      data-testid="operation-service-select"
-                    >
-                      <option value="">{t('operations.selectService')}</option>
-                      {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  )}
-                </div>
-                <div className="md:col-span-1">
-                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>
-                    إدخال صنف/خدمة جديدة
-                  </label>
                   <input
                     type="text"
+                    list="operation-item-options"
                     className="apple-input h-9 text-sm"
-                    value={item.customName}
-                    onChange={e =>
-                      setItem({
-                        ...item,
-                        customName: e.target.value,
-                        name: e.target.value,
-                        itemId: '',
-                      })
-                    }
-                    placeholder="يحفظ تلقائياً"
-                    data-testid="operation-item-custom-input"
+                    value={item.name || item.customName}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      const normalized = value.trim().toLowerCase();
+                      const selected = itemOptions.find((it) => (it.name || '').trim().toLowerCase() === normalized);
+                      if (selected) {
+                        setItem({
+                          ...item,
+                          itemId: selected.id,
+                          name: selected.name,
+                          customName: '',
+                          price: item.itemType === 'service'
+                            ? (selected.price || 0)
+                            : (selected.sell_price || selected.purchase_price || 0),
+                        });
+                      } else {
+                        setItem({
+                          ...item,
+                          itemId: '',
+                          name: value,
+                          customName: value,
+                        });
+                      }
+                    }}
+                    placeholder="اختر صنفاً أو اكتب جديداً"
+                    data-testid="operation-item-select-or-input"
                   />
+                  <datalist id="operation-item-options">
+                    {itemOptions.map((it) => (
+                      <option key={it.id} value={it.name} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="md:col-span-1">

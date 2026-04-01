@@ -1035,9 +1035,24 @@ const Operations = () => {
           ? 'vehicle_operation'
           : 'rakan_parts_operation';
 
+      const paymentAmountValue = effectiveType === 'payment_order'
+        ? Number(form.paymentAmount || 0)
+        : 0;
+      const itemsForSubmit = effectiveType === 'payment_order'
+        ? [{
+            name: 'سداد مديونية',
+            itemType: 'service',
+            quantity: 1,
+            price: paymentAmountValue,
+            total: paymentAmountValue,
+          }]
+        : form.items;
+
       const cleanPayload = {
         ...form,
         type: effectiveType,
+        items: itemsForSubmit,
+        paymentAmount: paymentAmountValue,
         workshopId: workshopId || null,
         operationKind: effectiveOperationKind,
         accountId: selectedBusinessAccount.id,

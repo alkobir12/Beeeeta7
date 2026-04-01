@@ -1765,7 +1765,7 @@ const Operations = () => {
                                 };
                                 setForm({ ...form, items: newItems });
                               }}
-                              className="w-24 rounded-lg border border-white/10 bg-transparent px-2 py-1 text-sm text-white"
+                              className="apple-input h-9 text-sm w-24"
                               data-testid={`operation-item-price-input-${idx}`}
                             />
                           </td>

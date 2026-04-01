@@ -397,6 +397,15 @@ const Operations = () => {
       raw: it,
     }));
   }, [item.itemType, parts, services]);
+
+  const partnerOptions = useMemo(() => {
+    const source = form.partnerType === 'supplier' ? suppliers : customers;
+    return (source || []).map((it) => ({
+      id: it.id || it._id || '',
+      name: it.name || '',
+      phone: it.phone || '',
+    }));
+  }, [form.partnerType, suppliers, customers]);
   const customers = customersQuery.data || [];
   const suppliers = suppliersQuery.data || [];
   const vehicles = vehiclesQuery.data || [];

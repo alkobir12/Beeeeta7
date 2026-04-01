@@ -1485,16 +1485,65 @@ const Operations = () => {
                       <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
                         الجهة/المستفيد (اختياري)
                       </label>
-                      <div className="relative">
-                        <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                          className="apple-input pr-10"
-                          placeholder="مثال: شركة الكهرباء / مورد أدوات"
-                          value={form.partnerName}
-                          onChange={e => setForm({ ...form, partnerName: e.target.value, partnerType: form.type === 'purchase' ? 'supplier' : 'customer' })}
-                          data-testid="operation-partner-name-input"
-                        />
-                      </div>
+                      {form.type === 'payment_order' ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className={`dash-btn ${form.partnerType === 'customer' ? 'dash-btn-primary' : 'dash-btn-secondary'}`}
+                              onClick={() => setForm({ ...form, partnerType: 'customer', partnerId: '', partnerName: '' })}
+                              data-testid="operation-partner-type-customer"
+                            >
+                              عميل
+                            </button>
+                            <button
+                              type="button"
+                              className={`dash-btn ${form.partnerType === 'supplier' ? 'dash-btn-primary' : 'dash-btn-secondary'}`}
+                              onClick={() => setForm({ ...form, partnerType: 'supplier', partnerId: '', partnerName: '' })}
+                              data-testid="operation-partner-type-supplier"
+                            >
+                              مورد
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input
+                              className="apple-input pr-10"
+                              list="payment-partner-options"
+                              placeholder="اختر عميل/مورد أو اكتب اسمًا جديدًا"
+                              value={form.partnerName}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const normalized = value.trim().toLowerCase();
+                                const match = partnerOptions.find((it) => (it.name || '').trim().toLowerCase() === normalized);
+                                setForm({
+                                  ...form,
+                                  partnerName: value,
+                                  partnerId: match?.id || '',
+                                  partnerPhone: match?.phone || '',
+                                });
+                              }}
+                              data-testid="operation-partner-name-input"
+                            />
+                            <datalist id="payment-partner-options">
+                              {partnerOptions.map((option) => (
+                                <option key={option.id || option.name} value={option.name} />
+                              ))}
+                            </datalist>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                          <input
+                            className="apple-input pr-10"
+                            placeholder="مثال: شركة الكهرباء / مورد أدوات"
+                            value={form.partnerName}
+                            onChange={e => setForm({ ...form, partnerName: e.target.value, partnerType: form.type === 'purchase' ? 'supplier' : 'customer' })}
+                            data-testid="operation-partner-name-input"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

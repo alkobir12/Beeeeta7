@@ -1218,7 +1218,8 @@ const Operations = () => {
             >
               <div className="text-sm font-semibold" style={{ color: 'rgba(254,226,226,0.95)' }}>
                 {t('common.error') || 'خطأ'}
-              </div>
+                </div>
+              )}
               <div className="text-sm mt-1" style={{ color: 'rgba(254,226,226,0.82)' }}>
                 {createError}
               </div>

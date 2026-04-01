@@ -1748,7 +1748,24 @@ const Operations = () => {
                           <td className="p-3" style={{ color: styles.textSecondary }}>{it.itemType==='part'? t('operations.part') : t('operations.service')}</td>
                           <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{it.name}</td>
                           <td className="p-3" style={{ color: styles.textSecondary }}>{it.quantity}</td>
-                          <td className="p-3" style={{ color: styles.textSecondary }}>{it.price}</td>
+                          <td className="p-3">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={it.price}
+                              onChange={(event) => {
+                                const newItems = [...form.items];
+                                newItems[idx] = {
+                                  ...newItems[idx],
+                                  price: event.target.value
+                                };
+                                setForm({ ...form, items: newItems });
+                              }}
+                              className="w-24 rounded-lg border border-white/10 bg-transparent px-2 py-1 text-sm text-white"
+                              data-testid={`operation-item-price-input-${idx}`}
+                            />
+                          </td>
                           <td className="p-3 font-medium" style={{ color: styles.textPrimary }}>{(Number(it.quantity)*Number(it.price)).toFixed(2)}</td>
                           <td className="p-3 text-left">
                             <button 

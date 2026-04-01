@@ -1789,9 +1789,10 @@ const Operations = () => {
                   </button>
                 </div>
               </div>
+              )}
 
               {/* Items Table */}
-              {form.items.length > 0 && (
+              {form.type !== 'payment_order' && form.items.length > 0 && (
                 <>
                   <div className="md:hidden space-y-3">
                     {form.items.map((it, idx) => (

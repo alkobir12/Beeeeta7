@@ -382,7 +382,15 @@ const Operations = () => {
     const arr = Array.isArray(ops) ? [...ops] : [];
     const getTs = (o) => {
       try {
-        return new Date(o.date || o.op_date || o.createdAt || 0).getTime() || 0;
+        return new Date(
+          o.date
+          || o.op_date
+          || o.createdAt
+          || o.created_at
+          || o.updatedAt
+          || o.updated_at
+          || 0
+        ).getTime() || 0;
       } catch {
         return 0;
       }
@@ -393,7 +401,7 @@ const Operations = () => {
       if (dt !== 0) return dt;
       const at = Math.abs(Number(b.total || 0)) - Math.abs(Number(a.total || 0));
       if (at !== 0) return at;
-      return String(b.id || '').localeCompare(String(a.id || ''));
+      return String(b.id || b._id || '').localeCompare(String(a.id || a._id || ''));
     });
     return arr;
   }, [ops]);

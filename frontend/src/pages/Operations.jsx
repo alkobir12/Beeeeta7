@@ -1280,6 +1280,7 @@ const Operations = () => {
                         <option value="sale">{t('operations.sale')}</option>
                         <option value="expense">مصروف مباشر</option>
                         <option value="direct">عملية مفتوحة/مباشرة</option>
+                        <option value="payment_order">أمر دفع (سداد مديونية)</option>
                       </select>
                     </div>
                   </div>

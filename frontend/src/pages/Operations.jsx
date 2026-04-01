@@ -1756,9 +1756,12 @@ const Operations = () => {
                               value={it.price}
                               onChange={(event) => {
                                 const newItems = [...form.items];
+                                const price = Number(event.target.value || 0);
+                                const quantity = Number(newItems[idx]?.quantity || 1);
                                 newItems[idx] = {
                                   ...newItems[idx],
-                                  price: event.target.value
+                                  price: event.target.value,
+                                  total: quantity * price
                                 };
                                 setForm({ ...form, items: newItems });
                               }}

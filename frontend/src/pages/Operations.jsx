@@ -1257,7 +1257,23 @@ const Operations = () => {
                       <select
                         className="apple-input pr-10"
                         value={form.type}
-                        onChange={e => setForm({ ...form, type: e.target.value, partnerType: e.target.value === 'sale' ? 'customer' : 'supplier' })}
+                        onChange={(e) => {
+                          const selectedType = e.target.value;
+                          const nextPartnerType = selectedType === 'sale'
+                            ? 'customer'
+                            : selectedType === 'payment_order'
+                              ? (form.partnerType || 'customer')
+                              : 'supplier';
+                          setForm({
+                            ...form,
+                            type: selectedType,
+                            partnerType: nextPartnerType,
+                            partnerId: '',
+                            partnerName: '',
+                            items: selectedType === 'payment_order' ? [] : form.items,
+                            paymentStatus: selectedType === 'payment_order' ? 'paid' : form.paymentStatus,
+                          });
+                        }}
                         data-testid="operation-type-select"
                       >
                         <option value="purchase">{t('operations.purchase')}</option>

@@ -1711,7 +1711,7 @@ const Operations = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.price')}</label>
+                  <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>سعر الحبة</label>
                   <input 
                     type="number" 
                     className="apple-input h-9 text-sm"

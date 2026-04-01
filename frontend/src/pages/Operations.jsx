@@ -1686,8 +1686,24 @@ const Operations = () => {
               </div>
 
               
-              <div className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end mb-4">
-                <div className="md:col-span-1">
+              {form.type === 'payment_order' ? (
+                <div className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end mb-4">
+                  <div className="md:col-span-2">
+                    <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>مبلغ السداد</label>
+                    <input
+                      type="number"
+                      className="apple-input h-9 text-sm"
+                      min="0"
+                      step="0.01"
+                      value={form.paymentAmount}
+                      onChange={e=> setForm({ ...form, paymentAmount: e.target.value })}
+                      data-testid="operation-payment-amount-input"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end mb-4">
+                  <div className="md:col-span-1">
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>نوع العنصر</label>
                   <select 
                     className="apple-input h-9 text-sm"

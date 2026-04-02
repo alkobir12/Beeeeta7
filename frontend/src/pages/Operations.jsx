@@ -441,6 +441,7 @@ const Operations = () => {
     return list.length ? list : vehicleOptions;
   }, [vehicleOptions, form.partnerId]);
   const ops = operationsQuery.data || [];
+  const operationsLoading = operationsQuery.isLoading || operationsQuery.isFetching;
   const visits = visitsQuery.data || [];
 
   const sortedOps = useMemo(() => {

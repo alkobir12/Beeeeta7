@@ -287,7 +287,17 @@ const Operations = () => {
       const res = await axios.get(operationsUrl);
       return res.data || [];
     },
-    ...freshQueryOptions,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    keepPreviousData: true,
+    placeholderData: cachedOperations.length ? cachedOperations : undefined,
+    onSuccess: (data) => {
+      if (typeof window === 'undefined') return;
+      if (Array.isArray(data)) {
+        localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+      }
+    },
   });
 
   const bizAccountsQuery = useQuery({

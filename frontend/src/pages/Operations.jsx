@@ -198,6 +198,20 @@ const Operations = () => {
     retry: 2,
   };
 
+  const operationsCacheKey = React.useMemo(
+    () => `operationsCache:${vehicleIdFromUrl || 'all'}`,
+    [vehicleIdFromUrl]
+  );
+  const cachedOperations = React.useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem(operationsCacheKey);
+      return cached ? JSON.parse(cached) : [];
+    } catch (error) {
+      return [];
+    }
+  }, [operationsCacheKey]);
+
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
     queryFn: async () => {

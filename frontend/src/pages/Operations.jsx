@@ -2116,7 +2116,11 @@ const Operations = () => {
             </span>
           </div>
 
-          {activeOpsTotalCount === 0 ? (
+          {operationsLoading && activeOpsTotalCount === 0 ? (
+            <div className="apple-card p-4 text-center" data-testid="operations-loading">
+              <div className="text-sm text-slate-300">جاري تحميل العمليات...</div>
+            </div>
+          ) : activeOpsTotalCount === 0 ? (
             <div className="apple-card p-4 text-center" data-testid="operations-active-tab-empty">
               <div className="text-sm text-slate-400">
                 {isRakanTabActive ? 'لا توجد عمليات قطع راكان حالياً' : 'لا توجد عمليات ورشة حالياً'}

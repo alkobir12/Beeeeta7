@@ -42,6 +42,16 @@
 - تم التأكيد على بقاء قسم العمليات الأخيرة دون تغيير وظيفي.
 - نتيجة التحقق: `iteration_39.json` نجاح **13/13** اختبار واجهة، مع تأكيد أن الفرق البصري واضح وأن الخط لم يتغير.
 
+### أرصدة العملاء والموردين + نظام السداد + الحسابات الفرعية (03 Apr 2026)
+- تم إضافة أرصدة **مدين/دائن/آجل** وسجل الحركات لكل عميل ومورد عبر دمج بيانات العمليات + قيود سداد `operation_payment`.
+- تم توسيع `GET /api/customers` و`GET /api/suppliers` لإرجاع الحقول:
+  `debitBalance`, `creditBalance`, `ajelBalance`, `overdueBalance`, `settledAmount`, `paymentPlanCount`, `movements`.
+- تم تحديث واجهة **العملاء** و**الموردين** لعرض الأرصدة مباشرة داخل الكروت، مع قسم expandable لسجل الحركات.
+- تم إنشاء/مزامنة حسابات فرعية تلقائيًا للعملاء والموردين ضمن دليل الحسابات بالنمط:
+  `acc-customer-{id}` و `acc-supplier-{id}` تحت أكواد رئيسية `1103` و `2101`.
+- تم تحسين توافق Supabase القديم (fallback عند غياب أعمدة مثل `partner_id` أو `workshop_id`) لمنع أخطاء 500.
+- نتيجة التحقق: `iteration_40.json` نجاح **100% Backend + 100% Frontend**.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -641,3 +651,4 @@
 | 03 Apr 2026 | Operations preview speed pass: deferred secondary queries + login prefetch, reducing initial operations-page load to ~1s |
 | 03 Apr 2026 | Applied Glass UI refresh to create-operation form only (font unchanged), verified no regression in operations list (`iteration_38`) |
 | 03 Apr 2026 | Strong Glass parity update: added top glass header + payment chips + scanner bar + item input row grid, verified with `iteration_39` |
+| 03 Apr 2026 | Added customer/supplier debit-credit-ajel balances, movement history, and automatic subaccounts (`acc-customer-*`, `acc-supplier-*`) verified by `iteration_40` |

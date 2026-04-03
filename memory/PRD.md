@@ -37,6 +37,11 @@
 - قائمة العمليات (التبويبات/البطاقات/الترقيم) بقيت دون كسر أو تغيير هيكلي.
 - نتيجة التحقق: `iteration_38.json` نجاح **22/22** اختبار واجهة.
 
+### تعزيز التطابق القوي مع نموذج Glass المطلوب (03 Apr 2026)
+- أُعيدت صياغة نموذج الإنشاء ليكون الفرق **واضح جدًا**: `operation-glass-header` مع زر حفظ علوي، Payment Chips، Scanner Bar، وInput Row Grid للعناصر.
+- تم التأكيد على بقاء قسم العمليات الأخيرة دون تغيير وظيفي.
+- نتيجة التحقق: `iteration_39.json` نجاح **13/13** اختبار واجهة، مع تأكيد أن الفرق البصري واضح وأن الخط لم يتغير.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -635,3 +640,4 @@
 | 03 Apr 2026 | P0 Performance: optimized `/api/operations`, fixed Operations re-render loop, and replaced dashboard service-type N+1 with batch summaries endpoint |
 | 03 Apr 2026 | Operations preview speed pass: deferred secondary queries + login prefetch, reducing initial operations-page load to ~1s |
 | 03 Apr 2026 | Applied Glass UI refresh to create-operation form only (font unchanged), verified no regression in operations list (`iteration_38`) |
+| 03 Apr 2026 | Strong Glass parity update: added top glass header + payment chips + scanner bar + item input row grid, verified with `iteration_39` |

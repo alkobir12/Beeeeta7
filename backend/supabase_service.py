@@ -461,6 +461,16 @@ class SupabaseService:
                 }
             )
 
+        out.sort(
+            key=lambda op: str(
+                op.get("date")
+                or op.get("createdAt")
+                or op.get("updatedAt")
+                or ""
+            ),
+            reverse=True,
+        )
+
         return out
 
     def operations_get(self, op_id: str) -> Optional[Dict[str, Any]]:

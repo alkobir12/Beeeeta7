@@ -17,6 +17,13 @@
 
 ## What's Been Implemented
 
+### إغلاق مهام الأداء الحرجة P0 (03 Apr 2026)
+- تسريع جلب العمليات عبر تحسين خدمة Supabase (`supabase_service.py`) بإعادة استخدام عميل Supabase بدل إنشائه لكل طلب.
+- دعم `limit/offset` في `GET /api/operations` مع توافق مرن مع اختلافات مخطط Supabase (fallback تلقائي عند الأعمدة غير الموجودة).
+- إصلاح خطأ إعادة التصيير اللانهائي في `Operations.jsx` عبر حواجز `setForm` (return prev عند عدم التغيير) واستخدام `useMemo` للبيانات المشتقة.
+- تحسين لوحة التحكم: إزالة N+1 في نوع الخدمة بإضافة endpoint مجمّع `POST /api/vehicles/dashboard/summaries` وربط `Dashboard.jsx` به.
+- نتيجة التحقق: اختبار الوكيل (`iteration_36.json`) أكد اختفاء خطأ `Maximum update depth exceeded` وتحسن تحميل العمليات (~5.36s بدل ~17.83s) وسرعة API (~0.90s).
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -612,3 +619,4 @@
 | 10 Mar 2026 | Added advanced Rakan expense tracking (category buckets + weekly trend + top expense operations) |
 | 10 Mar 2026 | Added detailed part price timeline (sale/purchase points + % change + volatility) |
 | 10 Mar 2026 | Inventory architecture now includes execution budget strip (urgent/high/planned/total commitment) |
+| 03 Apr 2026 | P0 Performance: optimized `/api/operations`, fixed Operations re-render loop, and replaced dashboard service-type N+1 with batch summaries endpoint |

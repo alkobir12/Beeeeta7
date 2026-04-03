@@ -834,15 +834,28 @@ class SupabaseService:
             "vehicle_id": vehicle_id,
             "visit_id": visit_id,
             "partner_type": payload.get("partnerType"),
+            "partner_id": payload.get("partnerId"),
             "partner_name": payload.get("partnerName"),
             "items": items,
             "subtotal": subtotal,
             "total": subtotal,
             "payment_method": payload.get("paymentMethod", "cash"),
+            "payment_status": payload.get("paymentStatus", "paid"),
+            "payment_amount": payload.get("paymentAmount"),
             "notes": payload.get("notes"),
             "op_date": op_date or datetime.utcnow().isoformat(),
         }
-        retry_fields = ["visit_id", "workshop_id", "accounting_account_id", "scope", "source", "business_unit"]
+        retry_fields = [
+            "visit_id",
+            "workshop_id",
+            "accounting_account_id",
+            "scope",
+            "source",
+            "business_unit",
+            "partner_id",
+            "payment_status",
+            "payment_amount",
+        ]
         last_error = None
         for _ in range(len(retry_fields) + 1):
             try:
@@ -870,11 +883,13 @@ class SupabaseService:
             "vehicleId": r.get("vehicle_id"),
             "visitId": r.get("visit_id"),
             "partnerType": r.get("partner_type"),
+            "partnerId": r.get("partner_id"),
             "partnerName": r.get("partner_name"),
             "items": r.get("items"),
             "subtotal": r.get("subtotal"),
             "total": r.get("total"),
             "paymentMethod": r.get("payment_method"),
+            "paymentStatus": r.get("payment_status"),
             "notes": r.get("notes"),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),
@@ -900,18 +915,31 @@ class SupabaseService:
             "accounting_account_id": payload.get("accountingAccountId") or payload.get("accounting_account_id"),
             "vehicle_id": payload.get("vehicleId"),
             "partner_type": payload.get("partnerType"),
+            "partner_id": payload.get("partnerId"),
             "partner_name": payload.get("partnerName"),
             "items": items,
             "subtotal": subtotal,
             "total": subtotal,
             "payment_method": payload.get("paymentMethod"),
+            "payment_status": payload.get("paymentStatus"),
+            "payment_amount": payload.get("paymentAmount"),
             "notes": payload.get("notes"),
             "updated_at": datetime.utcnow().isoformat(),
         }
         # إزالة القيم الفارغة
         row = {k: v for k, v in row.items() if v is not None}
         
-        retry_fields = ["visit_id", "workshop_id", "accounting_account_id", "scope", "source", "business_unit"]
+        retry_fields = [
+            "visit_id",
+            "workshop_id",
+            "accounting_account_id",
+            "scope",
+            "source",
+            "business_unit",
+            "partner_id",
+            "payment_status",
+            "payment_amount",
+        ]
         last_error = None
         for _ in range(len(retry_fields) + 1):
             try:
@@ -945,6 +973,7 @@ class SupabaseService:
             "subtotal": r.get("subtotal"),
             "total": r.get("total"),
             "paymentMethod": r.get("payment_method"),
+            "paymentStatus": r.get("payment_status"),
             "notes": r.get("notes"),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),

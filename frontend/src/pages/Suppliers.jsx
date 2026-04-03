@@ -8,6 +8,7 @@ const Suppliers = () => {
   const { themeName } = useTheme();
   const isLight = themeName === 'light' || themeName === 'dashPro';
   const { toast } = useToast();
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
   const [searchQuery, setSearchQuery] = useState('');
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ const Suppliers = () => {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const response = await supplierAPI.getAll();
+      const response = await supplierAPI.getAll(workshopId ? { workshop_id: workshopId } : {});
       setSuppliers(response.data || []);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
@@ -144,6 +145,11 @@ const Suppliers = () => {
     supplier.phone?.includes(searchQuery) ||
     supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const formatMoney = (value) => Number(value || 0).toLocaleString('ar-SA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   if (loading) {
     return (
@@ -265,6 +271,27 @@ const Suppliers = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-3 gap-2 mb-4" data-testid={`supplier-balance-grid-${supplier.id}`}>
+                  <div className="rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-2 py-2">
+                    <p className="text-[10px] text-cyan-200/80">مدين</p>
+                    <p className="text-xs font-bold text-cyan-100" data-testid={`supplier-debit-balance-${supplier.id}`}>
+                      {formatMoney(supplier.debitBalance)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-2 py-2">
+                    <p className="text-[10px] text-amber-200/80">دائن</p>
+                    <p className="text-xs font-bold text-amber-100" data-testid={`supplier-credit-balance-${supplier.id}`}>
+                      {formatMoney(supplier.creditBalance)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-2">
+                    <p className="text-[10px] text-rose-200/80">آجل</p>
+                    <p className="text-xs font-bold text-rose-100" data-testid={`supplier-ajel-balance-${supplier.id}`}>
+                      {formatMoney(supplier.ajelBalance)}
+                    </p>
+                  </div>
+                </div>
+
                 {/* معلومات الاتصال */}
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center gap-3">
@@ -316,6 +343,44 @@ const Suppliers = () => {
                         </span>
                       </div>
                     )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-medium">إجمالي المدفوعات</span>
+                      <span className="text-sm font-bold text-emerald-300" data-testid={`supplier-settled-amount-${supplier.id}`}>
+                        {formatMoney(supplier.settledAmount)} ر.س
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-medium">عدد خطط/حركات الآجل</span>
+                      <span className="text-sm font-bold text-indigo-300" data-testid={`supplier-payment-plan-count-${supplier.id}`}>
+                        {supplier.paymentPlanCount || 0}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800 space-y-2" data-testid={`supplier-movements-${supplier.id}`}>
+                      <p className="text-xs font-semibold text-slate-300">سجل الحركات</p>
+                      {Array.isArray(supplier.movements) && supplier.movements.length > 0 ? (
+                        supplier.movements.slice(0, 4).map((mv) => (
+                          <div
+                            key={mv.id}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5"
+                            data-testid={`supplier-movement-item-${supplier.id}-${mv.id}`}
+                          >
+                            <div>
+                              <p className="text-[11px] text-slate-200">{mv.label || 'حركة مالية'}</p>
+                              <p className="text-[10px] text-slate-400">{mv.date ? String(mv.date).slice(0, 10) : '-'}</p>
+                            </div>
+                            <p className={`text-xs font-bold ${mv.direction === 'debit' ? 'text-cyan-300' : 'text-amber-300'}`}>
+                              {formatMoney(mv.amount)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[11px] text-slate-500" data-testid={`supplier-movements-empty-${supplier.id}`}>
+                          لا توجد حركات مسجلة حتى الآن.
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
                       <button
                         onClick={(e) => {

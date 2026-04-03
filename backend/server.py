@@ -6,13 +6,13 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 import uuid
 import json
@@ -1006,16 +1006,603 @@ async def delete_vehicle(vehicle_id: str):
     return {"success": True}
 
 
-@api_router.get("/customers", response_model=List[Customer])
-async def get_customers():
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        if value is None or value == "":
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def _normalize_partner_name(value: Any) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _op_field(row: Dict[str, Any], snake: str, camel: str) -> Any:
+    return row.get(snake) if row.get(snake) is not None else row.get(camel)
+
+
+def _partner_summary_template() -> Dict[str, Any]:
+    return {
+        "debitBalance": 0.0,
+        "creditBalance": 0.0,
+        "overdueBalance": 0.0,
+        "ajelBalance": 0.0,
+        "settledAmount": 0.0,
+        "paymentPlanCount": 0,
+        "movements": [],
+        "balance": 0.0,
+        "netBalance": 0.0,
+    }
+
+
+def _append_partner_movement(summary: Dict[str, Any], movement: Dict[str, Any]):
+    if not movement:
+        return
+    summary.setdefault("movements", []).append(movement)
+
+
+async def _fetch_operations_for_partner_financials(
+    workshop_id: Optional[str],
+) -> List[Dict[str, Any]]:
     if DB_PROVIDER == "supabase":
-        rows = supabase_service.customers_list()
-        return [Customer(**r) for r in rows]
+        if not (supabase_service.client and not supabase_service.mock_mode):
+            return []
+
+        select_expr = (
+            "id,type,partner_type,partner_id,partner_name,total,payment_method,payment_status,"
+            "payment_amount,op_date,created_at,notes,workshop_id"
+        )
+
+        def _exec_query(expr: str, with_workshop_filter: bool) -> List[Dict[str, Any]]:
+            q = supabase_service.client.table("operations").select(expr).order("created_at", desc=True)
+            if workshop_id and with_workshop_filter:
+                q = q.eq("workshop_id", workshop_id)
+            return q.execute().data or []
+
+        try:
+            return _exec_query(select_expr, with_workshop_filter=True)
+        except Exception as e:
+            error_text = str(e).lower()
+            try:
+                if workshop_id and "workshop_id" in error_text:
+                    return _exec_query(select_expr, with_workshop_filter=False)
+            except Exception as second_error:
+                error_text = str(second_error).lower()
+
+            if "does not exist" in error_text or "column" in error_text:
+                try:
+                    return _exec_query("*", with_workshop_filter=True)
+                except Exception as fallback_error:
+                    fallback_text = str(fallback_error).lower()
+                    if workshop_id and "workshop_id" in fallback_text:
+                        try:
+                            return _exec_query("*", with_workshop_filter=False)
+                        except Exception as final_error:
+                            print(f"Partner financial fallback query failed: {final_error}")
+                            return []
+                    print(f"Partner financial fallback query failed: {fallback_error}")
+                    return []
+
+            print(f"Partner financial operations query failed: {e}")
+            return []
 
     if DB_PROVIDER == "memory":
-        return [Customer(**r) for r in _mem_read("customers")]
+        rows = _mem_read("operations")
+        if workshop_id:
+            rows = [
+                r
+                for r in rows
+                if str(r.get("workshopId") or r.get("workshop_id") or "") == str(workshop_id)
+            ]
+        return rows
+
+    if db is None:
+        return []
+
+    query: Dict[str, Any] = {}
+    if workshop_id:
+        query["$or"] = [{"workshopId": workshop_id}, {"workshop_id": workshop_id}]
+    projection = {
+        "_id": 0,
+        "id": 1,
+        "type": 1,
+        "partnerType": 1,
+        "partner_type": 1,
+        "partnerId": 1,
+        "partner_id": 1,
+        "partnerName": 1,
+        "partner_name": 1,
+        "total": 1,
+        "paymentMethod": 1,
+        "payment_method": 1,
+        "paymentStatus": 1,
+        "payment_status": 1,
+        "paymentAmount": 1,
+        "payment_amount": 1,
+        "date": 1,
+        "op_date": 1,
+        "createdAt": 1,
+        "created_at": 1,
+        "notes": 1,
+    }
+    return await db.operations.find(query, projection).to_list(5000)
+
+
+async def _fetch_operation_payment_map(
+    workshop_id: Optional[str],
+) -> Dict[str, List[Dict[str, Any]]]:
+    rows: List[Dict[str, Any]] = []
+
+    if DB_PROVIDER == "supabase":
+        if supabase_service.client and not supabase_service.mock_mode:
+            try:
+                q = (
+                    supabase_service.client.table("journal_entries")
+                    .select("id,reference_id,total,date,description,source,workshop_id")
+                    .eq("source", "operation_payment")
+                )
+                if workshop_id:
+                    q = q.eq("workshop_id", workshop_id)
+                rows = q.execute().data or []
+            except Exception as e:
+                if workshop_id and "workshop_id" in str(e).lower():
+                    try:
+                        rows = (
+                            supabase_service.client.table("journal_entries")
+                            .select("id,reference_id,total,date,description,source")
+                            .eq("source", "operation_payment")
+                            .execute()
+                            .data
+                            or []
+                        )
+                    except Exception:
+                        rows = []
+                else:
+                    rows = []
+    elif DB_PROVIDER == "memory":
+        rows = [r for r in _mem_read("journal_entries") if str(r.get("source") or "") == "operation_payment"]
+        if workshop_id:
+            rows = [
+                r
+                for r in rows
+                if str(r.get("workshopId") or r.get("workshop_id") or "") == str(workshop_id)
+            ]
+    else:
+        if db is None:
+            return {}
+        query: Dict[str, Any] = {"source": "operation_payment"}
+        if workshop_id:
+            query["workshop_id"] = workshop_id
+        rows = await db.journal_entries.find(query, {"_id": 0}).to_list(5000)
+
+    by_ref: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        ref_id = str(row.get("reference_id") or row.get("referenceId") or "").strip()
+        if not ref_id:
+            continue
+        by_ref.setdefault(ref_id, []).append(row)
+    return by_ref
+
+
+def _round_partner_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
+    summary["debitBalance"] = round(_safe_float(summary.get("debitBalance")), 2)
+    summary["creditBalance"] = round(_safe_float(summary.get("creditBalance")), 2)
+    summary["overdueBalance"] = round(_safe_float(summary.get("overdueBalance")), 2)
+    summary["ajelBalance"] = round(_safe_float(summary.get("ajelBalance")), 2)
+    summary["settledAmount"] = round(_safe_float(summary.get("settledAmount")), 2)
+    summary["balance"] = round(_safe_float(summary.get("overdueBalance")), 2)
+    summary["netBalance"] = round(
+        _safe_float(summary.get("debitBalance")) - _safe_float(summary.get("creditBalance")),
+        2,
+    )
+    summary["movements"] = sorted(
+        summary.get("movements") or [],
+        key=lambda m: str(m.get("date") or ""),
+        reverse=True,
+    )[:20]
+    return summary
+
+
+async def _build_partner_financial_map(
+    partner_type: str,
+    entities: List[Dict[str, Any]],
+    workshop_id: Optional[str],
+) -> Dict[str, Dict[str, Any]]:
+    p_type = str(partner_type or "").strip().lower()
+    by_id: Dict[str, Dict[str, Any]] = {}
+    by_name: Dict[str, str] = {}
+
+    for entity in entities or []:
+        entity_id = str(entity.get("id") or "").strip()
+        if not entity_id:
+            continue
+        by_id[entity_id] = _partner_summary_template()
+        normalized_name = _normalize_partner_name(entity.get("name"))
+        if normalized_name:
+            by_name[normalized_name] = entity_id
+
+    if not by_id:
+        return {}
+
+    operations = await _fetch_operations_for_partner_financials(workshop_id)
+    payment_map = await _fetch_operation_payment_map(workshop_id)
+
+    for op in operations:
+        op_partner_type = str(_op_field(op, "partner_type", "partnerType") or "").strip().lower()
+        if op_partner_type and op_partner_type != p_type:
+            continue
+
+        partner_id = str(_op_field(op, "partner_id", "partnerId") or "").strip()
+        partner_name_norm = _normalize_partner_name(_op_field(op, "partner_name", "partnerName"))
+        target_id = partner_id if partner_id in by_id else by_name.get(partner_name_norm)
+        if not target_id:
+            continue
+
+        summary = by_id[target_id]
+        op_id = str(op.get("id") or "")
+        op_type = str(op.get("type") or "").strip().lower()
+        total_amount = _safe_float(op.get("total"))
+        if total_amount <= 0:
+            total_amount = _safe_float(_op_field(op, "payment_amount", "paymentAmount"))
+
+        payment_method = str(_op_field(op, "payment_method", "paymentMethod") or "").strip().lower()
+        payment_status = str(_op_field(op, "payment_status", "paymentStatus") or "").strip().lower()
+        paid_rows = payment_map.get(op_id, [])
+        paid_amount = round(sum(_safe_float(row.get("total")) for row in paid_rows), 2)
+
+        movement_date = str(_op_field(op, "op_date", "date") or _op_field(op, "created_at", "createdAt") or "")
+        movement_note = str(op.get("notes") or "")
+
+        is_credit_origin = (
+            payment_method == "credit"
+            or payment_status in {"credit", "unpaid", "pending", "partial"}
+            or paid_amount > 0
+        )
+
+        if p_type == "customer" and op_type in {"sale", "service"} and is_credit_origin:
+            summary["debitBalance"] += total_amount
+            remaining = max(0.0, total_amount - paid_amount)
+            summary["overdueBalance"] += remaining
+            summary["ajelBalance"] += remaining
+            summary["paymentPlanCount"] += 1
+            _append_partner_movement(
+                summary,
+                {
+                    "id": f"op-{op_id}",
+                    "direction": "debit",
+                    "label": "مبيعات آجل",
+                    "amount": round(total_amount, 2),
+                    "date": movement_date,
+                    "source": "operation",
+                    "operationId": op_id,
+                    "note": movement_note,
+                },
+            )
+            if paid_amount > 0:
+                summary["creditBalance"] += paid_amount
+                summary["settledAmount"] += paid_amount
+                _append_partner_movement(
+                    summary,
+                    {
+                        "id": f"pay-{op_id}",
+                        "direction": "credit",
+                        "label": "سداد آجل",
+                        "amount": round(paid_amount, 2),
+                        "date": movement_date,
+                        "source": "operation_payment",
+                        "operationId": op_id,
+                        "note": "تحصيل دفعة من العميل",
+                    },
+                )
+
+        elif p_type == "supplier" and op_type in {"purchase", "expense"} and is_credit_origin:
+            summary["creditBalance"] += total_amount
+            remaining = max(0.0, total_amount - paid_amount)
+            summary["overdueBalance"] += remaining
+            summary["ajelBalance"] += remaining
+            summary["paymentPlanCount"] += 1
+            _append_partner_movement(
+                summary,
+                {
+                    "id": f"op-{op_id}",
+                    "direction": "credit",
+                    "label": "مشتريات آجل",
+                    "amount": round(total_amount, 2),
+                    "date": movement_date,
+                    "source": "operation",
+                    "operationId": op_id,
+                    "note": movement_note,
+                },
+            )
+            if paid_amount > 0:
+                summary["debitBalance"] += paid_amount
+                summary["settledAmount"] += paid_amount
+                _append_partner_movement(
+                    summary,
+                    {
+                        "id": f"pay-{op_id}",
+                        "direction": "debit",
+                        "label": "سداد آجل",
+                        "amount": round(paid_amount, 2),
+                        "date": movement_date,
+                        "source": "operation_payment",
+                        "operationId": op_id,
+                        "note": "دفعة سداد للمورد",
+                    },
+                )
+
+        elif op_type == "payment_order" and total_amount > 0:
+            if p_type == "customer":
+                summary["creditBalance"] += total_amount
+                summary["settledAmount"] += total_amount
+                _append_partner_movement(
+                    summary,
+                    {
+                        "id": f"po-{op_id}",
+                        "direction": "credit",
+                        "label": "أمر سداد",
+                        "amount": round(total_amount, 2),
+                        "date": movement_date,
+                        "source": "payment_order",
+                        "operationId": op_id,
+                        "note": movement_note,
+                    },
+                )
+            elif p_type == "supplier":
+                summary["debitBalance"] += total_amount
+                summary["settledAmount"] += total_amount
+                _append_partner_movement(
+                    summary,
+                    {
+                        "id": f"po-{op_id}",
+                        "direction": "debit",
+                        "label": "أمر سداد",
+                        "amount": round(total_amount, 2),
+                        "date": movement_date,
+                        "source": "payment_order",
+                        "operationId": op_id,
+                        "note": movement_note,
+                    },
+                )
+
+    for entity_id, summary in by_id.items():
+        by_id[entity_id] = _round_partner_summary(summary)
+
+    return by_id
+
+
+def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": raw.get("id"),
+        "code": str(raw.get("code") or ""),
+        "name": raw.get("name") or raw.get("name_ar"),
+        "type": raw.get("type"),
+        "parent_id": raw.get("parent_id") if raw.get("parent_id") is not None else raw.get("parentId"),
+        "is_system": bool(raw.get("is_system") if raw.get("is_system") is not None else raw.get("isSystem", False)),
+        "balance": _safe_float(raw.get("balance")),
+    }
+
+
+async def _load_chart_accounts_rows() -> List[Dict[str, Any]]:
+    if DB_PROVIDER == "supabase":
+        if supabase_service.client and not supabase_service.mock_mode:
+            try:
+                res = supabase_service.client.table("accounts").select("*").execute()
+                return [_normalize_account_row(r) for r in (res.data or [])]
+            except Exception:
+                return []
+        return []
+
+    if DB_PROVIDER == "memory":
+        return [_normalize_account_row(r) for r in (_mem_read("accounts") or [])]
+
+    if db is None:
+        return []
+
+    rows = await db.accounts.find({}, {"_id": 0}).to_list(5000)
+    return [_normalize_account_row(r) for r in rows]
+
+
+def _next_partner_sub_code(accounts: List[Dict[str, Any]], prefix: str) -> str:
+    max_suffix = 0
+    for account in accounts:
+        code = str(account.get("code") or "")
+        if not code.startswith(prefix) or code == prefix:
+            continue
+        suffix = code[len(prefix):]
+        if suffix.isdigit():
+            max_suffix = max(max_suffix, int(suffix))
+    return f"{prefix}{max_suffix + 1:04d}"
+
+
+async def _upsert_chart_account(account: Dict[str, Any]):
+    if DB_PROVIDER == "supabase":
+        if not (supabase_service.client and not supabase_service.mock_mode):
+            return
+        existing = (
+            supabase_service.client.table("accounts")
+            .select("id")
+            .eq("id", account["id"])
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        payload = {
+            "id": account["id"],
+            "code": account.get("code"),
+            "name": account.get("name"),
+            "name_en": account.get("name_en") or "",
+            "type": account.get("type"),
+            "parent_id": account.get("parent_id"),
+            "is_system": bool(account.get("is_system", False)),
+            "balance": _safe_float(account.get("balance")),
+        }
+        if existing:
+            supabase_service.client.table("accounts").update(payload).eq("id", account["id"]).execute()
+        else:
+            supabase_service.client.table("accounts").insert(payload).execute()
+        return
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("accounts") or []
+        idx = next((i for i, row in enumerate(rows) if str(row.get("id")) == str(account.get("id"))), -1)
+        memory_row = {
+            "id": account.get("id"),
+            "code": account.get("code"),
+            "name": account.get("name"),
+            "nameEn": account.get("name_en") or "",
+            "type": account.get("type"),
+            "parentId": account.get("parent_id"),
+            "isSystem": bool(account.get("is_system", False)),
+            "balance": _safe_float(account.get("balance")),
+        }
+        if idx >= 0:
+            rows[idx] = memory_row
+        else:
+            rows.append(memory_row)
+        _mem_write("accounts", rows)
+        return
+
+    await db.accounts.update_one(
+        {"id": account["id"]},
+        {
+            "$set": {
+                "code": account.get("code"),
+                "name": account.get("name"),
+                "nameEn": account.get("name_en") or "",
+                "type": account.get("type"),
+                "parentId": account.get("parent_id"),
+                "isSystem": bool(account.get("is_system", False)),
+                "balance": _safe_float(account.get("balance")),
+            }
+        },
+        upsert=True,
+    )
+
+
+async def _ensure_parent_partner_account(partner_type: str, accounts: List[Dict[str, Any]]) -> Dict[str, Any]:
+    if partner_type == "customer":
+        parent_code = "1103"
+        parent_name = "العملاء"
+        acc_type = "asset"
+    else:
+        parent_code = "2101"
+        parent_name = "الموردون"
+        acc_type = "liability"
+
+    parent = next((a for a in accounts if str(a.get("code") or "") == parent_code), None)
+    if parent:
+        return parent
+
+    parent = {
+        "id": f"acc-{parent_code}",
+        "code": parent_code,
+        "name": parent_name,
+        "name_en": "",
+        "type": acc_type,
+        "parent_id": None,
+        "is_system": True,
+        "balance": 0.0,
+    }
+    await _upsert_chart_account(parent)
+    accounts.append(_normalize_account_row(parent))
+    return _normalize_account_row(parent)
+
+
+async def _sync_partner_subaccounts(
+    partner_type: str,
+    entities: List[Dict[str, Any]],
+    financial_map: Dict[str, Dict[str, Any]],
+):
+    if not entities:
+        return
+    accounts = await _load_chart_accounts_rows()
+    parent = await _ensure_parent_partner_account(partner_type, accounts)
+    parent_id = str(parent.get("id") or "")
+    code_prefix = "1103" if partner_type == "customer" else "2101"
+    acc_type = "asset" if partner_type == "customer" else "liability"
+
+    for entity in entities:
+        entity_id = str(entity.get("id") or "").strip()
+        if not entity_id:
+            continue
+        sub_id = f"acc-{partner_type}-{entity_id}"
+        existing = next((a for a in accounts if str(a.get("id") or "") == sub_id), None)
+        if existing:
+            code = str(existing.get("code") or "") or _next_partner_sub_code(accounts, code_prefix)
+        else:
+            code = _next_partner_sub_code(accounts, code_prefix)
+
+        summary = financial_map.get(entity_id) or {}
+        account_payload = {
+            "id": sub_id,
+            "code": code,
+            "name": f"{'عميل' if partner_type == 'customer' else 'مورد'} - {entity.get('name') or entity_id}",
+            "name_en": "",
+            "type": acc_type,
+            "parent_id": parent_id,
+            "is_system": False,
+            "balance": _safe_float(summary.get("overdueBalance")),
+        }
+        await _upsert_chart_account(account_payload)
+        if not existing:
+            accounts.append(_normalize_account_row(account_payload))
+
+
+async def _safe_sync_partner_subaccounts(
+    partner_type: str,
+    entities: List[Dict[str, Any]],
+    financial_map: Dict[str, Dict[str, Any]],
+):
+    try:
+        await _sync_partner_subaccounts(partner_type, entities, financial_map)
+    except Exception as sync_error:
+        print(f"⚠️ partner subaccounts sync warning ({partner_type}): {sync_error}")
+
+
+@api_router.get("/customers", response_model=List[Customer])
+async def get_customers(
+    workshop_id: Optional[str] = Query(None),
+    sync_accounts: bool = Query(False),
+):
+    if DB_PROVIDER == "supabase":
+        rows = supabase_service.customers_list()
+        financial_map = await _build_partner_financial_map("customer", rows, workshop_id)
+        if sync_accounts:
+            await _safe_sync_partner_subaccounts("customer", rows, financial_map)
+        enriched = []
+        for row in rows:
+            summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+            enriched.append({**row, **summary})
+        return [Customer(**r) for r in enriched]
+
+    if DB_PROVIDER == "memory":
+        rows = _mem_read("customers")
+        financial_map = await _build_partner_financial_map("customer", rows, workshop_id)
+        if sync_accounts:
+            await _safe_sync_partner_subaccounts("customer", rows, financial_map)
+        enriched = []
+        for row in rows:
+            summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+            enriched.append({**row, **summary})
+        return [Customer(**r) for r in enriched]
+
     customers = await db.customers.find().to_list(1000)
-    return [Customer(**c) for c in customers]
+    normalized = []
+    for c in customers:
+        c.pop("_id", None)
+        normalized.append(c)
+    financial_map = await _build_partner_financial_map("customer", normalized, workshop_id)
+    if sync_accounts:
+        await _safe_sync_partner_subaccounts("customer", normalized, financial_map)
+    enriched = []
+    for row in normalized:
+        summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+        enriched.append({**row, **summary})
+    return [Customer(**c) for c in enriched]
 
 
 @api_router.delete("/customers/{customer_id}")
@@ -1086,6 +1673,11 @@ async def delete_customer(customer_id: str):
 async def create_customer(customer: CustomerBase):
     if DB_PROVIDER == "supabase":
         c = supabase_service.customers_create(customer.dict())
+        await _safe_sync_partner_subaccounts(
+            "customer",
+            [c],
+            {str(c.get("id") or ""): _partner_summary_template()},
+        )
         return Customer(**c)
 
     if DB_PROVIDER == "memory":
@@ -1093,11 +1685,21 @@ async def create_customer(customer: CustomerBase):
         new_c = {**customer.dict(), "id": str(uuid.uuid4())}
         rows.append(new_c)
         _mem_write("customers", rows)
+        await _safe_sync_partner_subaccounts(
+            "customer",
+            [new_c],
+            {str(new_c.get("id") or ""): _partner_summary_template()},
+        )
         return Customer(**new_c)
 
     customer_dict = customer.dict()
     customer_dict["id"] = str(uuid.uuid4())
     await db.customers.insert_one(customer_dict)
+    await _safe_sync_partner_subaccounts(
+        "customer",
+        [customer_dict],
+        {str(customer_dict.get("id") or ""): _partner_summary_template()},
+    )
     return Customer(**customer_dict)
 
 
@@ -1557,29 +2159,82 @@ async def delete_part(part_id: str):
 
 
 @api_router.get("/suppliers", response_model=List[Supplier])
-async def get_suppliers():
+async def get_suppliers(
+    workshop_id: Optional[str] = Query(None),
+    sync_accounts: bool = Query(False),
+):
     global SUPPLIERS_TABLE_AVAILABLE
     if DB_PROVIDER == "supabase":
         if not SUPPLIERS_TABLE_AVAILABLE:
-            return [Supplier(**r) for r in _mem_read("suppliers")]
+            rows = _mem_read("suppliers")
+            financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
+            if sync_accounts:
+                await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
+            enriched = []
+            for row in rows:
+                summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+                enriched.append({**row, **summary})
+            return [Supplier(**r) for r in enriched]
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 res = supabase_service.client.table("suppliers").select("*").execute()
                 rows = res.data or []
-                return [Supplier(**r) for r in rows]
+                financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
+                if sync_accounts:
+                    await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
+                enriched = []
+                for row in rows:
+                    summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+                    enriched.append({**row, **summary})
+                return [Supplier(**r) for r in enriched]
         except Exception as e:
             if _is_suppliers_table_missing(e):
                 SUPPLIERS_TABLE_AVAILABLE = False
             else:
                 print(f"Supabase suppliers error: {e}")
-            return [Supplier(**r) for r in _mem_read("suppliers")]
-        return [Supplier(**r) for r in _mem_read("suppliers")]
+            rows = _mem_read("suppliers")
+            financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
+            if sync_accounts:
+                await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
+            enriched = []
+            for row in rows:
+                summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+                enriched.append({**row, **summary})
+            return [Supplier(**r) for r in enriched]
+        rows = _mem_read("suppliers")
+        financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
+        if sync_accounts:
+            await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
+        enriched = []
+        for row in rows:
+            summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+            enriched.append({**row, **summary})
+        return [Supplier(**r) for r in enriched]
 
     if DB_PROVIDER == "memory":
-        return [Supplier(**r) for r in _mem_read("suppliers")]
+        rows = _mem_read("suppliers")
+        financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
+        if sync_accounts:
+            await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
+        enriched = []
+        for row in rows:
+            summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+            enriched.append({**row, **summary})
+        return [Supplier(**r) for r in enriched]
 
     suppliers = await db.suppliers.find().to_list(1000)
-    return [Supplier(**s) for s in suppliers]
+    normalized = []
+    for s in suppliers:
+        s.pop("_id", None)
+        normalized.append(s)
+    financial_map = await _build_partner_financial_map("supplier", normalized, workshop_id)
+    if sync_accounts:
+        await _safe_sync_partner_subaccounts("supplier", normalized, financial_map)
+    enriched = []
+    for row in normalized:
+        summary = financial_map.get(str(row.get("id") or ""), _partner_summary_template())
+        enriched.append({**row, **summary})
+    return [Supplier(**s) for s in enriched]
 
 
 @api_router.post("/suppliers", response_model=Supplier)
@@ -1594,12 +2249,22 @@ async def create_supplier(supplier: SupplierCreate):
             rows = _mem_read("suppliers")
             rows.append(payload)
             _mem_write("suppliers", rows)
+            await _safe_sync_partner_subaccounts(
+                "supplier",
+                [payload],
+                {str(payload.get("id") or ""): _partner_summary_template()},
+            )
             return Supplier(**payload)
         try:
             if supabase_service.client and not supabase_service.mock_mode:
                 supabase_payload = {**payload, "createdAt": payload["createdAt"].isoformat()}
                 res = supabase_service.client.table("suppliers").insert(supabase_payload).execute()
                 row = (res.data or [payload])[0]
+                await _safe_sync_partner_subaccounts(
+                    "supplier",
+                    [row],
+                    {str(row.get("id") or payload.get("id") or ""): _partner_summary_template()},
+                )
                 return Supplier(**row)
         except Exception as e:
             if _is_suppliers_table_missing(e):
@@ -1609,15 +2274,30 @@ async def create_supplier(supplier: SupplierCreate):
             rows = _mem_read("suppliers")
             rows.append(payload)
             _mem_write("suppliers", rows)
+            await _safe_sync_partner_subaccounts(
+                "supplier",
+                [payload],
+                {str(payload.get("id") or ""): _partner_summary_template()},
+            )
             return Supplier(**payload)
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("suppliers")
         rows.append(payload)
         _mem_write("suppliers", rows)
+        await _safe_sync_partner_subaccounts(
+            "supplier",
+            [payload],
+            {str(payload.get("id") or ""): _partner_summary_template()},
+        )
         return Supplier(**payload)
 
     await db.suppliers.insert_one(payload)
+    await _safe_sync_partner_subaccounts(
+        "supplier",
+        [payload],
+        {str(payload.get("id") or ""): _partner_summary_template()},
+    )
     return Supplier(**payload)
 
 

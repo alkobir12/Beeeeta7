@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Users, Search, Phone, Mail, Plus, Car, MapPin, RefreshCw, User, Edit2, Trash2, Upload } from 'lucide-react';
 import { customerAPI, api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../hooks/use-toast';
 
 const Customers = () => {
   const { themeName } = useTheme();
+  const { toast } = useToast();
   const isLight = themeName === 'light' || themeName === 'dashPro';
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +47,7 @@ const Customers = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await customerAPI.getAll();
+      const response = await customerAPI.getAll(workshopId ? { workshop_id: workshopId } : {});
       setCustomers(response.data || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -169,6 +172,11 @@ const Customers = () => {
     customer.phone?.includes(searchQuery) ||
     customer.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const formatMoney = (value) => Number(value || 0).toLocaleString('ar-SA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   if (loading) {
     return (
@@ -383,6 +391,27 @@ const Customers = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-3 gap-2 mb-4" data-testid={`customer-balance-grid-${customer.id}`}>
+                  <div className="rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-2 py-2">
+                    <p className="text-[10px] text-cyan-200/80">مدين</p>
+                    <p className="text-xs font-bold text-cyan-100" data-testid={`customer-debit-balance-${customer.id}`}>
+                      {formatMoney(customer.debitBalance)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-2 py-2">
+                    <p className="text-[10px] text-amber-200/80">دائن</p>
+                    <p className="text-xs font-bold text-amber-100" data-testid={`customer-credit-balance-${customer.id}`}>
+                      {formatMoney(customer.creditBalance)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-2">
+                    <p className="text-[10px] text-rose-200/80">آجل</p>
+                    <p className="text-xs font-bold text-rose-100" data-testid={`customer-ajel-balance-${customer.id}`}>
+                      {formatMoney(customer.ajelBalance)}
+                    </p>
+                  </div>
+                </div>
+
                 {/* معلومات الاتصال */}
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center gap-3">
@@ -438,6 +467,44 @@ const Customers = () => {
                         {customer.vehicleCount || 0}
                       </span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-medium">إجمالي المدفوعات</span>
+                      <span className="text-sm font-bold text-emerald-300" data-testid={`customer-settled-amount-${customer.id}`}>
+                        {formatMoney(customer.settledAmount)} ر.س
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-medium">عدد خطط/حركات الآجل</span>
+                      <span className="text-sm font-bold text-indigo-300" data-testid={`customer-payment-plan-count-${customer.id}`}>
+                        {customer.paymentPlanCount || 0}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800 space-y-2" data-testid={`customer-movements-${customer.id}`}>
+                      <p className="text-xs font-semibold text-slate-300">سجل الحركات</p>
+                      {Array.isArray(customer.movements) && customer.movements.length > 0 ? (
+                        customer.movements.slice(0, 4).map((mv) => (
+                          <div
+                            key={mv.id}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5"
+                            data-testid={`customer-movement-item-${customer.id}-${mv.id}`}
+                          >
+                            <div>
+                              <p className="text-[11px] text-slate-200">{mv.label || 'حركة مالية'}</p>
+                              <p className="text-[10px] text-slate-400">{mv.date ? String(mv.date).slice(0, 10) : '-'}</p>
+                            </div>
+                            <p className={`text-xs font-bold ${mv.direction === 'debit' ? 'text-cyan-300' : 'text-amber-300'}`}>
+                              {formatMoney(mv.amount)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[11px] text-slate-500" data-testid={`customer-movements-empty-${customer.id}`}>
+                          لا توجد حركات مسجلة حتى الآن.
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
                       <button
                         onClick={(e) => {

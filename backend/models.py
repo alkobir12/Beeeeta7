@@ -82,6 +82,14 @@ class Customer(CustomerBase):
     createdAt: Optional[datetime] = None
     creditLimit: Optional[float] = 10000  # حد الائتمان
     balance: Optional[float] = 0  # الرصيد المستحق
+    debitBalance: Optional[float] = 0
+    creditBalance: Optional[float] = 0
+    overdueBalance: Optional[float] = 0
+    ajelBalance: Optional[float] = 0
+    settledAmount: Optional[float] = 0
+    paymentPlanCount: Optional[int] = 0
+    netBalance: Optional[float] = 0
+    movements: Optional[List[Any]] = []
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -164,6 +172,15 @@ class SupplierCreate(SupplierBase):
 class Supplier(SupplierBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     createdAt: datetime = Field(default_factory=datetime.utcnow)
+    balance: Optional[float] = 0
+    debitBalance: Optional[float] = 0
+    creditBalance: Optional[float] = 0
+    overdueBalance: Optional[float] = 0
+    ajelBalance: Optional[float] = 0
+    settledAmount: Optional[float] = 0
+    paymentPlanCount: Optional[int] = 0
+    netBalance: Optional[float] = 0
+    movements: Optional[List[Any]] = []
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

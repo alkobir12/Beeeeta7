@@ -42,7 +42,7 @@ export const visitAPI = {
 
 
 const customerAPI = {
-  getAll: () => axios.get(`${API_BASE}/customers`),
+  getAll: (params = {}) => axios.get(`${API_BASE}/customers`, { params }),
   getById: (id) => axios.get(`${API_BASE}/customers/${id}`),
   create: (data) => axios.post(`${API_BASE}/customers`, data),
   update: (id, data) => axios.put(`${API_BASE}/customers/${id}`, data),
@@ -99,7 +99,7 @@ const partAPI = {
 };
 
 const supplierAPI = {
-  getAll: () => axios.get(`${API_BASE}/suppliers`),
+  getAll: (params = {}) => axios.get(`${API_BASE}/suppliers`, { params }),
   create: (data) => axios.post(`${API_BASE}/suppliers`, data),
   update: (id, data) => axios.put(`${API_BASE}/suppliers/${id}`, data),
   delete: (id) => axios.delete(`${API_BASE}/suppliers/${id}`),

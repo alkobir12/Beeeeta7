@@ -378,12 +378,14 @@ const Operations = () => {
     () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
     [accounts]
   );
-  const filteredAccounts = accounts.filter((account) => {
-    const accountType = String(account?.type || '').toLowerCase();
-    if (form.type === 'sale') return accountType === 'revenue';
-    if (form.type === 'purchase') return ['expense', 'asset', 'liability'].includes(accountType);
-    return true;
-  });
+  const filteredAccounts = useMemo(() => (
+    accounts.filter((account) => {
+      const accountType = String(account?.type || '').toLowerCase();
+      if (form.type === 'sale') return accountType === 'revenue';
+      if (form.type === 'purchase') return ['expense', 'asset', 'liability'].includes(accountType);
+      return true;
+    })
+  ), [accounts, form.type]);
   const selectedAccountingAccount = useMemo(
     () => accounts.find((account) => String(account.id || account.code) === String(form.accountingAccountId || '')) || null,
     [accounts, form.accountingAccountId]
@@ -435,8 +437,14 @@ const Operations = () => {
       phone: it.phone || '',
     }));
   }, [form.partnerType, suppliers, customers]);
-  const activeVehicles = vehicles.filter((vehicle) => !['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'].includes(vehicle.status));
-  const vehicleOptions = activeVehicles.length ? activeVehicles : vehicles;
+  const activeVehicles = useMemo(
+    () => vehicles.filter((vehicle) => !['delivered', 'completed', 'finished', 'تم التسليم', 'مكتمل'].includes(vehicle.status)),
+    [vehicles]
+  );
+  const vehicleOptions = useMemo(
+    () => (activeVehicles.length ? activeVehicles : vehicles),
+    [activeVehicles, vehicles]
+  );
   const customerVehicles = useMemo(() => {
     if (!form.partnerId) return vehicleOptions;
     const list = vehicleOptions.filter((vehicle) => String(vehicle.customerId || '') === String(form.partnerId || ''));
@@ -598,12 +606,19 @@ const Operations = () => {
 
   useEffect(() => {
     if (!filteredAccounts.length) {
-      setForm((prev) => ({ ...prev, accountingAccountId: '' }));
+      setForm((prev) => {
+        if (!prev.accountingAccountId) return prev;
+        return { ...prev, accountingAccountId: '' };
+      });
       return;
     }
     const exists = filteredAccounts.some((acc) => String(acc.id || acc.code) === String(form.accountingAccountId || ''));
     if (!exists) {
-      setForm((prev) => ({ ...prev, accountingAccountId: String(filteredAccounts[0].id || filteredAccounts[0].code || '') }));
+      setForm((prev) => {
+        const nextId = String(filteredAccounts[0].id || filteredAccounts[0].code || '');
+        if (String(prev.accountingAccountId || '') === nextId) return prev;
+        return { ...prev, accountingAccountId: nextId };
+      });
     }
   }, [filteredAccounts, form.accountingAccountId]);
 
@@ -622,14 +637,22 @@ const Operations = () => {
   }, [form.accountingAccountId, form.operationKind, form.vehicleId, isSelectedAccountingRakan]);
 
   useEffect(() => {
-    if (vehicleIdFromUrl) {
-      setForm(prev => ({
+    if (!vehicleIdFromUrl) return;
+    setForm((prev) => {
+      if (
+        prev.operationKind === OPERATION_KIND_VEHICLE
+        && prev.scope === 'vehicle'
+        && prev.vehicleId === vehicleIdFromUrl
+      ) {
+        return prev;
+      }
+      return {
         ...prev,
         operationKind: OPERATION_KIND_VEHICLE,
         scope: 'vehicle',
         vehicleId: vehicleIdFromUrl,
-      }));
-    }
+      };
+    });
   }, [vehicleIdFromUrl]);
 
   useEffect(() => {
@@ -638,12 +661,23 @@ const Operations = () => {
     if (!selectedVehicle) return;
 
     if (form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) {
-      setForm((prev) => ({
-        ...prev,
-        partnerType: 'customer',
-        partnerId: selectedVehicle.customerId || prev.partnerId || '',
-        partnerName: selectedVehicle.customerName || prev.partnerName || '',
-      }));
+      setForm((prev) => {
+        const nextPartnerId = selectedVehicle.customerId || prev.partnerId || '';
+        const nextPartnerName = selectedVehicle.customerName || prev.partnerName || '';
+        if (
+          prev.partnerType === 'customer'
+          && String(prev.partnerId || '') === String(nextPartnerId)
+          && String(prev.partnerName || '') === String(nextPartnerName)
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          partnerType: 'customer',
+          partnerId: nextPartnerId,
+          partnerName: nextPartnerName,
+        };
+      });
     }
   }, [form.vehicleId, form.operationKind, vehicleOptions]);
 
@@ -652,11 +686,20 @@ const Operations = () => {
     if (form.operationKind !== OPERATION_KIND_RAKAN) return;
     const customer = customers.find((c) => String(c.id) === String(form.partnerId));
     if (!customer) return;
-    setForm((prev) => ({
-      ...prev,
-      partnerType: 'customer',
-      partnerName: customer.name || prev.partnerName,
-    }));
+    setForm((prev) => {
+      const nextPartnerName = customer.name || prev.partnerName;
+      if (
+        prev.partnerType === 'customer'
+        && String(prev.partnerName || '') === String(nextPartnerName || '')
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        partnerType: 'customer',
+        partnerName: nextPartnerName,
+      };
+    });
   }, [form.partnerId, form.operationKind, customers]);
 
   useEffect(() => {
@@ -664,26 +707,49 @@ const Operations = () => {
       return;
     }
     if (form.operationKind === OPERATION_KIND_WORKSHOP) {
-      setForm((prev) => ({
-        ...prev,
-        scope: 'workshop',
-        vehicleId: '',
-        visitId: '',
-        partnerId: prev.type === 'purchase' ? prev.partnerId : '',
-        partnerType: prev.type === 'purchase' ? 'supplier' : prev.partnerType,
-      }));
+      setForm((prev) => {
+        const nextPartnerId = prev.type === 'purchase' ? prev.partnerId : '';
+        const nextPartnerType = prev.type === 'purchase' ? 'supplier' : prev.partnerType;
+        if (
+          prev.scope === 'workshop'
+          && !prev.vehicleId
+          && !prev.visitId
+          && String(prev.partnerId || '') === String(nextPartnerId || '')
+          && String(prev.partnerType || '') === String(nextPartnerType || '')
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          scope: 'workshop',
+          vehicleId: '',
+          visitId: '',
+          partnerId: nextPartnerId,
+          partnerType: nextPartnerType,
+        };
+      });
     } else if (form.operationKind === OPERATION_KIND_VEHICLE) {
-      setForm((prev) => ({
-        ...prev,
-        scope: 'vehicle',
-        partnerType: 'customer',
-      }));
+      setForm((prev) => {
+        if (prev.scope === 'vehicle' && prev.partnerType === 'customer') {
+          return prev;
+        }
+        return {
+          ...prev,
+          scope: 'vehicle',
+          partnerType: 'customer',
+        };
+      });
     } else if (form.operationKind === OPERATION_KIND_RAKAN) {
-      setForm((prev) => ({
-        ...prev,
-        scope: 'rakan_parts',
-        partnerType: 'customer',
-      }));
+      setForm((prev) => {
+        if (prev.scope === 'rakan_parts' && prev.partnerType === 'customer') {
+          return prev;
+        }
+        return {
+          ...prev,
+          scope: 'rakan_parts',
+          partnerType: 'customer',
+        };
+      });
     }
   }, [form.operationKind, vehicleIdFromUrl]);
 

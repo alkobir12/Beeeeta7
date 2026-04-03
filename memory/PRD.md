@@ -52,6 +52,18 @@
 - تم تحسين توافق Supabase القديم (fallback عند غياب أعمدة مثل `partner_id` أو `workshop_id`) لمنع أخطاء 500.
 - نتيجة التحقق: `iteration_40.json` نجاح **100% Backend + 100% Frontend**.
 
+### تحديث أنواع العمليات (03 Apr 2026)
+- تم قصر الأنواع على 6 فقط داخل نموذج العمليات:
+  `purchase`, `sale`, `expense`, `sale_return`, `purchase_return`, `payment_order`
+  (شراء، بيع، مصروف نقدي، مرتجع بيع، مرتجع شراء، سداد مستحقات).
+- تم ربط الحقول المطلوبة حسب النوع:
+  - شراء + مرتجع شراء: **المورد إلزامي**.
+  - بيع + مرتجع بيع: **عميل أو مركبة إلزامي**.
+  - سداد مستحقات: دعم **عميل/مورد** مع Toggle واضح.
+- تم تحديث محاسبة backend لدعم `sale_return` و`purchase_return` (قيود يومية + توافق بدون 500) مع تحديث تأثير المخزون للحالات المرتبطة.
+- تم إصلاح ترجمة رسالة التحقق `operations.account_required` لتظهر عربيًا بدل مفتاح الترجمة.
+- نتيجة التحقق: `iteration_41.json` نجاح شامل (Backend 11/11 + Frontend 100%).
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -652,3 +664,4 @@
 | 03 Apr 2026 | Applied Glass UI refresh to create-operation form only (font unchanged), verified no regression in operations list (`iteration_38`) |
 | 03 Apr 2026 | Strong Glass parity update: added top glass header + payment chips + scanner bar + item input row grid, verified with `iteration_39` |
 | 03 Apr 2026 | Added customer/supplier debit-credit-ajel balances, movement history, and automatic subaccounts (`acc-customer-*`, `acc-supplier-*`) verified by `iteration_40` |
+| 03 Apr 2026 | Updated operation types to 6 curated types with required-field logic + return-type backend support, verified by `iteration_41` |

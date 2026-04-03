@@ -246,6 +246,7 @@ const translations = {
     recentOperations: "العمليات الأخيرة",
     operationType: "نوع العملية",
     paymentMethod: "طريقة الدفع",
+    account_required: "اختر الحساب",
     partner: "الشريك",
     submit: "حفظ",
     customerName: "اسم العميل",

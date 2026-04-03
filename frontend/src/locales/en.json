@@ -224,6 +224,7 @@
     "supplierName": "Supplier Name",
     "customerName": "Customer Name",
     "paymentMethod": "Payment Method",
+    "account_required": "Select account",
     "cash": "Cash",
     "card": "Card",
     "transfer": "Bank Transfer",

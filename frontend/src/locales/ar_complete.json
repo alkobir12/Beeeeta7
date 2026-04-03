@@ -220,6 +220,7 @@
     "supplierName": "اسم المورد",
     "customerName": "اسم العميل",
     "paymentMethod": "طريقة الدفع",
+    "account_required": "اختر الحساب",
     "cash": "كاش",
     "card": "شبكة",
     "transfer": "تحويل بنكي",

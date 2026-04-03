@@ -32,6 +32,20 @@ const OPERATION_KIND_LABELS = {
   [OPERATION_KIND_RAKAN]: 'عملية قطع راكان',
 };
 
+const OPERATION_KIND_META = {
+  [OPERATION_KIND_WORKSHOP]: { icon: '🏭', label: 'عملية ورشة' },
+  [OPERATION_KIND_VEHICLE]: { icon: '⚙️', label: 'عملية مركبة' },
+  [OPERATION_KIND_RAKAN]: { icon: '🔧', label: 'عملية قطع راكان' },
+};
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: 'cash', label: 'نقدي', icon: '💵' },
+  { value: 'transfer', label: 'تحويل', icon: '🏦' },
+  { value: 'card', label: 'بطاقة', icon: '💳' },
+  { value: 'wallet', label: 'محفظة', icon: '📱' },
+  { value: 'credit', label: 'آجل', icon: '📄' },
+];
+
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
@@ -95,6 +109,7 @@ const Operations = () => {
   const [deleteOpId, setDeleteOpId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const lastSubmitRef = useRef({ hash: '', timestamp: 0 });
+  const formRef = useRef(null);
 
   const [createError, setCreateError] = useState('');
 
@@ -1391,6 +1406,76 @@ const Operations = () => {
             border: 1px solid rgba(94,184,196,.28) !important;
             border-radius: 14px;
           }
+          .ops-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.14);
+          }
+          .ops-save-top-btn {
+            background: linear-gradient(135deg, #5EB8C4, #3A9BAA);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 6px 22px rgba(94,184,196,.35);
+          }
+          .ops-chip-grid {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .ops-pay-chip {
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: rgba(226,232,240,.85);
+            background: rgba(255,255,255,.06);
+            transition: .2s ease;
+          }
+          .ops-pay-chip:hover { border-color: rgba(255,255,255,.35); color: rgba(255,255,255,.95); }
+          .ops-pay-chip-active {
+            border-color: rgba(167,139,250,.7);
+            background: rgba(167,139,250,.2);
+            color: #ddd6fe;
+            box-shadow: 0 0 0 1px rgba(167,139,250,.25);
+          }
+          .ops-scanner-bar {
+            background: rgba(15, 40, 80, 0.48);
+            border: 1px solid rgba(94,184,196,.28);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: inset 0 1px 0 rgba(94,184,196,.15);
+          }
+          .ops-input-row-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 2fr .8fr .9fr auto;
+            gap: 10px;
+            align-items: end;
+          }
+          .ops-item-add-btn {
+            background: linear-gradient(135deg, #5EB8C4, #3A9BAA);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            height: 36px;
+            padding: 0 16px;
+            font-weight: 700;
+            box-shadow: 0 4px 18px rgba(94,184,196,.35);
+          }
+          @media (max-width: 920px) {
+            .ops-input-row-grid { grid-template-columns: 1fr 1fr; }
+          }
         `}</style>
         {/* Header */}
         <div>
@@ -1442,14 +1527,27 @@ const Operations = () => {
               </button>
             </div>
           ) : null}
-          <div className="flex items-center gap-3 mb-6 pb-4" style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
-              <Plus size={20} className="text-white" />
+          <div className="ops-page-header" data-testid="operation-glass-header">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
+                <Plus size={20} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold" style={{ color: styles.textPrimary }}>{t('operations.new_operation')}</h2>
+                <p className="text-xs mt-0.5" style={{ color: styles.textMuted }}>مسودة · نموذج زجاجي</p>
+              </div>
             </div>
-            <h2 className="text-base sm:text-lg font-semibold" style={{ color: styles.textPrimary }}>{t('operations.new_operation')}</h2>
+            <button
+              type="button"
+              className="ops-save-top-btn"
+              onClick={() => formRef.current?.requestSubmit()}
+              data-testid="operation-save-top-button"
+            >
+              💾 حفظ العملية
+            </button>
           </div>
 
-          <form onSubmit={submit} className="space-y-6">
+          <form ref={formRef} onSubmit={submit} className="space-y-6">
             <div className="space-y-5">
               {/* Section 1: Basic Info */}
               <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
@@ -1475,7 +1573,8 @@ const Operations = () => {
                           }}
                           data-testid={`operation-kind-${kind}`}
                         >
-                          {OPERATION_KIND_LABELS[kind]}
+                          <span className="block text-lg leading-none mb-1">{OPERATION_KIND_META[kind]?.icon}</span>
+                          <span className="block text-xs sm:text-sm">{OPERATION_KIND_META[kind]?.label || OPERATION_KIND_LABELS[kind]}</span>
                         </button>
                       ))}
                     </div>
@@ -1760,22 +1859,34 @@ const Operations = () => {
               <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
                 <div className="ops-section-title"><span className="ops-section-icon">💳</span><span>{t('common.payment') || 'الدفع'}</span></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 lg:col-span-4">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
-                    <div className="relative">
-                      <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <select 
-                        className="apple-input pr-10"
-                        value={form.paymentMethod} 
-                        onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
-                        data-testid="operation-payment-method-select"
-                      >
-                        <option value="cash">{t('operations.cash')}</option>
-                        <option value="card">{t('operations.card')}</option>
-                        <option value="transfer">{t('operations.transfer')}</option>
-                        <option value="credit">{t('operations.credit')}</option>
-                      </select>
+                    <div className="ops-chip-grid" data-testid="operation-payment-method-chips">
+                      {PAYMENT_METHOD_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`ops-pay-chip ${form.paymentMethod === option.value ? 'ops-pay-chip-active' : ''}`}
+                          onClick={() => setForm({ ...form, paymentMethod: option.value })}
+                          data-testid={`operation-payment-chip-${option.value}`}
+                        >
+                          <span className="ml-1">{option.icon}</span>
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
+                    <select
+                      className="sr-only"
+                      value={form.paymentMethod}
+                      onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                      data-testid="operation-payment-method-select"
+                    >
+                      <option value="cash">{t('operations.cash')}</option>
+                      <option value="card">{t('operations.card')}</option>
+                      <option value="transfer">{t('operations.transfer')}</option>
+                      <option value="credit">{t('operations.credit')}</option>
+                      <option value="wallet">محفظة</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
@@ -1871,9 +1982,9 @@ const Operations = () => {
 
             {/* OCR Invoice */}
             <div className="ops-glass-section rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div className="ops-scanner-bar">
                 <div>
-                  <div className="text-sm font-semibold" style={{ color: styles.textPrimary }}>مسح فاتورة (Scanner)</div>
+                  <div className="text-sm font-semibold" style={{ color: styles.textPrimary }}>📷 مسح فاتورة (Scanner)</div>
                   <div className="text-xs" style={{ color: styles.textSecondary }}>التقط صورة أو ارفع ملف لملء البنود تلقائياً</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1887,11 +1998,11 @@ const Operations = () => {
                     <option value="purchase">فاتورة شراء</option>
                     <option value="sale">فاتورة بيع</option>
                   </select>
-                  <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
+                  <label className="ops-pay-chip flex items-center gap-2 text-xs cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
                     <Camera size={14} /> التقاط
                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFileChange} data-testid="operation-ocr-camera-input" />
                   </label>
-                  <label className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
+                  <label className="ops-pay-chip flex items-center gap-2 text-xs cursor-pointer" style={{ borderColor: styles.inputBorder, backgroundColor: styles.inputBg, color: styles.textPrimary }}>
                     <Upload size={14} /> رفع ملف
                     <input type="file" accept="image/*" className="hidden" onChange={handleOcrFileChange} data-testid="operation-ocr-file-input" />
                   </label>
@@ -1899,8 +2010,8 @@ const Operations = () => {
                     type="button"
                     onClick={runOcr}
                     disabled={ocrLoading}
-                    className="text-xs px-3 py-2 rounded-lg"
-                    style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                    className="ops-item-add-btn text-xs"
+                    style={{ height: 34 }}
                     data-testid="operation-ocr-run"
                   >
                     {ocrLoading ? 'جاري القراءة...' : 'تشغيل OCR'}
@@ -1909,8 +2020,8 @@ const Operations = () => {
                     <button
                       type="button"
                       onClick={applyOcrToItems}
-                      className="text-xs px-3 py-2 rounded-lg"
-                      style={{ backgroundColor: '#10b981', color: '#fff' }}
+                      className="ops-item-add-btn text-xs"
+                      style={{ height: 34, background: 'linear-gradient(135deg, #34d399, #059669)' }}
                       data-testid="operation-ocr-apply"
                     >
                       تطبيق البنود
@@ -1962,8 +2073,8 @@ const Operations = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end mb-4">
-                  <div className="md:col-span-1">
+                <div className="ops-input-row-grid mb-4">
+                  <div>
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>نوع العنصر</label>
                   <select 
                     className="apple-input h-9 text-sm"
@@ -1976,7 +2087,7 @@ const Operations = () => {
                   </select>
                 </div>
                 
-                <div className="md:col-span-2">
+                <div>
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.items')}</label>
                   <input
                     type="text"
@@ -2014,7 +2125,7 @@ const Operations = () => {
                   </datalist>
                 </div>
 
-                <div className="md:col-span-1">
+                <div>
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>{t('operations.quantity')}</label>
                   <input 
                     type="number" 
@@ -2025,7 +2136,7 @@ const Operations = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>سعر الحبة</label>
                   <input 
                     type="number" 
@@ -2036,11 +2147,12 @@ const Operations = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: 'transparent' }}>.</label>
                   <button 
                     type="button" 
                     onClick={addItem}
-                    className="apple-button w-full h-9 flex items-center justify-center gap-1"
+                    className="ops-item-add-btn w-full flex items-center justify-center gap-1"
                     data-testid="operation-add-item-button"
                   >
                     <Plus size={16} />

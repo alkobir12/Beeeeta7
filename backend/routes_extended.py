@@ -1054,6 +1054,16 @@ def _infer_operation_type_from_account(
     account_type: Optional[str],
 ) -> str:
     req = str(requested_type or "").strip().lower()
+    if req in {
+        "purchase",
+        "sale",
+        "expense",
+        "service",
+        "payment_order",
+        "sale_return",
+        "purchase_return",
+    }:
+        return req
     acc_type = str(account_type or "").strip().lower()
     if acc_type == "revenue":
         return "sale"
@@ -1189,6 +1199,44 @@ def _build_operation_journal_entry(
         debit_code = selected_code or "6100"
         credit_code = "2101" if is_credit else cash_code
 
+        lines = [
+            {
+                "account": debit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                "debit": total,
+                "credit": 0,
+            },
+            {
+                "account": credit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(credit_code, credit_code),
+                "debit": 0,
+                "credit": total,
+            },
+        ]
+
+    elif op_type == "sale_return":
+        transaction_type = "sale_return"
+        debit_code = selected_code or "4100"
+        credit_code = "1103" if is_credit else cash_code
+        lines = [
+            {
+                "account": debit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                "debit": total,
+                "credit": 0,
+            },
+            {
+                "account": credit_code,
+                "account_name": ACCOUNT_NAME_MAP.get(credit_code, credit_code),
+                "debit": 0,
+                "credit": total,
+            },
+        ]
+
+    elif op_type == "purchase_return":
+        transaction_type = "purchase_return"
+        debit_code = "2101" if is_credit else cash_code
+        credit_code = selected_code or "6100"
         lines = [
             {
                 "account": debit_code,
@@ -2135,11 +2183,11 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         await db.operations.insert_one(op)
 
         # inventory adjust for parts
-        if op["type"] in ("purchase", "sale"):
+        if op["type"] in ("purchase", "sale", "sale_return", "purchase_return"):
             for it in items:
                 if it.get("itemType") == "part" and it.get("itemId"):
                     delta = int(float(it.get("quantity", 0)))
-                    if op["type"] == "sale":
+                    if op["type"] in ("sale", "purchase_return"):
                         delta = -delta
                     await db.parts.update_one(
                         {"id": it["itemId"]}, {"$inc": {"quantity": delta}}
@@ -2149,7 +2197,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             "id": str(uuid.uuid4()),
             "accountId": op["accountId"],
             "vehicleId": op.get("vehicleId"),
-            "type": "income" if op["type"] == "sale" else "expense",
+            "type": "income" if op["type"] in ("sale", "purchase_return") else "expense",
             "category": f"operation_{op['type']}",
             "amount": subtotal,
             "description": f"{op['type']} - {op.get('partnerName') or ''}",

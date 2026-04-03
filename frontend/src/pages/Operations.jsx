@@ -38,6 +38,26 @@ const OPERATION_KIND_META = {
   [OPERATION_KIND_RAKAN]: { icon: '🔧', label: 'عملية قطع راكان' },
 };
 
+const OPERATION_TYPE_OPTIONS = [
+  { value: 'purchase', label: 'شراء' },
+  { value: 'sale', label: 'بيع' },
+  { value: 'expense', label: 'مصروف نقدي' },
+  { value: 'sale_return', label: 'مرتجع بيع' },
+  { value: 'purchase_return', label: 'مرتجع شراء' },
+  { value: 'payment_order', label: 'سداد مستحقات' },
+];
+
+const SALE_LIKE_TYPES = new Set(['sale', 'sale_return']);
+const PURCHASE_LIKE_TYPES = new Set(['purchase', 'purchase_return']);
+
+const defaultPartnerTypeForOperation = (opType, current = 'customer') => {
+  if (SALE_LIKE_TYPES.has(opType)) return 'customer';
+  if (PURCHASE_LIKE_TYPES.has(opType)) return 'supplier';
+  if (opType === 'expense') return 'supplier';
+  if (opType === 'payment_order') return current || 'customer';
+  return current || 'customer';
+};
+
 const PAYMENT_METHOD_OPTIONS = [
   { value: 'cash', label: 'نقدي', icon: '💵' },
   { value: 'transfer', label: 'تحويل', icon: '🏦' },
@@ -416,8 +436,10 @@ const Operations = () => {
   const filteredAccounts = useMemo(() => (
     accounts.filter((account) => {
       const accountType = String(account?.type || '').toLowerCase();
-      if (form.type === 'sale') return accountType === 'revenue';
-      if (form.type === 'purchase') return ['expense', 'asset', 'liability'].includes(accountType);
+      if (SALE_LIKE_TYPES.has(form.type)) return accountType === 'revenue';
+      if (PURCHASE_LIKE_TYPES.has(form.type)) return ['expense', 'asset', 'liability'].includes(accountType);
+      if (form.type === 'expense') return ['expense', 'asset'].includes(accountType);
+      if (form.type === 'payment_order') return ['asset', 'liability', 'expense'].includes(accountType);
       return true;
     })
   ), [accounts, form.type]);
@@ -448,7 +470,7 @@ const Operations = () => {
       0;
 
     if (itemType === 'part') {
-      return operationType === 'sale' ? sellingPrice : purchasePrice;
+      return SALE_LIKE_TYPES.has(operationType) ? sellingPrice : purchasePrice;
     }
     return selectedItem.price ?? sellingPrice ?? purchasePrice ?? 0;
   };
@@ -743,8 +765,9 @@ const Operations = () => {
     }
     if (form.operationKind === OPERATION_KIND_WORKSHOP) {
       setForm((prev) => {
-        const nextPartnerId = prev.type === 'purchase' ? prev.partnerId : '';
-        const nextPartnerType = prev.type === 'purchase' ? 'supplier' : prev.partnerType;
+        const requiresSupplier = PURCHASE_LIKE_TYPES.has(prev.type);
+        const nextPartnerId = requiresSupplier ? prev.partnerId : '';
+        const nextPartnerType = requiresSupplier ? 'supplier' : prev.partnerType;
         if (
           prev.scope === 'workshop'
           && !prev.vehicleId
@@ -797,8 +820,10 @@ const Operations = () => {
   }, [visits, form.visitId]);
 
   useEffect(() => {
-    if (form.type === 'sale' || form.type === 'purchase') {
-      setOcrInvoiceType(form.type);
+    if (SALE_LIKE_TYPES.has(form.type)) {
+      setOcrInvoiceType('sale');
+    } else if (PURCHASE_LIKE_TYPES.has(form.type)) {
+      setOcrInvoiceType('purchase');
     }
   }, [form.type]);
 
@@ -822,8 +847,8 @@ const Operations = () => {
         name: trimmed,
         partNumber: `AUTO-${Date.now().toString().slice(-6)}`,
         category: 'عام',
-        purchasePrice: form.type === 'purchase' ? Number(item.price) || 0 : 0,
-        sellingPrice: form.type === 'sale' ? Number(item.price) || 0 : Number(item.price) || 0,
+        purchasePrice: PURCHASE_LIKE_TYPES.has(form.type) ? Number(item.price) || 0 : 0,
+        sellingPrice: SALE_LIKE_TYPES.has(form.type) ? Number(item.price) || 0 : Number(item.price) || 0,
         quantity: 0,
       };
       const { data } = await axios.post(`${API_URL}/parts`, payload);
@@ -1012,7 +1037,7 @@ const Operations = () => {
 
   const buildOperationPayload = (operation) => {
     const opType = (operation?.type || '').toLowerCase();
-    const isPurchase = ['purchase', 'expense', 'out'].includes(opType);
+    const isPurchase = ['purchase', 'expense', 'out', 'purchase_return'].includes(opType);
     const partnerPhone = resolvePartnerPhone(operation);
     const partner = {
       name: operation?.partnerName || operation?.customerName || operation?.supplierName || '',
@@ -1057,7 +1082,7 @@ const Operations = () => {
 
   const openPrintDialogForOperation = (operation) => {
     const opType = (operation?.type || '').toLowerCase();
-    const label = ['purchase', 'expense', 'out'].includes(opType) ? 'فاتورة شراء' : 'فاتورة مبيعات';
+    const label = ['purchase', 'expense', 'out', 'purchase_return'].includes(opType) ? 'فاتورة شراء' : 'فاتورة مبيعات';
     const phone = resolvePartnerPhone(operation);
     setPrintDialogConfig({
       title: label,
@@ -1117,22 +1142,16 @@ const Operations = () => {
     }
 
     const hasCustomerOrVehicle = Boolean(activeVehicleId || form.partnerId || form.partnerName);
-    const selectedAccountType = String(selectedAccountingAccount?.type || '').toLowerCase();
+    const hasSupplierLink = Boolean(form.partnerId || form.partnerName);
     const effectiveOperationKind = isSelectedAccountingRakan
       ? OPERATION_KIND_RAKAN
       : (form.operationKind === OPERATION_KIND_RAKAN
         ? (activeVehicleId ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP)
         : form.operationKind);
 
-    const effectiveType = selectedAccountType === 'revenue'
-      ? 'sale'
-      : selectedAccountType === 'expense'
-        ? (form.type === 'purchase' ? 'purchase' : 'expense')
-        : ['asset', 'liability'].includes(selectedAccountType)
-          ? 'purchase'
-          : selectedAccountType === 'equity'
-            ? 'expense'
-            : form.type;
+    const effectiveType = form.type;
+    const requiresSupplier = PURCHASE_LIKE_TYPES.has(effectiveType);
+    const requiresCustomerOrVehicle = SALE_LIKE_TYPES.has(effectiveType);
 
     if (effectiveOperationKind === OPERATION_KIND_VEHICLE && !activeVehicleId) {
       const msg = 'عملية المركبة تتطلب اختيار مركبة';
@@ -1146,7 +1165,23 @@ const Operations = () => {
       return;
     }
 
-    if (effectiveOperationKind === OPERATION_KIND_RAKAN && ['sale', 'service'].includes(effectiveType) && !hasCustomerOrVehicle) {
+    if (requiresCustomerOrVehicle && !hasCustomerOrVehicle) {
+      const msg = 'أنواع البيع ومرتجع البيع تتطلب اختيار عميل أو مركبة';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
+      return;
+    }
+
+    if (requiresSupplier && !hasSupplierLink) {
+      const msg = 'أنواع الشراء ومرتجع الشراء تتطلب اختيار مورد';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
+      return;
+    }
+
+    if (effectiveOperationKind === OPERATION_KIND_RAKAN && SALE_LIKE_TYPES.has(effectiveType) && !hasCustomerOrVehicle) {
       const msg = 'عملية قطع راكان تتطلب تحديد عميل أو مركبة';
       setCreateError(msg);
       toast({ title: t('common.error'), description: msg, variant: 'destructive' });
@@ -1201,8 +1236,8 @@ const Operations = () => {
         vehicleId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (activeVehicleId || null),
         visitId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (form.visitId || null),
         partnerType: effectiveOperationKind === OPERATION_KIND_WORKSHOP
-          ? (effectiveType === 'sale' ? 'customer' : (form.partnerType || 'supplier'))
-          : (effectiveType === 'sale' ? 'customer' : 'supplier'),
+          ? defaultPartnerTypeForOperation(effectiveType, form.partnerType)
+          : defaultPartnerTypeForOperation(effectiveType, form.partnerType),
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
@@ -1263,16 +1298,7 @@ const Operations = () => {
   };
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
-  const previewAccountType = String(selectedAccountingAccount?.type || '').toLowerCase();
-  const previewEffectiveType = previewAccountType === 'revenue'
-    ? 'sale'
-    : previewAccountType === 'expense'
-      ? (form.type === 'purchase' ? 'purchase' : 'expense')
-      : ['asset', 'liability'].includes(previewAccountType)
-        ? 'purchase'
-        : previewAccountType === 'equity'
-          ? 'expense'
-          : form.type;
+  const previewEffectiveType = form.type;
   const previewKind = isSelectedAccountingRakan
     ? OPERATION_KIND_RAKAN
     : (form.operationKind === OPERATION_KIND_RAKAN
@@ -1280,8 +1306,10 @@ const Operations = () => {
       : form.operationKind);
   const missingVehicleForVehicleKind = previewKind === OPERATION_KIND_VEHICLE && !activeVehicleId;
   const missingCustomerOrVehicleForRakan = previewKind === OPERATION_KIND_RAKAN
-    && ['sale', 'service'].includes(previewEffectiveType)
+    && SALE_LIKE_TYPES.has(previewEffectiveType)
     && !(activeVehicleId || form.partnerId || form.partnerName);
+  const missingSupplierForPurchaseLike = PURCHASE_LIKE_TYPES.has(previewEffectiveType)
+    && !(form.partnerId || form.partnerName);
   const hasRequiredItems = form.type === 'payment_order'
     ? Number(form.paymentAmount) > 0
     : form.items.length > 0;
@@ -1292,9 +1320,14 @@ const Operations = () => {
     || !form.accountingAccountId
     || missingVehicleForVehicleKind
     || missingCustomerOrVehicleForRakan
+    || missingSupplierForPurchaseLike
     || missingPartnerForPayment
     || isSaving
   );
+  const isSaleLikeType = SALE_LIKE_TYPES.has(form.type);
+  const isPurchaseLikeType = PURCHASE_LIKE_TYPES.has(form.type);
+  const showVehicleLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
+  const showCustomerLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
 
   // Theme-based styles (align with dashboard glass look)
   const styles = {
@@ -1589,17 +1622,16 @@ const Operations = () => {
                         value={form.type}
                         onChange={(e) => {
                           const selectedType = e.target.value;
-                          const nextPartnerType = selectedType === 'sale'
-                            ? 'customer'
-                            : selectedType === 'payment_order'
-                              ? (form.partnerType || 'customer')
-                              : 'supplier';
+                          const nextPartnerType = defaultPartnerTypeForOperation(selectedType, form.partnerType);
+                          const shouldResetVehicle = !(SALE_LIKE_TYPES.has(selectedType));
                           setForm({
                             ...form,
                             type: selectedType,
                             partnerType: nextPartnerType,
                             partnerId: '',
                             partnerName: '',
+                            vehicleId: shouldResetVehicle ? '' : form.vehicleId,
+                            visitId: shouldResetVehicle ? '' : form.visitId,
                             items: selectedType === 'payment_order' ? [] : form.items,
                             paymentStatus: selectedType === 'payment_order' ? 'paid' : form.paymentStatus,
                             paymentAmount: selectedType === 'payment_order' ? '' : form.paymentAmount,
@@ -1607,11 +1639,9 @@ const Operations = () => {
                         }}
                         data-testid="operation-type-select"
                       >
-                        <option value="purchase">{t('operations.purchase')}</option>
-                        <option value="sale">{t('operations.sale')}</option>
-                        <option value="expense">مصروف مباشر</option>
-                        <option value="direct">عملية مفتوحة/مباشرة</option>
-                        <option value="payment_order">أمر دفع (سداد مديونية)</option>
+                        {OPERATION_TYPE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1654,9 +1684,9 @@ const Operations = () => {
                     </p>
                   </div>
 
-                  {(form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && (
+                  {showVehicleLinking && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')}</label>
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.vehicle')} {isSaleLikeType ? '(اختياري)' : ''}</label>
                       <div className="relative">
                         <Car className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <select
@@ -1669,7 +1699,7 @@ const Operations = () => {
                           data-testid="operation-vehicle-select"
                         >
                           <option value="">{t('operations.select_vehicle')}...</option>
-                          {(form.operationKind === OPERATION_KIND_RAKAN ? customerVehicles : vehicleOptions).map((v) => (
+                          {(form.operationKind === OPERATION_KIND_RAKAN || isSaleLikeType ? customerVehicles : vehicleOptions).map((v) => (
                             <option key={v.id} value={v.id}>
                               {v.plateNumber} - {v.brand} {v.model}
                             </option>
@@ -1679,10 +1709,12 @@ const Operations = () => {
                     </div>
                   )}
 
-                  {(form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN) && (
+                  {showCustomerLinking && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{form.operationKind === OPERATION_KIND_VEHICLE ? 'العميل المرتبط بالمركبة' : 'العميل'}</label>
-                      {form.operationKind === OPERATION_KIND_VEHICLE ? (
+                      <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
+                        {form.operationKind === OPERATION_KIND_VEHICLE && !isSaleLikeType ? 'العميل المرتبط بالمركبة' : 'العميل'}
+                      </label>
+                      {form.operationKind === OPERATION_KIND_VEHICLE && !isSaleLikeType ? (
                         <div className="apple-input text-sm" data-testid="operation-linked-customer-readonly">
                           {form.partnerName || '---'}
                         </div>
@@ -1780,10 +1812,16 @@ const Operations = () => {
                     </div>
                   )}
 
-                  {form.operationKind === OPERATION_KIND_WORKSHOP && (
+                  {form.operationKind === OPERATION_KIND_WORKSHOP && !isSaleLikeType && (
                     <div className="space-y-2 md:col-span-2 lg:col-span-3">
                       <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                        الجهة/المستفيد (اختياري)
+                        {form.type === 'payment_order'
+                          ? 'الجهة/المستفيد (إلزامي)'
+                          : isPurchaseLikeType
+                            ? 'المورد (إلزامي)'
+                            : form.type === 'expense'
+                              ? 'المستفيد/المورد (اختياري)'
+                              : 'الجهة/المستفيد (اختياري)'}
                       </label>
                       {form.type === 'payment_order' ? (
                         <div className="space-y-2">
@@ -1837,11 +1875,29 @@ const Operations = () => {
                           <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                           <input
                             className="apple-input pr-10"
-                            placeholder="مثال: شركة الكهرباء / مورد أدوات"
+                            list={isPurchaseLikeType || form.type === 'expense' ? 'supplier-options-list' : undefined}
+                            placeholder={isPurchaseLikeType ? 'اختر مورد أو اكتب اسم مورد' : 'مثال: شركة الكهرباء / مورد أدوات'}
                             value={form.partnerName}
-                            onChange={e => setForm({ ...form, partnerName: e.target.value, partnerType: form.type === 'purchase' ? 'supplier' : 'customer' })}
+                            onChange={e => {
+                              const value = e.target.value;
+                              const match = suppliers.find((sup) => (sup.name || '').trim().toLowerCase() === value.trim().toLowerCase());
+                              setForm({
+                                ...form,
+                                partnerName: value,
+                                partnerId: match?.id || '',
+                                partnerPhone: match?.phone || '',
+                                partnerType: defaultPartnerTypeForOperation(form.type, form.partnerType),
+                              });
+                            }}
                             data-testid="operation-partner-name-input"
                           />
+                          {(isPurchaseLikeType || form.type === 'expense') && (
+                            <datalist id="supplier-options-list">
+                              {suppliers.map((option) => (
+                                <option key={option.id || option.name} value={option.name} />
+                              ))}
+                            </datalist>
+                          )}
                         </div>
                       )}
                     </div>

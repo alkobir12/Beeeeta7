@@ -24,6 +24,12 @@
 - تحسين لوحة التحكم: إزالة N+1 في نوع الخدمة بإضافة endpoint مجمّع `POST /api/vehicles/dashboard/summaries` وربط `Dashboard.jsx` به.
 - نتيجة التحقق: اختبار الوكيل (`iteration_36.json`) أكد اختفاء خطأ `Maximum update depth exceeded` وتحسن تحميل العمليات (~5.36s بدل ~17.83s) وسرعة API (~0.90s).
 
+### تحسين تجربة فتح صفحة العمليات في Preview (03 Apr 2026)
+- إضافة **Deferred Loading** في `Operations.jsx`: تحميل العمليات أولاً ثم تأجيل تحميل بيانات lookup الثانوية (الحسابات/العملاء/الموردين/الخدمات/القطع/المركبات/حسابات الأعمال).
+- تقليل حجم دفعة العمليات الافتراضية إلى `limit=600` لتسريع التهيئة الأولية للواجهة.
+- إضافة prefetch بعد تسجيل الدخول في `Login.jsx` لجلب `operations` و`vehicles` مبكرًا لتخفيف زمن الانتقال للصفحة.
+- نتيجة التحقق: `iteration_37.json` أكد أن التحميل الأولي لصفحة العمليات أصبح تقريبًا **0.93–1.04s** مع اختفاء أخطاء React.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -620,3 +626,4 @@
 | 10 Mar 2026 | Added detailed part price timeline (sale/purchase points + % change + volatility) |
 | 10 Mar 2026 | Inventory architecture now includes execution budget strip (urgent/high/planned/total commitment) |
 | 03 Apr 2026 | P0 Performance: optimized `/api/operations`, fixed Operations re-render loop, and replaced dashboard service-type N+1 with batch summaries endpoint |
+| 03 Apr 2026 | Operations preview speed pass: deferred secondary queries + login prefetch, reducing initial operations-page load to ~1s |

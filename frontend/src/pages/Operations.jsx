@@ -1301,6 +1301,97 @@ const Operations = () => {
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{ backgroundColor: styles.bg }}
     >
+        <style>{`
+          .ops-glass-create {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(12, 24, 48, 0.88) 0%, rgba(8, 18, 36, 0.92) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 30px;
+            box-shadow: 0 18px 60px rgba(2, 6, 23, 0.55);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+          }
+          .ops-glass-content { position: relative; z-index: 2; }
+          .ops-glass-orb {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(70px);
+            opacity: .35;
+            pointer-events: none;
+            animation: opsFloat 12s ease-in-out infinite alternate;
+            z-index: 1;
+          }
+          .ops-glass-orb-a { width: 260px; height: 260px; top: -90px; right: -60px; background: radial-gradient(circle, rgba(94,184,196,.85), transparent 70%); }
+          .ops-glass-orb-b { width: 220px; height: 220px; bottom: -90px; left: -60px; background: radial-gradient(circle, rgba(167,139,250,.85), transparent 70%); animation-delay: -3s; }
+          .ops-glass-orb-c { width: 140px; height: 140px; top: 48%; left: 36%; background: radial-gradient(circle, rgba(246,168,98,.85), transparent 70%); opacity:.2; animation-delay: -6s; }
+          @keyframes opsFloat { from { transform: translate3d(0,0,0); } to { transform: translate3d(26px,22px,0); } }
+
+          .ops-glass-create .apple-input {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1px solid rgba(255,255,255,0.16) !important;
+            border-radius: 12px !important;
+            color: rgba(255,255,255,0.92) !important;
+          }
+          .ops-glass-create .apple-input:focus {
+            border-color: rgba(94,184,196,0.75) !important;
+            box-shadow: 0 0 0 3px rgba(94,184,196,0.2) !important;
+            background: rgba(94,184,196,0.08) !important;
+          }
+          .ops-glass-section {
+            background: rgba(255,255,255,0.045) !important;
+            border: 1px solid rgba(255,255,255,0.16) !important;
+            border-radius: 18px !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+          }
+          .ops-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            color: rgba(248,250,252,0.95);
+            font-size: 14px;
+            font-weight: 700;
+          }
+          .ops-section-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+          }
+          .ops-kind-option {
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 12px;
+            padding: 11px 10px;
+            font-size: 13px;
+            color: rgba(226,232,240,0.82);
+            background: rgba(255,255,255,0.05);
+            transition: .2s ease;
+          }
+          .ops-kind-option:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.95); }
+          .ops-kind-option-active {
+            border-color: rgba(94,184,196,0.85);
+            background: rgba(94,184,196,0.18);
+            color: #9BE4EE;
+            box-shadow: 0 0 0 1px rgba(94,184,196,0.35), 0 10px 24px rgba(94,184,196,0.18);
+          }
+          .ops-glass-create .apple-button {
+            background: linear-gradient(135deg, #5EB8C4, #3A9BAA) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            box-shadow: 0 6px 24px rgba(94,184,196,0.4);
+          }
+          .ops-total-bar {
+            margin-top: 14px;
+            background: rgba(94,184,196,.12) !important;
+            border: 1px solid rgba(94,184,196,.28) !important;
+            border-radius: 14px;
+          }
+        `}</style>
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: styles.textPrimary }}>{t('operations.title')}</h1>
@@ -1319,15 +1410,12 @@ const Operations = () => {
 
         {/* Create Operation Card */}
         <div 
-          className="rounded-[32px] p-5 sm:p-6"
-          style={{ 
-            backgroundColor: styles.cardBg,
-            border: `1px solid ${styles.cardBorder}`,
-            boxShadow: '0 18px 60px rgba(2,6,23,0.55)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)'
-          }}
+          className="ops-glass-create p-5 sm:p-6"
         >
+          <div className="ops-glass-orb ops-glass-orb-a" aria-hidden="true" />
+          <div className="ops-glass-orb ops-glass-orb-b" aria-hidden="true" />
+          <div className="ops-glass-orb ops-glass-orb-c" aria-hidden="true" />
+          <div className="ops-glass-content">
           {createError ? (
             <div
               className="mb-5 rounded-2xl border px-4 py-3"
@@ -1364,8 +1452,8 @@ const Operations = () => {
           <form onSubmit={submit} className="space-y-6">
             <div className="space-y-5">
               {/* Section 1: Basic Info */}
-              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
-                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.basic_info') || 'المعلومات الأساسية'}</div>
+              <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="ops-section-title"><span className="ops-section-icon">📋</span><span>{t('common.basic_info') || 'المعلومات الأساسية'}</span></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2 md:col-span-2 lg:col-span-4">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>نوع العملية في النظام</label>
@@ -1374,7 +1462,7 @@ const Operations = () => {
                         <button
                           key={kind}
                           type="button"
-                          className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm border transition ${form.operationKind === kind ? 'bg-cyan-500/20 border-cyan-300/40 text-cyan-100' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                          className={`ops-kind-option ${form.operationKind === kind ? 'ops-kind-option-active' : ''}`}
                           onClick={() => {
                             setForm((prev) => ({
                               ...prev,
@@ -1454,8 +1542,8 @@ const Operations = () => {
               </div>
 
               {/* Section 2: Linking */}
-              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
-                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.linking') || 'الربط'}</div>
+              <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="ops-section-title"><span className="ops-section-icon">🔗</span><span>{t('common.linking') || 'الربط'}</span></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>حساب الأعمال</label>
@@ -1669,8 +1757,8 @@ const Operations = () => {
               </div>
 
               {/* Section 3: Payment */}
-              <div className="rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
-                <div className="text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('common.payment') || 'الدفع'}</div>
+              <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+                <div className="ops-section-title"><span className="ops-section-icon">💳</span><span>{t('common.payment') || 'الدفع'}</span></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>{t('operations.paymentMethod')}</label>
@@ -1782,7 +1870,7 @@ const Operations = () => {
               </div>
 
             {/* OCR Invoice */}
-            <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+            <div className="ops-glass-section rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                 <div>
                   <div className="text-sm font-semibold" style={{ color: styles.textPrimary }}>مسح فاتورة (Scanner)</div>
@@ -1846,11 +1934,11 @@ const Operations = () => {
               {/* Section 4: Items */}
 
             {/* Items Section */}
-            <div className="rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
-              <label className="block text-sm font-semibold mb-4" style={{ color: styles.textPrimary }}>{t('operations.addItems')}</label>
+            <div className="ops-glass-section rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
+              <div className="ops-section-title"><span className="ops-section-icon">📦</span><span>{t('operations.addItems')}</span></div>
 
               {/* Live total summary */}
-              <div className="mt-4 flex items-center justify-between rounded-2xl border px-4 py-3" style={{ backgroundColor: 'rgba(15,23,42,0.35)', borderColor: styles.cardBorder }}>
+              <div className="ops-total-bar mt-4 flex items-center justify-between rounded-2xl border px-4 py-3" style={{ backgroundColor: 'rgba(15,23,42,0.35)', borderColor: styles.cardBorder }}>
                 <div className="text-sm" style={{ color: styles.textSecondary }}>{t('operations.total') || 'الإجمالي'}</div>
                 <div className="text-lg font-extrabold tabular-nums" style={{ color: styles.textPrimary }}>
                   {subtotal.toFixed(2)} {t('operations.SAR')}
@@ -2131,6 +2219,7 @@ const Operations = () => {
             </div>
             </div>
           </form>
+          </div>
         </div>
 
         {/* Recent Operations */}

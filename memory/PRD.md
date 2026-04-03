@@ -64,6 +64,14 @@
 - تم إصلاح ترجمة رسالة التحقق `operations.account_required` لتظهر عربيًا بدل مفتاح الترجمة.
 - نتيجة التحقق: `iteration_41.json` نجاح شامل (Backend 11/11 + Frontend 100%).
 
+### متابعة الذمم + معاينة وتعديل رسائل واتساب قبل الإرسال (03 Apr 2026)
+- تم إضافة صفحة مستقلة: `/debts-followup` لعرض الذمم المدينة/الدائنة مع ملخصات وتقادم (0-30 و31+ يوم).
+- تم إضافة **معاينة وتعديل الرسائل** قبل الإرسال عبر `DebtWhatsAppComposerDialog`.
+- تم دعم **الإرسال الجماعي** بعد المعاينة والتعديل (تحديد الكل + إرسال الكل).
+- تم إضافة زر "معاينة واتساب" داخل كرت العميل والمورد (داخل التوسعة) لإرسال فردي سريع مع تعديل الرسالة قبل الإرسال.
+- جميع العناصر الجديدة مغطاة بـ `data-testid`.
+- نتيجة التحقق: `iteration_42.json` نجاح Frontend 100%.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -665,3 +673,4 @@
 | 03 Apr 2026 | Strong Glass parity update: added top glass header + payment chips + scanner bar + item input row grid, verified with `iteration_39` |
 | 03 Apr 2026 | Added customer/supplier debit-credit-ajel balances, movement history, and automatic subaccounts (`acc-customer-*`, `acc-supplier-*`) verified by `iteration_40` |
 | 03 Apr 2026 | Updated operation types to 6 curated types with required-field logic + return-type backend support, verified by `iteration_41` |
+| 03 Apr 2026 | Added debt follow-up center (`/debts-followup`) + editable WhatsApp preview and bulk send, verified by `iteration_42` |

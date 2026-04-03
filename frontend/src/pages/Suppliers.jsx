@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Plus, RefreshCw, Phone, Mail, MapPin, Edit2, Trash2, X } from 'lucide-react';
+import { Package, Search, Plus, RefreshCw, Phone, Mail, MapPin, Edit2, Trash2, X, MessageCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../hooks/use-toast';
 import { supplierAPI } from '../services/api';
+import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
+import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
+import { getWhatsAppLink } from '../utils/constants';
 
 const Suppliers = () => {
   const { themeName } = useTheme();
@@ -15,6 +18,8 @@ const Suppliers = () => {
   const [expandedSupplierId, setExpandedSupplierId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [whatsAppDialogOpen, setWhatsAppDialogOpen] = useState(false);
+  const [whatsAppDrafts, setWhatsAppDrafts] = useState([]);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -150,6 +155,32 @@ const Suppliers = () => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+  const openWhatsAppPreview = (supplier) => {
+    const draft = buildDebtWhatsAppDraft(supplier, 'supplier');
+    if (!draft.phone) {
+      toast({ title: 'رقم غير صالح', description: 'لا يوجد رقم واتساب صالح لهذا المورد', variant: 'destructive' });
+      return;
+    }
+    setWhatsAppDrafts([draft]);
+    setWhatsAppDialogOpen(true);
+  };
+
+  const updateWhatsAppDraft = (draftId, message) => {
+    setWhatsAppDrafts((prev) => prev.map((draft) => (
+      draft.id === draftId
+        ? { ...draft, message, url: draft.phone ? getWhatsAppLink(draft.phone, message) : '' }
+        : draft
+    )));
+  };
+
+  const sendWhatsAppCurrent = (draft) => {
+    if (!draft?.phone || !draft?.url) {
+      toast({ title: 'خطأ', description: 'تعذر إنشاء رابط واتساب', variant: 'destructive' });
+      return;
+    }
+    window.open(draft.url, '_blank', 'noopener,noreferrer');
+  };
 
   if (loading) {
     return (
@@ -381,7 +412,18 @@ const Suppliers = () => {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openWhatsAppPreview(supplier);
+                        }}
+                        className="flex-1 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`supplier-whatsapp-preview-${supplier.id}`}
+                      >
+                        <MessageCircle size={14} className="inline ml-1" />
+                        معاينة واتساب
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -594,6 +636,18 @@ const Suppliers = () => {
           </div>
         </div>
       )}
+
+      <DebtWhatsAppComposerDialog
+        open={whatsAppDialogOpen}
+        onOpenChange={setWhatsAppDialogOpen}
+        drafts={whatsAppDrafts}
+        onUpdateDraft={updateWhatsAppDraft}
+        onSendCurrent={sendWhatsAppCurrent}
+        onSendAll={(allDrafts) => allDrafts.forEach((draft, index) => {
+          if (!draft.phone || !draft.url) return;
+          setTimeout(() => window.open(draft.url, '_blank', 'noopener,noreferrer'), index * 250);
+        })}
+      />
     </div>
   );
 };

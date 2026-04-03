@@ -47,6 +47,7 @@ const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
 const SystemAudit = lazy(() => import("./pages/SystemAudit"));
 const MoltBot = lazy(() => import("./pages/MoltBot"));
+const DebtFollowUp = lazy(() => import("./pages/DebtFollowUp"));
 
 // Loading component
 const PageLoader = () => (
@@ -135,6 +136,7 @@ function App() {
                   <Route path="customer/:id" element={<CustomerDetails />} />
                   <Route path="technicians" element={<Technicians />} />
                   <Route path="suppliers" element={<Suppliers />} />
+                  <Route path="debts-followup" element={<DebtFollowUp />} />
                   <Route path="parts" element={<PartsInventory />} />
                   <Route path="parts-dashboard" element={<PartsDashboard />} />
                   <Route path="catalog" element={<Navigate to="/parts" replace />} />

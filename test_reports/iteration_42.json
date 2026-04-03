@@ -1,0 +1,49 @@
+{
+  "summary": "Completed frontend testing of Debt Follow-up feature (متابعة الذمم) with WhatsApp preview/edit functionality. All core features working correctly: route /debts-followup loads, page displays debt summaries and aging, WhatsApp preview dialog allows message editing before sending, bulk selection and bulk send work, Customers and Suppliers pages have WhatsApp preview buttons in expanded cards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Sidebar navigation",
+        "issues": ["Finance section (المالية والمحاسبة) is collapsed by default - user needs to click to expand and see debt followup link. This is expected behavior but worth noting for UX."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Debt Follow-up feature fully tested. Route /debts-followup works. WhatsApp preview dialog allows editing messages before sending. Bulk selection and bulk send work. Customers and Suppliers pages have WhatsApp preview buttons in expanded cards. All data-testid attributes are present and working.",
+  "verified_features": [
+    "Route /debts-followup loads correctly",
+    "Page title 'متابعة الذمم والتحصيل' displays",
+    "Summary cards show customer debts, supplier debts, aging 0-30 days, aging 31+ days",
+    "Debt table shows entries with name, type, phone, debit, credit, overdue amounts",
+    "Row-level 'معاينة واتساب' (WhatsApp Preview) button opens dialog",
+    "WhatsApp composer dialog shows recipient list, editable message textarea",
+    "Message editing works - can modify text before sending",
+    "'إرسال الحالي' (Send Current) button present and functional",
+    "'إغلاق' (Close) button closes dialog",
+    "'تحديد الكل' (Select All) button selects all rows",
+    "'معاينة/إرسال جماعي' (Bulk Preview/Send) button opens dialog with multiple recipients",
+    "'إرسال الكل' (Send All) button visible for bulk sending",
+    "Customers page expanded card shows 'معاينة واتساب' button",
+    "Suppliers page expanded card shows 'معاينة واتساب' button",
+    "WhatsApp dialog opens from Customers page",
+    "WhatsApp dialog opens from Suppliers page",
+    "All data-testid attributes present: debt-followup-page, debt-followup-title, debt-total-customers-card, debt-total-suppliers-card, debt-aging-0-30-card, debt-aging-31-plus-card, debt-followup-refresh-button, debt-select-all-button, debt-open-bulk-preview-button, debt-followup-table, debt-row-preview-*, debt-row-checkbox-*, debt-whatsapp-message-textarea, debt-whatsapp-recipient-list, debt-whatsapp-composer-panel, debt-whatsapp-send-current-button, debt-whatsapp-send-all-button, debt-whatsapp-cancel-button, customer-whatsapp-preview-button-*, supplier-whatsapp-preview-*"
+  ],
+  "test_credentials": "username: مدير (admin role with debts.view permission)"
+}

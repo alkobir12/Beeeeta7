@@ -122,18 +122,31 @@ def to_camel_user(dbrow: Dict[str, Any]) -> Dict[str, Any]:
 class SupabaseService:
     """Service for Supabase database operations"""
 
+    _shared_client: Optional[Client] = None
+    _shared_mock_mode: Optional[bool] = None
+    _mock_notice_logged: bool = False
+
     def __init__(self):
         self.supabase_url = os.environ.get("SUPABASE_URL", "")
         self.supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-        if self.supabase_url and self.supabase_key and SUPABASE_AVAILABLE:
-            self.client: Client = create_client(self.supabase_url, self.supabase_key)
-            self.mock_mode = False
-        else:
-            self.client = None
-            self.mock_mode = True
-            print(
-                "⚠️ Supabase running in MOCK mode. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to enable."
-            )
+
+        if SupabaseService._shared_mock_mode is None:
+            if self.supabase_url and self.supabase_key and SUPABASE_AVAILABLE:
+                SupabaseService._shared_client = create_client(
+                    self.supabase_url, self.supabase_key
+                )
+                SupabaseService._shared_mock_mode = False
+            else:
+                SupabaseService._shared_client = None
+                SupabaseService._shared_mock_mode = True
+                if not SupabaseService._mock_notice_logged:
+                    print(
+                        "⚠️ Supabase running in MOCK mode. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to enable."
+                    )
+                    SupabaseService._mock_notice_logged = True
+
+        self.client = SupabaseService._shared_client
+        self.mock_mode = bool(SupabaseService._shared_mock_mode)
 
     # -------------------- Vehicles --------------------
     def vehicles_list(self) -> List[Dict[str, Any]]:
@@ -370,22 +383,50 @@ class SupabaseService:
     # -------------------- Operations (minimal) --------------------
     def operations_list(
         self,
+        workshop_id: Optional[str] = None,
         account_id: Optional[str] = None,
         type: Optional[str] = None,
         vehicle_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
         try:
-            q = self.client.table("operations").select("*")
-            if account_id:
-                q = q.eq("account_id", account_id)
-            if type:
-                q = q.eq("type", type)
-            if vehicle_id:
-                q = q.eq("vehicle_id", vehicle_id)
-            res = q.order("created_at", desc=True).execute()
-            rows = res.data or []
+            select_fields = (
+                "id,type,account_id,accounting_account_id,vehicle_id,visit_id,"
+                "partner_type,partner_id,partner_name,items,subtotal,total,payment_method,"
+                "payment_status,notes,op_date,created_at,updated_at,invoice_number,"
+                "scope,source,business_unit"
+            )
+            safe_offset = max(0, int(offset or 0))
+            safe_limit = (
+                max(1, min(int(limit), 2000))
+                if limit is not None
+                else None
+            )
+
+            def _fetch_rows(select_expr: str) -> List[Dict[str, Any]]:
+                q = self.client.table("operations").select(select_expr)
+                if account_id:
+                    q = q.eq("account_id", account_id)
+                if type:
+                    q = q.eq("type", type)
+                if vehicle_id:
+                    q = q.eq("vehicle_id", vehicle_id)
+                q = q.order("created_at", desc=True)
+                if safe_limit is not None:
+                    q = q.range(safe_offset, safe_offset + safe_limit - 1)
+                res = q.execute()
+                return res.data or []
+
+            try:
+                rows = _fetch_rows(select_fields)
+            except Exception as schema_error:
+                if "does not exist" in str(schema_error).lower():
+                    rows = _fetch_rows("*")
+                else:
+                    raise
         except Exception as e:
             print(f"Supabase operations list error: {e}")
             return []
@@ -397,24 +438,26 @@ class SupabaseService:
                 {
                     "id": r.get("id"),
                     "type": r.get("type"),
-                    "accountId": r.get("account_id"),
-                    "accountingAccountId": r.get("accounting_account_id"),
-                    "vehicleId": r.get("vehicle_id"),
-                    "visitId": r.get("visit_id"),
-                    "partnerType": r.get("partner_type"),
-                    "partnerId": r.get("partner_id"),
-                    "partnerName": r.get("partner_name"),
+                    "accountId": r.get("account_id") or r.get("accountId"),
+                    "accountingAccountId": r.get("accounting_account_id") or r.get("accountingAccountId"),
+                    "vehicleId": r.get("vehicle_id") or r.get("vehicleId"),
+                    "visitId": r.get("visit_id") or r.get("visitId"),
+                    "partnerType": r.get("partner_type") or r.get("partnerType"),
+                    "partnerId": r.get("partner_id") or r.get("partnerId"),
+                    "partnerName": r.get("partner_name") or r.get("partnerName"),
                     "items": r.get("items"),
                     "subtotal": r.get("subtotal"),
                     "total": r.get("total"),
-                    "paymentMethod": r.get("payment_method"),
+                    "paymentMethod": r.get("payment_method") or r.get("paymentMethod"),
+                    "paymentStatus": r.get("payment_status") or r.get("paymentStatus"),
                     "notes": r.get("notes"),
-                    "date": r.get("op_date"),
-                    "createdAt": r.get("created_at"),
-                    "invoiceNumber": r.get("invoice_number"),
-                    "scope": r.get("scope") or ("vehicle" if r.get("vehicle_id") else "workshop"),
+                    "date": r.get("op_date") or r.get("date"),
+                    "createdAt": r.get("created_at") or r.get("createdAt"),
+                    "updatedAt": r.get("updated_at") or r.get("updatedAt"),
+                    "invoiceNumber": r.get("invoice_number") or r.get("invoiceNumber"),
+                    "scope": r.get("scope") or ("vehicle" if (r.get("vehicle_id") or r.get("vehicleId")) else "workshop"),
                     "source": r.get("source"),
-                    "businessUnit": r.get("business_unit"),
+                    "businessUnit": r.get("business_unit") or r.get("businessUnit"),
                 }
             )
 

@@ -1,144 +1,175 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to enforce strict financial separation between their main workshop business and a new entity, Rakan Parts. All transactions related to Rakan Parts must be isolated and not affect the workshop's financial records.
+The user's primary goal is to enforce strict financial separation between their main workshop business and a new entity, Rakan Parts. All transactions related to Rakan Parts must be isolated and not affect the workshop's financial records. Additionally, the user requested continuous UX/UI improvements across the app (Dashboard, Journal Entries, Operations, Customers), printing fixes (fetching correct workshop data), and severe performance optimizations (fixing an 8-second delay on the Operations page and slow dashboard cards).
 
-The user provided a detailed specification for this logic:
-1.  **Rakan Parts Identification:** Any account in the Chart of Accounts with a code starting with 5000 belongs exclusively to Rakan Parts.
-2.  **Financial Isolation:** Transactions (sales, purchases, expenses) using a 5000 series account must only be recorded within the Parts Control Panel and its dedicated reports. They must NOT be posted to the main workshop's accounts.
-3.  **Flexible POS:** The Point of Sale (POS) system must be generalized. Instead of being hardcoded for parts sales, it should allow the user to select any account from the Chart of Accounts, and the transaction type (revenue, expense, liability) should be determined by the classification of the chosen account.
-4.  **Data Cleanup:** The Chart of Accounts must be cleaned of any experimental, raw, or other unused test accounts.
-5.  **Bug from Previous Session:** The Chart of Accounts page was not displaying top-level accounts (Assets, Liabilities), and sales for Rakan Parts were being incorrectly credited to the workshop's revenue.
+**PRODUCT REQUIREMENTS:**
+1. Rakan Parts Identification (Accounts starting with 5000).
+2. Financial Isolation in reports and views.
+3. Flexible POS/Operations entry with inline price editing and unified item selection.
+4. Glassmorphism UI enhancements in Journal Entries.
+5. Accurate document printing (invoices/receipts) with proper workshop profile data.
+6. Lightning-fast load times for Operations list and Dashboard widgets.
 
-**User's preferred language**: Arabic (العربية)
+**User's preferred language**: Arabic (العربية). You MUST respond in the user's preferred language only.
 
 **what currently exists?**
-The agent has performed a major refactoring of the application to implement the user's required accounting logic.
-- **Backend:** The  logic in  was rewritten to dynamically create journal entries based on the selected account's code, enforcing the 5000 rule for Rakan Parts. The bug preventing top-level accounts from displaying in  has been fixed. Logic to clean up test accounts during a chart reset was also added.
-- **Frontend:** The  page has been completely overhauled. It now features a searchable dropdown for selecting any account from the Chart of Accounts, making it a flexible transaction entry point as requested.
-
-The application is in a non-working state because the core transaction creation endpoint is currently broken.
+A full-stack React (frontend) and FastAPI (backend) ERP system for an auto repair workshop. The system features a dual-ledger accounting setup separating the main workshop from Rakan Parts. It includes modules for Inventory, Operations (POS), Customers, Vehicles, Journal Entries, and Document Printing. The backend relies primarily on Supabase with some MongoDB fallback.
 
 **Last working item**:
-- **Last item agent was working:** Debugging a  when trying to create a new operation through the  endpoint.
+- **Last item agent was working:** Optimizing the load speed of the Operations page (which currently takes ~8 seconds to fetch data) and the Service Type card in the Dashboard. The agent was attempting to locate the operations backend route to fix the bottleneck but failed due to looking in the wrong directory ( instead of  or ).
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N (Testing failed, revealing the bug).
-- **Which testing method agent to use?** Manual testing by . The immediate next step is to re-run the  command the agent prepared to validate the recent patch. If that succeeds, the  should be used to perform a comprehensive verification of the entire financial separation logic.
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** Frontend/Backend testing agent + Manual testing via curl/screenshot tool logging in as مدير.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Critical: Operation Creation Fails with 500 Error (P0)**
-    - **Description:** After refactoring the accounting logic, any attempt to create a new transaction via  results in a . This completely blocks all transaction-related functionality, including the new POS system.
-    - **Attempted fixes:** The agent inspected the backend logs, found a , and applied a patch to  to add  to the database query projection. The fix has not been verified.
-    - **Next debug checklist:**
-        1.  Re-run the last prepared  command to test the  endpoint and confirm if the  is resolved.
-        2.  If the error persists, check the backend logs () for the new root cause.
-        3.  Inspect the data being passed from the frontend and the logic within the  function in .
-    - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. Fixing it will restore the application's core functionality and allow for the testing of the newly implemented financial separation logic.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Backend.
-    - **Blocked on other issue:** No. This is the highest priority issue.
+  - **Issue 1: Severe API Latency on Operations Page (P0)**
+     - **Attempted fixes:** The previous agent tried to add frontend React Query caching (), but the user reported the initial fetch still takes 8 seconds. The agent attempted to view  which does not exist.
+     - **Next debug checklist:** 
+       - Check  (around line 1180 ) and  to identify slow DB queries.
+       - Implement backend pagination, limit default payload, or add database indexes.
+     - **Why fix this issue and what will be achieved with the fix?** 8 seconds is unacceptable for POS entry; fixing this ensures business operations are not blocked.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** Both
+     - **Blocked on other issue:** None
 
-- **Issue 2: Verify Financial Separation Logic (P0)**
-    - **Description:** Once the 500 error is fixed, the new accounting logic must be thoroughly tested to confirm it meets the user's specification. Specifically, transactions for Rakan Parts (account code ) must not affect the main workshop's financial accounts.
-    - **Attempted fixes:** The logic has been implemented but not yet successfully tested.
-    - **Next debug checklist:**
-        1.  Create an operation using a Rakan Parts account (e.g., 'Rakan Sales').
-        2.  Fetch the entire Chart of Accounts using .
-        3.  Verify that the balance of the main 'Workshop Sales' account has NOT changed.
-        4.  Verify that the balance of the 'Rakan Sales' account HAS changed correctly.
-    - **Why fix this issue and what will be achieved with the fix?** This will confirm the resolution of the original critical bug and ensure data integrity for the user's business.
-    - **Status:** BLOCKED
-    - **Is recurring issue?** Y (This is the verification step for a recurring business logic failure).
-    - **Should Test frontend/backend/both after fix?** Backend.
-    - **Blocked on other issue:** Issue 1: Critical: Operation Creation Fails with 500 Error
+  - **Issue 2: Slow Data Fetch on Dashboard Service Type Card (P0)**
+     - **Attempted fixes:** None yet.
+     - **Next debug checklist:** 
+       - Inspect  to find which API endpoint feeds the Service Type card.
+       - Optimize the corresponding backend route in  or .
+     - **Why fix this issue and what will be achieved with the fix?** Improves user experience and perceived app performance upon login.
+     - **Status:** NOT STARTED
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** Both
+     - **Blocked on other issue:** None
+
+  - **Issue 3: Customer Balances and Payment Orders missing Supplier Option (P1)**
+     - **Attempted fixes:** None yet. Mentioned by user in earlier messages but overridden by performance complaints.
+     - **Next debug checklist:** Check Operations page payload logic for payment orders to ensure Suppliers can be selected and balances are accurate.
+     - **Why fix this issue and what will be achieved with the fix?** Crucial for proper accounting of debts and supplier payments.
+     - **Status:** NOT STARTED
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** Both
+     - **Blocked on other issue:** None
 
 **In progress Task List**:
-- **Task 1: Complete and Verify Accounting System Refactor (P0)**
-    - **Where to resume:** Resume debugging the  on the  endpoint.
-    - **What will be achieved with this?** A fully functional and verified accounting system that correctly separates financials for Rakan Parts and provides a flexible POS interface, resolving the user's primary complaint.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both.
-    - **Blocked on something:** Issue 1.
+  - **Task 1: Backend Performance Audit & Optimization (P0)**
+     - **Where to resume:** Find the  endpoint in  or  and optimize it.
+     - **What will be achieved with this?** Instant loading times.
+     - **Status:** IN PROGRESS
+     - **Should Test frontend/backend/both after fix?** Both
+     - **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-*   **Upcoming Tasks:**
-    *   **P1: Enhance Parts Control Panel:** Add smart analysis features like tracking price changes over time and more detailed expense tracking.
-    *   **P1: Implement New Inventory System Architecture:** Continue the overhaul of the inventory backend based on the user's  specification.
-*   **Future Tasks:**
-    *   Complete the Liquid System redesign for all remaining pages.
-    *   Implement a full user roles and permissions system.
-    *   Integrate with external services like shipping companies and payment gateways.
-    *   Implement AI-based features like demand forecasting for inventory.
+  - **P1**: Add Supplier selection explicitly to payment order types (سداد مديونية لعميل/مورد).
+  - **P2**: Complete the Liquid System/Glassmorphism redesign for all remaining pages.
+  - **P2**: Advanced User Roles and Permissions matrix UI.
 
 **Completed work in this session**
-- **Backend Accounting Refactor:** Rewrote the core logic in  to handle financial separation for Rakan Parts based on account codes starting with 5000.
-- **Frontend POS Overhaul:** Transformed  from a static sales page into a flexible, account-driven transaction entry system.
-- **Chart of Accounts Bug Fix:** Corrected the query in  to ensure all account types (including top-level ones) are displayed correctly.
-- **Data Cleanup Implementation:** Added logic to  to delete specified test accounts during a chart reset.
+-  fixed to stop ignoring  files (blocking deployment) (DONE)
+- Journal Entries UI revamped to match glassmorphism styling (DONE)
+- Fixed Document Generator (Print/WhatsApp) to fetch correct Workshop Profile data (Name, Phone, Tax Number) (DONE)
+- Unified item select/custom input and inline price editing in Operations page (DONE)
+- Added visual indicators for payment status (green/red) and an overdue credit operations reminder card (DONE)
+- Prevented duplicate operation submissions via saving overlay lock (DONE)
+- Ordered operations list to show newest first (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-*   None. All work in this session was focused on the primary accounting issue.
+   - Issue 1: Missing supplier debt payment option in Operations.
+   - Debug checklist:  form types and  for handling payment_order with suppliers.
+   - Why to solve this issue and what will be achieved with this? Accounts payable tracking.
+   - Should Test frontend/backend/both after fix: Both
+   - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:** Critical Frontend Build Failure.
-- **Recurrence count:** 1
-- **Status:** RESOLVED in the previous fork.
+  - Issue recurrence in previous fork: None from immediate prior, but UI missing fields and slow queries have recurred.
+  - Recurrence count: 0
+  - Status: N/A
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **Account-Driven Logic:** Business logic now dynamically adapts based on the  of a transaction, enabling the separation of business units.
-*   **Dynamic Journal Entry Creation:** The backend no longer uses hardcoded account names for journal entries; it generates them based on the properties of the account selected by the user.
-*   **Asynchronous Select Component:** Used  in the POS page to create a live search-as-you-type input for the Chart of Accounts.
+- React SPA with React Query for state/caching.
+- Tailwind CSS with CRACO overlay.
+- FastAPI backend serving multiple routers.
+- Supabase used heavily for primary models, MongoDB fallback for older logs.
+-  handles HTML template generation which is converted to PDF on frontend or sent via WhatsApp.
 
 **key DB schema**
-*   No direct schema changes. However, the logic for reading from  and writing to  has been significantly altered.
+  - operations: {id, type, amount, items, paymentMethod, paymentStatus, partnerId, visitId}
+  - journal_entries: {id, total_debit, total_credit, source}
+  - workshop_profile: {name, phone, address, tax_number, commercial_register}
+
+**changes in tech stack**
+  - None
 
 **All files of reference**
-*   : The location of the current  and the core implementation of the financial separation logic.
-*   : The refactored frontend interface for creating transactions.
-*   : Contains the logic for displaying and resetting the Chart of Accounts.
+-  (Must optimize GET operations here)
+- 
+- 
+-  (Updated to track envs)
+
+**Areas that need refactoring**:
+-  is over 6000 lines long and needs segmentation (Optional/Future).
+- The  endpoint is highly unoptimized, fetching too much relational data at once.
+
+**key api endpoints**
+- 
+- 
+- 
+- 
 
 **Critical Info for New Agent**
-*   **Your immediate priority is fixing the  in .** The application is not functional without this. The previous agent applied a patch for a ; your first step is to verify if that patch worked.
-*   The user's message (Message 7 in the history) provides the definitive rules for the accounting logic. Refer to it as the source of truth for all financial separation requirements.
-*   After fixing the 500 error, you **must** perform a thorough test to verify that Rakan Parts transactions are fully isolated from the workshop's financials.
-*   All communication with the user must be in **Arabic**.
+- **Do NOT look for **. The operations endpoints are mostly located in  and .
+- The user is extremely frustrated by the 8-second load time on the Operations page. **This is your absolute P0.** Do whatever is necessary to the backend endpoint (pagination, limit, removing N+1 queries) to make it instant.
+- The user wants to test via the credentials: Username:  (No password specified, check  or bypass if local). Use playwright screenshots to verify load states.
+- ALWAYS respond in Arabic.
 
 **documents and test reports created in this job**
-*   None.
+  - /app/test_reports/iteration_34.json (Testing agent output)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** نعم (Yes)
-    - **Summary:** User approved the agent's plan to proceed with testing the implemented changes.
-    - **Status:** Handled.
-2.  **User:** Continue Next Action Items
-    - **Summary:** User prompted the agent to continue its work.
-    - **Status:** Handled.
-3.  **User:** (A long, detailed message in Arabic specifying the exact rules for the accounting system).
-    - **Summary:** This message is the new product requirement document. It defines how Rakan Parts (accounts starting with ) should be financially isolated, how the POS should be flexible, and that test data should be cleaned.
-    - **Status:** IN PROGRESS. This is the primary directive for the current work.
+1. User: حتى الآن جلب بيانات العمليات يستغرق ٨ ثواني اجعله فوري سجل الدخول باسم مدير واختبر سرعة الدخول ثم اجعلها اسرع ثم اختبر بعد التحسين استدعي الوكيل المختص 2- في لوحة التحكم يوجد تاخير جلب بيانات نوع الخدمه في نفس الكرت انظر للصوره المرفقه اجعله فوري
+2. User: اسم المستخدم:مدير عند الدخول على صفحة العمليات في preview يوجد تاخير جدا لجلب العمليات اجله فوري او تحميل
+3. User: دمج حقول العناصر جيد لكن لا يعمل بشكل جيد ولا تظهر الأسعار عند اختيار قطعه يجب حقل سعر الحبه يكون في الحقول الرئيسيه ليس بعد اضافة الصنف ايضاً هل العملاء لديهم ارصده مثال الآن أريد إنشاء امر دفع لسداد مديونية لعميل لم اعرف و المورد لايمكن لايوجد خيار
+4. User: اعمل تحسين اداء الموقع كامل vCPU واجعله سريع حدث جميع الأدوات وغيرها إلى آخر إصدار
+5. User: حتى الآن لم يظهر الحقل في preview ايضاً الحقل المحدده بخط احمر ادمجها حيث يمكن اختيار صنف او كتابه جديد استدعي الوكيل المختص
+6. User: مازال الحقل لايظهر في preview حتى بعد اضافة قطعه
+7. User: في صفحة العمليات في preview أضف حقل سعر الحبه قابل للتعديل داخل بلوك العناصر
+8. User: ترتيب العمليات عشوائي اجعله يبدا في اخر العمليات
+9. User: اجعل فقط التنبيه يكون اذا مضى على العمليه اسبوع بشكل متغير ليس ثابت وعدد منفصل ايضا العدد في بطاقة التنبيه يجب ان يكون مفتوح ليس محصورا على اسبوع فقط
+10. User: ظهرت بشكل جيد لكن العدد غير صحيح وغير مطابق للعمليات في preview
 
 **Project Health Check:**
-*   **Broken:** The core function for creating transactions () is down, making the application unusable for data entry.
+- Broken: Operations page load time (unacceptably slow API). Dashboard service type card load time.
 
 **3rd Party Integrations**
-*   **Supabase:** Primary database.
-*   **MongoDB:** Used for some financial data and as a fallback.
-*   **Blackbox AI:** Integrated into the workshop bot (requires User Key).
-*   **OpenAI GPT-4o:** Used for OCR via  (uses Emergent LLM Key).
-*   **Hostinger:** User's deployment platform.
+- Supabase (Database) — requires User API Key
+- MongoDB (Database fallback) — requires User API Key
+- OpenAI GPT-4o (Emergent LLM Key Applicability)
+- Blackbox AI (Chatbot) — requires User API Key
+- Hostinger VPS (User discussed deployment, but app remains on Emergent infra).
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** []
-- **Known regressions:** The core operation creation endpoint is currently non-functional as a result of the recent refactoring.
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: Slow load times caused by unoptimized operations fetch query.
 
 **Credentials to test flow:**
-*   **Username:** 
-*   **Password:** (not specified)
+Username: 
 
 **What agent forgot to execute**
-*   The agent did not forget anything. It correctly identified a critical bug during its own testing cycle and was in the middle of applying and verifying a fix when the session ended. The immediate next step is to complete that verification.</analysis>
+- The agent forgot that the operations endpoints are housed in  and wasted time looking for a  directory.
+- The agent did not actually fix the backend response time for , they only added frontend caching which doesn't solve the initial 8-second delay.
+
+**Debugging checklist for current issue**
+    Issue: Operations page API takes 8 seconds to load.
+    
+    Backend files to check: 
+    -  (Search for  or )
+    -  (Search for  method)
+    
+    Action: Check for N+1 queries (e.g., fetching related items, visits, or partners in a loop). Implement  and  (pagination) or reduce the payload size by avoiding full table scans. Make sure  is utilizing indexed columns.</analysis>

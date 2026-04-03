@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 import time
 
 # Configuration
-BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-performance-2.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def print_test_header(test_name):

@@ -23,7 +23,7 @@ from datetime import datetime
 import re
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-performance-2.preview.emergentagent.com/api"
 
 class InvoiceBackendTester:
     def __init__(self):

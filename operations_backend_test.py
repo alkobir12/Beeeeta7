@@ -26,9 +26,9 @@ def get_base_url():
                     return line.split('=', 1)[1].strip()
     except Exception as e:
         print(f"❌ Error reading frontend .env: {e}")
-        return "https://dual-ledger-app.preview.emergentagent.com"
+        return "https://pos-performance-2.preview.emergentagent.com"
     
-    return "https://dual-ledger-app.preview.emergentagent.com"
+    return "https://pos-performance-2.preview.emergentagent.com"
 
 BASE_URL = get_base_url()
 API_BASE = f"{BASE_URL}/api"

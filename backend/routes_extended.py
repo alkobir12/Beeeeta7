@@ -1252,33 +1252,51 @@ def _safe_insert_journal_entry(supa: SupabaseService, entry: Dict[str, Any]):
             return None
 @router.get("/operations")
 async def list_operations(
+    workshop_id: Optional[str] = None,
     account_id: Optional[str] = None,
     type: Optional[str] = None,
     vehicle_id: Optional[str] = None,
+    limit: Optional[int] = Query(default=None, ge=1, le=2000),
+    offset: int = Query(default=0, ge=0),
 ):
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
             ops = supa.operations_list(
-                account_id=account_id, type=type, vehicle_id=vehicle_id
+                workshop_id=workshop_id,
+                account_id=account_id,
+                type=type,
+                vehicle_id=vehicle_id,
+                limit=limit,
+                offset=offset,
             )
             return ops
 
         if provider == "memory" or db is None:
             ops = _mem_read("operations")
+            if workshop_id:
+                ops = [
+                    o for o in ops if str(o.get("workshopId") or o.get("workshop_id") or "") == str(workshop_id)
+                ]
             if account_id:
                 ops = [o for o in ops if o.get("accountId") == account_id]
             if type:
                 ops = [o for o in ops if o.get("type") == type]
             if vehicle_id:
                 ops = [o for o in ops if o.get("vehicleId") == vehicle_id]
+            if offset:
+                ops = ops[offset:]
+            if limit:
+                ops = ops[:limit]
             for o in ops:
                 if not o.get("scope"):
                     o["scope"] = "vehicle" if o.get("vehicleId") else "workshop"
             return ops
 
         q: Dict[str, Any] = {}
+        if workshop_id:
+            q["workshopId"] = workshop_id
         if account_id:
             q["accountId"] = account_id
         if type:
@@ -1301,13 +1319,16 @@ async def list_operations(
                     "accountingAccountId": 1,
                     "partnerId": 1,
                     "notes": 1,
+                    "paymentStatus": 1,
+                    "paymentMethod": 1,
                     "scope": 1,
                     "source": 1,
                     "businessUnit": 1,
                 },
             )
             .sort("date", -1)
-            .to_list(length=2000)
+            .skip(offset)
+            .to_list(length=limit or 2000)
         )
         for o in ops:
             o.pop("_id", None)
@@ -1315,6 +1336,129 @@ async def list_operations(
                 o["date"] = o["date"].isoformat()
             o["scope"] = o.get("scope") or ("vehicle" if o.get("vehicleId") else "workshop")
         return ops
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _extract_visit_items_for_dashboard(visit_row: Dict[str, Any]) -> List[Dict[str, Any]]:
+    notes_payload = _parse_notes_json(visit_row.get("notes"))
+    financial = _calc_visit_financial(notes_payload)
+    items = financial.get("items") or notes_payload.get("items") or []
+    if not items and (notes_payload.get("services") or notes_payload.get("parts")):
+        items = [*(notes_payload.get("services") or []), *(notes_payload.get("parts") or [])]
+    return items if isinstance(items, list) else []
+
+
+def _build_dashboard_vehicle_summary(vehicle_id: str, visits: List[Dict[str, Any]]) -> Dict[str, Any]:
+    latest_visit = None
+    latest_key = ""
+
+    for row in visits:
+        row_key = str(row.get("entryDate") or row.get("entry_date") or row.get("createdAt") or row.get("created_at") or "")
+        if not latest_visit or row_key > latest_key:
+            latest_visit = row
+            latest_key = row_key
+
+    items = _extract_visit_items_for_dashboard(latest_visit or {})
+    names = []
+    for item in items:
+        name = str(item.get("name") or item.get("description") or "").strip()
+        if name:
+            names.append(name)
+
+    service_type = "، ".join(names[:3]) if names else "غير محدد"
+    estimated_total = 0.0
+    for item in items:
+        try:
+            quantity = float(item.get("quantity") or 1)
+        except Exception:
+            quantity = 1.0
+        try:
+            price = float(item.get("price") or item.get("unit_price") or 0)
+        except Exception:
+            price = 0.0
+        try:
+            line_total = float(item.get("total") or (quantity * price))
+        except Exception:
+            line_total = quantity * price
+        estimated_total += line_total
+
+    return {
+        "vehicleId": vehicle_id,
+        "visitsCount": len(visits),
+        "estimatedTotal": round(estimated_total, 2),
+        "serviceType": service_type,
+    }
+
+
+@router.post("/vehicles/dashboard/summaries")
+async def vehicle_dashboard_summaries(payload: Dict[str, Any] = Body(...)):
+    try:
+        raw_ids = payload.get("vehicle_ids") or payload.get("vehicleIds") or []
+        vehicle_ids = [str(v).strip() for v in raw_ids if str(v).strip()]
+        if not vehicle_ids:
+            return {"summaries": []}
+
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        grouped: Dict[str, List[Dict[str, Any]]] = {vid: [] for vid in vehicle_ids}
+
+        if provider == "supabase":
+            supa = SupabaseService()
+            if supa.mock_mode:
+                rows = [
+                    row
+                    for row in _mem_read("vehicle_visits")
+                    if str(row.get("vehicleId") or "") in grouped
+                ]
+                for row in rows:
+                    vid = str(row.get("vehicleId") or "")
+                    grouped.setdefault(vid, []).append(row)
+            else:
+                chunk_size = 100
+                for i in range(0, len(vehicle_ids), chunk_size):
+                    chunk_ids = vehicle_ids[i : i + chunk_size]
+                    res = (
+                        supa.client.table("vehicle_visits")
+                        .select("id,vehicle_id,entry_date,created_at,notes")
+                        .in_("vehicle_id", chunk_ids)
+                        .execute()
+                    )
+                    for row in res.data or []:
+                        vid = str(row.get("vehicle_id") or "")
+                        grouped.setdefault(vid, []).append(row)
+
+        elif provider == "memory" or db is None:
+            rows = [
+                row
+                for row in _mem_read("vehicle_visits")
+                if str(row.get("vehicleId") or "") in grouped
+            ]
+            for row in rows:
+                vid = str(row.get("vehicleId") or "")
+                grouped.setdefault(vid, []).append(row)
+        else:
+            rows = await db.vehicle_visits.find(
+                {"vehicleId": {"$in": vehicle_ids}},
+                {
+                    "_id": 0,
+                    "id": 1,
+                    "vehicleId": 1,
+                    "entryDate": 1,
+                    "createdAt": 1,
+                    "notes": 1,
+                },
+            ).to_list(length=5000)
+            for row in rows:
+                vid = str(row.get("vehicleId") or "")
+                grouped.setdefault(vid, []).append(row)
+
+        summaries = [
+            _build_dashboard_vehicle_summary(vehicle_id=vid, visits=grouped.get(vid, []))
+            for vid in vehicle_ids
+        ]
+        return {"summaries": summaries}
     except HTTPException:
         raise
     except Exception as e:

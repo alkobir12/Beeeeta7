@@ -178,60 +178,77 @@ const Dashboard = () => {
 
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
-  const loadVehicleSummary = async (vehicleId) => {
-    if (!vehicleId) return;
-    if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
-    setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: true }));
-    try {
-      const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
-      const visits = res.data || [];
-      const visitsCount = visits.length;
-      const sortedVisits = [...visits].sort(
-        (a, b) => new Date(b.entryDate || b.entry_date || b.created_at || 0) - new Date(a.entryDate || a.entry_date || a.created_at || 0)
-      );
-      const inProgress = sortedVisits.find((v) => v.status === 'in_progress');
-      const withItems = sortedVisits.find((v) => getVisitItems(v).length);
-      const currentVisit = inProgress || withItems || sortedVisits[0];
-      const items = getVisitItems(currentVisit);
-      const estimatedTotal = items.reduce((sum, item) => {
-        const qty = Number(item.quantity || 1);
-        const price = Number(item.price || 0);
-        return sum + qty * price;
-      }, 0);
-
-      setVehicleSummaries((prev) => ({
-        ...prev,
-        [vehicleId]: {
-          visitsCount,
-          estimatedTotal,
-          serviceType: getServiceTypeLabel(items),
-        }
-      }));
-    } catch (e) {
-      setVehicleSummaries((prev) => ({
-        ...prev,
-        [vehicleId]: {
-          visitsCount: 0,
-          estimatedTotal: 0,
-          serviceType: 'غير محدد',
-        }
-      }));
-    } finally {
-      setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: false }));
-    }
-  };
-
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
-  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
+  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState(false);
+
+  const getVehicleFallbackSummary = (vehicle) => {
+    const mergedItems = [
+      ...(Array.isArray(vehicle?.services) ? vehicle.services : []),
+      ...(Array.isArray(vehicle?.parts) ? vehicle.parts : []),
+    ];
+
+    const estimatedTotal = mergedItems.reduce((sum, item) => {
+      const qty = Number(item.quantity || 1);
+      const price = Number(item.price || item.unit_price || 0);
+      return sum + (Number(item.total || 0) || (qty * price));
+    }, 0);
+
+    return {
+      visitsCount: Number(vehicle?.visitsCount || 0),
+      estimatedTotal,
+      serviceType: getServiceTypeLabel(mergedItems),
+    };
+  };
+
+  const loadVehicleSummaries = useCallback(async () => {
+    if (!vehicles.length) {
+      setVehicleSummaries({});
+      return;
+    }
+
+    setVehicleSummaryLoading(true);
+    try {
+      const vehicleIds = vehicles.map((vehicle) => vehicle.id).filter(Boolean);
+      if (!vehicleIds.length) {
+        setVehicleSummaries({});
+        return;
+      }
+
+      const res = await axios.post(`${API_URL}/vehicles/dashboard/summaries`, {
+        vehicle_ids: vehicleIds,
+      });
+      const summariesArray = res?.data?.summaries || [];
+      const summariesMap = summariesArray.reduce((acc, summary) => {
+        const key = String(summary?.vehicleId || '').trim();
+        if (!key) return acc;
+        acc[key] = {
+          visitsCount: Number(summary?.visitsCount || 0),
+          estimatedTotal: Number(summary?.estimatedTotal || 0),
+          serviceType: summary?.serviceType || 'غير محدد',
+        };
+        return acc;
+      }, {});
+
+      if (isMountedRef.current) {
+        setVehicleSummaries(summariesMap);
+      }
+    } catch (e) {
+      if (isMountedRef.current) {
+        setVehicleSummaries({});
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setVehicleSummaryLoading(false);
+      }
+    }
+  }, [API_URL, vehicles]);
+
+  useEffect(() => {
+    loadVehicleSummaries();
+  }, [loadVehicleSummaries]);
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -675,10 +692,11 @@ const Dashboard = () => {
               const statusConfig = getStatusConfigForVehicle(vehicle.status);
               const progress = typeof vehicle.progress === 'number' ? vehicle.progress : 65;
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
-              const summary = vehicleSummaries[vehicle.id] || {};
-              const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+              const fallbackSummary = getVehicleFallbackSummary(vehicle);
+              const summary = vehicleSummaries[vehicle.id] || fallbackSummary;
+              const visitsCount = summary.visitsCount ?? fallbackSummary.visitsCount ?? vehicle.visitsCount ?? 0;
+              const estimatedTotal = summary.estimatedTotal ?? fallbackSummary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
+              const serviceType = summary.serviceType || fallbackSummary.serviceType || (vehicleSummaryLoading ? 'جارٍ التحميل...' : 'غير محدد');
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

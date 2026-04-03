@@ -18,7 +18,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from frontend/.env (REACT_APP_BACKEND_URL)
-BACKEND_URL = "https://dual-ledger-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-performance-2.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

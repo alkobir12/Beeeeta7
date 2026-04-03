@@ -477,7 +477,7 @@
 ## Test Credentials
 - Username: مدير
 - Workshop ID: finmodule-sync
-- API URL: https://dual-ledger-app.preview.emergentagent.com
+- API URL: https://pos-performance-2.preview.emergentagent.com
 - Groq API Key: configured in backend/.env
 
 ## Key Files

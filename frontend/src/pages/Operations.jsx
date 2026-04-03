@@ -192,10 +192,11 @@ const Operations = () => {
   const vehiclePlateFromUrl = searchParams.get('plate');
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
   const freshQueryOptions = {
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    retry: 2,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
   };
 
   const operationsCacheKey = React.useMemo(
@@ -279,12 +280,13 @@ const Operations = () => {
   });
 
   const operationsQuery = useQuery({
-    queryKey: ['operations', vehicleIdFromUrl || 'all'],
+    queryKey: ['operations', workshopId || 'default', vehicleIdFromUrl || 'all'],
     queryFn: async () => {
-      const operationsUrl = vehicleIdFromUrl 
-        ? `${API_URL}/operations?vehicle_id=${vehicleIdFromUrl}` 
-        : `${API_URL}/operations`;
-      const res = await axios.get(operationsUrl);
+      const params = {
+        limit: 1200,
+        ...(vehicleIdFromUrl ? { vehicle_id: vehicleIdFromUrl } : {}),
+      };
+      const res = await axios.get(`${API_URL}/operations`, { params });
       return res.data || [];
     },
     staleTime: 60 * 1000,
@@ -315,7 +317,7 @@ const Operations = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['operations'] });
       toast({
         title: t('common.success'),
         description: t('operations.saved_successfully') || 'تم حفظ العملية',
@@ -845,7 +847,7 @@ const Operations = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['operations'] });
       toast({
         title: t('common.success'),
         description: t('operations.saved_successfully') || 'تم حفظ العملية',
@@ -975,7 +977,7 @@ const Operations = () => {
     try {
       setDeleteOpId(deleteTarget.id);
       await axios.delete(`${API_URL}/operations/${deleteTarget.id}`);
-      queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['operations'] });
       setDeleteConfirmOpen(false);
       setDeleteTarget(null);
     } catch (e) {
@@ -1252,8 +1254,7 @@ const Operations = () => {
             >
               <div className="text-sm font-semibold" style={{ color: 'rgba(254,226,226,0.95)' }}>
                 {t('common.error') || 'خطأ'}
-                </div>
-              )}
+              </div>
               <div className="text-sm mt-1" style={{ color: 'rgba(254,226,226,0.82)' }}>
                 {createError}
               </div>
@@ -2264,7 +2265,7 @@ const Operations = () => {
             setConfirmOpen(false);
             setConfirmTarget(null);
 
-            queryClient.invalidateQueries({ queryKey: ['operations', vehicleIdFromUrl || 'all'] });
+            queryClient.invalidateQueries({ queryKey: ['operations'] });
           } catch (e) {
             console.error('Failed to confirm payment:', e);
             alert(t('operations.payment_confirm_failed'));

@@ -15,6 +15,16 @@ const Login = () => {
 
   const fallbackPermissions = getRolePermissions('admin');
 
+  const prefetchCriticalData = () => {
+    try {
+      const API_URL = `${resolveBackendBase()}/api`;
+      fetch(`${API_URL}/operations?limit=600`, { method: 'GET', keepalive: true }).catch(() => {});
+      fetch(`${API_URL}/vehicles`, { method: 'GET', keepalive: true }).catch(() => {});
+    } catch (e) {
+      // ignore prefetch errors
+    }
+  };
+
   const handleLogin = async () => {
     if (!name.trim()) {
       toast({ title: 'خطأ', description: 'الرجاء إدخال الاسم', variant: 'destructive' });
@@ -53,6 +63,7 @@ const Login = () => {
       }
 
       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
+      prefetchCriticalData();
       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)
       window.location.assign(`${window.location.origin}/`);
       return;
@@ -104,6 +115,7 @@ const Login = () => {
           localStorage.setItem('user', JSON.stringify(fallbackUser));
           window.dispatchEvent(new Event('sessionUpdated'));
           toast({ title: 'مرحباً بك', description: `أهلاً بعودتك، ${fallbackUser.name}` });
+          prefetchCriticalData();
           window.location.assign(`${window.location.origin}/`);
           return;
         }
@@ -156,6 +168,7 @@ const Login = () => {
         title: 'مرحباً بك',
         description: `أهلاً بعودتك، ${user.name}`
       });
+      prefetchCriticalData();
       window.location.assign(`${window.location.origin}/`);
     } catch (e) {
       console.error('Login error:', e);

@@ -191,6 +191,7 @@ const Operations = () => {
   const vehicleIdFromUrl = searchParams.get('vehicleId');
   const vehiclePlateFromUrl = searchParams.get('plate');
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+  const [isDeferredDataEnabled, setIsDeferredDataEnabled] = useState(false);
   const freshQueryOptions = {
     staleTime: 3 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
@@ -231,6 +232,7 @@ const Operations = () => {
       }
       return accountsData || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -240,6 +242,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/parts`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -249,6 +252,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/services`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -258,6 +262,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/customers`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -267,6 +272,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/suppliers`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -276,6 +282,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/vehicles`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -283,7 +290,7 @@ const Operations = () => {
     queryKey: ['operations', workshopId || 'default', vehicleIdFromUrl || 'all'],
     queryFn: async () => {
       const params = {
-        limit: 1200,
+        limit: 600,
         ...(vehicleIdFromUrl ? { vehicle_id: vehicleIdFromUrl } : {}),
       };
       const res = await axios.get(`${API_URL}/operations`, { params });
@@ -302,12 +309,25 @@ const Operations = () => {
     },
   });
 
+  useEffect(() => {
+    if (isDeferredDataEnabled) return;
+    if (operationsQuery.isSuccess || cachedOperations.length > 0) {
+      setIsDeferredDataEnabled(true);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setIsDeferredDataEnabled(true);
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [isDeferredDataEnabled, operationsQuery.isSuccess, cachedOperations.length]);
+
   const bizAccountsQuery = useQuery({
     queryKey: ['biz-accounts'],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/biz-accounts`);
       return res.data || [];
     },
+    enabled: isDeferredDataEnabled,
     ...freshQueryOptions,
   });
 
@@ -344,7 +364,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/vehicles/${activeVehicleId}/visits`);
       return res.data || [];
     },
-    enabled: Boolean(activeVehicleId)
+    enabled: Boolean(activeVehicleId) && isDeferredDataEnabled
   });
 
   const accounts = accountsQuery.data || [];

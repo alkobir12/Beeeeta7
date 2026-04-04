@@ -82,6 +82,7 @@ const ACCOUNT_GROUP_LABELS = new Set([
   'revenue',
   'expenses',
 ]);
+const UUID_LIKE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -279,7 +280,11 @@ const Operations = () => {
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
     queryFn: async () => {
-      const chartAccRes = await financeAPI.getChartOfAccounts();
+      const [chartAccRes, ledgerAccountsRes] = await Promise.all([
+        financeAPI.getChartOfAccounts(),
+        axios.get(`${API_URL}/accounts`),
+      ]);
+
       let accountsData = [];
       if (chartAccRes?.data) {
         if (chartAccRes.data.success && Array.isArray(chartAccRes.data.data)) {
@@ -292,7 +297,56 @@ const Operations = () => {
           accountsData = chartAccRes.data.accounts;
         }
       }
-      return accountsData || [];
+
+      const ledgerAccounts = Array.isArray(ledgerAccountsRes?.data) ? ledgerAccountsRes.data : [];
+      const normalizeId = (value) => normalizeText(value);
+      const byCode = new Map(
+        ledgerAccounts
+          .map((account) => [normalizeAccountCode(account?.code), account])
+          .filter(([key]) => key)
+      );
+      const byId = new Map(
+        ledgerAccounts
+          .map((account) => [normalizeId(account?.id), account])
+          .filter(([key]) => key)
+      );
+
+      const sourceAccounts = (accountsData && accountsData.length) ? accountsData : ledgerAccounts;
+      const merged = [];
+
+      sourceAccounts.forEach((account) => {
+        const accountId = String(account?.id || '').trim();
+        const accountCode = normalizeAccountCode(account?.code || accountId);
+        const canonical = byCode.get(accountCode) || byId.get(normalizeId(accountId));
+        const mergedAccount = {
+          ...account,
+          ...(canonical || {}),
+          id: canonical?.id || account?.id,
+          code: canonical?.code || account?.code,
+          type: canonical?.type || account?.type,
+          name: canonical?.name || account?.name_ar || account?.name || '',
+          name_ar: canonical?.name || account?.name_ar || account?.name || '',
+        };
+
+        const displayName = String(mergedAccount?.name_ar || mergedAccount?.name || '').trim();
+        if (!displayName) return;
+        if (UUID_LIKE_REGEX.test(displayName)) return;
+
+        if (canonical || !accountsData.length) {
+          merged.push(mergedAccount);
+        }
+      });
+
+      const unique = [];
+      const seen = new Set();
+      merged.forEach((account) => {
+        const key = normalizeText(account?.id || account?.code || account?.name);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        unique.push(account);
+      });
+
+      return unique;
     },
     enabled: isDeferredDataEnabled,
     ...freshQueryOptions,

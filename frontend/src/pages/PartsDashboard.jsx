@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
-import { api, partAPI } from '../services/api';
+import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp, Wrench, Cog } from 'lucide-react';
+import { api, financeAPI, operationsAPI, partAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { InventoryPlannerTab } from '../components/parts-dashboard/InventoryPlannerTab';
 import { RakanExpenseTrackingPanel } from '../components/parts-dashboard/RakanExpenseTrackingPanel';
@@ -37,6 +37,32 @@ const backorderStatusOptions = [
   { value: 'cancelled', label: 'ملغية' },
 ];
 
+const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+const normalizeAccountCode = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('acc-') && /^acc-\d+$/.test(raw)) return raw.replace('acc-', '');
+  return raw;
+};
+
+const WORKSHOP_ACCOUNT_TARGETS = [
+  {
+    key: 'workshop-parts',
+    title: 'حساب قطع غيار الورشة',
+    icon: Wrench,
+    color: '#38bdf8',
+    keywords: ['قطع غيار الورشة', 'قطع غيار الورشه', 'قطع الورشة', 'قطع الورشه'],
+  },
+  {
+    key: 'engine-repair',
+    title: 'حساب إصلاح المحركات',
+    icon: Cog,
+    color: '#f59e0b',
+    keywords: ['إصلاح المحركات', 'اصلاح المحركات', 'إصلاح محركات', 'اصلاح محركات'],
+  },
+];
+
 const PartsDashboard = () => {
   const [daysFilter, setDaysFilter] = useState(30);
   const [analytics, setAnalytics] = useState(null);
@@ -49,6 +75,8 @@ const PartsDashboard = () => {
   const [loadingRakanAnalytics, setLoadingRakanAnalytics] = useState(true);
   const [inventoryArchitecture, setInventoryArchitecture] = useState(null);
   const [loadingInventoryArchitecture, setLoadingInventoryArchitecture] = useState(true);
+  const [workshopAccountStats, setWorkshopAccountStats] = useState([]);
+  const [loadingWorkshopAccountStats, setLoadingWorkshopAccountStats] = useState(true);
   const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
   const [selectedExpenseCategory, setSelectedExpenseCategory] = useState('all');
   const [savingBackorder, setSavingBackorder] = useState(false);
@@ -122,10 +150,107 @@ const PartsDashboard = () => {
     }
   };
 
+  const loadWorkshopAccountStats = async () => {
+    setLoadingWorkshopAccountStats(true);
+    try {
+      const [accountsRes, operationsRes] = await Promise.all([
+        financeAPI.getChartOfAccounts(),
+        operationsAPI.list({ limit: 400 }),
+      ]);
+
+      const accountsPayload = accountsRes?.data;
+      const accounts = Array.isArray(accountsPayload?.data)
+        ? accountsPayload.data
+        : Array.isArray(accountsPayload)
+          ? accountsPayload
+          : [];
+
+      const operationsPayload = operationsRes?.data;
+      const operations = Array.isArray(operationsPayload) ? operationsPayload : [];
+      const periodStart = Date.now() - (Number(daysFilter || 30) * 24 * 60 * 60 * 1000);
+
+      const cards = WORKSHOP_ACCOUNT_TARGETS.map((target) => {
+        const account = accounts.find((acc) => {
+          const haystack = [acc?.name, acc?.name_ar, acc?.code].map((v) => normalizeText(v)).join(' ');
+          return target.keywords.some((keyword) => haystack.includes(normalizeText(keyword)));
+        });
+
+        if (!account) {
+          return {
+            ...target,
+            accountFound: false,
+            accountName: 'غير موجود',
+            balance: 0,
+            periodOpsCount: 0,
+            periodAmount: 0,
+            lastMovementDate: null,
+          };
+        }
+
+        const accountIds = new Set([
+          normalizeText(account?.id),
+          normalizeText(account?.code),
+          normalizeText(normalizeAccountCode(account?.code)),
+        ].filter(Boolean));
+
+        const matchedOps = operations.filter((op) => {
+          const possibleIds = [
+            op?.accountingAccountId,
+            op?.accountId,
+            op?.account_code,
+            normalizeAccountCode(op?.accountingAccountId),
+            normalizeAccountCode(op?.accountId),
+            normalizeAccountCode(op?.account_code),
+          ].map((v) => normalizeText(v)).filter(Boolean);
+          return possibleIds.some((id) => accountIds.has(id));
+        });
+
+        const periodOps = matchedOps.filter((op) => {
+          const rawDate = op?.date || op?.createdAt || op?.created_at;
+          const ts = rawDate ? new Date(rawDate).getTime() : NaN;
+          return Number.isFinite(ts) && ts >= periodStart;
+        });
+
+        const sortedOps = [...matchedOps].sort((a, b) => {
+          const aTs = new Date(a?.date || a?.createdAt || a?.created_at || 0).getTime();
+          const bTs = new Date(b?.date || b?.createdAt || b?.created_at || 0).getTime();
+          return bTs - aTs;
+        });
+
+        return {
+          ...target,
+          accountFound: true,
+          accountName: account?.name_ar || account?.name || account?.code || target.title,
+          balance: Number(account?.balance || 0),
+          periodOpsCount: periodOps.length,
+          periodAmount: periodOps.reduce((sum, op) => sum + Number(op?.total || op?.amount || 0), 0),
+          lastMovementDate: sortedOps[0]?.date || sortedOps[0]?.createdAt || sortedOps[0]?.created_at || null,
+        };
+      });
+
+      setWorkshopAccountStats(cards);
+    } catch (error) {
+      setWorkshopAccountStats(
+        WORKSHOP_ACCOUNT_TARGETS.map((target) => ({
+          ...target,
+          accountFound: false,
+          accountName: 'تعذر تحميل الحساب',
+          balance: 0,
+          periodOpsCount: 0,
+          periodAmount: 0,
+          lastMovementDate: null,
+        }))
+      );
+    } finally {
+      setLoadingWorkshopAccountStats(false);
+    }
+  };
+
   useEffect(() => {
     loadControlPanel();
     loadRakanAnalytics();
     loadInventoryArchitecture();
+    loadWorkshopAccountStats();
   }, [daysFilter]);
 
   useEffect(() => {
@@ -219,13 +344,54 @@ const PartsDashboard = () => {
             type="button"
             variant="outline"
             className="bg-white/10 text-white border-white/20"
-            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadRakanAnalytics(), loadInventoryArchitecture()])}
+            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadRakanAnalytics(), loadInventoryArchitecture(), loadWorkshopAccountStats()])}
             data-testid="parts-control-refresh-button"
           >
             <RefreshCw size={16} className="ml-1" /> تحديث
           </Button>
         </div>
       </div>
+
+      {loadingWorkshopAccountStats ? (
+        <div className="glass-card p-5 text-slate-300 flex items-center gap-2" data-testid="parts-control-workshop-account-loading">
+          <Loader2 className="animate-spin" size={16} /> جاري تحميل إحصائيات حسابات الورشة...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="parts-control-workshop-account-cards">
+          {workshopAccountStats.map((card) => (
+            <div key={card.key} className="glass-card p-5 border-t-4" style={{ borderColor: card.color }} data-testid={`parts-control-workshop-account-card-${card.key}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm text-slate-300" data-testid={`parts-control-workshop-account-title-${card.key}`}>{card.title}</p>
+                  <p className="text-xs text-slate-400" data-testid={`parts-control-workshop-account-name-${card.key}`}>{card.accountName}</p>
+                </div>
+                <card.icon size={18} style={{ color: card.color }} />
+              </div>
+              <p className="text-2xl font-bold text-white" data-testid={`parts-control-workshop-account-balance-${card.key}`}>
+                {formatCurrency(card.balance)}
+              </p>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-white/5 p-2" data-testid={`parts-control-workshop-account-period-ops-${card.key}`}>
+                  <p className="text-slate-400">عمليات الفترة</p>
+                  <p className="text-white font-semibold">{Number(card.periodOpsCount || 0).toLocaleString('ar-SA')}</p>
+                </div>
+                <div className="rounded-lg bg-white/5 p-2" data-testid={`parts-control-workshop-account-period-amount-${card.key}`}>
+                  <p className="text-slate-400">إجمالي الفترة</p>
+                  <p className="text-white font-semibold">{formatCurrency(card.periodAmount)}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-[11px] text-slate-400" data-testid={`parts-control-workshop-account-last-movement-${card.key}`}>
+                آخر حركة: {card.lastMovementDate ? new Date(card.lastMovementDate).toLocaleDateString('ar-SA') : 'لا توجد'}
+              </p>
+              {!card.accountFound && (
+                <p className="mt-2 text-[11px] text-amber-300" data-testid={`parts-control-workshop-account-missing-${card.key}`}>
+                  لم يتم العثور على الحساب في دليل الحسابات.
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2" data-testid="parts-control-tabs">
         <button

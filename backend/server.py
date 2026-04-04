@@ -1052,7 +1052,7 @@ async def _fetch_operations_for_partner_financials(
 
         select_expr = (
             "id,type,partner_type,partner_id,partner_name,total,payment_method,payment_status,"
-            "payment_amount,op_date,created_at,notes,workshop_id"
+            "payment_amount,op_date,created_at,notes,workshop_id,vehicle_id,visit_id"
         )
 
         def _exec_query(expr: str, with_workshop_filter: bool) -> List[Dict[str, Any]]:
@@ -1121,6 +1121,10 @@ async def _fetch_operations_for_partner_financials(
         "payment_status": 1,
         "paymentAmount": 1,
         "payment_amount": 1,
+        "vehicleId": 1,
+        "vehicle_id": 1,
+        "visitId": 1,
+        "visit_id": 1,
         "date": 1,
         "op_date": 1,
         "createdAt": 1,
@@ -1186,6 +1190,46 @@ async def _fetch_operation_payment_map(
     return by_ref
 
 
+async def _fetch_vehicle_customer_lookup(workshop_id: Optional[str]) -> Dict[str, str]:
+    rows: List[Dict[str, Any]] = []
+
+    if DB_PROVIDER == "supabase":
+        if supabase_service.client and not supabase_service.mock_mode:
+            try:
+                q = supabase_service.client.table("vehicles").select("id,customer_id")
+                if workshop_id:
+                    q = q.eq("workshop_id", workshop_id)
+                rows = q.execute().data or []
+            except Exception:
+                try:
+                    rows = supabase_service.client.table("vehicles").select("id,customer_id").execute().data or []
+                except Exception:
+                    rows = []
+    elif DB_PROVIDER == "memory":
+        rows = _mem_read("vehicles") or []
+        if workshop_id:
+            rows = [
+                r
+                for r in rows
+                if str(r.get("workshopId") or r.get("workshop_id") or "") == str(workshop_id)
+            ]
+    else:
+        if db is None:
+            return {}
+        query: Dict[str, Any] = {}
+        if workshop_id:
+            query["$or"] = [{"workshopId": workshop_id}, {"workshop_id": workshop_id}]
+        rows = await db.vehicles.find(query, {"_id": 0, "id": 1, "customerId": 1, "customer_id": 1}).to_list(5000)
+
+    lookup: Dict[str, str] = {}
+    for row in rows:
+        vehicle_id = str(row.get("id") or "").strip()
+        customer_id = str(row.get("customer_id") or row.get("customerId") or "").strip()
+        if vehicle_id and customer_id:
+            lookup[vehicle_id] = customer_id
+    return lookup
+
+
 def _round_partner_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
     summary["debitBalance"] = round(_safe_float(summary.get("debitBalance")), 2)
     summary["creditBalance"] = round(_safe_float(summary.get("creditBalance")), 2)
@@ -1228,6 +1272,7 @@ async def _build_partner_financial_map(
 
     operations = await _fetch_operations_for_partner_financials(workshop_id)
     payment_map = await _fetch_operation_payment_map(workshop_id)
+    vehicle_customer_lookup = await _fetch_vehicle_customer_lookup(workshop_id) if p_type == "customer" else {}
 
     for op in operations:
         op_partner_type = str(_op_field(op, "partner_type", "partnerType") or "").strip().lower()
@@ -1237,6 +1282,14 @@ async def _build_partner_financial_map(
         partner_id = str(_op_field(op, "partner_id", "partnerId") or "").strip()
         partner_name_norm = _normalize_partner_name(_op_field(op, "partner_name", "partnerName"))
         target_id = partner_id if partner_id in by_id else by_name.get(partner_name_norm)
+        vehicle_id = str(_op_field(op, "vehicle_id", "vehicleId") or "").strip()
+        visit_id = str(_op_field(op, "visit_id", "visitId") or "").strip()
+
+        if not target_id and p_type == "customer" and vehicle_id:
+            mapped_customer = vehicle_customer_lookup.get(vehicle_id)
+            if mapped_customer and mapped_customer in by_id:
+                target_id = mapped_customer
+
         if not target_id:
             continue
 
@@ -1254,6 +1307,8 @@ async def _build_partner_financial_map(
 
         movement_date = str(_op_field(op, "op_date", "date") or _op_field(op, "created_at", "createdAt") or "")
         movement_note = str(op.get("notes") or "")
+        if not visit_id:
+            visit_id = f"op-{op_id}"
 
         is_credit_origin = (
             payment_method == "credit"
@@ -1275,6 +1330,10 @@ async def _build_partner_financial_map(
                     "label": "مبيعات آجل",
                     "amount": round(total_amount, 2),
                     "date": movement_date,
+                    "flow": "in",
+                    "flowLabel": "داخل",
+                    "visitId": visit_id,
+                    "vehicleId": vehicle_id,
                     "source": "operation",
                     "operationId": op_id,
                     "note": movement_note,
@@ -1291,6 +1350,10 @@ async def _build_partner_financial_map(
                         "label": "سداد آجل",
                         "amount": round(paid_amount, 2),
                         "date": movement_date,
+                        "flow": "in",
+                        "flowLabel": "داخل",
+                        "visitId": visit_id,
+                        "vehicleId": vehicle_id,
                         "source": "operation_payment",
                         "operationId": op_id,
                         "note": "تحصيل دفعة من العميل",
@@ -1311,6 +1374,10 @@ async def _build_partner_financial_map(
                     "label": "مشتريات آجل",
                     "amount": round(total_amount, 2),
                     "date": movement_date,
+                    "flow": "out",
+                    "flowLabel": "خارج",
+                    "visitId": visit_id,
+                    "vehicleId": vehicle_id,
                     "source": "operation",
                     "operationId": op_id,
                     "note": movement_note,
@@ -1327,6 +1394,10 @@ async def _build_partner_financial_map(
                         "label": "سداد آجل",
                         "amount": round(paid_amount, 2),
                         "date": movement_date,
+                        "flow": "out",
+                        "flowLabel": "خارج",
+                        "visitId": visit_id,
+                        "vehicleId": vehicle_id,
                         "source": "operation_payment",
                         "operationId": op_id,
                         "note": "دفعة سداد للمورد",
@@ -1345,6 +1416,10 @@ async def _build_partner_financial_map(
                         "label": "أمر سداد",
                         "amount": round(total_amount, 2),
                         "date": movement_date,
+                        "flow": "in",
+                        "flowLabel": "داخل",
+                        "visitId": visit_id,
+                        "vehicleId": vehicle_id,
                         "source": "payment_order",
                         "operationId": op_id,
                         "note": movement_note,
@@ -1361,6 +1436,10 @@ async def _build_partner_financial_map(
                         "label": "أمر سداد",
                         "amount": round(total_amount, 2),
                         "date": movement_date,
+                        "flow": "out",
+                        "flowLabel": "خارج",
+                        "visitId": visit_id,
+                        "vehicleId": vehicle_id,
                         "source": "payment_order",
                         "operationId": op_id,
                         "note": movement_note,

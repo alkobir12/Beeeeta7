@@ -1,0 +1,56 @@
+{
+  "summary": "Tested partner movements feature for customers and suppliers. Backend APIs return movements with flow/flowLabel/visitId/vehicleId fields correctly. Frontend pages load without errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_partner_movements.py",
+    "/app/test_reports/pytest/pytest_partner_movements.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_partner_movements.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (pages load correctly)"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Partner movements feature is working correctly. Backend _build_partner_financial_map function returns movements with flow/flowLabel/visitId/vehicleId fields. Frontend Customers.jsx and Suppliers.jsx display these fields in the expanded card view. The vehicle->customer fallback lookup is implemented for cases where partner_id is missing.",
+  "verified_features": [
+    "GET /api/customers returns movements with flow/flowLabel/visitId/vehicleId - PASS",
+    "GET /api/suppliers returns movements structure (empty for current data) - PASS",
+    "Customer movements include: flow='in', flowLabel='داخل', visitId, vehicleId, label - PASS",
+    "Vehicle->customer fallback lookup implemented in _fetch_vehicle_customer_lookup - PASS",
+    "Frontend Customers.jsx displays movements with flowLabel and visitId - PASS",
+    "Frontend Suppliers.jsx displays movements with flowLabel and visitId - PASS",
+    "Pages load without breaking - PASS"
+  ],
+  "test_credentials": "username: مدير",
+  "api_response_sample": {
+    "customer_movement_example": {
+      "id": "op-61c2778a-b15b-40ee-9d65-417de38e88a9",
+      "direction": "debit",
+      "label": "مبيعات آجل",
+      "amount": 150.0,
+      "date": "2026-04-02T00:00:00+00:00",
+      "flow": "in",
+      "flowLabel": "داخل",
+      "visitId": "op-61c2778a-b15b-40ee-9d65-417de38e88a9",
+      "vehicleId": "1b9b4214-7078-415a-91c3-2eecaf072f21",
+      "source": "operation",
+      "operationId": "61c2778a-b15b-40ee-9d65-417de38e88a9"
+    }
+  },
+  "customers_with_movements_count": 19,
+  "suppliers_with_movements_count": 0
+}

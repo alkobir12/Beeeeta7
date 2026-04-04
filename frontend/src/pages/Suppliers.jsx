@@ -398,7 +398,15 @@ const Suppliers = () => {
                           >
                             <div>
                               <p className="text-[11px] text-slate-200">{mv.label || 'حركة مالية'}</p>
-                              <p className="text-[10px] text-slate-400">{mv.date ? String(mv.date).slice(0, 10) : '-'}</p>
+                              <p className="text-[10px] text-slate-400">
+                                {mv.date ? String(mv.date).slice(0, 10) : '-'}
+                                <span className={`mx-1 px-1.5 py-0.5 rounded ${mv.flow === 'out' ? 'bg-rose-500/20 text-rose-200' : 'bg-emerald-500/20 text-emerald-200'}`}>
+                                  {mv.flowLabel || (mv.flow === 'out' ? 'خارج' : 'داخل')}
+                                </span>
+                                <span className="text-[10px] text-slate-500" data-testid={`supplier-movement-visit-${supplier.id}-${mv.id}`}>
+                                  زيارة: {mv.visitId || '-'}
+                                </span>
+                              </p>
                             </div>
                             <p className={`text-xs font-bold ${mv.direction === 'debit' ? 'text-cyan-300' : 'text-amber-300'}`}>
                               {formatMoney(mv.amount)}

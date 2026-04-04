@@ -96,6 +96,14 @@
 - تم الحفاظ على منطق الحقول والتحقق والحفظ دون كسر، واستمرار ظهور قائمة العمليات أسفل النموذج.
 - نتيجة التحقق: `iteration_46.json` نجاح Frontend 100%.
 
+### تنقل تلقائي بين تبويبات إنشاء العملية (04 Apr 2026)
+- تم تفعيل Auto-Advance كما طلب المستخدم:
+  - تبويب (1) العملية → تبويب (2) الربط عند اكتمال `type + date`.
+  - تبويب (2) الربط → تبويب (3) العناصر عند اختيار الحساب المحاسبي.
+  - البقاء في تبويب (3) حتى الحفظ دون انتقال إضافي.
+- تم الحفاظ على منطق التحقق والحفظ كما هو.
+- نتيجة التحقق: `iteration_47.json` نجاح Frontend 100%.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -702,3 +710,4 @@
 | 04 Apr 2026 | Upgraded POS to stronger Liquid mobile-first UI + fixed `/parts` mobile horizontal overflow (0px overflow) |
 | 04 Apr 2026 | Fixed critical mobile POS visibility bug by restoring fixed dialog positioning, verified by `iteration_45` |
 | 04 Apr 2026 | Matched Operations create block to POS-like tabbed UX while preserving logic, verified by `iteration_46` |
+| 04 Apr 2026 | Added auto-advance flow between Operations create tabs (type/date → linking, account → items), verified by `iteration_47` |

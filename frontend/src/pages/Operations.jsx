@@ -1355,14 +1355,6 @@ const Operations = () => {
     }
   };
 
-  useEffect(() => {
-    if (createFormTab === 'linking' && canMoveToItemsTab) {
-      const timer = window.setTimeout(() => setCreateFormTab('items'), 140);
-      return () => window.clearTimeout(timer);
-    }
-    return undefined;
-  }, [createFormTab, canMoveToItemsTab]);
-
   // Theme-based styles (align with dashboard glass look)
   const styles = {
     bg: 'transparent',

@@ -88,7 +88,7 @@ export const PartsTransactionModal = ({
       <DialogContent className="liquid-pos w-[100vw] h-[100dvh] sm:w-auto sm:h-auto sm:max-h-[92vh] max-w-5xl overflow-y-auto border border-cyan-300/20 bg-slate-950/95 px-3 sm:px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
         <style>{`
           .liquid-pos {
-            position: relative;
+            position: fixed !important;
             overflow-x: hidden;
             background: radial-gradient(1200px 420px at 10% -10%, rgba(94,184,196,.22), transparent 60%), radial-gradient(900px 360px at 95% 5%, rgba(147,51,234,.18), transparent 60%), rgba(2,6,23,.95);
           }

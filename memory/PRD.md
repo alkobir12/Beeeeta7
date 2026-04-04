@@ -90,6 +90,12 @@
 - الحل: تثبيت التموضع إلى `position: fixed !important` داخل `PartsTransactionModal.jsx`.
 - التحقق: `iteration_45.json` ✅ (390x844) فتح POS يعمل، التبويبات مرئية وتفاعلية، والمودال داخل الشاشة.
 
+### مطابقة بلوك إنشاء العملية مع شكل POS (04 Apr 2026)
+- تم تحويل بلوك إنشاء العملية في `Operations.jsx` إلى تجربة POS-like: **تبويبات 3 مراحل** (العملية / الربط / العناصر) بنفس الروح البصرية.
+- تم إضافة Stepper علوي + تنقل السابق/التالي + Footer Actions مطابقين لمنطق POS، مع الحفاظ على نفس منطق الإنشاء الحالي.
+- تم الحفاظ على منطق الحقول والتحقق والحفظ دون كسر، واستمرار ظهور قائمة العمليات أسفل النموذج.
+- نتيجة التحقق: `iteration_46.json` نجاح Frontend 100%.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -695,3 +701,4 @@
 | 04 Apr 2026 | Redesigned inventory POS modal with tabbed responsive UX + reduced repeated data loading, verified by `iteration_43` |
 | 04 Apr 2026 | Upgraded POS to stronger Liquid mobile-first UI + fixed `/parts` mobile horizontal overflow (0px overflow) |
 | 04 Apr 2026 | Fixed critical mobile POS visibility bug by restoring fixed dialog positioning, verified by `iteration_45` |
+| 04 Apr 2026 | Matched Operations create block to POS-like tabbed UX while preserving logic, verified by `iteration_46` |

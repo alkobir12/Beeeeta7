@@ -1631,6 +1631,30 @@ const Operations = () => {
                 <TabsTrigger value="items" data-testid="operation-create-tab-items">3) العناصر</TabsTrigger>
               </TabsList>
 
+              <div className="mt-3 mb-1 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2" data-testid="operation-create-stepper-top">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-lg border border-white/20 text-slate-200 disabled:opacity-50"
+                  onClick={goToPrevCreateTab}
+                  disabled={createFormTab === 'operation'}
+                  data-testid="operation-create-prev-step-top"
+                >
+                  السابق
+                </button>
+                <span className="text-xs text-slate-300">
+                  {createFormTab === 'operation' ? 'الخطوة 1: العملية' : createFormTab === 'linking' ? 'الخطوة 2: الربط' : 'الخطوة 3: العناصر'}
+                </span>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-lg border border-cyan-300/40 text-cyan-100 disabled:opacity-50"
+                  onClick={goToNextCreateTab}
+                  disabled={(createFormTab === 'operation' && !canMoveToLinkingTab) || (createFormTab === 'linking' && !canMoveToItemsTab) || createFormTab === 'items'}
+                  data-testid="operation-create-next-step-top"
+                >
+                  التالي
+                </button>
+              </div>
+
             <div className={createFormTab === 'operation' ? 'space-y-5 mt-4' : 'hidden'}>
               {/* Section 1: Basic Info */}
               <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>

@@ -85,6 +85,11 @@
 - تم إصلاح مشكلة الـ horizontal overflow في صفحة `/parts` على الجوال (قياس فعلي: `overflow_px=0`).
 - نتيجة التحقق الذاتي: mobile overflow قبل/بعد = 0، وPOS يعمل دون كسر.
 
+### إصلاح عاجل: نافذة POS لا تظهر على الجوال (04 Apr 2026)
+- السبب الجذري: class `liquid-pos` كان يفرض `position: relative` على DialogContent، فصار المودال يُرسم خارج الـ viewport على الجوال.
+- الحل: تثبيت التموضع إلى `position: fixed !important` داخل `PartsTransactionModal.jsx`.
+- التحقق: `iteration_45.json` ✅ (390x844) فتح POS يعمل، التبويبات مرئية وتفاعلية، والمودال داخل الشاشة.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -689,3 +694,4 @@
 | 03 Apr 2026 | Added debt follow-up center (`/debts-followup`) + editable WhatsApp preview and bulk send, verified by `iteration_42` |
 | 04 Apr 2026 | Redesigned inventory POS modal with tabbed responsive UX + reduced repeated data loading, verified by `iteration_43` |
 | 04 Apr 2026 | Upgraded POS to stronger Liquid mobile-first UI + fixed `/parts` mobile horizontal overflow (0px overflow) |
+| 04 Apr 2026 | Fixed critical mobile POS visibility bug by restoring fixed dialog positioning, verified by `iteration_45` |

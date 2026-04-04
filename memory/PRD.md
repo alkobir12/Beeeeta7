@@ -109,6 +109,12 @@
 - التسلسل النهائي الآن: **عملية → ربط → عناصر** بشكل ثابت.
 - تحقق ذاتي عبر Playwright: بعد الانتقال من العملية، يبقى تبويب الربط Active حتى اختيار الحساب.
 
+### سجل الحركات للعميل/المورد مع داخل/خارج وربط الزيارة (04 Apr 2026)
+- تم إصلاح ظهور الدفعات المقدمة في سجل حركات العميل عبر fallback ربط `vehicle -> customer` عند غياب `partner_id`.
+- تم توحيد سجل الحركات للعميل والمورد مع حقول: `flow`, `flowLabel`, `visitId`, `vehicleId`.
+- الواجهة في العملاء/الموردين تعرض الآن بوضوح: نوع التدفق (**داخل/خارج**) + معرف الزيارة لكل حركة.
+- نتيجة التحقق: `iteration_48.json` نجاح Backend 13/13 + Frontend 100%.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -717,3 +723,4 @@
 | 04 Apr 2026 | Matched Operations create block to POS-like tabbed UX while preserving logic, verified by `iteration_46` |
 | 04 Apr 2026 | Added auto-advance flow between Operations create tabs (type/date → linking, account → items), verified by `iteration_47` |
 | 04 Apr 2026 | Fixed tab sequence to prevent skipping linking step before manual account selection |
+| 04 Apr 2026 | Fixed customer/supplier movement ledger with flow in/out + visit linkage and vehicle-customer fallback, verified by `iteration_48` |

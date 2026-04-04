@@ -68,6 +68,20 @@ const PAYMENT_METHOD_OPTIONS = [
 ];
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
+const ACCOUNT_GROUP_LABELS = new Set([
+  'الأصول',
+  'الأصول المتداولة',
+  'الخصوم',
+  'حقوق الملكية',
+  'الإيرادات',
+  'المصروفات',
+  'assets',
+  'current assets',
+  'liabilities',
+  'equity',
+  'revenue',
+  'expenses',
+]);
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -435,16 +449,37 @@ const Operations = () => {
     () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
     [accounts]
   );
-  const filteredAccounts = useMemo(() => (
-    accounts.filter((account) => {
+  const filteredAccounts = useMemo(() => {
+    const typeScoped = accounts.filter((account) => {
       const accountType = String(account?.type || '').toLowerCase();
       if (SALE_LIKE_TYPES.has(form.type)) return accountType === 'revenue';
       if (PURCHASE_LIKE_TYPES.has(form.type)) return ['expense', 'asset', 'liability'].includes(accountType);
       if (form.type === 'expense') return ['expense', 'asset'].includes(accountType);
       if (form.type === 'payment_order') return ['asset', 'liability', 'expense'].includes(accountType);
       return true;
-    })
-  ), [accounts, form.type]);
+    });
+
+    const cleaned = typeScoped.filter((account) => {
+      const accountId = String(account?.id || account?.code || '').trim();
+      const accountName = normalizeText(account?.name_ar || account?.name);
+      const accountCode = normalizeAccountCode(account?.code || accountId);
+
+      const isGroupLabel = ACCOUNT_GROUP_LABELS.has(accountName);
+      const isPartnerSubAccount =
+        accountId.startsWith('acc-customer-')
+        || accountId.startsWith('acc-supplier-')
+        || accountCode.startsWith('1103')
+        || accountCode.startsWith('2101')
+        || accountName.startsWith('عميل -')
+        || accountName.startsWith('مورد -')
+        || accountName.includes('حساب العملاء')
+        || accountName.includes('حساب الموردين');
+
+      return !(isGroupLabel || isPartnerSubAccount);
+    });
+
+    return cleaned.length > 0 ? cleaned : typeScoped;
+  }, [accounts, form.type]);
   const selectedAccountingAccount = useMemo(
     () => accounts.find((account) => String(account.id || account.code) === String(form.accountingAccountId || '')) || null,
     [accounts, form.accountingAccountId]

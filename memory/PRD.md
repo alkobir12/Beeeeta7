@@ -79,6 +79,12 @@
 - تم الحفاظ الكامل على المنطق الوظيفي (بيع/شراء/عملية مباشرة، إضافة/حذف بنود، تحديث القوائم، الحسابات).
 - نتيجة التحقق: `iteration_43.json` نجاح Frontend 100% على Desktop + Mobile.
 
+### ترقية POS إلى نظام Liquid أقوى للجوال (04 Apr 2026)
+- تم تفعيل نمط Liquid بصريًا داخل POS (خلفيات متدرجة + Glass + Glow + عناصر لمس أكبر).
+- تم تحسين المودال للجوال إلى Fullscreen (`100vw/100dvh`) مع حقول أكبر وSticky Actions عملية.
+- تم إصلاح مشكلة الـ horizontal overflow في صفحة `/parts` على الجوال (قياس فعلي: `overflow_px=0`).
+- نتيجة التحقق الذاتي: mobile overflow قبل/بعد = 0، وPOS يعمل دون كسر.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -682,3 +688,4 @@
 | 03 Apr 2026 | Updated operation types to 6 curated types with required-field logic + return-type backend support, verified by `iteration_41` |
 | 03 Apr 2026 | Added debt follow-up center (`/debts-followup`) + editable WhatsApp preview and bulk send, verified by `iteration_42` |
 | 04 Apr 2026 | Redesigned inventory POS modal with tabbed responsive UX + reduced repeated data loading, verified by `iteration_43` |
+| 04 Apr 2026 | Upgraded POS to stronger Liquid mobile-first UI + fixed `/parts` mobile horizontal overflow (0px overflow) |

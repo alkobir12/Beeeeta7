@@ -867,7 +867,7 @@ const PartsInventory = () => {
   const isSelectedTransactionRakan = isRakanCode(selectedTransactionAccount?.code || selectedAccountId);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col gap-2">
@@ -877,10 +877,10 @@ const PartsInventory = () => {
         <div className="px-4 py-2 rounded-lg bg-white/10 text-sm text-white" data-testid="inventory-date-badge">
           {currentDate}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button
             onClick={() => openTransactionModal()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
             data-testid="inventory-pos-button"
           >
             نقطة بيع
@@ -899,7 +899,7 @@ const PartsInventory = () => {
               <Button
                 variant="outline"
                 asChild
-                className="cursor-pointer bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                className="cursor-pointer bg-green-50 text-green-700 hover:bg-green-100 border-green-200 w-full sm:w-auto"
                 data-testid="parts-import-button"
               >
                 <span>
@@ -914,7 +914,7 @@ const PartsInventory = () => {
             <DialogTrigger asChild>
               <Button
                 onClick={() => { resetForm(); setIsDialogOpen(true); }}
-                className="apple-button"
+                className="apple-button w-full sm:w-auto"
                 data-testid="parts-add-button"
               >
                 <Plus className="ml-2" size={18} />

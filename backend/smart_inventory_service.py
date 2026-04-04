@@ -5,7 +5,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from supabase_service import SupabaseService
 
@@ -324,6 +324,120 @@ class SmartInventoryService:
                     item[key] = self._to_iso(item.get(key))
             normalized.append(item)
         return normalized
+
+    async def _get_inventory_totals_reset_at(self) -> Optional[datetime]:
+        key = "inventory_totals_reset_at"
+
+        if self.provider == "supabase":
+            try:
+                if self.supabase and self.supabase.client and not self.supabase.mock_mode:
+                    res = (
+                        self.supabase.client.table("workshop_settings")
+                        .select(key)
+                        .eq("id", "app_settings")
+                        .limit(1)
+                        .execute()
+                    )
+                    row = (res.data or [None])[0]
+                    parsed = self._parse_date((row or {}).get(key))
+                    if parsed:
+                        if parsed.tzinfo is None:
+                            parsed = parsed.replace(tzinfo=timezone.utc)
+                        return parsed
+            except Exception:
+                pass
+
+            settings_rows = self._mem_read("settings")
+            if settings_rows:
+                parsed = self._parse_date(settings_rows[0].get(key))
+                if parsed:
+                    if parsed.tzinfo is None:
+                        parsed = parsed.replace(tzinfo=timezone.utc)
+                    return parsed
+            return None
+
+        if self.provider == "memory" or self.db is None:
+            settings_rows = self._mem_read("settings")
+            if settings_rows:
+                parsed = self._parse_date(settings_rows[0].get(key))
+                if parsed:
+                    if parsed.tzinfo is None:
+                        parsed = parsed.replace(tzinfo=timezone.utc)
+                    return parsed
+            return None
+
+        row = await self.db.settings.find_one({"id": "app_settings"}, {"_id": 0, key: 1})
+        parsed = self._parse_date((row or {}).get(key))
+        if parsed and parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+
+    async def reset_inventory_totals_archive(self) -> Dict[str, Any]:
+        reset_at = datetime.now(timezone.utc)
+        payload = {
+            "id": "app_settings",
+            "inventory_totals_reset_at": reset_at.isoformat(),
+            "updatedAt": reset_at.isoformat(),
+        }
+
+        if self.provider == "supabase":
+            try:
+                if self.supabase and self.supabase.client and not self.supabase.mock_mode:
+                    (
+                        self.supabase.client.table("workshop_settings")
+                        .upsert(payload, on_conflict="id")
+                        .execute()
+                    )
+            except Exception:
+                pass
+
+            settings_rows = self._mem_read("settings")
+            settings_doc = settings_rows[0] if settings_rows else {"id": "app_settings"}
+            settings_doc.update(payload)
+            self._mem_write("settings", [settings_doc])
+            return {
+                "status": "ok",
+                "totals_reset_at": reset_at.isoformat(),
+                "archive_mode": "enabled",
+            }
+
+        if self.provider == "memory" or self.db is None:
+            settings_rows = self._mem_read("settings")
+            settings_doc = settings_rows[0] if settings_rows else {"id": "app_settings"}
+            settings_doc.update(payload)
+            self._mem_write("settings", [settings_doc])
+            return {
+                "status": "ok",
+                "totals_reset_at": reset_at.isoformat(),
+                "archive_mode": "enabled",
+            }
+
+        await self.db.settings.update_one(
+            {"id": "app_settings"},
+            {"$set": payload},
+            upsert=True,
+        )
+        return {
+            "status": "ok",
+            "totals_reset_at": reset_at.isoformat(),
+            "archive_mode": "enabled",
+        }
+
+    async def _filter_operations_by_reset_cutoff(
+        self, operations: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], Optional[datetime]]:
+        cutoff = await self._get_inventory_totals_reset_at()
+        if not cutoff:
+            return operations, None
+
+        filtered = []
+        for op in operations:
+            op_date = self._operation_date(op)
+            if op_date.tzinfo is None:
+                op_date = op_date.replace(tzinfo=timezone.utc)
+            if op_date >= cutoff:
+                filtered.append(op)
+        return filtered, cutoff
 
     async def list_business_accounts(self) -> List[Dict[str, Any]]:
         if self.provider == "supabase":
@@ -801,6 +915,7 @@ class SmartInventoryService:
     async def get_control_panel(self, days: int = 30) -> Dict[str, Any]:
         parts = await self.list_parts()
         operations = await self.list_operations()
+        operations, totals_reset_at = await self._filter_operations_by_reset_cutoff(operations)
         backorders = await self.list_backorders()
 
         days = max(7, min(days, 365))
@@ -964,6 +1079,7 @@ class SmartInventoryService:
                 "inventory_retail_value": round(
                     sum(p.quantity * p.selling_price for p in parts), 2
                 ),
+                "totals_reset_at": totals_reset_at.isoformat() if totals_reset_at else None,
                 "low_stock_count": len(
                     [p for p in parts if p.quantity <= p.min_quantity and p.quantity > 0]
                 ),
@@ -1733,6 +1849,7 @@ class SmartInventoryService:
 
         parts = await self.list_parts()
         operations = await self.list_operations()
+        operations, totals_reset_at = await self._filter_operations_by_reset_cutoff(operations)
         chart_accounts = await self.list_chart_accounts()
         business_accounts = await self.list_business_accounts()
 
@@ -1826,6 +1943,7 @@ class SmartInventoryService:
         return {
             **current_summary,
             "period_days": days,
+            "totals_reset_at": totals_reset_at.isoformat() if totals_reset_at else None,
             "period_comparison": comparison,
             "insights": insights,
         }

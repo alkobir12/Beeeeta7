@@ -80,6 +80,7 @@ const PartsDashboard = () => {
   const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
   const [selectedExpenseCategory, setSelectedExpenseCategory] = useState('all');
   const [savingBackorder, setSavingBackorder] = useState(false);
+  const [resettingTotals, setResettingTotals] = useState(false);
   const [partsList, setPartsList] = useState([]);
   const [formData, setFormData] = useState({
     part_id: '',
@@ -272,6 +273,23 @@ const PartsDashboard = () => {
     }
   };
 
+  const handleResetInventoryTotals = async () => {
+    const confirmed = window.confirm('سيتم إعادة ضبط إجمالي المبيعات والمصروفات في لوحة القطع وأرشفة العمليات السابقة. هل تريد المتابعة؟');
+    if (!confirmed) return;
+
+    setResettingTotals(true);
+    try {
+      await api.post('/inventory/reset-totals');
+      await Promise.all([
+        loadControlPanel(),
+        loadRakanAnalytics(),
+        loadWorkshopAccountStats(),
+      ]);
+    } finally {
+      setResettingTotals(false);
+    }
+  };
+
   useEffect(() => {
     loadControlPanel();
     loadRakanAnalytics();
@@ -375,8 +393,25 @@ const PartsDashboard = () => {
           >
             <RefreshCw size={16} className="ml-1" /> تحديث
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="bg-rose-500/15 text-rose-100 border-rose-300/30"
+            onClick={handleResetInventoryTotals}
+            disabled={resettingTotals}
+            data-testid="parts-control-reset-totals-button"
+          >
+            {resettingTotals ? <Loader2 size={16} className="ml-1 animate-spin" /> : null}
+            إعادة ضبط الإجماليات
+          </Button>
         </div>
       </div>
+
+      {(overview?.totals_reset_at || rakanAnalytics?.totals_reset_at) && (
+        <div className="glass-card p-3 text-xs text-amber-200" data-testid="parts-control-reset-totals-note">
+          أرشيف العمليات السابقة مفعل من تاريخ: {new Date(overview?.totals_reset_at || rakanAnalytics?.totals_reset_at).toLocaleString('ar-SA')}
+        </div>
+      )}
 
       {loadingWorkshopAccountStats ? (
         <div className="glass-card p-5 text-slate-300 flex items-center gap-2" data-testid="parts-control-workshop-account-loading">

@@ -1,7 +1,7 @@
-{
-  "printDefaults": {
-    "theme": "أزرق",
-    "style": "حديث",
-    "tax_rate": 0
+[
+  {
+    "id": "app_settings",
+    "inventory_totals_reset_at": "2026-04-04T22:40:24.971631+00:00",
+    "updatedAt": "2026-04-04T22:40:24.971631+00:00"
   }
-}
+]

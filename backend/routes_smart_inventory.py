@@ -49,6 +49,12 @@ async def get_rakan_inventory_analytics(days: int = Query(default=30, ge=7, le=3
     return await service.get_rakan_analytics(days=days)
 
 
+@router.post("/reset-totals")
+async def reset_inventory_totals_to_archive():
+    service = SmartInventoryService(db)
+    return await service.reset_inventory_totals_archive()
+
+
 @router.get("/backorders")
 async def list_backorders(status: Optional[BackorderStatus] = None):
     service = SmartInventoryService(db)

@@ -280,75 +280,39 @@ const Operations = () => {
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
     queryFn: async () => {
-      const [chartAccRes, ledgerAccountsRes] = await Promise.all([
-        financeAPI.getChartOfAccounts(),
-        axios.get(`${API_URL}/accounts`),
-      ]);
-
-      let accountsData = [];
-      if (chartAccRes?.data) {
-        if (chartAccRes.data.success && Array.isArray(chartAccRes.data.data)) {
-          accountsData = chartAccRes.data.data;
-        } else if (Array.isArray(chartAccRes.data.data)) {
-          accountsData = chartAccRes.data.data;
-        } else if (Array.isArray(chartAccRes.data)) {
-          accountsData = chartAccRes.data;
-        } else if (chartAccRes.data.accounts && Array.isArray(chartAccRes.data.accounts)) {
-          accountsData = chartAccRes.data.accounts;
+      console.log('[accountsQuery] Starting to fetch accounts...');
+      
+      try {
+        // Try to fetch accounts from the simpler /api/accounts endpoint first
+        const ledgerAccountsRes = await axios.get(`${API_URL}/accounts`, { timeout: 30000 });
+        console.log('[accountsQuery] Accounts API completed', { length: ledgerAccountsRes?.data?.length || 0 });
+        
+        const ledgerAccounts = Array.isArray(ledgerAccountsRes?.data) ? ledgerAccountsRes.data : [];
+        
+        // If we got accounts, return them directly
+        if (ledgerAccounts.length > 0) {
+          const unique = [];
+          const seen = new Set();
+          ledgerAccounts.forEach((account) => {
+            const key = normalizeText(account?.id || account?.code || account?.name);
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            unique.push({
+              ...account,
+              name_ar: account.name || account.name_ar || '',
+            });
+          });
+          console.log('[accountsQuery] Returning', unique.length, 'accounts');
+          return unique;
         }
+        
+        return [];
+      } catch (err) {
+        console.error('[accountsQuery] Failed to fetch accounts:', err?.message || err);
+        return [];
       }
-
-      const ledgerAccounts = Array.isArray(ledgerAccountsRes?.data) ? ledgerAccountsRes.data : [];
-      const normalizeId = (value) => normalizeText(value);
-      const byCode = new Map(
-        ledgerAccounts
-          .map((account) => [normalizeAccountCode(account?.code), account])
-          .filter(([key]) => key)
-      );
-      const byId = new Map(
-        ledgerAccounts
-          .map((account) => [normalizeId(account?.id), account])
-          .filter(([key]) => key)
-      );
-
-      const sourceAccounts = (accountsData && accountsData.length) ? accountsData : ledgerAccounts;
-      const merged = [];
-
-      sourceAccounts.forEach((account) => {
-        const accountId = String(account?.id || '').trim();
-        const accountCode = normalizeAccountCode(account?.code || accountId);
-        const canonical = byCode.get(accountCode) || byId.get(normalizeId(accountId));
-        const mergedAccount = {
-          ...account,
-          ...(canonical || {}),
-          id: canonical?.id || account?.id,
-          code: canonical?.code || account?.code,
-          type: canonical?.type || account?.type,
-          name: canonical?.name || account?.name_ar || account?.name || '',
-          name_ar: canonical?.name || account?.name_ar || account?.name || '',
-        };
-
-        const displayName = String(mergedAccount?.name_ar || mergedAccount?.name || '').trim();
-        if (!displayName) return;
-        if (UUID_LIKE_REGEX.test(displayName)) return;
-
-        if (canonical || !accountsData.length) {
-          merged.push(mergedAccount);
-        }
-      });
-
-      const unique = [];
-      const seen = new Set();
-      merged.forEach((account) => {
-        const key = normalizeText(account?.id || account?.code || account?.name);
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        unique.push(account);
-      });
-
-      return unique;
     },
-    enabled: isDeferredDataEnabled,
+    enabled: true,
     ...freshQueryOptions,
   });
 
@@ -358,7 +322,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/parts`);
       return res.data || [];
     },
-    enabled: isDeferredDataEnabled,
+    enabled: true,
     ...freshQueryOptions,
   });
 
@@ -444,7 +408,7 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/biz-accounts`);
       return res.data || [];
     },
-    enabled: isDeferredDataEnabled,
+    enabled: true,
     ...freshQueryOptions,
   });
 
@@ -485,6 +449,7 @@ const Operations = () => {
   });
 
   const accounts = accountsQuery.data || [];
+  const accountsLoading = accountsQuery.isLoading || accountsQuery.isFetching;
   const bizAccounts = bizAccountsQuery.data || [];
   const rakanBizAccount = useMemo(
     () => bizAccounts.find((account) => isRakanBusinessAccount(account)) || null,
@@ -765,6 +730,7 @@ const Operations = () => {
   }, [selectedBusinessAccount]);
 
   useEffect(() => {
+    if (accountsLoading) return;
     if (!filteredAccounts.length) {
       setForm((prev) => {
         if (!prev.accountingAccountId) return prev;
@@ -780,7 +746,7 @@ const Operations = () => {
         return { ...prev, accountingAccountId: nextId };
       });
     }
-  }, [filteredAccounts, form.accountingAccountId]);
+  }, [filteredAccounts, form.accountingAccountId, accountsLoading]);
 
   useEffect(() => {
     if (!form.accountingAccountId) return;
@@ -2148,7 +2114,9 @@ const Operations = () => {
                         data-testid="operation-account-select"
                       >
                         <option value="">{t('operations.select_account')}</option>
-                        {Array.isArray(filteredAccounts) ? (
+                        {accountsLoading ? (
+                          <option value="">{t('operations.loading_accounts')}</option>
+                        ) : Array.isArray(filteredAccounts) ? (
                           filteredAccounts.length > 0 ? (
                             filteredAccounts.map(a => (
                               <option key={a.id || a.code} value={a.id || a.code}>
@@ -2158,9 +2126,7 @@ const Operations = () => {
                           ) : (
                             <option value="">{t('operations.no_accounts')}</option>
                           )
-                        ) : (
-                          <option value="">{t('operations.loading_accounts')}</option>
-                        )}
+                        ) : null}
                       </select>
                     </div>
                   </div>

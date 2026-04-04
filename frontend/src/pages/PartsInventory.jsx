@@ -115,9 +115,6 @@ const PartsInventory = () => {
   useEffect(() => { loadParts(); }, []);
 
   useEffect(() => {
-    loadVehicles();
-    loadCustomers();
-    loadSuppliers();
     loadAccounts();
     loadBusinessAccounts();
   }, []);
@@ -128,22 +125,20 @@ const PartsInventory = () => {
 
   useEffect(() => {
     if (showTransactionModal) {
-      loadModalParts();
-      loadAccounts();
-      loadBusinessAccounts();
+      if (!modalParts.length) loadModalParts();
+      if (!accounts.length) loadAccounts();
+      if (!businessAccounts.length) loadBusinessAccounts();
       if (transactionType === 'sale') {
-        loadCustomers();
+        if (!customers.length) loadCustomers();
       } else if (transactionType === 'purchase') {
-        loadSuppliers();
+        if (!suppliers.length) loadSuppliers();
       } else {
-        loadCustomers();
-        loadSuppliers();
+        if (!customers.length) loadCustomers();
+        if (!suppliers.length) loadSuppliers();
       }
-      if (saleMode === 'vehicle') {
-        loadVehicles();
-      }
+      if (saleMode === 'vehicle' && !vehicles.length) loadVehicles();
     }
-  }, [showTransactionModal, transactionType, saleMode]);
+  }, [showTransactionModal, transactionType, saleMode, modalParts.length, accounts.length, businessAccounts.length, customers.length, suppliers.length, vehicles.length]);
 
   // Define accountOptions early so useEffects can reference it
   const accountOptions = useMemo(() => {
@@ -170,17 +165,6 @@ const PartsInventory = () => {
     if (transactionType !== 'sale') {
       setSaleMode('instant');
       setTransactionVehicleId('');
-    }
-    if (showTransactionModal) {
-      loadAccounts();
-      if (transactionType === 'sale') {
-        loadCustomers();
-      } else if (transactionType === 'purchase') {
-        loadSuppliers();
-      } else {
-        loadCustomers();
-        loadSuppliers();
-      }
     }
     setTransactionItems(prev => prev.map(item => {
       if (!item.partId) return item;

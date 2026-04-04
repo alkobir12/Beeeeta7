@@ -15,6 +15,7 @@ import OperationDetailsModal from '../components/OperationDetailsModal';
 import OperationCard from '../components/OperationCard';
 import OperationDeleteConfirmDialog from '../components/OperationDeleteConfirmDialog';
 import QuickPrintDialog from '../components/QuickPrintDialog';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resolveBackendBase } from '../utils/backendBase';
@@ -220,6 +221,7 @@ const Operations = () => {
   const [expandedOperationId, setExpandedOperationId] = useState(null);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [printDialogConfig, setPrintDialogConfig] = useState(null);
+  const [createFormTab, setCreateFormTab] = useState('operation');
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -1328,6 +1330,30 @@ const Operations = () => {
   const isPurchaseLikeType = PURCHASE_LIKE_TYPES.has(form.type);
   const showVehicleLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
   const showCustomerLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
+  const canMoveToLinkingTab = Boolean(form.type && form.date);
+  const canMoveToItemsTab = Boolean(form.accountingAccountId);
+
+  const goToNextCreateTab = () => {
+    if (createFormTab === 'operation') {
+      if (!canMoveToLinkingTab) return;
+      setCreateFormTab('linking');
+      return;
+    }
+    if (createFormTab === 'linking') {
+      if (!canMoveToItemsTab) return;
+      setCreateFormTab('items');
+    }
+  };
+
+  const goToPrevCreateTab = () => {
+    if (createFormTab === 'items') {
+      setCreateFormTab('linking');
+      return;
+    }
+    if (createFormTab === 'linking') {
+      setCreateFormTab('operation');
+    }
+  };
 
   // Theme-based styles (align with dashboard glass look)
   const styles = {
@@ -1506,6 +1532,23 @@ const Operations = () => {
             font-weight: 700;
             box-shadow: 0 4px 18px rgba(94,184,196,.35);
           }
+          .ops-pos-tabs [data-slot="tabs-list"] {
+            border-radius: 16px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,.16);
+            background: rgba(255,255,255,.05);
+          }
+          .ops-pos-tabs [data-slot="tabs-trigger"] {
+            min-height: 38px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: rgba(226,232,240,.85);
+          }
+          .ops-pos-tabs [data-slot="tabs-trigger"][data-state="active"] {
+            background: rgba(94,184,196,.2);
+            color: #cffafe;
+            box-shadow: 0 0 0 1px rgba(94,184,196,.35);
+          }
           @media (max-width: 920px) {
             .ops-input-row-grid { grid-template-columns: 1fr 1fr; }
           }
@@ -1580,8 +1623,15 @@ const Operations = () => {
             </button>
           </div>
 
-          <form ref={formRef} onSubmit={submit} className="space-y-6">
-            <div className="space-y-5">
+          <form ref={formRef} onSubmit={submit} className="space-y-4">
+            <Tabs value={createFormTab} onValueChange={setCreateFormTab} className="ops-pos-tabs w-full" data-testid="operation-create-tabs">
+              <TabsList className="grid grid-cols-3">
+                <TabsTrigger value="operation" data-testid="operation-create-tab-operation">1) العملية</TabsTrigger>
+                <TabsTrigger value="linking" data-testid="operation-create-tab-linking">2) الربط</TabsTrigger>
+                <TabsTrigger value="items" data-testid="operation-create-tab-items">3) العناصر</TabsTrigger>
+              </TabsList>
+
+            <div className={createFormTab === 'operation' ? 'space-y-5 mt-4' : 'hidden'}>
               {/* Section 1: Basic Info */}
               <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
                 <div className="ops-section-title"><span className="ops-section-icon">📋</span><span>{t('common.basic_info') || 'المعلومات الأساسية'}</span></div>
@@ -1670,6 +1720,9 @@ const Operations = () => {
                 </div>
               </div>
 
+              </div>
+
+              <div className={createFormTab === 'linking' ? 'space-y-5 mt-4' : 'hidden'}>
               {/* Section 2: Linking */}
               <div className="ops-glass-section rounded-2xl border px-4 py-4" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
                 <div className="ops-section-title"><span className="ops-section-icon">🔗</span><span>{t('common.linking') || 'الربط'}</span></div>
@@ -2036,6 +2089,9 @@ const Operations = () => {
                 </div>
               </div>
 
+              </div>
+
+            <div className={createFormTab === 'items' ? 'space-y-5 mt-4' : 'hidden'}>
             {/* OCR Invoice */}
             <div className="ops-glass-section rounded-2xl p-4 border" style={{ backgroundColor: styles.tableBg, borderColor: styles.cardBorder }}>
               <div className="ops-scanner-bar">
@@ -2359,33 +2415,59 @@ const Operations = () => {
               )}
             </div>
 
-            <div className="flex flex-col items-end pt-4 gap-2">
-              <div className="text-xs" style={{ color: styles.textMuted }}>
-                {t('operations.items_count') || 'العناصر'}: {form.items.length}
+            <div className="sticky bottom-0 z-10 rounded-xl border border-white/15 bg-slate-950/92 backdrop-blur px-3 py-3 mt-4" data-testid="operation-create-footer-actions">
+              <div className="flex flex-wrap gap-2 items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2.5 rounded-xl border border-white/20 text-slate-200"
+                    onClick={goToPrevCreateTab}
+                    disabled={createFormTab === 'operation'}
+                    data-testid="operation-create-prev-step"
+                  >
+                    السابق
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2.5 rounded-xl border border-cyan-300/40 text-cyan-100 disabled:opacity-50"
+                    onClick={goToNextCreateTab}
+                    disabled={(createFormTab === 'operation' && !canMoveToLinkingTab) || (createFormTab === 'linking' && !canMoveToItemsTab) || createFormTab === 'items'}
+                    data-testid="operation-create-next-step"
+                  >
+                    التالي
+                  </button>
+                  <div className="text-xs" style={{ color: styles.textMuted }} data-testid="operation-create-items-count">
+                    {t('operations.items_count') || 'العناصر'}: {form.items.length}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitDisabled}
+                  className="apple-button min-h-11 px-6 rounded-xl text-base w-full sm:w-auto"
+                  data-testid="operation-save-button"
+                  aria-busy={isSaving}
+                >
+                  {isSaving ? 'جارٍ الحفظ...' : t('operations.submit')}
+                </button>
               </div>
-              <button 
-                type="submit" 
-                disabled={submitDisabled}
-                className="apple-button w-full sm:w-auto px-8 py-2 text-base"
-                data-testid="operation-save-button"
-                aria-busy={isSaving}
-              >
-                {isSaving ? 'جارٍ الحفظ...' : t('operations.submit')}
-              </button>
 
-              {form.items.length === 0 && (
-                <div className="text-xs text-slate-500">{t('operations.items_required') || 'أضف عنصر واحد على الأقل قبل الحفظ'}</div>
-              )}
+              <div className="mt-2 space-y-1 text-xs text-slate-500">
+                {form.items.length === 0 && (
+                  <div>{t('operations.items_required') || 'أضف عنصر واحد على الأقل قبل الحفظ'}</div>
+                )}
 
-              {missingVehicleForVehicleKind && (
-                <div className="text-xs text-slate-500">{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
-              )}
+                {missingVehicleForVehicleKind && (
+                  <div>{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
+                )}
 
-              {missingCustomerOrVehicleForRakan && (
-                <div className="text-xs text-slate-500">حدد عميل أو مركبة لعملية قطع راكان قبل الحفظ</div>
-              )}
+                {missingCustomerOrVehicleForRakan && (
+                  <div>حدد عميل أو مركبة لعملية قطع راكان قبل الحفظ</div>
+                )}
+              </div>
             </div>
             </div>
+            </Tabs>
           </form>
           </div>
         </div>

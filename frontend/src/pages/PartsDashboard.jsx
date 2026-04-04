@@ -153,9 +153,17 @@ const PartsDashboard = () => {
   const loadWorkshopAccountStats = async () => {
     setLoadingWorkshopAccountStats(true);
     try {
+      let cachedOperations = [];
+      try {
+        const cached = localStorage.getItem('operationsCache:all');
+        cachedOperations = cached ? JSON.parse(cached) : [];
+      } catch (e) {
+        cachedOperations = [];
+      }
+
       const [accountsRes, operationsRes] = await Promise.all([
         financeAPI.getChartOfAccounts(),
-        operationsAPI.list({ limit: 400 }),
+        cachedOperations.length ? Promise.resolve({ data: cachedOperations }) : operationsAPI.list({ limit: 120 }),
       ]);
 
       const accountsPayload = accountsRes?.data;

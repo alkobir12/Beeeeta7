@@ -92,6 +92,68 @@ const PartsDashboard = () => {
     note: '',
   });
 
+  const buildWorkshopAccountCards = (accounts, operations) => {
+    const periodStart = Date.now() - (Number(daysFilter || 30) * 24 * 60 * 60 * 1000);
+    return WORKSHOP_ACCOUNT_TARGETS.map((target) => {
+      const account = accounts.find((acc) => {
+        const haystack = [acc?.name, acc?.name_ar, acc?.code].map((v) => normalizeText(v)).join(' ');
+        return target.keywords.some((keyword) => haystack.includes(normalizeText(keyword)));
+      });
+
+      if (!account) {
+        return {
+          ...target,
+          accountFound: false,
+          accountName: 'غير موجود',
+          balance: 0,
+          periodOpsCount: 0,
+          periodAmount: 0,
+          lastMovementDate: null,
+        };
+      }
+
+      const accountIds = new Set([
+        normalizeText(account?.id),
+        normalizeText(account?.code),
+        normalizeText(normalizeAccountCode(account?.code)),
+      ].filter(Boolean));
+
+      const matchedOps = operations.filter((op) => {
+        const possibleIds = [
+          op?.accountingAccountId,
+          op?.accountId,
+          op?.account_code,
+          normalizeAccountCode(op?.accountingAccountId),
+          normalizeAccountCode(op?.accountId),
+          normalizeAccountCode(op?.account_code),
+        ].map((v) => normalizeText(v)).filter(Boolean);
+        return possibleIds.some((id) => accountIds.has(id));
+      });
+
+      const periodOps = matchedOps.filter((op) => {
+        const rawDate = op?.date || op?.createdAt || op?.created_at;
+        const ts = rawDate ? new Date(rawDate).getTime() : NaN;
+        return Number.isFinite(ts) && ts >= periodStart;
+      });
+
+      const sortedOps = [...matchedOps].sort((a, b) => {
+        const aTs = new Date(a?.date || a?.createdAt || a?.created_at || 0).getTime();
+        const bTs = new Date(b?.date || b?.createdAt || b?.created_at || 0).getTime();
+        return bTs - aTs;
+      });
+
+      return {
+        ...target,
+        accountFound: true,
+        accountName: account?.name_ar || account?.name || account?.code || target.title,
+        balance: Number(account?.balance || 0),
+        periodOpsCount: periodOps.length,
+        periodAmount: periodOps.reduce((sum, op) => sum + Number(op?.total || op?.amount || 0), 0),
+        lastMovementDate: sortedOps[0]?.date || sortedOps[0]?.createdAt || sortedOps[0]?.created_at || null,
+      };
+    });
+  };
+
   const loadControlPanel = async () => {
     setLoadingAnalytics(true);
     try {
@@ -152,15 +214,26 @@ const PartsDashboard = () => {
 
   const loadWorkshopAccountStats = async () => {
     setLoadingWorkshopAccountStats(true);
-    try {
-      let cachedOperations = [];
-      try {
-        const cached = localStorage.getItem('operationsCache:all');
-        cachedOperations = cached ? JSON.parse(cached) : [];
-      } catch (e) {
-        cachedOperations = [];
-      }
 
+    const readCachedArray = (key) => {
+      try {
+        const raw = localStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    };
+
+    const cachedOperations = readCachedArray('operationsCache:all');
+    const cachedAccounts = readCachedArray('chartAccountsCache:all');
+
+    if (cachedAccounts.length) {
+      setWorkshopAccountStats(buildWorkshopAccountCards(cachedAccounts, cachedOperations));
+      setLoadingWorkshopAccountStats(false);
+    }
+
+    try {
       const [accountsRes, operationsRes] = await Promise.all([
         financeAPI.getChartOfAccounts(),
         cachedOperations.length ? Promise.resolve({ data: cachedOperations }) : operationsAPI.list({ limit: 120 }),
@@ -175,80 +248,25 @@ const PartsDashboard = () => {
 
       const operationsPayload = operationsRes?.data;
       const operations = Array.isArray(operationsPayload) ? operationsPayload : [];
-      const periodStart = Date.now() - (Number(daysFilter || 30) * 24 * 60 * 60 * 1000);
+      if (accounts.length) {
+        localStorage.setItem('chartAccountsCache:all', JSON.stringify(accounts));
+      }
 
-      const cards = WORKSHOP_ACCOUNT_TARGETS.map((target) => {
-        const account = accounts.find((acc) => {
-          const haystack = [acc?.name, acc?.name_ar, acc?.code].map((v) => normalizeText(v)).join(' ');
-          return target.keywords.some((keyword) => haystack.includes(normalizeText(keyword)));
-        });
-
-        if (!account) {
-          return {
+      setWorkshopAccountStats(buildWorkshopAccountCards(accounts, operations));
+    } catch (error) {
+      if (!cachedAccounts.length) {
+        setWorkshopAccountStats(
+          WORKSHOP_ACCOUNT_TARGETS.map((target) => ({
             ...target,
             accountFound: false,
-            accountName: 'غير موجود',
+            accountName: 'تعذر تحميل الحساب',
             balance: 0,
             periodOpsCount: 0,
             periodAmount: 0,
             lastMovementDate: null,
-          };
-        }
-
-        const accountIds = new Set([
-          normalizeText(account?.id),
-          normalizeText(account?.code),
-          normalizeText(normalizeAccountCode(account?.code)),
-        ].filter(Boolean));
-
-        const matchedOps = operations.filter((op) => {
-          const possibleIds = [
-            op?.accountingAccountId,
-            op?.accountId,
-            op?.account_code,
-            normalizeAccountCode(op?.accountingAccountId),
-            normalizeAccountCode(op?.accountId),
-            normalizeAccountCode(op?.account_code),
-          ].map((v) => normalizeText(v)).filter(Boolean);
-          return possibleIds.some((id) => accountIds.has(id));
-        });
-
-        const periodOps = matchedOps.filter((op) => {
-          const rawDate = op?.date || op?.createdAt || op?.created_at;
-          const ts = rawDate ? new Date(rawDate).getTime() : NaN;
-          return Number.isFinite(ts) && ts >= periodStart;
-        });
-
-        const sortedOps = [...matchedOps].sort((a, b) => {
-          const aTs = new Date(a?.date || a?.createdAt || a?.created_at || 0).getTime();
-          const bTs = new Date(b?.date || b?.createdAt || b?.created_at || 0).getTime();
-          return bTs - aTs;
-        });
-
-        return {
-          ...target,
-          accountFound: true,
-          accountName: account?.name_ar || account?.name || account?.code || target.title,
-          balance: Number(account?.balance || 0),
-          periodOpsCount: periodOps.length,
-          periodAmount: periodOps.reduce((sum, op) => sum + Number(op?.total || op?.amount || 0), 0),
-          lastMovementDate: sortedOps[0]?.date || sortedOps[0]?.createdAt || sortedOps[0]?.created_at || null,
-        };
-      });
-
-      setWorkshopAccountStats(cards);
-    } catch (error) {
-      setWorkshopAccountStats(
-        WORKSHOP_ACCOUNT_TARGETS.map((target) => ({
-          ...target,
-          accountFound: false,
-          accountName: 'تعذر تحميل الحساب',
-          balance: 0,
-          periodOpsCount: 0,
-          periodAmount: 0,
-          lastMovementDate: null,
-        }))
-      );
+          }))
+        );
+      }
     } finally {
       setLoadingWorkshopAccountStats(false);
     }

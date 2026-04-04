@@ -1355,6 +1355,14 @@ const Operations = () => {
     }
   };
 
+  useEffect(() => {
+    if (createFormTab === 'linking' && canMoveToItemsTab) {
+      const timer = window.setTimeout(() => setCreateFormTab('items'), 140);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [createFormTab, canMoveToItemsTab]);
+
   // Theme-based styles (align with dashboard glass look)
   const styles = {
     bg: 'transparent',
@@ -1710,6 +1718,9 @@ const Operations = () => {
                             paymentStatus: selectedType === 'payment_order' ? 'paid' : form.paymentStatus,
                             paymentAmount: selectedType === 'payment_order' ? '' : form.paymentAmount,
                           });
+                          if (selectedType && form.date) {
+                            window.setTimeout(() => setCreateFormTab('linking'), 120);
+                          }
                         }}
                         data-testid="operation-type-select"
                       >
@@ -1725,7 +1736,12 @@ const Operations = () => {
                     <input
                       type="date"
                       value={form.date}
-                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      onChange={(e) => {
+                        setForm({ ...form, date: e.target.value });
+                        if (form.type && e.target.value) {
+                          window.setTimeout(() => setCreateFormTab('linking'), 120);
+                        }
+                      }}
                       className="apple-input"
                     />
                   </div>
@@ -2029,7 +2045,13 @@ const Operations = () => {
                       <select 
                         className="apple-input pr-10"
                         value={form.accountingAccountId} 
-                        onChange={e => setForm({ ...form, accountingAccountId: e.target.value })}
+                        onChange={e => {
+                          const nextAccountId = e.target.value;
+                          setForm({ ...form, accountingAccountId: nextAccountId });
+                          if (nextAccountId) {
+                            window.setTimeout(() => setCreateFormTab('items'), 120);
+                          }
+                        }}
                         data-testid="operation-account-select"
                       >
                         <option value="">{t('operations.select_account')}</option>

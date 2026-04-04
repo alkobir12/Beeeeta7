@@ -277,41 +277,69 @@ const Operations = () => {
     }
   }, [operationsCacheKey, operationsCacheUpdatedAtKey]);
 
+  const cachedChartAccounts = React.useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem('chartAccountsCache:all');
+      const parsed = cached ? JSON.parse(cached) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }, []);
+
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
     queryFn: async () => {
-      console.log('[accountsQuery] Starting to fetch accounts...');
-      
+      let accountsData = [];
+
       try {
-        // Try to fetch accounts from the simpler /api/accounts endpoint first
-        const ledgerAccountsRes = await axios.get(`${API_URL}/accounts`, { timeout: 30000 });
-        console.log('[accountsQuery] Accounts API completed', { length: ledgerAccountsRes?.data?.length || 0 });
-        
-        const ledgerAccounts = Array.isArray(ledgerAccountsRes?.data) ? ledgerAccountsRes.data : [];
-        
-        // If we got accounts, return them directly
-        if (ledgerAccounts.length > 0) {
-          const unique = [];
-          const seen = new Set();
-          ledgerAccounts.forEach((account) => {
-            const key = normalizeText(account?.id || account?.code || account?.name);
-            if (!key || seen.has(key)) return;
-            seen.add(key);
-            unique.push({
-              ...account,
-              name_ar: account.name || account.name_ar || '',
-            });
-          });
-          console.log('[accountsQuery] Returning', unique.length, 'accounts');
-          return unique;
-        }
-        
-        return [];
-      } catch (err) {
-        console.error('[accountsQuery] Failed to fetch accounts:', err?.message || err);
-        return [];
+        const ledgerAccountsRes = await axios.get(`${API_URL}/accounts`, { timeout: 5000 });
+        accountsData = Array.isArray(ledgerAccountsRes?.data) ? ledgerAccountsRes.data : [];
+      } catch (error) {
+        accountsData = [];
       }
+
+      if (!accountsData.length) {
+        try {
+          const chartAccRes = await financeAPI.getChartOfAccounts();
+          const chartPayload = chartAccRes?.data;
+          if (chartPayload?.success && Array.isArray(chartPayload?.data)) {
+            accountsData = chartPayload.data;
+          } else if (Array.isArray(chartPayload?.data)) {
+            accountsData = chartPayload.data;
+          } else if (Array.isArray(chartPayload)) {
+            accountsData = chartPayload;
+          } else if (Array.isArray(chartPayload?.accounts)) {
+            accountsData = chartPayload.accounts;
+          }
+        } catch (error) {
+          accountsData = [];
+        }
+      }
+
+      const unique = [];
+      const seen = new Set();
+      (Array.isArray(accountsData) ? accountsData : []).forEach((account) => {
+        const displayName = String(account?.name_ar || account?.name || '').trim();
+        if (!displayName || UUID_LIKE_REGEX.test(displayName)) return;
+        const key = normalizeText(account?.id || account?.code || displayName);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        unique.push({
+          ...account,
+          name: account?.name || account?.name_ar || displayName,
+          name_ar: account?.name_ar || account?.name || displayName,
+        });
+      });
+
+      if (typeof window !== 'undefined' && unique.length > 0) {
+        localStorage.setItem('chartAccountsCache:all', JSON.stringify(unique));
+      }
+
+      return unique;
     },
+    initialData: cachedChartAccounts.length ? cachedChartAccounts : undefined,
     enabled: true,
     ...freshQueryOptions,
   });
@@ -449,7 +477,7 @@ const Operations = () => {
   });
 
   const accounts = accountsQuery.data || [];
-  const accountsLoading = accountsQuery.isLoading || accountsQuery.isFetching;
+  const accountsLoading = (!accounts.length) && (accountsQuery.isLoading || accountsQuery.isFetching);
   const bizAccounts = bizAccountsQuery.data || [];
   const rakanBizAccount = useMemo(
     () => bizAccounts.find((account) => isRakanBusinessAccount(account)) || null,

@@ -32,6 +32,22 @@ const Login = () => {
     }
   };
 
+  const warmAccountsCache = async (API_URL) => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1500);
+      const res = await fetch(`${API_URL}/accounts`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return;
+      const accounts = await res.json();
+      if (Array.isArray(accounts) && accounts.length > 0) {
+        localStorage.setItem('chartAccountsCache:all', JSON.stringify(accounts));
+      }
+    } catch (e) {
+      // ignore warmup failures
+    }
+  };
+
   const prefetchCriticalData = () => {
     try {
       const API_URL = `${resolveBackendBase()}/api`;
@@ -80,7 +96,10 @@ const Login = () => {
       }
 
       toast({ title: 'مرحبا بك', description: `أهلا بعودتك، ${fallbackUser.name}` });
-      await warmOperationsCache(`${resolveBackendBase()}/api`);
+      await Promise.all([
+        warmOperationsCache(`${resolveBackendBase()}/api`),
+        warmAccountsCache(`${resolveBackendBase()}/api`),
+      ]);
       prefetchCriticalData();
       // لضمان الدخول بدون الحاجة لتحديث يدوي (حل لمشكلة عدم إعادة التوجيه تلقائياً)
       window.location.assign(`${window.location.origin}/`);
@@ -133,7 +152,10 @@ const Login = () => {
           localStorage.setItem('user', JSON.stringify(fallbackUser));
           window.dispatchEvent(new Event('sessionUpdated'));
           toast({ title: 'مرحباً بك', description: `أهلاً بعودتك، ${fallbackUser.name}` });
-          await warmOperationsCache(`${resolveBackendBase()}/api`);
+          await Promise.all([
+            warmOperationsCache(`${resolveBackendBase()}/api`),
+            warmAccountsCache(`${resolveBackendBase()}/api`),
+          ]);
           prefetchCriticalData();
           window.location.assign(`${window.location.origin}/`);
           return;
@@ -187,7 +209,10 @@ const Login = () => {
         title: 'مرحباً بك',
         description: `أهلاً بعودتك، ${user.name}`
       });
-      await warmOperationsCache(`${resolveBackendBase()}/api`);
+      await Promise.all([
+        warmOperationsCache(`${resolveBackendBase()}/api`),
+        warmAccountsCache(`${resolveBackendBase()}/api`),
+      ]);
       prefetchCriticalData();
       window.location.assign(`${window.location.origin}/`);
     } catch (e) {

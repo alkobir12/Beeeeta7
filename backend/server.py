@@ -1019,6 +1019,18 @@ def _normalize_partner_name(value: Any) -> str:
     return " ".join(str(value or "").strip().lower().split())
 
 
+def _parse_json_like(value: Any) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str) and value.strip():
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
 def _op_field(row: Dict[str, Any], snake: str, camel: str) -> Any:
     return row.get(snake) if row.get(snake) is not None else row.get(camel)
 
@@ -1230,6 +1242,59 @@ async def _fetch_vehicle_customer_lookup(workshop_id: Optional[str]) -> Dict[str
     return lookup
 
 
+async def _fetch_vehicle_visits_for_financials(workshop_id: Optional[str]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+
+    if DB_PROVIDER == "supabase":
+        if supabase_service.client and not supabase_service.mock_mode:
+            try:
+                q = supabase_service.client.table("vehicle_visits").select("id,vehicle_id,entry_date,created_at,notes")
+                if workshop_id:
+                    q = q.eq("workshop_id", workshop_id)
+                rows = q.execute().data or []
+            except Exception:
+                try:
+                    rows = (
+                        supabase_service.client.table("vehicle_visits")
+                        .select("id,vehicle_id,entry_date,created_at,notes")
+                        .execute()
+                        .data
+                        or []
+                    )
+                except Exception:
+                    rows = []
+    elif DB_PROVIDER == "memory":
+        rows = _mem_read("vehicle_visits") or []
+        if workshop_id:
+            rows = [
+                r
+                for r in rows
+                if str(r.get("workshopId") or r.get("workshop_id") or "") == str(workshop_id)
+            ]
+    else:
+        if db is None:
+            return []
+        query: Dict[str, Any] = {}
+        if workshop_id:
+            query["$or"] = [{"workshopId": workshop_id}, {"workshop_id": workshop_id}]
+        rows = await db.vehicle_visits.find(
+            query,
+            {
+                "_id": 0,
+                "id": 1,
+                "vehicleId": 1,
+                "vehicle_id": 1,
+                "entryDate": 1,
+                "entry_date": 1,
+                "createdAt": 1,
+                "created_at": 1,
+                "notes": 1,
+            },
+        ).to_list(5000)
+
+    return rows
+
+
 def _round_partner_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
     summary["debitBalance"] = round(_safe_float(summary.get("debitBalance")), 2)
     summary["creditBalance"] = round(_safe_float(summary.get("creditBalance")), 2)
@@ -1315,6 +1380,7 @@ async def _build_partner_financial_map(
             or payment_status in {"credit", "unpaid", "pending", "partial"}
             or paid_amount > 0
         )
+        movement_logged = False
 
         if p_type == "customer" and op_type in {"sale", "service"} and is_credit_origin:
             summary["debitBalance"] += total_amount
@@ -1339,6 +1405,68 @@ async def _build_partner_financial_map(
                     "note": movement_note,
                 },
             )
+
+    if p_type == "customer" and vehicle_customer_lookup:
+        visit_rows = await _fetch_vehicle_visits_for_financials(workshop_id)
+        for visit in visit_rows:
+            vehicle_id = str(visit.get("vehicle_id") or visit.get("vehicleId") or "").strip()
+            if not vehicle_id:
+                continue
+            customer_id = vehicle_customer_lookup.get(vehicle_id)
+            if not customer_id or customer_id not in by_id:
+                continue
+
+            notes_payload = _parse_json_like(visit.get("notes"))
+            payments = notes_payload.get("payments") if isinstance(notes_payload.get("payments"), list) else []
+            if not payments:
+                continue
+
+            summary = by_id[customer_id]
+            visit_id = str(visit.get("id") or "").strip() or f"visit-{vehicle_id}"
+            visit_date = str(visit.get("entry_date") or visit.get("entryDate") or visit.get("created_at") or visit.get("createdAt") or "")
+
+            for payment in payments:
+                payment_id = str(payment.get("id") or f"visit-pay-{visit_id}")
+                amount = _safe_float(payment.get("amount"))
+                if amount <= 0:
+                    continue
+                kind = str(payment.get("kind") or payment.get("type") or "payment").strip().lower()
+                movement_date = str(payment.get("date") or visit_date)
+
+                if kind in {"refund", "return"}:
+                    flow = "out"
+                    flow_label = "خارج"
+                    direction = "debit"
+                    label = "مرتجع دفعة"
+                    summary["debitBalance"] += amount
+                else:
+                    flow = "in"
+                    flow_label = "داخل"
+                    direction = "credit"
+                    label = "دفعة مقدمة" if kind in {"advance", "deposit"} else "دفعة"
+                    summary["creditBalance"] += amount
+                    summary["settledAmount"] += amount
+                    summary["overdueBalance"] = max(0.0, _safe_float(summary.get("overdueBalance")) - amount)
+                    summary["ajelBalance"] = max(0.0, _safe_float(summary.get("ajelBalance")) - amount)
+
+                _append_partner_movement(
+                    summary,
+                    {
+                        "id": f"visit-payment-{payment_id}",
+                        "direction": direction,
+                        "label": label,
+                        "amount": round(amount, 2),
+                        "date": movement_date,
+                        "flow": flow,
+                        "flowLabel": flow_label,
+                        "visitId": visit_id,
+                        "vehicleId": vehicle_id,
+                        "source": "visit_payment",
+                        "operationId": str(payment.get("operationId") or ""),
+                        "note": str(payment.get("note") or ""),
+                    },
+                )
+            movement_logged = True
             if paid_amount > 0:
                 summary["creditBalance"] += paid_amount
                 summary["settledAmount"] += paid_amount
@@ -1359,6 +1487,7 @@ async def _build_partner_financial_map(
                         "note": "تحصيل دفعة من العميل",
                     },
                 )
+                movement_logged = True
 
         elif p_type == "supplier" and op_type in {"purchase", "expense"} and is_credit_origin:
             summary["creditBalance"] += total_amount
@@ -1383,6 +1512,7 @@ async def _build_partner_financial_map(
                     "note": movement_note,
                 },
             )
+            movement_logged = True
             if paid_amount > 0:
                 summary["debitBalance"] += paid_amount
                 summary["settledAmount"] += paid_amount
@@ -1403,6 +1533,7 @@ async def _build_partner_financial_map(
                         "note": "دفعة سداد للمورد",
                     },
                 )
+                movement_logged = True
 
         elif op_type == "payment_order" and total_amount > 0:
             if p_type == "customer":
@@ -1425,6 +1556,7 @@ async def _build_partner_financial_map(
                         "note": movement_note,
                     },
                 )
+                movement_logged = True
             elif p_type == "supplier":
                 summary["debitBalance"] += total_amount
                 summary["settledAmount"] += total_amount
@@ -1445,6 +1577,67 @@ async def _build_partner_financial_map(
                         "note": movement_note,
                     },
                 )
+                movement_logged = True
+
+        if not movement_logged and total_amount > 0:
+            flow = "in"
+            flow_label = "داخل"
+            movement_label = "حركة مالية"
+            direction = "credit"
+
+            if p_type == "customer":
+                if op_type in {"sale", "service"}:
+                    movement_label = "دفعة" if payment_method != "credit" else "مبيعات آجل"
+                    flow = "in"
+                    flow_label = "داخل"
+                    direction = "credit" if payment_method != "credit" else "debit"
+                    if payment_method != "credit":
+                        summary["creditBalance"] += total_amount
+                        summary["settledAmount"] += total_amount
+                elif op_type in {"sale_return", "refund"}:
+                    movement_label = "مرتجع بيع"
+                    flow = "out"
+                    flow_label = "خارج"
+                    direction = "debit"
+                else:
+                    movement_label = "حركة عميل"
+            else:
+                if op_type in {"purchase", "expense"}:
+                    movement_label = "شراء نقدي" if payment_method != "credit" else "مشتريات آجل"
+                    flow = "out"
+                    flow_label = "خارج"
+                    direction = "debit" if payment_method != "credit" else "credit"
+                    if payment_method != "credit":
+                        summary["debitBalance"] += total_amount
+                        summary["settledAmount"] += total_amount
+                elif op_type in {"purchase_return"}:
+                    movement_label = "مرتجع شراء"
+                    flow = "in"
+                    flow_label = "داخل"
+                    direction = "credit"
+                else:
+                    movement_label = "حركة مورد"
+                    flow = "out"
+                    flow_label = "خارج"
+                    direction = "debit"
+
+            _append_partner_movement(
+                summary,
+                {
+                    "id": f"raw-{op_id}",
+                    "direction": direction,
+                    "label": movement_label,
+                    "amount": round(total_amount, 2),
+                    "date": movement_date,
+                    "flow": flow,
+                    "flowLabel": flow_label,
+                    "visitId": visit_id,
+                    "vehicleId": vehicle_id,
+                    "source": "operation_raw",
+                    "operationId": op_id,
+                    "note": movement_note,
+                },
+            )
 
     for entity_id, summary in by_id.items():
         by_id[entity_id] = _round_partner_summary(summary)

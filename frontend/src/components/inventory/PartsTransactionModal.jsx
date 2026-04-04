@@ -85,7 +85,59 @@ export const PartsTransactionModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[96vw] sm:w-auto max-w-5xl max-h-[92vh] overflow-y-auto border border-cyan-300/20 bg-slate-950/95 px-3 sm:px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <DialogContent className="liquid-pos w-[100vw] h-[100dvh] sm:w-auto sm:h-auto sm:max-h-[92vh] max-w-5xl overflow-y-auto border border-cyan-300/20 bg-slate-950/95 px-3 sm:px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <style>{`
+          .liquid-pos {
+            position: relative;
+            overflow-x: hidden;
+            background: radial-gradient(1200px 420px at 10% -10%, rgba(94,184,196,.22), transparent 60%), radial-gradient(900px 360px at 95% 5%, rgba(147,51,234,.18), transparent 60%), rgba(2,6,23,.95);
+          }
+          .liquid-pos::before, .liquid-pos::after {
+            content: '';
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(40px);
+            pointer-events: none;
+            animation: liquidDrift 12s ease-in-out infinite alternate;
+            opacity: .35;
+            z-index: 0;
+          }
+          .liquid-pos::before {
+            width: 180px;
+            height: 180px;
+            top: -40px;
+            right: -40px;
+            background: rgba(56,189,248,.4);
+          }
+          .liquid-pos::after {
+            width: 220px;
+            height: 220px;
+            bottom: -90px;
+            left: -70px;
+            background: rgba(168,85,247,.4);
+            animation-delay: -4s;
+          }
+          @keyframes liquidDrift {
+            from { transform: translate3d(0,0,0) scale(1); }
+            to { transform: translate3d(20px,24px,0) scale(1.08); }
+          }
+          .liquid-pos [data-slot="dialog-header"],
+          .liquid-pos [data-testid="transaction-modal-content"] {
+            position: relative;
+            z-index: 1;
+          }
+          .liquid-pos .apple-input {
+            min-height: 46px;
+            font-size: 15px;
+            border-radius: 14px;
+            border-color: rgba(255,255,255,.16);
+            background: rgba(255,255,255,.07);
+          }
+          .liquid-pos .apple-input:focus {
+            box-shadow: 0 0 0 3px rgba(94,184,196,.18);
+            border-color: rgba(94,184,196,.72);
+          }
+        `}</style>
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-100" data-testid="transaction-modal-title">نقطة البيع والعمليات المباشرة</DialogTitle>
           <DialogDescription data-testid="transaction-modal-description">
@@ -115,7 +167,7 @@ export const PartsTransactionModal = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-testid="transaction-pos-tabs">
-            <TabsList className="grid grid-cols-3 bg-white/5 border border-white/10">
+            <TabsList className="grid grid-cols-3 bg-white/5 border border-white/15 rounded-2xl p-1 h-auto">
               <TabsTrigger value="operation" data-testid="transaction-tab-operation">1) العملية</TabsTrigger>
               <TabsTrigger value="partner" data-testid="transaction-tab-partner">2) الربط</TabsTrigger>
               <TabsTrigger value="items" data-testid="transaction-tab-items">3) السلة</TabsTrigger>
@@ -123,7 +175,7 @@ export const PartsTransactionModal = ({
 
             <TabsContent value="operation" className="mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3" data-testid="transaction-type-card">
+                <div className="rounded-2xl border border-white/15 bg-white/5 p-4 space-y-3 shadow-[inset_0_1px_0_rgba(255,255,255,.14)]" data-testid="transaction-type-card">
                   <div>
                     <label className="block text-sm mb-2" data-testid="transaction-type-label">نوع العملية</label>
                     <select
@@ -165,7 +217,7 @@ export const PartsTransactionModal = ({
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4 space-y-3">
+                <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4 space-y-3 shadow-[0_0_25px_rgba(94,184,196,.15)]">
                   <p className="text-sm font-semibold text-cyan-100">خيارات البيع</p>
                   {transactionType === 'sale' ? (
                     <>
@@ -215,7 +267,7 @@ export const PartsTransactionModal = ({
 
             <TabsContent value="partner" className="mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3" data-testid="transaction-partner-card">
+                <div className="rounded-2xl border border-white/15 bg-white/5 p-4 space-y-3 shadow-[inset_0_1px_0_rgba(255,255,255,.12)]" data-testid="transaction-partner-card">
                   {!isDirect && (
                     <div>
                       <label className="block text-sm mb-2" data-testid="transaction-partner-label">{transactionType === 'sale' ? 'العميل' : 'المورد'}</label>
@@ -259,7 +311,7 @@ export const PartsTransactionModal = ({
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 space-y-2" data-testid="transaction-total-wrapper">
+                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 space-y-2 shadow-[0_0_24px_rgba(16,185,129,.12)]" data-testid="transaction-total-wrapper">
                   <p className="text-sm text-emerald-100 font-semibold">ملخص العملية</p>
                   <p className="text-sm text-slate-200">النوع: <span className="font-bold">{transactionType === 'sale' ? 'بيع' : transactionType === 'purchase' ? 'شراء' : 'مباشرة'}</span></p>
                   <p className="text-sm text-slate-200">إجمالي العملية:</p>
@@ -272,7 +324,7 @@ export const PartsTransactionModal = ({
               {!isDirect && (
                 <div className="space-y-3" data-testid="transaction-items-section">
                   {transactionItems.map((item, index) => (
-                    <div key={`transaction-item-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3" data-testid={`transaction-item-row-${index}`}>
+                    <div key={`transaction-item-${index}`} className="rounded-xl border border-white/15 bg-white/5 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)]" data-testid={`transaction-item-row-${index}`}>
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
                         <div className="md:col-span-2">
                           <label className="block text-sm mb-2" data-testid={`transaction-item-part-label-${index}`}>القطعة</label>
@@ -340,12 +392,12 @@ export const PartsTransactionModal = ({
             </TabsContent>
           </Tabs>
 
-          <div className="sticky bottom-0 z-10 rounded-xl border border-white/10 bg-slate-950/90 backdrop-blur px-3 py-3 flex flex-wrap gap-2 justify-between items-center" data-testid="transaction-footer-actions">
+          <div className="sticky bottom-0 z-10 rounded-xl border border-white/15 bg-slate-950/92 backdrop-blur px-3 py-3 flex flex-wrap gap-2 justify-between items-center" data-testid="transaction-footer-actions">
             <div className="flex items-center gap-2">
               {!isDirect && (
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20"
+                  className="px-4 py-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20"
                   onClick={addTransactionItem}
                   data-testid="transaction-add-item"
                 >
@@ -354,7 +406,7 @@ export const PartsTransactionModal = ({
               )}
               <button
                 type="button"
-                className="px-3 py-2 rounded-lg border border-white/15 text-slate-200"
+                className="px-4 py-2.5 rounded-xl border border-white/20 text-slate-200"
                 onClick={prevTab}
                 data-testid="transaction-step-prev"
               >
@@ -362,7 +414,7 @@ export const PartsTransactionModal = ({
               </button>
               <button
                 type="button"
-                className="px-3 py-2 rounded-lg border border-cyan-300/30 text-cyan-100 disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl border border-cyan-300/40 text-cyan-100 disabled:opacity-50"
                 onClick={nextTab}
                 disabled={(activeTab === 'operation' && !canMoveToPartner) || (activeTab === 'partner' && !canMoveToItems) || activeTab === 'items'}
                 data-testid="transaction-step-next"
@@ -371,7 +423,7 @@ export const PartsTransactionModal = ({
               </button>
             </div>
 
-            <Button onClick={submitTransaction} data-testid="transaction-submit" className="apple-button">
+            <Button onClick={submitTransaction} data-testid="transaction-submit" className="apple-button min-h-11 px-5 rounded-xl text-base">
               {isDirect ? 'حفظ العملية المباشرة' : 'حفظ العملية'}
             </Button>
           </div>

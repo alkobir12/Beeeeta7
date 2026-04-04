@@ -403,7 +403,7 @@ class SupabaseService:
             safe_limit = (
                 max(1, min(int(limit), 2000))
                 if limit is not None
-                else None
+                else 200
             )
 
             def _fetch_rows(select_expr: str) -> List[Dict[str, Any]]:
@@ -415,8 +415,7 @@ class SupabaseService:
                 if vehicle_id:
                     q = q.eq("vehicle_id", vehicle_id)
                 q = q.order("created_at", desc=True)
-                if safe_limit is not None:
-                    q = q.range(safe_offset, safe_offset + safe_limit - 1)
+                q = q.range(safe_offset, safe_offset + safe_limit - 1)
                 res = q.execute()
                 return res.data or []
 
@@ -460,16 +459,6 @@ class SupabaseService:
                     "businessUnit": r.get("business_unit") or r.get("businessUnit"),
                 }
             )
-
-        out.sort(
-            key=lambda op: str(
-                op.get("date")
-                or op.get("createdAt")
-                or op.get("updatedAt")
-                or ""
-            ),
-            reverse=True,
-        )
 
         return out
 

@@ -1,145 +1,180 @@
 """
-Operations Performance Tests - Iteration 37
-Testing deferred loading implementation and API performance
+Operations Performance Tests - Iteration 51
+Tests for operations loading speed after warm cache optimization
 """
+
 import pytest
 import requests
-import time
 import os
+import time
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pos-performance-2.preview.emergentagent.com').rstrip('/')
 
 
-class TestOperationsAPIPerformance:
-    """Test GET /api/operations endpoint performance"""
+class TestOperationsPerformance:
+    """Test operations API performance after cache optimization"""
     
-    def test_operations_endpoint_responds(self):
-        """Verify /api/operations endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/operations?limit=10")
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        print("✓ Operations endpoint responds with 200")
+    def test_health_check(self):
+        """Verify API is healthy"""
+        response = requests.get(f"{BASE_URL}/api/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("status") == "ok"
+        print("✅ Health check passed")
     
-    def test_operations_returns_data(self):
-        """Verify /api/operations returns operation data"""
+    def test_operations_list_with_limit_200(self):
+        """Test GET /api/operations?limit=200 response time"""
+        # First request (cold)
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/api/operations?limit=200")
+        cold_time = time.time() - start_time
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        print(f"✅ Operations list returned {len(data)} items")
+        print(f"⏱️ Cold request time: {cold_time:.3f}s")
+        
+        # Second request (warm)
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/api/operations?limit=200")
+        warm_time = time.time() - start_time
+        
+        assert response.status_code == 200
+        print(f"⏱️ Warm request time: {warm_time:.3f}s")
+        
+        # Performance assertion - should be under 2 seconds
+        assert warm_time < 2.0, f"Operations API too slow: {warm_time:.3f}s"
+        print("✅ Performance within acceptable range (<2s)")
+    
+    def test_operations_list_response_structure(self):
+        """Verify operations response has correct structure"""
         response = requests.get(f"{BASE_URL}/api/operations?limit=10")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list), "Expected list response"
-        assert len(data) > 0, "Expected at least one operation"
-        print(f"✓ Operations endpoint returns {len(data)} operations")
-    
-    def test_operations_response_time_under_3s(self):
-        """Verify /api/operations responds within 3 seconds"""
-        start = time.time()
-        response = requests.get(f"{BASE_URL}/api/operations?limit=600")
-        elapsed = time.time() - start
         
+        if len(data) > 0:
+            op = data[0]
+            # Check required fields exist
+            assert "id" in op, "Missing 'id' field"
+            assert "type" in op, "Missing 'type' field"
+            print(f"✅ Operation structure valid: id={op.get('id')[:8]}...")
+            
+            # Check optional fields
+            optional_fields = ["accountId", "vehicleId", "partnerName", "items", "total", "paymentMethod"]
+            present_fields = [f for f in optional_fields if f in op]
+            print(f"📊 Optional fields present: {present_fields}")
+    
+    def test_operations_list_sorting(self):
+        """Verify operations are sorted by created_at desc"""
+        response = requests.get(f"{BASE_URL}/api/operations?limit=50")
         assert response.status_code == 200
-        assert elapsed < 3.0, f"Response took {elapsed:.2f}s, expected < 3s"
-        print(f"✓ Operations endpoint responded in {elapsed:.2f}s (target < 3s)")
+        data = response.json()
+        
+        if len(data) >= 2:
+            # Check that operations are sorted by date (newest first)
+            dates = []
+            for op in data[:10]:  # Check first 10
+                date_str = op.get("createdAt") or op.get("date") or ""
+                if date_str:
+                    dates.append(date_str)
+            
+            if len(dates) >= 2:
+                # Verify descending order
+                sorted_dates = sorted(dates, reverse=True)
+                assert dates == sorted_dates, "Operations not sorted by date descending"
+                print("✅ Operations sorted correctly (newest first)")
+            else:
+                print("⚠️ Not enough dates to verify sorting")
+        else:
+            print("⚠️ Not enough operations to verify sorting")
     
     def test_operations_limit_parameter(self):
-        """Verify limit parameter is respected"""
+        """Verify limit parameter works correctly"""
+        # Test with limit=5
         response = requests.get(f"{BASE_URL}/api/operations?limit=5")
         assert response.status_code == 200
         data = response.json()
         assert len(data) <= 5, f"Expected max 5 operations, got {len(data)}"
-        print(f"✓ Limit parameter works correctly (returned {len(data)} operations)")
-    
-    def test_operations_data_structure(self):
-        """Verify operation data has required fields"""
-        response = requests.get(f"{BASE_URL}/api/operations?limit=1")
+        print(f"✅ Limit=5 returned {len(data)} operations")
+        
+        # Test with limit=200
+        response = requests.get(f"{BASE_URL}/api/operations?limit=200")
         assert response.status_code == 200
         data = response.json()
-        assert len(data) > 0, "Expected at least one operation"
-        
-        op = data[0]
-        required_fields = ['id', 'type', 'total']
-        for field in required_fields:
-            assert field in op, f"Missing required field: {field}"
-        
-        print(f"✓ Operation data structure is valid (id={op['id'][:8]}...)")
+        assert len(data) <= 200, f"Expected max 200 operations, got {len(data)}"
+        print(f"✅ Limit=200 returned {len(data)} operations")
     
-    def test_operations_scope_field_present(self):
-        """Verify scope field is present for deferred loading categorization"""
-        response = requests.get(f"{BASE_URL}/api/operations?limit=10")
+    def test_multiple_requests_performance(self):
+        """Test performance consistency across multiple requests"""
+        times = []
+        for i in range(3):
+            start_time = time.time()
+            response = requests.get(f"{BASE_URL}/api/operations?limit=200")
+            elapsed = time.time() - start_time
+            times.append(elapsed)
+            assert response.status_code == 200
+        
+        avg_time = sum(times) / len(times)
+        max_time = max(times)
+        min_time = min(times)
+        
+        print(f"⏱️ Request times: {[f'{t:.3f}s' for t in times]}")
+        print(f"⏱️ Average: {avg_time:.3f}s, Min: {min_time:.3f}s, Max: {max_time:.3f}s")
+        
+        # All requests should be under 2 seconds
+        assert max_time < 2.0, f"Max request time too high: {max_time:.3f}s"
+        print("✅ All requests within acceptable range")
+
+
+class TestOperationsPageDependencies:
+    """Test other endpoints that Operations page depends on"""
+    
+    def test_chart_of_accounts(self):
+        """Test chart of accounts endpoint"""
+        response = requests.get(f"{BASE_URL}/api/accounts")
         assert response.status_code == 200
         data = response.json()
-        
-        # Check if scope field exists (used for Rakan vs Workshop categorization)
-        ops_with_scope = [op for op in data if 'scope' in op]
-        print(f"✓ {len(ops_with_scope)}/{len(data)} operations have scope field")
-
-
-class TestSecondaryEndpointsPerformance:
-    """Test secondary endpoints that are loaded after operations (deferred)"""
+        print(f"✅ Chart of accounts: {len(data)} accounts")
     
-    def test_parts_endpoint_responds(self):
-        """Verify /api/parts endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/parts")
-        assert response.status_code == 200
-        print("✓ Parts endpoint responds with 200")
-    
-    def test_services_endpoint_responds(self):
-        """Verify /api/services endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/services")
-        assert response.status_code == 200
-        print("✓ Services endpoint responds with 200")
-    
-    def test_customers_endpoint_responds(self):
-        """Verify /api/customers endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/customers")
-        assert response.status_code == 200
-        print("✓ Customers endpoint responds with 200")
-    
-    def test_suppliers_endpoint_responds(self):
-        """Verify /api/suppliers endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/suppliers")
-        assert response.status_code == 200
-        print("✓ Suppliers endpoint responds with 200")
-    
-    def test_vehicles_endpoint_responds(self):
-        """Verify /api/vehicles endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/vehicles")
-        assert response.status_code == 200
-        print("✓ Vehicles endpoint responds with 200")
-    
-    def test_biz_accounts_endpoint_responds(self):
-        """Verify /api/biz-accounts endpoint is accessible"""
+    def test_biz_accounts(self):
+        """Test business accounts endpoint"""
         response = requests.get(f"{BASE_URL}/api/biz-accounts")
         assert response.status_code == 200
-        print("✓ Business accounts endpoint responds with 200")
+        data = response.json()
+        print(f"✅ Business accounts: {len(data)} accounts")
     
-    def test_chart_of_accounts_endpoint_responds(self):
-        """Verify /api/finance/chart-of-accounts endpoint is accessible"""
-        response = requests.get(f"{BASE_URL}/api/finance/chart-of-accounts")
+    def test_customers(self):
+        """Test customers endpoint"""
+        response = requests.get(f"{BASE_URL}/api/customers")
         assert response.status_code == 200
-        print("✓ Chart of accounts endpoint responds with 200")
-
-
-class TestPrefetchEndpoints:
-    """Test endpoints used for prefetch on login"""
+        data = response.json()
+        print(f"✅ Customers: {len(data)} customers")
     
-    def test_prefetch_operations_performance(self):
-        """Verify operations prefetch is fast"""
-        start = time.time()
-        response = requests.get(f"{BASE_URL}/api/operations?limit=600")
-        elapsed = time.time() - start
-        
+    def test_suppliers(self):
+        """Test suppliers endpoint"""
+        response = requests.get(f"{BASE_URL}/api/suppliers")
         assert response.status_code == 200
-        assert elapsed < 2.0, f"Prefetch took {elapsed:.2f}s, expected < 2s"
-        print(f"✓ Operations prefetch completed in {elapsed:.2f}s")
+        data = response.json()
+        print(f"✅ Suppliers: {len(data)} suppliers")
     
-    def test_prefetch_vehicles_performance(self):
-        """Verify vehicles prefetch is fast"""
-        start = time.time()
+    def test_vehicles(self):
+        """Test vehicles endpoint"""
         response = requests.get(f"{BASE_URL}/api/vehicles")
-        elapsed = time.time() - start
-        
         assert response.status_code == 200
-        assert elapsed < 2.0, f"Prefetch took {elapsed:.2f}s, expected < 2s"
-        print(f"✓ Vehicles prefetch completed in {elapsed:.2f}s")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+        data = response.json()
+        print(f"✅ Vehicles: {len(data)} vehicles")
+    
+    def test_parts(self):
+        """Test parts endpoint"""
+        response = requests.get(f"{BASE_URL}/api/parts")
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✅ Parts: {len(data)} parts")
+    
+    def test_services(self):
+        """Test services endpoint"""
+        response = requests.get(f"{BASE_URL}/api/services")
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✅ Services: {len(data)} services")

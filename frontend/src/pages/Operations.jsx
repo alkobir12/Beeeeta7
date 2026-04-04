@@ -255,15 +255,26 @@ const Operations = () => {
     () => `operationsCache:${vehicleIdFromUrl || 'all'}`,
     [vehicleIdFromUrl]
   );
+  const operationsCacheUpdatedAtKey = React.useMemo(
+    () => `operationsCacheUpdatedAt:${vehicleIdFromUrl || 'all'}`,
+    [vehicleIdFromUrl]
+  );
   const cachedOperations = React.useMemo(() => {
     if (typeof window === 'undefined') return [];
     try {
+      const updatedAt = localStorage.getItem(operationsCacheUpdatedAtKey);
+      if (updatedAt) {
+        const ageMs = Date.now() - new Date(updatedAt).getTime();
+        if (Number.isFinite(ageMs) && ageMs > 1000 * 60 * 60 * 12) {
+          return [];
+        }
+      }
       const cached = localStorage.getItem(operationsCacheKey);
       return cached ? JSON.parse(cached) : [];
     } catch (error) {
       return [];
     }
-  }, [operationsCacheKey]);
+  }, [operationsCacheKey, operationsCacheUpdatedAtKey]);
 
   const accountsQuery = useQuery({
     queryKey: ['chart-of-accounts', workshopId],
@@ -341,7 +352,7 @@ const Operations = () => {
     queryKey: ['operations', workshopId || 'default', vehicleIdFromUrl || 'all'],
     queryFn: async () => {
       const params = {
-        limit: 600,
+        limit: 200,
         ...(vehicleIdFromUrl ? { vehicle_id: vehicleIdFromUrl } : {}),
       };
       const res = await axios.get(`${API_URL}/operations`, { params });
@@ -356,6 +367,7 @@ const Operations = () => {
       if (typeof window === 'undefined') return;
       if (Array.isArray(data)) {
         localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+        localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
       }
     },
   });

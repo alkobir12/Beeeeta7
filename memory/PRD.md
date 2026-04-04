@@ -72,6 +72,13 @@
 - جميع العناصر الجديدة مغطاة بـ `data-testid`.
 - نتيجة التحقق: `iteration_42.json` نجاح Frontend 100%.
 
+### تحسين واجهة نافذة نقطة البيع في المخزون + دعم جميع الأجهزة (04 Apr 2026)
+- تم إعادة تصميم نافذة POS (`PartsTransactionModal`) إلى تجربة **تبويبات + بطاقات** بنفس هوية الواجهة الحالية.
+- تم دعم تجربة mobile step-by-step بأزرار **التالي/السابق** مع بقاء التبويبات قابلة للوصول المباشر.
+- تم تحسين استجابة المودال للموبايل (`w-[96vw]`, `max-h`) وتقليل التحميلات المكررة في `PartsInventory` عبر lazy-loading أفضل لبيانات الشركاء/المركبات/الحسابات.
+- تم الحفاظ الكامل على المنطق الوظيفي (بيع/شراء/عملية مباشرة، إضافة/حذف بنود، تحديث القوائم، الحسابات).
+- نتيجة التحقق: `iteration_43.json` نجاح Frontend 100% على Desktop + Mobile.
+
 ### نقل أدوات التحكم بالعرض إلى صفحة الإعدادات (11 Mar 2026)
 - إزالة dock العائم الخاص بحجم الخط وإظهار/إخفاء القائمة الجانبية لمنع تغطية الأزرار.
 - إضافة قسم جديد في الإعدادات للتحكم بحجم الخط ورؤية/حجم القائمة الجانبية مع تحديث فوري للحالة.
@@ -674,3 +681,4 @@
 | 03 Apr 2026 | Added customer/supplier debit-credit-ajel balances, movement history, and automatic subaccounts (`acc-customer-*`, `acc-supplier-*`) verified by `iteration_40` |
 | 03 Apr 2026 | Updated operation types to 6 curated types with required-field logic + return-type backend support, verified by `iteration_41` |
 | 03 Apr 2026 | Added debt follow-up center (`/debts-followup`) + editable WhatsApp preview and bulk send, verified by `iteration_42` |
+| 04 Apr 2026 | Redesigned inventory POS modal with tabbed responsive UX + reduced repeated data loading, verified by `iteration_43` |

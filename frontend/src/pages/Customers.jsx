@@ -24,6 +24,7 @@ const Customers = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    fileNumber: '',
     email: '',
     address: '',
     vehicleBrand: '',
@@ -66,6 +67,7 @@ const Customers = () => {
     setFormData({
       name: '',
       phone: '',
+      fileNumber: '',
       email: '',
       address: '',
       vehicleBrand: '',
@@ -84,6 +86,7 @@ const Customers = () => {
     setFormData({
       name: customer.name || '',
       phone: customer.phone || '',
+      fileNumber: customer.fileNumber || '',
       email: customer.email || '',
       address: customer.address || '',
       vehicleBrand: customer.vehicleBrand || '',
@@ -102,6 +105,7 @@ const Customers = () => {
     try {
       const payload = {
         ...formData,
+        fileNumber: formData.fileNumber?.trim() || null,
         vehicleKm: formData.vehicleKm ? Number(formData.vehicleKm) : null,
       };
       if (editingCustomer?.id) {
@@ -175,6 +179,7 @@ const Customers = () => {
   const filteredCustomers = customers.filter(customer =>
     customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.phone?.includes(searchQuery) ||
+    String(customer.fileNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -324,7 +329,7 @@ const Customers = () => {
           <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="ابحث عن عميل بالاسم، رقم الهاتف أو البريد الإلكتروني..."
+            placeholder="ابحث عن عميل بالاسم، رقم الهاتف، رقم الملف أو البريد الإلكتروني..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pr-12 pl-4 py-3 rounded-xl text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -395,6 +400,9 @@ const Customers = () => {
                       </h3>
                       <p className="text-xs text-slate-400" data-testid={`customer-id-${customer.id}`}>
                         عميل #{customer.id?.slice(0, 8)}
+                      </p>
+                      <p className="text-[11px] text-cyan-300" data-testid={`customer-file-number-${customer.id}`}>
+                        رقم الملف: {customer.fileNumber || '-'}
                       </p>
                     </div>
                   </div>
@@ -627,6 +635,15 @@ const Customers = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   data-testid="customer-form-phone"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">رقم الملف</label>
+                <input
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                  value={formData.fileNumber}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, fileNumber: e.target.value }))}
+                  data-testid="customer-form-file-number"
                 />
               </div>
               <div>

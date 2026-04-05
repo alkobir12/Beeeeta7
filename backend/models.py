@@ -57,6 +57,7 @@ class VehicleUpdate(BaseModel):
 class CustomerBase(BaseModel):
     name: str
     phone: str
+    fileNumber: Optional[str] = None  # رقم الملف
     email: Optional[str] = None
     address: Optional[str] = None
     vehicleBrand: Optional[str] = None  # نوع المركبة
@@ -67,6 +68,7 @@ class CustomerBase(BaseModel):
 class CustomerUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
+    fileNumber: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
     vehicleBrand: Optional[str] = None

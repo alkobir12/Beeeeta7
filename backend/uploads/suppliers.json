@@ -130,5 +130,17 @@
     "rating": 5.0,
     "id": "bfd5c3d1-7e6b-46ec-b8bf-02fc5690d6ce",
     "createdAt": "2026-04-04T20:25:27.974578"
+  },
+  {
+    "name": "ساسكو",
+    "phone": "ى",
+    "contactPerson": "",
+    "email": "",
+    "address": "",
+    "city": "",
+    "category": "",
+    "rating": 5.0,
+    "id": "14e005c5-7619-4c07-b616-92e7be4da2d3",
+    "createdAt": "2026-04-05T13:24:25.446821"
   }
 ]

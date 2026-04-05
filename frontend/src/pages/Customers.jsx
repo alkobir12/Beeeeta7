@@ -498,6 +498,12 @@ const Customers = () => {
                       </div>
                     )}
                     <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-medium">رقم الملف</span>
+                      <span className="text-sm font-bold text-cyan-300" data-testid={`customer-file-number-detail-${customer.id}`}>
+                        {customer.fileNumber || '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-400 font-medium flex items-center gap-2">
                         <Car size={14} />
                         عدد المركبات

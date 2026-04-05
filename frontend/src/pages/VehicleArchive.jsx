@@ -35,7 +35,9 @@ const VehicleArchive = () => {
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = !searchQuery || 
       vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase());
+      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(vehicle.fileNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(vehicle.customerFileNumber || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -68,7 +70,7 @@ const VehicleArchive = () => {
         <div className="apple-card p-4 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input className="apple-input pr-10" placeholder="بحث برقم اللوحة أو اسم العميل..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <input className="apple-input pr-10" placeholder="بحث برقم اللوحة أو اسم العميل أو رقم الملف..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} data-testid="vehicle-archive-search-input" />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
             {['all', 'diagnosis', 'quotation', 'repair', 'ready', 'delivered'].map(status => (
@@ -101,6 +103,7 @@ const VehicleArchive = () => {
                       <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                         <span className="flex items-center gap-1"><User size={14} /> {vehicle.customerName}</span>
                         <span className="flex items-center gap-1"><Phone size={14} /> {vehicle.customerPhone}</span>
+                        <span className="flex items-center gap-1 text-cyan-700" data-testid={`vehicle-archive-file-number-${vehicle.id}`}><FileText size={14} /> {vehicle.fileNumber || vehicle.customerFileNumber || '-'}</span>
                         <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(vehicle.entryDate).toLocaleDateString('ar-SA')}</span>
                       </div>
                     </div>

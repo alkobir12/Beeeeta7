@@ -528,10 +528,18 @@ async def create_vehicle(vehicle_data: VehicleCreate):
             "estimatedCompletion": (datetime.utcnow() + timedelta(days=2)).isoformat(),
             "entryDate": datetime.utcnow().isoformat(),
         }
+        customer_file_map = await _get_customer_file_number_map([customer_id])
+        linked_customer_file = customer_file_map.get(customer_id)
+        vehicle_dict["customerFileNumber"] = linked_customer_file or None
+        if linked_customer_file and not vehicle_dict.get("fileNumber"):
+            vehicle_dict["fileNumber"] = linked_customer_file
 
         if DB_PROVIDER == "supabase":
             # supabase_service expects camelCase dict
             v_res = supabase_service.vehicles_create(vehicle_dict)
+            v_res["customerFileNumber"] = linked_customer_file or None
+            if linked_customer_file and not v_res.get("fileNumber"):
+                v_res["fileNumber"] = linked_customer_file
             return Vehicle(**v_res)
 
         if DB_PROVIDER == "memory":
@@ -550,6 +558,7 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
         rows = supabase_service.vehicles_list()
+        rows = await _attach_customer_file_numbers_to_vehicles(rows)
         # Ensure status has a default value if None
         for r in rows:
             if r.get("status") is None:
@@ -558,6 +567,7 @@ async def get_vehicles():
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
+        rows = await _attach_customer_file_numbers_to_vehicles(rows)
         # Ensure status has a default value if None
         for r in rows:
             if r.get("status") is None:
@@ -571,6 +581,7 @@ async def get_vehicles():
         .limit(200)
         .to_list(200)
     )
+    vehicles = await _attach_customer_file_numbers_to_vehicles(vehicles)
     # Ensure status has a default value if None and calculate estimatedTotal
     for v in vehicles:
         if v.get("status") is None:
@@ -597,18 +608,24 @@ async def get_vehicle(vehicle_id: str):
         v = supabase_service.vehicles_get(vehicle_id)
         if not v:
             raise HTTPException(status_code=404, detail="Vehicle not found")
+        patched = await _attach_customer_file_numbers_to_vehicles([v])
+        v = patched[0] if patched else v
         return Vehicle(**v)
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
         for r in rows:
             if r.get("id") == vehicle_id:
+                patched = await _attach_customer_file_numbers_to_vehicles([r])
+                r = patched[0] if patched else r
                 return Vehicle(**r)
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
+    patched = await _attach_customer_file_numbers_to_vehicles([vehicle])
+    vehicle = patched[0] if patched else vehicle
     return Vehicle(**vehicle)
 
 
@@ -1961,6 +1978,27 @@ async def _delete_customer_file_number(customer_id: str) -> None:
         return
 
     await db.customer_file_numbers.delete_one({"customerId": cid})
+
+
+async def _attach_customer_file_numbers_to_vehicles(rows: List[dict]) -> List[dict]:
+    if not rows:
+        return rows
+
+    customer_ids = [
+        str(r.get("customerId") or r.get("customer_id") or "").strip()
+        for r in rows
+        if str(r.get("customerId") or r.get("customer_id") or "").strip()
+    ]
+    file_map = await _get_customer_file_number_map(customer_ids)
+
+    for row in rows:
+        cid = str(row.get("customerId") or row.get("customer_id") or "").strip()
+        customer_file = file_map.get(cid)
+        row["customerFileNumber"] = customer_file or row.get("customerFileNumber") or None
+        if customer_file and not row.get("fileNumber"):
+            row["fileNumber"] = customer_file
+
+    return rows
 
 
 @api_router.get("/customers", response_model=List[Customer])

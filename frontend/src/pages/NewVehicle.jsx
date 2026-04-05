@@ -64,7 +64,8 @@ const NewVehicle = () => {
         const all = res.data || [];
         const filtered = all.filter(c => 
           c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
-          c.phone.includes(customerSearch)
+          c.phone.includes(customerSearch) ||
+          String(c.fileNumber || '').toLowerCase().includes(customerSearch.toLowerCase())
         );
         setCustomerResults(filtered.slice(0, 5));
         setShowCustomerResults(true);
@@ -84,6 +85,7 @@ const NewVehicle = () => {
       customerName: customer.name,
       customerPhone: customer.phone,
       customerEmail: customer.email || '',
+      fileNumber: prev.fileNumber || customer.fileNumber || '',
     }));
     setExistingCustomerId(customer.id);
     setCustomerSearch('');

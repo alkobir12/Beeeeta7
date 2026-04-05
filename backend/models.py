@@ -16,6 +16,7 @@ class VehicleBase(BaseModel):
     customerName: str
     customerPhone: str
     customerEmail: Optional[str] = None
+    customerFileNumber: Optional[str] = None
     services: List[str] = []
     technicianId: Optional[str] = None
     technicianName: Optional[str] = None
@@ -51,6 +52,7 @@ class VehicleUpdate(BaseModel):
     images: Optional[List[str]] = None
     services: Optional[List[str]] = None
     parts: Optional[List[Any]] = None
+    customerFileNumber: Optional[str] = None
 
 
 # ============ Customer Models ============

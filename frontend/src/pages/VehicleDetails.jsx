@@ -2331,6 +2331,16 @@ const VehicleDetails = () => {
                     )}
                   </div>
                   <div className="flex flex-col py-2">
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم الملف</span>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: 'rgba(186,230,253,0.95)' }}
+                      data-testid="customer-file-number-value"
+                    >
+                      {vehicle.fileNumber || vehicle.customerFileNumber || '-'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col py-2">
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>البريد الإلكتروني</span>
                     {isEditingCustomer ? (
                       <input

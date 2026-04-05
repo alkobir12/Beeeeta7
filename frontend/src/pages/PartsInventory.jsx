@@ -48,6 +48,8 @@ const isRakanBusinessAccount = (account) => {
   return isRakanCode(account?.code) || RAKAN_ACCOUNT_KEYWORDS.some((k) => text.includes(k));
 };
 
+const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
+
 const inferOperationTypeByAccount = (accountType, transactionType) => {
   const normalizedType = String(accountType || '').toLowerCase();
   if (normalizedType === 'revenue') return 'sale';
@@ -102,6 +104,9 @@ const PartsInventory = () => {
   const [inventoryDashboard, setInventoryDashboard] = useState(null);
   const [inventoryAlerts, setInventoryAlerts] = useState([]);
   const [loadingInventoryIntelligence, setLoadingInventoryIntelligence] = useState(false);
+  const [inventoryViewTab, setInventoryViewTab] = useState('stock');
+  const [posOperations, setPosOperations] = useState([]);
+  const [loadingPosOperations, setLoadingPosOperations] = useState(false);
   const [missingRakanAccounts, setMissingRakanAccounts] = useState(false);
   const [businessAccounts, setBusinessAccounts] = useState([]);
   const [rakanBusinessAccountId, setRakanBusinessAccountId] = useState('');
@@ -122,6 +127,11 @@ const PartsInventory = () => {
   useEffect(() => {
     loadInventoryIntelligence();
   }, []);
+
+  useEffect(() => {
+    if (inventoryViewTab !== 'pos') return;
+    loadPosOperations();
+  }, [inventoryViewTab]);
 
   useEffect(() => {
     if (showTransactionModal) {
@@ -207,6 +217,52 @@ const PartsInventory = () => {
       setInventoryAlerts([]);
     } finally {
       setLoadingInventoryIntelligence(false);
+    }
+  };
+
+  const loadPosOperations = async () => {
+    try {
+      setLoadingPosOperations(true);
+      let cachedRows = [];
+      try {
+        const cached = localStorage.getItem('operationsCache:all');
+        const parsed = cached ? JSON.parse(cached) : [];
+        cachedRows = Array.isArray(parsed) ? parsed : [];
+      } catch (_e) {
+        cachedRows = [];
+      }
+
+      if (cachedRows.length) {
+        const cachedFiltered = cachedRows
+          .filter((op) => {
+            const source = normalizeText(op?.source);
+            return source === 'parts_pos' || source === 'rakan_parts_pos';
+          })
+          .sort((a, b) => {
+            const aTs = new Date(a?.date || a?.createdAt || a?.created_at || 0).getTime();
+            const bTs = new Date(b?.date || b?.createdAt || b?.created_at || 0).getTime();
+            return bTs - aTs;
+          });
+        setPosOperations(cachedFiltered);
+      }
+
+      const response = await api.get('/operations', { params: { limit: 200 }, timeout: 7000 });
+      const rows = Array.isArray(response?.data) ? response.data : [];
+      const filtered = rows
+        .filter((op) => {
+          const source = normalizeText(op?.source);
+          return source === 'parts_pos' || source === 'rakan_parts_pos';
+        })
+        .sort((a, b) => {
+          const aTs = new Date(a?.date || a?.createdAt || a?.created_at || 0).getTime();
+          const bTs = new Date(b?.date || b?.createdAt || b?.created_at || 0).getTime();
+          return bTs - aTs;
+        });
+      setPosOperations(filtered);
+    } catch (_error) {
+      setPosOperations([]);
+    } finally {
+      setLoadingPosOperations(false);
     }
   };
 
@@ -1047,67 +1103,142 @@ const PartsInventory = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4" data-testid="inventory-smart-intelligence-section">
-        <div className="xl:col-span-2">
-          <InventorySmartOverview
-            summary={inventoryDashboard?.summary}
-            topMovers={inventoryDashboard?.top_movers || []}
-            loading={loadingInventoryIntelligence}
-          />
-        </div>
-        <div>
-          <InventoryAlertsRail
-            alerts={inventoryAlerts}
-            onSelectAlert={handleAlertSelection}
-          />
-        </div>
+      <div className="glass-card p-2 flex gap-2 w-full sm:w-fit" data-testid="inventory-main-tabs">
+        <Button
+          type="button"
+          onClick={() => setInventoryViewTab('stock')}
+          className={inventoryViewTab === 'stock' ? 'apple-button' : 'apple-button-secondary'}
+          data-testid="inventory-main-tab-stock"
+        >
+          تبويب المخزون
+        </Button>
+        <Button
+          type="button"
+          onClick={() => setInventoryViewTab('pos')}
+          className={inventoryViewTab === 'pos' ? 'apple-button' : 'apple-button-secondary'}
+          data-testid="inventory-main-tab-pos-operations"
+        >
+          عمليات نقطة البيع
+        </Button>
       </div>
-      <PartsOcrPanel
-        ocrPreview={ocrPreview}
-        ocrError={ocrError}
-        ocrResult={ocrResult}
-        ocrLoading={ocrLoading}
-        ocrImporting={ocrImporting}
-        onFileChange={handleOcrFileChange}
-        onRun={runOcr}
-        onImport={importOcrItems}
-      />
 
-      <InventoryStatsCards
-        partsCount={parts.length}
-        lowStockCount={lowStockCount}
-        outOfStockCount={outOfStockCount}
-        inventoryValue={inventoryValue}
-      />
+      {inventoryViewTab === 'stock' ? (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4" data-testid="inventory-smart-intelligence-section">
+            <div className="xl:col-span-2">
+              <InventorySmartOverview
+                summary={inventoryDashboard?.summary}
+                topMovers={inventoryDashboard?.top_movers || []}
+                loading={loadingInventoryIntelligence}
+              />
+            </div>
+            <div>
+              <InventoryAlertsRail
+                alerts={inventoryAlerts}
+                onSelectAlert={handleAlertSelection}
+              />
+            </div>
+          </div>
+          <PartsOcrPanel
+            ocrPreview={ocrPreview}
+            ocrError={ocrError}
+            ocrResult={ocrResult}
+            ocrLoading={ocrLoading}
+            ocrImporting={ocrImporting}
+            onFileChange={handleOcrFileChange}
+            onRun={runOcr}
+            onImport={importOcrItems}
+          />
 
-      <InventoryFiltersPanel
-        searchQuery={searchQuery}
-        selectedCategory={selectedCategory}
-        selectedBrand={selectedBrand}
-        stockStatus={stockStatus}
-        categories={categories}
-        brands={brands}
-        categoryStats={categoryStats}
-        outOfStockCount={outOfStockCount}
-        lowStockCount={lowStockCount}
-        onSearchChange={setSearchQuery}
-        onCategoryChange={setSelectedCategory}
-        onBrandChange={setSelectedBrand}
-        onStockStatusChange={setStockStatus}
-        onResetFilters={handleResetFilters}
-        onCategoryQuickFilter={setSelectedCategory}
-        onOutFilter={() => setStockStatus('out')}
-        onLowFilter={() => setStockStatus('low')}
-      />
+          <InventoryStatsCards
+            partsCount={parts.length}
+            lowStockCount={lowStockCount}
+            outOfStockCount={outOfStockCount}
+            inventoryValue={inventoryValue}
+          />
 
-      <PartInventoryGrid
-        loading={loading}
-        parts={filteredParts}
-        onSell={handleSellPart}
-        onRestock={handleRestockPart}
-        onEdit={openEditDialog}
-        onDelete={handleDelete}
-      />
+          <InventoryFiltersPanel
+            searchQuery={searchQuery}
+            selectedCategory={selectedCategory}
+            selectedBrand={selectedBrand}
+            stockStatus={stockStatus}
+            categories={categories}
+            brands={brands}
+            categoryStats={categoryStats}
+            outOfStockCount={outOfStockCount}
+            lowStockCount={lowStockCount}
+            onSearchChange={setSearchQuery}
+            onCategoryChange={setSelectedCategory}
+            onBrandChange={setSelectedBrand}
+            onStockStatusChange={setStockStatus}
+            onResetFilters={handleResetFilters}
+            onCategoryQuickFilter={setSelectedCategory}
+            onOutFilter={() => setStockStatus('out')}
+            onLowFilter={() => setStockStatus('low')}
+          />
+
+          <PartInventoryGrid
+            loading={loading}
+            parts={filteredParts}
+            onSell={handleSellPart}
+            onRestock={handleRestockPart}
+            onEdit={openEditDialog}
+            onDelete={handleDelete}
+          />
+        </>
+      ) : (
+        <div className="glass-card p-4 space-y-4" data-testid="inventory-pos-operations-tab-panel">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-white" data-testid="inventory-pos-operations-title">العمليات المنشأة من نقطة البيع</h2>
+              <p className="text-sm text-slate-300" data-testid="inventory-pos-operations-subtitle">تظهر هنا عمليات المصدر: parts_pos و rakan_parts_pos مع معلومات الربط (مركبة/عميل/مورد)</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={loadPosOperations}
+              data-testid="inventory-pos-operations-refresh-button"
+            >
+              تحديث العمليات
+            </Button>
+          </div>
+
+          {loadingPosOperations ? (
+            <div className="text-sm text-slate-300" data-testid="inventory-pos-operations-loading">جاري تحميل العمليات...</div>
+          ) : posOperations.length === 0 ? (
+            <div className="text-sm text-slate-400" data-testid="inventory-pos-operations-empty">لا توجد عمليات نقطة بيع حتى الآن.</div>
+          ) : (
+            <div className="space-y-3" data-testid="inventory-pos-operations-list">
+              {posOperations.map((op) => {
+                const opDate = op?.date || op?.createdAt || op?.created_at;
+                const linkType = op?.vehicleId ? 'مركبة' : (op?.partnerType === 'supplier' ? 'مورد' : 'عميل');
+                const linkValue = op?.vehicleId || op?.partnerName || op?.partnerId || 'غير مرتبط';
+                return (
+                  <div key={op.id} className="rounded-xl border border-white/10 bg-white/5 p-3" data-testid={`inventory-pos-operation-row-${op.id}`}>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="text-white text-sm" data-testid={`inventory-pos-operation-type-${op.id}`}>
+                          {op?.type || 'عملية'} • {formatCurrency(op?.total || op?.amount || 0)}
+                        </p>
+                        <p className="text-xs text-slate-300" data-testid={`inventory-pos-operation-link-${op.id}`}>
+                          الربط: {linkType} — {linkValue}
+                        </p>
+                        <p className="text-xs text-slate-400" data-testid={`inventory-pos-operation-account-${op.id}`}>
+                          الحساب المحاسبي: {op?.accountingAccountId || 'غير محدد'}
+                        </p>
+                      </div>
+                      <div className="text-xs text-slate-400 text-right" data-testid={`inventory-pos-operation-meta-${op.id}`}>
+                        <p>المصدر: {op?.source || '-'}</p>
+                        <p>{opDate ? new Date(opDate).toLocaleString('ar-SA') : 'بدون تاريخ'}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

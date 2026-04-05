@@ -2,7 +2,5 @@
   "id": "app_settings",
   "inventory_totals_reset_at": "2026-04-04T22:40:24.971631+00:00",
   "updatedAt": "2026-04-04T22:40:24.971631+00:00",
-  "customerFileNumbers": {
-    "c4f45720-a6c7-4f58-a780-d081370971ef": "FN-TEST-9f8c35"
-  }
+  "customerFileNumbers": {}
 }

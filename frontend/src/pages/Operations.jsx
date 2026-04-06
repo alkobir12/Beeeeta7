@@ -68,6 +68,7 @@ const PAYMENT_METHOD_OPTIONS = [
 ];
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
+const ACCOUNT_USAGE_CACHE_KEY = 'operations:account-usage:v1';
 const ACCOUNT_GROUP_LABELS = new Set([
   'الأصول',
   'الأصول المتداولة',
@@ -148,6 +149,7 @@ const Operations = () => {
   const formRef = useRef(null);
 
   const [createError, setCreateError] = useState('');
+  const [accountUsageVersion, setAccountUsageVersion] = useState(0);
 
   const [form, setForm] = useState({ 
     accountId: '', 
@@ -536,8 +538,25 @@ const Operations = () => {
       });
     });
 
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedRaw = localStorage.getItem(ACCOUNT_USAGE_CACHE_KEY);
+        const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+        Object.entries(cached || {}).forEach(([key, info]) => {
+          const normalizedKey = normalizeText(key);
+          if (!normalizedKey) return;
+          const count = Number(info?.count || 0);
+          const usedAt = Number(info?.lastUsed || 0);
+          if (count > 0) usage.set(normalizedKey, (usage.get(normalizedKey) || 0) + count);
+          if (usedAt > (lastUsed.get(normalizedKey) || 0)) lastUsed.set(normalizedKey, usedAt);
+        });
+      } catch (_error) {
+        // ignore local usage cache parse errors
+      }
+    }
+
     return { usage, lastUsed };
-  }, [operationsForRanking]);
+  }, [operationsForRanking, accountUsageVersion]);
 
   const filteredAccounts = useMemo(() => {
     const typeScoped = accounts.filter((account) => {
@@ -605,6 +624,36 @@ const Operations = () => {
   );
   const selectedAccountingCode = normalizeAccountCode(selectedAccountingAccount?.code || form.accountingAccountId || '');
   const isSelectedAccountingRakan = isRakanCode(selectedAccountingCode);
+  const recordAccountUsage = (accountIdOrCode) => {
+    const raw = String(accountIdOrCode || '').trim();
+    if (!raw || typeof window === 'undefined') return;
+
+    const matched = accounts.find((acc) => String(acc?.id || acc?.code || '') === raw) || null;
+    const keyVariants = [
+      normalizeText(raw),
+      normalizeText(normalizeAccountCode(raw)),
+      normalizeText(matched?.code),
+      normalizeText(normalizeAccountCode(matched?.code)),
+      normalizeText(matched?.id),
+    ].filter(Boolean);
+
+    try {
+      const cacheRaw = localStorage.getItem(ACCOUNT_USAGE_CACHE_KEY);
+      const cache = cacheRaw ? JSON.parse(cacheRaw) : {};
+      const now = Date.now();
+      keyVariants.forEach((key) => {
+        const prev = cache[key] || { count: 0, lastUsed: 0 };
+        cache[key] = {
+          count: Number(prev.count || 0) + 1,
+          lastUsed: Math.max(Number(prev.lastUsed || 0), now),
+        };
+      });
+      localStorage.setItem(ACCOUNT_USAGE_CACHE_KEY, JSON.stringify(cache));
+      setAccountUsageVersion((v) => v + 1);
+    } catch (_error) {
+      // ignore cache write errors
+    }
+  };
   const parts = partsQuery.data || [];
   const services = servicesQuery.data || [];
   const normalizeItemId = (it) => it?.id || it?._id || '';
@@ -1451,6 +1500,9 @@ const Operations = () => {
       lastSubmitRef.current = { hash: payloadHash, timestamp: now };
 
       await createOperationMutation.mutateAsync(cleanPayload);
+      if (cleanPayload.accountingAccountId) {
+        recordAccountUsage(cleanPayload.accountingAccountId);
+      }
       setCreateError('');
 
       setForm({
@@ -2237,6 +2289,9 @@ const Operations = () => {
                         onChange={e => {
                           const nextAccountId = e.target.value;
                           setForm({ ...form, accountingAccountId: nextAccountId });
+                          if (nextAccountId) {
+                            recordAccountUsage(nextAccountId);
+                          }
                           if (nextAccountId) {
                             window.setTimeout(() => setCreateFormTab('items'), 120);
                           }

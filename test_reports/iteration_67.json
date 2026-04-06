@@ -1,0 +1,61 @@
+{
+  "summary": "Tested account dropdown sorting in Operations page. All features working correctly: immediate sorting on selection, localStorage cache persistence, and fallback from cachedOperations.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_67.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "✅ recordAccountUsage (lines 627-656) correctly updates localStorage with count and lastUsed timestamp",
+    "✅ accountUsageStats (lines 516-559) correctly merges localStorage cache with operations data",
+    "✅ filteredAccounts (lines 561-620) correctly sorts by lastUsed DESC, then usage count DESC",
+    "✅ operationsForRanking (lines 513-515) correctly falls back to cachedOperations when API data unavailable",
+    "✅ recordAccountUsage is called on account selection (line 2293) AND on operation save (line 1504)",
+    "✅ accountUsageVersion state triggers re-render for immediate sorting update"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Account sorting feature is fully working. The implementation uses a local usage cache (localStorage key: operations:account-usage:v1) that is updated immediately when an account is selected or when an operation is saved. The sorting is based on lastUsed timestamp (most recent first) and usage count (most used first).",
+  "test_credentials": "username: مدير (no password)",
+  "verified_features": [
+    "✅ Dropdown sorts accounts by last usage + most used",
+    "✅ Immediate sorting: selecting an account moves it to top instantly",
+    "✅ localStorage key 'operations:account-usage:v1' is updated after selection",
+    "✅ Sorting persists after navigation within same session",
+    "✅ Sorting persists after page reload",
+    "✅ Fallback from cachedOperations works (operationsForRanking uses cached data when API unavailable)"
+  ],
+  "test_evidence": {
+    "test_1_initial_order": ["النقد", "البنك", "مخزون قطع غيار", "مخزون مستهلكات", "الأصول الثابتة"],
+    "test_2_after_selection": ["مخزون مستهلكات", "النقد", "البنك", "مخزون قطع غيار", "الأصول الثابتة"],
+    "test_3_after_navigation": ["مخزون مستهلكات", "النقد", "البنك", "مخزون قطع غيار", "الأصول الثابتة"],
+    "test_4_after_reload": ["مخزون مستهلكات", "النقد", "البنك", "مخزون قطع غيار", "الأصول الثابتة"],
+    "cache_structure": {
+      "1106": {"count": 3, "lastUsed": 1775466590337},
+      "acc-1106": {"count": 2, "lastUsed": 1775466590337}
+    }
+  },
+  "implementation_details": {
+    "cache_key": "operations:account-usage:v1",
+    "sorting_logic": "lastUsed DESC, then usage count DESC, then account code ASC",
+    "trigger_points": [
+      "On account selection in dropdown (line 2293)",
+      "On operation save (line 1504)"
+    ],
+    "state_update": "accountUsageVersion state increments to trigger re-render"
+  }
+}

@@ -531,15 +531,11 @@ async def create_vehicle(vehicle_data: VehicleCreate):
         customer_file_map = await _get_customer_file_number_map([customer_id])
         linked_customer_file = customer_file_map.get(customer_id)
         vehicle_dict["customerFileNumber"] = linked_customer_file or None
-        if linked_customer_file and not vehicle_dict.get("fileNumber"):
-            vehicle_dict["fileNumber"] = linked_customer_file
 
         if DB_PROVIDER == "supabase":
             # supabase_service expects camelCase dict
             v_res = supabase_service.vehicles_create(vehicle_dict)
             v_res["customerFileNumber"] = linked_customer_file or None
-            if linked_customer_file and not v_res.get("fileNumber"):
-                v_res["fileNumber"] = linked_customer_file
             return Vehicle(**v_res)
 
         if DB_PROVIDER == "memory":
@@ -1995,8 +1991,6 @@ async def _attach_customer_file_numbers_to_vehicles(rows: List[dict]) -> List[di
         cid = str(row.get("customerId") or row.get("customer_id") or "").strip()
         customer_file = file_map.get(cid)
         row["customerFileNumber"] = customer_file or row.get("customerFileNumber") or None
-        if customer_file and not row.get("fileNumber"):
-            row["fileNumber"] = customer_file
 
     return rows
 

@@ -1792,7 +1792,8 @@ const VehicleDetails = () => {
         brand: vehicleRes.data.brand,
         model: vehicleRes.data.model,
         vin: vehicleRes.data.vin,
-        color: vehicleRes.data.color
+        color: vehicleRes.data.color,
+        fileNumber: vehicleRes.data.fileNumber || ''
       });
       setCustomerForm({
         name: vehicleRes.data.customerName,
@@ -2205,6 +2206,30 @@ const VehicleDetails = () => {
                       </span>
                     )}
                   </div>
+                  <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم ملف المركبة</span>
+                    {isEditingVehicle ? (
+                      <input
+                        className="w-full text-sm rounded-xl px-3 py-2"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          color: 'rgba(248,250,252,0.92)',
+                        }}
+                        value={vehicleForm.fileNumber || ''}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, fileNumber: e.target.value })}
+                        data-testid="vehicle-file-number-input"
+                      />
+                    ) : (
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(186,230,253,0.95)' }}
+                        data-testid="vehicle-file-number-value"
+                      >
+                        {vehicle.fileNumber || '-'}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-col py-2">
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicle_details.color')}</span>
                     {isEditingVehicle ? (
@@ -2331,13 +2356,23 @@ const VehicleDetails = () => {
                     )}
                   </div>
                   <div className="flex flex-col py-2">
-                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم الملف</span>
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم ملف المركبة</span>
                     <span
                       className="text-sm font-semibold"
                       style={{ color: 'rgba(186,230,253,0.95)' }}
                       data-testid="customer-file-number-value"
                     >
-                      {vehicle.fileNumber || vehicle.customerFileNumber || '-'}
+                      {vehicle.fileNumber || '-'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col py-2">
+                    <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم ملف العميل المرتبط</span>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: 'rgba(167,243,208,0.95)' }}
+                      data-testid="customer-linked-file-number-value"
+                    >
+                      {vehicle.customerFileNumber || '-'}
                     </span>
                   </div>
                   <div className="flex flex-col py-2">

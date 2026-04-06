@@ -85,7 +85,6 @@ const NewVehicle = () => {
       customerName: customer.name,
       customerPhone: customer.phone,
       customerEmail: customer.email || '',
-      fileNumber: prev.fileNumber || customer.fileNumber || '',
     }));
     setExistingCustomerId(customer.id);
     setCustomerSearch('');

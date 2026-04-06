@@ -60,6 +60,8 @@ const Sidebar = ({
   const MENU_ITEMS = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: { module: 'dashboard', action: 'view' } },
     { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: { module: 'work_orders', action: 'view' } },
+    { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', icon: DollarSign, enabled: true, permission: { module: 'debts', action: 'view' } },
+    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
     { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: { module: 'customers', action: 'view' } },
     { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: { module: 'users', action: 'view' } },
     { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: { module: 'inventory', action: 'view' } },
@@ -85,7 +87,6 @@ const Sidebar = ({
         { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
-        { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', enabled: true, permission: { module: 'debts', action: 'view' } },
         { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/ai-financial', label: `🤖 ${t('nav.abu_fahd_financial_ai')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة
@@ -106,7 +107,6 @@ const Sidebar = ({
       ]
     },
  
-    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
     { path: '/import', label: t('nav.import'), icon: Upload, enabled: true, permission: { module: 'inventory', action: 'create' } },
     { path: '/users', label: t('nav.users'), icon: UserCircle, enabled: true, permission: { module: 'users', action: 'view' } },
     { path: '/profile', label: t('nav.profile'), icon: Building2, enabled: true, permission: { module: 'settings', action: 'view' } },

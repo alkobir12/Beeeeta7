@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, Body, HTTPException
 from accounting_auditor import AccountingSystemAuditor
 
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import uuid
 import os
 from supabase import create_client
@@ -825,6 +825,171 @@ def _is_rakan_operation_row(row: Dict[str, Any]) -> bool:
     )
 
 
+def _normalize_operation_type_for_reconciliation(op_type: Optional[str]) -> Optional[str]:
+    normalized = str(op_type or "").strip().lower()
+    if not normalized:
+        return None
+    if normalized == "service":
+        return "sale"
+    return normalized
+
+
+def _infer_tx_type_from_journal_entry(
+    entry: Dict[str, Any],
+    id_to_code: Optional[Dict[str, str]] = None,
+    code_to_name: Optional[Dict[str, str]] = None,
+) -> Optional[str]:
+    description = str(entry.get("description") or "").strip().lower()
+    source = str(entry.get("source") or "").strip().lower()
+    lines = entry.get("lines") or []
+
+    if source == "operation_payment":
+        return "payment_order"
+
+    if "payment_order" in description or "سداد" in description:
+        return "payment_order"
+    if "purchase_return" in description:
+        return "purchase_return"
+    if "sale_return" in description:
+        return "sale_return"
+    if "purchase" in description or "مشت" in description:
+        return "purchase"
+    if "expense" in description or "مصروف" in description:
+        return "expense"
+    if "sale" in description or "service" in description or "بيع" in description:
+        return "sale"
+
+    credits_by_code: Dict[str, float] = {}
+    debits_by_code: Dict[str, float] = {}
+    id_to_code = id_to_code or {}
+    code_to_name = code_to_name or {}
+
+    for line in lines:
+        normalized = _normalize_line(line, id_to_code, code_to_name)
+        if not normalized:
+            continue
+        code = str(normalized.get("code") or "").strip()
+        if not code:
+            continue
+        debits_by_code[code] = debits_by_code.get(code, 0.0) + _safe_float(normalized.get("debit"))
+        credits_by_code[code] = credits_by_code.get(code, 0.0) + _safe_float(normalized.get("credit"))
+
+    if any(code in AR_ACCOUNT_CODES and credits_by_code.get(code, 0.0) > 0 for code in credits_by_code):
+        return "payment_order"
+    if any(code in AP_ACCOUNT_CODES and debits_by_code.get(code, 0.0) > 0 for code in debits_by_code):
+        return "payment_order"
+
+    if any(code.startswith("4") and credits_by_code.get(code, 0.0) > 0 for code in credits_by_code):
+        return "sale"
+    if any(code.startswith("5") and debits_by_code.get(code, 0.0) > 0 for code in debits_by_code):
+        return "purchase"
+    if any(code.startswith("6") and debits_by_code.get(code, 0.0) > 0 for code in debits_by_code):
+        return "expense"
+
+    return None
+
+
+def _build_repair_journal_entry_from_operation(operation: Dict[str, Any], workshop_id: str) -> Optional[Dict[str, Any]]:
+    op_type = _normalize_operation_type_for_reconciliation(operation.get("type"))
+    if not op_type:
+        return None
+
+    total = _safe_float(operation.get("total"))
+    if total <= 0:
+        return None
+
+    payment_method = str(operation.get("payment_method") or operation.get("paymentMethod") or "cash").strip().lower()
+    is_credit = payment_method == "credit"
+    cash_code = "1102" if payment_method in {"bank", "transfer"} else "1101"
+    selected_code = (
+        operation.get("accounting_account_code")
+        or operation.get("accountCode")
+        or operation.get("account_number")
+        or operation.get("accountNumber")
+    )
+    selected_code = str(selected_code or "").strip() or None
+
+    lines: List[Dict[str, Any]] = []
+    transaction_type = op_type
+
+    if op_type == "sale":
+        debit_code = "1103" if is_credit else cash_code
+        credit_code = selected_code or "4000"
+        lines = [
+            {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
+            {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
+        ]
+    elif op_type == "purchase":
+        debit_code = selected_code or "5000"
+        credit_code = "2101" if is_credit else cash_code
+        lines = [
+            {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
+            {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
+        ]
+    elif op_type == "expense":
+        debit_code = selected_code or "6100"
+        lines = [
+            {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
+            {"account": cash_code, "account_name": cash_code, "debit": 0, "credit": total},
+        ]
+    elif op_type == "sale_return":
+        credit_code = "1103" if is_credit else cash_code
+        debit_code = selected_code or "4000"
+        lines = [
+            {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
+            {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
+        ]
+    elif op_type == "purchase_return":
+        debit_code = "2101" if is_credit else cash_code
+        credit_code = selected_code or "6100"
+        lines = [
+            {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
+            {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
+        ]
+    elif op_type == "payment_order":
+        partner_type = str(operation.get("partner_type") or operation.get("partnerType") or "").strip().lower()
+        if partner_type == "customer":
+            lines = [
+                {"account": cash_code, "account_name": cash_code, "debit": total, "credit": 0},
+                {"account": "1103", "account_name": "1103", "debit": 0, "credit": total},
+            ]
+        else:
+            lines = [
+                {"account": "2101", "account_name": "2101", "debit": total, "credit": 0},
+                {"account": cash_code, "account_name": cash_code, "debit": 0, "credit": total},
+            ]
+    else:
+        return None
+
+    op_id = str(operation.get("id") or "").strip()
+    op_date = operation.get("op_date") or operation.get("date") or datetime.now().isoformat()
+    description = (
+        operation.get("notes")
+        or operation.get("description")
+        or f"Backfill journal for operation {op_type}"
+    )
+
+    return {
+        "id": str(uuid.uuid4()),
+        "workshop_id": workshop_id,
+        "date": op_date,
+        "description": description,
+        "lines": lines,
+        "total": round(total, 2),
+        "source": "operation",
+        "transaction_type": transaction_type,
+        "reference_id": op_id,
+    }
+
+
+def _insert_repair_journal_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    response = supabase.table("journal_entries").insert(entry).execute()
+    return (response.data or [{}])[0] if response.data else {}
+
+
 @router.get("/reports/reconciliation")
 async def get_financial_reconciliation(
     workshop_id: str = Query(...),
@@ -847,7 +1012,6 @@ async def get_financial_reconciliation(
 
         tracked_types = [
             "sale",
-            "service",
             "purchase",
             "expense",
             "sale_return",
@@ -856,10 +1020,17 @@ async def get_financial_reconciliation(
         ]
         operation_totals = {t: 0.0 for t in tracked_types}
         operation_counts = {t: 0 for t in tracked_types}
+        operation_type_by_id: Dict[str, str] = {}
+        untracked_operations = {"count": 0, "total": 0.0}
 
         for op in operations:
-            op_type = str(op.get("type") or "").strip().lower()
+            op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
+            op_id = str(op.get("id") or "").strip()
+            if op_id and op_type:
+                operation_type_by_id[op_id] = op_type
             if op_type not in operation_totals:
+                untracked_operations["count"] += 1
+                untracked_operations["total"] += _safe_float(op.get("total"))
                 continue
             operation_totals[op_type] += _safe_float(op.get("total"))
             operation_counts[op_type] += 1
@@ -871,24 +1042,48 @@ async def get_financial_reconciliation(
             limit=10000,
             include_rakan=include_rakan,
         )
+        accounts = _fetch_accounts()
+        id_to_code, code_to_name, _ = _build_account_maps(accounts)
         journal_totals = {t: 0.0 for t in tracked_types}
         journal_counts = {t: 0 for t in tracked_types}
+        unclassified_journals = {"count": 0, "total": 0.0}
 
         for entry in journal_entries:
-            tx_type = str(entry.get("transaction_type") or "").strip().lower()
-            source = str(entry.get("source") or "").strip().lower()
+            tx_type = _normalize_operation_type_for_reconciliation(entry.get("transaction_type"))
 
-            if not tx_type and source == "operation_payment":
-                tx_type = "payment_order"
+            if not tx_type:
+                reference_id = str(entry.get("reference_id") or "").strip()
+                if reference_id and reference_id in operation_type_by_id:
+                    tx_type = operation_type_by_id.get(reference_id)
 
-            if tx_type == "service":
-                tx_type = "sale"
+            if not tx_type:
+                tx_type = _infer_tx_type_from_journal_entry(
+                    entry,
+                    id_to_code=id_to_code,
+                    code_to_name=code_to_name,
+                )
 
             if tx_type not in journal_totals:
+                unclassified_journals["count"] += 1
+                unclassified_journals["total"] += _safe_float(entry.get("total"))
                 continue
 
             journal_totals[tx_type] += _safe_float(entry.get("total"))
             journal_counts[tx_type] += 1
+
+        existing_operation_refs = {
+            str(entry.get("reference_id") or "").strip()
+            for entry in journal_entries
+            if str(entry.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            and str(entry.get("reference_id") or "").strip()
+        }
+        missing_operation_journals = [
+            op
+            for op in operations
+            if str(op.get("id") or "").strip()
+            and _normalize_operation_type_for_reconciliation(op.get("type")) in journal_totals
+            and str(op.get("id") or "").strip() not in existing_operation_refs
+        ]
 
         rows = []
         total_absolute_difference = 0.0
@@ -916,6 +1111,24 @@ async def get_financial_reconciliation(
                 "summary": {
                     "matched": total_absolute_difference < 0.01,
                     "total_absolute_difference": round(total_absolute_difference, 2),
+                    "untracked_operations": {
+                        "count": int(untracked_operations["count"]),
+                        "total": round(float(untracked_operations["total"]), 2),
+                    },
+                    "unclassified_journal_entries": {
+                        "count": int(unclassified_journals["count"]),
+                        "total": round(float(unclassified_journals["total"]), 2),
+                    },
+                    "missing_operation_journals": {
+                        "count": len(missing_operation_journals),
+                        "total": round(
+                            sum(_safe_float(op.get("total")) for op in missing_operation_journals),
+                            2,
+                        ),
+                        "sample_operation_ids": [
+                            str(op.get("id")) for op in missing_operation_journals[:10]
+                        ],
+                    },
                 },
                 "rows": rows,
             },
@@ -929,6 +1142,131 @@ async def get_financial_reconciliation(
                 "period": {"start_date": start_date, "end_date": end_date},
                 "summary": {"matched": False, "total_absolute_difference": 0},
                 "rows": [],
+            },
+        }
+
+
+@router.post("/reports/reconciliation/backfill-journals")
+async def backfill_missing_operation_journals(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    include_rakan: bool = Query(False),
+    apply_changes: bool = Query(False),
+    max_records: int = Query(200, ge=1, le=1000),
+):
+    """فحص/ترميم القيود المفقودة للعمليات التاريخية.
+
+    - `apply_changes=false` => معاينة فقط (dry-run)
+    - `apply_changes=true`  => إنشاء قيود للعمليات التي لا تملك قيدًا مرجعيًا
+    """
+    try:
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        start_date = start_date or (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if not include_rakan:
+            operations = [op for op in operations if not _is_rakan_operation_row(op)]
+
+        journal_entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=10000,
+            include_rakan=include_rakan,
+        )
+
+        tracked_types = {
+            "sale",
+            "purchase",
+            "expense",
+            "sale_return",
+            "purchase_return",
+            "payment_order",
+        }
+        existing_operation_refs = {
+            str(entry.get("reference_id") or "").strip()
+            for entry in journal_entries
+            if str(entry.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            and str(entry.get("reference_id") or "").strip()
+        }
+
+        missing_operations = []
+        for op in operations:
+            op_id = str(op.get("id") or "").strip()
+            op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
+            if not op_id or op_type not in tracked_types:
+                continue
+            if op_id in existing_operation_refs:
+                continue
+            candidate_entry = _build_repair_journal_entry_from_operation(op, workshop_id)
+            if candidate_entry:
+                missing_operations.append({"operation": op, "journal": candidate_entry})
+
+        preview = [
+            {
+                "operation_id": str(item["operation"].get("id")),
+                "type": str(item["operation"].get("type")),
+                "total": round(_safe_float(item["operation"].get("total")), 2),
+                "journal_transaction_type": item["journal"].get("transaction_type"),
+            }
+            for item in missing_operations[:20]
+        ]
+
+        if not apply_changes:
+            return {
+                "success": True,
+                "mode": "dry_run",
+                "data": {
+                    "period": {"start_date": start_date, "end_date": end_date},
+                    "missing_count": len(missing_operations),
+                    "missing_total": round(
+                        sum(_safe_float(item["operation"].get("total")) for item in missing_operations),
+                        2,
+                    ),
+                    "preview": preview,
+                },
+            }
+
+        created = 0
+        failed = []
+        for item in missing_operations[:max_records]:
+            try:
+                _insert_repair_journal_entry(item["journal"])
+                created += 1
+            except Exception as insert_error:
+                failed.append(
+                    {
+                        "operation_id": str(item["operation"].get("id")),
+                        "error": str(insert_error),
+                    }
+                )
+
+        return {
+            "success": True,
+            "mode": "apply",
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "found_missing": len(missing_operations),
+                "created": created,
+                "failed": failed,
+                "preview": preview,
+            },
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "mode": "error",
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "missing_count": 0,
+                "preview": [],
             },
         }
 

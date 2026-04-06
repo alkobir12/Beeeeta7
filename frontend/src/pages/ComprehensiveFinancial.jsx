@@ -303,6 +303,12 @@ export default function ComprehensiveFinancial() {
               <p className="mt-2 text-sm text-slate-100" data-testid="financial-reconcile-summary-diff">
                 إجمالي الفروقات المطلقة: {formatCurrency(reconciliation.summary?.total_absolute_difference || 0)}
               </p>
+              <p className="mt-1 text-xs text-slate-300" data-testid="financial-reconcile-summary-missing-journals">
+                قيود العمليات المفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}
+              </p>
+              <p className="mt-1 text-xs text-slate-400" data-testid="financial-reconcile-summary-unclassified-journals">
+                قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}
+              </p>
             </div>
           </div>
         )}
@@ -447,6 +453,11 @@ export default function ComprehensiveFinancial() {
               <span>
                 {reconciliation.summary?.matched ? 'مطابقة كاملة بين العمليات والقيود' : 'يوجد اختلاف بين العمليات والقيود'}
               </span>
+            </div>
+            <div className="mb-3 text-xs text-slate-300" data-testid="financial-reconcile-panel-metrics">
+              <span>قيود مفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}</span>
+              <span className="mx-2">|</span>
+              <span>قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}</span>
             </div>
 
             <div className="overflow-x-auto">

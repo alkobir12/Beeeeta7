@@ -1252,6 +1252,43 @@ def _build_operation_journal_entry(
             },
         ]
 
+    elif op_type == "payment_order":
+        transaction_type = "payment_order"
+        partner_type = str(op.get("partnerType") or op.get("partner_type") or "").strip().lower()
+
+        if partner_type == "customer":
+            # تحصيل من عميل: Dr نقدية/بنك, Cr ذمم مدينة
+            lines = [
+                {
+                    "account": cash_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                    "debit": total,
+                    "credit": 0,
+                },
+                {
+                    "account": "1103",
+                    "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
+                    "debit": 0,
+                    "credit": total,
+                },
+            ]
+        else:
+            # سداد لمورد: Dr ذمم دائنة, Cr نقدية/بنك
+            lines = [
+                {
+                    "account": "2101",
+                    "account_name": ACCOUNT_NAME_MAP.get("2101", "2101"),
+                    "debit": total,
+                    "credit": 0,
+                },
+                {
+                    "account": cash_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                    "debit": 0,
+                    "credit": total,
+                },
+            ]
+
     else:
         return None
 

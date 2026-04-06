@@ -85,6 +85,29 @@ def _safe_float(value) -> float:
         return 0.0
 
 
+AR_ACCOUNT_CODES = {"1103", "113"}
+AP_ACCOUNT_CODES = {"2101", "211"}
+
+
+def _infer_account_type_from_code(code: str) -> str:
+    try:
+        numeric = int(str(code or "").strip())
+    except Exception:
+        return "other"
+
+    if 1000 <= numeric <= 1999:
+        return "asset"
+    if 2000 <= numeric <= 2999:
+        return "liability"
+    if 3000 <= numeric <= 3999:
+        return "equity"
+    if 4000 <= numeric <= 4999:
+        return "revenue"
+    if 5000 <= numeric <= 6999:
+        return "expense"
+    return "other"
+
+
 RAKAN_ACCOUNT_CODE_PREFIX = "5000"
 
 
@@ -321,44 +344,49 @@ async def get_balance_sheet(
     """
     try:
         target_date = as_of_date or datetime.now().strftime("%Y-%m-%d")
-        
-        # جلب دليل الحسابات (الذي يحتوي على الأرصدة الصحيحة)
-        coa_response = await get_chart_of_accounts(workshop_id)
-        
-        if not coa_response.get('success'):
-            raise Exception("Failed to get chart of accounts")
-        
-        accounts = coa_response.get('data', [])
-        
-        # تصنيف الحسابات
+        balances_map, accounts = _compute_trial_balance_map(
+            workshop_id,
+            end_date=target_date,
+            include_rakan=False,
+        )
+        _, code_to_name, code_to_type = _build_account_maps(accounts)
+
         assets_accounts = []
         liabilities_accounts = []
         equity_accounts = []
-        
-        for acc in accounts:
-            balance = float(acc.get('balance', 0))
-            if balance == 0:
+
+        for code, row in balances_map.items():
+            debit = _safe_float(row.get("debit"))
+            credit = _safe_float(row.get("credit"))
+
+            acc_type = code_to_type.get(code) or _infer_account_type_from_code(code)
+            if acc_type == "asset":
+                balance = debit - credit
+            elif acc_type in {"liability", "equity"}:
+                balance = credit - debit
+            else:
                 continue
-            
-            acc_type = acc.get('type', '')
+
+            if abs(balance) < 0.0001:
+                continue
+
             account_data = {
-                "id": acc.get('id'),
-                "code": acc.get('code'),
-                "name": acc.get('name') or acc.get('name_ar'),
-                "balance": abs(balance)
+                "id": code,
+                "code": code,
+                "name": row.get("name") or code_to_name.get(code) or code,
+                "balance": round(abs(balance), 2),
             }
-            
-            if acc_type == 'asset':
+
+            if acc_type == "asset":
                 assets_accounts.append(account_data)
-            elif acc_type == 'liability':
+            elif acc_type == "liability":
                 liabilities_accounts.append(account_data)
-            elif acc_type == 'equity':
+            else:
                 equity_accounts.append(account_data)
-        
-        # حساب الإجماليات
-        total_assets = sum(acc['balance'] for acc in assets_accounts)
-        total_liabilities = sum(acc['balance'] for acc in liabilities_accounts)
-        total_equity = sum(acc['balance'] for acc in equity_accounts)
+
+        total_assets = sum(acc["balance"] for acc in assets_accounts)
+        total_liabilities = sum(acc["balance"] for acc in liabilities_accounts)
+        total_equity = sum(acc["balance"] for acc in equity_accounts)
         
         return {
             "success": True,
@@ -409,39 +437,55 @@ async def get_income_statement(
         end_date = end_date or datetime.now().strftime("%Y-%m-%d")
         start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-        # جلب دليل الحسابات
-        coa_response = await get_chart_of_accounts(effective_workshop_id)
-        
-        if not coa_response.get('success'):
-            raise Exception("Failed to get chart of accounts")
-        
-        accounts = coa_response.get('data', [])
-        
-        # حساب الإيرادات والمصروفات من الحسابات
-        total_revenue = 0
-        total_expenses = 0
-        revenue_accounts = {}
-        expense_accounts = {}
-        
-        for acc in accounts:
-            balance = float(acc.get('balance', 0))
-            acc_type = acc.get('type', '')
-            code = acc.get('code', '')
-            name = acc.get('name') or acc.get('name_ar', '')
-            
-            if acc_type == 'revenue' and balance != 0:
-                total_revenue += abs(balance)
-                revenue_accounts[code] = {
-                    "name": name,
-                    "amount": abs(balance)
-                }
-            
-            elif acc_type == 'expense' and balance != 0:
-                total_expenses += abs(balance)
-                expense_accounts[code] = {
-                    "name": name,
-                    "amount": abs(balance)
-                }
+        accounts = _fetch_accounts()
+        id_to_code, code_to_name, code_to_type = _build_account_maps(accounts)
+        entries = _fetch_journal_entries(
+            effective_workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=10000,
+            include_rakan=False,
+        )
+
+        revenue_accounts: Dict[str, Dict[str, Any]] = {}
+        expense_accounts: Dict[str, Dict[str, Any]] = {}
+
+        for entry in entries:
+            for line in entry.get("lines", []) or []:
+                normalized = _normalize_line(line, id_to_code, code_to_name)
+                if not normalized:
+                    continue
+
+                code = normalized["code"]
+                acc_type = code_to_type.get(code) or _infer_account_type_from_code(code)
+                debit = _safe_float(normalized.get("debit"))
+                credit = _safe_float(normalized.get("credit"))
+                name = normalized.get("name") or code_to_name.get(code) or code
+
+                if acc_type == "revenue":
+                    amount = credit - debit
+                    if code not in revenue_accounts:
+                        revenue_accounts[code] = {"name": name, "amount": 0.0}
+                    revenue_accounts[code]["amount"] += amount
+                elif acc_type == "expense":
+                    amount = debit - credit
+                    if code not in expense_accounts:
+                        expense_accounts[code] = {"name": name, "amount": 0.0}
+                    expense_accounts[code]["amount"] += amount
+
+        revenue_accounts = {
+            code: {"name": data["name"], "amount": round(float(data["amount"]), 2)}
+            for code, data in revenue_accounts.items()
+            if abs(float(data.get("amount") or 0)) >= 0.0001
+        }
+        expense_accounts = {
+            code: {"name": data["name"], "amount": round(float(data["amount"]), 2)}
+            for code, data in expense_accounts.items()
+            if abs(float(data.get("amount") or 0)) >= 0.0001
+        }
+
+        total_revenue = sum(float(v.get("amount") or 0) for v in revenue_accounts.values())
+        total_expenses = sum(float(v.get("amount") or 0) for v in expense_accounts.values())
         
         net_income = total_revenue - total_expenses
         
@@ -729,6 +773,166 @@ def _normalize_account_type(account_type: Optional[str]) -> str:
     return normalized if normalized in allowed else "asset"
 
 
+def _fetch_operations_for_reconciliation(
+    workshop_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    if not supabase:
+        raise Exception("Supabase not connected")
+
+    def _build(scoped: bool, select_expr: str):
+        q = supabase.table("operations").select(select_expr)
+        if scoped:
+            q = q.eq("workshop_id", workshop_id)
+        if start_date:
+            q = q.gte("op_date", start_date)
+        if end_date:
+            q = q.lte("op_date", end_date)
+        return q.order("op_date", desc=False)
+
+    def _run(scoped: bool):
+        preferred_select = (
+            "id,type,total,payment_method,scope,source,business_unit,op_date,workshop_id,notes"
+        )
+        try:
+            return _build(scoped, preferred_select).execute().data or []
+        except Exception as schema_error:
+            if "does not exist" not in str(schema_error).lower():
+                raise
+            try:
+                fallback_select = "id,type,total,payment_method,source,op_date,workshop_id,notes"
+                return _build(scoped, fallback_select).execute().data or []
+            except Exception:
+                return _build(scoped, "*").execute().data or []
+
+    try:
+        return _run(scoped=True)
+    except Exception:
+        return _run(scoped=False)
+
+
+def _is_rakan_operation_row(row: Dict[str, Any]) -> bool:
+    scope = str(row.get("scope") or "").strip().lower()
+    source = str(row.get("source") or "").strip().lower()
+    business_unit = str(row.get("business_unit") or "").strip().lower()
+    notes = str(row.get("notes") or "").strip().lower()
+    return (
+        scope == "rakan_parts"
+        or "rakan_parts" in source
+        or business_unit == "rakan_parts"
+        or "[rakan_parts]" in notes
+    )
+
+
+@router.get("/reports/reconciliation")
+async def get_financial_reconciliation(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    include_rakan: bool = Query(False),
+):
+    """مطابقة العمليات مقابل القيود اليومية للفترة المحددة."""
+    try:
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        start_date = start_date or (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if not include_rakan:
+            operations = [op for op in operations if not _is_rakan_operation_row(op)]
+
+        tracked_types = [
+            "sale",
+            "service",
+            "purchase",
+            "expense",
+            "sale_return",
+            "purchase_return",
+            "payment_order",
+        ]
+        operation_totals = {t: 0.0 for t in tracked_types}
+        operation_counts = {t: 0 for t in tracked_types}
+
+        for op in operations:
+            op_type = str(op.get("type") or "").strip().lower()
+            if op_type not in operation_totals:
+                continue
+            operation_totals[op_type] += _safe_float(op.get("total"))
+            operation_counts[op_type] += 1
+
+        journal_entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=10000,
+            include_rakan=include_rakan,
+        )
+        journal_totals = {t: 0.0 for t in tracked_types}
+        journal_counts = {t: 0 for t in tracked_types}
+
+        for entry in journal_entries:
+            tx_type = str(entry.get("transaction_type") or "").strip().lower()
+            source = str(entry.get("source") or "").strip().lower()
+
+            if not tx_type and source == "operation_payment":
+                tx_type = "payment_order"
+
+            if tx_type == "service":
+                tx_type = "sale"
+
+            if tx_type not in journal_totals:
+                continue
+
+            journal_totals[tx_type] += _safe_float(entry.get("total"))
+            journal_counts[tx_type] += 1
+
+        rows = []
+        total_absolute_difference = 0.0
+        for tx_type in tracked_types:
+            op_total = round(operation_totals.get(tx_type, 0.0), 2)
+            je_total = round(journal_totals.get(tx_type, 0.0), 2)
+            difference = round(op_total - je_total, 2)
+            total_absolute_difference += abs(difference)
+            rows.append(
+                {
+                    "type": tx_type,
+                    "operations_count": operation_counts.get(tx_type, 0),
+                    "journal_entries_count": journal_counts.get(tx_type, 0),
+                    "operations_total": op_total,
+                    "journal_entries_total": je_total,
+                    "difference": difference,
+                    "matched": abs(difference) < 0.01,
+                }
+            )
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "summary": {
+                    "matched": total_absolute_difference < 0.01,
+                    "total_absolute_difference": round(total_absolute_difference, 2),
+                },
+                "rows": rows,
+            },
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "summary": {"matched": False, "total_absolute_difference": 0},
+                "rows": [],
+            },
+        }
+
+
 @router.get("/alerts")
 async def get_finance_alerts(
     workshop_id: str = Query(...),
@@ -765,17 +969,23 @@ async def get_finance_alerts(
 
         # ذمم مدينة/دائنة موجودة (عمليات آجل)
         accounts = (tb.get("data") or {}).get("accounts") or []
-        ar = next((a for a in accounts if a.get("code") == "113"), None)
-        ap = next((a for a in accounts if a.get("code") == "211"), None)
-        ar_amt = float((ar or {}).get("debit") or 0)
-        ap_amt = float((ap or {}).get("credit") or 0)
+        ar_amt = 0.0
+        ap_amt = 0.0
+        for acc in accounts:
+            code = str(acc.get("code") or "")
+            debit = float(acc.get("debit") or 0)
+            credit = float(acc.get("credit") or 0)
+            if code in AR_ACCOUNT_CODES:
+                ar_amt += max(0.0, debit - credit)
+            if code in AP_ACCOUNT_CODES:
+                ap_amt += max(0.0, credit - debit)
         if ar_amt > 0:
             alerts.append(
                 {
                     "id": "ar_open",
                     "severity": "medium",
                     "title": "ذمم مدينة مفتوحة",
-                    "message": f"يوجد آجل (غير محصل) بقيمة {ar_amt:,.2f} على حساب 113.",
+                    "message": f"يوجد آجل (غير محصل) بقيمة {ar_amt:,.2f} على حساب الذمم المدينة 1103.",
                     "action": "تابع التحصيل أو اربطها بفاتورة/سداد.",
                 }
             )
@@ -785,7 +995,7 @@ async def get_finance_alerts(
                     "id": "ap_open",
                     "severity": "medium",
                     "title": "ذمم دائنة مفتوحة",
-                    "message": f"يوجد آجل (غير مسدد) بقيمة {ap_amt:,.2f} على حساب 211.",
+                    "message": f"يوجد آجل (غير مسدد) بقيمة {ap_amt:,.2f} على حساب الذمم الدائنة 2101.",
                     "action": "راجع التزامات الموردين وجدول السداد.",
                 }
             )
@@ -1097,7 +1307,7 @@ async def get_journal_entries(
                     "description": "قيد بيع خدمة صيانة",
                     "lines": [
                         {
-                            "account": "113",
+                            "account": "1103",
                             "account_name": "ذمم مدينة",
                             "debit": 5000,
                             "credit": 0,
@@ -1476,12 +1686,12 @@ def _to_date(dt_str: str) -> Optional[datetime]:
 
 
 def _payment_amount_affecting_ar(entry: dict) -> float:
-    """Return the amount that credits AR (113) from a payment journal entry."""
+    """Return the amount that credits AR (1103/legacy 113) from a payment journal entry."""
     try:
         lines = entry.get("lines") or []
         amt = 0.0
         for ln in lines:
-            if str(ln.get("account")) == "113":
+            if str(ln.get("account")) in AR_ACCOUNT_CODES:
                 amt += float(ln.get("credit") or 0)
         if amt > 0:
             return amt
@@ -1499,7 +1709,7 @@ async def ar_ledger(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
-    """دفتر الأستاذ لحساب ذمم مدينة عملاء (113).
+    """دفتر الأستاذ لحساب ذمم مدينة عملاء (1103).
 
     المصدر:
     - مبيعات آجل من operations (payment_method='credit') → زيادة AR
@@ -1585,7 +1795,7 @@ async def ar_ledger(
         return {
             "success": True,
             "data": {
-                "account": {"code": "113", "name": "ذمم مدينة عملاء"},
+                "account": {"code": "1103", "name": "ذمم مدينة عملاء"},
                 "rows": rows,
                 "ending_balance": round(balance, 2),
             },
@@ -2105,7 +2315,7 @@ async def audit_accounting_system(
         # 2. جلب قائمة الدخل
         try:
             end_date = datetime.now().strftime("%Y-%m-%d")
-            start_date = (datetime.now().replace(month=datetime.now().month - 1)).strftime("%Y-%m-%d")
+            start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
             income_data = await get_income_statement(workshop_id, start_date, end_date)
             if income_data and income_data.get('success'):
                 ins = income_data['data']

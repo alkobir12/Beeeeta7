@@ -19,6 +19,8 @@ import {
   Receipt,
   Scale,
   Trash2,
+  FileText,
+  ListChecks,
 } from 'lucide-react';
 
 import FinancialCard from '../components/FinancialCard';
@@ -29,6 +31,7 @@ import { Button } from '../components/ui/button';
 import { aiAPI, financeAPI, vehicleAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { resolveBackendBase } from '../utils/backendBase';
+import WorkshopAIBot from '../components/WorkshopAIBot';
 
 const STORAGE_KEYS = {
   sessions: 'finance_bot_sessions_v1',
@@ -48,6 +51,7 @@ export default function AIFinancial() {
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
   const [timeRange, setTimeRange] = useState('month');
+  const [assistantTab, setAssistantTab] = useState('finance');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -660,10 +664,10 @@ export default function AIFinancial() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             <Brain size={34} className="text-blue-500" />
-            أبوفهد – التحليل والتدقيق المالي
+            المساعد الذكي الموحد
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            صفحة موحدة تجمع نظرة مالية، ميزان المراجعة، تدقيق النظام، ومحادثة أبوفهد.
+            واجهة موحّدة تجمع ذكاء الورشة والتحليل المالي في مكان واحد.
           </p>
         </div>
 
@@ -671,6 +675,7 @@ export default function AIFinancial() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
+            data-testid="unified-assistant-time-range-select"
             className="px-4 py-2 rounded-lg"
             style={{
               backgroundColor: 'var(--bg-card)',
@@ -684,12 +689,56 @@ export default function AIFinancial() {
             <option value="year">آخر سنة</option>
           </select>
 
-          <Button onClick={fetchCoreFinancials} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={fetchCoreFinancials} className="bg-blue-600 hover:bg-blue-700" data-testid="unified-assistant-refresh-button">
             <RefreshCw className="h-4 w-4 ml-2" />
             تحديث
           </Button>
         </div>
       </div>
+
+      <div className="flex items-center gap-2 mb-6" data-testid="unified-assistant-tab-switcher">
+        <button
+          type="button"
+          onClick={() => setAssistantTab('finance')}
+          data-testid="unified-assistant-tab-finance"
+          className="px-4 py-2 rounded-lg text-sm transition-all"
+          style={{
+            backgroundColor: assistantTab === 'finance' ? 'var(--accent-primary)' : 'var(--bg-card)',
+            color: assistantTab === 'finance' ? '#fff' : 'var(--text-secondary)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          التحليل المالي
+        </button>
+        <button
+          type="button"
+          onClick={() => setAssistantTab('workshop')}
+          data-testid="unified-assistant-tab-workshop"
+          className="px-4 py-2 rounded-lg text-sm transition-all"
+          style={{
+            backgroundColor: assistantTab === 'workshop' ? 'var(--accent-primary)' : 'var(--bg-card)',
+            color: assistantTab === 'workshop' ? '#fff' : 'var(--text-secondary)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          ذكاء الورشة
+        </button>
+      </div>
+
+      {assistantTab === 'workshop' ? (
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-card)',
+            minHeight: '720px',
+          }}
+          data-testid="unified-assistant-workshop-panel"
+        >
+          <WorkshopAIBot />
+        </div>
+      ) : (
+        <>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1044,6 +1093,8 @@ export default function AIFinancial() {
           </FinancialCard>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -130,6 +130,7 @@ const financeAPI = {
   getBalanceSheet: (params) => api.get('/finance/reports/balance-sheet', { params }),
   getCashFlow: (params) => api.get('/finance/reports/cash-flow', { params }),
   getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
+  getReconciliation: (params) => api.get('/finance/reports/reconciliation', { params }),
 
   // AR (Receivables)
   getARCustomers: (params) => api.get('/finance/ar/customers', { params }),

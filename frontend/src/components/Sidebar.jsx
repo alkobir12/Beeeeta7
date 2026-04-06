@@ -24,7 +24,6 @@ import {
   BookOpen,
   Truck,
   Bot,
-  Sparkles,
   Lock
 } from 'lucide-react';
 import axios from 'axios';
@@ -59,21 +58,11 @@ const Sidebar = ({
 
   const MENU_ITEMS = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: { module: 'dashboard', action: 'view' } },
-    {
-      group: true,
-      label: '🚀 التشغيل اليومي',
-      icon: Sparkles,
-      enabled: true,
-      permission: { module: 'work_orders', action: 'view' },
-      children: [
-        { path: '/operations', label: t('nav.operations'), enabled: true, permission: { module: 'work_orders', action: 'view' } },
-        { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', enabled: true, permission: { module: 'debts', action: 'view' } },
-        { path: '/archive', label: t('nav.archive'), enabled: true, permission: { module: 'vehicles', action: 'view' } },
-      ]
-    },
+    { path: '/operations', label: t('nav.operations'), icon: Receipt, enabled: true, permission: { module: 'work_orders', action: 'view' } },
+    { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', icon: DollarSign, enabled: true, permission: { module: 'debts', action: 'view' } },
+    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
     { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: { module: 'customers', action: 'view' } },
     { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: { module: 'users', action: 'view' } },
-    { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: { module: 'inventory', action: 'view' } },
     {
       group: true,
       label: t('nav.inventory'),
@@ -83,6 +72,7 @@ const Sidebar = ({
       children: [
         { path: '/parts-dashboard', label: t('inventory.parts_dashboard') || 'لوحة تحكم القطع', enabled: true, permission: { module: 'inventory', action: 'view' } },
         { path: '/parts', label: t('inventory.inventory'), enabled: true, permission: { module: 'inventory', action: 'view' } },
+        { path: '/suppliers', label: t('nav.suppliers'), enabled: true, permission: { module: 'inventory', action: 'view' } },
       ]
     },
     { path: '/services', label: t('nav.services'), icon: Wrench, enabled: true, permission: { module: 'work_orders', action: 'view' } },
@@ -97,7 +87,7 @@ const Sidebar = ({
         { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
-        { path: '/ai-financial', label: `🤖 ${t('nav.abu_fahd_financial_ai')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/ai-financial', label: '🤖 المساعد الذكي الموحد', enabled: true, permission: { module: 'reports', action: 'view' } },
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة
         // { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },
       ]
@@ -345,7 +335,7 @@ const Sidebar = ({
                     {workshopName || t('nav.workshop_system')}
                   </h2>
                   <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                    <Sparkles size={12} className="text-sky-300" />
+                    <Activity size={12} className="text-sky-300" />
                     <span>{t('nav.workshop_system')}</span>
                   </div>
                 </div>

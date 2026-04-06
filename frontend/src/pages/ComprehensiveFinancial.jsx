@@ -1,490 +1,485 @@
-import React, { useState } from 'react';
-import { Scale, TrendingUp, Banknote, BarChart3, RefreshCw, Calendar } from 'lucide-react';
-import FinancialCard from '../components/FinancialCard';
-import { financeAPI, operationsAPI } from '../services/api';
-import { formatCurrency } from '../utils/formatters';
-import { useTheme } from '../contexts/ThemeContext';
+import React, { useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Banknote,
+  BarChart3,
+  CalendarDays,
+  RefreshCw,
+  Scale,
+  ShieldCheck,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-
+import { financeAPI } from '../services/api';
+import { formatCurrency } from '../utils/formatters';
 import ARReceivablesTab from '../components/ARReceivablesTab';
 
-const ComprehensiveFinancial = () => {
-  const { themeName } = useTheme();
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
-  const [activeTab, setActiveTab] = useState('balance');
-  const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 3);
-    return d.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+const tabs = [
+  { key: 'overview', label: 'نظرة عامة' },
+  { key: 'balance', label: 'الميزانية' },
+  { key: 'income', label: 'قائمة الدخل' },
+  { key: 'cashflow', label: 'التدفقات النقدية' },
+  { key: 'receivables', label: 'الذمم' },
+  { key: 'trial', label: 'ميزان المراجعة' },
+  { key: 'reconcile', label: 'مطابقة العمليات' },
+];
+
+const GlassCard = ({ title, value, subtitle, testId, accent = 'from-sky-500/25 to-cyan-400/10' }) => (
+  <div
+    className="rounded-3xl border border-white/15 bg-slate-950/45 backdrop-blur-2xl p-5 shadow-[0_10px_45px_-20px_rgba(14,165,233,0.55)]"
+    data-testid={`${testId}-card`}
+  >
+    <div className={`h-1.5 w-28 rounded-full bg-gradient-to-r ${accent}`} />
+    <p className="mt-3 text-xs text-slate-300" data-testid={`${testId}-title`}>{title}</p>
+    <p className="mt-2 text-2xl font-bold text-slate-50" data-testid={testId}>{value}</p>
+    {subtitle ? <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p> : null}
+  </div>
+);
+
+const safeDate = (date) => date.toISOString().split('T')[0];
+
+export default function ComprehensiveFinancial() {
   const queryClient = useQueryClient();
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+  const [activeTab, setActiveTab] = useState('overview');
+  const [startDate, setStartDate] = useState(() => {
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 14);
+    return safeDate(start);
+  });
+  const [endDate, setEndDate] = useState(() => safeDate(new Date()));
+
+  const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
 
   const balanceSheetQuery = useQuery({
-    queryKey: ['balance-sheet', workshopId],
+    queryKey: ['financial-balance-sheet', workshopId, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getBalanceSheet({ workshop_id: workshopId });
+      const res = await financeAPI.getBalanceSheet({ workshop_id: workshopId, as_of_date: endDate });
       return res.data?.data || null;
-    }
+    },
+    enabled: Boolean(workshopId),
   });
 
   const incomeStatementQuery = useQuery({
-    queryKey: ['income-statement', workshopId, startDate, endDate],
+    queryKey: ['financial-income-statement', workshopId, startDate, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getIncomeStatement({ 
-        workshop_id: workshopId, 
-        start_date: startDate, 
-        end_date: endDate 
-      });
+      const res = await financeAPI.getIncomeStatement(commonParams);
       return res.data?.data || null;
-    }
+    },
+    enabled: Boolean(workshopId),
   });
 
   const cashFlowQuery = useQuery({
-    queryKey: ['cash-flow', workshopId, startDate, endDate],
+    queryKey: ['financial-cash-flow', workshopId, startDate, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getCashFlow({ 
-        workshop_id: workshopId, 
-        start_date: startDate, 
-        end_date: endDate 
-      });
+      const res = await financeAPI.getCashFlow(commonParams);
       return res.data?.data || null;
-    }
+    },
+    enabled: Boolean(workshopId),
   });
 
   const trialBalanceQuery = useQuery({
-    queryKey: ['trial-balance', workshopId, startDate, endDate],
+    queryKey: ['financial-trial-balance', workshopId, startDate, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getTrialBalance({ workshop_id: workshopId, start_date: startDate, end_date: endDate });
-      const tbData = res.data?.data || res.data || {};
-      return tbData.accounts || [];
-    }
+      const res = await financeAPI.getTrialBalance(commonParams);
+      return res.data?.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
+    },
+    enabled: Boolean(workshopId),
   });
 
   const receivablesSummaryQuery = useQuery({
-    queryKey: ['ar-customers-summary', workshopId, endDate],
+    queryKey: ['financial-ar-summary', workshopId, endDate],
     queryFn: async () => {
       const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: endDate });
-      return res.data?.data || null;
-    }
-  });
-
-  const operationsQuery = useQuery({
-    queryKey: ['operations', workshopId],
-    queryFn: async () => {
-      const res = await operationsAPI.list({});
-      return res.data || [];
+      return res.data?.data || { total_ar: 0, customers: [] };
     },
-    retry: 1,
+    enabled: Boolean(workshopId),
   });
 
+  const reconciliationQuery = useQuery({
+    queryKey: ['financial-reconciliation', workshopId, startDate, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getReconciliation(commonParams);
+      return res.data?.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
+    },
+    enabled: Boolean(workshopId),
+  });
 
-  const receivablesSummary = receivablesSummaryQuery.data;
+  const loading = [
+    balanceSheetQuery,
+    incomeStatementQuery,
+    cashFlowQuery,
+    trialBalanceQuery,
+    receivablesSummaryQuery,
+    reconciliationQuery,
+  ].some((query) => query.isLoading);
 
-  const balanceSheet = balanceSheetQuery.data;
-  const incomeStatement = incomeStatementQuery.data;
-  const cashFlow = cashFlowQuery.data;
+  const hasError = [
+    balanceSheetQuery,
+    incomeStatementQuery,
+    cashFlowQuery,
+    trialBalanceQuery,
+    receivablesSummaryQuery,
+    reconciliationQuery,
+  ].some((query) => query.isError);
 
-  const loading = balanceSheetQuery.isLoading || incomeStatementQuery.isLoading || cashFlowQuery.isLoading || trialBalanceQuery.isLoading || receivablesSummaryQuery.isLoading || operationsQuery.isLoading;
+  const bsTotals = balanceSheetQuery.data?.totals || { assets: 0, liabilities: 0, equity: 0 };
+  const incomeTotals = incomeStatementQuery.data?.totals || { revenue: 0, expenses: 0, net_income: 0 };
+  const cashFlow = cashFlowQuery.data || {};
+  const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
+  const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
+  const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['balance-sheet', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['income-statement', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['cash-flow', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['trial-balance', workshopId] });
-    queryClient.invalidateQueries({ queryKey: ['ar-customers-summary', workshopId] });
+  const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
+  const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
+
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['financial-balance-sheet', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-income-statement', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-cash-flow', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-trial-balance', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-ar-summary', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-reconciliation', workshopId] });
   };
 
-  // Avoid blank/stuck page if a query fails
-  const hasError = balanceSheetQuery.isError || incomeStatementQuery.isError || cashFlowQuery.isError || trialBalanceQuery.isError || receivablesSummaryQuery.isError;
-  if (hasError) {
+  if (!workshopId) {
     return (
-      <div className="max-w-7xl mx-auto p-6" dir={isRTL ? 'rtl' : 'ltr'}>
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>تعذر تحميل القوائم المالية</h2>
-        <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>تحقق من اتصال الشبكة ثم اضغط تحديث.</p>
-        <div className="mt-4">
-          <button onClick={handleRefresh} className="apple-button">تحديث</button>
+      <div className="max-w-4xl mx-auto p-6" dir="rtl">
+        <div className="rounded-2xl border border-rose-300/40 bg-rose-500/10 p-5" data-testid="financial-missing-workshop-id-alert">
+          <h2 className="text-lg font-semibold text-rose-200">تعذر تحميل اللوحة المالية</h2>
+          <p className="text-sm text-rose-100 mt-1">المتغير REACT_APP_WORKSHOP_ID غير موجود في البيئة.</p>
         </div>
       </div>
     );
   }
-
-
-  const trialBalance = trialBalanceQuery.data;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      <div className="flex items-center justify-center h-[50vh]" data-testid="financial-loading-state">
+        <div className="w-10 h-10 border-4 border-cyan-200 border-t-cyan-500 rounded-full animate-spin" />
       </div>
     );
   }
 
-  const bsTotals = balanceSheet?.totals || { assets: 0, liabilities: 0, equity: 0 };
-  const isTotals = incomeStatement?.totals || { revenue: 0, expenses: 0, net_income: 0 };
-  const cfData = cashFlow || {};
-  
-  const isBalanced = Math.abs(bsTotals.assets - (bsTotals.liabilities + bsTotals.equity)) < 0.01;
-
-  const operations = operationsQuery.data || [];
-
-  const creditOperationsTotal = operations
-    .filter((o) => (o.paymentMethod || '').toLowerCase() === 'credit')
-    .reduce((sum, o) => sum + Number(o.total || 0), 0);
-
-  const cashOperationsTotal = operations
-    .filter((o) => (o.paymentMethod || 'cash').toLowerCase() !== 'credit')
-    .reduce((sum, o) => sum + Number(o.total || 0), 0);
+  if (hasError) {
+    return (
+      <div className="max-w-5xl mx-auto p-6" dir="rtl">
+        <div className="rounded-3xl border border-amber-300/35 bg-amber-500/10 p-5" data-testid="financial-error-state">
+          <h2 className="text-lg font-semibold text-amber-100">تعذر تحميل بعض البيانات المالية</h2>
+          <p className="text-sm text-amber-50 mt-1">يمكنك إعادة التحديث الآن.</p>
+          <button
+            onClick={refreshAll}
+            className="mt-4 rounded-xl px-4 py-2 bg-amber-500/20 border border-amber-200/35 text-amber-50"
+            data-testid="financial-error-refresh-button"
+          >
+            إعادة التحديث
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl" dir={isRTL ? 'rtl' : 'ltr'} style={{
-      backgroundColor: 'var(--bg-primary)',
-      minHeight: '100vh'
-    }}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <Scale size={32} className="text-blue-500" />
-            القوائم المالية الشاملة
-          </h1>
-          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
-            الميزانية، الدخل، التدفقات، وميزان المراجعة في مكان واحد
-          </p>
-        </div>
+    <div className="container mx-auto max-w-7xl p-4 md:p-6" dir="rtl">
+      <div className="rounded-[34px] border border-white/10 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0b1220] p-5 md:p-7 shadow-[0_35px_120px_-45px_rgba(14,165,233,0.45)]">
+        <div className="absolute pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border-color)'
-          }}>
-            <Calendar size={18} style={{ color: 'var(--text-secondary)' }} />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              data-testid="financial-start-date-input"
-              className="bg-transparent border-0 outline-none text-sm w-32"
-
-
-              style={{ color: 'var(--text-primary)' }}
-            />
-            <span style={{ color: 'var(--text-secondary)' }}>-</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              data-testid="financial-end-date-input"
-              className="bg-transparent border-0 outline-none text-sm w-32"
-              style={{ color: 'var(--text-primary)' }}
-            />
-          </div>
-          <button
-            onClick={handleRefresh}
-            data-testid="financial-refresh-button"
-            className="p-2.5 rounded-lg transition-colors flex items-center gap-2"
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)'
-            }}
-          >
-            <RefreshCw size={18} />
-            <span>تحديث</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
-        {[
-          { key: 'balance', label: 'الميزانية العمومية', icon: Scale },
-          { key: 'income', label: 'قائمة الدخل', icon: TrendingUp },
-          { key: 'cashflow', label: 'التدفقات النقدية', icon: Banknote },
-          { key: 'receivables', label: 'الذمم (نقد/آجل)', icon: Banknote },
-          { key: 'trial', label: 'ميزان المراجعة', icon: BarChart3 }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            data-testid={`financial-tab-${tab.key}`}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${
-              activeTab === tab.key 
-                ? 'bg-blue-600 text-white shadow-lg' 
-                : ''
-            }`}
-            style={activeTab !== tab.key ? {
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-secondary)'
-            } : {}}
-          >
-            <tab.icon size={18} />
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Balance Sheet Tab */}
-      {activeTab === 'balance' && (
-        <div className="space-y-6">
-          {/* Balance Check */}
-          <FinancialCard
-            title={isBalanced ? 'الميزانية متوازنة ✓' : 'الميزانية غير متوازنة'}
-            subtitle="معادلة الميزانية"
-            icon={Scale}
-            variant={isBalanced ? 'success' : 'danger'}
-            expandable={false}
-            details={[
-              { label: 'الأصول', value: formatCurrency(bsTotals.assets) },
-              { label: 'الخصوم + حقوق الملكية', value: formatCurrency(bsTotals.liabilities + bsTotals.equity) },
-              { label: 'الفرق', value: formatCurrency(Math.abs(bsTotals.assets - (bsTotals.liabilities + bsTotals.equity))), valueColor: isBalanced ? 'text-emerald-400' : 'text-red-400' }
-            ]}
-          />
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FinancialCard
-              title={formatCurrency(bsTotals.assets)}
-              subtitle="إجمالي الأصول"
-              icon={Scale}
-              variant="default"
-              details={
-                balanceSheet?.sections?.assets?.slice(0, 5).map(acc => ({
-                  label: acc.name,
-                  value: formatCurrency(acc.balance)
-                })) || []
-              }
-            />
-
-            <FinancialCard
-              title={formatCurrency(bsTotals.liabilities)}
-              subtitle="إجمالي الخصوم"
-              icon={TrendingUp}
-              variant="warning"
-              details={
-                balanceSheet?.sections?.liabilities?.slice(0, 5).map(acc => ({
-                  label: acc.name,
-                  value: formatCurrency(acc.balance),
-                  valueColor: 'text-red-400'
-                })) || []
-              }
-            />
-
-            <FinancialCard
-              title={formatCurrency(bsTotals.equity)}
-              subtitle="حقوق الملكية"
-              icon={Banknote}
-              variant="success"
-              details={
-                balanceSheet?.sections?.equity?.slice(0, 5).map(acc => ({
-                  label: acc.name,
-                  value: formatCurrency(acc.balance),
-                  valueColor: 'text-emerald-400'
-                })) || []
-              }
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Income Statement Tab */}
-      {activeTab === 'income' && (
-        <div className="space-y-6">
-          {/* Cash vs Credit quick cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FinancialCard
-              title={formatCurrency(cashOperationsTotal || 0)}
-              subtitle="إجمالي المبيعات/العمليات النقدية"
-              icon={Banknote}
-              variant="success"
-              expandable={false}
-            />
-            <FinancialCard
-              title={formatCurrency(creditOperationsTotal || 0)}
-              subtitle="إجمالي المبيعات/العمليات الآجلة"
-              icon={TrendingUp}
-              variant="warning"
-              expandable={false}
-            />
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight" data-testid="financial-dashboard-main-title">
+              لوحة المؤشرات المالية
+            </h1>
+            <p className="text-sm md:text-base text-slate-300 mt-3" data-testid="financial-dashboard-main-subtitle">
+              تصميم زجاجي شامل مع مطابقة تلقائية بين العمليات والقيود خلال الفترة المحددة.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FinancialCard
-              title={formatCurrency(isTotals.revenue)}
-              subtitle="إجمالي الإيرادات"
-              icon={TrendingUp}
-              trend="up"
-              trendValue="+15%"
-              variant="success"
-              details={
-                Object.entries(incomeStatement?.details?.revenue_by_account || {}).slice(0, 4).map(([code, data]) => ({
-                  label: data.name || `حساب ${code}`,
-                  value: formatCurrency(data.amount || 0)
-                }))
-              }
-            />
-
-            <FinancialCard
-              title={formatCurrency(isTotals.expenses)}
-              subtitle="إجمالي المصروفات"
-              icon={TrendingUp}
-              trend="down"
-              variant="warning"
-              details={
-                Object.entries(incomeStatement?.details?.expenses_by_account || {}).slice(0, 4).map(([code, data]) => ({
-                  label: data.name || `حساب ${code}`,
-                  value: formatCurrency(data.amount || 0),
-                  valueColor: 'text-red-400'
-                }))
-              }
-            />
-
-            <FinancialCard
-              title={formatCurrency(isTotals.net_income)}
-              subtitle="صافي الدخل"
-              icon={TrendingUp}
-              trend={isTotals.net_income >= 0 ? 'up' : 'down'}
-              variant={isTotals.net_income >= 0 ? 'success' : 'danger'}
-              details={[
-                { label: 'الإيرادات', value: formatCurrency(isTotals.revenue) },
-                { label: 'المصروفات', value: formatCurrency(isTotals.expenses), valueColor: 'text-red-400' },
-                { label: 'صافي الدخل', value: formatCurrency(isTotals.net_income), valueColor: isTotals.net_income >= 0 ? 'text-emerald-400' : 'text-red-400' }
-              ]}
-            />
-
-            <FinancialCard
-              title={`${isTotals.revenue > 0 ? ((isTotals.net_income / isTotals.revenue) * 100).toFixed(1) : '0'}%`}
-              subtitle="هامش الربح الصافي"
-              icon={BarChart3}
-              variant={isTotals.revenue > 0 && (isTotals.net_income / isTotals.revenue) > 0.2 ? 'success' : 'warning'}
-              expandable={false}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Cash Flow Tab */}
-      {activeTab === 'cashflow' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <FinancialCard
-            title={formatCurrency(cfData.operating_activities?.net_operating_cash || 0)}
-            subtitle="الأنشطة التشغيلية"
-            icon={Banknote}
-            trend={(cfData.operating_activities?.net_operating_cash || 0) >= 0 ? 'up' : 'down'}
-            variant={(cfData.operating_activities?.net_operating_cash || 0) >= 0 ? 'success' : 'danger'}
-            details={[
-              { label: 'النقد من العملاء', value: formatCurrency(cfData.operating_activities?.cash_from_customers || 0) },
-              { label: 'النقد للموردين', value: formatCurrency(cfData.operating_activities?.cash_to_suppliers || 0), valueColor: 'text-red-400' }
-            ]}
-          />
-
-          <FinancialCard
-            title={formatCurrency(cfData.investing_activities?.net_investing_cash || 0)}
-            subtitle="الأنشطة الاستثمارية"
-            icon={TrendingUp}
-            variant="default"
-            details={[
-              { label: 'شراء معدات', value: formatCurrency(cfData.investing_activities?.equipment_purchases || 0), valueColor: 'text-red-400' }
-            ]}
-          />
-
-          <FinancialCard
-            title={formatCurrency(cfData.financing_activities?.net_financing_cash || 0)}
-            subtitle="الأنشطة التمويلية"
-            icon={Banknote}
-            variant="warning"
-            details={[
-              { label: 'قروض جديدة', value: formatCurrency(cfData.financing_activities?.new_loans || 0), valueColor: 'text-emerald-400' }
-            ]}
-          />
-
-          <FinancialCard
-            title={formatCurrency(cfData.ending_cash || 0)}
-            subtitle="رصيد النقد النهائي"
-            icon={Banknote}
-            variant="success"
-            details={[
-              { label: 'رصيد البداية', value: formatCurrency(cfData.beginning_cash || 0) },
-              { label: 'صافي التغير', value: formatCurrency(cfData.net_change_in_cash || 0), valueColor: (cfData.net_change_in_cash || 0) >= 0 ? 'text-emerald-400' : 'text-red-400' }
-            ]}
-          />
-        </div>
-      )}
-
-      {/* Receivables (AR) Tab */}
-      {activeTab === 'receivables' && (
-        <ARReceivablesTab />
-      )}
-
-      {/* Trial Balance Tab */}
-      {activeTab === 'trial' && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            ميزان المراجعة
-          </h2>
-          
-          {trialBalance && trialBalance.length > 0 ? (
-            <div className="rounded-2xl overflow-hidden"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)'
-              }}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2" data-testid="financial-date-range-panel">
+              <CalendarDays size={16} className="text-cyan-300" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent text-sm text-slate-100 outline-none"
+                data-testid="financial-start-date-input"
+              />
+              <span className="text-slate-300">إلى</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent text-sm text-slate-100 outline-none"
+                data-testid="financial-end-date-input"
+              />
+            </div>
+            <button
+              onClick={refreshAll}
+              className="inline-flex items-center gap-2 rounded-2xl border border-cyan-200/40 bg-cyan-500/20 px-3 py-2 text-cyan-50"
+              data-testid="financial-refresh-button"
             >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-blue-500 to-indigo-600">
-                    <tr>
-                      <th className="px-4 py-3 text-right text-white font-semibold">رمز الحساب</th>
-                      <th className="px-4 py-3 text-right text-white font-semibold">اسم الحساب</th>
-                      <th className="px-4 py-3 text-right text-white font-semibold">مدين</th>
-                      <th className="px-4 py-3 text-right text-white font-semibold">دائن</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trialBalance.map((account, idx) => (
-                      <tr key={idx} className="border-b hover:bg-slate-50/5" style={{ borderColor: 'var(--border-color)' }}>
-                        <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {account.code}
-                        </td>
-                        <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {account.name || account.name_ar}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {formatCurrency(account.debit || 0)}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {formatCurrency(account.credit || 0)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-900/20 font-bold">
-                    <tr>
-                      <td colSpan="3" className="px-4 py-3 text-right" style={{ color: 'var(--text-primary)' }}>
-                        الإجمالي
-                      </td>
-                      <td className="px-4 py-3 font-mono text-lg" style={{ color: 'var(--text-primary)' }}>
-                        {formatCurrency(trialBalance.reduce((sum, acc) => sum + Math.abs(acc.balance || 0), 0))}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+              <RefreshCw size={16} />
+              تحديث
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <GlassCard
+            title="إجمالي الإيرادات"
+            value={formatCurrency(incomeTotals.revenue || 0)}
+            subtitle="من القيود اليومية خلال الفترة"
+            testId="financial-metric-revenue"
+          />
+          <GlassCard
+            title="إجمالي المصروفات"
+            value={formatCurrency(incomeTotals.expenses || 0)}
+            subtitle="تكاليف التشغيل والمشتريات"
+            testId="financial-metric-expenses"
+            accent="from-rose-500/25 to-orange-400/10"
+          />
+          <GlassCard
+            title="صافي الربح"
+            value={formatCurrency(incomeTotals.net_income || 0)}
+            subtitle={`الهامش: ${profitMargin.toFixed(1)}%`}
+            testId="financial-metric-net-income"
+            accent={incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10'}
+          />
+          <GlassCard
+            title="إجمالي الذمم المدينة"
+            value={formatCurrency(arSummary.total_ar || 0)}
+            subtitle={`عدد العملاء: ${(arSummary.customers || []).length}`}
+            testId="financial-metric-ar-total"
+            accent="from-violet-500/25 to-blue-400/10"
+          />
+        </div>
+
+        <div className="mb-6 flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`rounded-full px-4 py-2 text-sm border transition-all ${
+                activeTab === tab.key
+                  ? 'bg-cyan-500/30 border-cyan-300/45 text-cyan-50'
+                  : 'bg-white/5 border-white/15 text-slate-300 hover:bg-white/10'
+              }`}
+              data-testid={`financial-tab-${tab.key}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="financial-overview-panel">
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-balance-status-title">
+                <Scale size={16} className="text-cyan-300" />
+                حالة معادلة الميزانية
+              </h3>
+              <p className={`mt-3 text-sm ${isBalanceEquationHealthy ? 'text-emerald-300' : 'text-rose-300'}`} data-testid="financial-balance-equation-status">
+                {isBalanceEquationHealthy ? '✅ الميزانية متوازنة' : '⚠️ الميزانية غير متوازنة'}
+              </p>
+              <div className="mt-3 space-y-1 text-sm text-slate-200">
+                <p data-testid="financial-overview-assets">الأصول: {formatCurrency(bsTotals.assets || 0)}</p>
+                <p data-testid="financial-overview-liabilities-equity">الخصوم + حقوق الملكية: {formatCurrency((bsTotals.liabilities || 0) + (bsTotals.equity || 0))}</p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <BarChart3 size={48} className="mx-auto mb-4 text-slate-400" />
-              <p style={{ color: 'var(--text-secondary)' }}>لا توجد حسابات في ميزان المراجعة</p>
+
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-reconcile-summary-title">
+                <ShieldCheck size={16} className="text-violet-300" />
+                ملخص المطابقة المحاسبية
+              </h3>
+              <p
+                className={`mt-3 text-sm ${reconciliation.summary?.matched ? 'text-emerald-300' : 'text-amber-300'}`}
+                data-testid="financial-reconcile-summary-status"
+              >
+                {reconciliation.summary?.matched ? '✅ لا توجد فروقات' : '⚠️ توجد فروقات تحتاج مراجعة'}
+              </p>
+              <p className="mt-2 text-sm text-slate-100" data-testid="financial-reconcile-summary-diff">
+                إجمالي الفروقات المطلقة: {formatCurrency(reconciliation.summary?.total_absolute_difference || 0)}
+              </p>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+
+        {activeTab === 'balance' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" data-testid="financial-balance-panel">
+            {[
+              { key: 'assets', label: 'الأصول', list: balanceSheetQuery.data?.sections?.assets || [] },
+              { key: 'liabilities', label: 'الخصوم', list: balanceSheetQuery.data?.sections?.liabilities || [] },
+              { key: 'equity', label: 'حقوق الملكية', list: balanceSheetQuery.data?.sections?.equity || [] },
+            ].map((section) => (
+              <div key={section.key} className="rounded-3xl border border-white/15 bg-white/5 p-4">
+                <h3 className="text-sm font-semibold text-white" data-testid={`financial-balance-${section.key}-title`}>{section.label}</h3>
+                <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
+                  {section.list.length ? section.list.map((acc, idx) => (
+                    <div key={`${section.key}-${idx}`} className="rounded-xl border border-white/10 bg-slate-900/45 px-3 py-2">
+                      <p className="text-xs text-slate-300" data-testid={`financial-balance-${section.key}-name-${idx}`}>{acc.name}</p>
+                      <p className="text-sm text-slate-100 font-semibold" data-testid={`financial-balance-${section.key}-value-${idx}`}>{formatCurrency(acc.balance || 0)}</p>
+                    </div>
+                  )) : <p className="text-xs text-slate-400" data-testid={`financial-balance-${section.key}-empty`}>لا توجد بيانات</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'income' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="financial-income-panel">
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
+              <h3 className="text-sm text-emerald-300 font-semibold flex items-center gap-2" data-testid="financial-income-revenue-title">
+                <TrendingUp size={14} />
+                الإيرادات حسب الحساب
+              </h3>
+              <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
+                {Object.entries(incomeStatementQuery.data?.details?.revenue_by_account || {}).map(([code, row], idx) => (
+                  <div key={code} className="rounded-xl border border-emerald-300/15 bg-emerald-500/10 px-3 py-2">
+                    <p className="text-xs text-emerald-100" data-testid={`financial-income-revenue-name-${idx}`}>{row.name || code}</p>
+                    <p className="text-sm text-white" data-testid={`financial-income-revenue-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
+              <h3 className="text-sm text-rose-300 font-semibold flex items-center gap-2" data-testid="financial-income-expenses-title">
+                <TrendingDown size={14} />
+                المصروفات حسب الحساب
+              </h3>
+              <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
+                {Object.entries(incomeStatementQuery.data?.details?.expenses_by_account || {}).map(([code, row], idx) => (
+                  <div key={code} className="rounded-xl border border-rose-300/15 bg-rose-500/10 px-3 py-2">
+                    <p className="text-xs text-rose-100" data-testid={`financial-income-expenses-name-${idx}`}>{row.name || code}</p>
+                    <p className="text-sm text-white" data-testid={`financial-income-expenses-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'cashflow' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="financial-cashflow-panel">
+            <GlassCard
+              title="التدفق التشغيلي"
+              value={formatCurrency(cashFlow.operating_activities?.net_operating_cash || 0)}
+              subtitle="صافي الأنشطة التشغيلية"
+              testId="financial-cash-operating"
+              accent="from-emerald-500/25 to-cyan-400/10"
+            />
+            <GlassCard
+              title="التدفق الاستثماري"
+              value={formatCurrency(cashFlow.investing_activities?.net_investing_cash || 0)}
+              subtitle="صافي الأنشطة الاستثمارية"
+              testId="financial-cash-investing"
+              accent="from-indigo-500/25 to-sky-400/10"
+            />
+            <GlassCard
+              title="التدفق التمويلي"
+              value={formatCurrency(cashFlow.financing_activities?.net_financing_cash || 0)}
+              subtitle="صافي الأنشطة التمويلية"
+              testId="financial-cash-financing"
+              accent="from-violet-500/25 to-fuchsia-400/10"
+            />
+            <GlassCard
+              title="صافي التغير النقدي"
+              value={formatCurrency(cashFlow.net_change_in_cash || 0)}
+              subtitle="خلال الفترة المحددة"
+              testId="financial-cash-net-change"
+              accent="from-amber-500/25 to-orange-400/10"
+            />
+          </div>
+        )}
+
+        {activeTab === 'receivables' && (
+          <div data-testid="financial-receivables-panel">
+            <ARReceivablesTab />
+          </div>
+        )}
+
+        {activeTab === 'trial' && (
+          <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-trial-balance-panel">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-200 border-b border-white/10">
+                    <th className="p-3 text-right">الكود</th>
+                    <th className="p-3 text-right">الحساب</th>
+                    <th className="p-3 text-right">مدين</th>
+                    <th className="p-3 text-right">دائن</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(trialBalance.accounts || []).map((acc, idx) => (
+                    <tr key={`${acc.code}-${idx}`} className="border-b border-white/5 text-slate-100">
+                      <td className="p-3" data-testid={`financial-trial-code-${idx}`}>{acc.code}</td>
+                      <td className="p-3" data-testid={`financial-trial-name-${idx}`}>{acc.name || acc.name_ar}</td>
+                      <td className="p-3" data-testid={`financial-trial-debit-${idx}`}>{formatCurrency(acc.debit || 0)}</td>
+                      <td className="p-3" data-testid={`financial-trial-credit-${idx}`}>{formatCurrency(acc.credit || 0)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="text-cyan-200 font-semibold">
+                    <td className="p-3" colSpan={2}>الإجمالي</td>
+                    <td className="p-3" data-testid="financial-trial-total-debit">{formatCurrency(trialBalance.totals?.total_debit || 0)}</td>
+                    <td className="p-3" data-testid="financial-trial-total-credit">{formatCurrency(trialBalance.totals?.total_credit || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reconcile' && (
+          <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-reconciliation-panel">
+            <div className="mb-3 flex items-center gap-2 text-sm text-slate-100" data-testid="financial-reconcile-panel-summary">
+              {reconciliation.summary?.matched ? (
+                <ShieldCheck size={16} className="text-emerald-300" />
+              ) : (
+                <AlertTriangle size={16} className="text-amber-300" />
+              )}
+              <span>
+                {reconciliation.summary?.matched ? 'مطابقة كاملة بين العمليات والقيود' : 'يوجد اختلاف بين العمليات والقيود'}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-200">
+                    <th className="p-3 text-right">النوع</th>
+                    <th className="p-3 text-right">عدد العمليات</th>
+                    <th className="p-3 text-right">عدد القيود</th>
+                    <th className="p-3 text-right">إجمالي العمليات</th>
+                    <th className="p-3 text-right">إجمالي القيود</th>
+                    <th className="p-3 text-right">الفرق</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(reconciliation.rows || []).map((row, idx) => (
+                    <tr key={`${row.type}-${idx}`} className="border-b border-white/5 text-slate-100">
+                      <td className="p-3" data-testid={`financial-reconcile-type-${idx}`}>{row.type}</td>
+                      <td className="p-3" data-testid={`financial-reconcile-op-count-${idx}`}>{row.operations_count}</td>
+                      <td className="p-3" data-testid={`financial-reconcile-je-count-${idx}`}>{row.journal_entries_count}</td>
+                      <td className="p-3" data-testid={`financial-reconcile-op-total-${idx}`}>{formatCurrency(row.operations_total || 0)}</td>
+                      <td className="p-3" data-testid={`financial-reconcile-je-total-${idx}`}>{formatCurrency(row.journal_entries_total || 0)}</td>
+                      <td className={`p-3 ${Math.abs(Number(row.difference || 0)) < 0.01 ? 'text-emerald-300' : 'text-amber-300'}`} data-testid={`financial-reconcile-diff-${idx}`}>
+                        {formatCurrency(row.difference || 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default ComprehensiveFinancial;
+}

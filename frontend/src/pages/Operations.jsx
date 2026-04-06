@@ -508,7 +508,9 @@ const Operations = () => {
     () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
     [accounts]
   );
-  const operationsForRanking = operationsQuery.data || [];
+  const operationsForRanking = (Array.isArray(operationsQuery.data) && operationsQuery.data.length)
+    ? operationsQuery.data
+    : cachedOperations;
   const accountUsageStats = useMemo(() => {
     const usage = new Map();
     const lastUsed = new Map();
@@ -517,13 +519,21 @@ const Operations = () => {
       const rawId = String(op?.accountingAccountId || op?.accountId || '').trim();
       if (!rawId) return;
 
-      const key = normalizeText(rawId);
-      usage.set(key, (usage.get(key) || 0) + 1);
+      const keyVariants = [
+        normalizeText(rawId),
+        normalizeText(normalizeAccountCode(rawId)),
+      ].filter(Boolean);
+
+      keyVariants.forEach((key) => {
+        usage.set(key, (usage.get(key) || 0) + 1);
+      });
 
       const ts = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
       if (!Number.isFinite(ts)) return;
-      const prev = lastUsed.get(key) || 0;
-      if (ts > prev) lastUsed.set(key, ts);
+      keyVariants.forEach((key) => {
+        const prev = lastUsed.get(key) || 0;
+        if (ts > prev) lastUsed.set(key, ts);
+      });
     });
 
     return { usage, lastUsed };
@@ -561,15 +571,27 @@ const Operations = () => {
     const base = cleaned.length > 0 ? cleaned : typeScoped;
 
     return [...base].sort((a, b) => {
-      const aKey = normalizeText(a?.id || a?.code || '');
-      const bKey = normalizeText(b?.id || b?.code || '');
+      const buildKeys = (account) => {
+        const rawId = String(account?.id || '').trim();
+        const rawCode = String(account?.code || '').trim();
+        return [
+          normalizeText(rawId),
+          normalizeText(rawCode),
+          normalizeText(normalizeAccountCode(rawId)),
+          normalizeText(normalizeAccountCode(rawCode)),
+        ].filter(Boolean);
+      };
 
-      const aLast = accountUsageStats.lastUsed.get(aKey) || 0;
-      const bLast = accountUsageStats.lastUsed.get(bKey) || 0;
+      const pickMax = (mapRef, keys) => keys.reduce((max, key) => Math.max(max, mapRef.get(key) || 0), 0);
+      const aKeys = buildKeys(a);
+      const bKeys = buildKeys(b);
+
+      const aLast = pickMax(accountUsageStats.lastUsed, aKeys);
+      const bLast = pickMax(accountUsageStats.lastUsed, bKeys);
       if (bLast !== aLast) return bLast - aLast;
 
-      const aUsage = accountUsageStats.usage.get(aKey) || 0;
-      const bUsage = accountUsageStats.usage.get(bKey) || 0;
+      const aUsage = pickMax(accountUsageStats.usage, aKeys);
+      const bUsage = pickMax(accountUsageStats.usage, bKeys);
       if (bUsage !== aUsage) return bUsage - aUsage;
 
       const aCode = normalizeAccountCode(a?.code || a?.id || '');

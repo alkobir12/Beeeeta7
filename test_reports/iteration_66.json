@@ -1,0 +1,68 @@
+{
+  "summary": "Tested account sorting in Operations page dropdown. The sorting code is correctly implemented but doesn't work because operations lack accountingAccountId field.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Account dropdown sorting by usage",
+        "issue": "Sorting doesn't work because operations have accountId (biz-account UUIDs) but not accountingAccountId (chart account IDs). The dropdown shows chart accounts, so IDs don't match.",
+        "affected_selectors": ["[data-testid='operation-account-select']"],
+        "priority": "HIGH"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_66.json"
+  ],
+  "action_items": [
+    "Operations need to store accountingAccountId (chart of accounts ID) when created, not just accountId (biz-account ID)",
+    "The sorting logic in filteredAccounts (lines 573-600) is correct but can't match because operations don't have accountingAccountId",
+    "Current operations have: 58 total, 0 with accountingAccountId, 36 with accountId (biz-account UUIDs)"
+  ],
+  "critical_code_review_comments": [
+    "✅ Code Implementation: accountUsageStats (lines 514-540) correctly calculates usage count and lastUsed timestamp",
+    "✅ Code Implementation: filteredAccounts (lines 542-601) correctly sorts by lastUsed DESC, then usage DESC, then code",
+    "✅ Code Implementation: operationsForRanking (lines 511-513) uses cachedOperations for immediate display",
+    "❌ Data Issue: Operations in DB have accountId (biz-account UUIDs like 40b024d7-260d-4b45-94fb-20c1c594c76f) but NOT accountingAccountId",
+    "❌ Data Issue: Chart accounts have IDs like acc-1101, acc-1102 which don't match biz-account UUIDs",
+    "❌ Result: Sorting falls back to account code order (1101, 1102, 1105...) instead of usage-based order"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "50% - UI loads correctly but sorting doesn't work due to data mismatch"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Account sorting code is correct but operations need accountingAccountId field populated. Current operations only have accountId (biz-account UUIDs). The dropdown shows chart accounts with different IDs (acc-1101, etc.), so sorting can't match.",
+  "test_credentials": "username: مدير (no password)",
+  "verified_features": [
+    "Operations page loads correctly",
+    "Account dropdown shows 39 options (filtered by operation type)",
+    "cachedOperations is stored in localStorage (58 operations)",
+    "chartAccountsCache is stored in localStorage (201 accounts)"
+  ],
+  "api_verification": {
+    "GET /api/operations": "58 operations, 0 with accountingAccountId, 36 with accountId",
+    "GET /api/accounts": "201 chart accounts available",
+    "GET /api/biz-accounts": "5 business accounts available"
+  },
+  "root_cause_analysis": {
+    "issue": "Account dropdown not sorted by usage",
+    "root_cause": "Operations store accountId (biz-account UUID) but not accountingAccountId (chart account ID). The sorting logic tries to match op.accountingAccountId || op.accountId with chart account IDs, but biz-account UUIDs don't match chart account IDs.",
+    "evidence": [
+      "58 operations in database",
+      "0 operations have accountingAccountId field",
+      "36 operations have accountId field with biz-account UUIDs",
+      "Chart accounts have IDs like acc-1101, acc-1102",
+      "Biz-accounts have UUIDs like 40b024d7-260d-4b45-94fb-20c1c594c76f"
+    ],
+    "fix_required": "When creating operations, populate accountingAccountId with the selected chart account ID (e.g., acc-1101) in addition to accountId (biz-account ID)"
+  }
+}

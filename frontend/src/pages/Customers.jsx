@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Search, Phone, Mail, Plus, Car, MapPin, RefreshCw, User, Edit2, Trash2, Upload, MessageCircle } from 'lucide-react';
+import { Users, Search, Phone, Mail, Plus, Car, MapPin, RefreshCw, User, Edit2, Trash2, Upload, MessageCircle, HandCoins, Receipt } from 'lucide-react';
 import { customerAPI, api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../hooks/use-toast';
@@ -35,6 +35,15 @@ const Customers = () => {
   const [saving, setSaving] = useState(false);
   const [whatsAppDialogOpen, setWhatsAppDialogOpen] = useState(false);
   const [whatsAppDrafts, setWhatsAppDrafts] = useState([]);
+  const [collectionAccounts, setCollectionAccounts] = useState([]);
+  const [collectionModal, setCollectionModal] = useState({
+    open: false,
+    customer: null,
+    amount: '',
+    accountId: '',
+    note: '',
+    issueReceipt: false,
+  });
   const fileInputRef = useRef(null);
 
   const styles = {
@@ -48,7 +57,23 @@ const Customers = () => {
 
   useEffect(() => {
     fetchCustomers();
+    fetchCollectionAccounts();
   }, []);
+
+  const fetchCollectionAccounts = async () => {
+    try {
+      const response = await api.get('/finance/chart-of-accounts', workshopId ? { params: { workshop_id: workshopId } } : undefined);
+      const rows = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      const filtered = rows.filter((acc) => ['asset', 'liability', 'expense'].includes(String(acc?.type || '').toLowerCase()));
+      setCollectionAccounts(filtered);
+    } catch (error) {
+      setCollectionAccounts([]);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -212,6 +237,117 @@ const Customers = () => {
       return;
     }
     window.open(draft.url, '_blank', 'noopener,noreferrer');
+  };
+
+  const openCollectionModal = (customer, issueReceipt = false) => {
+    const defaultAccount = collectionAccounts[0]?.id || collectionAccounts[0]?.code || '';
+    setCollectionModal({
+      open: true,
+      customer,
+      amount: String(Number(customer?.overdueBalance || customer?.ajelBalance || 0) || ''),
+      accountId: defaultAccount,
+      note: `تحصيل من العميل ${customer?.name || ''}`,
+      issueReceipt,
+    });
+  };
+
+  const closeCollectionModal = () => {
+    setCollectionModal({
+      open: false,
+      customer: null,
+      amount: '',
+      accountId: '',
+      note: '',
+      issueReceipt: false,
+    });
+  };
+
+  const printCollectionReceipt = ({ customer, amount, operationId, date }) => {
+    const win = window.open('', '_blank', 'noopener,noreferrer');
+    if (!win) return;
+    const html = `
+      <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="utf-8" />
+          <title>إيصال دفع</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
+            .card { border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; max-width: 520px; margin: 0 auto; }
+            h1 { margin: 0 0 16px; font-size: 22px; }
+            p { margin: 8px 0; font-size: 14px; }
+            .amount { font-size: 24px; font-weight: 700; color: #0369a1; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>إيصال دفع</h1>
+            <p>العميل: <strong>${customer?.name || '-'}</strong></p>
+            <p>رقم الجوال: <strong>${customer?.phone || '-'}</strong></p>
+            <p>رقم العملية: <strong>${operationId || '-'}</strong></p>
+            <p>التاريخ: <strong>${date || new Date().toLocaleDateString('ar-SA')}</strong></p>
+            <p>المبلغ:</p>
+            <p class="amount">${Number(amount || 0).toLocaleString('ar-SA')} ر.س</p>
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `;
+    win.document.write(html);
+    win.document.close();
+  };
+
+  const createCollectionOrder = async () => {
+    const customer = collectionModal.customer;
+    const amount = Number(collectionModal.amount || 0);
+    if (!customer?.id || amount <= 0 || !collectionModal.accountId) {
+      toast({ title: 'أدخل مبلغ صحيح واختر حساب القيد', variant: 'destructive' });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        type: 'payment_order',
+        total: amount,
+        amount,
+        paymentAmount: amount,
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+        status: 'issued',
+        date: new Date().toISOString().split('T')[0],
+        accountingAccountId: collectionModal.accountId,
+        partnerId: customer.id,
+        partnerName: customer.name,
+        partnerPhone: customer.phone || '',
+        partnerType: 'customer',
+        notes: collectionModal.note || `تحصيل من العميل ${customer.name}`,
+        items: [{
+          name: `تحصيل ذمم - ${customer.name}`,
+          quantity: 1,
+          price: amount,
+          total: amount,
+          isCustom: true,
+        }],
+      };
+
+      const response = await api.post('/operations', payload);
+      toast({ title: 'تم إنشاء أمر التحصيل بنجاح' });
+      await fetchCustomers();
+
+      if (collectionModal.issueReceipt) {
+        printCollectionReceipt({
+          customer,
+          amount,
+          operationId: response?.data?.id,
+          date: payload.date,
+        });
+      }
+      closeCollectionModal();
+    } catch (error) {
+      toast({ title: 'تعذر إنشاء أمر التحصيل', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -562,6 +698,28 @@ const Customers = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          openCollectionModal(customer, false);
+                        }}
+                        className="flex-1 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`customer-create-collection-order-button-${customer.id}`}
+                      >
+                        <HandCoins size={14} className="inline ml-1" />
+                        أمر تحصيل
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCollectionModal(customer, true);
+                        }}
+                        className="flex-1 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`customer-create-payment-receipt-button-${customer.id}`}
+                      >
+                        <Receipt size={14} className="inline ml-1" />
+                        إيصال دفع
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           openWhatsAppPreview(customer);
                         }}
                         className="flex-1 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-white transition-all text-sm font-semibold"
@@ -714,6 +872,76 @@ const Customers = () => {
                 data-testid="customer-form-submit"
               >
                 {saving ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {collectionModal.open && collectionModal.customer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" data-testid="customer-collection-modal">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950/90 p-6">
+            <h3 className="text-lg font-bold text-white" data-testid="customer-collection-modal-title">
+              {collectionModal.issueReceipt ? 'إيصال دفع + أمر تحصيل' : 'إنشاء أمر تحصيل'}
+            </h3>
+            <p className="mt-1 text-sm text-slate-300" data-testid="customer-collection-modal-customer">
+              العميل: {collectionModal.customer.name}
+            </p>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs text-slate-400">المبلغ</label>
+                <input
+                  type="number"
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                  value={collectionModal.amount}
+                  onChange={(e) => setCollectionModal((prev) => ({ ...prev, amount: e.target.value }))}
+                  data-testid="customer-collection-amount-input"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">حساب القيد</label>
+                <select
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                  value={collectionModal.accountId}
+                  onChange={(e) => setCollectionModal((prev) => ({ ...prev, accountId: e.target.value }))}
+                  data-testid="customer-collection-account-select"
+                >
+                  <option value="">اختر حساب</option>
+                  {collectionAccounts.map((acc) => (
+                    <option key={acc.id || acc.code} value={acc.id || acc.code}>
+                      {acc.name_ar || acc.name || acc.code}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">ملاحظة</label>
+                <textarea
+                  rows={3}
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                  value={collectionModal.note}
+                  onChange={(e) => setCollectionModal((prev) => ({ ...prev, note: e.target.value }))}
+                  data-testid="customer-collection-note-input"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={closeCollectionModal}
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-200"
+                data-testid="customer-collection-cancel-button"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={createCollectionOrder}
+                disabled={saving}
+                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                data-testid="customer-collection-submit-button"
+              >
+                {saving ? 'جارٍ الإنشاء...' : (collectionModal.issueReceipt ? 'إنشاء + إيصال' : 'إنشاء أمر تحصيل')}
               </button>
             </div>
           </div>

@@ -894,10 +894,13 @@
 | 06 Apr 2026 | Added reconciliation repair API (`/api/finance/reports/reconciliation/backfill-journals`) with dry-run/apply modes + safer diagnostics (`missing_operation_journals`, `unclassified_journal_entries`) |
 | 06 Apr 2026 | Operations cards enhanced to show accounting clarity: explicit account name, account classification (إيراد/مصروف/أصل/التزام), and item/category summary with test IDs |
 | 06 Apr 2026 | Financial dashboard optimized with lazy loading for heavy tabs (cashflow/trial) while preserving reconciliation visibility |
+| 06 Apr 2026 | Implemented account drill-down tree in Financial Dashboard (Income tab): clickable account cards now open child-account tree + paginated account operations table (`/api/finance/reports/account-tree-details`) |
+| 06 Apr 2026 | Reconciliation table localized and enriched: Arabic type labels + per-type account label details instead of raw English operation codes |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 
 - **P0**: Resolve real data discrepancies highlighted by reconciliation rows (legacy records with missing/old journal mappings).
 - **P0**: Review and clean duplicate historical backfill journal entries in Rakan scope (non-blocking for workshop reconciliation but recommended housekeeping).
+- **P1**: Extend account-tree drilldown pattern from ComprehensiveFinancial to additional analytics pages where account codes still appear raw.
 - **P1**: Supplier/payment-order UX polishing inside Operations + debt flows (permission-aware visibility checks for all roles).
 - **P2**: Continue liquid/glass UI parity across remaining legacy pages and complete advanced roles/permissions matrix UX.

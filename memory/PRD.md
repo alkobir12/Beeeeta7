@@ -898,6 +898,9 @@
 | 06 Apr 2026 | Reconciliation table localized and enriched: Arabic type labels + per-type account label details instead of raw English operation codes |
 | 06 Apr 2026 | Added new KPI card in Financial Dashboard: **النقد الحالي** (sum of cash + bank balances 1101/1102) |
 | 06 Apr 2026 | Fixed reconciliation account labels to use real chart-of-accounts names from journal lines (removed misleading/undefined labels in sale row) |
+| 06 Apr 2026 | Refined current cash logic to reflect **cash-collected sales by payment method** (not raw ledger assumption), and added sales AR split |
+| 06 Apr 2026 | Added Income-tab block "عمليات البيع (مع الإجمالي)" with totals: total sales / cash collected / unpaid credit + paginated rows |
+| 06 Apr 2026 | Improved account/operation readability: Trial Balance names normalized (no code-only rows), and account-tree operation descriptions enriched with customer/vehicle context instead of raw visit IDs where possible |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

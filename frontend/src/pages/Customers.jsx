@@ -546,6 +546,28 @@ const Customers = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        openCollectionModal(customer, false);
+                      }}
+                      className="px-2 py-2 rounded-lg border border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/10"
+                      data-testid={`customer-create-collection-order-inline-${customer.id}`}
+                    >
+                      <HandCoins size={14} className="inline ml-1" />
+                      تحصيل
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCollectionModal(customer, true);
+                      }}
+                      className="px-2 py-2 rounded-lg border border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/10"
+                      data-testid={`customer-create-payment-receipt-inline-${customer.id}`}
+                    >
+                      <Receipt size={14} className="inline ml-1" />
+                      إيصال
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         openEditModal(customer);
                       }}
                       className="p-2 rounded-lg border border-white/10 text-slate-200 hover:bg-white/10"

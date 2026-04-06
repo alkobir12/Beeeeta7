@@ -1,0 +1,49 @@
+{
+  "summary": "Verified inline collection order (تحصيل) and payment receipt (إيصال) buttons are now visible directly on customer cards WITHOUT needing to expand card details. All 4 tests passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "✅ Inline Collection Order button (تحصيل) visible directly on customer card header",
+    "✅ Inline Payment Receipt button (إيصال) visible directly on customer card header",
+    "✅ Buttons use correct data-testid: customer-create-collection-order-inline-{id} and customer-create-payment-receipt-inline-{id}",
+    "✅ Clicking تحصيل opens modal with title 'إنشاء أمر تحصيل'",
+    "✅ Clicking إيصال opens modal with title 'إيصال دفع + أمر تحصيل'",
+    "✅ Both buttons are visible without expanding the card (fix for user's original issue)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% (4/4 tests passed)"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Inline buttons for collection order and payment receipt are now working correctly on customer cards. The buttons appear in the card header alongside Edit and Delete buttons, visible without expanding the card. Previous iteration (68) tested the expanded view buttons; this iteration confirms the inline buttons fix.",
+  "test_credentials": "username: مدير (no password)",
+  "verified_features": [
+    "✅ زر أمر التحصيل ظاهر مباشرة على كرت العميل بدون الحاجة لتوسيع التفاصيل",
+    "✅ زر إيصال الدفع ظاهر مباشرة على كرت العميل",
+    "✅ النقر على زر التحصيل يفتح مودال إنشاء أمر التحصيل",
+    "✅ النقر على زر الإيصال يفتح مودال إيصال الدفع"
+  ],
+  "test_evidence": {
+    "ui_tests": {
+      "inline_collection_button_visible": true,
+      "inline_receipt_button_visible": true,
+      "collection_modal_opens": true,
+      "receipt_modal_opens": true,
+      "collection_modal_title": "إنشاء أمر تحصيل",
+      "receipt_modal_title": "إيصال دفع + أمر تحصيل"
+    },
+    "customer_cards_found": 115
+  }
+}

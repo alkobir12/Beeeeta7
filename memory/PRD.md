@@ -890,9 +890,14 @@
 | 06 Apr 2026 | Implemented new glassmorphism Financial Dashboard (`/accounting/comprehensive`) with 7 tabs and live reconciliation panel wired to backend data |
 | 06 Apr 2026 | Unified AI assistant page (`/ai-financial`) now supports tabbed switch between financial analysis and workshop intelligence in a single interface |
 | 06 Apr 2026 | Sidebar refactor completed: removed "التشغيل اليومي" group and moved "الموردون" under "المخزون" group |
+| 06 Apr 2026 | Applied historical reconciliation backfill (user-approved): created missing operation journals for recent period and brought reconciliation to matched state (`total_absolute_difference=0`) |
+| 06 Apr 2026 | Added reconciliation repair API (`/api/finance/reports/reconciliation/backfill-journals`) with dry-run/apply modes + safer diagnostics (`missing_operation_journals`, `unclassified_journal_entries`) |
+| 06 Apr 2026 | Operations cards enhanced to show accounting clarity: explicit account name, account classification (إيراد/مصروف/أصل/التزام), and item/category summary with test IDs |
+| 06 Apr 2026 | Financial dashboard optimized with lazy loading for heavy tabs (cashflow/trial) while preserving reconciliation visibility |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 
 - **P0**: Resolve real data discrepancies highlighted by reconciliation rows (legacy records with missing/old journal mappings).
+- **P0**: Review and clean duplicate historical backfill journal entries in Rakan scope (non-blocking for workshop reconciliation but recommended housekeeping).
 - **P1**: Supplier/payment-order UX polishing inside Operations + debt flows (permission-aware visibility checks for all roles).
 - **P2**: Continue liquid/glass UI parity across remaining legacy pages and complete advanced roles/permissions matrix UX.

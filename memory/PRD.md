@@ -896,6 +896,8 @@
 | 06 Apr 2026 | Financial dashboard optimized with lazy loading for heavy tabs (cashflow/trial) while preserving reconciliation visibility |
 | 06 Apr 2026 | Implemented account drill-down tree in Financial Dashboard (Income tab): clickable account cards now open child-account tree + paginated account operations table (`/api/finance/reports/account-tree-details`) |
 | 06 Apr 2026 | Reconciliation table localized and enriched: Arabic type labels + per-type account label details instead of raw English operation codes |
+| 06 Apr 2026 | Added new KPI card in Financial Dashboard: **النقد الحالي** (sum of cash + bank balances 1101/1102) |
+| 06 Apr 2026 | Fixed reconciliation account labels to use real chart-of-accounts names from journal lines (removed misleading/undefined labels in sale row) |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

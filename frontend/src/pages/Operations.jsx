@@ -508,6 +508,27 @@ const Operations = () => {
     () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
     [accounts]
   );
+  const operationsForRanking = operationsQuery.data || [];
+  const accountUsageStats = useMemo(() => {
+    const usage = new Map();
+    const lastUsed = new Map();
+
+    (operationsForRanking || []).forEach((op) => {
+      const rawId = String(op?.accountingAccountId || op?.accountId || '').trim();
+      if (!rawId) return;
+
+      const key = normalizeText(rawId);
+      usage.set(key, (usage.get(key) || 0) + 1);
+
+      const ts = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
+      if (!Number.isFinite(ts)) return;
+      const prev = lastUsed.get(key) || 0;
+      if (ts > prev) lastUsed.set(key, ts);
+    });
+
+    return { usage, lastUsed };
+  }, [operationsForRanking]);
+
   const filteredAccounts = useMemo(() => {
     const typeScoped = accounts.filter((account) => {
       const accountType = String(account?.type || '').toLowerCase();
@@ -537,8 +558,25 @@ const Operations = () => {
       return !(isGroupLabel || isPartnerSubAccount);
     });
 
-    return cleaned.length > 0 ? cleaned : typeScoped;
-  }, [accounts, form.type]);
+    const base = cleaned.length > 0 ? cleaned : typeScoped;
+
+    return [...base].sort((a, b) => {
+      const aKey = normalizeText(a?.id || a?.code || '');
+      const bKey = normalizeText(b?.id || b?.code || '');
+
+      const aLast = accountUsageStats.lastUsed.get(aKey) || 0;
+      const bLast = accountUsageStats.lastUsed.get(bKey) || 0;
+      if (bLast !== aLast) return bLast - aLast;
+
+      const aUsage = accountUsageStats.usage.get(aKey) || 0;
+      const bUsage = accountUsageStats.usage.get(bKey) || 0;
+      if (bUsage !== aUsage) return bUsage - aUsage;
+
+      const aCode = normalizeAccountCode(a?.code || a?.id || '');
+      const bCode = normalizeAccountCode(b?.code || b?.id || '');
+      return String(aCode).localeCompare(String(bCode), 'ar');
+    });
+  }, [accounts, form.type, accountUsageStats]);
   const selectedAccountingAccount = useMemo(
     () => accounts.find((account) => String(account.id || account.code) === String(form.accountingAccountId || '')) || null,
     [accounts, form.accountingAccountId]
@@ -603,7 +641,7 @@ const Operations = () => {
     const list = vehicleOptions.filter((vehicle) => String(vehicle.customerId || '') === String(form.partnerId || ''));
     return list.length ? list : vehicleOptions;
   }, [vehicleOptions, form.partnerId]);
-  const ops = operationsQuery.data || [];
+  const ops = operationsForRanking;
   const operationsLoading = operationsQuery.isLoading || operationsQuery.isFetching;
   const visits = visitsQuery.data || [];
 
@@ -1287,6 +1325,40 @@ const Operations = () => {
     }
 
     try {
+      let resolvedPartnerId = form.partnerId || '';
+      let resolvedPartnerName = (form.partnerName || '').trim();
+      let resolvedPartnerPhone = (form.partnerPhone || '').trim();
+      let resolvedPartnerType = defaultPartnerTypeForOperation(effectiveType, form.partnerType);
+
+      const shouldAutoCreateSupplier = (
+        (requiresSupplier || (effectiveType === 'payment_order' && resolvedPartnerType === 'supplier'))
+        && !resolvedPartnerId
+        && resolvedPartnerName
+      );
+
+      if (shouldAutoCreateSupplier) {
+        const existingSupplier = suppliers.find(
+          (sup) => normalizeText(sup?.name) === normalizeText(resolvedPartnerName)
+        );
+
+        if (existingSupplier?.id) {
+          resolvedPartnerId = existingSupplier.id;
+          resolvedPartnerName = existingSupplier.name || resolvedPartnerName;
+          resolvedPartnerPhone = existingSupplier.phone || resolvedPartnerPhone;
+        } else {
+          const createdSupplierRes = await axios.post(`${API_URL}/suppliers`, {
+            name: resolvedPartnerName,
+            phone: resolvedPartnerPhone || null,
+          });
+          const createdSupplier = createdSupplierRes?.data || {};
+          resolvedPartnerId = createdSupplier.id || '';
+          resolvedPartnerName = createdSupplier.name || resolvedPartnerName;
+          resolvedPartnerPhone = createdSupplier.phone || resolvedPartnerPhone;
+          queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+        }
+        resolvedPartnerType = 'supplier';
+      }
+
       const selectedVehicle = (vehicleOptions || []).find((v) => v.id === activeVehicleId);
       const vehicleDetailsNote = ((effectiveOperationKind === OPERATION_KIND_VEHICLE || effectiveOperationKind === OPERATION_KIND_RAKAN) && selectedVehicle)
         ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${form.visitId || '-'}`
@@ -1326,15 +1398,16 @@ const Operations = () => {
         operationKind: effectiveOperationKind,
         accountId: selectedBusinessAccount.id,
         accountingAccountId: form.accountingAccountId || null,
+        partnerId: resolvedPartnerId || null,
+        partnerName: resolvedPartnerName || null,
+        partnerPhone: resolvedPartnerPhone || null,
         opDate: form.date,
         scope: normalizedScope,
         source: normalizedSource,
         businessUnit: effectiveOperationKind === OPERATION_KIND_RAKAN ? 'rakan_parts' : 'workshop',
         vehicleId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (activeVehicleId || null),
         visitId: effectiveOperationKind === OPERATION_KIND_WORKSHOP ? null : (form.visitId || null),
-        partnerType: effectiveOperationKind === OPERATION_KIND_WORKSHOP
-          ? defaultPartnerTypeForOperation(effectiveType, form.partnerType)
-          : defaultPartnerTypeForOperation(effectiveType, form.partnerType),
+        partnerType: resolvedPartnerType,
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
@@ -2051,34 +2124,41 @@ const Operations = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="relative">
-                          <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                          <input
-                            className="apple-input pr-10"
-                            list={isPurchaseLikeType || form.type === 'expense' ? 'supplier-options-list' : undefined}
-                            placeholder={isPurchaseLikeType ? 'اختر مورد أو اكتب اسم مورد' : 'مثال: شركة الكهرباء / مورد أدوات'}
-                            value={form.partnerName}
-                            onChange={e => {
-                              const value = e.target.value;
-                              const match = suppliers.find((sup) => (sup.name || '').trim().toLowerCase() === value.trim().toLowerCase());
-                              setForm({
-                                ...form,
-                                partnerName: value,
-                                partnerId: match?.id || '',
-                                partnerPhone: match?.phone || '',
-                                partnerType: defaultPartnerTypeForOperation(form.type, form.partnerType),
-                              });
-                            }}
-                            data-testid="operation-partner-name-input"
-                          />
-                          {(isPurchaseLikeType || form.type === 'expense') && (
-                            <datalist id="supplier-options-list">
-                              {suppliers.map((option) => (
-                                <option key={option.id || option.name} value={option.name} />
-                              ))}
-                            </datalist>
+                        <>
+                          <div className="relative">
+                            <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input
+                              className="apple-input pr-10"
+                              list={isPurchaseLikeType || form.type === 'expense' ? 'supplier-options-list' : undefined}
+                              placeholder={isPurchaseLikeType ? 'اختر مورد أو اكتب اسم مورد' : 'مثال: شركة الكهرباء / مورد أدوات'}
+                              value={form.partnerName}
+                              onChange={e => {
+                                const value = e.target.value;
+                                const match = suppliers.find((sup) => (sup.name || '').trim().toLowerCase() === value.trim().toLowerCase());
+                                setForm({
+                                  ...form,
+                                  partnerName: value,
+                                  partnerId: match?.id || '',
+                                  partnerPhone: match?.phone || '',
+                                  partnerType: defaultPartnerTypeForOperation(form.type, form.partnerType),
+                                });
+                              }}
+                              data-testid="operation-partner-name-input"
+                            />
+                            {(isPurchaseLikeType || form.type === 'expense') && (
+                              <datalist id="supplier-options-list">
+                                {suppliers.map((option) => (
+                                  <option key={option.id || option.name} value={option.name} />
+                                ))}
+                              </datalist>
+                            )}
+                          </div>
+                          {isPurchaseLikeType && (
+                            <p className="text-[11px] text-emerald-300" data-testid="operation-supplier-auto-create-note">
+                              عند كتابة اسم مورد جديد سيتم إنشاؤه تلقائيًا عند حفظ العملية.
+                            </p>
                           )}
-                        </div>
+                        </>
                       )}
                     </div>
                   )}

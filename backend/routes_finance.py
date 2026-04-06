@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 import uuid
 import os
+import re
 from supabase import create_client
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -279,9 +280,15 @@ def _fetch_journal_entries(
         .neq("workshop_id", None)
     )
     if start_date:
-        query = query.gte("date", start_date)
+        start_boundary = start_date
+        if isinstance(start_date, str) and len(start_date) == 10 and "T" not in start_date:
+            start_boundary = f"{start_date}T00:00:00"
+        query = query.gte("date", start_boundary)
     if end_date:
-        query = query.lte("date", end_date)
+        end_boundary = end_date
+        if isinstance(end_date, str) and len(end_date) == 10 and "T" not in end_date:
+            end_boundary = f"{end_date}T23:59:59.999999"
+        query = query.lte("date", end_boundary)
     if limit is not None:
         query = query.range(skip, skip + limit - 1)
     rows = query.order("date", desc=True).execute().data or []
@@ -817,11 +824,21 @@ def _is_rakan_operation_row(row: Dict[str, Any]) -> bool:
     source = str(row.get("source") or "").strip().lower()
     business_unit = str(row.get("business_unit") or "").strip().lower()
     notes = str(row.get("notes") or "").strip().lower()
+    account_code = str(
+        row.get("accounting_account_code")
+        or row.get("accountCode")
+        or row.get("account_number")
+        or row.get("accountNumber")
+        or ""
+    ).strip()
+    notes_has_5000 = bool(re.search(r"account_code\s*:\s*5000", notes, re.IGNORECASE))
     return (
         scope == "rakan_parts"
         or "rakan_parts" in source
         or business_unit == "rakan_parts"
         or "[rakan_parts]" in notes
+        or account_code.startswith("5000")
+        or notes_has_5000
     )
 
 
@@ -889,7 +906,11 @@ def _infer_tx_type_from_journal_entry(
     return None
 
 
-def _build_repair_journal_entry_from_operation(operation: Dict[str, Any], workshop_id: str) -> Optional[Dict[str, Any]]:
+def _build_repair_journal_entry_from_operation(
+    operation: Dict[str, Any],
+    workshop_id: str,
+    account_id_to_code: Optional[Dict[str, str]] = None,
+) -> Optional[Dict[str, Any]]:
     op_type = _normalize_operation_type_for_reconciliation(operation.get("type"))
     if not op_type:
         return None
@@ -907,6 +928,17 @@ def _build_repair_journal_entry_from_operation(operation: Dict[str, Any], worksh
         or operation.get("account_number")
         or operation.get("accountNumber")
     )
+    notes_blob = str(operation.get("notes") or operation.get("description") or "")
+    notes_code_match = re.search(r"ACCOUNT_CODE\s*:\s*([0-9]+)", notes_blob, re.IGNORECASE)
+    if notes_code_match:
+        selected_code = notes_code_match.group(1)
+
+    if not selected_code:
+        account_id_to_code = account_id_to_code or {}
+        account_id = str(operation.get("account_id") or operation.get("accountId") or "").strip()
+        if account_id:
+            selected_code = account_id_to_code.get(account_id)
+
     selected_code = str(selected_code or "").strip() or None
 
     lines: List[Dict[str, Any]] = []
@@ -986,8 +1018,20 @@ def _insert_repair_journal_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
     if not supabase:
         raise Exception("Supabase not connected")
 
-    response = supabase.table("journal_entries").insert(entry).execute()
-    return (response.data or [{}])[0] if response.data else {}
+    supabase.table("journal_entries").insert(entry).execute()
+
+    row = (
+        supabase.table("journal_entries")
+        .select("id,reference_id,transaction_type,total,workshop_id,date,source")
+        .eq("id", str(entry.get("id") or ""))
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not row:
+        raise Exception("Insert not persisted: journal row not found after insert")
+    return row[0]
 
 
 @router.get("/reports/reconciliation")
@@ -1050,9 +1094,14 @@ async def get_financial_reconciliation(
 
         for entry in journal_entries:
             tx_type = _normalize_operation_type_for_reconciliation(entry.get("transaction_type"))
+            reference_id = str(entry.get("reference_id") or "").strip()
+            source = str(entry.get("source") or "").strip().lower()
+
+            # إذا كان القيد مربوطًا بعملية، نُقدّم نوع العملية كمصدر الحقيقة
+            if reference_id and reference_id in operation_type_by_id and source in {"operation", "operation_rakan_parts"}:
+                tx_type = operation_type_by_id.get(reference_id)
 
             if not tx_type:
-                reference_id = str(entry.get("reference_id") or "").strip()
                 if reference_id and reference_id in operation_type_by_id:
                     tx_type = operation_type_by_id.get(reference_id)
 
@@ -1082,6 +1131,7 @@ async def get_financial_reconciliation(
             for op in operations
             if str(op.get("id") or "").strip()
             and _normalize_operation_type_for_reconciliation(op.get("type")) in journal_totals
+            and _safe_float(op.get("total")) > 0.01
             and str(op.get("id") or "").strip() not in existing_operation_refs
         ]
 
@@ -1172,6 +1222,9 @@ async def backfill_missing_operation_journals(
         if not include_rakan:
             operations = [op for op in operations if not _is_rakan_operation_row(op)]
 
+        accounts = _fetch_accounts()
+        account_id_to_code, _, _ = _build_account_maps(accounts)
+
         journal_entries = _fetch_journal_entries(
             workshop_id=workshop_id,
             start_date=start_date,
@@ -1203,7 +1256,11 @@ async def backfill_missing_operation_journals(
                 continue
             if op_id in existing_operation_refs:
                 continue
-            candidate_entry = _build_repair_journal_entry_from_operation(op, workshop_id)
+            candidate_entry = _build_repair_journal_entry_from_operation(
+                op,
+                workshop_id,
+                account_id_to_code=account_id_to_code,
+            )
             if candidate_entry:
                 missing_operations.append({"operation": op, "journal": candidate_entry})
 
@@ -1213,6 +1270,9 @@ async def backfill_missing_operation_journals(
                 "type": str(item["operation"].get("type")),
                 "total": round(_safe_float(item["operation"].get("total")), 2),
                 "journal_transaction_type": item["journal"].get("transaction_type"),
+                "journal_accounts": [
+                    str(line.get("account")) for line in (item["journal"].get("lines") or [])
+                ],
             }
             for item in missing_operations[:20]
         ]
@@ -1233,11 +1293,25 @@ async def backfill_missing_operation_journals(
             }
 
         created = 0
+        created_items = []
         failed = []
         for item in missing_operations[:max_records]:
             try:
-                _insert_repair_journal_entry(item["journal"])
+                inserted = _insert_repair_journal_entry(item["journal"])
                 created += 1
+                created_items.append(
+                    {
+                        "journal_id": str(inserted.get("id") or item["journal"].get("id")),
+                        "reference_id": str(
+                            inserted.get("reference_id") or item["journal"].get("reference_id")
+                        ),
+                        "transaction_type": inserted.get("transaction_type")
+                        or item["journal"].get("transaction_type"),
+                        "workshop_id": inserted.get("workshop_id") or item["journal"].get("workshop_id"),
+                        "date": inserted.get("date") or item["journal"].get("date"),
+                        "source": inserted.get("source") or item["journal"].get("source"),
+                    }
+                )
             except Exception as insert_error:
                 failed.append(
                     {
@@ -1253,6 +1327,7 @@ async def backfill_missing_operation_journals(
                 "period": {"start_date": start_date, "end_date": end_date},
                 "found_missing": len(missing_operations),
                 "created": created,
+                "created_items": created_items[:50],
                 "failed": failed,
                 "preview": preview,
             },

@@ -64,6 +64,27 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
   return t('operations.account') || 'الحساب';
 };
 
+const resolveAccountCode = (operation, chartAccount, businessAccount) => {
+  const notes = String(operation?.notes || '');
+  const codeMatch = notes.match(/ACCOUNT_CODE\s*:\s*([0-9]+)/i);
+  if (codeMatch?.[1]) return codeMatch[1];
+  if (chartAccount?.code) return String(chartAccount.code);
+  if (businessAccount?.code) return String(businessAccount.code);
+  const fallback = operation?.accountCode || operation?.account_number || operation?.accountNumber;
+  return fallback ? String(fallback) : '';
+};
+
+const classifyAccountCode = (accountCode = '') => {
+  const code = String(accountCode || '').trim();
+  if (!code) return 'غير مصنف';
+  if (code.startsWith('4')) return 'إيراد';
+  if (code.startsWith('5') || code.startsWith('6')) return 'مصروف';
+  if (code.startsWith('1')) return 'أصل';
+  if (code.startsWith('2')) return 'التزام';
+  if (code.startsWith('3')) return 'حقوق ملكية';
+  return 'غير مصنف';
+};
+
 export default function OperationCard({
   operation,
   isRTL,
@@ -123,11 +144,33 @@ export default function OperationCard({
     [vehicles, operation.vehicleId]
   );
 
+  const targetAccountName = useMemo(
+    () => resolveTargetAccountName(operation, chartAccount, businessAccount, t),
+    [operation, chartAccount, businessAccount, t]
+  );
+
   const journalEntryText = useMemo(() => {
     const fromAccount = sanitizeAccountingText(normalizePaymentSourceAccount(operation, t));
-    const toAccount = sanitizeAccountingText(resolveTargetAccountName(operation, chartAccount, businessAccount, t));
+    const toAccount = sanitizeAccountingText(targetAccountName);
     return `قيد محاسبي: من حساب ${fromAccount || t('operations.account') || 'الحساب'} إلى حساب ${toAccount || t('operations.account') || 'الحساب'}`;
-  }, [operation, chartAccount, businessAccount, t]);
+  }, [operation, targetAccountName, t]);
+
+  const accountCode = useMemo(
+    () => resolveAccountCode(operation, chartAccount, businessAccount),
+    [operation, chartAccount, businessAccount]
+  );
+
+  const accountClassLabel = useMemo(() => classifyAccountCode(accountCode), [accountCode]);
+
+  const itemsSummary = useMemo(() => {
+    const items = Array.isArray(operation.items) ? operation.items : [];
+    if (!items.length) return '-';
+    const names = items
+      .map((it) => it?.name || it?.itemName || it?.description)
+      .filter(Boolean);
+    if (!names.length) return '-';
+    return names.slice(0, 2).join(' • ');
+  }, [operation.items]);
 
   const itemsView = editing ? itemsDraft : (operation.items || []);
   const totalDraft = useMemo(() => {
@@ -225,6 +268,19 @@ export default function OperationCard({
 
               <div className="text-[11px] text-slate-200/80 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-journal-entry-${operation.id}`}>
                 {journalEntryText}
+              </div>
+
+              <div className="text-[11px] text-cyan-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-name-${operation.id}`}>
+                الحساب: <span className="font-semibold">{targetAccountName || '-'}</span>
+                {accountCode ? <span className="mx-1 text-cyan-300/80">({accountCode})</span> : null}
+              </div>
+
+              <div className="text-[11px] text-amber-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-class-${operation.id}`}>
+                التصنيف: <span className="font-semibold">{accountClassLabel}</span>
+              </div>
+
+              <div className="text-[11px] text-violet-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-items-summary-${operation.id}`}>
+                الصنف/البند: <span className="font-semibold">{itemsSummary}</span>
               </div>
             </div>
           </div>
@@ -379,8 +435,12 @@ export default function OperationCard({
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.account') || 'الحساب'}</div>
               <div className="text-xs font-semibold text-slate-50 break-words">
-                {resolveTargetAccountName(operation, chartAccount, businessAccount, t)}
+                {targetAccountName}
               </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-account-class-expanded-${operation.id}`}>
+              <div className="text-[10px] text-slate-300/70 mb-1">التصنيف المحاسبي</div>
+              <div className="text-xs font-semibold text-slate-50 break-words">{accountClassLabel} {accountCode ? `(${accountCode})` : ''}</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('common.total') || 'الإجمالي'}</div>

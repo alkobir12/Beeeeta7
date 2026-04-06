@@ -1,0 +1,62 @@
+{
+  "summary": "Verified DebtFollowUp page settlement order feature. All 5 test cases passed: manual amount input exists for each row, settlement order button exists for each row, clicking button creates payment_order with correct partner info, amount comes from manual input, page doesn't crash after operation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "✅ Manual amount input (data-testid: debt-row-manual-amount-{rowId}) present for each debt row",
+    "✅ Settlement order button (data-testid: debt-row-settlement-order-{rowId}) present for each debt row",
+    "✅ Button text shows 'أمر سداد' (Settlement Order)",
+    "✅ Input placeholder shows default ajelBalance value (e.g., 350.00)",
+    "✅ Clicking settlement order creates payment_order via POST /api/operations",
+    "✅ Created operation has correct partnerType (customer/supplier) and partnerName",
+    "✅ Created operation amount matches manual input (tested with 150.00)",
+    "✅ Toast message 'تم إنشاء أمر السداد بنجاح' shown on success",
+    "✅ Page remains stable after settlement order creation (no crash)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (POST /api/operations working)",
+    "frontend": "100% (5/5 tests passed)"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "DebtFollowUp page at /debts-followup now has settlement order functionality. Each row in the debt table has: (1) manual amount input with placeholder showing ajelBalance, (2) 'أمر سداد' button that creates payment_order. The feature was tested with customer 'ابو تركي العوفي' with manual amount 150.00 - operation created successfully.",
+  "test_credentials": "username: مدير (no password)",
+  "verified_features": [
+    "✅ في جدول DebtFollowUp لكل صف يوجد input مبلغ يدوي",
+    "✅ في جدول DebtFollowUp لكل صف يوجد زر أمر سداد",
+    "✅ الضغط على زر أمر سداد ينشئ payment_order مرتبط بنفس الجهة (customer/supplier)",
+    "✅ قيمة المبلغ في العملية المنشأة تأتي من الإدخال اليدوي",
+    "✅ صفحة الذمم لا تنهار بعد الإضافة"
+  ],
+  "test_evidence": {
+    "ui_tests": {
+      "manual_amount_inputs_found": 6,
+      "settlement_order_buttons_found": 6,
+      "input_placeholder_shows_ajelBalance": true,
+      "custom_amount_entered": "150.00",
+      "settlement_button_clicked": true,
+      "success_toast_shown": true,
+      "page_stable_after_operation": true
+    },
+    "api_verification": {
+      "operation_created": true,
+      "operation_type": "payment_order",
+      "operation_partner_name": "ابو تركي العوفي",
+      "operation_partner_type": "customer",
+      "operation_amount": 150.0,
+      "operation_notes": "أمر سداد/تحصيل من متابعة الذمم"
+    },
+    "debt_entries_found": 6
+  }
+}

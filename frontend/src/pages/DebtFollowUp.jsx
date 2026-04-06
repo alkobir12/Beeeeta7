@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { MessageCircle, RefreshCw } from 'lucide-react';
-import { customerAPI, supplierAPI } from '../services/api';
+import { api, customerAPI, supplierAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
 import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
@@ -15,6 +15,9 @@ export default function DebtFollowUp() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [drafts, setDrafts] = useState([]);
+  const [settlementAccounts, setSettlementAccounts] = useState([]);
+  const [manualAmounts, setManualAmounts] = useState({});
+  const [savingRowId, setSavingRowId] = useState('');
 
   const fetchData = async () => {
     try {
@@ -23,6 +26,15 @@ export default function DebtFollowUp() {
         customerAPI.getAll(workshopId ? { workshop_id: workshopId } : {}),
         supplierAPI.getAll(workshopId ? { workshop_id: workshopId } : {}),
       ]);
+
+      const accountsRes = await api.get('/finance/chart-of-accounts', workshopId ? { params: { workshop_id: workshopId } } : undefined);
+      const accountRows = Array.isArray(accountsRes?.data?.data)
+        ? accountsRes.data.data
+        : Array.isArray(accountsRes?.data)
+          ? accountsRes.data
+          : [];
+      const payableAccounts = accountRows.filter((acc) => ['asset', 'liability', 'expense'].includes(String(acc?.type || '').toLowerCase()));
+      setSettlementAccounts(payableAccounts);
 
       const customers = (customersRes.data || []).map((row) => ({ ...row, entityType: 'customer' }));
       const suppliers = (suppliersRes.data || []).map((row) => ({ ...row, entityType: 'supplier' }));
@@ -119,6 +131,53 @@ export default function DebtFollowUp() {
       }, index * 280);
     });
     toast({ title: 'تم التنفيذ', description: `تم فتح ${validDrafts.length} رسالة واتساب بعد المعاينة` });
+  };
+
+  const createSettlementOrder = async (row) => {
+    const rowId = `${row.entityType}-${row.id}`;
+    const amount = Number(manualAmounts[rowId] || row.ajelBalance || 0);
+    const accountId = settlementAccounts[0]?.id || settlementAccounts[0]?.code || '';
+
+    if (amount <= 0 || !accountId) {
+      toast({ title: 'تنبيه', description: 'أدخل مبلغ صحيح وتأكد من وجود حساب قيد', variant: 'destructive' });
+      return;
+    }
+
+    setSavingRowId(rowId);
+    try {
+      const payload = {
+        type: 'payment_order',
+        total: amount,
+        amount,
+        paymentAmount: amount,
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+        status: 'issued',
+        date: new Date().toISOString().split('T')[0],
+        accountingAccountId: accountId,
+        partnerId: row.id,
+        partnerName: row.name,
+        partnerPhone: row.phone || '',
+        partnerType: row.entityType,
+        notes: `أمر سداد/تحصيل من متابعة الذمم - ${row.name}`,
+        items: [{
+          name: `سداد ذمم - ${row.name}`,
+          quantity: 1,
+          price: amount,
+          total: amount,
+          isCustom: true,
+        }],
+      };
+
+      await api.post('/operations', payload);
+      toast({ title: 'تم إنشاء أمر السداد بنجاح' });
+      setManualAmounts((prev) => ({ ...prev, [rowId]: '' }));
+      await fetchData();
+    } catch (_error) {
+      toast({ title: 'تعذر إنشاء أمر السداد', variant: 'destructive' });
+    } finally {
+      setSavingRowId('');
+    }
   };
 
   const fmt = (v) => Number(v || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -221,14 +280,35 @@ export default function DebtFollowUp() {
                       <td className="p-2">{fmt(row.creditBalance)}</td>
                       <td className="p-2 text-rose-200 font-bold">{fmt(row.ajelBalance)}</td>
                       <td className="p-2">
-                        <button
-                          type="button"
-                          className="text-xs px-2 py-1 rounded border border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
-                          onClick={() => openPreviewForRows([row])}
-                          data-testid={`debt-row-preview-${rowId}`}
-                        >
-                          معاينة واتساب
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={manualAmounts[rowId] ?? ''}
+                            onChange={(e) => setManualAmounts((prev) => ({ ...prev, [rowId]: e.target.value }))}
+                            placeholder={String(Number(row.ajelBalance || 0).toFixed(2))}
+                            className="w-28 rounded border border-white/20 bg-white/10 px-2 py-1 text-xs text-white"
+                            data-testid={`debt-row-manual-amount-${rowId}`}
+                          />
+                          <button
+                            type="button"
+                            className="text-xs px-2 py-1 rounded border border-cyan-400/40 bg-cyan-500/15 text-cyan-100"
+                            onClick={() => createSettlementOrder(row)}
+                            disabled={savingRowId === rowId}
+                            data-testid={`debt-row-settlement-order-${rowId}`}
+                          >
+                            {savingRowId === rowId ? 'جارٍ...' : 'أمر سداد'}
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs px-2 py-1 rounded border border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
+                            onClick={() => openPreviewForRows([row])}
+                            data-testid={`debt-row-preview-${rowId}`}
+                          >
+                            معاينة واتساب
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

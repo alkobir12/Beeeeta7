@@ -24,6 +24,8 @@ const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([key, value]) => ({
   label: value?.name || key,
 }));
 
+const LINKED_VIEW_MODULES = ['work_orders', 'reports'];
+
 const UsersManagement = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState([]);
@@ -64,7 +66,32 @@ const UsersManagement = () => {
     setForm((prev) => {
       const next = clonePermissions(prev.permissions);
       if (!next[moduleKey]) next[moduleKey] = {};
-      next[moduleKey][action] = !next[moduleKey][action];
+
+      const nextValue = !next[moduleKey][action];
+      next[moduleKey][action] = nextValue;
+
+      if (action !== 'view' && nextValue) {
+        next[moduleKey].view = true;
+      }
+
+      if (action === 'view' && !nextValue) {
+        Object.keys(next[moduleKey]).forEach((key) => {
+          next[moduleKey][key] = false;
+        });
+      }
+
+      if (action === 'view' && LINKED_VIEW_MODULES.includes(moduleKey)) {
+        LINKED_VIEW_MODULES.forEach((linkedModule) => {
+          if (!next[linkedModule]) next[linkedModule] = {};
+          next[linkedModule].view = nextValue;
+          if (!nextValue) {
+            Object.keys(next[linkedModule]).forEach((key) => {
+              next[linkedModule][key] = false;
+            });
+          }
+        });
+      }
+
       return { ...prev, permissions: next };
     });
   };
@@ -285,6 +312,9 @@ const UsersManagement = () => {
                     <Shield size={16} />
                     الصلاحيات
                   </h3>
+                  <p className="text-xs text-amber-700 mb-3" data-testid="users-linked-permissions-note">
+                    ملاحظة: صلاحية عرض العمليات ودفتر الأستاذ مترابطة ولا يمكن فصلها.
+                  </p>
                   <div className="grid grid-cols-1 gap-3">
                     {MODULE_DEFINITIONS.map((module) => (
                       <div key={module.key} className="rounded-lg border border-gray-200 bg-white p-3">

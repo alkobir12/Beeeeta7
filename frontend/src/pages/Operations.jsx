@@ -1499,6 +1499,42 @@ const Operations = () => {
       }
       lastSubmitRef.current = { hash: payloadHash, timestamp: now };
 
+      const candidateAmount = Number(cleanPayload?.total || cleanPayload?.paymentAmount || 0);
+      const duplicateMatches = (ops || []).filter((op) => {
+        const opAmount = Number(op?.total || op?.amount || op?.paymentAmount || 0);
+        if (!Number.isFinite(opAmount) || !Number.isFinite(candidateAmount)) return false;
+        if (Math.abs(opAmount - candidateAmount) > 0.01) return false;
+
+        const sameType = normalizeText(op?.type) === normalizeText(cleanPayload?.type);
+        if (!sameType) return false;
+
+        const samePartner =
+          normalizeText(op?.partnerId || op?.partner_id) === normalizeText(cleanPayload?.partnerId)
+          || normalizeText(op?.partnerName || op?.partner_name) === normalizeText(cleanPayload?.partnerName);
+
+        const sameAccounting =
+          normalizeText(op?.accountingAccountId || op?.accounting_account_id) === normalizeText(cleanPayload?.accountingAccountId);
+
+        const opTs = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
+        const nearTime = Number.isFinite(opTs) && Math.abs(Date.now() - opTs) <= 5 * 60 * 1000;
+
+        return samePartner || sameAccounting || nearTime;
+      });
+
+      if (duplicateMatches.length > 0) {
+        const latest = duplicateMatches[0];
+        const latestTime = latest?.date || latest?.createdAt || latest?.created_at || '-';
+        const proceed = window.confirm(
+          `⚠️ يوجد تطابق محتمل مع عملية سابقة بنفس النوع/المبلغ.\n` +
+          `آخر تطابق: ${latestTime}\n` +
+          `هل العملية صحيحة وتريد المتابعة؟`
+        );
+        if (!proceed) {
+          setIsSaving(false);
+          return;
+        }
+      }
+
       await createOperationMutation.mutateAsync(cleanPayload);
       if (cleanPayload.accountingAccountId) {
         recordAccountUsage(cleanPayload.accountingAccountId);

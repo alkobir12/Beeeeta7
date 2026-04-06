@@ -24,7 +24,8 @@ import {
   BookOpen,
   Truck,
   Bot,
-  Sparkles
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
@@ -192,18 +193,10 @@ const Sidebar = ({
       return null;
     }
 
-    if (item.permission && !hasPermission(session, item.permission.module, item.permission.action)) {
-      return null;
-    }
+    const canAccessItem = !item.permission || hasPermission(session, item.permission.module, item.permission.action);
 
     if (item.group && item.children) {
-      const visibleChildren = item.children.filter((child) => {
-        if (!child.enabled) return false;
-        if (child.permission && !hasPermission(session, child.permission.module, child.permission.action)) {
-          return false;
-        }
-        return true;
-      });
+      const visibleChildren = item.children.filter((child) => child.enabled !== false);
 
       if (!visibleChildren.length) return null;
 
@@ -237,15 +230,17 @@ const Sidebar = ({
             <div className="ms-9 mt-1 space-y-1">
               {visibleChildren.map((child, childIndex) => {
                 const isActive = location.pathname === child.path;
+                const childCanAccess = !child.permission || hasPermission(session, child.permission.module, child.permission.action);
                 return (
                   <button
                     key={childIndex}
-                    onClick={() => handleNavigate(child.path)}
-                    className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'}`}
+                    onClick={() => { if (childCanAccess) handleNavigate(child.path); }}
+                    className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'} ${childCanAccess ? '' : 'opacity-60 cursor-not-allowed'}`}
                     data-testid={`sidebar-item-${child.path.replace(/\//g, '-')}`}
                     title={child.label}
                   >
                     <span>{child.label}</span>
+                    {!childCanAccess && <Lock size={12} className="mr-auto text-amber-300" />}
                   </button>
                 );
               })}
@@ -261,15 +256,17 @@ const Sidebar = ({
               <div className="space-y-1">
                 {visibleChildren.map((child, childIndex) => {
                   const isActive = location.pathname === child.path;
+                  const childCanAccess = !child.permission || hasPermission(session, child.permission.module, child.permission.action);
                   return (
                     <button
                       key={childIndex}
                       type="button"
-                      onClick={() => handleNavigate(child.path)}
-                      className={`sidebar-item w-full ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-200'}`}
+                      onClick={() => { if (childCanAccess) handleNavigate(child.path); }}
+                      className={`sidebar-item w-full ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-200'} ${childCanAccess ? '' : 'opacity-60 cursor-not-allowed'}`}
                       data-testid={`sidebar-collapsed-item-${child.path.replace(/\//g, '-')}`}
                     >
                       <span className="truncate">{child.label}</span>
+                      {!childCanAccess && <Lock size={12} className="mr-auto text-amber-300" />}
                     </button>
                   );
                 })}
@@ -286,12 +283,12 @@ const Sidebar = ({
     return (
       <button
         key={index}
-        onClick={() => handleNavigate(item.path)}
+        onClick={() => { if (canAccessItem) handleNavigate(item.path); }}
         className={`sidebar-item w-full rounded-2xl px-3 py-2 text-[0.9rem] flex items-center gap-3 transition-colors ${isCollapsed ? '!justify-center !px-0' : ''} ${
           isActive
             ? 'sidebar-item-active active'
             : 'text-slate-300 hover:bg-white/8 hover:text-slate-50'
-        }`}
+        } ${canAccessItem ? '' : 'opacity-60 cursor-not-allowed'}`}
         data-testid={`sidebar-item-${item.path.replace(/\//g, '-') || 'dashboard'}`}
         title={item.label}
       >
@@ -300,6 +297,7 @@ const Sidebar = ({
           className={isActive ? 'text-white' : 'text-slate-400'}
         />
         {!isCollapsed && <span className="truncate">{item.label}</span>}
+        {!isCollapsed && !canAccessItem && <Lock size={12} className="mr-auto text-amber-300" />}
       </button>
     );
   };

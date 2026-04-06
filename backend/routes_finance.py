@@ -697,12 +697,13 @@ async def get_trial_balance(
         end_bound = end_date or target_date
         start_bound = start_date
 
-        accounts_balances, _ = _compute_trial_balance_map(
+        accounts_balances, merged_accounts = _compute_trial_balance_map(
             workshop_id,
             start_date=start_bound,
             end_date=end_bound,
             include_rakan=include_rakan,
         )
+        _, code_to_name, _ = _build_account_maps(merged_accounts)
 
         accounts_list = []
         total_debit = 0
@@ -712,8 +713,11 @@ async def get_trial_balance(
             acc = accounts_balances[code]
             debit = round(acc["debit"], 2)
             credit = round(acc["credit"], 2)
+            name = acc.get("name") or code_to_name.get(code) or code
+            if str(name).strip() == code and code_to_name.get(code):
+                name = code_to_name.get(code)
             accounts_list.append(
-                {"code": code, "name": acc["name"], "debit": debit, "credit": credit}
+                {"code": code, "name": name, "debit": debit, "credit": credit}
             )
             total_debit += debit
             total_credit += credit
@@ -1487,6 +1491,73 @@ async def get_account_tree_details(
             include_rakan=False,
         )
 
+        operation_refs = [
+            str(e.get("reference_id") or "").strip()
+            for e in entries
+            if str(e.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            and str(e.get("reference_id") or "").strip()
+        ]
+        operation_refs = list(dict.fromkeys(operation_refs))
+
+        operation_map: Dict[str, Dict[str, Any]] = {}
+        visit_map: Dict[str, Dict[str, Any]] = {}
+        if operation_refs and supabase:
+            try:
+                op_rows = (
+                    supabase.table("operations")
+                    .select("*")
+                    .in_("id", operation_refs)
+                    .execute()
+                    .data
+                    or []
+                )
+                operation_map = {str(row.get("id") or ""): row for row in op_rows}
+
+                visit_ids = [
+                    str(row.get("visit_id") or row.get("visitId") or "").strip()
+                    for row in op_rows
+                    if str(row.get("visit_id") or row.get("visitId") or "").strip()
+                ]
+                visit_ids = list(dict.fromkeys(visit_ids))
+                if visit_ids:
+                    visit_rows = (
+                        supabase.table("vehicle_visits")
+                        .select("id,customer_name,vehicle_plate,plate_number,car_type,vehicle_number,customer_id")
+                        .in_("id", visit_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    visit_map = {str(row.get("id") or ""): row for row in visit_rows}
+            except Exception:
+                operation_map = {}
+                visit_map = {}
+
+        # دعم إضافي: استخراج معرف الزيارة من الوصف عند غياب ربط العملية
+        if supabase:
+            try:
+                visit_ids_from_desc = []
+                for e in entries:
+                    desc = str(e.get("description") or "")
+                    match = re.search(r"الزيارة\s+([a-zA-Z0-9-]+)", desc)
+                    if match:
+                        visit_ids_from_desc.append(match.group(1).strip())
+                visit_ids_from_desc = [v for v in dict.fromkeys(visit_ids_from_desc) if v]
+                missing_visit_ids = [v for v in visit_ids_from_desc if v not in visit_map]
+                if missing_visit_ids:
+                    extra_visits = (
+                        supabase.table("vehicle_visits")
+                        .select("id,customer_name,vehicle_plate,plate_number,car_type,vehicle_number,customer_id")
+                        .in_("id", missing_visit_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    for row in extra_visits:
+                        visit_map[str(row.get("id") or "")] = row
+            except Exception:
+                pass
+
         operations = []
         for entry in entries:
             normalized_lines = []
@@ -1497,6 +1568,8 @@ async def get_account_tree_details(
 
             matched_debit = 0.0
             matched_credit = 0.0
+            cash_component = 0.0
+            receivable_component = 0.0
             counterpart_accounts = []
 
             for line in normalized_lines:
@@ -1512,6 +1585,12 @@ async def get_account_tree_details(
                         }
                     )
 
+                # مكونات التحصيل/الآجل (مفيد لحسابات الإيراد)
+                if line_code in {"1101", "1102"}:
+                    cash_component += _safe_float(line.get("debit"))
+                if line_code in {"1103", "113"}:
+                    receivable_component += _safe_float(line.get("debit"))
+
             if matched_debit == 0 and matched_credit == 0:
                 continue
 
@@ -1525,13 +1604,89 @@ async def get_account_tree_details(
                     "source": entry.get("source") or "",
                     "reference_id": entry.get("reference_id") or "",
                     "entry_total": _safe_float(entry.get("total")),
+                    "operation_payment_method": "",
                     "debit": round(matched_debit, 2),
                     "credit": round(matched_credit, 2),
+                    "cash_component": round(cash_component, 2),
+                    "receivable_component": round(receivable_component, 2),
                     "counterpart_accounts": counterpart_accounts[:6],
                 }
             )
 
+            ref = str(entry.get("reference_id") or "").strip()
+            src = str(entry.get("source") or "").strip().lower()
+            if ref and src in {"operation", "operation_rakan_parts"}:
+                op_row = operation_map.get(ref) or {}
+                visit_id = str(op_row.get("visit_id") or op_row.get("visitId") or "").strip()
+                visit_row = visit_map.get(visit_id) or {}
+                operations[-1]["operation_payment_method"] = str(
+                    op_row.get("payment_method") or op_row.get("paymentMethod") or ""
+                ).strip().lower()
+
+                customer_label = (
+                    op_row.get("partner_name")
+                    or op_row.get("partnerName")
+                    or visit_row.get("customer_name")
+                    or ""
+                )
+                vehicle_label = (
+                    visit_row.get("vehicle_plate")
+                    or visit_row.get("plate_number")
+                    or visit_row.get("vehicle_number")
+                    or visit_row.get("car_type")
+                    or ""
+                )
+
+                if customer_label or vehicle_label:
+                    prefix = _transaction_type_label_ar(entry.get("transaction_type"))
+                    parts = [prefix]
+                    if customer_label:
+                        parts.append(f"عميل: {customer_label}")
+                    if vehicle_label:
+                        parts.append(f"مركبة: {vehicle_label}")
+                    operations[-1]["description"] = " - ".join(parts)
+            else:
+                desc = str(operations[-1].get("description") or "")
+                match = re.search(r"الزيارة\s+([a-zA-Z0-9-]+)", desc)
+                if match:
+                    visit_id = match.group(1).strip()
+                    visit_row = visit_map.get(visit_id) or {}
+                    customer_label = visit_row.get("customer_name") or ""
+                    vehicle_label = (
+                        visit_row.get("vehicle_plate")
+                        or visit_row.get("plate_number")
+                        or visit_row.get("vehicle_number")
+                        or visit_row.get("car_type")
+                        or ""
+                    )
+                    if customer_label or vehicle_label:
+                        prefix = _transaction_type_label_ar(entry.get("transaction_type"))
+                        parts = [prefix]
+                        if customer_label:
+                            parts.append(f"عميل: {customer_label}")
+                        if vehicle_label:
+                            parts.append(f"مركبة: {vehicle_label}")
+                        operations[-1]["description"] = " - ".join(parts)
+
         operations.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
+        operations_cash_total = 0.0
+        operations_credit_total = 0.0
+        for item in operations:
+            payment_method = str(item.get("operation_payment_method") or "").strip().lower()
+            amount = _safe_float(item.get("credit"))
+            if payment_method == "credit":
+                operations_credit_total += amount
+            elif payment_method:
+                operations_cash_total += amount
+
+        summary = {
+            "total_debit": round(sum(_safe_float(item.get("debit")) for item in operations), 2),
+            "total_credit": round(sum(_safe_float(item.get("credit")) for item in operations), 2),
+            "total_cash_component": round(sum(_safe_float(item.get("cash_component")) for item in operations), 2),
+            "total_receivable_component": round(sum(_safe_float(item.get("receivable_component")) for item in operations), 2),
+            "operations_cash_total": round(operations_cash_total, 2),
+            "operations_credit_total": round(operations_credit_total, 2),
+        }
         total_items = len(operations)
         total_pages = max(1, (total_items + page_size - 1) // page_size)
         page = min(page, total_pages)
@@ -1567,6 +1722,7 @@ async def get_account_tree_details(
                 "children": children_payload,
                 "operations": {
                     "items": operations[start_idx:end_idx],
+                    "summary": summary,
                     "pagination": {
                         "page": page,
                         "page_size": page_size,
@@ -1590,6 +1746,14 @@ async def get_account_tree_details(
                 "children": [],
                 "operations": {
                     "items": [],
+                    "summary": {
+                        "total_debit": 0,
+                        "total_credit": 0,
+                        "total_cash_component": 0,
+                        "total_receivable_component": 0,
+                        "operations_cash_total": 0,
+                        "operations_credit_total": 0,
+                    },
                     "pagination": {
                         "page": page,
                         "page_size": page_size,

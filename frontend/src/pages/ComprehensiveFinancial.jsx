@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Banknote,
@@ -48,6 +48,7 @@ export default function ComprehensiveFinancial() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountTreePage, setAccountTreePage] = useState(1);
   const [showChildrenTree, setShowChildrenTree] = useState(true);
+  const [salesOpsPage, setSalesOpsPage] = useState(1);
   const [startDate, setStartDate] = useState(() => {
     const end = new Date();
     const start = new Date(end);
@@ -141,6 +142,23 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId && selectedAccount?.code),
   });
 
+  const salesOperationsQuery = useQuery({
+    queryKey: ['financial-sales-operations', workshopId, startDate, endDate, salesOpsPage],
+    queryFn: async () => {
+      const res = await financeAPI.getAccountTreeDetails({
+        workshop_id: workshopId,
+        account_code: '4000',
+        start_date: startDate,
+        end_date: endDate,
+        include_descendants: true,
+        page: salesOpsPage,
+        page_size: 10,
+      });
+      return res.data?.data || null;
+    },
+    enabled: Boolean(workshopId),
+  });
+
   const loading = [
     balanceSheetQuery,
     incomeStatementQuery,
@@ -165,6 +183,7 @@ export default function ComprehensiveFinancial() {
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
   const chartAccounts = chartAccountsQuery.data || [];
   const accountTree = accountTreeDetailsQuery.data || null;
+  const salesOperationsData = salesOperationsQuery.data || null;
 
   const accountNameMap = useMemo(() => {
     const map = {};
@@ -199,16 +218,21 @@ export default function ComprehensiveFinancial() {
     payment_order: 'أمر سداد',
   };
 
-  const currentCashBalance = useMemo(() => {
-    const findBalance = (code) => {
-      const row = chartAccounts.find((acc) => String(acc?.code || '').trim() === code);
-      return Number(row?.balance || 0);
-    };
-    return findBalance('1101') + findBalance('1102');
-  }, [chartAccounts]);
+  const currentCashBalance = Number(salesOperationsData?.operations?.summary?.operations_cash_total || 0);
+  const salesSummary = salesOperationsData?.operations?.summary || {
+    total_credit: 0,
+    total_cash_component: 0,
+    total_receivable_component: 0,
+    operations_cash_total: 0,
+    operations_credit_total: 0,
+  };
 
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
   const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
+
+  useEffect(() => {
+    setSalesOpsPage(1);
+  }, [startDate, endDate]);
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ['financial-balance-sheet', workshopId] });
@@ -221,6 +245,7 @@ export default function ComprehensiveFinancial() {
     if (selectedAccount?.code) {
       queryClient.invalidateQueries({ queryKey: ['financial-account-tree-details', workshopId, selectedAccount.code] });
     }
+    queryClient.invalidateQueries({ queryKey: ['financial-sales-operations', workshopId] });
   };
 
   if (!workshopId) {
@@ -309,7 +334,7 @@ export default function ComprehensiveFinancial() {
           <GlassCard
             title="النقد الحالي"
             value={formatCurrency(currentCashBalance || 0)}
-            subtitle="رصيد النقد + البنك"
+            subtitle="المحصل نقدًا (حسب طريقة السداد)"
             testId="financial-metric-current-cash"
             accent="from-cyan-500/25 to-blue-400/10"
           />
@@ -423,6 +448,84 @@ export default function ComprehensiveFinancial() {
 
         {activeTab === 'income' && (
           <div className="space-y-4" data-testid="financial-income-panel">
+            <div className="rounded-3xl border border-cyan-300/20 bg-cyan-500/5 p-4" data-testid="financial-sales-operations-block">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div>
+                  <h3 className="text-sm text-cyan-100 font-semibold" data-testid="financial-sales-operations-title">عمليات البيع (مع الإجمالي)</h3>
+                  <p className="text-[11px] text-cyan-200/80">يعرض البيع الكلي، المحصل نقدًا، والذمم غير المسددة.</p>
+                </div>
+                <div className="text-xs text-cyan-100 space-y-1 text-left" data-testid="financial-sales-operations-summary">
+                  <p>إجمالي البيع: <span className="font-semibold">{formatCurrency(salesSummary.total_credit || 0)}</span></p>
+                  <p>المحصل نقدًا: <span className="font-semibold">{formatCurrency(salesSummary.operations_cash_total || 0)}</span></p>
+                  <p>آجل غير مسدد: <span className="font-semibold">{formatCurrency(salesSummary.operations_credit_total || 0)}</span></p>
+                </div>
+              </div>
+
+              {salesOperationsQuery.isLoading ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300" data-testid="financial-sales-operations-loading-state">
+                  جاري تحميل عمليات البيع...
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto" data-testid="financial-sales-operations-table-wrap">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 text-slate-300">
+                          <th className="p-2 text-right">التاريخ</th>
+                          <th className="p-2 text-right">الوصف</th>
+                          <th className="p-2 text-right">النوع</th>
+                          <th className="p-2 text-right">المبلغ</th>
+                          <th className="p-2 text-right">نقدي</th>
+                          <th className="p-2 text-right">آجل</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(salesOperationsData?.operations?.items || []).map((item, idx) => (
+                          <tr key={`${item.entry_id}-${idx}`} className="border-b border-white/5 text-slate-100">
+                            <td className="p-2" data-testid={`financial-sales-op-date-${idx}`}>{String(item.date || '').slice(0, 10)}</td>
+                            <td className="p-2" data-testid={`financial-sales-op-description-${idx}`}>{item.description || '-'}</td>
+                            <td className="p-2" data-testid={`financial-sales-op-type-${idx}`}>{item.transaction_type_label_ar || item.transaction_type || '-'}</td>
+                            <td className="p-2" data-testid={`financial-sales-op-total-${idx}`}>{formatCurrency(item.credit || 0)}</td>
+                            <td className="p-2" data-testid={`financial-sales-op-cash-${idx}`}>{formatCurrency(item.cash_component || 0)}</td>
+                            <td className="p-2" data-testid={`financial-sales-op-ar-${idx}`}>{formatCurrency(item.receivable_component || 0)}</td>
+                          </tr>
+                        ))}
+                        {!(salesOperationsData?.operations?.items || []).length && (
+                          <tr>
+                            <td colSpan={6} className="p-4 text-center text-slate-400" data-testid="financial-sales-op-empty">لا توجد عمليات بيع ضمن الفترة.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between" data-testid="financial-sales-operations-pagination">
+                    <button
+                      type="button"
+                      onClick={() => setSalesOpsPage((p) => Math.max(1, p - 1))}
+                      disabled={!salesOperationsData?.operations?.pagination?.has_prev}
+                      className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-40"
+                      data-testid="financial-sales-operations-prev-page-button"
+                    >
+                      السابق
+                    </button>
+                    <span className="text-xs text-slate-300" data-testid="financial-sales-operations-pagination-info">
+                      صفحة {salesOperationsData?.operations?.pagination?.page || 1} / {salesOperationsData?.operations?.pagination?.total_pages || 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSalesOpsPage((p) => p + 1)}
+                      disabled={!salesOperationsData?.operations?.pagination?.has_next}
+                      className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-40"
+                      data-testid="financial-sales-operations-next-page-button"
+                    >
+                      التالي
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
                 <h3 className="text-sm text-emerald-300 font-semibold flex items-center gap-2" data-testid="financial-income-revenue-title">

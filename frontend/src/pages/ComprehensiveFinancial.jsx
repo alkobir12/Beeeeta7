@@ -52,6 +52,8 @@ export default function ComprehensiveFinancial() {
   const [endDate, setEndDate] = useState(() => safeDate(new Date()));
 
   const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
+  const shouldLoadCashFlow = activeTab === 'cashflow';
+  const shouldLoadTrialBalance = activeTab === 'trial';
 
   const balanceSheetQuery = useQuery({
     queryKey: ['financial-balance-sheet', workshopId, endDate],
@@ -77,7 +79,7 @@ export default function ComprehensiveFinancial() {
       const res = await financeAPI.getCashFlow(commonParams);
       return res.data?.data || null;
     },
-    enabled: Boolean(workshopId),
+    enabled: Boolean(workshopId) && shouldLoadCashFlow,
   });
 
   const trialBalanceQuery = useQuery({
@@ -86,7 +88,7 @@ export default function ComprehensiveFinancial() {
       const res = await financeAPI.getTrialBalance(commonParams);
       return res.data?.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
     },
-    enabled: Boolean(workshopId),
+    enabled: Boolean(workshopId) && shouldLoadTrialBalance,
   });
 
   const receivablesSummaryQuery = useQuery({
@@ -110,8 +112,6 @@ export default function ComprehensiveFinancial() {
   const loading = [
     balanceSheetQuery,
     incomeStatementQuery,
-    cashFlowQuery,
-    trialBalanceQuery,
     receivablesSummaryQuery,
     reconciliationQuery,
   ].some((query) => query.isLoading);
@@ -370,36 +370,42 @@ export default function ComprehensiveFinancial() {
         )}
 
         {activeTab === 'cashflow' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="financial-cashflow-panel">
-            <GlassCard
-              title="التدفق التشغيلي"
-              value={formatCurrency(cashFlow.operating_activities?.net_operating_cash || 0)}
-              subtitle="صافي الأنشطة التشغيلية"
-              testId="financial-cash-operating"
-              accent="from-emerald-500/25 to-cyan-400/10"
-            />
-            <GlassCard
-              title="التدفق الاستثماري"
-              value={formatCurrency(cashFlow.investing_activities?.net_investing_cash || 0)}
-              subtitle="صافي الأنشطة الاستثمارية"
-              testId="financial-cash-investing"
-              accent="from-indigo-500/25 to-sky-400/10"
-            />
-            <GlassCard
-              title="التدفق التمويلي"
-              value={formatCurrency(cashFlow.financing_activities?.net_financing_cash || 0)}
-              subtitle="صافي الأنشطة التمويلية"
-              testId="financial-cash-financing"
-              accent="from-violet-500/25 to-fuchsia-400/10"
-            />
-            <GlassCard
-              title="صافي التغير النقدي"
-              value={formatCurrency(cashFlow.net_change_in_cash || 0)}
-              subtitle="خلال الفترة المحددة"
-              testId="financial-cash-net-change"
-              accent="from-amber-500/25 to-orange-400/10"
-            />
-          </div>
+          cashFlowQuery.isLoading ? (
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-6 text-sm text-slate-300" data-testid="financial-cashflow-loading-state">
+              جاري تحميل بيانات التدفقات النقدية...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="financial-cashflow-panel">
+              <GlassCard
+                title="التدفق التشغيلي"
+                value={formatCurrency(cashFlow.operating_activities?.net_operating_cash || 0)}
+                subtitle="صافي الأنشطة التشغيلية"
+                testId="financial-cash-operating"
+                accent="from-emerald-500/25 to-cyan-400/10"
+              />
+              <GlassCard
+                title="التدفق الاستثماري"
+                value={formatCurrency(cashFlow.investing_activities?.net_investing_cash || 0)}
+                subtitle="صافي الأنشطة الاستثمارية"
+                testId="financial-cash-investing"
+                accent="from-indigo-500/25 to-sky-400/10"
+              />
+              <GlassCard
+                title="التدفق التمويلي"
+                value={formatCurrency(cashFlow.financing_activities?.net_financing_cash || 0)}
+                subtitle="صافي الأنشطة التمويلية"
+                testId="financial-cash-financing"
+                accent="from-violet-500/25 to-fuchsia-400/10"
+              />
+              <GlassCard
+                title="صافي التغير النقدي"
+                value={formatCurrency(cashFlow.net_change_in_cash || 0)}
+                subtitle="خلال الفترة المحددة"
+                testId="financial-cash-net-change"
+                accent="from-amber-500/25 to-orange-400/10"
+              />
+            </div>
+          )
         )}
 
         {activeTab === 'receivables' && (
@@ -409,37 +415,43 @@ export default function ComprehensiveFinancial() {
         )}
 
         {activeTab === 'trial' && (
-          <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-trial-balance-panel">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-slate-200 border-b border-white/10">
-                    <th className="p-3 text-right">الكود</th>
-                    <th className="p-3 text-right">الحساب</th>
-                    <th className="p-3 text-right">مدين</th>
-                    <th className="p-3 text-right">دائن</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(trialBalance.accounts || []).map((acc, idx) => (
-                    <tr key={`${acc.code}-${idx}`} className="border-b border-white/5 text-slate-100">
-                      <td className="p-3" data-testid={`financial-trial-code-${idx}`}>{acc.code}</td>
-                      <td className="p-3" data-testid={`financial-trial-name-${idx}`}>{acc.name || acc.name_ar}</td>
-                      <td className="p-3" data-testid={`financial-trial-debit-${idx}`}>{formatCurrency(acc.debit || 0)}</td>
-                      <td className="p-3" data-testid={`financial-trial-credit-${idx}`}>{formatCurrency(acc.credit || 0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="text-cyan-200 font-semibold">
-                    <td className="p-3" colSpan={2}>الإجمالي</td>
-                    <td className="p-3" data-testid="financial-trial-total-debit">{formatCurrency(trialBalance.totals?.total_debit || 0)}</td>
-                    <td className="p-3" data-testid="financial-trial-total-credit">{formatCurrency(trialBalance.totals?.total_credit || 0)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+          trialBalanceQuery.isLoading ? (
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-6 text-sm text-slate-300" data-testid="financial-trial-loading-state">
+              جاري تحميل ميزان المراجعة...
             </div>
-          </div>
+          ) : (
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-trial-balance-panel">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-slate-200 border-b border-white/10">
+                      <th className="p-3 text-right">الكود</th>
+                      <th className="p-3 text-right">الحساب</th>
+                      <th className="p-3 text-right">مدين</th>
+                      <th className="p-3 text-right">دائن</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(trialBalance.accounts || []).map((acc, idx) => (
+                      <tr key={`${acc.code}-${idx}`} className="border-b border-white/5 text-slate-100">
+                        <td className="p-3" data-testid={`financial-trial-code-${idx}`}>{acc.code}</td>
+                        <td className="p-3" data-testid={`financial-trial-name-${idx}`}>{acc.name || acc.name_ar}</td>
+                        <td className="p-3" data-testid={`financial-trial-debit-${idx}`}>{formatCurrency(acc.debit || 0)}</td>
+                        <td className="p-3" data-testid={`financial-trial-credit-${idx}`}>{formatCurrency(acc.credit || 0)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="text-cyan-200 font-semibold">
+                      <td className="p-3" colSpan={2}>الإجمالي</td>
+                      <td className="p-3" data-testid="financial-trial-total-debit">{formatCurrency(trialBalance.totals?.total_debit || 0)}</td>
+                      <td className="p-3" data-testid="financial-trial-total-credit">{formatCurrency(trialBalance.totals?.total_credit || 0)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )
         )}
 
         {activeTab === 'reconcile' && (

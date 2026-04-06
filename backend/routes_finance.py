@@ -1119,7 +1119,6 @@ async def get_financial_reconciliation(
         ]
         operation_totals = {t: 0.0 for t in tracked_types}
         operation_counts = {t: 0 for t in tracked_types}
-        operation_accounts_by_type = {t: set() for t in tracked_types}
         operation_type_by_id: Dict[str, str] = {}
         untracked_operations = {"count": 0, "total": 0.0}
 
@@ -1134,13 +1133,6 @@ async def get_financial_reconciliation(
                 continue
             operation_totals[op_type] += _safe_float(op.get("total"))
             operation_counts[op_type] += 1
-            operation_accounts_by_type[op_type].add(
-                _extract_operation_account_label(
-                    op,
-                    account_id_to_code=account_id_to_code,
-                    code_to_name=code_to_name,
-                )
-            )
 
         journal_entries = _fetch_journal_entries(
             workshop_id=workshop_id,
@@ -1152,6 +1144,7 @@ async def get_financial_reconciliation(
         id_to_code = account_id_to_code
         journal_totals = {t: 0.0 for t in tracked_types}
         journal_counts = {t: 0 for t in tracked_types}
+        account_labels_by_type = {t: set() for t in tracked_types}
         unclassified_journals = {"count": 0, "total": 0.0}
 
         for entry in journal_entries:
@@ -1181,6 +1174,37 @@ async def get_financial_reconciliation(
 
             journal_totals[tx_type] += _safe_float(entry.get("total"))
             journal_counts[tx_type] += 1
+
+            normalized_lines = []
+            for line in entry.get("lines", []) or []:
+                normalized = _normalize_line(line, id_to_code, code_to_name)
+                if normalized:
+                    normalized_lines.append(normalized)
+
+            for line in normalized_lines:
+                code = str(line.get("code") or "").strip()
+                name = line.get("name") or code_to_name.get(code) or code
+                if str(name).strip() == code and code_to_name.get(code):
+                    name = code_to_name.get(code)
+                debit = _safe_float(line.get("debit"))
+                credit = _safe_float(line.get("credit"))
+
+                is_target = False
+                if tx_type == "sale":
+                    is_target = code.startswith("4") and credit > 0
+                elif tx_type == "purchase":
+                    is_target = code.startswith("5") and debit > 0
+                elif tx_type == "expense":
+                    is_target = code.startswith("6") and debit > 0
+                elif tx_type == "sale_return":
+                    is_target = code.startswith("4") and debit > 0
+                elif tx_type == "purchase_return":
+                    is_target = (code.startswith("5") or code.startswith("6")) and credit > 0
+                elif tx_type == "payment_order":
+                    is_target = code in {"1101", "1102", "1103", "2101"}
+
+                if is_target:
+                    account_labels_by_type[tx_type].add(f"{name} ({code})")
 
         existing_operation_refs = {
             str(entry.get("reference_id") or "").strip()
@@ -1215,7 +1239,7 @@ async def get_financial_reconciliation(
                     "difference": difference,
                     "matched": abs(difference) < 0.01,
                     "account_labels": sorted(
-                        [label for label in operation_accounts_by_type.get(tx_type, set()) if label]
+                        [label for label in account_labels_by_type.get(tx_type, set()) if label]
                     )[:6],
                 }
             )

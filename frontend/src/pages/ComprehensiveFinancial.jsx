@@ -199,6 +199,14 @@ export default function ComprehensiveFinancial() {
     payment_order: 'أمر سداد',
   };
 
+  const currentCashBalance = useMemo(() => {
+    const findBalance = (code) => {
+      const row = chartAccounts.find((acc) => String(acc?.code || '').trim() === code);
+      return Number(row?.balance || 0);
+    };
+    return findBalance('1101') + findBalance('1102');
+  }, [chartAccounts]);
+
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
   const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
 
@@ -297,7 +305,14 @@ export default function ComprehensiveFinancial() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+          <GlassCard
+            title="النقد الحالي"
+            value={formatCurrency(currentCashBalance || 0)}
+            subtitle="رصيد النقد + البنك"
+            testId="financial-metric-current-cash"
+            accent="from-cyan-500/25 to-blue-400/10"
+          />
           <GlassCard
             title="إجمالي الإيرادات"
             value={formatCurrency(incomeTotals.revenue || 0)}

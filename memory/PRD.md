@@ -886,3 +886,13 @@
 | 04 Apr 2026 | Added auto-advance flow between Operations create tabs (type/date → linking, account → items), verified by `iteration_47` |
 | 04 Apr 2026 | Fixed tab sequence to prevent skipping linking step before manual account selection |
 | 04 Apr 2026 | Fixed customer/supplier movement ledger with flow in/out + visit linkage and vehicle-customer fallback, verified by `iteration_48` |
+| 06 Apr 2026 | P0 Accounting audit hardening: added `/api/finance/reports/reconciliation` (operations vs journal entries), fixed income-statement to respect date range journal lines, normalized AR/AP handling (1103/2101 legacy-safe), and added `payment_order` journal creation path |
+| 06 Apr 2026 | Implemented new glassmorphism Financial Dashboard (`/accounting/comprehensive`) with 7 tabs and live reconciliation panel wired to backend data |
+| 06 Apr 2026 | Unified AI assistant page (`/ai-financial`) now supports tabbed switch between financial analysis and workshop intelligence in a single interface |
+| 06 Apr 2026 | Sidebar refactor completed: removed "التشغيل اليومي" group and moved "الموردون" under "المخزون" group |
+
+## Current Prioritized Backlog (Post Iteration 74)
+
+- **P0**: Resolve real data discrepancies highlighted by reconciliation rows (legacy records with missing/old journal mappings).
+- **P1**: Supplier/payment-order UX polishing inside Operations + debt flows (permission-aware visibility checks for all roles).
+- **P2**: Continue liquid/glass UI parity across remaining legacy pages and complete advanced roles/permissions matrix UX.

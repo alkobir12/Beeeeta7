@@ -4,6 +4,8 @@ import {
   Banknote,
   BarChart3,
   CalendarDays,
+  ChevronDown,
+  ChevronRight,
   RefreshCw,
   Scale,
   ShieldCheck,
@@ -43,6 +45,9 @@ export default function ComprehensiveFinancial() {
   const queryClient = useQueryClient();
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [accountTreePage, setAccountTreePage] = useState(1);
+  const [showChildrenTree, setShowChildrenTree] = useState(true);
   const [startDate, setStartDate] = useState(() => {
     const end = new Date();
     const start = new Date(end);
@@ -109,6 +114,33 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
+  const chartAccountsQuery = useQuery({
+    queryKey: ['financial-chart-of-accounts', workshopId],
+    queryFn: async () => {
+      const res = await financeAPI.getChartOfAccounts({ workshop_id: workshopId });
+      return res.data?.data || [];
+    },
+    enabled: Boolean(workshopId),
+  });
+
+  const accountTreeDetailsQuery = useQuery({
+    queryKey: ['financial-account-tree-details', workshopId, selectedAccount?.code, startDate, endDate, accountTreePage],
+    queryFn: async () => {
+      if (!selectedAccount?.code) return null;
+      const res = await financeAPI.getAccountTreeDetails({
+        workshop_id: workshopId,
+        account_code: selectedAccount.code,
+        start_date: startDate,
+        end_date: endDate,
+        include_descendants: true,
+        page: accountTreePage,
+        page_size: 20,
+      });
+      return res.data?.data || null;
+    },
+    enabled: Boolean(workshopId && selectedAccount?.code),
+  });
+
   const loading = [
     balanceSheetQuery,
     incomeStatementQuery,
@@ -131,6 +163,41 @@ export default function ComprehensiveFinancial() {
   const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
   const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
+  const chartAccounts = chartAccountsQuery.data || [];
+  const accountTree = accountTreeDetailsQuery.data || null;
+
+  const accountNameMap = useMemo(() => {
+    const map = {};
+    chartAccounts.forEach((acc) => {
+      const code = String(acc?.code || '').trim();
+      if (!code) return;
+      map[code] = acc?.name || acc?.name_ar || code;
+    });
+    return map;
+  }, [chartAccounts]);
+
+  const revenueEntries = Object.entries(incomeStatementQuery.data?.details?.revenue_by_account || {});
+  const expenseEntries = Object.entries(incomeStatementQuery.data?.details?.expenses_by_account || {});
+
+  const resolveReadableAccountName = (code, rawName) => {
+    const fallback = rawName || '';
+    if (accountNameMap[code]) return accountNameMap[code];
+    if (!fallback) return code;
+    const trimmed = String(fallback).trim();
+    if (!trimmed || trimmed === code || /^[0-9]+$/.test(trimmed)) {
+      return accountNameMap[code] || code;
+    }
+    return trimmed;
+  };
+
+  const reconcileTypeLabelMap = {
+    sale: 'بيع',
+    purchase: 'شراء',
+    expense: 'مصروف',
+    sale_return: 'مرتجع بيع',
+    purchase_return: 'مرتجع شراء',
+    payment_order: 'أمر سداد',
+  };
 
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
   const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
@@ -142,6 +209,10 @@ export default function ComprehensiveFinancial() {
     queryClient.invalidateQueries({ queryKey: ['financial-trial-balance', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['financial-ar-summary', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['financial-reconciliation', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-chart-of-accounts', workshopId] });
+    if (selectedAccount?.code) {
+      queryClient.invalidateQueries({ queryKey: ['financial-account-tree-details', workshopId, selectedAccount.code] });
+    }
   };
 
   if (!workshopId) {
@@ -336,36 +407,185 @@ export default function ComprehensiveFinancial() {
         )}
 
         {activeTab === 'income' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="financial-income-panel">
-            <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
-              <h3 className="text-sm text-emerald-300 font-semibold flex items-center gap-2" data-testid="financial-income-revenue-title">
-                <TrendingUp size={14} />
-                الإيرادات حسب الحساب
-              </h3>
-              <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
-                {Object.entries(incomeStatementQuery.data?.details?.revenue_by_account || {}).map(([code, row], idx) => (
-                  <div key={code} className="rounded-xl border border-emerald-300/15 bg-emerald-500/10 px-3 py-2">
-                    <p className="text-xs text-emerald-100" data-testid={`financial-income-revenue-name-${idx}`}>{row.name || code}</p>
-                    <p className="text-sm text-white" data-testid={`financial-income-revenue-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
-                  </div>
-                ))}
+          <div className="space-y-4" data-testid="financial-income-panel">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
+                <h3 className="text-sm text-emerald-300 font-semibold flex items-center gap-2" data-testid="financial-income-revenue-title">
+                  <TrendingUp size={14} />
+                  الإيرادات حسب الحساب
+                  <span className="text-[10px] text-slate-400">(اضغط لعرض الشجرة والعمليات)</span>
+                </h3>
+                <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
+                  {revenueEntries.map(([code, row], idx) => {
+                    const accountName = resolveReadableAccountName(code, row?.name);
+                    const isSelected = selectedAccount?.code === code;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAccount({ code, name: accountName });
+                          setAccountTreePage(1);
+                        }}
+                        className={`w-full text-right rounded-xl border px-3 py-2 transition-all ${isSelected ? 'border-cyan-300/50 bg-cyan-500/15' : 'border-emerald-300/15 bg-emerald-500/10 hover:bg-emerald-500/20'}`}
+                        data-testid={`financial-income-revenue-account-button-${idx}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-xs text-emerald-100" data-testid={`financial-income-revenue-name-${idx}`}>{accountName}</p>
+                            <p className="text-[10px] text-emerald-200/80">{code}</p>
+                          </div>
+                          {isSelected ? <ChevronDown size={14} className="text-cyan-200" /> : <ChevronRight size={14} className="text-emerald-200" />}
+                        </div>
+                        <p className="text-sm text-white mt-1" data-testid={`financial-income-revenue-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
+                <h3 className="text-sm text-rose-300 font-semibold flex items-center gap-2" data-testid="financial-income-expenses-title">
+                  <TrendingDown size={14} />
+                  المصروفات حسب الحساب
+                  <span className="text-[10px] text-slate-400">(اضغط لعرض الشجرة والعمليات)</span>
+                </h3>
+                <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
+                  {expenseEntries.map(([code, row], idx) => {
+                    const accountName = resolveReadableAccountName(code, row?.name);
+                    const isSelected = selectedAccount?.code === code;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAccount({ code, name: accountName });
+                          setAccountTreePage(1);
+                        }}
+                        className={`w-full text-right rounded-xl border px-3 py-2 transition-all ${isSelected ? 'border-cyan-300/50 bg-cyan-500/15' : 'border-rose-300/15 bg-rose-500/10 hover:bg-rose-500/20'}`}
+                        data-testid={`financial-income-expenses-account-button-${idx}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-xs text-rose-100" data-testid={`financial-income-expenses-name-${idx}`}>{accountName}</p>
+                            <p className="text-[10px] text-rose-200/80">{code}</p>
+                          </div>
+                          {isSelected ? <ChevronDown size={14} className="text-cyan-200" /> : <ChevronRight size={14} className="text-rose-200" />}
+                        </div>
+                        <p className="text-sm text-white mt-1" data-testid={`financial-income-expenses-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/15 bg-white/5 p-4">
-              <h3 className="text-sm text-rose-300 font-semibold flex items-center gap-2" data-testid="financial-income-expenses-title">
-                <TrendingDown size={14} />
-                المصروفات حسب الحساب
-              </h3>
-              <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
-                {Object.entries(incomeStatementQuery.data?.details?.expenses_by_account || {}).map(([code, row], idx) => (
-                  <div key={code} className="rounded-xl border border-rose-300/15 bg-rose-500/10 px-3 py-2">
-                    <p className="text-xs text-rose-100" data-testid={`financial-income-expenses-name-${idx}`}>{row.name || code}</p>
-                    <p className="text-sm text-white" data-testid={`financial-income-expenses-value-${idx}`}>{formatCurrency(row.amount || 0)}</p>
+            {selectedAccount && (
+              <div className="rounded-3xl border border-cyan-300/30 bg-cyan-500/5 p-4" data-testid="financial-income-account-tree-panel">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-xs text-cyan-200">تفاصيل الحساب المحدد</p>
+                    <h4 className="text-sm font-semibold text-white" data-testid="financial-income-selected-account-name">
+                      {selectedAccount.name} ({selectedAccount.code})
+                    </h4>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowChildrenTree((v) => !v)}
+                    className="rounded-xl border border-cyan-200/35 bg-cyan-500/15 px-3 py-1.5 text-xs text-cyan-50"
+                    data-testid="financial-income-toggle-children-tree-button"
+                  >
+                    {showChildrenTree ? 'إخفاء الفروع' : 'إظهار الفروع'}
+                  </button>
+                </div>
+
+                {showChildrenTree && (
+                  <div className="mb-3" data-testid="financial-income-children-tree-list">
+                    <p className="text-[11px] text-slate-300 mb-2">الحسابات الفرعية</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(accountTree?.children || []).length ? (accountTree.children || []).map((child, idx) => (
+                        <button
+                          key={`${child.code}-${idx}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAccount({ code: child.code, name: child.name || child.code });
+                            setAccountTreePage(1);
+                          }}
+                          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-slate-100"
+                          data-testid={`financial-income-child-account-button-${idx}`}
+                        >
+                          {child.name} ({child.code})
+                        </button>
+                      )) : <span className="text-xs text-slate-400">لا توجد حسابات فرعية</span>}
+                    </div>
+                  </div>
+                )}
+
+                {accountTreeDetailsQuery.isLoading ? (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300" data-testid="financial-income-account-tree-loading-state">
+                    جاري تحميل تفاصيل الحساب والعمليات...
+                  </div>
+                ) : (
+                <div className="overflow-x-auto" data-testid="financial-income-account-operations-table-wrap">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/10 text-slate-300">
+                        <th className="p-2 text-right">التاريخ</th>
+                        <th className="p-2 text-right">الوصف</th>
+                        <th className="p-2 text-right">النوع</th>
+                        <th className="p-2 text-right">مدين</th>
+                        <th className="p-2 text-right">دائن</th>
+                        <th className="p-2 text-right">حساب مقابل</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(accountTree?.operations?.items || []).map((entry, idx) => (
+                        <tr key={`${entry.entry_id}-${idx}`} className="border-b border-white/5 text-slate-100">
+                          <td className="p-2" data-testid={`financial-income-account-op-date-${idx}`}>{String(entry.date || '').slice(0, 10)}</td>
+                          <td className="p-2" data-testid={`financial-income-account-op-desc-${idx}`}>{entry.description || '-'}</td>
+                          <td className="p-2" data-testid={`financial-income-account-op-type-${idx}`}>{entry.transaction_type_label_ar || entry.transaction_type || '-'}</td>
+                          <td className="p-2" data-testid={`financial-income-account-op-debit-${idx}`}>{formatCurrency(entry.debit || 0)}</td>
+                          <td className="p-2" data-testid={`financial-income-account-op-credit-${idx}`}>{formatCurrency(entry.credit || 0)}</td>
+                          <td className="p-2" data-testid={`financial-income-account-op-counterparts-${idx}`}>
+                            {(entry.counterpart_accounts || []).map((cp) => cp.name || cp.code).join(' • ') || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                      {!(accountTree?.operations?.items || []).length && (
+                        <tr>
+                          <td colSpan={6} className="p-4 text-center text-slate-400" data-testid="financial-income-account-op-empty">لا توجد عمليات لهذا الحساب ضمن الفترة.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                )}
+
+                <div className="mt-3 flex items-center justify-between" data-testid="financial-income-account-pagination">
+                  <button
+                    type="button"
+                    onClick={() => setAccountTreePage((p) => Math.max(1, p - 1))}
+                    disabled={!accountTree?.operations?.pagination?.has_prev}
+                    className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-40"
+                    data-testid="financial-income-account-prev-page-button"
+                  >
+                    السابق
+                  </button>
+                  <span className="text-xs text-slate-300" data-testid="financial-income-account-pagination-info">
+                    صفحة {accountTree?.operations?.pagination?.page || 1} / {accountTree?.operations?.pagination?.total_pages || 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAccountTreePage((p) => p + 1)}
+                    disabled={!accountTree?.operations?.pagination?.has_next}
+                    className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-40"
+                    data-testid="financial-income-account-next-page-button"
+                  >
+                    التالي
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -487,7 +707,14 @@ export default function ComprehensiveFinancial() {
                 <tbody>
                   {(reconciliation.rows || []).map((row, idx) => (
                     <tr key={`${row.type}-${idx}`} className="border-b border-white/5 text-slate-100">
-                      <td className="p-3" data-testid={`financial-reconcile-type-${idx}`}>{row.type}</td>
+                      <td className="p-3" data-testid={`financial-reconcile-type-${idx}`}>
+                        <div className="font-medium">{row.type_label_ar || reconcileTypeLabelMap[row.type] || row.type}</div>
+                        {(row.account_labels || []).length ? (
+                          <div className="text-[10px] text-slate-400 mt-1" data-testid={`financial-reconcile-type-accounts-${idx}`}>
+                            {(row.account_labels || []).join(' • ')}
+                          </div>
+                        ) : null}
+                      </td>
                       <td className="p-3" data-testid={`financial-reconcile-op-count-${idx}`}>{row.operations_count}</td>
                       <td className="p-3" data-testid={`financial-reconcile-je-count-${idx}`}>{row.journal_entries_count}</td>
                       <td className="p-3" data-testid={`financial-reconcile-op-total-${idx}`}>{formatCurrency(row.operations_total || 0)}</td>

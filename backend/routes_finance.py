@@ -906,6 +906,58 @@ def _infer_tx_type_from_journal_entry(
     return None
 
 
+def _extract_operation_account_label(
+    operation: Dict[str, Any],
+    account_id_to_code: Optional[Dict[str, str]] = None,
+    code_to_name: Optional[Dict[str, str]] = None,
+) -> str:
+    account_id_to_code = account_id_to_code or {}
+    code_to_name = code_to_name or {}
+
+    notes_blob = str(operation.get("notes") or operation.get("description") or "")
+    target_match = re.search(r"ACCOUNTING_TARGET\s*:\s*([^\n\r]+)", notes_blob, re.IGNORECASE)
+    if target_match and target_match.group(1).strip():
+        return target_match.group(1).strip()
+
+    code_match = re.search(r"ACCOUNT_CODE\s*:\s*([0-9]+)", notes_blob, re.IGNORECASE)
+    code = code_match.group(1).strip() if code_match else ""
+
+    if not code:
+        code = str(
+            operation.get("accounting_account_code")
+            or operation.get("accountCode")
+            or operation.get("account_number")
+            or operation.get("accountNumber")
+            or ""
+        ).strip()
+
+    if not code:
+        account_id = str(operation.get("account_id") or operation.get("accountId") or "").strip()
+        if account_id:
+            code = str(account_id_to_code.get(account_id) or "").strip()
+
+    if not code:
+        return "غير محدد"
+
+    name = code_to_name.get(code)
+    return f"{name} ({code})" if name else code
+
+
+def _transaction_type_label_ar(tx_type: Optional[str]) -> str:
+    labels = {
+        "sale": "بيع",
+        "purchase": "شراء",
+        "expense": "مصروف",
+        "sale_return": "مرتجع بيع",
+        "purchase_return": "مرتجع شراء",
+        "payment_order": "أمر سداد",
+        "payment": "تحصيل/سداد",
+        "service": "خدمة",
+    }
+    normalized = str(tx_type or "").strip().lower()
+    return labels.get(normalized, normalized or "غير محدد")
+
+
 def _build_repair_journal_entry_from_operation(
     operation: Dict[str, Any],
     workshop_id: str,
@@ -1054,6 +1106,9 @@ async def get_financial_reconciliation(
         if not include_rakan:
             operations = [op for op in operations if not _is_rakan_operation_row(op)]
 
+        accounts = _fetch_accounts()
+        account_id_to_code, code_to_name, _ = _build_account_maps(accounts)
+
         tracked_types = [
             "sale",
             "purchase",
@@ -1064,6 +1119,7 @@ async def get_financial_reconciliation(
         ]
         operation_totals = {t: 0.0 for t in tracked_types}
         operation_counts = {t: 0 for t in tracked_types}
+        operation_accounts_by_type = {t: set() for t in tracked_types}
         operation_type_by_id: Dict[str, str] = {}
         untracked_operations = {"count": 0, "total": 0.0}
 
@@ -1078,6 +1134,13 @@ async def get_financial_reconciliation(
                 continue
             operation_totals[op_type] += _safe_float(op.get("total"))
             operation_counts[op_type] += 1
+            operation_accounts_by_type[op_type].add(
+                _extract_operation_account_label(
+                    op,
+                    account_id_to_code=account_id_to_code,
+                    code_to_name=code_to_name,
+                )
+            )
 
         journal_entries = _fetch_journal_entries(
             workshop_id=workshop_id,
@@ -1086,8 +1149,7 @@ async def get_financial_reconciliation(
             limit=10000,
             include_rakan=include_rakan,
         )
-        accounts = _fetch_accounts()
-        id_to_code, code_to_name, _ = _build_account_maps(accounts)
+        id_to_code = account_id_to_code
         journal_totals = {t: 0.0 for t in tracked_types}
         journal_counts = {t: 0 for t in tracked_types}
         unclassified_journals = {"count": 0, "total": 0.0}
@@ -1145,12 +1207,16 @@ async def get_financial_reconciliation(
             rows.append(
                 {
                     "type": tx_type,
+                    "type_label_ar": _transaction_type_label_ar(tx_type),
                     "operations_count": operation_counts.get(tx_type, 0),
                     "journal_entries_count": journal_counts.get(tx_type, 0),
                     "operations_total": op_total,
                     "journal_entries_total": je_total,
                     "difference": difference,
                     "matched": abs(difference) < 0.01,
+                    "account_labels": sorted(
+                        [label for label in operation_accounts_by_type.get(tx_type, set()) if label]
+                    )[:6],
                 }
             )
 
@@ -1342,6 +1408,173 @@ async def backfill_missing_operation_journals(
                 "period": {"start_date": start_date, "end_date": end_date},
                 "missing_count": 0,
                 "preview": [],
+            },
+        }
+
+
+@router.get("/reports/account-tree-details")
+async def get_account_tree_details(
+    workshop_id: str = Query(...),
+    account_code: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    include_descendants: bool = Query(True),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """تفاصيل حساب شجرية: الحساب الفرعي + العمليات المرتبطة مع ترقيم صفحات."""
+    try:
+        accounts = _fetch_accounts()
+        id_to_code, code_to_name, code_to_type = _build_account_maps(accounts)
+        code_map = {str(acc.get("code") or "").strip(): acc for acc in accounts}
+
+        account_code = str(account_code or "").strip()
+        selected = code_map.get(account_code)
+        if not selected:
+            raise HTTPException(status_code=404, detail="الحساب غير موجود")
+
+        selected_id = str(selected.get("id") or "").strip()
+
+        direct_children = [
+            acc
+            for acc in accounts
+            if str(acc.get("parent_id") or "").strip() == selected_id
+        ]
+
+        descendants_codes = {account_code}
+        if include_descendants:
+            queue = [selected_id]
+            while queue:
+                current_id = queue.pop(0)
+                for acc in accounts:
+                    if str(acc.get("parent_id") or "").strip() == current_id:
+                        child_id = str(acc.get("id") or "").strip()
+                        child_code = str(acc.get("code") or "").strip()
+                        if child_code:
+                            descendants_codes.add(child_code)
+                        if child_id:
+                            queue.append(child_id)
+
+        entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=20000,
+            include_rakan=False,
+        )
+
+        operations = []
+        for entry in entries:
+            normalized_lines = []
+            for line in entry.get("lines", []) or []:
+                normalized = _normalize_line(line, id_to_code, code_to_name)
+                if normalized:
+                    normalized_lines.append(normalized)
+
+            matched_debit = 0.0
+            matched_credit = 0.0
+            counterpart_accounts = []
+
+            for line in normalized_lines:
+                line_code = str(line.get("code") or "").strip()
+                if line_code in descendants_codes:
+                    matched_debit += _safe_float(line.get("debit"))
+                    matched_credit += _safe_float(line.get("credit"))
+                else:
+                    counterpart_accounts.append(
+                        {
+                            "code": line_code,
+                            "name": line.get("name") or code_to_name.get(line_code) or line_code,
+                        }
+                    )
+
+            if matched_debit == 0 and matched_credit == 0:
+                continue
+
+            operations.append(
+                {
+                    "entry_id": str(entry.get("id") or ""),
+                    "date": entry.get("date"),
+                    "description": entry.get("description") or "",
+                    "transaction_type": entry.get("transaction_type") or "",
+                    "transaction_type_label_ar": _transaction_type_label_ar(entry.get("transaction_type")),
+                    "source": entry.get("source") or "",
+                    "reference_id": entry.get("reference_id") or "",
+                    "entry_total": _safe_float(entry.get("total")),
+                    "debit": round(matched_debit, 2),
+                    "credit": round(matched_credit, 2),
+                    "counterpart_accounts": counterpart_accounts[:6],
+                }
+            )
+
+        operations.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
+        total_items = len(operations)
+        total_pages = max(1, (total_items + page_size - 1) // page_size)
+        page = min(page, total_pages)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+
+        children_payload = []
+        for child in direct_children:
+            child_id = str(child.get("id") or "").strip()
+            has_children = any(
+                str(acc.get("parent_id") or "").strip() == child_id for acc in accounts
+            )
+            child_code = str(child.get("code") or "")
+            children_payload.append(
+                {
+                    "id": child_id,
+                    "code": child_code,
+                    "name": child.get("name") or child.get("name_ar") or child_code,
+                    "type": child.get("type") or code_to_type.get(child_code) or "",
+                    "has_children": has_children,
+                }
+            )
+
+        return {
+            "success": True,
+            "data": {
+                "account": {
+                    "id": selected_id,
+                    "code": account_code,
+                    "name": selected.get("name") or selected.get("name_ar") or account_code,
+                    "type": selected.get("type") or code_to_type.get(account_code) or "",
+                },
+                "children": children_payload,
+                "operations": {
+                    "items": operations[start_idx:end_idx],
+                    "pagination": {
+                        "page": page,
+                        "page_size": page_size,
+                        "total_items": total_items,
+                        "total_pages": total_pages,
+                        "has_next": page < total_pages,
+                        "has_prev": page > 1,
+                    },
+                },
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "account": {"code": account_code, "name": account_code, "type": ""},
+                "children": [],
+                "operations": {
+                    "items": [],
+                    "pagination": {
+                        "page": page,
+                        "page_size": page_size,
+                        "total_items": 0,
+                        "total_pages": 1,
+                        "has_next": False,
+                        "has_prev": False,
+                    },
+                },
             },
         }
 

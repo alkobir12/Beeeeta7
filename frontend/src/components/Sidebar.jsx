@@ -59,9 +59,18 @@ const Sidebar = ({
 
   const MENU_ITEMS = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: { module: 'dashboard', action: 'view' } },
-    { path: '/operations', label: t('nav.operations'), icon: Wrench, enabled: true, permission: { module: 'work_orders', action: 'view' } },
-    { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', icon: DollarSign, enabled: true, permission: { module: 'debts', action: 'view' } },
-    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
+    {
+      group: true,
+      label: '🚀 التشغيل اليومي',
+      icon: Sparkles,
+      enabled: true,
+      permission: { module: 'work_orders', action: 'view' },
+      children: [
+        { path: '/operations', label: t('nav.operations'), enabled: true, permission: { module: 'work_orders', action: 'view' } },
+        { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', enabled: true, permission: { module: 'debts', action: 'view' } },
+        { path: '/archive', label: t('nav.archive'), enabled: true, permission: { module: 'vehicles', action: 'view' } },
+      ]
+    },
     { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: { module: 'customers', action: 'view' } },
     { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: { module: 'users', action: 'view' } },
     { path: '/suppliers', label: t('nav.suppliers'), icon: Truck, enabled: true, permission: { module: 'inventory', action: 'view' } },

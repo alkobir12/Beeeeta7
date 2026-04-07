@@ -105,6 +105,7 @@ export default function ChartOfAccountsLiquid() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sheetAccountId, setSheetAccountId] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [resettingAccounts, setResettingAccounts] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
@@ -247,6 +248,23 @@ export default function ChartOfAccountsLiquid() {
       XLSX.writeFile(workbook, 'chart_of_accounts_filtered.xlsx');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const resetAccounts = async () => {
+    const ok = window.confirm('سيتم إعادة ضبط دليل الحسابات للقيم الافتراضية. هل تريد المتابعة؟');
+    if (!ok) return;
+    setResettingAccounts(true);
+    try {
+      const res = await fetch(`${API_URL}/accounts/init-defaults`, { method: 'POST' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.detail || json?.error || 'فشل إعادة الضبط');
+      await fetchTree();
+      alert('تمت إعادة ضبط الحسابات بنجاح');
+    } catch (error) {
+      alert(error?.message || 'تعذر إعادة ضبط الحسابات');
+    } finally {
+      setResettingAccounts(false);
     }
   };
 
@@ -428,15 +446,26 @@ export default function ChartOfAccountsLiquid() {
             </label>
 
             {!isMobile && (
-              <button
-                type="button"
-                onClick={exportExcel}
-                disabled={exporting}
-                className="rounded-xl border border-amber-300/40 bg-amber-500/20 text-amber-50 px-3 py-2 text-sm inline-flex items-center gap-2 md:mr-auto"
-                data-testid="coa-export-excel-button"
-              >
-                <Download size={14} /> {exporting ? 'جاري التصدير...' : 'تصدير Excel'}
-              </button>
+              <div className="inline-flex items-center gap-2 md:mr-auto">
+                <button
+                  type="button"
+                  onClick={resetAccounts}
+                  disabled={resettingAccounts}
+                  className="rounded-xl border border-rose-300/40 bg-rose-500/20 text-rose-50 px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                  data-testid="coa-reset-accounts-button"
+                >
+                  <Filter size={14} /> {resettingAccounts ? 'جارٍ إعادة الضبط...' : 'إعادة ضبط الحسابات'}
+                </button>
+                <button
+                  type="button"
+                  onClick={exportExcel}
+                  disabled={exporting}
+                  className="rounded-xl border border-amber-300/40 bg-amber-500/20 text-amber-50 px-3 py-2 text-sm inline-flex items-center gap-2"
+                  data-testid="coa-export-excel-button"
+                >
+                  <Download size={14} /> {exporting ? 'جاري التصدير...' : 'تصدير Excel'}
+                </button>
+              </div>
             )}
           </div>
 

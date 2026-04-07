@@ -1880,6 +1880,8 @@ def _normalize_operation_kind(payload: Dict[str, Any]) -> str:
         return "VEHICLE_OPERATION"
     if scope == "rakan_parts":
         return "RAKAN_PARTS_OPERATION"
+    if payload.get("vehicleId") or payload.get("vehicle_id"):
+        return "VEHICLE_OPERATION"
     return "WORKSHOP_OPERATION"
 
 
@@ -2101,7 +2103,7 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             if payload.get("visitId"):
                 visit_data = await _get_vehicle_visit_by_id(provider, payload.get("visitId"), db)
             if not visit_data:
-                visit_data = await _get_latest_vehicle_visit(provider, payload.get("vehicleId"), db)
+                visit_data = await _get_latest_vehicle_visit(provider, payload.get("vehicleId"))
                 if visit_data:
                     payload["visitId"] = visit_data.get("id")
 
@@ -3432,7 +3434,7 @@ async def _append_operation_to_visit(payload: dict, operation: dict, provider: s
     vehicle_id = payload.get("vehicleId") or payload.get("vehicle_id") or operation.get("vehicle_id")
     if not vehicle_id:
         return
-    visit = visit_data or await _get_vehicle_visit_by_id(provider, payload.get("visitId"), db) or await _get_latest_vehicle_visit(provider, vehicle_id, db)
+    visit = visit_data or await _get_vehicle_visit_by_id(provider, payload.get("visitId"), db) or await _get_latest_vehicle_visit(provider, vehicle_id)
     if not visit:
         return
 

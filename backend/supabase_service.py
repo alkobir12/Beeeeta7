@@ -869,8 +869,8 @@ class SupabaseService:
             "type": r.get("type"),
             "accountId": r.get("account_id"),
             "accountingAccountId": accounting_account_id,  # Preserve the original accountingAccountId
-            "vehicleId": r.get("vehicle_id"),
-            "visitId": r.get("visit_id"),
+            "vehicleId": r.get("vehicle_id") or payload.get("vehicleId"),
+            "visitId": r.get("visit_id") or payload.get("visitId"),
             "partnerType": r.get("partner_type"),
             "partnerId": r.get("partner_id"),
             "partnerName": r.get("partner_name"),

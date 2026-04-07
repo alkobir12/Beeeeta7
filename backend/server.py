@@ -808,28 +808,37 @@ async def save_vehicle_parts_and_create_journal(
             "description": f"إضافة بنود للمركبة {vehicle.get('plateNumber', vehicle_id)}",
             "lines": [
                 {
-                    "account": "113",
+                    "account": "1103",
                     "account_name": "ذمم مدينة عملاء",
                     "debit": total,
                     "credit": 0
                 },
                 {
-                    "account": "411",
-                    "account_name": "إيرادات الخدمات",
+                    "account": "4000",
+                    "account_name": "الإيرادات",
                     "debit": 0,
                     "credit": total
                 }
             ],
             "total": total,
-            "source": "vehicle_parts_update",
-            "reference_id": vehicle_id
+            "source": "operation",
+            "transaction_type": "sale",
+            "reference_id": operation_id
         }
         
         # حفظ القيد
         # حفظ في Supabase
         if DB_PROVIDER == "supabase":
             try:
-                supabase_service.supabase.table("journal_entries").insert(journal_entry).execute()
+                try:
+                    supabase_service.supabase.table("journal_entries").insert(journal_entry).execute()
+                except Exception:
+                    fallback_entry = {
+                        k: v
+                        for k, v in journal_entry.items()
+                        if k not in {"transaction_type", "reference_id"}
+                    }
+                    supabase_service.supabase.table("journal_entries").insert(fallback_entry).execute()
                 print("✅ Journal entry saved to Supabase")
             except Exception as e:
                 print(f"Failed to save journal entry to Supabase: {e}")

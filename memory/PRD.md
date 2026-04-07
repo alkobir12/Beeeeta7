@@ -908,6 +908,9 @@
 | 07 Apr 2026 | Backend `GET /api/finance/journal-entries` now enriches entries with `party_label`, `party_type`, `vehicle_label`, `operation_type_label` from linked operations/visits + manual override token `[PARTY:...]` |
 | 07 Apr 2026 | Replaced quick party edit prompt with structured Party Editor Modal (type + label), persisted via `[PARTY:...] [PARTY_TYPE:...]` tokens and verified end-to-end |
 | 07 Apr 2026 | Updated cash KPI formula to user-requested rule: `النقد الحالي = الإيرادات - المصروفات`, and enforced purchase/purchase_return posting into expense accounts (5xxx/6xxx fallback 6100) for consistency |
+| 07 Apr 2026 | Fixed cross-page linking regression for vehicle operations: `vehicleId` now forces `VEHICLE_OPERATION`, `visitId` linking restored, and operation responses preserve vehicle/visit references |
+| 07 Apr 2026 | Added visible **Reset Accounts** control in Chart of Accounts (`coa-reset-accounts-button`) wired to `/api/accounts/init-defaults` |
+| 07 Apr 2026 | Updated vehicle parts journal posting in backend `server.py` to modern accounts (`1103/4000`) with operation-linked source/reference semantics |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

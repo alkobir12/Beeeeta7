@@ -39,6 +39,33 @@ const GlassCard = ({ title, value, subtitle, testId, accent = 'from-sky-500/25 t
   </div>
 );
 
+const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, onToggle, testId, accent }) => (
+  <div
+    className="rounded-3xl border border-white/15 bg-slate-950/45 backdrop-blur-2xl p-5 shadow-[0_10px_45px_-20px_rgba(14,165,233,0.55)]"
+    data-testid={`${testId}-card`}
+  >
+    <button type="button" onClick={onToggle} className="w-full text-right" data-testid={`${testId}-toggle`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className={`h-1.5 w-28 rounded-full bg-gradient-to-r ${accent}`} />
+          <p className="mt-3 text-xs text-slate-300" data-testid={`${testId}-title`}>{title}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50" data-testid={testId}>{value}</p>
+          {subtitle ? <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p> : null}
+        </div>
+        <span className="mt-1 text-slate-300">{expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+      </div>
+    </button>
+
+    {expanded && details.length > 0 ? (
+      <div className="mt-3 border-t border-white/15 pt-3 space-y-1" data-testid={`${testId}-details`}>
+        {details.map((line, idx) => (
+          <p key={`${testId}-line-${idx}`} className="text-xs text-slate-300">• {line}</p>
+        ))}
+      </div>
+    ) : null}
+  </div>
+);
+
 const safeDate = (date) => date.toISOString().split('T')[0];
 
 export default function ComprehensiveFinancial() {
@@ -49,6 +76,11 @@ export default function ComprehensiveFinancial() {
   const [accountTreePage, setAccountTreePage] = useState(1);
   const [showChildrenTree, setShowChildrenTree] = useState(true);
   const [salesOpsPage, setSalesOpsPage] = useState(1);
+  const [expandedHeadlineCards, setExpandedHeadlineCards] = useState({
+    net_income: true,
+    debts: false,
+    expenses_profit: false,
+  });
   const [startDate, setStartDate] = useState(() => {
     const end = new Date();
     const start = new Date(end);
@@ -198,6 +230,14 @@ export default function ComprehensiveFinancial() {
   const revenueEntries = Object.entries(incomeStatementQuery.data?.details?.revenue_by_account || {});
   const expenseEntries = Object.entries(incomeStatementQuery.data?.details?.expenses_by_account || {});
 
+  const parseEntryAmount = (entryValue) => {
+    if (typeof entryValue === 'number') return Number(entryValue || 0);
+    if (entryValue && typeof entryValue === 'object') {
+      return Number(entryValue.amount ?? entryValue.total ?? 0);
+    }
+    return Number(entryValue || 0);
+  };
+
   const resolveReadableAccountName = (code, rawName) => {
     const fallback = rawName || '';
     if (accountNameMap[code]) return accountNameMap[code];
@@ -229,6 +269,104 @@ export default function ComprehensiveFinancial() {
 
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
   const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
+
+  const classifyBucket = (code, rawName) => {
+    const name = String(rawName || '').toLowerCase();
+    const normalizedCode = String(code || '').trim();
+
+    if (
+      name.includes('قطع') ||
+      name.includes('غيار') ||
+      name.includes('part') ||
+      normalizedCode.startsWith('4002') ||
+      normalizedCode.startsWith('5002')
+    ) {
+      return 'parts';
+    }
+
+    if (
+      name.includes('خدم') ||
+      name.includes('صيان') ||
+      name.includes('service') ||
+      normalizedCode.startsWith('4000') ||
+      normalizedCode.startsWith('4001')
+    ) {
+      return 'service';
+    }
+
+    return 'other';
+  };
+
+  const revenueBreakdown = useMemo(() => {
+    return revenueEntries.reduce(
+      (acc, [code, value]) => {
+        const amount = parseEntryAmount(value);
+        const name = resolveReadableAccountName(code, value?.name);
+        const bucket = classifyBucket(code, name);
+        acc[bucket] += amount;
+        return acc;
+      },
+      { parts: 0, service: 0, other: 0 }
+    );
+  }, [revenueEntries, accountNameMap]);
+
+  const expenseBreakdown = useMemo(() => {
+    return expenseEntries.reduce(
+      (acc, [code, value]) => {
+        const amount = parseEntryAmount(value);
+        const name = resolveReadableAccountName(code, value?.name);
+        const bucket = classifyBucket(code, name);
+        acc[bucket] += amount;
+        return acc;
+      },
+      { parts: 0, service: 0, other: 0 }
+    );
+  }, [expenseEntries, accountNameMap]);
+
+  const partsNet = revenueBreakdown.parts - expenseBreakdown.parts;
+  const serviceNet = revenueBreakdown.service - expenseBreakdown.service;
+
+  const topCards = [
+    {
+      key: 'net_income',
+      title: 'صافي الدخل',
+      value: formatCurrency(incomeTotals.net_income || 0),
+      subtitle: `الهامش: ${profitMargin.toFixed(1)}%`,
+      accent: incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10',
+      details: [
+        `إجمالي الإيرادات: ${formatCurrency(incomeTotals.revenue || 0)}`,
+        `إجمالي المصروفات: ${formatCurrency(incomeTotals.expenses || 0)}`,
+        `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
+      ],
+      testId: 'financial-headline-net-income',
+    },
+    {
+      key: 'debts',
+      title: 'الذمم',
+      value: formatCurrency(arSummary.total_ar || 0),
+      subtitle: `عدد العملاء: ${(arSummary.customers || []).length}`,
+      accent: 'from-violet-500/25 to-blue-400/10',
+      details: [
+        `ذمم العملاء المدينة: ${formatCurrency(arSummary.total_ar || 0)}`,
+        `مطلوبات الموردين (من الميزانية): ${formatCurrency(bsTotals.liabilities || 0)}`,
+        'التحصيل القادم يرفع الرصيد عند السداد فقط.',
+      ],
+      testId: 'financial-headline-debts',
+    },
+    {
+      key: 'expenses_profit',
+      title: 'المصروفات + ربح الخدمات/القطع',
+      value: formatCurrency(incomeTotals.expenses || 0),
+      subtitle: 'تفصيل ربح/خسارة النشاط',
+      accent: 'from-rose-500/25 to-orange-400/10',
+      details: [
+        `ربح/خسارة الخدمات: ${formatCurrency(serviceNet)}`,
+        `ربح/خسارة القطع: ${formatCurrency(partsNet)}`,
+        serviceNet >= 0 ? 'الخدمات تحقق ربحًا حاليًا.' : 'الخدمات في منطقة خسارة وتحتاج مراجعة التسعير.',
+      ],
+      testId: 'financial-headline-expenses-profit',
+    },
+  ];
 
   useEffect(() => {
     setSalesOpsPage(1);
@@ -330,41 +468,20 @@ export default function ComprehensiveFinancial() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          <GlassCard
-            title="النقد الفعلي"
-            value={formatCurrency(currentCashBalance || 0)}
-            subtitle="الإيرادات - المصروفات"
-            testId="financial-metric-current-cash"
-            accent="from-cyan-500/25 to-blue-400/10"
-          />
-          <GlassCard
-            title="إجمالي الإيرادات"
-            value={formatCurrency(incomeTotals.revenue || 0)}
-            subtitle="من القيود اليومية خلال الفترة"
-            testId="financial-metric-revenue"
-          />
-          <GlassCard
-            title="إجمالي المصروفات"
-            value={formatCurrency(incomeTotals.expenses || 0)}
-            subtitle="تكاليف التشغيل والمشتريات"
-            testId="financial-metric-expenses"
-            accent="from-rose-500/25 to-orange-400/10"
-          />
-          <GlassCard
-            title="صافي الربح"
-            value={formatCurrency(incomeTotals.net_income || 0)}
-            subtitle={`الهامش: ${profitMargin.toFixed(1)}%`}
-            testId="financial-metric-net-income"
-            accent={incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10'}
-          />
-          <GlassCard
-            title="إجمالي الذمم المدينة"
-            value={formatCurrency(arSummary.total_ar || 0)}
-            subtitle={`عدد العملاء: ${(arSummary.customers || []).length}`}
-            testId="financial-metric-ar-total"
-            accent="from-violet-500/25 to-blue-400/10"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6" data-testid="financial-headline-cards-grid">
+          {topCards.map((card) => (
+            <ExpandableMetricCard
+              key={card.key}
+              title={card.title}
+              value={card.value}
+              subtitle={card.subtitle}
+              details={card.details}
+              expanded={Boolean(expandedHeadlineCards[card.key])}
+              onToggle={() => setExpandedHeadlineCards((prev) => ({ ...prev, [card.key]: !prev[card.key] }))}
+              testId={card.testId}
+              accent={card.accent}
+            />
+          ))}
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2">

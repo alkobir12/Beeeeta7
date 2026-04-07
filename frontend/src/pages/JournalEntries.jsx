@@ -91,6 +91,7 @@ export default function JournalEntries() {
   const [partyEditorLabel, setPartyEditorLabel] = useState('');
   const [partyEditorType, setPartyEditorType] = useState('open');
   const [partyEditorSaving, setPartyEditorSaving] = useState(false);
+  const [resetKeepDebtsLoading, setResetKeepDebtsLoading] = useState(false);
   const [coaAccounts, setCoaAccounts] = useState([]);
   const [workshopProfile, setWorkshopProfile] = useState(null);
   const [workshopSettings, setWorkshopSettings] = useState(null);
@@ -267,6 +268,48 @@ export default function JournalEntries() {
     }
   };
 
+  const handleResetToDebtsOnly = async () => {
+    const firstConfirm = window.confirm(
+      '⚠️ تحذير: سيتم حذف كل القيود اليومية وكل العمليات غير المرتبطة بالذمم.\n\nسيتم الإبقاء فقط على عمليات الذمم (الآجل/أوامر السداد).\n\nهل تريد المتابعة؟'
+    );
+    if (!firstConfirm) return;
+
+    const finalConfirm = window.prompt('اكتب "ذمم فقط" للتأكيد النهائي:', '');
+    if (finalConfirm !== 'ذمم فقط') {
+      alert('تم إلغاء العملية');
+      return;
+    }
+
+    try {
+      setResetKeepDebtsLoading(true);
+      const response = await fetch(
+        `${API_URL}/cleanup/keep-debts-only?confirm=KEEP_DEBTS_ONLY`,
+        { method: 'DELETE' }
+      );
+      const data = await response.json();
+
+      if (!data?.success) {
+        alert(data?.message || 'تعذر تنفيذ التنظيف');
+        return;
+      }
+
+      const payload = data?.data || {};
+      alert(
+        '✅ تم تنفيذ الحذف بنجاح\n\n' +
+        `• العمليات المحذوفة: ${payload.operations_deleted || 0}\n` +
+        `• عمليات الذمم المتبقية: ${payload.operations_kept || 0}\n` +
+        `• القيود المحذوفة: ${payload.journal_entries_deleted || 0}`
+      );
+
+      await fetchJournalEntries();
+    } catch (error) {
+      console.error('Error resetting financial data to debts-only:', error);
+      alert('حدث خطأ أثناء تنفيذ العملية');
+    } finally {
+      setResetKeepDebtsLoading(false);
+    }
+  };
+
   const handleQuickEditParty = (entry) => {
     setPartyEditorEntry(entry);
     setPartyEditorLabel(entry?.party_label || 'مفتوح');
@@ -434,6 +477,21 @@ export default function JournalEntries() {
           </div>
 
           <div className="flex gap-2">
+            <button
+              onClick={handleResetToDebtsOnly}
+              disabled={resetKeepDebtsLoading}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-white transition-all disabled:opacity-60"
+              style={{
+                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                boxShadow: '0 4px 14px rgba(220, 38, 38, 0.28)'
+              }}
+              data-testid="journal-reset-keep-debts-button"
+              title="حذف القيود والعمليات غير المرتبطة بالذمم"
+            >
+              <Trash2 size={17} />
+              <span>{resetKeepDebtsLoading ? 'جارِ الحذف...' : 'حذف الكل مع إبقاء الذمم'}</span>
+            </button>
+
             <button
               onClick={fetchJournalEntries}
               className="p-2.5 rounded-xl transition-all"

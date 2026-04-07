@@ -1704,6 +1704,108 @@ async def delete_all_operations():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.delete("/cleanup/keep-debts-only")
+async def cleanup_keep_debts_only(confirm: str = Query(...)):
+    """Delete journal entries + non-debt operations, keep debt operations only."""
+    if confirm != "KEEP_DEBTS_ONLY":
+        raise HTTPException(status_code=400, detail="confirm=KEEP_DEBTS_ONLY مطلوب")
+
+    def _is_debt_related(op: Dict[str, Any]) -> bool:
+        op_type = str(op.get("type") or "").strip().lower()
+        payment_method = str(op.get("payment_method") or op.get("paymentMethod") or "").strip().lower()
+        payment_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
+        if op_type == "payment_order":
+            return True
+        if payment_method == "credit":
+            return True
+        if payment_status in {"credit", "unpaid", "pending", "partial"}:
+            return True
+        return False
+
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        result = {
+            "operations_kept": 0,
+            "operations_deleted": 0,
+            "journal_entries_deleted": 0,
+        }
+
+        if provider == "supabase":
+            supa = SupabaseService()
+            all_ops = supa.operations_list() or []
+            keep_ids = []
+            delete_ids = []
+            for op in all_ops:
+                op_id = str(op.get("id") or "").strip()
+                if not op_id:
+                    continue
+                if _is_debt_related(op):
+                    keep_ids.append(op_id)
+                else:
+                    delete_ids.append(op_id)
+
+            for op_id in delete_ids:
+                try:
+                    supa.client.table("operations").delete().eq("id", op_id).execute()
+                except Exception as op_del_error:
+                    print(f"Cleanup operation delete failed for {op_id}: {op_del_error}")
+
+            journal_ids = []
+            try:
+                journal_rows = supa.client.table("journal_entries").select("id").range(0, 9999).execute().data or []
+                journal_ids = [str(row.get("id") or "").strip() for row in journal_rows if row.get("id")]
+            except Exception as journal_read_error:
+                print(f"Cleanup journal fetch failed: {journal_read_error}")
+
+            for journal_id in journal_ids:
+                try:
+                    supa.client.table("journal_entries").delete().eq("id", journal_id).execute()
+                except Exception as je_del_error:
+                    print(f"Cleanup journal delete failed for {journal_id}: {je_del_error}")
+
+            result["operations_kept"] = len(keep_ids)
+            result["operations_deleted"] = len(delete_ids)
+            result["journal_entries_deleted"] = len(journal_ids)
+            return {"success": True, "data": result}
+
+        if provider == "memory" or db is None:
+            operations = _mem_read("operations")
+            kept_ops = [op for op in operations if _is_debt_related(op)]
+            deleted_count = max(0, len(operations) - len(kept_ops))
+            _mem_write("operations", kept_ops)
+            journals = _mem_read("journal_entries")
+            _mem_write("journal_entries", [])
+            result["operations_kept"] = len(kept_ops)
+            result["operations_deleted"] = deleted_count
+            result["journal_entries_deleted"] = len(journals)
+            return {"success": True, "data": result}
+
+        operations = await db.operations.find({}, {"_id": 0, "id": 1, "type": 1, "payment_method": 1, "paymentMethod": 1, "payment_status": 1, "paymentStatus": 1}).to_list(length=50000)
+        keep_ids = []
+        delete_ids = []
+        for op in operations:
+            op_id = str(op.get("id") or "").strip()
+            if not op_id:
+                continue
+            if _is_debt_related(op):
+                keep_ids.append(op_id)
+            else:
+                delete_ids.append(op_id)
+
+        if delete_ids:
+            await db.operations.delete_many({"id": {"$in": delete_ids}})
+        je_result = await db.journal_entries.delete_many({})
+
+        result["operations_kept"] = len(keep_ids)
+        result["operations_deleted"] = len(delete_ids)
+        result["journal_entries_deleted"] = je_result.deleted_count
+        return {"success": True, "data": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/operations/{op_id}/confirm-payment")
 async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(None)):
     """تأكيد سداد عملية آجل.

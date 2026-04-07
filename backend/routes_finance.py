@@ -3148,7 +3148,7 @@ async def reset_all_financial_data(
             print("✅ Supabase: Deleted all financial data")
         
         # حذف من MongoDB
-        if finance_db:
+        if finance_db is not None:
             try:
                 # حذف العمليات
                 ops_result = await finance_db.operations.delete_many({})
@@ -3186,6 +3186,247 @@ async def reset_all_financial_data(
         return {
             "success": False,
             "message": f"حدث خطأ أثناء الحذف: {str(e)}"
+        }
+
+
+def _is_debt_related_operation(op: Dict[str, Any]) -> bool:
+    op_type = str(op.get("type") or "").strip().lower()
+    payment_method = str(op.get("payment_method") or op.get("paymentMethod") or "").strip().lower()
+    payment_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
+
+    if op_type == "payment_order":
+        return True
+
+    if payment_method == "credit":
+        return True
+
+    if payment_status in {"credit", "unpaid", "pending", "partial"}:
+        return True
+
+    return False
+
+
+@router.delete("/reset-ops-journals-keep-debts")
+async def reset_ops_journals_keep_debts_only(
+    workshop_id: str = Query(..., description="معرف الورشة"),
+    confirm: str = Query(..., description="يجب أن تكون KEEP_DEBTS_ONLY للتأكيد")
+):
+    """
+    تنظيف مالي مع الإبقاء على الذمم فقط:
+    - حذف جميع القيود اليومية
+    - حذف العمليات غير المرتبطة بالذمم
+    - الإبقاء فقط على عمليات الذمم (credit / unpaid / payment_order)
+    """
+    if confirm != "KEEP_DEBTS_ONLY":
+        return {
+            "success": False,
+            "message": "يجب تأكيد العملية عبر confirm=KEEP_DEBTS_ONLY"
+        }
+
+    try:
+        result = {
+            "operations_kept": 0,
+            "operations_deleted": 0,
+            "journal_entries_deleted": 0,
+        }
+
+        if supabase:
+            try:
+                scoped_ops_query = (
+                    supabase.table("operations")
+                    .select("id,type,payment_method,paymentMethod,payment_status,paymentStatus,workshop_id")
+                    .eq("workshop_id", workshop_id)
+                    .range(0, 9999)
+                )
+                scoped_operations = scoped_ops_query.execute().data or []
+            except Exception:
+                scoped_operations = []
+
+            try:
+                legacy_ops_query = (
+                    supabase.table("operations")
+                    .select("id,type,payment_method,paymentMethod,payment_status,paymentStatus,workshop_id")
+                    .is_("workshop_id", "null")
+                    .range(0, 9999)
+                )
+                legacy_operations = legacy_ops_query.execute().data or []
+            except Exception:
+                legacy_operations = []
+
+            operations_map: Dict[str, Dict[str, Any]] = {}
+            for op in (scoped_operations + legacy_operations):
+                op_id = str(op.get("id") or "").strip()
+                if op_id:
+                    operations_map[op_id] = op
+            operations = list(operations_map.values())
+
+            if not operations:
+                try:
+                    operations = (
+                        supabase.table("operations")
+                        .select("id,type,payment_method,paymentMethod,payment_status,paymentStatus,workshop_id")
+                        .range(0, 9999)
+                        .execute()
+                        .data
+                        or []
+                    )
+                except Exception:
+                    operations = []
+
+            keep_ids: List[str] = []
+            delete_ids: List[str] = []
+            for op in operations:
+                op_id = str(op.get("id") or "").strip()
+                if not op_id:
+                    continue
+                if _is_debt_related_operation(op):
+                    keep_ids.append(op_id)
+                else:
+                    delete_ids.append(op_id)
+
+            for idx in range(0, len(delete_ids), 200):
+                chunk = delete_ids[idx: idx + 200]
+                if not chunk:
+                    continue
+                try:
+                    supabase.table("operations").delete().in_("id", chunk).execute()
+                except Exception as delete_err:
+                    print(f"Failed deleting operations chunk: {delete_err}")
+
+            result["operations_kept"] = len(keep_ids)
+            result["operations_deleted"] = len(delete_ids)
+
+            try:
+                scoped_journal_rows = (
+                    supabase.table("journal_entries")
+                    .select("id")
+                    .eq("workshop_id", workshop_id)
+                    .range(0, 9999)
+                    .execute()
+                    .data
+                    or []
+                )
+
+                legacy_journal_rows = (
+                    supabase.table("journal_entries")
+                    .select("id")
+                    .is_("workshop_id", "null")
+                    .range(0, 9999)
+                    .execute()
+                    .data
+                    or []
+                )
+
+                journal_map: Dict[str, bool] = {}
+                for row in (scoped_journal_rows + legacy_journal_rows):
+                    row_id = str(row.get("id") or "").strip()
+                    if row_id:
+                        journal_map[row_id] = True
+
+                je_ids = list(journal_map.keys())
+
+                if not je_ids:
+                    fallback_rows = (
+                        supabase.table("journal_entries")
+                        .select("id")
+                        .range(0, 9999)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    je_ids = [str(row.get("id") or "").strip() for row in fallback_rows if row.get("id")]
+
+                for idx in range(0, len(je_ids), 200):
+                    chunk = je_ids[idx: idx + 200]
+                    if not chunk:
+                        continue
+                    try:
+                        supabase.table("journal_entries").delete().in_("id", chunk).execute()
+                    except Exception as delete_err:
+                        print(f"Failed deleting journal chunk: {delete_err}")
+                result["journal_entries_deleted"] = len(je_ids)
+            except Exception as je_err:
+                print(f"Journal cleanup failed: {je_err}")
+
+        if finance_db is not None:
+            ops_query: Dict[str, Any] = {
+                "$or": [
+                    {"workshop_id": workshop_id},
+                    {"workshop_id": {"$exists": False}},
+                    {"workshop_id": None},
+                    {"workshop_id": ""},
+                ]
+            }
+            operations = await finance_db.operations.find(ops_query, {"_id": 0}).to_list(length=10000)
+
+            keep_ids: List[str] = []
+            delete_ids: List[str] = []
+            for op in operations:
+                op_id = str(op.get("id") or "").strip()
+                if not op_id:
+                    continue
+                if _is_debt_related_operation(op):
+                    keep_ids.append(op_id)
+                else:
+                    delete_ids.append(op_id)
+
+            if delete_ids:
+                await finance_db.operations.delete_many({"id": {"$in": delete_ids}})
+
+            je_result = await finance_db.journal_entries.delete_many({
+                "$or": [
+                    {"workshop_id": workshop_id},
+                    {"workshop_id": {"$exists": False}},
+                    {"workshop_id": None},
+                    {"workshop_id": ""},
+                ]
+            })
+            result["operations_kept"] += len(keep_ids)
+            result["operations_deleted"] += len(delete_ids)
+            result["journal_entries_deleted"] += je_result.deleted_count
+
+        if db is not None and db is not finance_db:
+            operations = await db.operations.find({
+                "$or": [
+                    {"workshop_id": workshop_id},
+                    {"workshop_id": {"$exists": False}},
+                    {"workshop_id": None},
+                    {"workshop_id": ""},
+                ]
+            }, {"_id": 0}).to_list(length=10000)
+            keep_ids: List[str] = []
+            delete_ids: List[str] = []
+            for op in operations:
+                op_id = str(op.get("id") or "").strip()
+                if not op_id:
+                    continue
+                if _is_debt_related_operation(op):
+                    keep_ids.append(op_id)
+                else:
+                    delete_ids.append(op_id)
+            if delete_ids:
+                await db.operations.delete_many({"id": {"$in": delete_ids}})
+            je_result = await db.journal_entries.delete_many({
+                "$or": [
+                    {"workshop_id": workshop_id},
+                    {"workshop_id": {"$exists": False}},
+                    {"workshop_id": None},
+                    {"workshop_id": ""},
+                ]
+            })
+            result["operations_kept"] += len(keep_ids)
+            result["operations_deleted"] += len(delete_ids)
+            result["journal_entries_deleted"] += je_result.deleted_count
+
+        return {
+            "success": True,
+            "message": "تم حذف القيود والعمليات غير المرتبطة بالذمم بنجاح",
+            "data": result,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"تعذر تنفيذ التنظيف: {str(e)}"
         }
 
 

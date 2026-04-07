@@ -53,11 +53,18 @@ const VisitItemRow = ({
   servicesCatalog = [],
   partsCatalog = [],
   suppliersCatalog = [],
+  customersCatalog = [],
   rowId,
   visitId,
 }) => {
   if (!isEditing) {
-    const typeLabel = item.itemType === 'part' ? 'قطعة' : item.itemType === 'supplier' ? 'مورد' : 'خدمة';
+    const typeLabel = item.itemType === 'part'
+      ? 'قطعة'
+      : item.itemType === 'supplier'
+      ? 'مورد'
+      : item.itemType === 'customer'
+      ? 'عميل'
+      : 'خدمة';
     return (
       <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
         <td className="py-2 px-3 text-xs" style={{ color: 'rgba(226,232,240,0.72)' }}>
@@ -77,12 +84,18 @@ const VisitItemRow = ({
     ? partsCatalog
     : item.itemType === 'supplier'
     ? suppliersCatalog
+    : item.itemType === 'customer'
+    ? customersCatalog
     : servicesCatalog;
   const listId = `${item.itemType}-list-${rowId}`;
+  const isPartyType = item.itemType === 'supplier' || item.itemType === 'customer';
+  const partyLabel = item.itemType === 'supplier' ? 'المورد' : 'العميل';
+  const matchedParty = options.find((opt) => (opt.name || '').trim() === (item.name || '').trim());
+  const showManualPartyInput = Boolean(item.manualPartyEntry || (item.name && !matchedParty));
 
   const handleNameChange = (value) => {
     onChange('name', value);
-    if (item.itemType === 'supplier') return;
+    if (isPartyType) return;
     const match = options.find((opt) => (opt.name || '').trim() === value.trim());
     if (match) {
       const price = match.price ?? match.sellingPrice ?? match.selling_price ?? match.purchasePrice ?? 0;
@@ -106,29 +119,61 @@ const VisitItemRow = ({
         >
           <option value="service">خدمة</option>
           <option value="part">قطعة</option>
+          <option value="customer">عميل</option>
           <option value="supplier">مورد</option>
         </select>
       </td>
       <td className="p-2 min-w-[160px]">
-        {item.itemType === 'supplier' ? (
-          <select
-            value={item.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(148,163,184,0.18)',
-              color: 'rgba(248,250,252,0.92)',
-            }}
-            data-testid={`visit-item-name-${visitId}-${rowId}`}
-          >
-            <option value="">اختر المورد</option>
-            {suppliersCatalog.map((supplier) => (
-              <option key={supplier.id || supplier.name} value={supplier.name}>
-                {supplier.name}
-              </option>
-            ))}
-          </select>
+        {isPartyType ? (
+          <div className="space-y-2">
+            <select
+              value={showManualPartyInput ? '__manual__' : (item.name || '')}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '__manual__') {
+                  onChange('manualPartyEntry', true);
+                  onChange('name', '');
+                  return;
+                }
+                onChange('manualPartyEntry', false);
+                handleNameChange(value);
+              }}
+              className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(148,163,184,0.18)',
+                color: 'rgba(248,250,252,0.92)',
+              }}
+              data-testid={`visit-item-party-select-${visitId}-${rowId}`}
+            >
+              <option value="">اختر {partyLabel}</option>
+              {options.map((party) => (
+                <option key={party.id || party.name} value={party.name}>
+                  {party.name}
+                </option>
+              ))}
+              <option value="__manual__">إدخال يدوي</option>
+            </select>
+
+            {showManualPartyInput && (
+              <input
+                type="text"
+                value={item.name || ''}
+                onChange={(e) => {
+                  onChange('manualPartyEntry', true);
+                  onChange('name', e.target.value);
+                }}
+                className="w-full min-w-[140px] sm:min-w-[220px] text-xs sm:text-sm rounded-lg p-2"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(248,250,252,0.92)',
+                }}
+                placeholder={`اكتب اسم ${partyLabel} يدويًا`}
+                data-testid={`visit-item-party-manual-${visitId}-${rowId}`}
+              />
+            )}
+          </div>
         ) : (
           <>
             <input
@@ -266,6 +311,7 @@ const VisitItemCard = ({
   servicesCatalog = [],
   partsCatalog = [],
   suppliersCatalog = [],
+  customersCatalog = [],
   rowId,
   visitId,
 }) => {
@@ -273,12 +319,24 @@ const VisitItemCard = ({
     ? partsCatalog
     : item.itemType === 'supplier'
     ? suppliersCatalog
+    : item.itemType === 'customer'
+    ? customersCatalog
     : servicesCatalog;
   const listId = `${item.itemType}-list-card-${rowId}`;
   const amount = Number(item.quantity || 0) * Number(item.price || 0);
+  const isPartyType = item.itemType === 'supplier' || item.itemType === 'customer';
+  const partyLabel = item.itemType === 'supplier' ? 'المورد' : 'العميل';
+  const matchedParty = options.find((opt) => (opt.name || '').trim() === (item.name || '').trim());
+  const showManualPartyInput = Boolean(item.manualPartyEntry || (item.name && !matchedParty));
 
-  const typeLabel = item.itemType === 'part' ? 'قطعة' : item.itemType === 'supplier' ? 'مورد' : 'خدمة';
-  const typeAccent = item.itemType === 'part' ? 'rose' : item.itemType === 'supplier' ? 'amber' : 'violet';
+  const typeLabel = item.itemType === 'part'
+    ? 'قطعة'
+    : item.itemType === 'supplier'
+    ? 'مورد'
+    : item.itemType === 'customer'
+    ? 'عميل'
+    : 'خدمة';
+  const typeAccent = item.itemType === 'part' ? 'rose' : isPartyType ? 'amber' : 'violet';
   const typeStyle =
     typeAccent === 'rose'
       ? {
@@ -300,7 +358,7 @@ const VisitItemCard = ({
 
   const handleNameChange = (value) => {
     onChange('name', value);
-    if (item.itemType === 'supplier') return;
+    if (isPartyType) return;
     const match = options.find((opt) => (opt.name || '').trim() === value.trim());
     if (match) {
       const price = match.price ?? match.sellingPrice ?? match.selling_price ?? match.purchasePrice ?? 0;
@@ -347,28 +405,60 @@ const VisitItemCard = ({
               >
                 <option value="service">خدمة</option>
                 <option value="part">قطعة</option>
+                <option value="customer">عميل</option>
                 <option value="supplier">مورد</option>
               </select>
 
-              {item.itemType === 'supplier' ? (
-                <select
-                  value={item.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full text-sm rounded-lg p-2"
-                  style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(148,163,184,0.18)',
-                    color: 'rgba(248,250,252,0.92)',
-                  }}
-                  data-testid={`visit-item-name-card-${visitId}-${rowId}`}
-                >
-                  <option value="">اختر المورد</option>
-                  {suppliersCatalog.map((supplier) => (
-                    <option key={supplier.id || supplier.name} value={supplier.name}>
-                      {supplier.name}
-                    </option>
-                  ))}
-                </select>
+              {isPartyType ? (
+                <div className="space-y-2">
+                  <select
+                    value={showManualPartyInput ? '__manual__' : (item.name || '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '__manual__') {
+                        onChange('manualPartyEntry', true);
+                        onChange('name', '');
+                        return;
+                      }
+                      onChange('manualPartyEntry', false);
+                      handleNameChange(value);
+                    }}
+                    className="w-full text-sm rounded-lg p-2"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(148,163,184,0.18)',
+                      color: 'rgba(248,250,252,0.92)',
+                    }}
+                    data-testid={`visit-item-party-select-card-${visitId}-${rowId}`}
+                  >
+                    <option value="">اختر {partyLabel}</option>
+                    {options.map((party) => (
+                      <option key={party.id || party.name} value={party.name}>
+                        {party.name}
+                      </option>
+                    ))}
+                    <option value="__manual__">إدخال يدوي</option>
+                  </select>
+
+                  {showManualPartyInput && (
+                    <input
+                      type="text"
+                      value={item.name || ''}
+                      onChange={(e) => {
+                        onChange('manualPartyEntry', true);
+                        onChange('name', e.target.value);
+                      }}
+                      className="w-full text-sm rounded-lg p-2"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.18)',
+                        color: 'rgba(248,250,252,0.92)',
+                      }}
+                      placeholder={`اكتب اسم ${partyLabel} يدويًا`}
+                      data-testid={`visit-item-party-manual-card-${visitId}-${rowId}`}
+                    />
+                  )}
+                </div>
               ) : (
                 <>
                   <input
@@ -483,6 +573,7 @@ const VisitCard = ({
   servicesCatalog = [],
   partsCatalog = [],
   suppliersCatalog = [],
+  customersCatalog = [],
   onServiceAdded,
   onPartAdded,
   canDelete = false,
@@ -1004,6 +1095,7 @@ const VisitCard = ({
                     servicesCatalog={servicesCatalog}
                     partsCatalog={partsCatalog}
                     suppliersCatalog={suppliersCatalog}
+                    customersCatalog={customersCatalog}
                     rowId={idx}
                     visitId={visit.id}
                   />
@@ -1058,6 +1150,7 @@ const VisitCard = ({
                           servicesCatalog={servicesCatalog}
                           partsCatalog={partsCatalog}
                           suppliersCatalog={suppliersCatalog}
+                          customersCatalog={customersCatalog}
                           rowId={idx}
                           visitId={visit.id}
                         />
@@ -1616,6 +1709,7 @@ const VehicleDetails = () => {
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [partsCatalog, setPartsCatalog] = useState([]);
   const [suppliersCatalog, setSuppliersCatalog] = useState([]);
+  const [customersCatalog, setCustomersCatalog] = useState([]);
   const [visitFilter, setVisitFilter] = useState('all');
   const [createVisitConfirmAt, setCreateVisitConfirmAt] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1835,19 +1929,22 @@ const VehicleDetails = () => {
       const servicesPromise = serviceAPI.getAll().catch(() => ({ data: [] }));
       const partsPromise = partAPI.getAll().catch(() => ({ data: [] }));
       const suppliersPromise = supplierAPI.getAll().catch(() => ({ data: [] }));
+      const customersPromise = customerAPI.getAll().catch(() => ({ data: [] }));
 
-      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes] = await Promise.all([
+      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes] = await Promise.all([
         filesPromise,
         approvalsPromise,
         servicesPromise,
         partsPromise,
         suppliersPromise,
+        customersPromise,
       ]);
       
       setVehicleFiles(filesRes.files || []);
       setServicesCatalog(servicesRes.data || []);
       setPartsCatalog(partsRes.data || []);
       setSuppliersCatalog(suppliersRes.data || []);
+      setCustomersCatalog(customersRes.data || []);
       
       const approvalsRows = approvalsRes?.data || [];
       const approvalsByVisit = new Map();
@@ -2691,6 +2788,7 @@ const VehicleDetails = () => {
                       servicesCatalog={servicesCatalog}
                       partsCatalog={partsCatalog}
                       suppliersCatalog={suppliersCatalog}
+                      customersCatalog={customersCatalog}
                       onServiceAdded={appendService}
                       onPartAdded={appendPart}
                       canDelete={canDeleteVisit}

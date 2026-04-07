@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 87 - Frontend testing for VehicleDetails visit item party dropdown feature. All features tested and working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_87.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "لا يوجد"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "VehicleDetails visit item party dropdown feature is fully functional. When adding a new item in a visit and changing type to 'supplier' or 'customer', the dropdown correctly shows registered suppliers/customers from the system. Manual entry option ('إدخال يدوي') is available for both types and works correctly.",
+  "features_tested": {
+    "frontend": [
+      "✅ VehicleDetails page loads correctly at /vehicle/{id}",
+      "✅ Visit card expands to show items table",
+      "✅ 'إضافة بند جديد' (Add New Item) button works",
+      "✅ Type dropdown shows 4 options: خدمة (service), قطعة (part), عميل (customer), مورد (supplier)",
+      "✅ Changing type to 'supplier' shows party dropdown with 14 registered suppliers",
+      "✅ Supplier dropdown includes: الراكضي, الدرويش, القرعاوي, الحصان, الزايدي ليات, العبدالرحيم, مخرطه, الإقبال, دانية, الزايدي, أبو خالد الكبير, ساسكو, مورد اختبار التكرار",
+      "✅ Supplier dropdown has 'إدخال يدوي' (Manual Entry) option",
+      "✅ Changing type to 'customer' shows party dropdown with 121 registered customers",
+      "✅ Customer dropdown includes all registered customers from the system",
+      "✅ Customer dropdown has 'إدخال يدوي' (Manual Entry) option",
+      "✅ Selecting 'إدخال يدوي' shows manual text input field",
+      "✅ Manual input field has correct placeholder: 'اكتب اسم المورد يدويًا' / 'اكتب اسم العميل يدويًا'",
+      "✅ Manual entry field accepts text input correctly",
+      "✅ Switching between types (service→supplier→customer→service→part→supplier) does NOT cause freezing or breaking",
+      "✅ All type transitions are smooth and responsive"
+    ]
+  },
+  "test_details": {
+    "supplier_dropdown_options": [
+      "اختر المورد (placeholder)",
+      "الراكضي",
+      "الدرويش",
+      "القرعاوي",
+      "الحصان",
+      "الزايدي ليات",
+      "العبدالرحيم",
+      "مخرطه",
+      "الإقبال",
+      "دانية",
+      "الزايدي",
+      "أبو خالد الكبير",
+      "ساسكو",
+      "مورد اختبار التكرار",
+      "إدخال يدوي"
+    ],
+    "customer_dropdown_count": 122,
+    "manual_entry_tested": true,
+    "type_switching_tested": true
+  }
+}

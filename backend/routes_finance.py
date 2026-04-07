@@ -2203,9 +2203,10 @@ async def get_journal_entries(
 
             # allow quick manual override in description token: [PARTY:...]
             manual_party_match = re.search(r"\[PARTY:([^\]]+)\]", str(description or ""))
+            manual_party_type_match = re.search(r"\[PARTY_TYPE:([^\]]+)\]", str(description or ""))
             if manual_party_match:
                 party_label = manual_party_match.group(1).strip()
-                party_type = "manual"
+                party_type = str(manual_party_type_match.group(1)).strip().lower() if manual_party_type_match else "manual"
 
             operation_type_label = type_labels.get(tx_type, tx_type or "غير محدد")
 

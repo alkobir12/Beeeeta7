@@ -87,6 +87,10 @@ export default function JournalEntries() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [partyEditorEntry, setPartyEditorEntry] = useState(null);
+  const [partyEditorLabel, setPartyEditorLabel] = useState('');
+  const [partyEditorType, setPartyEditorType] = useState('open');
+  const [partyEditorSaving, setPartyEditorSaving] = useState(false);
   const [coaAccounts, setCoaAccounts] = useState([]);
   const [workshopProfile, setWorkshopProfile] = useState(null);
   const [workshopSettings, setWorkshopSettings] = useState(null);
@@ -263,40 +267,54 @@ export default function JournalEntries() {
     }
   };
 
-  const handleQuickEditParty = async (entry) => {
-    const current = entry?.party_label || 'مفتوح';
-    const next = window.prompt('تعديل طرف العملية (عميل/مورد/مفتوح):', current);
-    if (next === null) return;
-    const trimmed = next.trim();
-    if (!trimmed) return;
+  const handleQuickEditParty = (entry) => {
+    setPartyEditorEntry(entry);
+    setPartyEditorLabel(entry?.party_label || 'مفتوح');
+    setPartyEditorType(entry?.party_type || 'open');
+  };
 
-    const cleanDescription = String(entry.description || '').replace(/\[PARTY:[^\]]+\]/g, '').trim();
-    const nextDescription = `${cleanDescription} [PARTY:${trimmed}]`.trim();
+  const submitPartyEditor = async () => {
+    if (!partyEditorEntry) return;
+    const trimmed = partyEditorLabel.trim();
+    if (!trimmed) {
+      alert('يرجى إدخال طرف العملية');
+      return;
+    }
+
+    setPartyEditorSaving(true);
+    const cleanDescription = String(partyEditorEntry.description || '')
+      .replace(/\[PARTY:[^\]]+\]/g, '')
+      .replace(/\[PARTY_TYPE:[^\]]+\]/g, '')
+      .trim();
+    const nextDescription = `${cleanDescription} [PARTY:${trimmed}] [PARTY_TYPE:${partyEditorType}]`.trim();
 
     try {
-      const response = await fetch(`${API_URL}/finance/journal-entries/${entry.id}?workshop_id=${WORKSHOP_ID}`, {
+      const response = await fetch(`${API_URL}/finance/journal-entries/${partyEditorEntry.id}?workshop_id=${WORKSHOP_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          date: entry.entry_date,
+          date: partyEditorEntry.entry_date,
           description: nextDescription,
-          transaction_type: entry.transaction_type || 'manual',
-          lines: entry.lines?.map((l) => ({
+          transaction_type: partyEditorEntry.transaction_type || 'manual',
+          lines: partyEditorEntry.lines?.map((l) => ({
             account: l.account_code || l.account,
             account_name: l.account_name,
             debit: l.debit || 0,
             credit: l.credit || 0,
           })) || [],
-          total: entry.total_debit || 0,
+          total: partyEditorEntry.total_debit || 0,
         }),
       });
 
       const data = await response.json();
       if (!data?.success) throw new Error(data?.message || 'تعذر التحديث');
+      setPartyEditorEntry(null);
       await fetchJournalEntries();
     } catch (error) {
       console.error('Error updating party label:', error);
       alert('تعذر تحديث طرف العملية');
+    } finally {
+      setPartyEditorSaving(false);
     }
   };
 
@@ -890,6 +908,63 @@ export default function JournalEntries() {
           isLight={isLight}
           styles={styles}
         />
+      )}
+
+      {partyEditorEntry && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-testid="party-editor-modal">
+          <div className="w-full max-w-md rounded-2xl p-5" style={{ backgroundColor: styles.cardBg, border: `1px solid ${styles.cardBorder}` }}>
+            <h3 className="text-lg font-bold mb-3" style={{ color: styles.textPrimary }}>تعديل طرف العملية</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: styles.textSecondary }}>نوع الطرف</label>
+                <select
+                  value={partyEditorType}
+                  onChange={(e) => setPartyEditorType(e.target.value)}
+                  className="w-full rounded-xl px-3 py-2"
+                  style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', color: styles.textPrimary, border: `1px solid ${styles.cardBorder}` }}
+                  data-testid="party-editor-type-select"
+                >
+                  <option value="customer">عميل</option>
+                  <option value="supplier">مورد</option>
+                  <option value="open">مفتوح</option>
+                  <option value="manual">مخصص</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: styles.textSecondary }}>اسم طرف العملية</label>
+                <input
+                  value={partyEditorLabel}
+                  onChange={(e) => setPartyEditorLabel(e.target.value)}
+                  className="w-full rounded-xl px-3 py-2"
+                  style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', color: styles.textPrimary, border: `1px solid ${styles.cardBorder}` }}
+                  data-testid="party-editor-label-input"
+                  placeholder="مثال: عميل فلان / مورد فلان / مفتوح"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={submitPartyEditor}
+                disabled={partyEditorSaving}
+                className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
+                data-testid="party-editor-save-button"
+              >
+                {partyEditorSaving ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+              <button
+                onClick={() => setPartyEditorEntry(null)}
+                className="flex-1 py-2 rounded-xl"
+                style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', color: styles.textSecondary }}
+                data-testid="party-editor-cancel-button"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

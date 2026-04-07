@@ -302,15 +302,9 @@ def _fetch_journal_entries(
     normalized_end = _normalize_date_string(end_date)
 
     if normalized_start:
-        start_boundary = normalized_start
-        if isinstance(normalized_start, str) and len(normalized_start) == 10 and "T" not in normalized_start:
-            start_boundary = f"{normalized_start}T00:00:00"
-        query = query.gte("date", start_boundary)
+        query = query.gte("date", normalized_start)
     if normalized_end:
-        end_boundary = normalized_end
-        if isinstance(normalized_end, str) and len(normalized_end) == 10 and "T" not in normalized_end:
-            end_boundary = f"{normalized_end}T23:59:59.999999"
-        query = query.lte("date", end_boundary)
+        query = query.lte("date", normalized_end)
     if limit is not None:
         query = query.range(skip, skip + limit - 1)
     rows = query.order("date", desc=True).execute().data or []

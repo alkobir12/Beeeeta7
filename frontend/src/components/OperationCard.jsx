@@ -144,6 +144,19 @@ export default function OperationCard({
     [vehicles, operation.vehicleId]
   );
 
+  const customerDisplay = useMemo(
+    () => operation.partnerName || vehicle?.customerName || vehicle?.ownerName || 'غير محدد',
+    [operation.partnerName, vehicle]
+  );
+
+  const vehicleDisplay = useMemo(() => {
+    if (vehicle) {
+      return `${vehicle.plateNumber || vehicle.plate_number || '-'} ${vehicle.brand || ''} ${vehicle.model || ''}`.trim();
+    }
+    if (operation.vehicleId) return operation.vehicleId;
+    return 'غير محدد';
+  }, [vehicle, operation.vehicleId]);
+
   const targetAccountName = useMemo(
     () => resolveTargetAccountName(operation, chartAccount, businessAccount, t),
     [operation, chartAccount, businessAccount, t]
@@ -255,8 +268,13 @@ export default function OperationCard({
               <div className="flex items-center gap-1.5 text-slate-50">
                 <FileText size={14} className="text-slate-200/80" />
                 <span className="text-sm font-semibold break-words leading-tight" data-testid={`operation-card-partner-${operation.id}`}>
-                  {operation.partnerName || '-'}
+                  العميل/الطرف: {customerDisplay}
                 </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-sky-100/90 text-[11px]" data-testid={`operation-card-vehicle-summary-${operation.id}`}>
+                <Car size={12} />
+                <span className="break-words">المركبة: {vehicleDisplay}</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 text-slate-200/80 text-[11px] sm:text-xs" data-testid={`operation-card-meta-${operation.id}`}>
@@ -418,7 +436,7 @@ export default function OperationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-3">
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.customerName') || t('operations.partner_name') || 'العميل'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{operation.partnerName || '-'}</div>
+              <div className="text-xs font-semibold text-slate-50 break-words">{customerDisplay}</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.operationType') || 'نوع العملية'}</div>
@@ -427,6 +445,10 @@ export default function OperationCard({
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.operationDateLabel') || t('operations.date') || 'التاريخ'}</div>
               <div className="text-xs font-semibold text-slate-50 break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-vehicle-expanded-${operation.id}`}>
+              <div className="text-[10px] text-slate-300/70 mb-1">المركبة</div>
+              <div className="text-xs font-semibold text-slate-50 break-words">{vehicleDisplay}</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>

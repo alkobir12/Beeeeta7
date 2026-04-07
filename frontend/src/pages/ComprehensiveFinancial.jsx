@@ -332,7 +332,7 @@ export default function ComprehensiveFinancial() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
           <GlassCard
-            title="النقد الحالي"
+            title="النقد الفعلي"
             value={formatCurrency(currentCashBalance || 0)}
             subtitle="الإيرادات - المصروفات"
             testId="financial-metric-current-cash"

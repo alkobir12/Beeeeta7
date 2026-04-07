@@ -115,7 +115,9 @@ export default function JournalEntries() {
           entry_number: `JE-${String(index + 1).padStart(4, '0')}`,
           entry_date: entry.date,
           description: sanitizeEntryText(entry.description || ''),
-          reference_type: entry.source === 'operation' ? (entry.description?.includes('بيع') ? 'invoice' : 'purchase') : 'manual',
+          reference_type: entry.source === 'operation'
+            ? (entry.transaction_type === 'sale' || entry.transaction_type === 'service' ? 'invoice' : 'purchase')
+            : 'manual',
           status: 'posted',
           total_debit: entry.total,
           total_credit: entry.total,
@@ -125,8 +127,12 @@ export default function JournalEntries() {
             debit: line.debit,
             credit: line.credit
           })) || [],
-          vehicle_plate: entry.vehicle_plate,
-          customer_name: entry.customer_name,
+          vehicle_plate: entry.vehicle_label || entry.vehicle_plate,
+          customer_name: entry.party_label || entry.customer_name,
+          party_label: entry.party_label || 'مفتوح',
+          party_type: entry.party_type || 'open',
+          operation_type_label: entry.operation_type_label || 'غير محدد',
+          transaction_type: entry.transaction_type || '',
           source: entry.source || 'manual'
         }));
         setEntries(transformedEntries);
@@ -257,6 +263,43 @@ export default function JournalEntries() {
     }
   };
 
+  const handleQuickEditParty = async (entry) => {
+    const current = entry?.party_label || 'مفتوح';
+    const next = window.prompt('تعديل طرف العملية (عميل/مورد/مفتوح):', current);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) return;
+
+    const cleanDescription = String(entry.description || '').replace(/\[PARTY:[^\]]+\]/g, '').trim();
+    const nextDescription = `${cleanDescription} [PARTY:${trimmed}]`.trim();
+
+    try {
+      const response = await fetch(`${API_URL}/finance/journal-entries/${entry.id}?workshop_id=${WORKSHOP_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: entry.entry_date,
+          description: nextDescription,
+          transaction_type: entry.transaction_type || 'manual',
+          lines: entry.lines?.map((l) => ({
+            account: l.account_code || l.account,
+            account_name: l.account_name,
+            debit: l.debit || 0,
+            credit: l.credit || 0,
+          })) || [],
+          total: entry.total_debit || 0,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data?.success) throw new Error(data?.message || 'تعذر التحديث');
+      await fetchJournalEntries();
+    } catch (error) {
+      console.error('Error updating party label:', error);
+      alert('تعذر تحديث طرف العملية');
+    }
+  };
+
   const filteredEntries = entries.filter((entry) => {
     if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
     if (!searchQuery) return true;
@@ -265,6 +308,8 @@ export default function JournalEntries() {
     return (
       entry.entry_number?.toLowerCase().includes(query) ||
       safeDescription.toLowerCase().includes(query) ||
+      entry.operation_type_label?.toLowerCase().includes(query) ||
+      entry.party_label?.toLowerCase().includes(query) ||
       entry.customer_name?.toLowerCase().includes(query) ||
       entry.vehicle_plate?.toLowerCase().includes(query)
     );
@@ -579,6 +624,9 @@ export default function JournalEntries() {
                           <TypeIcon size={18} className={typeConfig.textColor} />
                         </div>
                         <div>
+                          <p className="text-[11px] text-blue-200 mb-0.5" data-testid={`entry-card-op-type-${entry.id}`}>
+                            نوع العملية: {entry.operation_type_label || 'غير محدد'}
+                          </p>
                           <p className="text-sm font-semibold text-slate-100" data-testid={`entry-card-desc-${entry.id}`}>
                             {safeDescription || 'قيد محاسبي'}
                           </p>
@@ -596,7 +644,11 @@ export default function JournalEntries() {
 
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
                       <span data-testid={`entry-card-date-${entry.id}`}>{formatDate(entry.entry_date)}</span>
-                      <span data-testid={`entry-card-customer-${entry.id}`}>{entry.customer_name || '-'}</span>
+                      <span data-testid={`entry-card-customer-${entry.id}`}>طرف العملية: {entry.party_label || 'مفتوح'}</span>
+                    </div>
+
+                    <div className="mt-1 text-xs text-slate-400" data-testid={`entry-card-vehicle-${entry.id}`}>
+                      المركبة: {entry.vehicle_plate || 'غير محدد'}
                     </div>
 
                     <div className="mt-3 flex items-center justify-between">
@@ -622,6 +674,14 @@ export default function JournalEntries() {
                           data-testid={`entry-card-view-${entry.id}`}
                         >
                           <Eye size={16} className="text-blue-300" />
+                        </button>
+                        <button
+                          onClick={() => handleQuickEditParty(entry)}
+                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                          title="تعديل طرف العملية"
+                          data-testid={`entry-card-edit-party-${entry.id}`}
+                        >
+                          <User size={16} className="text-cyan-300" />
                         </button>
                         <button
                           onClick={() => {
@@ -659,9 +719,9 @@ export default function JournalEntries() {
                     backgroundColor: 'rgba(15, 23, 42, 0.85)'
                   }}
                 >
-                  <div className="col-span-4">الوصف</div>
+                  <div className="col-span-3">الوصف</div>
                   <div className="col-span-2">التاريخ</div>
-                  <div className="col-span-2">العميل</div>
+                  <div className="col-span-3">طرف العملية</div>
                   <div className="col-span-2">المبلغ</div>
                   <div className="col-span-1">النوع</div>
                   <div className="col-span-1"></div>
@@ -684,11 +744,14 @@ export default function JournalEntries() {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       data-testid={`entry-row-${entry.id}`}
                     >
-                      <div className="col-span-4 flex items-center gap-3">
+                      <div className="col-span-3 flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${typeConfig.bgColor}`}>
                           <TypeIcon size={18} className={typeConfig.textColor} />
                         </div>
                         <div>
+                          <p className="text-[11px] text-blue-200">
+                            نوع العملية: {entry.operation_type_label || 'غير محدد'}
+                          </p>
                           <p className="font-medium text-sm" style={{ color: styles.textPrimary }}>
                             {safeDescription || 'قيد محاسبي'}
                           </p>
@@ -704,15 +767,23 @@ export default function JournalEntries() {
                         </p>
                       </div>
 
-                      <div className="col-span-2">
-                        <p className="text-sm truncate" style={{ color: styles.textPrimary }}>
-                          {entry.customer_name || '-'}
-                        </p>
-                        {entry.vehicle_plate && (
-                          <p className="text-xs font-mono" style={{ color: styles.textMuted }}>
-                            {entry.vehicle_plate}
+                      <div className="col-span-3">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm truncate" style={{ color: styles.textPrimary }} data-testid={`entry-row-party-${entry.id}`}>
+                            طرف العملية: {entry.party_label || 'مفتوح'}
                           </p>
-                        )}
+                          <button
+                            onClick={() => handleQuickEditParty(entry)}
+                            className="p-1.5 rounded-md hover:bg-white/10"
+                            title="تعديل طرف العملية"
+                            data-testid={`entry-row-party-edit-${entry.id}`}
+                          >
+                            <Pencil size={13} className="text-cyan-300" />
+                          </button>
+                        </div>
+                        <p className="text-xs" style={{ color: styles.textMuted }} data-testid={`entry-row-vehicle-${entry.id}`}>
+                          المركبة: {entry.vehicle_plate || 'غير محدد'}
+                        </p>
                       </div>
 
                       <div className="col-span-2">

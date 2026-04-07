@@ -2112,18 +2112,117 @@ async def get_journal_entries(
             include_rakan=include_rakan,
         )
 
+        operation_refs = [
+            str(e.get("reference_id") or "").strip()
+            for e in entries
+            if str(e.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            and str(e.get("reference_id") or "").strip()
+        ]
+        operation_refs = list(dict.fromkeys(operation_refs))
+
+        operation_map: Dict[str, Dict[str, Any]] = {}
+        visit_map: Dict[str, Dict[str, Any]] = {}
+        if operation_refs and supabase:
+            try:
+                op_rows = (
+                    supabase.table("operations")
+                    .select("*")
+                    .in_("id", operation_refs)
+                    .execute()
+                    .data
+                    or []
+                )
+                operation_map = {str(row.get("id") or ""): row for row in op_rows}
+                visit_ids = [
+                    str(row.get("visit_id") or row.get("visitId") or "").strip()
+                    for row in op_rows
+                    if str(row.get("visit_id") or row.get("visitId") or "").strip()
+                ]
+                visit_ids = list(dict.fromkeys(visit_ids))
+                if visit_ids:
+                    visit_rows = (
+                        supabase.table("vehicle_visits")
+                        .select("id,customer_name,vehicle_plate,plate_number,vehicle_number,car_type")
+                        .in_("id", visit_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    visit_map = {str(v.get("id") or ""): v for v in visit_rows}
+            except Exception:
+                operation_map = {}
+                visit_map = {}
+
+        type_labels = {
+            "sale": "بيع",
+            "service": "خدمة",
+            "purchase": "شراء",
+            "expense": "مصروف",
+            "sale_return": "مرتجع بيع",
+            "purchase_return": "مرتجع شراء",
+            "payment_order": "أمر سداد",
+            "payment": "تحصيل/سداد",
+        }
+
         formatted = []
         for entry in entries:
+            source = str(entry.get("source") or "manual").strip().lower()
+            tx_type = str(entry.get("transaction_type") or "").strip().lower()
+            reference_id = str(entry.get("reference_id") or "").strip()
+            description = entry.get("description", "قيد")
+
+            op = operation_map.get(reference_id, {}) if reference_id else {}
+            visit_id = str(op.get("visit_id") or op.get("visitId") or "").strip()
+            visit = visit_map.get(visit_id, {}) if visit_id else {}
+
+            party_type = str(op.get("partner_type") or op.get("partnerType") or "").strip().lower()
+            if not party_type and source in {"operation", "operation_rakan_parts"}:
+                party_type = "open"
+
+            party_label = (
+                op.get("partner_name")
+                or op.get("partnerName")
+                or visit.get("customer_name")
+                or ""
+            )
+            if not party_label:
+                if party_type == "supplier":
+                    party_label = "مورد غير محدد"
+                elif party_type == "customer":
+                    party_label = "عميل غير محدد"
+                elif source in {"operation", "operation_rakan_parts"}:
+                    party_label = "مفتوح"
+
+            vehicle_label = (
+                visit.get("vehicle_plate")
+                or visit.get("plate_number")
+                or visit.get("vehicle_number")
+                or visit.get("car_type")
+                or ""
+            )
+
+            # allow quick manual override in description token: [PARTY:...]
+            manual_party_match = re.search(r"\[PARTY:([^\]]+)\]", str(description or ""))
+            if manual_party_match:
+                party_label = manual_party_match.group(1).strip()
+                party_type = "manual"
+
+            operation_type_label = type_labels.get(tx_type, tx_type or "غير محدد")
+
             formatted.append(
                 {
                     "id": entry.get("id"),
                     "date": entry.get("date", ""),
-                    "description": entry.get("description", "قيد"),
+                    "description": description,
                     "lines": entry.get("lines", []),
                     "total": entry.get("total", 0),
-                    "source": entry.get("source", "manual"),
-                    "transaction_type": entry.get("transaction_type"),
-                    "reference_id": entry.get("reference_id"),
+                    "source": source,
+                    "transaction_type": tx_type,
+                    "reference_id": reference_id,
+                    "party_type": party_type or "open",
+                    "party_label": party_label or "مفتوح",
+                    "vehicle_label": vehicle_label,
+                    "operation_type_label": operation_type_label,
                 }
             )
 

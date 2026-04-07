@@ -911,6 +911,9 @@
 | 07 Apr 2026 | Fixed cross-page linking regression for vehicle operations: `vehicleId` now forces `VEHICLE_OPERATION`, `visitId` linking restored, and operation responses preserve vehicle/visit references |
 | 07 Apr 2026 | Added visible **Reset Accounts** control in Chart of Accounts (`coa-reset-accounts-button`) wired to `/api/accounts/init-defaults` |
 | 07 Apr 2026 | Updated vehicle parts journal posting in backend `server.py` to modern accounts (`1103/4000`) with operation-linked source/reference semantics |
+| 07 Apr 2026 | Operations cards now consistently display `العميل/الطرف` and `المركبة` for each operation in collapsed + expanded states |
+| 07 Apr 2026 | Financial dashboard cash KPI renamed to `النقد الفعلي` with formula subtitle `الإيرادات - المصروفات` |
+| 07 Apr 2026 | Hardened finance date parsing (supports slash/ISO input) to prevent dashboard loading stalls caused by date format mismatches |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

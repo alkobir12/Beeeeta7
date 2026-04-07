@@ -1,0 +1,533 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Search,
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Check,
+  AlertTriangle,
+  Download,
+  X,
+  GripHorizontal,
+} from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { resolveBackendBase } from '../utils/backendBase';
+
+const API_URL = (
+  process.env.NODE_ENV === 'production'
+    ? '/api'
+    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
+);
+
+const typeOptions = [
+  { value: 'all', label: 'الكل' },
+  { value: 'asset', label: 'أصول' },
+  { value: 'liability', label: 'خصوم' },
+  { value: 'equity', label: 'حقوق' },
+  { value: 'revenue', label: 'إيرادات' },
+  { value: 'expense', label: 'مصروفات' },
+];
+
+const typeBadgeClass = {
+  asset: 'bg-cyan-500/20 text-cyan-100 border-cyan-300/30',
+  liability: 'bg-amber-500/20 text-amber-100 border-amber-300/30',
+  equity: 'bg-indigo-500/20 text-indigo-100 border-indigo-300/30',
+  revenue: 'bg-emerald-500/20 text-emerald-100 border-emerald-300/30',
+  expense: 'bg-rose-500/20 text-rose-100 border-rose-300/30',
+};
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('ar-SA', {
+    style: 'currency',
+    currency: 'SAR',
+    minimumFractionDigits: 2,
+  }).format(Number(value || 0));
+
+const Sparkline = ({ points = [] }) => {
+  if (!points.length) return <div className="h-10 text-xs text-slate-400">لا توجد حركة</div>;
+  const values = points.map((p) => Number(p.balance || 0));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const coords = values.map((v, i) => {
+    const x = (i / Math.max(values.length - 1, 1)) * 100;
+    const y = 36 - ((v - min) / range) * 32;
+    return `${x},${y}`;
+  });
+
+  return (
+    <svg viewBox="0 0 100 40" className="w-full h-10" data-testid="account-sparkline-svg">
+      <polyline
+        fill="none"
+        stroke="rgba(251,191,36,0.95)"
+        strokeWidth="1.8"
+        points={coords.join(' ')}
+      />
+    </svg>
+  );
+};
+
+const highlight = (text, query) => {
+  const value = String(text || '');
+  if (!query) return value;
+  const q = query.toLowerCase();
+  const index = value.toLowerCase().indexOf(q);
+  if (index < 0) return value;
+  return (
+    <>
+      {value.slice(0, index)}
+      <mark className="bg-amber-300/70 text-slate-900 rounded px-1">{value.slice(index, index + query.length)}</mark>
+      {value.slice(index + query.length)}
+    </>
+  );
+};
+
+export default function ChartOfAccountsLiquid() {
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+  const searchRef = useRef(null);
+
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [hideZero, setHideZero] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [treeMode, setTreeMode] = useState('tree');
+  const [summary, setSummary] = useState({ assets: 0, liabilities: 0, net_profit: 0 });
+  const [accountsData, setAccountsData] = useState([]);
+  const [expanded, setExpanded] = useState(new Set());
+  const [recentAccounts, setRecentAccounts] = useState([]);
+  const [detailsCache, setDetailsCache] = useState({});
+  const [loadingDetails, setLoadingDetails] = useState({});
+  const [copiedCode, setCopiedCode] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [sheetAccountId, setSheetAccountId] = useState('');
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    const fromStorage = JSON.parse(localStorage.getItem('recentAccounts') || '[]');
+    if (Array.isArray(fromStorage)) setRecentAccounts(fromStorage.slice(0, 5));
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const onSlash = (e) => {
+      if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onSlash);
+    return () => window.removeEventListener('keydown', onSlash);
+  }, []);
+
+  const persistRecentAccount = async (accountId) => {
+    try {
+      const next = [accountId, ...recentAccounts.filter((id) => id !== accountId)].slice(0, 5);
+      setRecentAccounts(next);
+      localStorage.setItem('recentAccounts', JSON.stringify(next));
+      await fetch(`${API_URL}/accounts/${accountId}/touch`, { method: 'PATCH' });
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchTree = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({
+        workshop_id: workshopId,
+        type: typeFilter,
+        hideZero: String(hideZero),
+        search: searchQuery,
+      });
+      const res = await fetch(`${API_URL}/accounts/tree?${params.toString()}`);
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.detail || json?.error || 'تعذر تحميل الحسابات');
+
+      const payload = json.data || {};
+      setTreeMode(payload.mode || 'tree');
+      setSummary(payload.summary || {});
+      setAccountsData(payload.accounts || []);
+
+      // Auto-expand recently used when tree mode
+      if ((payload.mode || 'tree') === 'tree' && recentAccounts.length) {
+        setExpanded((prev) => new Set([...Array.from(prev), ...recentAccounts]));
+      }
+    } catch (err) {
+      setError(err?.message || 'تعذر تحميل الحسابات');
+      setAccountsData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTree();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, typeFilter, hideZero]);
+
+  const loadAccountDetails = async (accountId) => {
+    if (detailsCache[accountId] || loadingDetails[accountId]) return;
+    setLoadingDetails((prev) => ({ ...prev, [accountId]: true }));
+    try {
+      const [txRes, sparkRes] = await Promise.all([
+        fetch(`${API_URL}/accounts/${accountId}/transactions?workshop_id=${workshopId}&limit=10`),
+        fetch(`${API_URL}/accounts/${accountId}/sparkline?workshop_id=${workshopId}&days=30`),
+      ]);
+      const txJson = await txRes.json().catch(() => ({}));
+      const sparkJson = await sparkRes.json().catch(() => ({}));
+
+      setDetailsCache((prev) => ({
+        ...prev,
+        [accountId]: {
+          transactions: txJson?.data?.transactions || [],
+          sparkline: sparkJson?.data?.points || [],
+        },
+      }));
+    } finally {
+      setLoadingDetails((prev) => ({ ...prev, [accountId]: false }));
+    }
+  };
+
+  const toggleExpand = async (account) => {
+    await persistRecentAccount(account.id);
+    if (isMobile) {
+      setSheetAccountId(account.id);
+      loadAccountDetails(account.id);
+      return;
+    }
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(account.id)) next.delete(account.id);
+      else next.add(account.id);
+      return next;
+    });
+    await loadAccountDetails(account.id);
+  };
+
+  const copyCode = async (code) => {
+    try {
+      await navigator.clipboard.writeText(String(code || ''));
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(''), 1200);
+    } catch {
+      setCopiedCode('');
+    }
+  };
+
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        workshop_id: workshopId,
+        type: typeFilter,
+        hideZero: String(hideZero),
+        search: searchQuery,
+      });
+      const res = await fetch(`${API_URL}/accounts/export?${params.toString()}`);
+      const json = await res.json();
+      const rows = json?.data?.rows || [];
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Accounts');
+      XLSX.writeFile(workbook, 'chart_of_accounts_filtered.xlsx');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const accountById = useMemo(() => {
+    const map = {};
+    const stack = [...accountsData];
+    while (stack.length) {
+      const item = stack.pop();
+      if (!item) continue;
+      map[item.id] = item;
+      if (Array.isArray(item.children)) stack.push(...item.children);
+    }
+    return map;
+  }, [accountsData]);
+
+  const selectedSheetAccount = sheetAccountId ? accountById[sheetAccountId] : null;
+
+  const renderExpandedContent = (account) => {
+    const details = detailsCache[account.id] || { transactions: [], sparkline: [] };
+    const isLoadingDetails = loadingDetails[account.id];
+
+    return (
+      <div className="mt-3 rounded-2xl border border-white/10 bg-slate-900/45 p-3" data-testid={`coa-account-expanded-${account.id}`}>
+        {isLoadingDetails ? (
+          <div className="space-y-2" data-testid={`coa-account-expanded-loading-${account.id}`}>
+            <div className="h-3 bg-white/10 rounded animate-pulse" />
+            <div className="h-3 bg-white/10 rounded animate-pulse" />
+            <div className="h-16 bg-white/10 rounded animate-pulse" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs mb-3">
+              <div className="rounded-lg bg-white/5 p-2" data-testid={`coa-account-balance-${account.id}`}>الرصيد: {formatCurrency(account.balance)}</div>
+              <div className="rounded-lg bg-white/5 p-2" data-testid={`coa-account-debit-${account.id}`}>مدين: {formatCurrency(account.total_debit)}</div>
+              <div className="rounded-lg bg-white/5 p-2" data-testid={`coa-account-credit-${account.id}`}>دائن: {formatCurrency(account.total_credit)}</div>
+              <div className="rounded-lg bg-white/5 p-2" data-testid={`coa-account-tx-count-${account.id}`}>العمليات: {account.transaction_count || 0}</div>
+            </div>
+
+            <Sparkline points={details.sparkline} />
+
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-xs" data-testid={`coa-account-transactions-table-${account.id}`}>
+                <thead>
+                  <tr className="text-slate-300 border-b border-white/10">
+                    <th className="p-2 text-right">التاريخ</th>
+                    <th className="p-2 text-right">الوصف</th>
+                    <th className="p-2 text-right">مدين</th>
+                    <th className="p-2 text-right">دائن</th>
+                    <th className="p-2 text-right">الرصيد</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(details.transactions || []).map((tx, idx) => (
+                    <tr key={`${tx.id}-${idx}`} className="border-b border-white/5">
+                      <td className="p-2">{String(tx.date || '').slice(0, 10)}</td>
+                      <td className="p-2">{tx.description || '-'}</td>
+                      <td className="p-2">{formatCurrency(tx.debit || 0)}</td>
+                      <td className="p-2">{formatCurrency(tx.credit || 0)}</td>
+                      <td className="p-2">{formatCurrency(tx.balance || 0)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => (window.location.href = `/accounting/journal-entries?account=${encodeURIComponent(account.code)}`)}
+                className="rounded-lg bg-amber-500/25 text-amber-100 border border-amber-300/30 px-3 py-1.5 text-xs"
+                data-testid={`coa-account-view-ledger-${account.id}`}
+              >
+                عرض كل العمليات
+              </button>
+              <button
+                type="button"
+                onClick={() => copyCode(account.code)}
+                className="rounded-lg bg-white/10 border border-white/20 px-3 py-1.5 text-xs inline-flex items-center gap-2"
+                data-testid={`coa-account-copy-code-${account.id}`}
+              >
+                {copiedCode === account.code ? <Check size={14} /> : <Copy size={14} />} نسخ الكود
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderNode = (account, depth = 0) => {
+    const isExpanded = expanded.has(account.id);
+    const children = Array.isArray(account.children) ? account.children : [];
+    const showExpandIcon = treeMode === 'tree' && children.length > 0;
+
+    return (
+      <div key={account.id} className="space-y-2" data-testid={`coa-account-card-${account.id}`}>
+        <div
+          className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-3 transition-all duration-300 hover:bg-white/10"
+          style={{ marginRight: `${depth * 14}px` }}
+        >
+          <button
+            type="button"
+            onClick={() => toggleExpand(account)}
+            className="w-full text-right"
+            data-testid={`coa-account-toggle-${account.id}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {showExpandIcon ? (
+                  isExpanded ? <ChevronDown size={16} className="text-slate-300" /> : <ChevronRight size={16} className="text-slate-300" />
+                ) : (
+                  <span className="w-4" />
+                )}
+
+                <span className="text-xs text-amber-200 font-mono" data-testid={`coa-account-code-${account.id}`}>{account.code}</span>
+                <span className="text-sm text-slate-100 truncate" data-testid={`coa-account-name-${account.id}`}>{highlight(account.name, searchQuery)}</span>
+                <span className={`text-[10px] border rounded-full px-2 py-0.5 ${typeBadgeClass[account.type] || 'bg-white/10 border-white/20'}`}>
+                  {(typeOptions.find((t) => t.value === account.type)?.label) || account.type}
+                </span>
+                {account.warning_negative ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-100 bg-amber-500/20 border border-amber-300/30 px-2 py-0.5 rounded-full" data-testid={`coa-account-warning-${account.id}`}>
+                    <AlertTriangle size={12} /> ⚠️ يحتاج مراجعة
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="text-xs text-slate-200" data-testid={`coa-account-balance-chip-${account.id}`}>{formatCurrency(account.balance)}</div>
+            </div>
+          </button>
+
+          {!isMobile && isExpanded && renderExpandedContent(account)}
+        </div>
+
+        {treeMode === 'tree' && children.length > 0 && isExpanded && (
+          <div className="border-r border-white/10 mr-2 pr-2">
+            {children.map((child) => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen p-3 md:p-6" dir="rtl" data-testid="chart-of-accounts-liquid-page">
+      <div className="max-w-7xl mx-auto space-y-4">
+        <div className="sticky top-0 z-20 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3 md:p-4" data-testid="coa-sticky-filter-bar">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
+            <div className="relative">
+              <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchRef}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="بحث بالاسم أو الكود..."
+                className="w-full rounded-xl border border-white/15 bg-white/5 pr-9 pl-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 outline-none"
+                data-testid="coa-search-input"
+              />
+            </div>
+
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100"
+              data-testid="coa-type-filter-select"
+            >
+              {typeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="text-slate-900">{opt.label}</option>
+              ))}
+            </select>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-200" data-testid="coa-hide-zero-toggle-wrap">
+              <input
+                type="checkbox"
+                checked={hideZero}
+                onChange={(e) => setHideZero(e.target.checked)}
+                data-testid="coa-hide-zero-toggle"
+              />
+              إخفاء الأرصدة الصفرية
+            </label>
+
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={exportExcel}
+                disabled={exporting}
+                className="rounded-xl border border-amber-300/40 bg-amber-500/20 text-amber-50 px-3 py-2 text-sm inline-flex items-center gap-2"
+                data-testid="coa-export-excel-button"
+              >
+                <Download size={14} /> {exporting ? 'جاري التصدير...' : 'تصدير Excel'}
+              </button>
+            )}
+          </div>
+
+          <div className="mt-3 text-xs text-slate-200 rounded-xl bg-white/5 p-2" data-testid="coa-summary-bar">
+            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | صافي الربح: {formatCurrency(summary.net_profit)}
+          </div>
+        </div>
+
+        {recentAccounts.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-testid="coa-recent-accounts-row">
+            <p className="text-xs text-slate-300 mb-2">الحسابات الأخيرة</p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {recentAccounts.map((id) => {
+                const acc = accountById[id];
+                if (!acc) return null;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => toggleExpand(acc)}
+                    className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-500/15 text-cyan-50 px-3 py-1 text-xs"
+                    data-testid={`coa-recent-account-chip-${id}`}
+                  >
+                    {acc.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="space-y-3" data-testid="coa-loading-skeleton">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="h-16 rounded-2xl bg-white/10 animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-rose-300/30 bg-rose-500/10 text-rose-100 p-4" data-testid="coa-error-state">
+            {error}
+          </div>
+        ) : (
+          <div className="space-y-3" data-testid="coa-accounts-list-wrap">
+            {accountsData.map((account) => renderNode(account, 0))}
+            {!accountsData.length && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-slate-300" data-testid="coa-empty-state">
+                لا توجد حسابات مطابقة للفلاتر.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isMobile && (
+        <button
+          type="button"
+          onClick={exportExcel}
+          className="fixed bottom-6 right-6 z-30 h-12 w-12 rounded-full bg-amber-500/90 text-slate-900 flex items-center justify-center shadow-lg"
+          data-testid="coa-mobile-export-fab"
+        >
+          <Download size={18} />
+        </button>
+      )}
+
+      {isMobile && sheetAccountId && selectedSheetAccount && (
+        <>
+          <button
+            type="button"
+            onClick={() => setSheetAccountId('')}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            data-testid="coa-mobile-sheet-backdrop"
+          />
+
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-white/10 bg-slate-900 p-4 max-h-[78vh] overflow-y-auto" data-testid="coa-mobile-bottom-sheet">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <GripHorizontal size={16} className="text-slate-400" />
+                <div>
+                  <p className="text-sm text-slate-100">{selectedSheetAccount.name}</p>
+                  <p className="text-xs text-slate-400">{selectedSheetAccount.code}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setSheetAccountId('')} data-testid="coa-mobile-sheet-close">
+                <X size={18} className="text-slate-300" />
+              </button>
+            </div>
+
+            {renderExpandedContent(selectedSheetAccount)}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

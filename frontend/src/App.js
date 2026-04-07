@@ -41,7 +41,7 @@ const FaultKnowledge = lazy(() => import("./pages/FaultKnowledge"));
 const TemplatesManager = lazy(() => import("./pages/TemplatesManager"));
 const Taxes = lazy(() => import("./pages/Taxes"));
 const Invoices = lazy(() => import("./pages/Invoices"));
-const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
+const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccountsLiquid"));
 const JournalEntries = lazy(() => import("./pages/JournalEntries"));
 const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial"));
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));

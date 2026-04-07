@@ -4674,6 +4674,81 @@ async def _remove_account_status_override(account_id: str):
     _mem_write("account_status_overrides", rows)
 
 
+async def _account_usage_map() -> Dict[str, str]:
+    try:
+        if db is not None:
+            rows = await db.account_usage.find({}, {"_id": 0}).to_list(5000)
+            return {
+                str(row.get("accountId")): str(row.get("lastUsedAt"))
+                for row in rows
+                if row.get("accountId")
+            }
+        rows = _mem_read("account_usage")
+        return {
+            str(row.get("accountId")): str(row.get("lastUsedAt"))
+            for row in rows
+            if row.get("accountId")
+        }
+    except Exception:
+        return {}
+
+
+async def _set_account_usage(account_id: str, last_used_at: str):
+    doc = {"accountId": account_id, "lastUsedAt": last_used_at}
+    if db is not None:
+        await db.account_usage.update_one({"accountId": account_id}, {"$set": doc}, upsert=True)
+        return
+
+    rows = _mem_read("account_usage")
+    replaced = False
+    for i, row in enumerate(rows):
+        if row.get("accountId") == account_id:
+            rows[i] = doc
+            replaced = True
+            break
+    if not replaced:
+        rows.append(doc)
+    _mem_write("account_usage", rows)
+
+
+def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": str(raw.get("id") or ""),
+        "code": str(raw.get("code") or ""),
+        "name": raw.get("name") or raw.get("name_ar") or raw.get("code") or "",
+        "type": raw.get("type") or "asset",
+        "parent_id": raw.get("parent_id") or raw.get("parentId") or None,
+        "balance": float(raw.get("balance") or raw.get("current_balance") or 0),
+        "active": bool(raw.get("active", True)),
+        "is_system": bool(raw.get("is_system") or raw.get("isSystem") or False),
+        "last_used_at": raw.get("last_used_at") or raw.get("lastUsedAt"),
+    }
+
+
+def _line_account_code(line: Dict[str, Any], id_to_code: Dict[str, str]) -> str:
+    raw = str(line.get("account") or line.get("account_code") or "").strip()
+    if raw in id_to_code:
+        return id_to_code[raw]
+    return raw
+
+
+def _apply_account_filters(
+    account: Dict[str, Any],
+    type_filter: str,
+    hide_zero: bool,
+    search_q: str,
+) -> bool:
+    if type_filter and type_filter != "all" and account.get("type") != type_filter:
+        return False
+    if hide_zero and abs(float(account.get("balance") or 0)) < 0.0001:
+        return False
+    if search_q:
+        hay = f"{account.get('code','')} {account.get('name','')}".lower()
+        if search_q not in hay:
+            return False
+    return True
+
+
 @router.get("/accounts")
 async def list_accounts():
     """Get all accounts in the chart of accounts"""
@@ -4934,6 +5009,288 @@ async def delete_account(account_id: str, request: Request = None):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/accounts/tree")
+async def accounts_tree(
+    workshop_id: str = Query("finmodule-sync"),
+    type: str = Query("all"),
+    hideZero: bool = Query(False),
+    search: str = Query(""),
+):
+    """شجرة الحسابات مع إحصائيات النشاط والملخصات المالية."""
+    try:
+        raw_accounts = await list_accounts()
+        normalized = [_normalize_account_row(acc) for acc in (raw_accounts or [])]
+        usage_map = await _account_usage_map()
+
+        for acc in normalized:
+            usage_ts = usage_map.get(acc["id"])
+            if usage_ts:
+                acc["last_used_at"] = usage_ts
+            acc["transaction_count"] = 0
+            acc["total_debit"] = 0.0
+            acc["total_credit"] = 0.0
+            acc["activity_volume"] = 0.0
+            acc["warning_negative"] = acc["balance"] < 0 and acc["type"] in {"asset", "expense"}
+
+        id_to_code = {acc["id"]: acc["code"] for acc in normalized if acc.get("id") and acc.get("code")}
+        code_to_acc = {acc["code"]: acc for acc in normalized if acc.get("code")}
+
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider == "supabase":
+            supa = SupabaseService()
+            jres = (
+                supa.client.table("journal_entries")
+                .select("date,lines")
+                .eq("workshop_id", workshop_id)
+                .limit(20000)
+                .execute()
+            )
+            rows = jres.data or []
+        else:
+            rows = await db.journal_entries.find({"workshop_id": workshop_id}, {"_id": 0, "date": 1, "lines": 1}).to_list(length=20000)
+
+        for entry in rows:
+            for line in entry.get("lines", []) or []:
+                code = _line_account_code(line, id_to_code)
+                acc = code_to_acc.get(code)
+                if not acc:
+                    continue
+                debit = float(line.get("debit") or 0)
+                credit = float(line.get("credit") or 0)
+                acc["transaction_count"] += 1
+                acc["total_debit"] += debit
+                acc["total_credit"] += credit
+                acc["activity_volume"] = acc["total_debit"] + acc["total_credit"]
+
+        type_filter = str(type or "all").strip().lower()
+        search_q = str(search or "").strip().lower()
+        visible_accounts = [
+            acc for acc in normalized if _apply_account_filters(acc, type_filter, hideZero, search_q)
+        ]
+
+        summary = {
+            "assets": round(sum(a["balance"] for a in visible_accounts if a["type"] == "asset"), 2),
+            "liabilities": round(sum(a["balance"] for a in visible_accounts if a["type"] == "liability"), 2),
+            "equity": round(sum(a["balance"] for a in visible_accounts if a["type"] == "equity"), 2),
+            "revenue": round(sum(a["balance"] for a in visible_accounts if a["type"] == "revenue"), 2),
+            "expense": round(sum(a["balance"] for a in visible_accounts if a["type"] == "expense"), 2),
+        }
+        summary["net_profit"] = round(summary["revenue"] - summary["expense"], 2)
+
+        visible_ids = {a["id"] for a in visible_accounts}
+        by_parent: Dict[str, list] = {}
+        for acc in visible_accounts:
+            parent = str(acc.get("parent_id") or "")
+            by_parent.setdefault(parent, []).append(acc)
+
+        def build_node(acc: Dict[str, Any], level: int = 0) -> Dict[str, Any]:
+            children = by_parent.get(acc["id"], [])
+            children = sorted(children, key=lambda x: x.get("activity_volume", 0), reverse=True)
+            return {
+                **acc,
+                "level": level,
+                "children": [build_node(child, level + 1) for child in children],
+            }
+
+        # Flatten on active search (as requested)
+        if search_q:
+            flat_nodes = sorted(visible_accounts, key=lambda x: x.get("activity_volume", 0), reverse=True)
+            return {
+                "success": True,
+                "data": {
+                    "mode": "flat",
+                    "summary": summary,
+                    "accounts": flat_nodes,
+                },
+            }
+
+        roots = [
+            acc
+            for acc in visible_accounts
+            if not acc.get("parent_id") or str(acc.get("parent_id")) not in visible_ids
+        ]
+        roots = sorted(roots, key=lambda x: x.get("activity_volume", 0), reverse=True)
+
+        return {
+            "success": True,
+            "data": {
+                "mode": "tree",
+                "summary": summary,
+                "accounts": [build_node(root, 0) for root in roots],
+            },
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/accounts/{account_id}/transactions")
+async def account_transactions(
+    account_id: str,
+    workshop_id: str = Query("finmodule-sync"),
+    limit: int = Query(10, ge=1, le=200),
+):
+    """آخر عمليات الحساب."""
+    try:
+        raw_accounts = await list_accounts()
+        normalized = [_normalize_account_row(acc) for acc in (raw_accounts or [])]
+        target = next((a for a in normalized if a["id"] == account_id), None)
+        if not target:
+            raise HTTPException(status_code=404, detail="الحساب غير موجود")
+
+        id_to_code = {acc["id"]: acc["code"] for acc in normalized if acc.get("id") and acc.get("code")}
+        target_code = target["code"]
+
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider == "supabase":
+            supa = SupabaseService()
+            rows = (
+                supa.client.table("journal_entries")
+                .select("id,date,description,lines")
+                .eq("workshop_id", workshop_id)
+                .order("date", desc=True)
+                .limit(20000)
+                .execute()
+                .data
+                or []
+            )
+        else:
+            rows = await db.journal_entries.find({"workshop_id": workshop_id}, {"_id": 0, "id": 1, "date": 1, "description": 1, "lines": 1}).sort("date", -1).to_list(length=20000)
+
+        tx = []
+        for row in rows:
+            debit = 0.0
+            credit = 0.0
+            for line in row.get("lines", []) or []:
+                code = _line_account_code(line, id_to_code)
+                if code == target_code:
+                    debit += float(line.get("debit") or 0)
+                    credit += float(line.get("credit") or 0)
+            if debit == 0 and credit == 0:
+                continue
+            tx.append(
+                {
+                    "id": row.get("id"),
+                    "date": row.get("date"),
+                    "description": row.get("description") or "",
+                    "debit": round(debit, 2),
+                    "credit": round(credit, 2),
+                }
+            )
+
+        tx = tx[: max(limit, 1)]
+        running = float(target.get("balance") or 0)
+        for item in tx:
+            item["balance"] = round(running, 2)
+            running -= item["debit"] - item["credit"]
+
+        return {"success": True, "data": {"account": target, "transactions": tx}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/accounts/{account_id}/sparkline")
+async def account_sparkline(
+    account_id: str,
+    workshop_id: str = Query("finmodule-sync"),
+    days: int = Query(30, ge=7, le=120),
+):
+    """حركة الرصيد اليومية للحساب."""
+    try:
+        tx_res = await account_transactions(account_id=account_id, workshop_id=workshop_id, limit=2000)
+        payload = tx_res.get("data", {})
+        transactions = payload.get("transactions", [])
+        start_date = datetime.now(timezone.utc) - timedelta(days=days - 1)
+
+        daily_map: Dict[str, float] = {}
+        for item in transactions:
+            raw_date = str(item.get("date") or "")
+            try:
+                dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00")) if raw_date else datetime.now(timezone.utc)
+            except Exception:
+                dt = datetime.now(timezone.utc)
+            key = dt.strftime("%Y-%m-%d")
+            daily_map[key] = daily_map.get(key, 0.0) + float(item.get("debit") or 0) - float(item.get("credit") or 0)
+
+        points = []
+        balance = 0.0
+        for i in range(days):
+            day = start_date + timedelta(days=i)
+            key = day.strftime("%Y-%m-%d")
+            balance += daily_map.get(key, 0.0)
+            points.append({"date": key, "balance": round(balance, 2)})
+
+        return {"success": True, "data": {"days": days, "points": points}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/accounts/{account_id}/touch")
+async def touch_account(account_id: str):
+    """تحديث وقت آخر استخدام للحساب."""
+    try:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        await _set_account_usage(account_id, now_iso)
+        try:
+            provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+            if provider == "supabase":
+                supa = SupabaseService()
+                # best effort: may fail if column not available
+                supa.client.table("accounts").update({"last_used_at": now_iso}).eq("id", account_id).execute()
+            else:
+                await db.accounts.update_one({"id": account_id}, {"$set": {"last_used_at": now_iso}})
+        except Exception:
+            pass
+        return {"success": True, "account_id": account_id, "last_used_at": now_iso}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/accounts/export")
+async def export_accounts(
+    workshop_id: str = Query("finmodule-sync"),
+    type: str = Query("all"),
+    hideZero: bool = Query(False),
+    search: str = Query(""),
+):
+    """تصدير الحسابات المرئية بعد التصفية (JSON للواجهة لاستخدام Excel)."""
+    payload = await accounts_tree(
+        workshop_id=workshop_id,
+        type=type,
+        hideZero=hideZero,
+        search=search,
+    )
+    data = payload.get("data", {})
+    mode = data.get("mode")
+    rows = []
+
+    if mode == "flat":
+        rows = data.get("accounts", [])
+    else:
+        def flatten(nodes):
+            for node in nodes:
+                rows.append({k: v for k, v in node.items() if k != "children"})
+                flatten(node.get("children", []))
+
+        flatten(data.get("accounts", []))
+
+    export_rows = [
+        {
+            "code": r.get("code"),
+            "name": r.get("name"),
+            "type": r.get("type"),
+            "balance": r.get("balance"),
+            "total_debit": r.get("total_debit"),
+            "total_credit": r.get("total_credit"),
+            "transaction_count": r.get("transaction_count"),
+        }
+        for r in rows
+    ]
+
+    return {"success": True, "data": {"summary": data.get("summary", {}), "rows": export_rows}}
 
 
 @router.post("/accounts/init-defaults")

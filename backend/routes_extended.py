@@ -1195,8 +1195,11 @@ def _build_operation_journal_entry(
     elif op_type in ("purchase", "expense"):
         transaction_type = "purchase" if op_type == "purchase" else "expense"
 
-        # Default for purchases if no account selected: operating expenses (6100)
-        debit_code = selected_code or "6100"
+        # enforce purchases/expenses into expense accounts (5xxx/6xxx)
+        if op_type == "purchase":
+            debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+        else:
+            debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
         credit_code = "2101" if is_credit else cash_code
 
         lines = [
@@ -1236,7 +1239,7 @@ def _build_operation_journal_entry(
     elif op_type == "purchase_return":
         transaction_type = "purchase_return"
         debit_code = "2101" if is_credit else cash_code
-        credit_code = selected_code or "6100"
+        credit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
         lines = [
             {
                 "account": debit_code,

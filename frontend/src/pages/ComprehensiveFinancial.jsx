@@ -218,7 +218,7 @@ export default function ComprehensiveFinancial() {
     payment_order: 'أمر سداد',
   };
 
-  const currentCashBalance = Number(salesOperationsData?.operations?.summary?.operations_cash_total || 0);
+  const currentCashBalance = Number((incomeTotals.revenue || 0) - (incomeTotals.expenses || 0));
   const salesSummary = salesOperationsData?.operations?.summary || {
     total_credit: 0,
     total_cash_component: 0,
@@ -334,7 +334,7 @@ export default function ComprehensiveFinancial() {
           <GlassCard
             title="النقد الحالي"
             value={formatCurrency(currentCashBalance || 0)}
-            subtitle="المحصل نقدًا (حسب طريقة السداد)"
+            subtitle="الإيرادات - المصروفات"
             testId="financial-metric-current-cash"
             accent="from-cyan-500/25 to-blue-400/10"
           />

@@ -1,0 +1,117 @@
+{
+  "summary": "Iteration 82: Cash Formula Fix - All tests passed. Frontend cash card now shows 'الإيرادات - المصروفات' (Revenue - Expenses) formula. Backend enforces expense accounts (5xxx/6xxx) for purchase operations when non-expense accounts are selected.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cash_formula_iter82.py",
+    "/app/test_reports/pytest/pytest_cash_formula_iter82.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "✅ Frontend: currentCashBalance = incomeTotals.revenue - incomeTotals.expenses (line 221)",
+    "✅ Frontend: Cash card subtitle shows 'الإيرادات - المصروفات' (line 337)",
+    "✅ Backend: Purchase operations with non-expense accounts (1000/1101/1102) map debit to 6100 (lines 1199-1202)",
+    "✅ Backend: Purchase_return uses expense account (5xxx/6xxx) on credit side, defaults to 6100 (lines 1239-1256)",
+    "✅ Regression: Income tab and sales block working correctly",
+    "✅ Regression: Journal entries API returns enriched fields"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cash_formula_iter82.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Cash formula fix verified. Frontend displays cash as revenue - expenses with correct subtitle. Backend enforces expense accounts for purchase operations. All regression tests pass.",
+  "test_credentials": "username: مدير (no password required)",
+  "verified_features": [
+    "✅ Frontend: Cash card shows 'النقد الحالي' with value = Revenue - Expenses",
+    "✅ Frontend: Cash card subtitle is 'الإيرادات - المصروفات'",
+    "✅ Frontend: Revenue card shows ٢٤,٥٧٠ ر.س.",
+    "✅ Frontend: Expenses card shows ١,٨٥٤ ر.س.",
+    "✅ Frontend: Cash = 24,570 - 1,854 = 22,716 (formula verified)",
+    "✅ Frontend: Income tab loads correctly",
+    "✅ Frontend: Sales operations block visible and functional",
+    "✅ Backend: Income statement API returns revenue, expenses, net_income",
+    "✅ Backend: net_income = revenue - expenses (verified)",
+    "✅ Backend: Purchase with non-expense account (1101) maps to expense account 6100",
+    "✅ Backend: Purchase_return uses expense account on credit side",
+    "✅ Backend: Account tree details API (sales block) working",
+    "✅ Backend: Journal entries API returns enriched fields",
+    "✅ Backend: Reconciliation API working"
+  ],
+  "test_evidence": {
+    "backend_api_tests": {
+      "pytest_results": {
+        "total_tests": 8,
+        "passed": 8,
+        "failed": 0,
+        "report_file": "/app/test_reports/pytest/pytest_cash_formula_iter82.xml"
+      },
+      "endpoints_tested": [
+        "GET /api/finance/reports/income-statement (revenue, expenses, net_income)",
+        "GET /api/finance/reports/account-tree-details (sales block)",
+        "GET /api/finance/journal-entries (enriched fields)",
+        "GET /api/finance/reports/reconciliation"
+      ]
+    },
+    "frontend_tests": {
+      "financial_dashboard": {
+        "page_loads": true,
+        "page_title": "لوحة المؤشرات المالية",
+        "cash_card": {
+          "title": "النقد الحالي",
+          "value": "٢٢,٧١٦ ر.س.",
+          "subtitle": "الإيرادات - المصروفات"
+        },
+        "revenue_card": {
+          "value": "٢٤,٥٧٠ ر.س."
+        },
+        "expenses_card": {
+          "value": "١,٨٥٤ ر.س."
+        },
+        "formula_verified": "24,570 - 1,854 = 22,716 ✅"
+      },
+      "income_tab": {
+        "panel_visible": true,
+        "sales_operations_block_visible": true
+      }
+    },
+    "screenshots": [
+      ".screenshots/financial_dashboard_cash_formula.png",
+      ".screenshots/financial_income_tab.png"
+    ]
+  },
+  "code_review_verification": {
+    "frontend_cash_formula": {
+      "file": "/app/frontend/src/pages/ComprehensiveFinancial.jsx",
+      "line": 221,
+      "code": "const currentCashBalance = Number((incomeTotals.revenue || 0) - (incomeTotals.expenses || 0));"
+    },
+    "frontend_cash_subtitle": {
+      "file": "/app/frontend/src/pages/ComprehensiveFinancial.jsx",
+      "line": 337,
+      "code": "subtitle=\"الإيرادات - المصروفات\""
+    },
+    "backend_purchase_expense_mapping": {
+      "file": "/app/backend/routes_extended.py",
+      "lines": "1199-1202",
+      "logic": "if op_type == 'purchase': debit_code = selected_code if str(selected_code or '').startswith(('5', '6')) else '6100'"
+    },
+    "backend_purchase_return_credit": {
+      "file": "/app/backend/routes_extended.py",
+      "lines": "1239-1256",
+      "logic": "credit_code = selected_code if str(selected_code or '').startswith(('5', '6')) else '6100'"
+    }
+  }
+}

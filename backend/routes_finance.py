@@ -1008,7 +1008,7 @@ def _build_repair_journal_entry_from_operation(
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
         ]
     elif op_type == "purchase":
-        debit_code = selected_code or "5000"
+        debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
         credit_code = "2101" if is_credit else cash_code
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
@@ -1029,7 +1029,7 @@ def _build_repair_journal_entry_from_operation(
         ]
     elif op_type == "purchase_return":
         debit_code = "2101" if is_credit else cash_code
-        credit_code = selected_code or "6100"
+        credit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},

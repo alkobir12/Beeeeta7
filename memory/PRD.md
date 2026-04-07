@@ -904,6 +904,8 @@
 | 07 Apr 2026 | Rebuilt Chart of Accounts page into Liquid expandable card experience (`ChartOfAccountsLiquid`) with RTL tree hierarchy, smart recent accounts chips, sticky filters, live summary bar, search flatten mode, and mobile bottom sheet |
 | 07 Apr 2026 | Added full account APIs under `/api/accounts/*`: tree, transactions, sparkline, touch, export (filtered) with lazy-load support for account details |
 | 07 Apr 2026 | Added Excel export (SheetJS/xlsx) for currently filtered visible accounts and wired desktop button + mobile FAB |
+| 07 Apr 2026 | Enhanced Journal Entries "سجل الفواتير والعمليات": operation type displayed first, unified editable party field (عميل/مورد/مفتوح), and vehicle context shown in both desktop and mobile views |
+| 07 Apr 2026 | Backend `GET /api/finance/journal-entries` now enriches entries with `party_label`, `party_type`, `vehicle_label`, `operation_type_label` from linked operations/visits + manual override token `[PARTY:...]` |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

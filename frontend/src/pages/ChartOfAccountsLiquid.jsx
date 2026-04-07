@@ -393,8 +393,8 @@ export default function ChartOfAccountsLiquid() {
     <div className="min-h-screen p-3 md:p-6" dir="rtl" data-testid="chart-of-accounts-liquid-page">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="sticky top-0 z-20 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3 md:p-4" data-testid="coa-sticky-filter-bar">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-            <div className="relative">
+          <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
+            <div className="relative md:flex-1 md:min-w-[320px]">
               <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 ref={searchRef}
@@ -409,7 +409,7 @@ export default function ChartOfAccountsLiquid() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100"
+              className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 md:min-w-[130px]"
               data-testid="coa-type-filter-select"
             >
               {typeOptions.map((opt) => (
@@ -417,7 +417,7 @@ export default function ChartOfAccountsLiquid() {
               ))}
             </select>
 
-            <label className="inline-flex items-center gap-2 text-sm text-slate-200" data-testid="coa-hide-zero-toggle-wrap">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-200 whitespace-nowrap" data-testid="coa-hide-zero-toggle-wrap">
               <input
                 type="checkbox"
                 checked={hideZero}
@@ -432,7 +432,7 @@ export default function ChartOfAccountsLiquid() {
                 type="button"
                 onClick={exportExcel}
                 disabled={exporting}
-                className="rounded-xl border border-amber-300/40 bg-amber-500/20 text-amber-50 px-3 py-2 text-sm inline-flex items-center gap-2"
+                className="rounded-xl border border-amber-300/40 bg-amber-500/20 text-amber-50 px-3 py-2 text-sm inline-flex items-center gap-2 md:mr-auto"
                 data-testid="coa-export-excel-button"
               >
                 <Download size={14} /> {exporting ? 'جاري التصدير...' : 'تصدير Excel'}

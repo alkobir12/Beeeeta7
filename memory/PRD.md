@@ -901,6 +901,9 @@
 | 06 Apr 2026 | Refined current cash logic to reflect **cash-collected sales by payment method** (not raw ledger assumption), and added sales AR split |
 | 06 Apr 2026 | Added Income-tab block "عمليات البيع (مع الإجمالي)" with totals: total sales / cash collected / unpaid credit + paginated rows |
 | 06 Apr 2026 | Improved account/operation readability: Trial Balance names normalized (no code-only rows), and account-tree operation descriptions enriched with customer/vehicle context instead of raw visit IDs where possible |
+| 07 Apr 2026 | Rebuilt Chart of Accounts page into Liquid expandable card experience (`ChartOfAccountsLiquid`) with RTL tree hierarchy, smart recent accounts chips, sticky filters, live summary bar, search flatten mode, and mobile bottom sheet |
+| 07 Apr 2026 | Added full account APIs under `/api/accounts/*`: tree, transactions, sparkline, touch, export (filtered) with lazy-load support for account details |
+| 07 Apr 2026 | Added Excel export (SheetJS/xlsx) for currently filtered visible accounts and wired desktop button + mobile FAB |
 
 ## Current Prioritized Backlog (Post Iteration 74)
 

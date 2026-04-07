@@ -1,0 +1,92 @@
+{
+  "summary": "Iteration 88 - Frontend testing for expandable summary cards on DebtFollowUp page. All 6 cards (customers, suppliers, aging 0-30, aging 31+, cash account, bank account) tested and working correctly with expand/collapse functionality.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_88.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "لا يوجد"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "DebtFollowUp page expandable cards feature is fully functional. All 6 summary cards (customers, suppliers, aging_0_30, aging_31_plus, cash_account, bank_account) have working toggle buttons with expand/collapse functionality. Cash and bank balance cards correctly display liquidity information from chart-of-accounts.",
+  "features_tested": {
+    "frontend": [
+      "✅ DebtFollowUp page loads correctly at /debts-followup",
+      "✅ All 6 summary cards exist with correct data-testid attributes",
+      "✅ Card 'customers' (ذمم العملاء) - cyan color, expandable with customer count and average debt details",
+      "✅ Card 'suppliers' (ذمم الموردين) - amber color, expandable with supplier count and average debt details",
+      "✅ Card 'aging_0_30' (0-30 يوم) - white/slate color, expandable with aging breakdown details",
+      "✅ Card 'aging_31_plus' (+31 يوم) - white/slate color, expandable with aging breakdown details",
+      "✅ Card 'cash_account' (رصيد حساب النقد) - emerald color, expandable with cash account info (code 1101)",
+      "✅ Card 'bank_account' (رصيد حساب البنك) - indigo color, expandable with bank account info (code 1102)",
+      "✅ Each card has toggle button (data-testid='debt-summary-card-toggle-{key}')",
+      "✅ Clicking toggle expands card to show details section (data-testid='debt-summary-card-details-{key}')",
+      "✅ Clicking toggle again collapses card and hides details",
+      "✅ Rapid expand/collapse stress test (5 iterations) completed without errors",
+      "✅ Table wrapper, select all button, and bulk preview button remain functional",
+      "✅ No UI errors during repeated expand/collapse operations",
+      "✅ Cards display in responsive 3-column grid (xl:grid-cols-3)"
+    ]
+  },
+  "test_details": {
+    "cards_tested": [
+      {
+        "key": "customers",
+        "title": "ذمم العملاء (آجل)",
+        "color": "cyan",
+        "details_shown": "متوسط الذمة/عميل + إجمالي الجهات المحددة"
+      },
+      {
+        "key": "suppliers",
+        "title": "ذمم الموردين (آجل)",
+        "color": "amber",
+        "details_shown": "متوسط الذمة/مورد + إجمالي الجهات المحددة"
+      },
+      {
+        "key": "aging_0_30",
+        "title": "0-30 يوم",
+        "color": "white/slate",
+        "details_shown": "31-60 يوم + 61-90 يوم + +90 يوم breakdown"
+      },
+      {
+        "key": "aging_31_plus",
+        "title": "+31 يوم",
+        "color": "white/slate",
+        "details_shown": "31-60 يوم + 61-90 يوم + +90 يوم breakdown"
+      },
+      {
+        "key": "cash_account",
+        "title": "رصيد حساب النقد",
+        "color": "emerald",
+        "details_shown": "يشمل الحسابات المطابقة لكود 1101 (النقد)"
+      },
+      {
+        "key": "bank_account",
+        "title": "رصيد حساب البنك",
+        "color": "indigo",
+        "details_shown": "يشمل الحسابات المطابقة لكود 1102 (البنك)"
+      }
+    ],
+    "expand_collapse_tested": true,
+    "stress_test_passed": true,
+    "no_ui_errors": true
+  }
+}

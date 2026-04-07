@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MessageCircle, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageCircle, RefreshCw } from 'lucide-react';
 import { api, customerAPI, supplierAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
@@ -16,6 +16,8 @@ export default function DebtFollowUp() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [drafts, setDrafts] = useState([]);
   const [settlementAccounts, setSettlementAccounts] = useState([]);
+  const [liquidityBalances, setLiquidityBalances] = useState({ cash: 0, bank: 0 });
+  const [expandedCards, setExpandedCards] = useState({});
   const [manualAmounts, setManualAmounts] = useState({});
   const [savingRowId, setSavingRowId] = useState('');
 
@@ -35,6 +37,26 @@ export default function DebtFollowUp() {
           : [];
       const payableAccounts = accountRows.filter((acc) => ['asset', 'liability', 'expense'].includes(String(acc?.type || '').toLowerCase()));
       setSettlementAccounts(payableAccounts);
+
+      const normalizeName = (acc) => String(acc?.name || acc?.account_name || '').toLowerCase();
+      const toBalance = (acc) => Number(acc?.balance ?? acc?.current_balance ?? 0);
+
+      const cashAccounts = accountRows.filter((acc) => {
+        const code = String(acc?.code || '');
+        const name = normalizeName(acc);
+        return code.startsWith('1101') || name.includes('نقد') || name.includes('صندوق') || name.includes('cash');
+      });
+
+      const bankAccounts = accountRows.filter((acc) => {
+        const code = String(acc?.code || '');
+        const name = normalizeName(acc);
+        return code.startsWith('1102') || name.includes('بنك') || name.includes('bank');
+      });
+
+      setLiquidityBalances({
+        cash: cashAccounts.reduce((sum, acc) => sum + toBalance(acc), 0),
+        bank: bankAccounts.reduce((sum, acc) => sum + toBalance(acc), 0),
+      });
 
       const customers = (customersRes.data || []).map((row) => ({ ...row, entityType: 'customer' }));
       const suppliers = (suppliersRes.data || []).map((row) => ({ ...row, entityType: 'supplier' }));
@@ -57,6 +79,8 @@ export default function DebtFollowUp() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const fmt = (v) => Number(v || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const totals = useMemo(() => {
     return entries.reduce(
@@ -92,6 +116,81 @@ export default function DebtFollowUp() {
     () => entries.filter((row) => selectedIds.includes(`${row.entityType}-${row.id}`)),
     [entries, selectedIds]
   );
+
+  const metricsCards = useMemo(() => {
+    const customerRows = entries.filter((row) => row.entityType === 'customer');
+    const supplierRows = entries.filter((row) => row.entityType === 'supplier');
+    return [
+      {
+        key: 'customers',
+        title: 'ذمم العملاء (آجل)',
+        value: totals.customers,
+        tone: 'border-cyan-400/20 bg-cyan-500/10 text-cyan-100',
+        subtitle: `عدد العملاء: ${customerRows.length}`,
+        details: [
+          `متوسط الذمة/عميل: ${fmt(customerRows.length ? totals.customers / customerRows.length : 0)} ر.س`,
+          `إجمالي الجهات المحددة حاليًا: ${selectedEntries.filter((row) => row.entityType === 'customer').length}`,
+        ],
+      },
+      {
+        key: 'suppliers',
+        title: 'ذمم الموردين (آجل)',
+        value: totals.suppliers,
+        tone: 'border-amber-400/20 bg-amber-500/10 text-amber-100',
+        subtitle: `عدد الموردين: ${supplierRows.length}`,
+        details: [
+          `متوسط الذمة/مورد: ${fmt(supplierRows.length ? totals.suppliers / supplierRows.length : 0)} ر.س`,
+          `إجمالي الجهات المحددة حاليًا: ${selectedEntries.filter((row) => row.entityType === 'supplier').length}`,
+        ],
+      },
+      {
+        key: 'aging_0_30',
+        title: '0-30 يوم',
+        value: agingBuckets.b0_30,
+        tone: 'border-white/10 bg-white/5 text-slate-100',
+        subtitle: 'الذمم الحديثة',
+        details: [
+          `31-60 يوم: ${fmt(agingBuckets.b31_60)} ر.س`,
+          `61-90 يوم: ${fmt(agingBuckets.b61_90)} ر.س`,
+          `+90 يوم: ${fmt(agingBuckets.b90_plus)} ر.س`,
+        ],
+      },
+      {
+        key: 'aging_31_plus',
+        title: '+31 يوم',
+        value: agingBuckets.b31_60 + agingBuckets.b61_90 + agingBuckets.b90_plus,
+        tone: 'border-white/10 bg-white/5 text-slate-100',
+        subtitle: 'الذمم المتأخرة',
+        details: [
+          `31-60 يوم: ${fmt(agingBuckets.b31_60)} ر.س`,
+          `61-90 يوم: ${fmt(agingBuckets.b61_90)} ر.س`,
+          `+90 يوم: ${fmt(agingBuckets.b90_plus)} ر.س`,
+        ],
+      },
+      {
+        key: 'cash_account',
+        title: 'رصيد حساب النقد',
+        value: liquidityBalances.cash,
+        tone: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
+        subtitle: 'من دليل الحسابات',
+        details: [
+          'يشمل الحسابات المطابقة لكود 1101 (النقد).',
+          'يُستخدم لمراجعة السيولة النقدية الفعلية قبل أوامر السداد.',
+        ],
+      },
+      {
+        key: 'bank_account',
+        title: 'رصيد حساب البنك',
+        value: liquidityBalances.bank,
+        tone: 'border-indigo-400/20 bg-indigo-500/10 text-indigo-100',
+        subtitle: 'من دليل الحسابات',
+        details: [
+          'يشمل الحسابات المطابقة لكود 1102 (البنك).',
+          'يساعد على اختيار وسيلة السداد المناسبة (نقد/تحويل).',
+        ],
+      },
+    ];
+  }, [agingBuckets, entries, liquidityBalances, selectedEntries, totals]);
 
   const openPreviewForRows = (rows) => {
     const nextDrafts = rows.map((row) => buildDebtWhatsAppDraft(row, row.entityType));
@@ -180,8 +279,6 @@ export default function DebtFollowUp() {
     }
   };
 
-  const fmt = (v) => Number(v || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
     <div className="space-y-6" dir="rtl" data-testid="debt-followup-page">
       <div className="flex items-center justify-between">
@@ -199,23 +296,43 @@ export default function DebtFollowUp() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-3" data-testid="debt-total-customers-card">
-          <p className="text-xs text-cyan-200/80">ذمم العملاء (آجل)</p>
-          <p className="text-lg font-bold text-cyan-100">{fmt(totals.customers)} ر.س</p>
-        </div>
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3" data-testid="debt-total-suppliers-card">
-          <p className="text-xs text-amber-200/80">ذمم الموردين (آجل)</p>
-          <p className="text-lg font-bold text-amber-100">{fmt(totals.suppliers)} ر.س</p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 p-3" data-testid="debt-aging-0-30-card">
-          <p className="text-xs text-slate-300/80">0-30 يوم</p>
-          <p className="text-lg font-bold text-slate-100">{fmt(agingBuckets.b0_30)} ر.س</p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 p-3" data-testid="debt-aging-31-plus-card">
-          <p className="text-xs text-slate-300/80">+31 يوم</p>
-          <p className="text-lg font-bold text-slate-100">{fmt(agingBuckets.b31_60 + agingBuckets.b61_90 + agingBuckets.b90_plus)} ر.س</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" data-testid="debt-metrics-cards-grid">
+        {metricsCards.map((card) => {
+          const expanded = !!expandedCards[card.key];
+          return (
+            <div
+              key={card.key}
+              className={`rounded-xl border p-3 ${card.tone}`}
+              data-testid={`debt-summary-card-${card.key}`}
+            >
+              <button
+                type="button"
+                onClick={() => setExpandedCards((prev) => ({ ...prev, [card.key]: !prev[card.key] }))}
+                className="w-full flex items-start justify-between gap-3 text-right"
+                data-testid={`debt-summary-card-toggle-${card.key}`}
+              >
+                <div>
+                  <p className="text-xs opacity-80">{card.title}</p>
+                  <p className="text-lg font-bold mt-1">{fmt(card.value)} ر.س</p>
+                  <p className="text-[11px] opacity-80 mt-1">{card.subtitle}</p>
+                </div>
+                <span className="mt-1 opacity-80">
+                  {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </span>
+              </button>
+              {expanded && (
+                <div
+                  className="mt-3 pt-3 border-t border-white/20 space-y-1 text-[12px] opacity-90"
+                  data-testid={`debt-summary-card-details-${card.key}`}
+                >
+                  {card.details.map((line, idx) => (
+                    <p key={`${card.key}-detail-${idx}`}>• {line}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4" data-testid="debt-followup-table-wrapper">

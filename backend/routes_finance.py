@@ -86,6 +86,25 @@ def _safe_float(value) -> float:
         return 0.0
 
 
+def _normalize_date_string(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return value
+    raw = str(value).strip()
+    if not raw:
+        return raw
+
+    # already ISO date-like
+    if len(raw) >= 10 and raw[4] == "-" and raw[7] == "-":
+        return raw[:10]
+
+    for fmt in ("%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(raw, fmt).strftime("%Y-%m-%d")
+        except Exception:
+            continue
+    return raw
+
+
 AR_ACCOUNT_CODES = {"1103", "113"}
 AP_ACCOUNT_CODES = {"2101", "211"}
 
@@ -279,15 +298,18 @@ def _fetch_journal_entries(
         .eq("workshop_id", workshop_id)
         .neq("workshop_id", None)
     )
-    if start_date:
-        start_boundary = start_date
-        if isinstance(start_date, str) and len(start_date) == 10 and "T" not in start_date:
-            start_boundary = f"{start_date}T00:00:00"
+    normalized_start = _normalize_date_string(start_date)
+    normalized_end = _normalize_date_string(end_date)
+
+    if normalized_start:
+        start_boundary = normalized_start
+        if isinstance(normalized_start, str) and len(normalized_start) == 10 and "T" not in normalized_start:
+            start_boundary = f"{normalized_start}T00:00:00"
         query = query.gte("date", start_boundary)
-    if end_date:
-        end_boundary = end_date
-        if isinstance(end_date, str) and len(end_date) == 10 and "T" not in end_date:
-            end_boundary = f"{end_date}T23:59:59.999999"
+    if normalized_end:
+        end_boundary = normalized_end
+        if isinstance(normalized_end, str) and len(normalized_end) == 10 and "T" not in normalized_end:
+            end_boundary = f"{normalized_end}T23:59:59.999999"
         query = query.lte("date", end_boundary)
     if limit is not None:
         query = query.range(skip, skip + limit - 1)
@@ -350,7 +372,7 @@ async def get_balance_sheet(
     الميزانية العمومية - محسوبة من دليل الحسابات
     """
     try:
-        target_date = as_of_date or datetime.now().strftime("%Y-%m-%d")
+        target_date = _normalize_date_string(as_of_date) or datetime.now().strftime("%Y-%m-%d")
         balances_map, accounts = _compute_trial_balance_map(
             workshop_id,
             end_date=target_date,
@@ -441,8 +463,8 @@ async def get_income_statement(
         if not effective_workshop_id:
             raise HTTPException(status_code=400, detail="معرف الورشة مطلوب")
 
-        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
-        start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_date = _normalize_date_string(end_date) or datetime.now().strftime("%Y-%m-%d")
+        start_date = _normalize_date_string(start_date) or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
         accounts = _fetch_accounts()
         id_to_code, code_to_name, code_to_type = _build_account_maps(accounts)
@@ -539,8 +561,8 @@ async def get_cash_flow(
         if not effective_workshop_id:
             raise HTTPException(status_code=400, detail="معرف الورشة مطلوب")
 
-        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
-        start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_date = _normalize_date_string(end_date) or datetime.now().strftime("%Y-%m-%d")
+        start_date = _normalize_date_string(start_date) or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
         accounts = _fetch_accounts()
         id_to_code, code_to_name, _ = _build_account_maps(accounts)

@@ -1838,15 +1838,29 @@ const VehicleDetails = () => {
     fetchDataLight(); // Refresh visits without full loading
   }, []);
 
+  const normalizeListPayload = useCallback((response, preferredKeys = []) => {
+    const payload = response?.data;
+    if (Array.isArray(payload)) return payload;
+    if (payload && typeof payload === 'object') {
+      for (const key of preferredKeys) {
+        if (Array.isArray(payload?.[key])) return payload[key];
+      }
+      if (Array.isArray(payload?.data)) return payload.data;
+      if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.results)) return payload.results;
+    }
+    return [];
+  }, []);
+
   // Lightweight fetch that doesn't show loading spinner
   const fetchDataLight = useCallback(async () => {
     try {
       const visitsRes = await axios.get(`${API_URL}/vehicles/${id}/visits`).catch(() => ({ data: [] }));
-      setVisits(visitsRes.data || []);
+      setVisits(normalizeListPayload(visitsRes, ['visits']));
     } catch (e) {
       console.error('fetchDataLight error:', e);
     }
-  }, [id, API_URL]);
+  }, [id, API_URL, normalizeListPayload]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -1895,8 +1909,8 @@ const VehicleDetails = () => {
         email: vehicleRes.data.customerEmail
       });
       
-      setTechnicians(techniciansRes.data);
-      setVisits(visitsRes.data || []);
+      setTechnicians(normalizeListPayload(techniciansRes, ['technicians']));
+      setVisits(normalizeListPayload(visitsRes, ['visits']));
       
 
       // Vehicle financial summary (async, non-blocking)
@@ -1941,12 +1955,12 @@ const VehicleDetails = () => {
       ]);
       
       setVehicleFiles(filesRes.files || []);
-      setServicesCatalog(servicesRes.data || []);
-      setPartsCatalog(partsRes.data || []);
-      setSuppliersCatalog(suppliersRes.data || []);
-      setCustomersCatalog(customersRes.data || []);
+      setServicesCatalog(normalizeListPayload(servicesRes, ['services']));
+      setPartsCatalog(normalizeListPayload(partsRes, ['parts']));
+      setSuppliersCatalog(normalizeListPayload(suppliersRes, ['suppliers']));
+      setCustomersCatalog(normalizeListPayload(customersRes, ['customers']));
       
-      const approvalsRows = approvalsRes?.data || [];
+      const approvalsRows = normalizeListPayload(approvalsRes, ['approvals']);
       const approvalsByVisit = new Map();
       approvalsRows.forEach((a) => {
         const vId = a.visitId || a.visit_id;
@@ -1963,7 +1977,7 @@ const VehicleDetails = () => {
     } finally {
       setLoadingProgress(100);
     }
-  }, [id, API_URL, toast]);
+  }, [id, API_URL, toast, normalizeListPayload]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

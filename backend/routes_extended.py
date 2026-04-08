@@ -1593,6 +1593,9 @@ async def update_operation(op_id: str, payload: Dict[str, Any] = Body(...)):
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
+            existing = supa.operations_get(op_id)
+            if not existing:
+                raise HTTPException(status_code=404, detail="not found")
             return supa.operations_update(op_id, payload)
 
         if provider == "memory" or db is None:

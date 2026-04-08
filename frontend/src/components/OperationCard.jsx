@@ -98,6 +98,7 @@ export default function OperationCard({
   onDelete,
   onViewVehicle,
   onConfirmCreditPayment,
+  onEditInForm,
   onUpdateItems,
   isSaving,
   isDeleting,
@@ -415,6 +416,10 @@ export default function OperationCard({
               type="button"
               className="apple-button-secondary h-8 px-2.5 text-[11px]"
               onClick={() => {
+                if (typeof onEditInForm === 'function') {
+                  onEditInForm(operation);
+                  return;
+                }
                 setExpandedState(true);
                 setEditing(true);
               }}

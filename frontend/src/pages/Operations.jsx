@@ -167,6 +167,7 @@ const Operations = () => {
   const guidanceEnabled = session?.guidanceEnabled !== false;
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editingOperationId, setEditingOperationId] = useState(null);
 
   const [saveOpId, setSaveOpId] = useState(null);
   const [deleteOpId, setDeleteOpId] = useState(null);
@@ -473,8 +474,14 @@ const Operations = () => {
       const res = await axios.put(`${API_URL}/operations/${opId}`, payload);
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations'] });
+    onSuccess: (updatedOp, variables) => {
+      queryClient.setQueriesData({ queryKey: ['operations'] }, (old) => {
+        if (Array.isArray(old)) {
+          return old.map((op) => (String(op?.id) === String(variables?.opId) ? { ...op, ...(updatedOp || {}) } : op));
+        }
+        return old;
+      });
+      queryClient.invalidateQueries({ queryKey: ['operations'], refetchType: 'inactive' });
       toast({
         title: t('common.success'),
         description: t('operations.saved_successfully') || 'تم حفظ العملية',
@@ -1208,8 +1215,14 @@ const Operations = () => {
       const res = await axios.post(`${API_URL}/operations`, payload);
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations'] });
+    onSuccess: (createdOp) => {
+      queryClient.setQueriesData({ queryKey: ['operations'] }, (old) => {
+        if (Array.isArray(old) && createdOp && typeof createdOp === 'object') {
+          return [createdOp, ...old];
+        }
+        return old;
+      });
+      queryClient.invalidateQueries({ queryKey: ['operations'], refetchType: 'inactive' });
       toast({
         title: t('common.success'),
         description: t('operations.saved_successfully') || 'تم حفظ العملية',
@@ -1352,6 +1365,68 @@ const Operations = () => {
       payloadBuilder: () => buildOperationPayload(operation),
     });
     setPrintDialogOpen(true);
+  };
+
+  const startEditOperationInMainForm = (operation) => {
+    if (!operation?.id) return;
+
+    const opType = String(operation.type || 'purchase').toLowerCase();
+    const inferredKind = (() => {
+      const scope = String(operation.scope || '').toLowerCase();
+      if (scope === 'vehicle' || operation.vehicleId) return OPERATION_KIND_VEHICLE;
+      if (scope === 'rakan_parts' || isRakanOperationTagged(operation)) return OPERATION_KIND_RAKAN;
+      return OPERATION_KIND_WORKSHOP;
+    })();
+
+    const normalizedDateRaw = operation.date || operation.op_date || operation.createdAt || operation.created_at || '';
+    const normalizedDate = String(normalizedDateRaw).slice(0, 10) || new Date().toISOString().split('T')[0];
+
+    const normalizedItems = Array.isArray(operation.items)
+      ? operation.items.map((it) => ({
+          name: it?.name || it?.itemName || it?.description || '',
+          itemType: it?.itemType || 'part',
+          itemId: it?.itemId || it?.id || '',
+          quantity: Number(it?.quantity || 1),
+          price: Number(it?.price || 0),
+          total: Number(it?.total || Number(it?.quantity || 1) * Number(it?.price || 0)),
+        }))
+      : [];
+
+    setEditingOperationId(operation.id);
+    setCreateError('');
+    setCreateFormTab('operation');
+
+    setForm((prev) => ({
+      ...prev,
+      accountId: prev.accountId || selectedBusinessAccount?.id || '',
+      accountingAccountId: operation.accountingAccountId || operation.accountId || operation.accountCode || operation.account || '',
+      operationKind: inferredKind,
+      vehicleId: operation.vehicleId || '',
+      visitId: operation.visitId || '',
+      scope: inferredKind === OPERATION_KIND_WORKSHOP ? 'workshop' : (inferredKind === OPERATION_KIND_VEHICLE ? 'vehicle' : 'rakan_parts'),
+      type: opType || 'purchase',
+      partnerType: operation.partnerType || defaultPartnerTypeForOperation(opType, prev.partnerType),
+      partnerId: operation.partnerId || operation.customerId || operation.supplierId || '',
+      partnerName: operation.partnerName || operation.customerName || operation.supplierName || '',
+      partnerPhone: operation.partnerPhone || operation.customerPhone || operation.supplierPhone || '',
+      items: normalizedItems,
+      paymentMethod: operation.paymentMethod || operation.payment_method || 'cash',
+      paymentStatus: operation.paymentStatus || operation.payment_status || 'paid',
+      paymentAmount: Number(operation.paymentAmount || operation.total || 0) || '',
+      status: operation.status || 'issued',
+      invoiceNumber: operation.invoiceNumber || operation.reference || '',
+      notes: operation.notes || '',
+      date: normalizedDate,
+      paymentReceipt: null,
+    }));
+
+    window.setTimeout(() => {
+      try {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (_e) {
+        // ignore scroll errors
+      }
+    }, 80);
   };
 
   const requestDeleteOperation = (op) => {
@@ -1541,61 +1616,69 @@ const Operations = () => {
         notes: `${form.notes || ''}${vehicleDetailsNote}`.trim(),
       };
 
-      const payloadHash = JSON.stringify(cleanPayload);
-      const now = Date.now();
-      if (lastSubmitRef.current.hash === payloadHash && now - lastSubmitRef.current.timestamp < 4000) {
-        setCreateError('تم منع تكرار العملية');
-        toast({
-          title: 'تم منع التكرار',
-          description: 'تم تجاهل حفظ مكرر لنفس العملية. الرجاء الانتظار لحظات.',
-          variant: 'destructive',
-        });
-        setIsSaving(false);
-        return;
-      }
-      lastSubmitRef.current = { hash: payloadHash, timestamp: now };
-
-      const candidateAmount = Number(cleanPayload?.total || cleanPayload?.paymentAmount || 0);
-      const duplicateMatches = (ops || []).filter((op) => {
-        const opAmount = Number(op?.total || op?.amount || op?.paymentAmount || 0);
-        if (!Number.isFinite(opAmount) || !Number.isFinite(candidateAmount)) return false;
-        if (Math.abs(opAmount - candidateAmount) > 0.01) return false;
-
-        const sameType = normalizeText(op?.type) === normalizeText(cleanPayload?.type);
-        if (!sameType) return false;
-
-        const samePartner =
-          normalizeText(op?.partnerId || op?.partner_id) === normalizeText(cleanPayload?.partnerId)
-          || normalizeText(op?.partnerName || op?.partner_name) === normalizeText(cleanPayload?.partnerName);
-
-        const sameAccounting =
-          normalizeText(op?.accountingAccountId || op?.accounting_account_id) === normalizeText(cleanPayload?.accountingAccountId);
-
-        const opTs = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
-        const nearTime = Number.isFinite(opTs) && Math.abs(Date.now() - opTs) <= 5 * 60 * 1000;
-
-        return samePartner || sameAccounting || nearTime;
-      });
-
-      if (duplicateMatches.length > 0) {
-        const latest = duplicateMatches[0];
-        const latestTime = latest?.date || latest?.createdAt || latest?.created_at || '-';
-        const proceed = window.confirm(
-          `⚠️ يوجد تطابق محتمل مع عملية سابقة بنفس النوع/المبلغ.\n` +
-          `آخر تطابق: ${latestTime}\n` +
-          `هل العملية صحيحة وتريد المتابعة؟`
-        );
-        if (!proceed) {
+      if (!editingOperationId) {
+        const payloadHash = JSON.stringify(cleanPayload);
+        const now = Date.now();
+        if (lastSubmitRef.current.hash === payloadHash && now - lastSubmitRef.current.timestamp < 4000) {
+          setCreateError('تم منع تكرار العملية');
+          toast({
+            title: 'تم منع التكرار',
+            description: 'تم تجاهل حفظ مكرر لنفس العملية. الرجاء الانتظار لحظات.',
+            variant: 'destructive',
+          });
           setIsSaving(false);
           return;
         }
-      }
+        lastSubmitRef.current = { hash: payloadHash, timestamp: now };
 
-      await createOperationMutation.mutateAsync(cleanPayload);
+        const candidateAmount = Number(cleanPayload?.total || cleanPayload?.paymentAmount || 0);
+        const duplicateMatches = (ops || []).filter((op) => {
+          const opAmount = Number(op?.total || op?.amount || op?.paymentAmount || 0);
+          if (!Number.isFinite(opAmount) || !Number.isFinite(candidateAmount)) return false;
+          if (Math.abs(opAmount - candidateAmount) > 0.01) return false;
+
+          const sameType = normalizeText(op?.type) === normalizeText(cleanPayload?.type);
+          if (!sameType) return false;
+
+          const samePartner =
+            normalizeText(op?.partnerId || op?.partner_id) === normalizeText(cleanPayload?.partnerId)
+            || normalizeText(op?.partnerName || op?.partner_name) === normalizeText(cleanPayload?.partnerName);
+
+          const sameAccounting =
+            normalizeText(op?.accountingAccountId || op?.accounting_account_id) === normalizeText(cleanPayload?.accountingAccountId);
+
+          const opTs = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
+          const nearTime = Number.isFinite(opTs) && Math.abs(Date.now() - opTs) <= 5 * 60 * 1000;
+
+          return samePartner || sameAccounting || nearTime;
+        });
+
+        if (duplicateMatches.length > 0) {
+          const latest = duplicateMatches[0];
+          const latestTime = latest?.date || latest?.createdAt || latest?.created_at || '-';
+          const proceed = window.confirm(
+            `⚠️ يوجد تطابق محتمل مع عملية سابقة بنفس النوع/المبلغ.\n` +
+            `آخر تطابق: ${latestTime}\n` +
+            `هل العملية صحيحة وتريد المتابعة؟`
+          );
+          if (!proceed) {
+            setIsSaving(false);
+            return;
+          }
+        }
+
+        await createOperationMutation.mutateAsync(cleanPayload);
+      } else {
+        await updateOperationMutation.mutateAsync({
+          opId: editingOperationId,
+          payload: cleanPayload,
+        });
+      }
       if (cleanPayload.accountingAccountId) {
         recordAccountUsage(cleanPayload.accountingAccountId);
       }
       setCreateError('');
+      setEditingOperationId(null);
 
       setForm({
         accountId: selectedBusinessAccount?.id || '',
@@ -2800,6 +2883,11 @@ const Operations = () => {
             <div className="sticky bottom-0 z-10 rounded-xl border border-white/15 bg-slate-950/92 backdrop-blur px-3 py-3 mt-4" data-testid="operation-create-footer-actions">
               <div className="flex flex-wrap gap-2 items-center justify-between">
                 <div className="flex items-center gap-2">
+                  {editingOperationId ? (
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-300/35 text-amber-100 text-xs" data-testid="operation-editing-badge">
+                      وضع تعديل العملية
+                    </span>
+                  ) : null}
                   <button
                     type="button"
                     className="px-4 py-2.5 rounded-xl border border-white/20 text-slate-200"
@@ -2821,6 +2909,19 @@ const Operations = () => {
                   <div className="text-xs" style={{ color: styles.textMuted }} data-testid="operation-create-items-count">
                     {t('operations.items_count') || 'العناصر'}: {form.items.length}
                   </div>
+                  {editingOperationId ? (
+                    <button
+                      type="button"
+                      className="px-3 py-2 rounded-lg border border-rose-400/30 text-rose-100 text-xs"
+                      onClick={() => {
+                        setEditingOperationId(null);
+                        setCreateError('');
+                      }}
+                      data-testid="operation-edit-cancel-button"
+                    >
+                      إلغاء التعديل
+                    </button>
+                  ) : null}
                 </div>
 
                 <button
@@ -2830,7 +2931,7 @@ const Operations = () => {
                   data-testid="operation-save-button"
                   aria-busy={isSaving}
                 >
-                  {isSaving ? 'جارٍ الحفظ...' : t('operations.submit')}
+                  {isSaving ? 'جارٍ الحفظ...' : (editingOperationId ? 'تحديث العملية' : t('operations.submit'))}
                 </button>
               </div>
 
@@ -2976,6 +3077,7 @@ const Operations = () => {
                       setConfirmOpen(true);
                     }}
                     onDelete={(o) => requestDeleteOperation(o)}
+                    onEditInForm={(o) => startEditOperationInMainForm(o)}
                     onUpdateItems={(opId, items, meta) => handleUpdateOperationItems(opId, items, meta)}
                   />
                   );

@@ -1,0 +1,89 @@
+{
+  "summary": "Tested operation edit feature using main form (not inline card editing). All features working correctly: edit button navigates to form with edit mode badge, form fields are populated with operation data, update button saves changes successfully with ~3.2s UI response time and ~543ms API response time.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "PUT /operations/{op_id}",
+        "issue": "Returns 200 for non-existent operation ID (Supabase upsert behavior) instead of 404",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_operations_edit.py",
+    "/app/test_reports/pytest/pytest_operations_edit_iter96.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Lines 2886-2890 in Operations.jsx: Edit mode badge correctly shows 'وضع تعديل العملية' when editingOperationId is set",
+    "Lines 2912-2924: Cancel edit button correctly resets editingOperationId and clears form",
+    "Lines 2927-2935: Submit button correctly shows 'تحديث العملية' when in edit mode",
+    "Lines 1370-1430: startEditOperationInMainForm function correctly populates form with operation data"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_operations_edit.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Operation edit feature fully tested. Edit button on operation card navigates to main form with edit mode badge, form fields populated with operation data, update button saves changes. Response times: UI ~3.2s, API ~543ms.",
+  "test_credentials": {
+    "username": "مدير",
+    "password": "Not required"
+  },
+  "test_results": {
+    "edit_button_navigation": {
+      "status": "PASSED",
+      "description": "Edit button on operation card navigates to main form in edit mode"
+    },
+    "edit_mode_badge": {
+      "status": "PASSED",
+      "selector": "data-testid='operation-editing-badge'",
+      "text": "وضع تعديل العملية"
+    },
+    "cancel_edit_button": {
+      "status": "PASSED",
+      "selector": "data-testid='operation-edit-cancel-button'",
+      "text": "إلغاء التعديل"
+    },
+    "update_button": {
+      "status": "PASSED",
+      "selector": "data-testid='operation-save-button'",
+      "text": "تحديث العملية"
+    },
+    "form_fields_populated": {
+      "status": "PASSED",
+      "description": "Form fields correctly populated with operation data (type, date, description, items)"
+    },
+    "save_operation": {
+      "status": "PASSED",
+      "ui_response_time": "3.21 seconds",
+      "api_response_time": "543ms",
+      "toast_message": "تم بنجاح تم حفظ العملية"
+    },
+    "form_reset_after_save": {
+      "status": "PASSED",
+      "description": "Edit mode badge removed and form reset after successful save"
+    },
+    "backend_api_tests": {
+      "status": "PASSED",
+      "tests_passed": 6,
+      "tests_total": 6
+    }
+  },
+  "performance_notes": {
+    "ui_save_time": "3.21 seconds (includes form validation, API call, toast display, form reset)",
+    "api_response_time": "543ms (PUT /operations/{op_id})",
+    "assessment": "Response times are acceptable for the operation complexity"
+  }
+}

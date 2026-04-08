@@ -79,7 +79,8 @@ export default function ComprehensiveFinancial() {
   const [expandedHeadlineCards, setExpandedHeadlineCards] = useState({
     net_income: true,
     debts: false,
-    expenses_profit: false,
+    expenses: false,
+    parts_profit: false,
   });
   const [startDate, setStartDate] = useState(() => {
     const end = new Date();
@@ -354,17 +355,31 @@ export default function ComprehensiveFinancial() {
       testId: 'financial-headline-debts',
     },
     {
-      key: 'expenses_profit',
-      title: 'المصروفات + ربح الخدمات/القطع',
+      key: 'expenses',
+      title: 'المصروفات',
       value: formatCurrency(incomeTotals.expenses || 0),
-      subtitle: 'تفصيل ربح/خسارة النشاط',
+      subtitle: 'تفصيل المصروفات حسب النشاط',
       accent: 'from-rose-500/25 to-orange-400/10',
       details: [
-        `ربح/خسارة الخدمات: ${formatCurrency(serviceNet)}`,
-        `ربح/خسارة القطع: ${formatCurrency(partsNet)}`,
-        serviceNet >= 0 ? 'الخدمات تحقق ربحًا حاليًا.' : 'الخدمات في منطقة خسارة وتحتاج مراجعة التسعير.',
+        `مصروفات الخدمات: ${formatCurrency(expenseBreakdown.service || 0)}`,
+        `مصروفات القطع: ${formatCurrency(expenseBreakdown.parts || 0)}`,
+        `مصروفات أخرى: ${formatCurrency(expenseBreakdown.other || 0)}`,
       ],
-      testId: 'financial-headline-expenses-profit',
+      testId: 'financial-headline-expenses',
+    },
+    {
+      key: 'parts_profit',
+      title: 'أرباح القطع',
+      value: formatCurrency(partsNet),
+      subtitle: 'ربح/خسارة نشاط القطع',
+      accent: partsNet >= 0 ? 'from-cyan-500/25 to-blue-400/10' : 'from-rose-500/25 to-pink-400/10',
+      details: [
+        `إيرادات القطع: ${formatCurrency(revenueBreakdown.parts || 0)}`,
+        `تكلفة/مصروفات القطع: ${formatCurrency(expenseBreakdown.parts || 0)}`,
+        `ربح/خسارة الخدمات: ${formatCurrency(serviceNet)}`,
+        partsNet >= 0 ? 'القطع تحقق ربحًا حاليًا.' : 'القطع في منطقة خسارة وتحتاج مراجعة التسعير.',
+      ],
+      testId: 'financial-headline-parts-profit',
     },
   ];
 
@@ -468,7 +483,7 @@ export default function ComprehensiveFinancial() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6" data-testid="financial-headline-cards-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6" data-testid="financial-headline-cards-grid">
           {topCards.map((card) => (
             <ExpandableMetricCard
               key={card.key}

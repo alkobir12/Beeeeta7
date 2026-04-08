@@ -1,0 +1,66 @@
+{
+  "summary": "Frontend testing for OperationCard changes - All 4 tests PASSED. Verified: (1) Top value shows workshop revenue only, (2) Supplier items block visible in expanded view, (3) Supplier total displayed separately, (4) No UI breaks on operations page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "OperationCard component at /app/frontend/src/components/OperationCard.jsx has been updated to show workshop revenue (إيراد الورشة) at the top instead of total. Expanded view now shows supplier items block with names, prices, quantities, and totals. Supplier items total is displayed separately.",
+  "test_results": {
+    "operation_card_changes": {
+      "url": "/operations",
+      "status": "ALL PASSED",
+      "tests": {
+        "test_1_workshop_revenue_label": {
+          "description": "Top value shows 'إيراد الورشة' (workshop revenue) instead of total",
+          "status": "PASSED",
+          "evidence": "Found 15 'إيراد الورشة' labels on operation cards"
+        },
+        "test_2_supplier_items_block": {
+          "description": "Supplier items block visible in expanded view with name, price, quantity, total",
+          "status": "PASSED",
+          "evidence": "Found supplier items block with data-testid='operation-card-supplier-items-*'",
+          "sample_content": "النهدي: 13680.00 × 1 = 13680.00 ر.س, الدرويش: 220.00 × 1 = 220.00 ر.س, مخرطه: 1710.00 × 1 = 1710.00 ر.س, العبدالرحيم: 1650.00 × 1 = 1650.00 ر.س, زيت مكينة بالتر: 14.45 × 10 = 144.50 ر.س, عطيه سلف: 350.00 × 1 = 350.00 ر.س"
+        },
+        "test_3_supplier_total_separate": {
+          "description": "Supplier items total displayed separately",
+          "status": "PASSED",
+          "evidence": "Found supplier total block with data-testid='operation-card-supplier-total-*'",
+          "sample_content": "إجمالي بنود الموردين: 17754.50 ر.س"
+        },
+        "test_4_no_ui_breaks": {
+          "description": "No UI errors or breaks on operations page",
+          "status": "PASSED",
+          "evidence": "No error elements found on page, all cards rendered correctly"
+        }
+      },
+      "code_verification": {
+        "workshopRevenueTotal_calculation": "Line 239-242: Calculated from non-supplier items using workshopItems.reduce()",
+        "supplierItemsTotal_calculation": "Line 234-236: Calculated from supplier items using supplierItems.reduce()",
+        "displayedWorkshopAmount": "Line 248-251: Shows workshopRevenueTotal (not total of all items)",
+        "top_card_display": "Line 366-369: Shows displayedWorkshopAmount with label 'إيراد الورشة'",
+        "supplier_total_block": "Line 530-533: Shows supplierItemsTotal separately in expanded view",
+        "supplier_items_block": "Line 674-700: New block showing supplier items with name, price, quantity, total"
+      }
+    }
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "Not required"
+  }
+}

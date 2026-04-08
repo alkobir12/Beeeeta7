@@ -186,10 +186,69 @@ export default function OperationCard({
   }, [operation.items]);
 
   const itemsView = editing ? itemsDraft : (operation.items || []);
-  const totalDraft = useMemo(() => {
-    const items = itemsView || [];
-    return items.reduce((sum, it) => sum + (Number(it.quantity || 1) * Number(it.price || 0)), 0);
+  const normalizedItems = useMemo(() => {
+    const items = Array.isArray(itemsView) ? itemsView : [];
+    return items.map((it) => {
+      const quantity = Number(it?.quantity || 1);
+      const price = Number(it?.price || 0);
+      const lineTotal = Number(it?.total ?? (quantity * price));
+      return {
+        ...it,
+        quantity,
+        price,
+        lineTotal,
+      };
+    });
   }, [itemsView]);
+
+  const isSupplierItem = (item = {}) => {
+    const tags = [
+      item.itemType,
+      item.type,
+      item.billingType,
+      item.partyType,
+      item.partnerType,
+      item.source,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    if (tags.includes('supplier') || tags.includes('مورد')) return true;
+
+    const label = String(item?.name || item?.description || '').toLowerCase();
+    if (label.includes('مورد')) return true;
+    return false;
+  };
+
+  const supplierItems = useMemo(
+    () => normalizedItems.filter((it) => isSupplierItem(it)),
+    [normalizedItems]
+  );
+
+  const workshopItems = useMemo(
+    () => normalizedItems.filter((it) => !isSupplierItem(it)),
+    [normalizedItems]
+  );
+
+  const supplierItemsTotal = useMemo(
+    () => supplierItems.reduce((sum, it) => sum + Number(it.lineTotal || 0), 0),
+    [supplierItems]
+  );
+
+  const workshopRevenueTotal = useMemo(
+    () => workshopItems.reduce((sum, it) => sum + Number(it.lineTotal || 0), 0),
+    [workshopItems]
+  );
+
+  const totalDraft = useMemo(() => {
+    return normalizedItems.reduce((sum, it) => sum + Number(it.lineTotal || 0), 0);
+  }, [normalizedItems]);
+
+  const displayedWorkshopAmount =
+    workshopRevenueTotal > 0
+      ? workshopRevenueTotal
+      : Number(editing ? totalDraft : (operation.total || 0));
 
   const typeLabel = operation.type === 'sale'
     ? t('operations.sale')
@@ -305,9 +364,9 @@ export default function OperationCard({
 
           <div className="shrink-0 text-right">
             <div className="text-lg sm:text-xl font-extrabold text-slate-50 tabular-nums" data-testid={`operation-card-total-${operation.id}`}>
-              {Number(editing ? totalDraft : (operation.total || 0)).toFixed(2)}
+              {Number(displayedWorkshopAmount).toFixed(2)}
             </div>
-            <div className="text-[10px] text-slate-200/70">{t('common.currency') || ''}</div>
+            <div className="text-[10px] text-slate-200/70">إيراد الورشة • {t('common.currency') || ''}</div>
 
             <button
               type="button"
@@ -465,8 +524,12 @@ export default function OperationCard({
               <div className="text-xs font-semibold text-slate-50 break-words">{accountClassLabel} {accountCode ? `(${accountCode})` : ''}</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('common.total') || 'الإجمالي'}</div>
-              <div className="text-xs font-extrabold text-slate-50 tabular-nums">{Number(editing ? totalDraft : (operation.total || 0)).toFixed(2)} {t('common.currency') || ''}</div>
+              <div className="text-[10px] text-slate-300/70 mb-1">إيراد الورشة</div>
+              <div className="text-xs font-extrabold text-slate-50 tabular-nums">{Number(displayedWorkshopAmount).toFixed(2)} {t('common.currency') || ''}</div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-supplier-total-${operation.id}`}>
+              <div className="text-[10px] text-slate-300/70 mb-1">إجمالي بنود الموردين</div>
+              <div className="text-xs font-extrabold text-amber-200 tabular-nums">{Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}</div>
             </div>
           </div>
 
@@ -500,7 +563,7 @@ export default function OperationCard({
             <div className="px-3 py-2.5 flex items-center justify-between border-b border-slate-800/70">
               <div className="text-xs font-semibold text-slate-50">{t('operations.items') || 'البنود'}</div>
               <div className="text-[10px] text-slate-300/80 tabular-nums">
-                {t('common.total') || 'الإجمالي'}: {Number(totalDraft).toFixed(2)} {t('common.currency') || ''}
+                إيراد الورشة: {Number(displayedWorkshopAmount).toFixed(2)} {t('common.currency') || ''}
               </div>
             </div>
 
@@ -606,6 +669,34 @@ export default function OperationCard({
                 </button>
               </div>
             ) : null}
+          </div>
+
+          <div className="mt-3 bg-slate-950/50 rounded-xl border border-amber-900/40 overflow-hidden" data-testid={`operation-card-supplier-items-${operation.id}`}>
+            <div className="px-3 py-2.5 flex items-center justify-between border-b border-amber-900/30">
+              <div className="text-xs font-semibold text-amber-100">بنود الموردين (الاسم + السعر)</div>
+              <div className="text-[10px] text-amber-200/85 tabular-nums">
+                الإجمالي: {Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}
+              </div>
+            </div>
+
+            <div className="px-3 py-2.5 space-y-2">
+              {supplierItems.length === 0 ? (
+                <div className="text-xs text-slate-300/70" data-testid={`operation-card-supplier-items-empty-${operation.id}`}>
+                  لا توجد بنود موردين في هذه العملية.
+                </div>
+              ) : (
+                supplierItems.map((item, idx) => (
+                  <div key={`${operation.id}-supplier-item-${idx}`} className="flex items-center justify-between gap-2 text-xs" data-testid={`operation-card-supplier-item-${operation.id}-${idx}`}>
+                    <div className="text-slate-100 font-medium break-words">
+                      {item.name || item.description || '-'}
+                    </div>
+                    <div className="text-amber-100 tabular-nums whitespace-nowrap">
+                      {Number(item.price || 0).toFixed(2)} × {Number(item.quantity || 1)} = {Number(item.lineTotal || 0).toFixed(2)} {t('common.currency') || ''}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       ) : null}

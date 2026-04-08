@@ -87,6 +87,32 @@ const UUID_LIKE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
+const getAccountPriorityRank = (account) => {
+  const accountName = normalizeText(account?.name_ar || account?.name || account?.code || '');
+
+  if (accountName.includes('البنك')) return 0;
+  if (accountName.includes('النقد') || accountName.includes('الصندوق')) return 1;
+  if (accountName.includes('فطور العمال')) return 2;
+  if (
+    accountName.includes('المصروفات التشغيلية')
+    || accountName.includes('مصروفات تشغيلية')
+    || accountName.includes('مصاريف تشغيلية')
+    || accountName.includes('مصروف تشغيل')
+  ) {
+    return 3;
+  }
+  if (
+    accountName === 'قطع راكان'
+    || accountName === 'قطع غيار راكان'
+    || accountName.startsWith('قطع غيار راكان')
+  ) {
+    return 4;
+  }
+  if (accountName.includes('بنزين غسيل')) return 5;
+
+  return Number.MAX_SAFE_INTEGER;
+};
+
 const normalizeAccountCode = (value) => {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -590,6 +616,10 @@ const Operations = () => {
     const base = cleaned.length > 0 ? cleaned : typeScoped;
 
     return [...base].sort((a, b) => {
+      const aPriorityRank = getAccountPriorityRank(a);
+      const bPriorityRank = getAccountPriorityRank(b);
+      if (aPriorityRank !== bPriorityRank) return aPriorityRank - bPriorityRank;
+
       const buildKeys = (account) => {
         const rawId = String(account?.id || '').trim();
         const rawCode = String(account?.code || '').trim();

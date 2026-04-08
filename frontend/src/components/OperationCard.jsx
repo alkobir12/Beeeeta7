@@ -91,6 +91,8 @@ export default function OperationCard({
   t,
   accounts,
   businessAccounts,
+  customers = [],
+  suppliers = [],
   vehicles,
   onPrint,
   onDelete,
@@ -106,6 +108,12 @@ export default function OperationCard({
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [itemsDraft, setItemsDraft] = useState([]);
+  const [editMeta, setEditMeta] = useState({
+    partnerName: '',
+    partnerId: '',
+    accountCode: '',
+    accountName: '',
+  });
 
   const isExpanded = isControlled ? expanded : internalExpanded;
   const setExpandedState = (next) => {
@@ -119,6 +127,12 @@ export default function OperationCard({
   useEffect(() => {
     if (editing) {
       setItemsDraft(Array.isArray(operation.items) ? operation.items.map((it) => ({ ...it })) : []);
+      setEditMeta({
+        partnerName: operation.partnerName || operation.customerName || operation.supplierName || '',
+        partnerId: operation.partnerId || operation.customerId || operation.supplierId || '',
+        accountCode: operation.accountCode || operation.account || '',
+        accountName: operation.accountName || operation.account_name || '',
+      });
     }
   }, [editing, operation.items]);
 
@@ -174,6 +188,16 @@ export default function OperationCard({
   );
 
   const accountClassLabel = useMemo(() => classifyAccountCode(accountCode), [accountCode]);
+
+  const isPurchaseOperation = useMemo(() => {
+    const opType = String(operation.type || '').toLowerCase();
+    return ['purchase', 'expense', 'out', 'purchase_return'].includes(opType);
+  }, [operation.type]);
+
+  const partyOptions = useMemo(
+    () => (isPurchaseOperation ? suppliers : customers),
+    [isPurchaseOperation, suppliers, customers]
+  );
 
   const itemsSummary = useMemo(() => {
     const items = Array.isArray(operation.items) ? operation.items : [];
@@ -408,7 +432,7 @@ export default function OperationCard({
                 type="button"
                 className="apple-button h-8 px-2.5 text-[11px]"
                 onClick={async () => {
-                  const ok = await onUpdateItems(operation.id, itemsDraft);
+                  const ok = await onUpdateItems(operation.id, itemsDraft, editMeta);
                   if (ok) setEditing(false);
                 }}
                 disabled={isSaving}
@@ -424,6 +448,12 @@ export default function OperationCard({
                 onClick={() => {
                   setEditing(false);
                   setItemsDraft(Array.isArray(operation.items) ? operation.items.map((it) => ({ ...it })) : []);
+                  setEditMeta({
+                    partnerName: operation.partnerName || operation.customerName || operation.supplierName || '',
+                    partnerId: operation.partnerId || operation.customerId || operation.supplierId || '',
+                    accountCode: operation.accountCode || operation.account || '',
+                    accountName: operation.accountName || operation.account_name || '',
+                  });
                 }}
                 disabled={isSaving}
               >
@@ -532,6 +562,67 @@ export default function OperationCard({
               <div className="text-xs font-extrabold text-amber-200 tabular-nums">{Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}</div>
             </div>
           </div>
+
+          {editing ? (
+            <div className="mb-3 bg-slate-950/55 rounded-xl border border-cyan-900/40 p-3 space-y-3" data-testid={`operation-card-edit-meta-${operation.id}`}>
+              <div className="text-xs font-semibold text-cyan-100">تعديل العميل/المورد والحساب</div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-[10px] text-slate-300/80 block mb-1">{isPurchaseOperation ? 'المورد' : 'العميل'}</label>
+                  <input
+                    list={`operation-card-party-list-${operation.id}`}
+                    className="apple-input h-9 text-xs"
+                    value={editMeta.partnerName || ''}
+                    onChange={(e) => {
+                      const nextName = e.target.value;
+                      const matched = (partyOptions || []).find((p) => (p?.name || '') === nextName);
+                      setEditMeta((prev) => ({
+                        ...prev,
+                        partnerName: nextName,
+                        partnerId: matched?.id || '',
+                      }));
+                    }}
+                    placeholder={isPurchaseOperation ? 'اختر أو اكتب اسم المورد' : 'اختر أو اكتب اسم العميل'}
+                    data-testid={`operation-card-edit-partner-${operation.id}`}
+                  />
+                  <datalist id={`operation-card-party-list-${operation.id}`}>
+                    {(partyOptions || []).map((p) => (
+                      <option key={p.id || p.name} value={p.name} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-300/80 block mb-1">الحساب</label>
+                  <select
+                    className="apple-input h-9 text-xs"
+                    value={editMeta.accountCode || ''}
+                    onChange={(e) => {
+                      const code = e.target.value;
+                      const selected = (accounts || []).find((acc) => String(acc.code || acc.id || '') === code);
+                      setEditMeta((prev) => ({
+                        ...prev,
+                        accountCode: code,
+                        accountName: selected?.name || prev.accountName || '',
+                      }));
+                    }}
+                    data-testid={`operation-card-edit-account-${operation.id}`}
+                  >
+                    <option value="">اختر الحساب</option>
+                    {(accounts || []).map((acc) => {
+                      const code = String(acc.code || acc.id || '');
+                      return (
+                        <option key={`acc-${code}`} value={code}>
+                          {code} - {acc.name || acc.account_name || code}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70" data-testid={`operation-card-journal-entry-box-${operation.id}`}>
             <div className="text-[10px] text-slate-300/80 mb-1 flex items-center gap-1">

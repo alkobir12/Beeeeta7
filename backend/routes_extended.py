@@ -1859,7 +1859,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             prev = (
                 supa.client.table("journal_entries")
                 .select("total")
-                .eq("source", "operation_payment")
+                .in_("source", ["operation_payment", "operation_payment_income"])
                 .eq("reference_id", op_id)
                 .execute()
                 .data
@@ -1882,44 +1882,108 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         if payment_method in ("transfer", "bank"):
             cash_code = "1102"
 
-        if op_type in ("sale", "service"):
-            # Dr Cash/Bank, Cr AR
-            lines = [
-                {
-                    "account": cash_code,
-                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
-                    "debit": pay_amount,
-                    "credit": 0,
-                },
-                {
-                    "account": "1103",
-                    "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
-                    "debit": 0,
-                    "credit": pay_amount,
-                },
-            ]
-            desc = f"تحصيل آجل - {op_row.get('partner_name') or ''}"
-        elif op_type in ("purchase", "expense"):
-            # Dr AP, Cr Cash/Bank
-            lines = [
-                {
-                    "account": "2101",
-                    "account_name": ACCOUNT_NAME_MAP.get("2101", "2101"),
-                    "debit": pay_amount,
-                    "credit": 0,
-                },
-                {
-                    "account": cash_code,
-                    "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
-                    "debit": 0,
-                    "credit": pay_amount,
-                },
-            ]
-            desc = f"سداد آجل - {op_row.get('partner_name') or ''}"
+        op_account_code = str(op_row.get("account") or op_row.get("accountCode") or "").strip()
+        if not op_account_code:
+            op_account_code = "4001" if op_type in ("sale", "service") else "5001"
+        op_account_name = (
+            op_row.get("account_name")
+            or op_row.get("accountName")
+            or ACCOUNT_NAME_MAP.get(op_account_code, op_account_code)
+        )
+
+        has_base_operation_entry = False
+        try:
+            base_entries = (
+                supa.client.table("journal_entries")
+                .select("id,source")
+                .eq("reference_id", op_id)
+                .neq("source", "operation_payment")
+                .neq("source", "operation_payment_income")
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            has_base_operation_entry = len(base_entries) > 0
+        except Exception:
+            has_base_operation_entry = False
+
+        if has_base_operation_entry:
+            if op_type in ("sale", "service"):
+                # Accrual settlement: Dr Cash/Bank, Cr AR
+                lines = [
+                    {
+                        "account": cash_code,
+                        "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                        "debit": pay_amount,
+                        "credit": 0,
+                    },
+                    {
+                        "account": "1103",
+                        "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
+                        "debit": 0,
+                        "credit": pay_amount,
+                    },
+                ]
+                desc = f"تحصيل آجل - {op_row.get('partner_name') or ''}"
+            elif op_type in ("purchase", "expense"):
+                # Accrual settlement: Dr AP, Cr Cash/Bank
+                lines = [
+                    {
+                        "account": "2101",
+                        "account_name": ACCOUNT_NAME_MAP.get("2101", "2101"),
+                        "debit": pay_amount,
+                        "credit": 0,
+                    },
+                    {
+                        "account": cash_code,
+                        "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                        "debit": 0,
+                        "credit": pay_amount,
+                    },
+                ]
+                desc = f"سداد آجل - {op_row.get('partner_name') or ''}"
+            else:
+                raise HTTPException(status_code=400, detail="unsupported operation type")
         else:
-            raise HTTPException(status_code=400, detail="unsupported operation type")
+            # Cash-basis fallback (after cleanup or missing base entries)
+            if op_type in ("sale", "service"):
+                lines = [
+                    {
+                        "account": cash_code,
+                        "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                        "debit": pay_amount,
+                        "credit": 0,
+                    },
+                    {
+                        "account": op_account_code,
+                        "account_name": op_account_name,
+                        "debit": 0,
+                        "credit": pay_amount,
+                    },
+                ]
+                desc = f"تحصيل نقدي (اعتراف إيراد) - {op_row.get('partner_name') or ''}"
+            elif op_type in ("purchase", "expense"):
+                lines = [
+                    {
+                        "account": op_account_code,
+                        "account_name": op_account_name,
+                        "debit": pay_amount,
+                        "credit": 0,
+                    },
+                    {
+                        "account": cash_code,
+                        "account_name": ACCOUNT_NAME_MAP.get(cash_code, cash_code),
+                        "debit": 0,
+                        "credit": pay_amount,
+                    },
+                ]
+                desc = f"سداد نقدي (اعتراف مصروف) - {op_row.get('partner_name') or ''}"
+            else:
+                raise HTTPException(status_code=400, detail="unsupported operation type")
 
         pay_date = (payload or {}).get("date")
+        entry_source = "operation_payment" if has_base_operation_entry else "operation_payment_income"
         entry = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
@@ -1927,7 +1991,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             "description": desc,
             "lines": lines,
             "total": pay_amount,
-            "source": "operation_payment",
+            "source": entry_source,
             "transaction_type": "payment",
             "reference_id": op_id,
         }

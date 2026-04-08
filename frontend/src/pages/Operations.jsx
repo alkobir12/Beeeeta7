@@ -1196,7 +1196,7 @@ const Operations = () => {
   });
 
 
-  const handleUpdateOperationItems = async (opId, items) => {
+  const handleUpdateOperationItems = async (opId, items, meta = {}) => {
     try {
       setSaveOpId(opId);
 
@@ -1206,12 +1206,38 @@ const Operations = () => {
         0
       );
 
+      const targetOp = operations.find((o) => String(o.id) === String(opId)) || {};
+      const opType = String(targetOp?.type || '').toLowerCase();
+      const isPurchase = ['purchase', 'expense', 'out', 'purchase_return'].includes(opType);
+
       const payload = {
         items: safeItems,
         subtotal: newTotal,
         total: newTotal,
         workshopId: workshopId || null,
       };
+
+      if (meta?.accountCode) {
+        payload.account = meta.accountCode;
+        payload.accountCode = meta.accountCode;
+      }
+      if (meta?.accountName) {
+        payload.accountName = meta.accountName;
+      }
+
+      if (meta?.partnerName !== undefined) {
+        payload.partnerName = meta.partnerName || '';
+      }
+
+      if (isPurchase) {
+        payload.supplierName = meta?.partnerName || targetOp?.supplierName || '';
+        payload.supplierId = meta?.partnerId || targetOp?.supplierId || null;
+        payload.partnerType = 'supplier';
+      } else {
+        payload.customerName = meta?.partnerName || targetOp?.customerName || '';
+        payload.customerId = meta?.partnerId || targetOp?.customerId || null;
+        payload.partnerType = 'customer';
+      }
 
       await updateOperationMutation.mutateAsync({ opId, payload });
       return true;
@@ -2894,6 +2920,8 @@ const Operations = () => {
                     t={t}
                     accounts={accounts}
                     businessAccounts={bizAccounts}
+                    customers={customers}
+                    suppliers={suppliers}
                     vehicles={vehicleOptions}
                     isSaving={saveOpId === op.id}
                     isDeleting={deleteOpId === op.id}
@@ -2918,7 +2946,7 @@ const Operations = () => {
                       setConfirmOpen(true);
                     }}
                     onDelete={(o) => requestDeleteOperation(o)}
-                    onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
+                    onUpdateItems={(opId, items, meta) => handleUpdateOperationItems(opId, items, meta)}
                   />
                   );
                 })}

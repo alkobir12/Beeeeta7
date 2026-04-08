@@ -1818,6 +1818,11 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
     يدعم الدفعات الجزئية عبر payload.amount.
     """
     try:
+        try:
+            uuid.UUID(str(op_id))
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid operation id")
+
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider != "supabase":
             raise HTTPException(status_code=400, detail="confirm-payment supported only for supabase provider")
@@ -1835,7 +1840,21 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             raise HTTPException(status_code=404, detail="operation not found")
         op_row = op_rows[0]
 
-        if (op_row.get("payment_method") or "").lower() != "credit":
+        payment_methods = {
+            str(op_row.get("payment_method") or "").lower(),
+            str(op_row.get("paymentMethod") or "").lower(),
+        }
+        payment_statuses = {
+            str(op_row.get("payment_status") or "").lower(),
+            str(op_row.get("paymentStatus") or "").lower(),
+        }
+
+        is_credit_flow = (
+            "credit" in payment_methods
+            or len(payment_statuses.intersection({"credit", "unpaid", "pending", "partial"})) > 0
+        )
+
+        if not is_credit_flow:
             return {"success": True, "message": "operation is not credit"}
 
         op_type = (op_row.get("type") or "").lower()
@@ -1997,13 +2016,17 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         }
         _safe_insert_journal_entry(supa, entry)
 
-        try:
-            supa.client.table("operations").update({"payment_method": "cash", "payment_status": "paid"}).eq("id", op_id).execute()
-        except Exception:
-            pass
+        remaining_after = max(0.0, remaining - pay_amount)
+        new_status = "paid" if remaining_after <= 0.0001 else "partial"
+        new_method = "cash" if new_status == "paid" else "credit"
 
         try:
-            supa.client.table("operations").update({"payment_method": "cash"}).eq("id", op_id).execute()
+            supa.client.table("operations").update({
+                "payment_method": new_method,
+                "paymentMethod": new_method,
+                "payment_status": new_status,
+                "paymentStatus": new_status,
+            }).eq("id", op_id).execute()
         except Exception:
             pass
 
@@ -2017,7 +2040,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             "success": True,
             "data": {
                 "paid": round(pay_amount, 2),
-                "remaining": round(max(0.0, remaining - pay_amount), 2),
+                "remaining": round(remaining_after, 2),
             },
         }
 

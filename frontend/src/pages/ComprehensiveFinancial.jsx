@@ -210,12 +210,9 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
-  const loading = [
-    balanceSheetQuery,
-    incomeStatementQuery,
-    receivablesSummaryQuery,
-    reconciliationQuery,
-  ].some((query) => query.isLoading);
+  const loading = [balanceSheetQuery, incomeStatementQuery].some(
+    (query) => query.isLoading && !query.data
+  );
 
   const hasError = [
     balanceSheetQuery,

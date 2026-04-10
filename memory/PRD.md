@@ -17,6 +17,42 @@
 
 ## What's Been Implemented
 
+### مرحلة البوت الداخلي rrr + تخصيص الواجهة + الموازنة (10 Apr 2026)
+- إصلاح طباعة قيود اليومية (`JournalEntries.jsx`):
+  - `fetchWorkshopProfile` أصبح يدعم شكلين من استجابة API (`{success,data}` أو payload مباشر)
+  - بيانات الورشة تظهر بشكل موثوق عند الطباعة.
+
+- تطوير بوت الورشة الداخلي (`routes_alkabeer_bot.py` + `ChatWidget.jsx`):
+  - تفعيل وضع المطور عبر رمز `rrr` **للـ Manager/Admin فقط**.
+  - دعم أوامر تخصيص واجهة محفوظة: `rename / hide / show / reset_page`.
+  - حفظ التخصيصات في ملف دائم (`uploads/alkabeer_ui_customizations.json`).
+  - إضافة endpoint جديد: `GET /api/alkabeer-bot/customization`.
+  - إرسال `role/userId/currentPath/uiSnapshot` من الواجهة للبوت لتحليل الأوامر.
+  - عند توفر `ANTHROPIC_API_KEY`، البوت يستخدم Claude Sonnet 4.5 (مع fallback آمن).
+
+- إضافة أداة **الموازنة** (Budget) في المالية:
+  - Backend: `GET/POST/PUT/DELETE /api/finance/budgets`
+  - Frontend: تبويب جديد `الموازنة` في `ComprehensiveFinancial.jsx` مع:
+    - بطاقات ملخص (المخطط / الفعلي / الانحراف)
+    - إضافة بند موازنة
+    - حذف بند موازنة
+
+- تحسين **ميزان المراجعة**:
+  - بطاقات ملخص (مدين/دائن/فرق)
+  - بحث فوري بالكود أو اسم الحساب.
+
+- إصلاح bug حرج في التدقيق المالي:
+  - `audit_accounting_system` كان يستدعي `get_balance_sheet` بشكل غير صحيح.
+  - تم الإصلاح باستدعاء named params (`workshop_id=..., as_of_date=None`) لمنع خطأ date syntax.
+
+- نتائج اختبار المرحلة:
+  - `iteration_98.json`: نجاح كامل rrr + طباعة اليومية.
+  - `iteration_99.json`: كشف bug التدقيق وتم إصلاحه.
+  - `iteration_100.json`: تأكيد إصلاح endpoint التدقيق.
+
+ملاحظة متابعة:
+- لا يزال هناك ملاحظة أداء متوسطة من وكيل الاختبار على تحميل صفحة `ComprehensiveFinancial` في بعض جلسات Playwright (الـ APIs نفسها سليمة وتستجيب). تحتاج جولة Performance Frontend مستقلة لاحقة.
+
 ### فصل حساب النقد والبنك داخل كرت صافي الدخل (09 Apr 2026)
 - تم تحديث `ComprehensiveFinancial.jsx` في كرت **صافي الدخل** لعرض فصل واضح بين:
   - **حساب النقد** (عمليات نقدية)

@@ -209,6 +209,7 @@ export default function ComprehensiveFinancial() {
   ].some((query) => query.isError);
 
   const bsTotals = balanceSheetQuery.data?.totals || { assets: 0, liabilities: 0, equity: 0 };
+  const bsDetails = balanceSheetQuery.data?.details || {};
   const incomeTotals = incomeStatementQuery.data?.totals || { revenue: 0, expenses: 0, net_income: 0 };
   const cashFlow = cashFlowQuery.data || {};
   const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
@@ -327,16 +328,59 @@ export default function ComprehensiveFinancial() {
   const partsNet = revenueBreakdown.parts - expenseBreakdown.parts;
   const serviceNet = revenueBreakdown.service - expenseBreakdown.service;
 
+  const assetAccountEntries = useMemo(
+    () => Object.entries(bsDetails.assets_by_account || {}),
+    [bsDetails]
+  );
+
+  const cashAccountBalance = useMemo(() => {
+    return assetAccountEntries.reduce((sum, [code, value]) => {
+      const amount = parseEntryAmount(value);
+      const name = resolveReadableAccountName(code, value?.name);
+      const normalizedName = String(name || '').toLowerCase();
+      const normalizedCode = String(code || '').trim();
+      if (
+        normalizedCode.startsWith('1101')
+        || normalizedName.includes('النقد')
+        || normalizedName.includes('الصندوق')
+        || normalizedName.includes('cash')
+      ) {
+        return sum + amount;
+      }
+      return sum;
+    }, 0);
+  }, [assetAccountEntries, accountNameMap]);
+
+  const bankAccountBalance = useMemo(() => {
+    return assetAccountEntries.reduce((sum, [code, value]) => {
+      const amount = parseEntryAmount(value);
+      const name = resolveReadableAccountName(code, value?.name);
+      const normalizedName = String(name || '').toLowerCase();
+      const normalizedCode = String(code || '').trim();
+      if (
+        normalizedCode.startsWith('1102')
+        || normalizedName.includes('البنك')
+        || normalizedName.includes('bank')
+        || normalizedName.includes('بطاقة')
+      ) {
+        return sum + amount;
+      }
+      return sum;
+    }, 0);
+  }, [assetAccountEntries, accountNameMap]);
+
   const topCards = [
     {
       key: 'net_income',
       title: 'صافي الدخل',
       value: formatCurrency(incomeTotals.net_income || 0),
-      subtitle: `الهامش: ${profitMargin.toFixed(1)}%`,
+      subtitle: `الهامش: ${profitMargin.toFixed(1)}% • نقد: ${formatCurrency(cashAccountBalance)} • بنك: ${formatCurrency(bankAccountBalance)}`,
       accent: incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
         `إجمالي الإيرادات: ${formatCurrency(incomeTotals.revenue || 0)}`,
         `إجمالي المصروفات: ${formatCurrency(incomeTotals.expenses || 0)}`,
+        `حساب النقد (عمليات نقدية): ${formatCurrency(cashAccountBalance)}`,
+        `حساب البنك (بطاقة/تحويل): ${formatCurrency(bankAccountBalance)}`,
         `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
       ],
       testId: 'financial-headline-net-income',

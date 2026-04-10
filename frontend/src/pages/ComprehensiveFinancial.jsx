@@ -7,8 +7,10 @@ import {
   ChevronDown,
   ChevronRight,
   RefreshCw,
+  Save,
   Scale,
   ShieldCheck,
+  Trash2,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -24,6 +26,7 @@ const tabs = [
   { key: 'cashflow', label: 'التدفقات النقدية' },
   { key: 'receivables', label: 'الذمم' },
   { key: 'trial', label: 'ميزان المراجعة' },
+  { key: 'budget', label: 'الموازنة' },
   { key: 'reconcile', label: 'مطابقة العمليات' },
 ];
 
@@ -89,6 +92,12 @@ export default function ComprehensiveFinancial() {
     return safeDate(start);
   });
   const [endDate, setEndDate] = useState(() => safeDate(new Date()));
+  const [budgetMonth, setBudgetMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [budgetDraft, setBudgetDraft] = useState({ name: '', category: 'operating', planned: '', actual: '', notes: '' });
+  const [trialSearch, setTrialSearch] = useState('');
 
   const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
   const shouldLoadCashFlow = activeTab === 'cashflow';
@@ -135,6 +144,15 @@ export default function ComprehensiveFinancial() {
     queryFn: async () => {
       const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: endDate });
       return res.data?.data || { total_ar: 0, customers: [] };
+    },
+    enabled: Boolean(workshopId),
+  });
+
+  const budgetsQuery = useQuery({
+    queryKey: ['financial-budgets', workshopId, budgetMonth],
+    queryFn: async () => {
+      const res = await financeAPI.getBudgets({ workshop_id: workshopId, month: budgetMonth });
+      return res.data?.data || { rows: [], totals: { planned: 0, actual: 0, variance: 0 } };
     },
     enabled: Boolean(workshopId),
   });
@@ -204,6 +222,7 @@ export default function ComprehensiveFinancial() {
     incomeStatementQuery,
     cashFlowQuery,
     trialBalanceQuery,
+    budgetsQuery,
     receivablesSummaryQuery,
     reconciliationQuery,
   ].some((query) => query.isError);
@@ -213,11 +232,21 @@ export default function ComprehensiveFinancial() {
   const incomeTotals = incomeStatementQuery.data?.totals || { revenue: 0, expenses: 0, net_income: 0 };
   const cashFlow = cashFlowQuery.data || {};
   const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
+  const budgetsData = budgetsQuery.data || { rows: [], totals: { planned: 0, actual: 0, variance: 0 } };
   const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
   const chartAccounts = chartAccountsQuery.data || [];
   const accountTree = accountTreeDetailsQuery.data || null;
   const salesOperationsData = salesOperationsQuery.data || null;
+  const filteredTrialAccounts = useMemo(() => {
+    const q = String(trialSearch || '').trim().toLowerCase();
+    if (!q) return trialBalance.accounts || [];
+    return (trialBalance.accounts || []).filter((acc) => {
+      const code = String(acc?.code || '').toLowerCase();
+      const name = String(acc?.name || acc?.name_ar || '').toLowerCase();
+      return code.includes(q) || name.includes(q);
+    });
+  }, [trialBalance.accounts, trialSearch]);
 
   const accountNameMap = useMemo(() => {
     const map = {};
@@ -443,6 +472,27 @@ export default function ComprehensiveFinancial() {
       queryClient.invalidateQueries({ queryKey: ['financial-account-tree-details', workshopId, selectedAccount.code] });
     }
     queryClient.invalidateQueries({ queryKey: ['financial-sales-operations', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-budgets', workshopId] });
+  };
+
+  const handleSaveBudget = async () => {
+    if (!budgetDraft.name.trim()) return;
+    await financeAPI.createBudget({
+      workshop_id: workshopId,
+      month: budgetMonth,
+      name: budgetDraft.name.trim(),
+      category: budgetDraft.category,
+      planned: Number(budgetDraft.planned || 0),
+      actual: Number(budgetDraft.actual || 0),
+      notes: budgetDraft.notes,
+    });
+    setBudgetDraft({ name: '', category: 'operating', planned: '', actual: '', notes: '' });
+    queryClient.invalidateQueries({ queryKey: ['financial-budgets', workshopId, budgetMonth] });
+  };
+
+  const handleDeleteBudget = async (budgetId) => {
+    await financeAPI.deleteBudget(budgetId, { workshop_id: workshopId });
+    queryClient.invalidateQueries({ queryKey: ['financial-budgets', workshopId, budgetMonth] });
   };
 
   if (!workshopId) {
@@ -934,7 +984,44 @@ export default function ComprehensiveFinancial() {
               جاري تحميل ميزان المراجعة...
             </div>
           ) : (
-            <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-trial-balance-panel">
+            <div className="space-y-4" data-testid="financial-trial-enhanced-panel">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <GlassCard
+                  title="إجمالي المدين"
+                  value={formatCurrency(trialBalance.totals?.total_debit || 0)}
+                  subtitle="من ميزان المراجعة"
+                  testId="financial-trial-summary-debit"
+                  accent="from-cyan-500/25 to-blue-400/10"
+                />
+                <GlassCard
+                  title="إجمالي الدائن"
+                  value={formatCurrency(trialBalance.totals?.total_credit || 0)}
+                  subtitle="من ميزان المراجعة"
+                  testId="financial-trial-summary-credit"
+                  accent="from-indigo-500/25 to-violet-400/10"
+                />
+                <GlassCard
+                  title="فرق الميزان"
+                  value={formatCurrency((trialBalance.totals?.total_debit || 0) - (trialBalance.totals?.total_credit || 0))}
+                  subtitle="يفترض أن يكون قريبًا من الصفر"
+                  testId="financial-trial-summary-diff"
+                  accent="from-amber-500/25 to-orange-400/10"
+                />
+              </div>
+
+              <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-trial-balance-panel">
+                <div className="mb-3 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+                  <h3 className="text-sm font-semibold text-white" data-testid="financial-trial-title">ميزان المراجعة المطور</h3>
+                  <input
+                    type="text"
+                    value={trialSearch}
+                    onChange={(e) => setTrialSearch(e.target.value)}
+                    placeholder="بحث بالكود أو اسم الحساب"
+                    className="rounded-xl border border-white/15 bg-slate-900/40 px-3 py-2 text-xs text-slate-100 outline-none focus:border-cyan-300/40"
+                    data-testid="financial-trial-search-input"
+                  />
+                </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -946,7 +1033,7 @@ export default function ComprehensiveFinancial() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(trialBalance.accounts || []).map((acc, idx) => (
+                    {(filteredTrialAccounts || []).map((acc, idx) => (
                       <tr key={`${acc.code}-${idx}`} className="border-b border-white/5 text-slate-100">
                         <td className="p-3" data-testid={`financial-trial-code-${idx}`}>{acc.code}</td>
                         <td className="p-3" data-testid={`financial-trial-name-${idx}`}>{acc.name || acc.name_ar}</td>
@@ -964,8 +1051,134 @@ export default function ComprehensiveFinancial() {
                   </tfoot>
                 </table>
               </div>
+              </div>
             </div>
           )
+        )}
+
+        {activeTab === 'budget' && (
+          <div className="space-y-4" data-testid="financial-budget-panel">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <GlassCard
+                title="الموازنة المخططة"
+                value={formatCurrency(budgetsData.totals?.planned || 0)}
+                subtitle={`الشهر: ${budgetMonth}`}
+                testId="financial-budget-planned"
+                accent="from-cyan-500/25 to-blue-400/10"
+              />
+              <GlassCard
+                title="المصروف الفعلي"
+                value={formatCurrency(budgetsData.totals?.actual || 0)}
+                subtitle="إجمالي البنود"
+                testId="financial-budget-actual"
+                accent="from-rose-500/25 to-orange-400/10"
+              />
+              <GlassCard
+                title="الانحراف"
+                value={formatCurrency(budgetsData.totals?.variance || 0)}
+                subtitle="المخطط - الفعلي"
+                testId="financial-budget-variance"
+                accent="from-violet-500/25 to-fuchsia-400/10"
+              />
+            </div>
+
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-4 space-y-3" data-testid="financial-budget-editor">
+              <div className="flex flex-wrap gap-2 items-center">
+                <label className="text-xs text-slate-300">شهر الموازنة:</label>
+                <input
+                  type="month"
+                  value={budgetMonth}
+                  onChange={(e) => setBudgetMonth(e.target.value)}
+                  className="rounded-lg border border-white/15 bg-slate-900/40 px-2 py-1.5 text-xs text-slate-100"
+                  data-testid="financial-budget-month-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                <input
+                  type="text"
+                  placeholder="اسم البند"
+                  value={budgetDraft.name}
+                  onChange={(e) => setBudgetDraft((p) => ({ ...p, name: e.target.value }))}
+                  className="rounded-lg border border-white/15 bg-slate-900/40 px-2 py-2 text-xs text-slate-100"
+                  data-testid="financial-budget-name-input"
+                />
+                <select
+                  value={budgetDraft.category}
+                  onChange={(e) => setBudgetDraft((p) => ({ ...p, category: e.target.value }))}
+                  className="rounded-lg border border-white/15 bg-slate-900/40 px-2 py-2 text-xs text-slate-100"
+                  data-testid="financial-budget-category-select"
+                >
+                  <option value="operating">تشغيلي</option>
+                  <option value="parts">قطع</option>
+                  <option value="services">خدمات</option>
+                  <option value="other">أخرى</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="المخطط"
+                  value={budgetDraft.planned}
+                  onChange={(e) => setBudgetDraft((p) => ({ ...p, planned: e.target.value }))}
+                  className="rounded-lg border border-white/15 bg-slate-900/40 px-2 py-2 text-xs text-slate-100"
+                  data-testid="financial-budget-planned-input"
+                />
+                <input
+                  type="number"
+                  placeholder="الفعلي"
+                  value={budgetDraft.actual}
+                  onChange={(e) => setBudgetDraft((p) => ({ ...p, actual: e.target.value }))}
+                  className="rounded-lg border border-white/15 bg-slate-900/40 px-2 py-2 text-xs text-slate-100"
+                  data-testid="financial-budget-actual-input"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveBudget}
+                  className="inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-300/35 bg-emerald-500/15 px-2 py-2 text-xs text-emerald-100"
+                  data-testid="financial-budget-save-button"
+                >
+                  <Save size={13} />
+                  إضافة بند
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-200">
+                      <th className="p-2 text-right">البند</th>
+                      <th className="p-2 text-right">الفئة</th>
+                      <th className="p-2 text-right">المخطط</th>
+                      <th className="p-2 text-right">الفعلي</th>
+                      <th className="p-2 text-right">الانحراف</th>
+                      <th className="p-2 text-right">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(budgetsData.rows || []).map((row, idx) => (
+                      <tr key={row.id || idx} className="border-b border-white/5 text-slate-100" data-testid={`financial-budget-row-${idx}`}>
+                        <td className="p-2">{row.name}</td>
+                        <td className="p-2">{row.category}</td>
+                        <td className="p-2">{formatCurrency(row.planned || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.actual || 0)}</td>
+                        <td className="p-2">{formatCurrency((row.planned || 0) - (row.actual || 0))}</td>
+                        <td className="p-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBudget(row.id)}
+                            className="inline-flex items-center gap-1 rounded-md border border-rose-300/30 bg-rose-500/15 px-2 py-1 text-rose-100"
+                            data-testid={`financial-budget-delete-${idx}`}
+                          >
+                            <Trash2 size={12} />
+                            حذف
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === 'reconcile' && (

@@ -20,5 +20,13 @@
       "labels": {},
       "hidden": {}
     }
+  },
+  "test-hide-d77f5e08": {
+    "/test-hide-page": {
+      "labels": {},
+      "hidden": {
+        "test-element": true
+      }
+    }
   }
 }

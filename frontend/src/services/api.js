@@ -132,6 +132,10 @@ const financeAPI = {
   getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
   getReconciliation: (params) => api.get('/finance/reports/reconciliation', { params }),
   getAccountTreeDetails: (params) => api.get('/finance/reports/account-tree-details', { params }),
+  getBudgets: (params) => api.get('/finance/budgets', { params }),
+  createBudget: (data) => api.post('/finance/budgets', data),
+  updateBudget: (id, data) => api.put(`/finance/budgets/${id}`, data),
+  deleteBudget: (id, params) => api.delete(`/finance/budgets/${id}`, { params }),
 
   // AR (Receivables)
   getARCustomers: (params) => api.get('/finance/ar/customers', { params }),

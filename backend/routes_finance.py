@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any, List
 import uuid
 import os
 import re
+import json
 from supabase import create_client
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -3048,6 +3049,115 @@ async def ar_turnover(
 
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+_BUDGETS_FILE = os.path.join(os.path.dirname(__file__), "uploads", "finance_budgets.json")
+
+
+def _read_budgets() -> List[Dict[str, Any]]:
+    try:
+        os.makedirs(os.path.dirname(_BUDGETS_FILE), exist_ok=True)
+        if not os.path.exists(_BUDGETS_FILE):
+            with open(_BUDGETS_FILE, "w", encoding="utf-8") as f:
+                json.dump([], f, ensure_ascii=False, indent=2)
+        with open(_BUDGETS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _write_budgets(rows: List[Dict[str, Any]]):
+    os.makedirs(os.path.dirname(_BUDGETS_FILE), exist_ok=True)
+    with open(_BUDGETS_FILE, "w", encoding="utf-8") as f:
+        json.dump(rows, f, ensure_ascii=False, indent=2)
+
+
+@router.get("/budgets")
+async def get_budgets(
+    workshop_id: str = Query(...),
+    month: Optional[str] = Query(None, description="YYYY-MM")
+):
+    rows = _read_budgets()
+    filtered = [r for r in rows if str(r.get("workshop_id") or "") == str(workshop_id)]
+    if month:
+        filtered = [r for r in filtered if str(r.get("month") or "") == str(month)]
+
+    totals = {
+        "planned": round(sum(float(r.get("planned") or 0) for r in filtered), 2),
+        "actual": round(sum(float(r.get("actual") or 0) for r in filtered), 2),
+    }
+    totals["variance"] = round(totals["planned"] - totals["actual"], 2)
+
+    return {
+        "success": True,
+        "data": {
+            "rows": filtered,
+            "totals": totals,
+        },
+    }
+
+
+@router.post("/budgets")
+async def create_budget(payload: Dict[str, Any] = Body(...)):
+    workshop_id = str(payload.get("workshop_id") or "").strip()
+    month = str(payload.get("month") or "").strip()
+    name = str(payload.get("name") or "").strip()
+    if not workshop_id or not month or not name:
+        raise HTTPException(status_code=400, detail="workshop_id و month و name مطلوبة")
+
+    row = {
+        "id": str(uuid.uuid4()),
+        "workshop_id": workshop_id,
+        "month": month,
+        "name": name,
+        "category": str(payload.get("category") or "operating").strip() or "operating",
+        "planned": float(payload.get("planned") or 0),
+        "actual": float(payload.get("actual") or 0),
+        "notes": str(payload.get("notes") or "").strip(),
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+
+    rows = _read_budgets()
+    rows.append(row)
+    _write_budgets(rows)
+    return {"success": True, "data": row}
+
+
+@router.put("/budgets/{budget_id}")
+async def update_budget(budget_id: str, payload: Dict[str, Any] = Body(...)):
+    rows = _read_budgets()
+    idx = next((i for i, r in enumerate(rows) if str(r.get("id") or "") == str(budget_id)), -1)
+    if idx < 0:
+        raise HTTPException(status_code=404, detail="budget not found")
+
+    current = rows[idx]
+    updated = {
+        **current,
+        "name": str(payload.get("name", current.get("name") or "")).strip() or current.get("name"),
+        "category": str(payload.get("category", current.get("category") or "operating")).strip() or "operating",
+        "planned": float(payload.get("planned", current.get("planned") or 0)),
+        "actual": float(payload.get("actual", current.get("actual") or 0)),
+        "notes": str(payload.get("notes", current.get("notes") or "")).strip(),
+        "month": str(payload.get("month", current.get("month") or "")).strip() or current.get("month"),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    rows[idx] = updated
+    _write_budgets(rows)
+    return {"success": True, "data": updated}
+
+
+@router.delete("/budgets/{budget_id}")
+async def delete_budget(budget_id: str, workshop_id: str = Query(...)):
+    rows = _read_budgets()
+    next_rows = [
+        r for r in rows
+        if not (str(r.get("id") or "") == str(budget_id) and str(r.get("workshop_id") or "") == str(workshop_id))
+    ]
+    deleted = len(rows) - len(next_rows)
+    _write_budgets(next_rows)
+    return {"success": True, "deleted": deleted}
 
 @router.delete("/reset-all-data")
 async def reset_all_financial_data(

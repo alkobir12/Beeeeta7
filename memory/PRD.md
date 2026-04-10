@@ -17,6 +17,22 @@
 
 ## What's Been Implemented
 
+### تدقيق عكسي لخطأ النقد/البنك + إصلاح مباشر (10 Apr 2026)
+- تم تنفيذ تدقيق عكسي فعلي لآخر 30 يوم على حساب النقد 1101 وحساب البنك 1102.
+- تم اكتشاف السبب الجذري:
+  - بعض عمليات `payment_method=card` كانت تُرحّل سابقًا على **1101 النقد** بدل **1102 البنك**.
+- تم تطبيق إصلاحين:
+  1) **إصلاح مستقبلي** في إنشاء القيود:
+     - `card/transfer/pos/mada/visa/mastercard` ⇒ **1102 البنك**
+  2) **تصحيح تاريخي** عبر endpoint جديد:
+     - `POST /api/finance/reports/reclassify-payment-accounts`
+     - دعم Dry-run و Apply
+     - تم تطبيقه على Preview (آخر 30 يوم): `candidates=6`, `updated=6`
+
+- نتيجة التحقق بعد التطبيق:
+  - إعادة الفحص (dry-run) أصبحت `0 candidates`.
+  - تقرير اختبار backend: `iteration_102.json` نجاح **100%**.
+
 ### توثيق مصدر كل رقم داخل القوائم المالية (10 Apr 2026)
 - تم إضافة تقرير backend جديد: `GET /api/finance/reports/operation-trace`
   - يوضح التجميع حسب **نوع العملية**

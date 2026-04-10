@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Loader2, ClipboardList, FileText, Receipt, Send, Wrench, Bot, AlertCircle } from 'lucide-react';
 import { aiAPI, vehicleAPI, API_BASE } from '../services/api';
 import QuickPrintDialog from './QuickPrintDialog';
@@ -48,8 +48,10 @@ const isArchiveIntent = (value) => {
 // ويدجت مساعد الورشة الذكي العائم - تصميم Dark/Glass مطابق لثيم الموقع
 const ChatWidget = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const messagesEndRef = useRef(null);
   const archiveLookupTimerRef = useRef(null);
+  const appliedCustomizationsRef = useRef([]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState('chat'); // 'chat' | 'diagnosis' | 'technical' | 'invoice'
@@ -80,10 +82,107 @@ const ChatWidget = () => {
   const [archiveResults, setArchiveResults] = useState([]);
   const [selectedArchiveResult, setSelectedArchiveResult] = useState(null);
 
+  const currentPath = location?.pathname || '/';
+
+  const sessionInfo = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('session') || localStorage.getItem('workshopUser') || '{}';
+      const parsed = JSON.parse(raw);
+      const role = String(parsed?.role || parsed?.userRole || '').trim();
+      const userId = String(parsed?.id || parsed?.userId || parsed?.username || parsed?.phone || 'manager').trim();
+      return {
+        role,
+        userId: userId || 'manager',
+      };
+    } catch (_e) {
+      return { role: '', userId: 'manager' };
+    }
+  }, []);
+
+  const clearAppliedCustomizations = useCallback(() => {
+    appliedCustomizationsRef.current.forEach((entry) => {
+      try {
+        if (!entry?.element) return;
+        if (entry.type === 'hide') {
+          entry.element.style.display = entry.prevDisplay ?? '';
+        }
+        if (entry.type === 'rename') {
+          entry.element.textContent = entry.prevText ?? '';
+        }
+      } catch (_e) {
+        // noop
+      }
+    });
+    appliedCustomizationsRef.current = [];
+  }, []);
+
+  const applyCustomizations = useCallback((customization = {}) => {
+    clearAppliedCustomizations();
+
+    const labels = customization?.labels || {};
+    const hidden = customization?.hidden || {};
+
+    Object.entries(hidden).forEach(([testid, hideValue]) => {
+      if (!hideValue) return;
+      const element = document.querySelector(`[data-testid="${testid}"]`);
+      if (!element) return;
+      appliedCustomizationsRef.current.push({
+        type: 'hide',
+        element,
+        prevDisplay: element.style.display,
+      });
+      element.style.display = 'none';
+    });
+
+    Object.entries(labels).forEach(([testid, newLabel]) => {
+      const element = document.querySelector(`[data-testid="${testid}"]`);
+      if (!element) return;
+      appliedCustomizationsRef.current.push({
+        type: 'rename',
+        element,
+        prevText: element.textContent,
+      });
+      element.textContent = String(newLabel || '');
+    });
+  }, [clearAppliedCustomizations]);
+
+  const buildUiSnapshot = useCallback(() => {
+    try {
+      const nodes = Array.from(document.querySelectorAll('[data-testid]'));
+      const snapshot = nodes
+        .slice(0, 220)
+        .map((node) => ({
+          testid: node.getAttribute('data-testid') || '',
+          text: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80),
+          tag: String(node.tagName || '').toLowerCase(),
+        }))
+        .filter((item) => item.testid);
+      return snapshot;
+    } catch (_e) {
+      return [];
+    }
+  }, []);
+
+  const fetchAndApplyCustomizations = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/alkabeer-bot/customization?user_id=${encodeURIComponent(sessionInfo.userId)}&path=${encodeURIComponent(currentPath)}`);
+      const data = await res.json();
+      if (data?.success && data?.data) {
+        setTimeout(() => applyCustomizations(data.data), 80);
+      }
+    } catch (e) {
+      console.error('Failed to fetch customizations', e);
+    }
+  }, [API_BASE, sessionInfo.userId, currentPath, applyCustomizations]);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !chatSessionId) return;
     window.localStorage.setItem('workshop-bot-session-id', chatSessionId);
   }, [chatSessionId]);
+
+  useEffect(() => {
+    fetchAndApplyCustomizations();
+  }, [fetchAndApplyCustomizations, currentPath]);
 
   const resetChatSession = useCallback(() => {
     const nextSessionId = createWorkshopBotSessionId();
@@ -211,7 +310,14 @@ const ChatWidget = () => {
       }
 
       // إرسال الرسالة إلى أبو فهد (AlKabeer Bot)
-      const res = await aiAPI.alkabeerChat({ message: userMsg, sessionId: chatSessionId });
+      const res = await aiAPI.alkabeerChat({
+        message: userMsg,
+        sessionId: chatSessionId,
+        role: sessionInfo.role,
+        userId: sessionInfo.userId,
+        currentPath,
+        uiSnapshot: buildUiSnapshot(),
+      });
       
       const botResponse = res.data.response;
       const isDevMode = res.data.mode === 'dev';
@@ -224,6 +330,10 @@ const ChatWidget = () => {
         content: botResponse,
         isDev: isDevMode
       }]);
+
+      if (isDevMode && res?.data?.customization) {
+        setTimeout(() => applyCustomizations(res.data.customization), 80);
+      }
 
     } catch (e) {
       console.error('Chat error', e);
@@ -279,11 +389,11 @@ const ChatWidget = () => {
   };
 
   // تحديد المركبة الحالية من عنوان الصفحة
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const legacyCurrentPath = typeof window !== 'undefined' ? window.location.pathname : '';
   const currentVehicleIdFromPath = useMemo(() => {
-    const match = currentPath.match(/^\/vehicle\/(.+)$/);
+    const match = legacyCurrentPath.match(/^\/vehicle\/(.+)$/);
     return match ? match[1] : '';
-  }, [currentPath]);
+  }, [legacyCurrentPath]);
 
   const currentVehicle = useMemo(
     () => vehicles.find((v) => v.id === currentVehicleIdFromPath) || null,

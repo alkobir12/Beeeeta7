@@ -1,10 +1,15 @@
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Query
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import os
 import uuid
+import json
+import re
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter(prefix="/api/alkabeer-bot", tags=["alkabeer-bot"])
 
@@ -15,6 +20,209 @@ EXT_PROMPT_FILE = os.path.join(PROMPTS_DIR, "alkabeer_extensions.md")
 # In-memory session tracking for Developer Mode
 # Format: { session_id: { "mode": "user" | "dev", "pending_data": [] } }
 session_states = {}
+
+CUSTOMIZATION_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_ui_customizations.json")
+
+
+def _read_customizations() -> Dict[str, Any]:
+    try:
+        os.makedirs(os.path.dirname(CUSTOMIZATION_FILE), exist_ok=True)
+        if not os.path.exists(CUSTOMIZATION_FILE):
+            with open(CUSTOMIZATION_FILE, "w", encoding="utf-8") as f:
+                json.dump({}, f, ensure_ascii=False, indent=2)
+        with open(CUSTOMIZATION_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _write_customizations(data: Dict[str, Any]):
+    os.makedirs(os.path.dirname(CUSTOMIZATION_FILE), exist_ok=True)
+    with open(CUSTOMIZATION_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    labels = dict(global_cfg.get("labels") or {})
+    labels.update(page_cfg.get("labels") or {})
+
+    hidden = dict(global_cfg.get("hidden") or {})
+    hidden.update(page_cfg.get("hidden") or {})
+
+    return {
+        "labels": labels,
+        "hidden": hidden,
+    }
+
+
+def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
+    data = _read_customizations()
+    user_node = data.get(user_id) or {}
+    global_cfg = user_node.get("global") or {"labels": {}, "hidden": {}}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}}
+    merged = _merge_page_configs(global_cfg, page_cfg)
+    return {
+        "user_id": user_id,
+        "path": path,
+        "labels": merged.get("labels") or {},
+        "hidden": merged.get("hidden") or {},
+        "global": global_cfg,
+        "page": page_cfg,
+    }
+
+
+def _extract_json_object(raw_text: str) -> Optional[Dict[str, Any]]:
+    if not raw_text:
+        return None
+    text = raw_text.strip()
+
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"```$", "", text).strip()
+
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+
+    matches = re.findall(r"\{[\s\S]*\}", raw_text)
+    for candidate in reversed(matches):
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            continue
+    return None
+
+
+def _fallback_parse_actions(message: str, ui_snapshot: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    text = (message or "").strip()
+    actions: List[Dict[str, Any]] = []
+
+    show_terms = ["اظهر", "أظهر", "إظهار", "show"]
+    hide_terms = ["اخف", "إخفاء", "اخفاء", "hide"]
+    rename_terms = ["غير اسم", "تغيير اسم", "rename"]
+
+    def find_target(term_text: str) -> Optional[str]:
+        term_text = term_text.strip().lower()
+        for item in ui_snapshot or []:
+            label = str(item.get("text") or "").lower()
+            testid = str(item.get("testid") or "")
+            if term_text and term_text in label and testid:
+                return testid
+        return None
+
+    if any(token in text for token in hide_terms):
+        target_text = text
+        for token in hide_terms:
+            target_text = target_text.replace(token, "")
+        target = find_target(target_text)
+        if target:
+            actions.append({"type": "hide", "target_testid": target})
+        return actions
+
+    if any(token in text for token in show_terms):
+        target_text = text
+        for token in show_terms:
+            target_text = target_text.replace(token, "")
+        target = find_target(target_text)
+        if target:
+            actions.append({"type": "show", "target_testid": target})
+        return actions
+
+    if any(token in text for token in rename_terms) and "الى" in text:
+        parts = re.split(r"الى|إلى", text, maxsplit=1)
+        if len(parts) == 2:
+            left, right = parts[0], parts[1]
+            for token in rename_terms:
+                left = left.replace(token, "")
+            target = find_target(left)
+            new_label = right.strip()
+            if target and new_label:
+                actions.append({"type": "rename", "target_testid": target, "new_label": new_label})
+        return actions
+
+    return actions
+
+
+async def _parse_actions_with_claude(
+    message: str,
+    current_path: str,
+    ui_snapshot: List[Dict[str, Any]],
+    anthropic_key: str,
+    session_id: str,
+) -> List[Dict[str, Any]]:
+    model_prompt = (
+        "أنت محلل أوامر واجهة. مهمتك تحويل طلب المستخدم إلى JSON فقط بلا أي نص إضافي.\n"
+        "المسار الحالي: " + (current_path or "/") + "\n"
+        "العناصر المتاحة (data-testid + النص):\n"
+        f"{json.dumps(ui_snapshot[:200], ensure_ascii=False)}\n\n"
+        "الـ JSON النهائي بالشكل:\n"
+        "{\n"
+        "  \"actions\": [\n"
+        "    {\"type\": \"rename\", \"target_testid\": \"...\", \"new_label\": \"...\"},\n"
+        "    {\"type\": \"hide\", \"target_testid\": \"...\"},\n"
+        "    {\"type\": \"show\", \"target_testid\": \"...\"},\n"
+        "    {\"type\": \"reset_target\", \"target_testid\": \"...\"},\n"
+        "    {\"type\": \"reset_page\"}\n"
+        "  ]\n"
+        "}\n"
+        "لو لا يمكن التنفيذ، أرجع actions فارغة."
+    )
+
+    chat = LlmChat(
+        api_key=anthropic_key,
+        session_id=f"{session_id}-dev-parser",
+        system_message=model_prompt,
+    ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+
+    raw = await chat.send_message(UserMessage(text=message))
+    parsed = _extract_json_object(raw if isinstance(raw, str) else json.dumps(raw, ensure_ascii=False))
+    if not parsed:
+        return []
+    actions = parsed.get("actions")
+    return actions if isinstance(actions, list) else []
+
+
+def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    labels = dict(current_cfg.get("labels") or {})
+    hidden = dict(current_cfg.get("hidden") or {})
+
+    for action in actions:
+        action_type = str(action.get("type") or "").strip().lower()
+        target = str(action.get("target_testid") or "").strip()
+
+        if action_type == "reset_page":
+            labels = {}
+            hidden = {}
+            continue
+
+        if not target:
+            continue
+
+        if action_type == "rename":
+            new_label = str(action.get("new_label") or "").strip()
+            if new_label:
+                labels[target] = new_label
+            continue
+
+        if action_type == "hide":
+            hidden[target] = True
+            continue
+
+        if action_type == "show":
+            hidden[target] = False
+            continue
+
+        if action_type == "reset_target":
+            labels.pop(target, None)
+            hidden.pop(target, None)
+
+    return {"labels": labels, "hidden": hidden}
 
 def get_combined_system_prompt():
     base = ""
@@ -45,21 +253,32 @@ class ChatRequest(BaseModel):
     message: str
     sessionId: Optional[str] = None
     attachments: Optional[List[Dict[str, Any]]] = None
+    role: Optional[str] = None
+    userId: Optional[str] = None
+    currentPath: Optional[str] = "/"
+    uiSnapshot: Optional[List[Dict[str, Any]]] = None
 
 class ChatResponse(BaseModel):
     response: str
     sessionId: str
     model: str
     mode: str = "user"
+    actions: Optional[List[Dict[str, Any]]] = None
+    customization: Optional[Dict[str, Any]] = None
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest):
     try:
         api_key = os.getenv("EMERGENT_LLM_KEY")
-        if not api_key:
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key and not anthropic_api_key:
             raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
 
         session_id = payload.sessionId or str(uuid.uuid4())
+        user_role = str(payload.role or "").strip().lower()
+        user_id = str(payload.userId or "manager").strip() or "manager"
+        current_path = str(payload.currentPath or "/").strip() or "/"
+        ui_snapshot = payload.uiSnapshot or []
         
         # Init session state if not exists
         if session_id not in session_states:
@@ -71,9 +290,24 @@ async def chat(payload: ChatRequest):
         # --- Developer Mode Logic ---
         # 1. Trigger Entry
         if user_msg == "rrr":
+            if user_role not in {"manager", "admin", "مدير"}:
+                return ChatResponse(
+                    response="⛔ وضع المطور متاح للمدير فقط.",
+                    sessionId=session_id,
+                    model="system",
+                    mode="user",
+                )
             state["mode"] = "dev"
             return ChatResponse(
-                response="🔓 **تم تفعيل وضع المطور (Developer Mode)**\n\nأهلاً بك يا ريّس. أنا الآن مستعد لتلقي معلومات جديدة لتحديث ذاكرتي.\n\n📝 **التعليمات:**\n- أرسل أي معلومة تريد إضافتها مباشرة.\n- اكتب `EXIT` للخروج من وضع المطور.\n- اكتب `CLEAR` لمسح التحديثات الأخيرة (اختياري).",
+                response=(
+                    "🔓 **تم تفعيل وضع المطور (RRR)**\n\n"
+                    "أرسل أي أمر تعديل على الصفحة الحالية، مثل:\n"
+                    "- اخف كرت صافي الدخل\n"
+                    "- غير اسم زر تحديث إلى مزامنة\n"
+                    "- اظهر كرت الذمم\n"
+                    "- reset_page لإرجاع الصفحة للوضع الأصلي\n\n"
+                    "اكتب `EXIT` للخروج من وضع المطور."
+                ),
                 sessionId=session_id,
                 model="system",
                 mode="dev"
@@ -89,33 +323,86 @@ async def chat(payload: ChatRequest):
                     model="system",
                     mode="user"
                 )
-            
-            # Append received info to knowledge base
-            if append_to_knowledge(user_msg):
+
+            if user_msg.lower() in {"clear", "reset_page", "مسح", "اعادة الصفحة", "إعادة الصفحة"}:
+                data = _read_customizations()
+                user_node = data.get(user_id) or {}
+                user_node[current_path] = {"labels": {}, "hidden": {}}
+                data[user_id] = user_node
+                _write_customizations(data)
+                cfg = _get_user_page_config(user_id, current_path)
                 return ChatResponse(
-                    response=f"✅ **تم الحفظ!**\nتمت إضافة المعلومة إلى قاعدة المعرفة.\n\nهل لديك المزيد؟ (اكتب `EXIT` للخروج)",
+                    response="✅ تم إعادة الصفحة الحالية للوضع الأصلي.",
                     sessionId=session_id,
                     model="system",
-                    mode="dev"
+                    mode="dev",
+                    actions=[{"type": "reset_page"}],
+                    customization={"labels": cfg.get("labels", {}), "hidden": cfg.get("hidden", {})},
                 )
-            else:
+
+            actions: List[Dict[str, Any]] = []
+            try:
+                key_for_claude = anthropic_api_key or api_key
+                if key_for_claude:
+                    actions = await _parse_actions_with_claude(
+                        message=user_msg,
+                        current_path=current_path,
+                        ui_snapshot=ui_snapshot,
+                        anthropic_key=key_for_claude,
+                        session_id=session_id,
+                    )
+            except Exception as parse_err:
+                print(f"Developer command parse error: {parse_err}")
+
+            if not actions:
+                actions = _fallback_parse_actions(user_msg, ui_snapshot)
+
+            if not actions:
                 return ChatResponse(
-                    response="❌ حدث خطأ أثناء حفظ المعلومات. يرجى المحاولة مرة أخرى.",
+                    response="لم أفهم الأمر بشكل كافٍ. جرّب: (اخف ... / اظهر ... / غير اسم ... إلى ...)",
                     sessionId=session_id,
-                    model="system",
-                    mode="dev"
+                    model="claude-sonnet-4.5",
+                    mode="dev",
+                    actions=[],
                 )
+
+            data = _read_customizations()
+            user_node = data.get(user_id) or {}
+            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}}
+            updated_cfg = _apply_actions_to_config(page_cfg, actions)
+            user_node[current_path] = updated_cfg
+            data[user_id] = user_node
+            _write_customizations(data)
+
+            merged_cfg = _get_user_page_config(user_id, current_path)
+            return ChatResponse(
+                response=f"✅ تم تطبيق {len(actions)} تعديل على الصفحة الحالية.",
+                sessionId=session_id,
+                model="claude-sonnet-4.5",
+                mode="dev",
+                actions=actions,
+                customization={"labels": merged_cfg.get("labels", {}), "hidden": merged_cfg.get("hidden", {})},
+            )
 
         # --- Standard Chat Logic (Abu Fahad) ---
         
         # Load the latest combined prompt
         system_prompt = get_combined_system_prompt()
 
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message=system_prompt,
-        ).with_model("openai", "gpt-4o")
+        if anthropic_api_key:
+            chat = LlmChat(
+                api_key=anthropic_api_key,
+                session_id=session_id,
+                system_message=system_prompt,
+            ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+            model_used = "claude-sonnet-4.5"
+        else:
+            chat = LlmChat(
+                api_key=api_key,
+                session_id=session_id,
+                system_message=system_prompt,
+            ).with_model("openai", "gpt-4o")
+            model_used = "gpt-4o"
 
         file_contents = []
         if payload.attachments:
@@ -136,7 +423,7 @@ async def chat(payload: ChatRequest):
         return ChatResponse(
             response=response,
             sessionId=session_id,
-            model="gpt-4o",
+            model=model_used,
             mode="user"
         )
 
@@ -147,3 +434,17 @@ async def chat(payload: ChatRequest):
 @router.get("/health")
 def health():
     return {"status": "ok", "bot": "AlKabeer Abu Fahad (Dev Mode Enabled)"}
+
+
+@router.get("/customization")
+def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
+    cfg = _get_user_page_config(user_id, path)
+    return {
+        "success": True,
+        "data": {
+            "user_id": user_id,
+            "path": path,
+            "labels": cfg.get("labels", {}),
+            "hidden": cfg.get("hidden", {}),
+        },
+    }

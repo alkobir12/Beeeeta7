@@ -1,0 +1,24 @@
+{
+  "manager": {
+    "/accounting/comprehensive": {
+      "labels": {
+        "financial-headline-net-income-title": "صافي الدخل التشغيلي"
+      },
+      "hidden": {}
+    }
+  },
+  "test_dev_commands": {
+    "/test-page": {
+      "labels": {},
+      "hidden": {
+        "test-card": true
+      }
+    }
+  },
+  "test_customization_61a3ec5a": {
+    "/test-customization-page": {
+      "labels": {},
+      "hidden": {}
+    }
+  }
+}

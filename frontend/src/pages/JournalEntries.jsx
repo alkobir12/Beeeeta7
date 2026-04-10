@@ -153,8 +153,12 @@ export default function JournalEntries() {
     try {
       const response = await fetch(`${API_URL}/profile`);
       const data = await response.json();
-      if (data?.success && data?.data) {
-        setWorkshopProfile(data.data);
+      const normalizedProfile = (data?.success && data?.data)
+        ? data.data
+        : (data?.data || data || null);
+
+      if (normalizedProfile && typeof normalizedProfile === 'object') {
+        setWorkshopProfile(normalizedProfile);
       }
     } catch (error) {
       console.error('Error fetching workshop profile:', error);

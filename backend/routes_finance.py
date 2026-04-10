@@ -994,7 +994,7 @@ def _build_repair_journal_entry_from_operation(
 
     payment_method = str(operation.get("payment_method") or operation.get("paymentMethod") or "cash").strip().lower()
     is_credit = payment_method == "credit"
-    cash_code = "1102" if payment_method in {"bank", "transfer"} else "1101"
+    cash_code = "1102" if payment_method in {"bank", "transfer", "card", "pos", "mada", "visa", "mastercard"} else "1101"
     selected_code = (
         operation.get("accounting_account_code")
         or operation.get("accountCode")
@@ -3230,6 +3230,123 @@ async def get_operation_trace_report(
             "success": False,
             "error": str(e),
             "data": {"period": {"start_date": start_date, "end_date": end_date}, "rows": []},
+        }
+
+
+@router.post("/reports/reclassify-payment-accounts")
+async def reclassify_payment_accounts(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    apply_changes: bool = Query(False),
+):
+    """
+    تصحيح القيود التي سُجلت على النقد 1101 بدل البنك 1102 (أو العكس)
+    بحسب طريقة الدفع في العملية المرجعية.
+    """
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+    start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+    bank_methods = {"bank", "transfer", "card", "pos", "mada", "visa", "mastercard"}
+    account_id_to_code_local = {
+        "acc-1101": "1101",
+        "acc-1102": "1102",
+    }
+    account_name_local = {
+        "1101": "النقد",
+        "1102": "البنك",
+    }
+
+    try:
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        op_method = {}
+        for op in operations:
+            op_id = str(op.get("id") or "").strip()
+            if not op_id:
+                continue
+            method = str(op.get("payment_method") or op.get("paymentMethod") or "").strip().lower() or "cash"
+            op_method[op_id] = method
+
+        entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=20000,
+            include_rakan=True,
+        )
+
+        updated = 0
+        changed_entries = []
+
+        for entry in entries:
+            entry_id = str(entry.get("id") or "").strip()
+            ref = str(entry.get("reference_id") or "").strip()
+            if not entry_id or not ref or ref not in op_method:
+                continue
+
+            method = op_method[ref]
+            if method == "credit":
+                continue
+            expected_cash = "1102" if method in bank_methods else "1101"
+
+            lines = entry.get("lines") or []
+            if not isinstance(lines, list) or not lines:
+                continue
+
+            has_change = False
+            new_lines = []
+            for line in lines:
+                if not isinstance(line, dict):
+                    new_lines.append(line)
+                    continue
+
+                account_val = str(line.get("account") or "").strip()
+                mapped = account_id_to_code_local.get(account_val, account_val)
+                if mapped in {"1101", "1102"} and mapped != expected_cash:
+                    line = {**line}
+                    line["account"] = expected_cash
+                    if str(line.get("account_name") or "") in {"1101", "1102", "النقد", "البنك", "acc-1101", "acc-1102", ""}:
+                        line["account_name"] = account_name_local.get(expected_cash, expected_cash)
+                    has_change = True
+
+                new_lines.append(line)
+
+            if has_change:
+                changed_entries.append({
+                    "entry_id": entry_id,
+                    "reference_id": ref,
+                    "payment_method": method,
+                    "expected_cash_account": expected_cash,
+                })
+                if apply_changes and supabase:
+                    supabase.table("journal_entries").update({"lines": new_lines}).eq("id", entry_id).execute()
+                    updated += 1
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "candidates": len(changed_entries),
+                "updated": updated,
+                "changes": changed_entries[:50],
+                "applied": apply_changes,
+            },
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "candidates": 0,
+                "updated": 0,
+                "changes": [],
+                "applied": apply_changes,
+            },
         }
 
 

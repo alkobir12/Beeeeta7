@@ -1136,7 +1136,7 @@ def _build_operation_journal_entry(
 
     # Choose cash/bank code for non-credit payments
     cash_code = "1101"
-    if payment_method in ("transfer", "bank"):
+    if payment_method in ("transfer", "bank", "card", "pos", "mada", "visa", "mastercard"):
         cash_code = "1102"
 
     chart_account_ref_map = chart_account_ref_map or {}
@@ -1901,7 +1901,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         # Choose cash/bank account for settlement
         payment_method = (op_row.get("payment_method") or "cash").lower()
         cash_code = "1101"
-        if payment_method in ("transfer", "bank"):
+        if payment_method in ("transfer", "bank", "card", "pos", "mada", "visa", "mastercard"):
             cash_code = "1102"
 
         op_account_code = str(op_row.get("account") or op_row.get("accountCode") or "").strip()

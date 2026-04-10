@@ -3051,6 +3051,188 @@ async def ar_turnover(
         return {"success": False, "error": str(e)}
 
 
+@router.get("/reports/operation-trace")
+async def get_operation_trace_report(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    include_rakan: bool = Query(False),
+):
+    """شرح مسار الأرقام المالية حسب نوع العملية والقيود الناتجة."""
+    try:
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if not include_rakan:
+            operations = [op for op in operations if not _is_rakan_operation_row(op)]
+
+        accounts = _fetch_accounts()
+        id_to_code, code_to_name, _ = _build_account_maps(accounts)
+        entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=15000,
+            include_rakan=include_rakan,
+        )
+
+        op_type_by_id: Dict[str, str] = {}
+        by_type: Dict[str, Dict[str, Any]] = {}
+
+        for op in operations:
+            op_type = _normalize_operation_type_for_reconciliation(op.get("type")) or "other"
+            op_id = str(op.get("id") or "").strip()
+            if op_id:
+                op_type_by_id[op_id] = op_type
+
+            row = by_type.setdefault(op_type, {
+                "type": op_type,
+                "type_label_ar": _transaction_type_label_ar(op_type),
+                "operations_count": 0,
+                "operations_total": 0.0,
+                "journal_entries_count": 0,
+                "journal_entries_total": 0.0,
+                "payment_methods": {},
+                "impact": {
+                    "cash": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "bank": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "ar": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "ap": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "assets": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "revenue": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "expenses": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                },
+                "accounts_touched": {},
+            })
+            row["operations_count"] += 1
+            row["operations_total"] += _safe_float(op.get("total"))
+            pay_method = str(op.get("payment_method") or op.get("paymentMethod") or "unknown").lower()
+            row["payment_methods"][pay_method] = row["payment_methods"].get(pay_method, 0) + 1
+
+        def account_bucket(code: str) -> str:
+            c = str(code or "")
+            if c == "1101":
+                return "cash"
+            if c == "1102":
+                return "bank"
+            if c == "1103":
+                return "ar"
+            if c == "2101":
+                return "ap"
+            if c.startswith("1"):
+                return "assets"
+            if c.startswith("4"):
+                return "revenue"
+            if c.startswith("5") or c.startswith("6"):
+                return "expenses"
+            return "assets"
+
+        for entry in entries:
+            tx_type = _normalize_operation_type_for_reconciliation(entry.get("transaction_type"))
+            ref = str(entry.get("reference_id") or "").strip()
+            if ref and ref in op_type_by_id:
+                tx_type = op_type_by_id[ref]
+            tx_type = tx_type or "other"
+            row = by_type.setdefault(tx_type, {
+                "type": tx_type,
+                "type_label_ar": _transaction_type_label_ar(tx_type),
+                "operations_count": 0,
+                "operations_total": 0.0,
+                "journal_entries_count": 0,
+                "journal_entries_total": 0.0,
+                "payment_methods": {},
+                "impact": {
+                    "cash": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "bank": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "ar": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "ap": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "assets": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "revenue": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                    "expenses": {"debit": 0.0, "credit": 0.0, "net": 0.0},
+                },
+                "accounts_touched": {},
+            })
+            row["journal_entries_count"] += 1
+            row["journal_entries_total"] += _safe_float(entry.get("total"))
+
+            for line in entry.get("lines", []) or []:
+                norm = _normalize_line(line, id_to_code, code_to_name)
+                if not norm:
+                    continue
+                code = str(norm.get("code") or "")
+                debit = _safe_float(norm.get("debit"))
+                credit = _safe_float(norm.get("credit"))
+                bucket = account_bucket(code)
+                impact = row["impact"][bucket]
+                impact["debit"] += debit
+                impact["credit"] += credit
+                impact["net"] += (debit - credit)
+
+                touched = row["accounts_touched"].setdefault(code, {
+                    "code": code,
+                    "name": norm.get("name") or code_to_name.get(code) or code,
+                    "debit": 0.0,
+                    "credit": 0.0,
+                })
+                touched["debit"] += debit
+                touched["credit"] += credit
+
+        rows = []
+        for key in sorted(by_type.keys()):
+            row = by_type[key]
+            row["operations_total"] = round(_safe_float(row.get("operations_total")), 2)
+            row["journal_entries_total"] = round(_safe_float(row.get("journal_entries_total")), 2)
+            for impact_key in row["impact"]:
+                item = row["impact"][impact_key]
+                row["impact"][impact_key] = {
+                    "debit": round(_safe_float(item.get("debit")), 2),
+                    "credit": round(_safe_float(item.get("credit")), 2),
+                    "net": round(_safe_float(item.get("net")), 2),
+                }
+            touched = list((row.get("accounts_touched") or {}).values())
+            touched.sort(key=lambda x: abs(_safe_float(x.get("debit")) - _safe_float(x.get("credit"))), reverse=True)
+            row["accounts_touched"] = [
+                {
+                    "code": r.get("code"),
+                    "name": r.get("name"),
+                    "debit": round(_safe_float(r.get("debit")), 2),
+                    "credit": round(_safe_float(r.get("credit")), 2),
+                }
+                for r in touched[:8]
+            ]
+            rows.append(row)
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "rows": rows,
+                "summary": {
+                    "operations_total": round(sum(_safe_float(r.get("operations_total")) for r in rows), 2),
+                    "journal_total": round(sum(_safe_float(r.get("journal_entries_total")) for r in rows), 2),
+                    "types_count": len(rows),
+                },
+                "explainers": {
+                    "cash": "1101: عمليات نقدية مباشرة",
+                    "bank": "1102: بطاقات/تحويلات",
+                    "ar": "1103: ذمم مدينة",
+                    "ap": "2101: ذمم موردين",
+                },
+            },
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {"period": {"start_date": start_date, "end_date": end_date}, "rows": []},
+        }
+
+
 _BUDGETS_FILE = os.path.join(os.path.dirname(__file__), "uploads", "finance_budgets.json")
 
 

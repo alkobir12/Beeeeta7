@@ -131,6 +131,7 @@ const financeAPI = {
   getCashFlow: (params) => api.get('/finance/reports/cash-flow', { params }),
   getTrialBalance: (params) => api.get('/finance/reports/trial-balance', { params }),
   getReconciliation: (params) => api.get('/finance/reports/reconciliation', { params }),
+  getOperationTrace: (params) => api.get('/finance/reports/operation-trace', { params }),
   getAccountTreeDetails: (params) => api.get('/finance/reports/account-tree-details', { params }),
   getBudgets: (params) => api.get('/finance/budgets', { params }),
   createBudget: (data) => api.post('/finance/budgets', data),

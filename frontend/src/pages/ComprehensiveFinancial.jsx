@@ -157,6 +157,19 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
+  const operationTraceQuery = useQuery({
+    queryKey: ['financial-operation-trace', workshopId, startDate, endDate],
+    queryFn: async () => {
+      const res = await financeAPI.getOperationTrace({
+        workshop_id: workshopId,
+        start_date: startDate,
+        end_date: endDate,
+      });
+      return res.data?.data || { rows: [], summary: { operations_total: 0, journal_total: 0, types_count: 0 } };
+    },
+    enabled: Boolean(workshopId),
+  });
+
   const reconciliationQuery = useQuery({
     queryKey: ['financial-reconciliation', workshopId, startDate, endDate],
     queryFn: async () => {
@@ -220,6 +233,7 @@ export default function ComprehensiveFinancial() {
     cashFlowQuery,
     trialBalanceQuery,
     budgetsQuery,
+    operationTraceQuery,
     receivablesSummaryQuery,
     reconciliationQuery,
   ].some((query) => query.isError);
@@ -230,6 +244,7 @@ export default function ComprehensiveFinancial() {
   const cashFlow = cashFlowQuery.data || {};
   const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
   const budgetsData = budgetsQuery.data || { rows: [], totals: { planned: 0, actual: 0, variance: 0 } };
+  const operationTraceData = operationTraceQuery.data || { rows: [], summary: { operations_total: 0, journal_total: 0, types_count: 0 } };
   const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
   const chartAccounts = chartAccountsQuery.data || [];
@@ -470,6 +485,7 @@ export default function ComprehensiveFinancial() {
     }
     queryClient.invalidateQueries({ queryKey: ['financial-sales-operations', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['financial-budgets', workshopId] });
+    queryClient.invalidateQueries({ queryKey: ['financial-operation-trace', workshopId] });
   };
 
   const handleSaveBudget = async () => {
@@ -608,41 +624,90 @@ export default function ComprehensiveFinancial() {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="financial-overview-panel">
-            <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
-              <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-balance-status-title">
-                <Scale size={16} className="text-cyan-300" />
-                حالة معادلة الميزانية
-              </h3>
-              <p className={`mt-3 text-sm ${isBalanceEquationHealthy ? 'text-emerald-300' : 'text-rose-300'}`} data-testid="financial-balance-equation-status">
-                {isBalanceEquationHealthy ? '✅ الميزانية متوازنة' : '⚠️ الميزانية غير متوازنة'}
-              </p>
-              <div className="mt-3 space-y-1 text-sm text-slate-200">
-                <p data-testid="financial-overview-assets">الأصول: {formatCurrency(bsTotals.assets || 0)}</p>
-                <p data-testid="financial-overview-liabilities-equity">الخصوم + حقوق الملكية: {formatCurrency((bsTotals.liabilities || 0) + (bsTotals.equity || 0))}</p>
+          <div className="space-y-4" data-testid="financial-overview-panel">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-balance-status-title">
+                  <Scale size={16} className="text-cyan-300" />
+                  حالة معادلة الميزانية
+                </h3>
+                <p className={`mt-3 text-sm ${isBalanceEquationHealthy ? 'text-emerald-300' : 'text-rose-300'}`} data-testid="financial-balance-equation-status">
+                  {isBalanceEquationHealthy ? '✅ الميزانية متوازنة' : '⚠️ الميزانية غير متوازنة'}
+                </p>
+                <div className="mt-3 space-y-1 text-sm text-slate-200">
+                  <p data-testid="financial-overview-assets">الأصول: {formatCurrency(bsTotals.assets || 0)}</p>
+                  <p data-testid="financial-overview-liabilities-equity">الخصوم + حقوق الملكية: {formatCurrency((bsTotals.liabilities || 0) + (bsTotals.equity || 0))}</p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-reconcile-summary-title">
+                  <ShieldCheck size={16} className="text-violet-300" />
+                  ملخص المطابقة المحاسبية
+                </h3>
+                <p
+                  className={`mt-3 text-sm ${reconciliation.summary?.matched ? 'text-emerald-300' : 'text-amber-300'}`}
+                  data-testid="financial-reconcile-summary-status"
+                >
+                  {reconciliation.summary?.matched ? '✅ لا توجد فروقات' : '⚠️ توجد فروقات تحتاج مراجعة'}
+                </p>
+                <p className="mt-2 text-sm text-slate-100" data-testid="financial-reconcile-summary-diff">
+                  إجمالي الفروقات المطلقة: {formatCurrency(reconciliation.summary?.total_absolute_difference || 0)}
+                </p>
+                <p className="mt-1 text-xs text-slate-300" data-testid="financial-reconcile-summary-missing-journals">
+                  قيود العمليات المفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}
+                </p>
+                <p className="mt-1 text-xs text-slate-400" data-testid="financial-reconcile-summary-unclassified-journals">
+                  قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}
+                </p>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/15 bg-white/5 p-5">
-              <h3 className="text-base font-semibold text-white flex items-center gap-2" data-testid="financial-reconcile-summary-title">
-                <ShieldCheck size={16} className="text-violet-300" />
-                ملخص المطابقة المحاسبية
-              </h3>
-              <p
-                className={`mt-3 text-sm ${reconciliation.summary?.matched ? 'text-emerald-300' : 'text-amber-300'}`}
-                data-testid="financial-reconcile-summary-status"
-              >
-                {reconciliation.summary?.matched ? '✅ لا توجد فروقات' : '⚠️ توجد فروقات تحتاج مراجعة'}
-              </p>
-              <p className="mt-2 text-sm text-slate-100" data-testid="financial-reconcile-summary-diff">
-                إجمالي الفروقات المطلقة: {formatCurrency(reconciliation.summary?.total_absolute_difference || 0)}
-              </p>
-              <p className="mt-1 text-xs text-slate-300" data-testid="financial-reconcile-summary-missing-journals">
-                قيود العمليات المفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}
-              </p>
-              <p className="mt-1 text-xs text-slate-400" data-testid="financial-reconcile-summary-unclassified-journals">
-                قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}
-              </p>
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-5" data-testid="financial-operation-trace-panel">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-base font-semibold text-white" data-testid="financial-operation-trace-title">تتبّع مسار الأرقام حسب نوع العملية</h3>
+                <p className="text-xs text-slate-300" data-testid="financial-operation-trace-period">
+                  {startDate} → {endDate}
+                </p>
+              </div>
+
+              <div className="mt-2 text-xs text-slate-300" data-testid="financial-operation-trace-explainers">
+                النقد: {operationTraceData?.explainers?.cash || '1101'} • البنك: {operationTraceData?.explainers?.bank || '1102'} • الذمم: {operationTraceData?.explainers?.ar || '1103'}
+              </div>
+
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-300">
+                      <th className="p-2 text-right">نوع العملية</th>
+                      <th className="p-2 text-right">عدد العمليات</th>
+                      <th className="p-2 text-right">إجمالي العمليات</th>
+                      <th className="p-2 text-right">أثر النقد (صافي)</th>
+                      <th className="p-2 text-right">أثر البنك (صافي)</th>
+                      <th className="p-2 text-right">أثر الذمم (صافي)</th>
+                      <th className="p-2 text-right">أثر الأصول (صافي)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(operationTraceData?.rows || []).map((row, idx) => (
+                      <tr key={`${row.type}-${idx}`} className="border-b border-white/5 text-slate-100" data-testid={`financial-operation-trace-row-${idx}`}>
+                        <td className="p-2">{row.type_label_ar || row.type}</td>
+                        <td className="p-2">{row.operations_count || 0}</td>
+                        <td className="p-2">{formatCurrency(row.operations_total || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.impact?.cash?.net || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.impact?.bank?.net || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.impact?.ar?.net || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.impact?.assets?.net || 0)}</td>
+                      </tr>
+                    ))}
+                    {!(operationTraceData?.rows || []).length && (
+                      <tr>
+                        <td className="p-3 text-center text-slate-400" colSpan={7} data-testid="financial-operation-trace-empty">لا توجد بيانات تتبّع ضمن الفترة.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

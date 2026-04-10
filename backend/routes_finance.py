@@ -3602,7 +3602,7 @@ async def audit_accounting_system(
         
         # 1. جلب الميزانية العمومية
         try:
-            balance_sheet_data = await get_balance_sheet(workshop_id)
+            balance_sheet_data = await get_balance_sheet(workshop_id=workshop_id, as_of_date=None)
             if balance_sheet_data and balance_sheet_data.get('success'):
                 bs = balance_sheet_data['data']
                 financial_data['balance_sheet'] = {

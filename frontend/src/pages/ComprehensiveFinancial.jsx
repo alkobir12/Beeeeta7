@@ -723,10 +723,25 @@ export default function ComprehensiveFinancial() {
                 <h3 className="text-sm font-semibold text-white" data-testid={`financial-balance-${section.key}-title`}>{section.label}</h3>
                 <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto">
                   {section.list.length ? section.list.map((acc, idx) => (
-                    <div key={`${section.key}-${idx}`} className="rounded-xl border border-white/10 bg-slate-900/45 px-3 py-2">
-                      <p className="text-xs text-slate-300" data-testid={`financial-balance-${section.key}-name-${idx}`}>{acc.name}</p>
+                    <button
+                      key={`${section.key}-${idx}`}
+                      type="button"
+                      onClick={() => {
+                        const code = String(acc.code || acc.account_code || '').trim();
+                        if (!code) return;
+                        setSelectedAccount({ code, name: acc.name || code });
+                        setAccountTreePage(1);
+                        setActiveTab('income');
+                      }}
+                      className="w-full text-right rounded-xl border border-white/10 bg-slate-900/45 px-3 py-2 hover:bg-slate-900/60"
+                      data-testid={`financial-balance-${section.key}-source-button-${idx}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-slate-300" data-testid={`financial-balance-${section.key}-name-${idx}`}>{acc.name}</p>
+                        <span className="text-[10px] text-cyan-200">عرض المصدر</span>
+                      </div>
                       <p className="text-sm text-slate-100 font-semibold" data-testid={`financial-balance-${section.key}-value-${idx}`}>{formatCurrency(acc.balance || 0)}</p>
-                    </div>
+                    </button>
                   )) : <p className="text-xs text-slate-400" data-testid={`financial-balance-${section.key}-empty`}>لا توجد بيانات</p>}
                 </div>
               </div>
@@ -1092,6 +1107,7 @@ export default function ComprehensiveFinancial() {
                       <th className="p-3 text-right">الحساب</th>
                       <th className="p-3 text-right">مدين</th>
                       <th className="p-3 text-right">دائن</th>
+                      <th className="p-3 text-right">مصدر الرقم</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1101,6 +1117,22 @@ export default function ComprehensiveFinancial() {
                         <td className="p-3" data-testid={`financial-trial-name-${idx}`}>{acc.name || acc.name_ar}</td>
                         <td className="p-3" data-testid={`financial-trial-debit-${idx}`}>{formatCurrency(acc.debit || 0)}</td>
                         <td className="p-3" data-testid={`financial-trial-credit-${idx}`}>{formatCurrency(acc.credit || 0)}</td>
+                        <td className="p-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const code = String(acc.code || '').trim();
+                              if (!code) return;
+                              setSelectedAccount({ code, name: acc.name || acc.name_ar || code });
+                              setAccountTreePage(1);
+                              setActiveTab('income');
+                            }}
+                            className="rounded-lg border border-cyan-300/35 bg-cyan-500/15 px-2 py-1 text-[11px] text-cyan-100"
+                            data-testid={`financial-trial-source-button-${idx}`}
+                          >
+                            عرض المصدر
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1109,6 +1141,7 @@ export default function ComprehensiveFinancial() {
                       <td className="p-3" colSpan={2}>الإجمالي</td>
                       <td className="p-3" data-testid="financial-trial-total-debit">{formatCurrency(trialBalance.totals?.total_debit || 0)}</td>
                       <td className="p-3" data-testid="financial-trial-total-credit">{formatCurrency(trialBalance.totals?.total_credit || 0)}</td>
+                      <td className="p-3">—</td>
                     </tr>
                   </tfoot>
                 </table>

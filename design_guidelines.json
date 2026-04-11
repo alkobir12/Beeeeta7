@@ -1,0 +1,112 @@
+{
+  "theme_and_archetype": {
+    "domain": "Visual Page Editor & Dashboard",
+    "theme": "DARK",
+    "archetype": "Archetype 5 (Jewel & Luxury) + Archetype 4 (Swiss Structure)",
+    "description": "A premium, liquid-motion dark mode interface prioritizing infinite canvas building, deep space aesthetics, and hyper-fluid drag-and-drop mechanics. It balances the structural rigor of a page builder with the smooth, organic transitions of a modern AI bot-driven app."
+  },
+  "typography": {
+    "primary_heading_font": "Outfit",
+    "secondary_body_font": "Manrope",
+    "rules": {
+      "headings": "Tracking-tight, strictly non-Inter. Weights should be bold/black (700-900) for structural elements, medium (500) for card titles.",
+      "body": "Clean, highly legible geometric sans. Regular weight (400), loose line-height for chat and descriptions.",
+      "labels": "Uppercase, tracking-widest, text-xs. Used for system status and tiny metadata."
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight text-white",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight text-white",
+      "h3": "text-xl sm:text-2xl font-semibold text-white/90",
+      "card_title": "text-lg font-medium text-white/90",
+      "body": "text-base text-zinc-400",
+      "small_label": "text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500"
+    }
+  },
+  "color_palette": {
+    "background": {
+      "base": "#0A0A0A",
+      "canvas": "#050505",
+      "surface": "#121212",
+      "surface_elevated": "#1A1A1A"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "tertiary": "#52525B"
+    },
+    "brand_accents": {
+      "primary_liquid": "#3B82F6",
+      "primary_glow": "#8B5CF6",
+      "bot_indicator": "#10B981",
+      "destructive": "#EF4444"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.08)",
+      "hover": "rgba(255, 255, 255, 0.15)",
+      "active": "rgba(59, 130, 246, 0.5)"
+    },
+    "rules": "Never use pure #000000 or #808080. All grays must be tinted slightly cool (zinc). Gradients should be used sparingly as subtle background glows behind the canvas or AI chat panel, never as hard button backgrounds."
+  },
+  "spacing_and_layout": {
+    "general": "High-density for the builder canvas, generous padding for the bot chat and configuration panels.",
+    "container_padding": "p-6 md:p-8",
+    "canvas_grid": {
+      "type": "bento",
+      "columns": "grid-cols-1 md:grid-cols-4 lg:grid-cols-12",
+      "gap": "gap-4 md:gap-6",
+      "behavior": "Items must be draggable and resizable. Use fractional spans."
+    },
+    "chat_panel": {
+      "width": "w-full lg:w-96",
+      "position": "Fixed left or floating island on the left. Highly isolated from the canvas."
+    }
+  },
+  "surfaces_and_materials": {
+    "floating_toolbars": "Glassmorphism: bg-zinc-950/60 backdrop-blur-xl border border-white/10 shadow-2xl",
+    "canvas_cards": "Solid dark surface (bg-zinc-900), 1px subtle border (border-white/5), no heavy shadow. On drag/hover: scale-up, z-50, shadow-[0_0_30px_rgba(0,0,0,0.5)].",
+    "modals_and_edit_fields": "Neumorphic inset/outset blend. Deep inset backgrounds for inputs (bg-black/50 border border-white/5)."
+  },
+  "motion_and_liquid_ui": {
+    "core_library": "framer-motion",
+    "animations": {
+      "layout_transitions": "All canvas items must have `layout` prop with a spring transition (stiffness: 300, damping: 30) for liquid resizing and reordering.",
+      "liquid_hover": "Subtle scale up (1.02) and color gradient shift on interactive elements.",
+      "bot_typing": "Staggered fade-in for chat messages, liquid expanding height using AnimatePresence.",
+      "field_editing": "When double-clicking a card field, morph the text into an input field seamlessly using `layoutId`."
+    }
+  },
+  "component_instructions": {
+    "shadcn_ui": "Use shadcn/ui for Select, Dialog, Dropdown, Table, Tabs. Radix primitives should be styled with our deep dark theme.",
+    "builder_canvas": "Custom HTML/Tailwind + Framer Motion. DO NOT use rigid Shadcn cards for the main canvas elements; build custom `motion.div` bento blocks so they can fluidly animate.",
+    "chat_interface": "Use a sticky bottom input with blurred background. Messages should scroll behind it. Include a 'bot is thinking' animated SVG.",
+    "data_control": "Each card must have a visible or hover-revealed toolbar (edit, duplicate, delete). Editing opens an inline or floating glass form.",
+    "icons": "Use @phosphor-icons/react (Duotone or Regular) for a crisp, technical look."
+  },
+  "testing": {
+    "attributes": "All interactive elements MUST use `data-testid` (e.g., `data-testid='canvas-block-1'`, `data-testid='edit-field-button'`, `data-testid='bot-chat-input'`)."
+  },
+  "media_and_assets": {
+    "images": {
+      "canvas_background": {
+        "url": "https://images.unsplash.com/photo-1687463221023-02f259da7d77?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzOTB8MHwxfHNlYXJjaHwyfHxkYXJrJTIwYWJzdHJhY3QlMjAzZCUyMHNoYXBlc3xlbnwwfHx8fDE3NzU5NDU5MjN8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Abstract dark blue wavy background",
+        "usage": "Use as a fixed background for the main building canvas with high opacity reduction (e.g., opacity-20) to give a liquid depth feel behind the bento grid."
+      },
+      "avatar_bot": {
+        "url": "https://images.unsplash.com/photo-1773699022391-d9cd43f4f607?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwzfHxkYXJrJTIwc21vb3RoJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc3NTk0NTkyM3ww&ixlib=rb-4.1.0&q=85",
+        "alt": "Abstract shape for bot avatar",
+        "usage": "Use as the avatar for the rrr bot in the chat interface."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install framer-motion, @phosphor-icons/react, and shadcn/ui base primitives.",
+    "Build a dual-panel layout: Left is the 'rrr bot' chat interface for commands, Right is the interactive liquid canvas.",
+    "The Right canvas must be a Bento grid where cards can be added, edited, and deleted dynamically. Use framer-motion's `<Reorder.Group>` or manual `layout` animations so changes flow like liquid.",
+    "Allow inline editing of text/fields inside the bento cards. Double click a text node to swap it with an input field.",
+    "Implement a 'bot-driven editing' flow: typing 'add a pricing card' in the chat should inject a new animated block into the bento grid.",
+    "Never use generic sans-serif for headings; use Outfit from Google Fonts.",
+    "Ensure the entire UI feels fluid and reactive (Liquid animated UI), avoiding abrupt DOM jumps.",
+    "Ensure dark mode is locked in as the default theme."
+  ]
+}

@@ -888,6 +888,43 @@ async def update_biz_account(aid: str, payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.delete("/biz-accounts/{aid}")
+async def delete_biz_account(aid: str):
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
+        if provider == "supabase":
+            from supabase_service import SupabaseService
+
+            supa = SupabaseService()
+            existing = (
+                supa.client.table("business_accounts")
+                .select("id")
+                .eq("id", aid)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if not existing:
+                raise HTTPException(status_code=404, detail="not found")
+
+            supa.client.table("business_accounts").delete().eq("id", aid).execute()
+            return {"status": "ok", "deleted": 1}
+
+        if provider == "memory" or db is None:
+            return {"status": "ok", "deleted": 0}
+
+        res = await db.business_accounts.delete_one({"id": aid})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"status": "ok", "deleted": int(res.deleted_count)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --------------------- COA ---------------------
 DEFAULT_COA = {
     "Assets": {"Current Assets": ["Cash", "Bank"], "Fixed Assets": ["Equipment"]},

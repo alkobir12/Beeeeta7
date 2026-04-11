@@ -5,6 +5,24 @@
         "financial-headline-net-income-title": "صافي الدخل التشغيلي"
       },
       "hidden": {}
+    },
+    "/ai-financial": {
+      "labels": {
+        "test-element": "تسمية اختبار"
+      },
+      "hidden": {
+        "test-hidden-element": true
+      },
+      "contents": {
+        "test-content": "محتوى اختبار"
+      },
+      "custom_cards": [
+        {
+          "id": "test-card-1",
+          "title": "كرت اختبار",
+          "content": "محتوى كرت الاختبار"
+        }
+      ]
     }
   },
   "test_dev_commands": {

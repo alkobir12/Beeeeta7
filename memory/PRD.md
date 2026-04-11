@@ -17,6 +17,23 @@
 
 ## What's Been Implemented
 
+### تدقيق لوحة المؤشرات (الإيراد/الذمم) وإصلاحات القراءة (11 Apr 2026)
+- تم استدعاء وكيل التدقيق المتخصص والتحقق من تطابق أرقام لوحة المؤشرات مع الـ APIs الفعلية.
+- إصلاح Backend:
+  - إضافة alias endpoint: `GET /api/finance/reports/ar-customers` (متوافق مع `ar/customers`).
+- إصلاح Frontend (`ComprehensiveFinancial.jsx`):
+  - جعل تحميل الصفحة **غير حاجز** (non-blocking) بدل شاشة تحميل كاملة طويلة.
+  - إضافة `unwrapApiData` لقراءة payload بشكل متوافق حتى لا تبقى القيم صفرية عند اختلاف شكل الرد.
+  - تحسين حل workshop_id عبر env/session لتقليل أخطاء القراءة.
+- نتائج التحقق (`iteration_111.json`):
+  - صافي الدخل المعروض: **44,809.95 ر.س**
+  - إجمالي الذمم: **21,982 ر.س**
+  - اختفاء بنر التحميل بعد اكتمال البيانات.
+
+### إغلاق ملاحظة workshopTotal من التدقيق (11 Apr 2026)
+- في `supabase_service.py` تم إضافة fallback حسابي لـ `workshopTotal` و`supplierArchiveTotal` من `items` عند غياب الحقول المخزنة.
+- تأكيد الاختبار: `iteration_108.json` backend pass.
+
 ### تنظيف أسرار Git + تدقيق 90 يوم قبل/بعد (11 Apr 2026)
 - تم تنظيف الملفات التي ظهرت في خطأ `SECRETS_DETECTED`:
   - `/app/DEPLOYMENT_GUIDE.md`

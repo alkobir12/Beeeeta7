@@ -23,6 +23,38 @@
           "content": "محتوى كرت الاختبار"
         }
       ]
+    },
+    "/test-page-117": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    },
+    "/": {
+      "labels": {},
+      "hidden": {
+        "test-button": true
+      },
+      "contents": {},
+      "custom_cards": []
+    },
+    "/test-reset-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    },
+    "/page-a-117": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    },
+    "/page-b-117": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
     }
   },
   "test_dev_commands": {

@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Droplets, GripVertical, Plus, Save, X } from 'lucide-react';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { applyPageCustomizations, buildUiSnapshot } from '../utils/pageCustomization';
+import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
+import { LiquidBuilderBotTab } from './LiquidBuilderBotTab';
 
 const createCard = () => ({
   id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -11,31 +14,64 @@ const createCard = () => ({
 });
 
 export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('elements');
   const [snapshot, setSnapshot] = useState([]);
   const [config, setConfig] = useState({ labels: {}, hidden: {}, contents: {}, custom_cards: [] });
   const [saving, setSaving] = useState(false);
   const appliedRef = useRef([]);
+  const [selectedPage, setSelectedPage] = useState(currentPath || '/');
+  const [elementSearch, setElementSearch] = useState('');
+  const [groupFilter, setGroupFilter] = useState('all');
+  const [onlyCustomized, setOnlyCustomized] = useState(false);
+  const [elementsPage, setElementsPage] = useState(1);
 
   const canEdit = useMemo(() => ['manager', 'admin', 'مدير'].includes(String(session?.role || '').toLowerCase()), [session?.role]);
   const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
 
   useEffect(() => {
+    setSelectedPage(currentPath || '/');
+  }, [currentPath]);
+
+  useEffect(() => {
     if (!canEdit || !isOpen) return;
     setSnapshot(buildUiSnapshot());
-    siteBuilderAPI.getCustomization({ user_id: userId, path: currentPath }).then((response) => {
+    siteBuilderAPI.getCustomization({ user_id: userId, path: selectedPage }).then((response) => {
       const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [] };
       setConfig(nextConfig);
     }).catch((error) => console.error('Failed to load builder customization', error));
-  }, [canEdit, currentPath, isOpen, userId]);
+  }, [canEdit, selectedPage, isOpen, userId]);
 
   if (!canEdit) return null;
 
+  const groupOptions = Array.from(new Set(snapshot.map((item) => String(item.testid || '').split('-')[0]).filter(Boolean)));
+  const filteredSnapshot = snapshot.filter((item) => {
+    const text = `${item.testid} ${item.text}`.toLowerCase();
+    const matchesSearch = !elementSearch.trim() || text.includes(elementSearch.toLowerCase());
+    const matchesGroup = groupFilter === 'all' || String(item.testid || '').startsWith(`${groupFilter}-`);
+    const customized = config.labels?.[item.testid] || config.contents?.[item.testid] || config.hidden?.[item.testid];
+    const matchesCustomized = !onlyCustomized || customized;
+    return matchesSearch && matchesGroup && matchesCustomized;
+  });
+  const itemsPerPage = 20;
+  const totalElementPages = Math.max(1, Math.ceil(filteredSnapshot.length / itemsPerPage));
+  const paginatedSnapshot = filteredSnapshot.slice((elementsPage - 1) * itemsPerPage, elementsPage * itemsPerPage);
+
   const updateConfig = (nextConfig) => {
     setConfig(nextConfig);
-    applyPageCustomizations(nextConfig, appliedRef);
-    window.dispatchEvent(new CustomEvent('page-customization-preview', { detail: nextConfig }));
+    if (selectedPage === currentPath) {
+      applyPageCustomizations(nextConfig, appliedRef);
+      window.dispatchEvent(new CustomEvent('page-customization-preview', { detail: nextConfig }));
+    }
+  };
+
+  const navigateToPage = (path) => {
+    setSelectedPage(path);
+    setElementsPage(1);
+    if (path !== currentPath) {
+      navigate(path);
+    }
   };
 
   const updateElement = (testid, key, value) => {
@@ -83,7 +119,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       setSaving(true);
       const response = await siteBuilderAPI.saveCustomization({
         user_id: userId,
-        path: currentPath,
+        path: selectedPage,
         labels: config.labels || {},
         hidden: config.hidden || {},
         contents: config.contents || {},
@@ -91,8 +127,10 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       });
       const nextData = response.data?.data || config;
       setConfig(nextData);
-      applyPageCustomizations(nextData, appliedRef);
-      window.dispatchEvent(new CustomEvent('page-customization-updated', { detail: nextData }));
+      if (selectedPage === currentPath) {
+        applyPageCustomizations(nextData, appliedRef);
+        window.dispatchEvent(new CustomEvent('page-customization-updated', { detail: nextData }));
+      }
       onCustomizationSaved?.(nextData);
     } catch (error) {
       console.error('Failed to save site builder config', error);
@@ -114,17 +152,28 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div>
               <p className="text-base font-semibold text-white" data-testid="liquid-site-builder-title">Liquid Builder</p>
-              <p className="mt-1 text-xs text-slate-400" data-testid="liquid-site-builder-path">{currentPath}</p>
+              <p className="mt-1 text-xs text-slate-400" data-testid="liquid-site-builder-path">{selectedPage}</p>
             </div>
             <button type="button" onClick={() => setIsOpen(false)} className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200" data-testid="liquid-site-builder-close-button">
               <X size={16} />
             </button>
           </div>
 
+          <div className="border-b border-white/10 px-5 py-3" data-testid="liquid-site-builder-page-selector-wrap">
+            <label className="mb-2 block text-[11px] text-slate-400">الصفحة</label>
+            <select value={selectedPage} onChange={(event) => navigateToPage(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none" data-testid="liquid-site-builder-page-select">
+              {LIQUID_BUILDER_PAGES.map((page) => (
+                <option key={page.path} value={page.path}>{page.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-2 border-b border-white/10 px-5 py-3" data-testid="liquid-site-builder-tabs">
             {[
               { id: 'elements', label: 'العناصر' },
               { id: 'cards', label: 'الكروت' },
+              { id: 'layout', label: 'التخطيط' },
+              { id: 'bot', label: 'البوت' },
             ].map((tab) => (
               <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-2xl px-4 py-2 text-sm transition ${activeTab === tab.id ? 'bg-cyan-400 text-slate-950' : 'bg-white/5 text-slate-200'}`} data-testid={`liquid-site-builder-tab-${tab.id}`}>
                 {tab.label}
@@ -135,7 +184,23 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {activeTab === 'elements' ? (
               <div className="space-y-3" data-testid="liquid-site-builder-elements-tab">
-                {snapshot.map((item, index) => (
+                <div className="grid grid-cols-2 gap-2 rounded-[24px] border border-white/10 bg-white/5 p-3">
+                  <input value={elementSearch} onChange={(event) => { setElementSearch(event.target.value); setElementsPage(1); }} placeholder="بحث في عناصر الصفحة" className="col-span-2 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-white outline-none" data-testid="liquid-site-builder-elements-search" />
+                  <select value={groupFilter} onChange={(event) => { setGroupFilter(event.target.value); setElementsPage(1); }} className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-white outline-none" data-testid="liquid-site-builder-elements-group-filter">
+                    <option value="all">كل المجموعات</option>
+                    {groupOptions.map((group) => <option key={group} value={group}>{group}</option>)}
+                  </select>
+                  <label className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-200" data-testid="liquid-site-builder-elements-customized-filter">
+                    <span>المعدلة فقط</span>
+                    <input type="checkbox" checked={onlyCustomized} onChange={(event) => { setOnlyCustomized(event.target.checked); setElementsPage(1); }} />
+                  </label>
+                </div>
+
+                <div className="rounded-[24px] border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400" data-testid="liquid-site-builder-elements-meta">
+                  {filteredSnapshot.length} عنصر • صفحة {elementsPage} / {totalElementPages}
+                </div>
+
+                {paginatedSnapshot.map((item, index) => (
                   <div key={item.testid} className="rounded-[24px] border border-white/10 bg-white/5 p-3" data-testid={`liquid-site-builder-element-${index}`}>
                     <div className="mb-2 flex items-center gap-2 text-[11px] text-slate-400"><GripVertical size={12} />{item.testid}</div>
                     <p className="mb-3 text-xs text-slate-300">{item.text || 'بدون نص ظاهر'}</p>
@@ -151,8 +216,14 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                     </div>
                   </div>
                 ))}
+
+                <div className="flex items-center justify-between rounded-[24px] border border-white/10 bg-white/5 p-3 text-xs text-slate-300" data-testid="liquid-site-builder-elements-pagination">
+                  <button type="button" onClick={() => setElementsPage((page) => Math.max(1, page - 1))} className="rounded-xl border border-white/10 px-3 py-2" data-testid="liquid-site-builder-elements-prev-page">السابق</button>
+                  <span>{elementsPage} / {totalElementPages}</span>
+                  <button type="button" onClick={() => setElementsPage((page) => Math.min(totalElementPages, page + 1))} className="rounded-xl border border-white/10 px-3 py-2" data-testid="liquid-site-builder-elements-next-page">التالي</button>
+                </div>
               </div>
-            ) : (
+            ) : activeTab === 'cards' ? (
               <div className="space-y-4" data-testid="liquid-site-builder-cards-tab">
                 <button type="button" onClick={() => updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), createCard()] })} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100" data-testid="liquid-site-builder-add-card-button">
                   <Plus size={14} /> إضافة كرت
@@ -177,7 +248,40 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                   </div>
                 ))}
               </div>
-            )}
+            ) : activeTab === 'layout' ? (
+              <div className="space-y-4" data-testid="liquid-site-builder-layout-tab">
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                  <p className="font-semibold text-white">مركز الصفحة المختارة</p>
+                  <p className="mt-2 text-xs leading-6 text-slate-400">اختر أي صفحة من الأعلى وسيتم تحميل عناصرها الحالية داخل تبويب العناصر. هذا يجعل تعديل الصفحة نفسها أسرع بدل قائمة واحدة طويلة على مستوى النظام.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid="liquid-site-builder-layout-groups-card">
+                    <p className="text-xs text-slate-400">المجموعات المكتشفة</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{groupOptions.length}</p>
+                  </div>
+                  <div className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid="liquid-site-builder-layout-elements-card">
+                    <p className="text-xs text-slate-400">عناصر الصفحة الحالية</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{snapshot.length}</p>
+                  </div>
+                </div>
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 text-xs text-slate-300" data-testid="liquid-site-builder-layout-groups-list">
+                  {groupOptions.length ? groupOptions.join(' • ') : 'لا توجد مجموعات ظاهرة بعد على هذه الصفحة.'}
+                </div>
+              </div>
+            ) : activeTab === 'bot' ? (
+              <LiquidBuilderBotTab
+                session={session}
+                selectedPage={selectedPage}
+                snapshot={snapshot}
+                onCustomizationReceived={(customization) => updateConfig({
+                  ...config,
+                  labels: customization.labels || config.labels,
+                  hidden: customization.hidden || config.hidden,
+                  contents: customization.contents || config.contents,
+                  custom_cards: customization.custom_cards || config.custom_cards,
+                })}
+              />
+            ) : null}
           </div>
 
           <div className="border-t border-white/10 px-5 py-4">

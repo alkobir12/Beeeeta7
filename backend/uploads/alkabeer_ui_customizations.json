@@ -31,12 +31,22 @@
       "custom_cards": []
     },
     "/": {
-      "labels": {},
-      "hidden": {
-        "test-button": true
+      "labels": {
+        "root-element": "تسمية الصفحة الرئيسية"
       },
-      "contents": {},
-      "custom_cards": []
+      "hidden": {
+        "root-hidden-element": true
+      },
+      "contents": {
+        "root-content": "محتوى الصفحة الرئيسية"
+      },
+      "custom_cards": [
+        {
+          "id": "root-card-1",
+          "title": "كرت الصفحة الرئيسية",
+          "content": "محتوى كرت الصفحة الرئيسية"
+        }
+      ]
     },
     "/test-reset-page": {
       "labels": {},
@@ -55,6 +65,24 @@
       "hidden": {},
       "contents": {},
       "custom_cards": []
+    },
+    "/customers": {
+      "labels": {
+        "customers-element": "تسمية صفحة العملاء"
+      },
+      "hidden": {
+        "customers-hidden-element": false
+      },
+      "contents": {
+        "customers-content": "محتوى صفحة العملاء"
+      },
+      "custom_cards": [
+        {
+          "id": "customers-card-1",
+          "title": "كرت صفحة العملاء",
+          "content": "محتوى كرت صفحة العملاء"
+        }
+      ]
     }
   },
   "test_dev_commands": {

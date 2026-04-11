@@ -49,9 +49,7 @@ try:
     print("\n" + "=" * 60)
     print("METHOD 2: psql Command Line (if you have direct access)")
     print("=" * 60)
-    print(
-        'psql "postgresql://postgres:[YOUR-PASSWORD]@db.kqjlyozhvwswooztccag.supabase.co:5432/postgres" -f /app/backend/supabase_schema.sql'
-    )
+    print('psql "$DATABASE_URL" -f /app/backend/supabase_schema.sql')
 
     print("\n" + "=" * 60)
     print("After creating tables, run this verification:")

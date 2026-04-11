@@ -95,7 +95,7 @@ cp .env.example .env
 # عدّل الملف .env:
 MONGO_URL="mongodb://localhost:27017"
 DB_NAME="workshop_db"
-EMERGENT_LLM_KEY=sk-emergent-5A3C779954b79CeC9C
+EMERGENT_LLM_KEY=YOUR_EMERGENT_LLM_KEY
 
 # تهيئة قاعدة البيانات
 python init_data.py
@@ -186,7 +186,7 @@ REACT_APP_BACKEND_URL=https://api.yourdomain.com
 ### 2. تأمين MongoDB:
 ```javascript
 // في server.py, غيّر:
-MONGO_URL="mongodb://username:password@localhost:27017"
+MONGO_URL="mongodb://<DB_USER>:<DB_PASSWORD>@localhost:27017"
 ```
 
 ### 3. استخدام HTTPS:

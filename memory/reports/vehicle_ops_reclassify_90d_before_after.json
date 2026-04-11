@@ -1,0 +1,90 @@
+{
+  "period": {
+    "start_date": "2026-01-11",
+    "end_date": "2026-04-11"
+  },
+  "before": {
+    "reconciliation_summary": {
+      "matched": false,
+      "total_absolute_difference": 1850.0,
+      "untracked_operations": {
+        "count": 0,
+        "total": 0.0
+      },
+      "unclassified_journal_entries": {
+        "count": 9,
+        "total": 42633.5
+      },
+      "missing_operation_journals": {
+        "count": 0,
+        "total": 0,
+        "sample_operation_ids": []
+      }
+    },
+    "dry_run": {
+      "period": {
+        "start_date": "2026-01-11",
+        "end_date": "2026-04-11"
+      },
+      "candidates": 1,
+      "updated": 0,
+      "changes": [
+        {
+          "operation_id": "72078883-6db5-4631-8f72-cf308b4b9fc3",
+          "type": "service",
+          "current_total": 2250.0,
+          "workshop_total": 500.0,
+          "supplier_total": 1750.0
+        }
+      ],
+      "applied": false
+    }
+  },
+  "applied": {
+    "period": {
+      "start_date": "2026-01-11",
+      "end_date": "2026-04-11"
+    },
+    "candidates": 1,
+    "updated": 1,
+    "changes": [
+      {
+        "operation_id": "72078883-6db5-4631-8f72-cf308b4b9fc3",
+        "type": "service",
+        "current_total": 2250.0,
+        "workshop_total": 500.0,
+        "supplier_total": 1750.0
+      }
+    ],
+    "applied": true
+  },
+  "after": {
+    "reconciliation_summary": {
+      "matched": true,
+      "total_absolute_difference": 0.0,
+      "untracked_operations": {
+        "count": 0,
+        "total": 0.0
+      },
+      "unclassified_journal_entries": {
+        "count": 9,
+        "total": 42633.5
+      },
+      "missing_operation_journals": {
+        "count": 0,
+        "total": 0,
+        "sample_operation_ids": []
+      }
+    },
+    "dry_run": {
+      "period": {
+        "start_date": "2026-01-11",
+        "end_date": "2026-04-11"
+      },
+      "candidates": 0,
+      "updated": 0,
+      "changes": [],
+      "applied": false
+    }
+  }
+}

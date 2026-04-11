@@ -41,7 +41,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://autoprofit_user:${DB_PASSWORD}@postgres:5432/autoprofit
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ENVIRONMENT: production
@@ -63,7 +63,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_URL: postgresql://autoprofit_user:${DB_PASSWORD}@postgres:5432/autoprofit
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
       MODEL_PATH: /models
     volumes:
@@ -84,7 +84,7 @@ services:
     restart: always
     command: celery -A src.core.celery_app worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql://autoprofit_user:${DB_PASSWORD}@postgres:5432/autoprofit
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
     depends_on:
       - redis

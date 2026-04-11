@@ -209,6 +209,8 @@ export default function ComprehensiveFinancial() {
       return unwrapApiData(res, { rows: [], count: 0 });
     },
     enabled: Boolean(workshopId),
+    placeholderData: { rows: [], count: 0 },
+    refetchOnWindowFocus: false,
   });
 
   const chartAccountsQuery = useQuery({
@@ -281,6 +283,7 @@ export default function ComprehensiveFinancial() {
   const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
   const bulkDeleteAudit = bulkDeleteAuditQuery.data || { rows: [], count: 0 };
+  const isBulkDeleteAuditLoading = !bulkDeleteAuditQuery.data && (bulkDeleteAuditQuery.isLoading || bulkDeleteAuditQuery.isPending);
   const chartAccounts = chartAccountsQuery.data || [];
   const accountTree = accountTreeDetailsQuery.data || null;
   const salesOperationsData = salesOperationsQuery.data || null;
@@ -1370,7 +1373,7 @@ export default function ComprehensiveFinancial() {
               </div>
             </div>
 
-            <FinanceBulkDeleteAuditPanel rows={bulkDeleteAudit.rows || []} loading={bulkDeleteAuditQuery.isLoading && !bulkDeleteAuditQuery.data} />
+            <FinanceBulkDeleteAuditPanel rows={bulkDeleteAudit.rows || []} loading={isBulkDeleteAuditLoading} />
           </div>
         )}
       </div>

@@ -2826,6 +2826,21 @@ async def ar_customers(
         return {"success": False, "error": str(e), "data": {"customers": []}}
 
 
+@router.get("/reports/ar-customers")
+async def reports_ar_customers(
+    workshop_id: str = Query(...),
+    as_of: Optional[str] = Query(None),
+    include_today: bool = Query(True),
+):
+    """Compatibility alias for AR customers reporting endpoint."""
+    resolved_as_of = as_of or datetime.now().date().isoformat()
+    return await ar_customers(
+        workshop_id=workshop_id,
+        as_of=resolved_as_of,
+        include_today=include_today,
+    )
+
+
 @router.get("/ar/customer-statement")
 async def ar_customer_statement(
     workshop_id: str = Query(...),

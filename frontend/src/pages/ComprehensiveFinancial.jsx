@@ -223,13 +223,13 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
-  const loading = [balanceSheetQuery, incomeStatementQuery].some(
+  const coreLoading = [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isLoading && !query.data
   );
 
-  const hasError = [
-    balanceSheetQuery,
-    incomeStatementQuery,
+  const hasCoreError = [balanceSheetQuery, incomeStatementQuery].some((query) => query.isError);
+
+  const hasNonBlockingError = [
     cashFlowQuery,
     trialBalanceQuery,
     budgetsQuery,
@@ -519,15 +519,7 @@ export default function ComprehensiveFinancial() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[50vh]" data-testid="financial-loading-state">
-        <div className="w-10 h-10 border-4 border-cyan-200 border-t-cyan-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (hasError) {
+  if (hasCoreError) {
     return (
       <div className="max-w-5xl mx-auto p-6" dir="rtl">
         <div className="rounded-3xl border border-amber-300/35 bg-amber-500/10 p-5" data-testid="financial-error-state">
@@ -549,6 +541,18 @@ export default function ComprehensiveFinancial() {
     <div className="container mx-auto max-w-7xl p-4 md:p-6" dir="rtl">
       <div className="rounded-[34px] border border-white/10 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0b1220] p-5 md:p-7 shadow-[0_35px_120px_-45px_rgba(14,165,233,0.45)]">
         <div className="absolute pointer-events-none" />
+
+        {coreLoading && (
+          <div className="mb-4 rounded-2xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs text-cyan-100" data-testid="financial-loading-state">
+            جاري تحميل البيانات الأساسية... سيتم عرض الأرقام تدريجيًا.
+          </div>
+        )}
+
+        {hasNonBlockingError && (
+          <div className="mb-4 rounded-2xl border border-amber-300/25 bg-amber-500/10 px-4 py-2 text-xs text-amber-100" data-testid="financial-partial-error-banner">
+            بعض التقارير الفرعية لم تكتمل الآن، لكن البيانات الأساسية متاحة.
+          </div>
+        )}
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
           <div>

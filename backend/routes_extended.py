@@ -3271,6 +3271,8 @@ def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
         if kind == 'advance':
             advance_paid += amt
 
+    # Keep legacy total/balance view for vehicle page display
+    # while exposing supplier archive explicitly in a separate field.
     total_amount = total_workshop + total_suppliers
     balance = total_amount - total_paid
 
@@ -3288,6 +3290,7 @@ def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
         'payments': payments,
         'total_workshop': round(total_workshop, 2),
         'total_suppliers': round(total_suppliers, 2),
+        'supplier_archive_total': round(total_suppliers, 2),
         'total_amount': round(total_amount, 2),
         'total_paid': round(total_paid, 2),
         'advance_paid': round(advance_paid, 2),
@@ -3912,14 +3915,17 @@ async def vehicle_financial_summary(vehicle_id: str):
                 total_paid += fin['total_paid']
                 total_advance += fin['advance_paid']
 
+        # Keep current UI-compatible balance formula
         total_amount = total_workshop + total_suppliers
         balance = total_amount - total_paid
 
         return {
             "total_workshop": round(total_workshop, 2),
             "total_suppliers": round(total_suppliers, 2),
+            "supplier_archive_total": round(total_suppliers, 2),
             "total_paid": round(total_paid, 2),
             "advance_paid": round(total_advance, 2),
+            "total_amount": round(total_amount, 2),
             "balance": round(balance, 2),
         }
 

@@ -13,7 +13,7 @@ const formatMoney = (value) => {
   }
 };
 
-const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
+const StatCard = ({ title, value, subtitle, accent = 'slate', testId }) => {
   const accentMap = {
     emerald: {
       bg: 'rgba(16,185,129,0.10)',
@@ -47,6 +47,7 @@ const StatCard = ({ title, value, subtitle, accent = 'slate' }) => {
   return (
     <div
       className="dash-widget-shell"
+      data-testid={testId}
       style={{
         background:
           `radial-gradient(circle at 12% 18%, ${c.bg}, transparent 55%), rgba(255,255,255,0.06)`,
@@ -92,28 +93,35 @@ export default function VehicleFinancialSummary({ summary, t }) {
       <StatCard
         title={safeT('vehicle_finance.workshop_due', 'ذمم الورشة')}
         value={s.total_workshop}
+        subtitle={safeT('vehicle_finance.workshop_due_hint', 'إيراد الورشة (ذمم العميل)')}
         accent="violet"
+        testId="vehicle-financial-summary-workshop-due"
       />
       <StatCard
         title={safeT('vehicle_finance.suppliers_due', 'ذمم الموردين')}
         value={s.total_suppliers}
+        subtitle={safeT('vehicle_finance.suppliers_due_hint', 'أرشيف موردين (منفصل عن ربح الورشة)')}
         accent="rose"
+        testId="vehicle-financial-summary-suppliers-due"
       />
       <StatCard
         title={safeT('vehicle_finance.total_paid', 'المدفوع')}
         value={s.total_paid}
         accent="emerald"
+        testId="vehicle-financial-summary-total-paid"
       />
       <StatCard
         title={safeT('vehicle_finance.advance_paid', 'دفعة مقدمة')}
         value={s.advance_paid}
         accent="sky"
+        testId="vehicle-financial-summary-advance-paid"
       />
       <StatCard
         title={safeT('vehicle_finance.balance', 'المتبقي')}
         value={s.balance}
-        subtitle={balance < 0 ? safeT('vehicle_finance.credit', 'رصيد للعميل') : ''}
+        subtitle={balance < 0 ? safeT('vehicle_finance.credit', 'رصيد للعميل') : safeT('vehicle_finance.balance_hint', 'المتبقي للورشة فقط')}
         accent={balanceAccent}
+        testId="vehicle-financial-summary-balance"
       />
     </div>
   );

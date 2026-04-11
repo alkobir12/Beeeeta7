@@ -17,6 +17,38 @@
 
 ## What's Been Implemented
 
+### توسعة Liquid Builder: اختيار صفحات + فلاتر/تجميع + بوت داخلي (11 Apr 2026)
+- تم توسيع `LiquidSiteBuilder.jsx` ليشمل:
+  - **Page Selector** داخل الـ Builder لربط التحرير بجميع الصفحات الأساسية
+  - **4 تبويبات**:
+    - العناصر
+    - الكروت
+    - التخطيط
+    - البوت
+  - تبويب العناصر أصبح يدعم:
+    - Search
+    - Group Filter
+    - Customized-only Filter
+    - Pagination
+- تم إضافة قائمة صفحات مركزية:
+  - `/app/frontend/src/constants/liquidBuilderPages.js`
+  - تحتوي 22 صفحة أساسية قابلة للاختيار والتحرير من داخل الـ Builder.
+- تم إضافة **بوت داخلي داخل Liquid Builder**:
+  - `/app/frontend/src/components/LiquidBuilderBotTab.jsx`
+  - يدعم أوامر سريعة مثل:
+    - `rrr`
+    - `EXIT`
+    - أوامر تعديل مباشرة على الصفحة المختارة
+- تم اختبار الانتقال من داخل الـ Builder بين الصفحات (مثل `/` إلى `/customers`) وتأكيد تحديث عناصر الصفحة فعليًا بعد التنقل.
+- نتيجة الاختبار الرسمية: `iteration_117.json`
+  - Backend: **13/13 PASS**
+  - Frontend: **100% PASS**
+  - تم تأكيد:
+    - وجود 22 صفحة في selector
+    - عمل التبويبات الأربعة
+    - عمل الفلاتر والتجميع والترقيم
+    - عمل البوت الداخلي مع `rrr/EXIT`
+
 ### Liquid Builder عام للموقع + تحكم مرئي/بوتي بالصفحات (11 Apr 2026)
 - تنفيذ **Liquid Builder** على مستوى الموقع من داخل `Layout.jsx`:
   - زر عالمي `liquid-site-builder-toggle-button`

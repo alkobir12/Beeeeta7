@@ -71,9 +71,31 @@ const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, 
 
 const safeDate = (date) => date.toISOString().split('T')[0];
 
+const resolveWorkshopId = () => {
+  const fromEnv = process.env.REACT_APP_WORKSHOP_ID;
+  if (fromEnv && String(fromEnv).trim()) return String(fromEnv).trim();
+
+  try {
+    const rawSession = localStorage.getItem('session') || localStorage.getItem('workshopUser') || '{}';
+    const parsed = JSON.parse(rawSession);
+    const fromSession = parsed?.workshopId || parsed?.workshop_id || parsed?.workshop || '';
+    if (fromSession && String(fromSession).trim()) return String(fromSession).trim();
+  } catch (_e) {
+    // ignore
+  }
+  return '';
+};
+
+const unwrapApiData = (response, fallback = null) => {
+  if (!response) return fallback;
+  if (response?.data?.data !== undefined) return response.data.data;
+  if (response?.data !== undefined) return response.data;
+  return fallback;
+};
+
 export default function ComprehensiveFinancial() {
   const queryClient = useQueryClient();
-  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+  const workshopId = useMemo(() => resolveWorkshopId(), []);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountTreePage, setAccountTreePage] = useState(1);
@@ -107,7 +129,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-balance-sheet', workshopId, endDate],
     queryFn: async () => {
       const res = await financeAPI.getBalanceSheet({ workshop_id: workshopId, as_of_date: endDate });
-      return res.data?.data || null;
+      return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
   });
@@ -116,7 +138,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-income-statement', workshopId, startDate, endDate],
     queryFn: async () => {
       const res = await financeAPI.getIncomeStatement(commonParams);
-      return res.data?.data || null;
+      return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
   });
@@ -125,7 +147,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-cash-flow', workshopId, startDate, endDate],
     queryFn: async () => {
       const res = await financeAPI.getCashFlow(commonParams);
-      return res.data?.data || null;
+      return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId) && shouldLoadCashFlow,
   });
@@ -134,7 +156,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-trial-balance', workshopId, startDate, endDate],
     queryFn: async () => {
       const res = await financeAPI.getTrialBalance(commonParams);
-      return res.data?.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
+      return unwrapApiData(res, { accounts: [], totals: { total_debit: 0, total_credit: 0 } });
     },
     enabled: Boolean(workshopId) && shouldLoadTrialBalance,
   });
@@ -143,7 +165,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-ar-summary', workshopId, endDate],
     queryFn: async () => {
       const res = await financeAPI.getARCustomers({ workshop_id: workshopId, as_of: endDate });
-      return res.data?.data || { total_ar: 0, customers: [] };
+      return unwrapApiData(res, { total_ar: 0, customers: [] });
     },
     enabled: Boolean(workshopId),
   });
@@ -152,7 +174,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-budgets', workshopId, budgetMonth],
     queryFn: async () => {
       const res = await financeAPI.getBudgets({ workshop_id: workshopId, month: budgetMonth });
-      return res.data?.data || { rows: [], totals: { planned: 0, actual: 0, variance: 0 } };
+      return unwrapApiData(res, { rows: [], totals: { planned: 0, actual: 0, variance: 0 } });
     },
     enabled: Boolean(workshopId),
   });
@@ -165,7 +187,7 @@ export default function ComprehensiveFinancial() {
         start_date: startDate,
         end_date: endDate,
       });
-      return res.data?.data || { rows: [], summary: { operations_total: 0, journal_total: 0, types_count: 0 } };
+      return unwrapApiData(res, { rows: [], summary: { operations_total: 0, journal_total: 0, types_count: 0 } });
     },
     enabled: Boolean(workshopId),
   });
@@ -174,7 +196,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-reconciliation', workshopId, startDate, endDate],
     queryFn: async () => {
       const res = await financeAPI.getReconciliation(commonParams);
-      return res.data?.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
+      return unwrapApiData(res, { summary: { matched: true, total_absolute_difference: 0 }, rows: [] });
     },
     enabled: Boolean(workshopId),
   });
@@ -183,7 +205,7 @@ export default function ComprehensiveFinancial() {
     queryKey: ['financial-chart-of-accounts', workshopId],
     queryFn: async () => {
       const res = await financeAPI.getChartOfAccounts({ workshop_id: workshopId });
-      return res.data?.data || [];
+      return unwrapApiData(res, []);
     },
     enabled: Boolean(workshopId),
   });
@@ -201,7 +223,7 @@ export default function ComprehensiveFinancial() {
         page: accountTreePage,
         page_size: 20,
       });
-      return res.data?.data || null;
+      return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId && selectedAccount?.code),
   });
@@ -218,16 +240,16 @@ export default function ComprehensiveFinancial() {
         page: salesOpsPage,
         page_size: 10,
       });
-      return res.data?.data || null;
+      return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
   });
 
-  const coreLoading = [balanceSheetQuery, incomeStatementQuery].some(
+  const coreLoading = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isLoading && !query.data
   );
 
-  const hasCoreError = [balanceSheetQuery, incomeStatementQuery].some((query) => query.isError);
+  const hasCoreError = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some((query) => query.isError);
 
   const hasNonBlockingError = [
     cashFlowQuery,

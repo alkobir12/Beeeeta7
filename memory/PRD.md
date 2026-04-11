@@ -17,6 +17,32 @@
 
 ## What's Been Implemented
 
+### إصلاح جذري: منع ترحيل إجمالي ملف المركبة كإيراد ورشة (11 Apr 2026)
+- المشكلة التي عالجناها:
+  - إجمالي العملية القادم من ملف المركبة كان يجمع (الورشة + الموردين) ويتم ترحيله كإيراد/ذمم، وهذا غير صحيح.
+
+- الإصلاحات المنفذة:
+  1) `visit_sync.py`
+     - حساب `total_workshop` و `total_suppliers` بشكل منفصل.
+     - `total` العملية أصبح = **total_workshop فقط**.
+     - حفظ `supplier_archive_total` كبيان أرشيفي منفصل.
+  2) `routes_extended.py` (`_build_operation_journal_entry`)
+     - لعمليات `sale/service`: القيد يعتمد على **workshop_total** فقط (استبعاد supplier items).
+  3) `routes_finance.py`
+     - endpoint جديد: `POST /api/finance/reports/reclassify-vehicle-workshop-dues`
+     - لتصحيح العمليات السابقة تاريخيًا (dry-run/apply).
+
+- تصحيح تاريخي فعلي على Preview:
+  - `candidates=5`, `updated=5`, ثم dry-run لاحقًا = `0`.
+  - مثال مؤكد:
+    - العملية `0030fd8d-1068-43e8-a132-acffb406e893`
+    - قبل: `17504`
+    - بعد: `3850` (ورشة فقط)
+    - مجموع الموردين `13654` بقي أرشيفيًا.
+
+- التحقق النهائي:
+  - `iteration_106.json`: Backend **100% PASS** بدون regressions.
+
 ### ملف المركبة: أرشيف الموردين + مصدر الأرقام + انكماش بلوكات العميل/المركبة (11 Apr 2026)
 - إضافة **سجل حركة الموردين (أرشيف فقط)** داخل ملف المركبة:
   - جدول زمني يتضمن: التاريخ، رقم الزيارة، المورد، نوع الحركة، المبلغ.

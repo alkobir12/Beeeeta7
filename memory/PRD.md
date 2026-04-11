@@ -17,6 +17,33 @@
 
 ## What's Been Implemented
 
+### سجل حذف جماعي + تصدير Excel للذمم + تحقق من البوت (11 Apr 2026)
+- إضافة **سجل تدقيق Audit Log** ثابت لعمليات الحذف الجماعي ومسح البيانات:
+  - Backend helper جديد: `/app/backend/bulk_delete_audit.py`
+  - Endpoint قراءة: `GET /api/finance/audit-logs`
+  - تسجيل تلقائي عند تنفيذ:
+    - `DELETE /api/finance/reset-all-data`
+    - `DELETE /api/cleanup/keep-debts-only`
+    - `DELETE /api/operations`
+  - السجل يحفظ: المنفّذ، الدور، التاريخ، الـ endpoint، والعناصر المتأثرة.
+- إضافة **تصدير Excel سطر-بسطر** لمطابقة حساب العملاء **1103**:
+  - Endpoint جديد: `GET /api/finance/ar/ledger/export`
+  - الملف يحتوي sheets: `AR-1103-Summary`, `Customers`, `AR-1103-Ledger`, `Open-Invoices`
+  - وإذا تم تحديد عميل، يضاف sheet إضافي: `Customer-Statement`.
+- Frontend:
+  - زر جديد في تبويب الذمم: `ar-export-excel-button`
+  - لوحة جديدة في تبويب مطابقة العمليات: `financial-bulk-delete-audit-panel`
+  - إصلاح empty/loading state للوحة السجل حتى لا يبقى التحميل معلّقًا عند عدم وجود سجلات.
+- تمرير هوية المستخدم من الواجهة لمسارات الحذف الجماعي عبر headers:
+  - `x-user-id`
+  - `x-user-role`
+- تحقق إضافي من **بوت الورشة / AlKabeer Bot**:
+  - `GET /api/alkabeer-bot/health` = **PASS**
+  - محادثة البوت وأمر `rrr` لم تتعرض لأي regression.
+- نتيجة الاختبار الرسمية: `iteration_114.json`
+  - Backend: **10/10 PASS**
+  - Frontend: PASS بعد إغلاق ملاحظة loading الصغيرة بلوحة السجل
+
 ### تنظيف كامل بيانات الاختبار في Preview (11 Apr 2026)
 - تم تنفيذ حذف فعلي لكل البيانات التجريبية/الاختبارية (test/demo/اختبار/تجريب) عبر النظام بالكامل.
 - النطاق الذي تم تنظيفه: العملاء، الموردون، القطع، الخدمات، الحسابات، العمليات، البنود/الملاحظات التجريبية داخل زيارات المركبات.

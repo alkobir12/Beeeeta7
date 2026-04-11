@@ -1106,6 +1106,42 @@ def _safe_amount(value: Any) -> float:
         return 0.0
 
 
+def _split_operation_totals(op: Dict[str, Any]) -> Dict[str, float]:
+    total = _safe_amount(op.get("total"))
+    items = op.get("items") or []
+    if not isinstance(items, list) or not items:
+        supplier_total = _safe_amount(op.get("supplier_archive_total") or op.get("total_suppliers"))
+        return {
+            "combined_total": total,
+            "workshop_total": max(total - supplier_total, 0.0) if supplier_total > 0 else total,
+            "supplier_total": supplier_total,
+        }
+
+    workshop = 0.0
+    suppliers = 0.0
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        line_total = _safe_amount(item.get("total"))
+        if line_total <= 0:
+            line_total = _safe_amount(item.get("price")) * _safe_amount(item.get("quantity") or item.get("qty") or 1)
+        item_type = str(item.get("itemType") or item.get("type") or "").strip().lower()
+        if item_type == "supplier":
+            suppliers += line_total
+        else:
+            workshop += line_total
+
+    if workshop <= 0 and total > 0:
+        workshop = max(total - suppliers, 0.0)
+
+    combined = total if total > 0 else (workshop + suppliers)
+    return {
+        "combined_total": round(combined, 2),
+        "workshop_total": round(workshop, 2),
+        "supplier_total": round(suppliers, 2),
+    }
+
+
 def _build_operation_journal_entry(
     op: Dict[str, Any],
     workshop_id: Optional[str],
@@ -1128,7 +1164,13 @@ def _build_operation_journal_entry(
 
     op_type = (op.get("type") or "").lower()
     payment_method = (op.get("paymentMethod") or op.get("payment_method") or "cash").lower()
+    totals = _split_operation_totals(op)
     total = _safe_amount(op.get("total"))
+    workshop_total = totals.get("workshop_total", total)
+    supplier_total = totals.get("supplier_total", 0.0)
+
+    if total <= 0:
+        total = workshop_total
     if total <= 0:
         return None
 
@@ -1174,6 +1216,9 @@ def _build_operation_journal_entry(
     transaction_type = None
 
     if op_type in ("sale", "service"):
+        total = workshop_total if workshop_total > 0 else total
+        if total <= 0:
+            return None
         transaction_type = "sale"
         debit_code = "1103" if is_credit else cash_code
         revenue_code = selected_code or "4100"
@@ -1309,6 +1354,9 @@ def _build_operation_journal_entry(
         "description": description,
         "lines": lines,
         "total": total,
+        "operation_total": totals.get("combined_total", total),
+        "workshop_total": workshop_total,
+        "supplier_archive_total": supplier_total,
         "source": "operation_rakan_parts" if is_rakan_operation else "operation",
         "transaction_type": transaction_type,
         "reference_id": op.get("id"),

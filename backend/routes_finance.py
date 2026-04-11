@@ -3350,6 +3350,150 @@ async def reclassify_payment_accounts(
         }
 
 
+@router.post("/reports/reclassify-vehicle-workshop-dues")
+async def reclassify_vehicle_workshop_dues(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    apply_changes: bool = Query(False),
+):
+    """Exclude supplier item amounts from vehicle revenue/dues (sale/service)."""
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+    start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+    def _split_totals(items: Any, current_total: float) -> Dict[str, float]:
+        if not isinstance(items, list):
+            return {"workshop_total": current_total, "supplier_total": 0.0}
+        workshop = 0.0
+        supplier = 0.0
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            qty = _safe_float(item.get("quantity") or item.get("qty") or 1)
+            price = _safe_float(item.get("price"))
+            line_total = _safe_float(item.get("total"))
+            if line_total <= 0:
+                line_total = qty * price
+            item_type = str(item.get("itemType") or item.get("type") or "").strip().lower()
+            if item_type == "supplier":
+                supplier += line_total
+            else:
+                workshop += line_total
+        if workshop <= 0 and current_total > 0:
+            workshop = max(current_total - supplier, 0.0)
+        return {"workshop_total": round(workshop, 2), "supplier_total": round(supplier, 2)}
+
+    try:
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        candidates = []
+        updated = 0
+
+        for op in operations:
+            op_type = str(op.get("type") or "").strip().lower()
+            if op_type not in {"sale", "service"}:
+                continue
+            op_id = str(op.get("id") or "").strip()
+            if not op_id:
+                continue
+            current_total = _safe_float(op.get("total"))
+            split = _split_totals(op.get("items"), current_total)
+            workshop_total = split["workshop_total"]
+            supplier_total = split["supplier_total"]
+            if supplier_total <= 0:
+                continue
+            if abs(current_total - workshop_total) <= 0.009:
+                continue
+
+            candidates.append({
+                "operation_id": op_id,
+                "type": op_type,
+                "current_total": round(current_total, 2),
+                "workshop_total": workshop_total,
+                "supplier_total": supplier_total,
+            })
+
+            if apply_changes and supabase:
+                # 1) operation total => workshop only
+                try:
+                    supabase.table("operations").update({
+                        "total": workshop_total,
+                        "subtotal": workshop_total,
+                        "workshop_total": workshop_total,
+                        "supplier_archive_total": supplier_total,
+                    }).eq("id", op_id).execute()
+                except Exception:
+                    supabase.table("operations").update({
+                        "total": workshop_total,
+                        "subtotal": workshop_total,
+                    }).eq("id", op_id).execute()
+
+                # 2) operation journal entries => adjust to workshop total
+                try:
+                    entries = (
+                        supabase.table("journal_entries")
+                        .select("id,lines,total,source")
+                        .eq("reference_id", op_id)
+                        .in_("source", ["operation", "operation_rakan_parts"])
+                        .execute()
+                        .data
+                        or []
+                    )
+                except Exception:
+                    entries = []
+
+                for entry in entries:
+                    lines = entry.get("lines") or []
+                    if not isinstance(lines, list):
+                        continue
+                    patched = []
+                    for line in lines:
+                        if not isinstance(line, dict):
+                            patched.append(line)
+                            continue
+                        account = str(line.get("account") or "").strip()
+                        debit = _safe_float(line.get("debit"))
+                        credit = _safe_float(line.get("credit"))
+                        next_line = dict(line)
+
+                        if account in {"1101", "1102", "1103", "acc-1101", "acc-1102", "acc-1103"} and debit > 0:
+                            next_line["debit"] = workshop_total
+                        if (account.startswith("4") or account.startswith("acc-4")) and credit > 0:
+                            next_line["credit"] = workshop_total
+                        patched.append(next_line)
+
+                    supabase.table("journal_entries").update({"lines": patched, "total": workshop_total}).eq("id", entry.get("id")).execute()
+
+                updated += 1
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "candidates": len(candidates),
+                "updated": updated,
+                "changes": candidates[:50],
+                "applied": apply_changes,
+            },
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "candidates": 0,
+                "updated": 0,
+                "changes": [],
+                "applied": apply_changes,
+            },
+        }
+
+
 _BUDGETS_FILE = os.path.join(os.path.dirname(__file__), "uploads", "finance_budgets.json")
 
 

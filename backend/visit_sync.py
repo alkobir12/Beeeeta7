@@ -24,8 +24,18 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
         if not items:
             return # No items to sync
 
-        # 2. Calculate Total
-        total = sum(float(i.get("price", 0)) * float(i.get("quantity", 1)) for i in items)
+        # 2. Calculate totals with strict separation
+        total_workshop = 0.0
+        total_suppliers = 0.0
+        for i in items:
+            line_total = float(i.get("total", 0) or 0) or (float(i.get("price", 0) or 0) * float(i.get("quantity", 1) or 1))
+            item_type = str(i.get("itemType") or i.get("type") or "").strip().lower()
+            if item_type == "supplier":
+                total_suppliers += line_total
+            else:
+                total_workshop += line_total
+
+        total = total_workshop
         
         # 3. Prepare Operation Data
         vehicle_id = visit_data.get("vehicleId") or visit_data.get("vehicle_id")
@@ -50,6 +60,9 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
             "items": items,
             "total": total,
             "subtotal": total,
+            "workshop_total": total_workshop,
+            "supplier_archive_total": total_suppliers,
+            "total_combined": total_workshop + total_suppliers,
             "vehicle_id": vehicle_id,
             "partner_name": partner_name,
             "partner_type": "customer",

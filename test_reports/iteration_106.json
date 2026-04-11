@@ -1,0 +1,89 @@
+{
+  "summary": "Iteration 106 - Verified accounting fix: vehicle operation totals now correctly exclude supplier items (itemType=supplier). The reclassify-vehicle-workshop-dues endpoint shows 0 candidates after historical fix was applied. Operation 0030fd8d-1068-43e8-a132-acffb406e893 correctly shows total=3850 (workshop only) instead of 17504 (combined).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vehicle_workshop_dues_iter106.py",
+    "/app/test_reports/pytest/pytest_vehicle_workshop_dues_iter106.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "visit_sync.py correctly separates workshop_total and supplier_archive_total (lines 28-38)",
+    "visit_sync.py sets total = total_workshop (line 38) - excludes supplier items",
+    "routes_extended.py _build_operation_journal_entry uses workshop_total for sale/service (line 1219)",
+    "routes_finance.py reclassify-vehicle-workshop-dues endpoint correctly identifies and fixes historical operations",
+    "Operation 0030fd8d-1068-43e8-a132-acffb406e893 verified: total=3850 (workshop service), not 17504 (combined with suppliers)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vehicle_workshop_dues_iter106.py"
+  ],
+  "success_rate": {
+    "backend": "100% - 8/8 tests passed, 1 skipped (no expense operations found)"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Accounting fix verified. The visit_sync and routes_extended correctly separate workshop and supplier totals. Historical operations were corrected via reclassify-vehicle-workshop-dues endpoint (candidates=5 updated=5, now dry-run shows 0 candidates).",
+  "features_verified": {
+    "visit_sync workshop_total separation": {
+      "status": "PASS",
+      "details": "visit_sync.py correctly calculates total_workshop excluding itemType=supplier items"
+    },
+    "routes_extended journal entry uses workshop_total": {
+      "status": "PASS",
+      "details": "_build_operation_journal_entry uses workshop_total for sale/service operations (line 1219)"
+    },
+    "reclassify-vehicle-workshop-dues endpoint dry-run": {
+      "status": "PASS",
+      "details": "Endpoint returns candidates=0 after historical fix was applied"
+    },
+    "Operation 0030fd8d total corrected": {
+      "status": "PASS",
+      "details": "total=3850 (workshop only), not 17504 (combined). Items: workshop service=3850, suppliers=13654"
+    },
+    "No regression in other journal paths": {
+      "status": "PASS",
+      "details": "purchase, payment_order operations still work correctly"
+    },
+    "Reconciliation report": {
+      "status": "PASS",
+      "details": "Reconciliation endpoint returns data successfully"
+    }
+  },
+  "code_verification": {
+    "visit_sync.py line 33": "if item_type == 'supplier': total_suppliers += line_total",
+    "visit_sync.py line 38": "total = total_workshop (excludes suppliers)",
+    "visit_sync.py lines 63-64": "workshop_total and supplier_archive_total stored separately",
+    "routes_extended.py line 1219": "total = workshop_total if workshop_total > 0 else total (for sale/service)",
+    "routes_finance.py line 3353": "reclassify-vehicle-workshop-dues endpoint for historical correction"
+  },
+  "operation_0030fd8d_verification": {
+    "operation_id": "0030fd8d-1068-43e8-a132-acffb406e893",
+    "type": "service",
+    "total_before_fix": 17504,
+    "total_after_fix": 3850,
+    "workshop_items": [
+      {"name": "توضيب مكينة 8س ديزل", "price": 3850, "itemType": "service"}
+    ],
+    "supplier_items": [
+      {"name": "شركة القرعاوي", "price": 1453, "itemType": "supplier"},
+      {"name": "الورشه", "price": 936, "itemType": "supplier"},
+      {"name": "مخرطة العوفي", "price": 620, "itemType": "supplier"},
+      {"name": "الدريويش", "price": 200, "itemType": "supplier"},
+      {"name": "النهدي", "price": 10445, "itemType": "supplier"}
+    ],
+    "supplier_total": 13654,
+    "verification": "total=3850 correctly excludes supplier items"
+  }
+}

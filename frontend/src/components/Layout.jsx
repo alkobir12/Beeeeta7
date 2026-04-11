@@ -9,11 +9,15 @@ import FinanceAlertsWidget from './FinanceAlertsWidget';
 import ChatWidget from './ChatWidget';
 import { Toaster } from './ui/toaster';
 import { hasPermission, resolveRoutePermission } from '../utils/permissions';
+import { siteBuilderAPI } from '../services/siteBuilderAPI';
+import { PageCustomCardsDock } from './PageCustomCardsDock';
+import { LiquidSiteBuilder } from './LiquidSiteBuilder';
 
 
 
 const Layout = ({ pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pageCustomization, setPageCustomization] = useState({ custom_cards: [] });
   const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 1024);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
     try {
@@ -62,6 +66,23 @@ const Layout = ({ pageTitle }) => {
       window.removeEventListener('storage', sync);
       window.removeEventListener('sessionUpdated', sync);
     };
+  }, []);
+
+  useEffect(() => {
+    const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+    siteBuilderAPI.getCustomization({ user_id: userId, path: location.pathname || '/' })
+      .then((response) => setPageCustomization(response.data?.data || { custom_cards: [] }))
+      .catch(() => setPageCustomization({ custom_cards: [] }));
+  }, [location.pathname, session]);
+
+  useEffect(() => {
+    const handleCustomizationUpdate = (event) => {
+      if (event?.detail) {
+        setPageCustomization(event.detail);
+      }
+    };
+    window.addEventListener('page-customization-updated', handleCustomizationUpdate);
+    return () => window.removeEventListener('page-customization-updated', handleCustomizationUpdate);
   }, []);
 
   useEffect(() => {
@@ -129,6 +150,8 @@ const Layout = ({ pageTitle }) => {
           zIndex: 1,
         }}
       />
+      <div className="pointer-events-none absolute -top-20 left-[18%] h-56 w-56 rounded-full bg-cyan-400/12 blur-[90px] animate-pulse" />
+      <div className="pointer-events-none absolute bottom-10 right-[12%] h-64 w-64 rounded-full bg-sky-500/10 blur-[110px] animate-pulse" />
       
       {/* Sidebar */}
       <Sidebar 
@@ -190,7 +213,12 @@ const Layout = ({ pageTitle }) => {
               </div>
             }
           >
-            {canAccessRoute ? <Outlet /> : <UnauthorizedPanel />}
+            {canAccessRoute ? (
+              <>
+                <PageCustomCardsDock cards={pageCustomization.custom_cards || []} />
+                <Outlet />
+              </>
+            ) : <UnauthorizedPanel />}
           </Suspense>
         </div>
 
@@ -205,6 +233,7 @@ const Layout = ({ pageTitle }) => {
       </main>
         {/* Workshop Assistant Chat Widget */}
         <ChatWidget />
+        <LiquidSiteBuilder session={session} currentPath={location.pathname || '/'} onCustomizationSaved={setPageCustomization} />
 
       
       {/* Toast Notifications */}

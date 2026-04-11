@@ -5,6 +5,7 @@ import { aiAPI, vehicleAPI, API_BASE } from '../services/api';
 import QuickPrintDialog from './QuickPrintDialog';
 import { ArchiveSearchPanel } from './workshop-bot/ArchiveSearchPanel';
 import { ArchiveVisitResultCard } from './workshop-bot/ArchiveVisitResultCard';
+import { applyPageCustomizations, buildUiSnapshot, clearPageCustomizations } from '../utils/pageCustomization';
 
 const INITIAL_CHAT_MESSAGES = [
   { role: 'assistant', content: 'يا هلا! أنا أبو فهد، مدير خدمة العملاء. آمرني وش بغيت؟' },
@@ -100,68 +101,14 @@ const ChatWidget = () => {
   }, []);
 
   const clearAppliedCustomizations = useCallback(() => {
-    appliedCustomizationsRef.current.forEach((entry) => {
-      try {
-        if (!entry?.element) return;
-        if (entry.type === 'hide') {
-          entry.element.style.display = entry.prevDisplay ?? '';
-        }
-        if (entry.type === 'rename') {
-          entry.element.textContent = entry.prevText ?? '';
-        }
-      } catch (_e) {
-        // noop
-      }
-    });
-    appliedCustomizationsRef.current = [];
+    clearPageCustomizations(appliedCustomizationsRef);
   }, []);
 
   const applyCustomizations = useCallback((customization = {}) => {
-    clearAppliedCustomizations();
-
-    const labels = customization?.labels || {};
-    const hidden = customization?.hidden || {};
-
-    Object.entries(hidden).forEach(([testid, hideValue]) => {
-      if (!hideValue) return;
-      const element = document.querySelector(`[data-testid="${testid}"]`);
-      if (!element) return;
-      appliedCustomizationsRef.current.push({
-        type: 'hide',
-        element,
-        prevDisplay: element.style.display,
-      });
-      element.style.display = 'none';
-    });
-
-    Object.entries(labels).forEach(([testid, newLabel]) => {
-      const element = document.querySelector(`[data-testid="${testid}"]`);
-      if (!element) return;
-      appliedCustomizationsRef.current.push({
-        type: 'rename',
-        element,
-        prevText: element.textContent,
-      });
-      element.textContent = String(newLabel || '');
-    });
+    applyPageCustomizations(customization, appliedCustomizationsRef);
   }, [clearAppliedCustomizations]);
 
-  const buildUiSnapshot = useCallback(() => {
-    try {
-      const nodes = Array.from(document.querySelectorAll('[data-testid]'));
-      const snapshot = nodes
-        .slice(0, 220)
-        .map((node) => ({
-          testid: node.getAttribute('data-testid') || '',
-          text: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80),
-          tag: String(node.tagName || '').toLowerCase(),
-        }))
-        .filter((item) => item.testid);
-      return snapshot;
-    } catch (_e) {
-      return [];
-    }
-  }, []);
+  const getPageSnapshot = useCallback(() => buildUiSnapshot(220), []);
 
   const fetchAndApplyCustomizations = useCallback(async () => {
     try {
@@ -183,6 +130,16 @@ const ChatWidget = () => {
   useEffect(() => {
     fetchAndApplyCustomizations();
   }, [fetchAndApplyCustomizations, currentPath]);
+
+  useEffect(() => {
+    const handleCustomizationUpdate = (event) => {
+      if (event?.detail) {
+        applyCustomizations(event.detail);
+      }
+    };
+    window.addEventListener('page-customization-updated', handleCustomizationUpdate);
+    return () => window.removeEventListener('page-customization-updated', handleCustomizationUpdate);
+  }, [applyCustomizations]);
 
   const resetChatSession = useCallback(() => {
     const nextSessionId = createWorkshopBotSessionId();
@@ -316,7 +273,7 @@ const ChatWidget = () => {
         role: sessionInfo.role,
         userId: sessionInfo.userId,
         currentPath,
-        uiSnapshot: buildUiSnapshot(),
+        uiSnapshot: getPageSnapshot(),
       });
       
       const botResponse = res.data.response;

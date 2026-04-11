@@ -50,9 +50,16 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
     hidden = dict(global_cfg.get("hidden") or {})
     hidden.update(page_cfg.get("hidden") or {})
 
+    contents = dict(global_cfg.get("contents") or {})
+    contents.update(page_cfg.get("contents") or {})
+
+    custom_cards = list(global_cfg.get("custom_cards") or []) + list(page_cfg.get("custom_cards") or [])
+
     return {
         "labels": labels,
         "hidden": hidden,
+        "contents": contents,
+        "custom_cards": custom_cards,
     }
 
 
@@ -60,13 +67,19 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
     data = _read_customizations()
     user_node = data.get(user_id) or {}
     global_cfg = user_node.get("global") or {"labels": {}, "hidden": {}}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}}
+    if "contents" not in global_cfg:
+        global_cfg["contents"] = {}
+    if "custom_cards" not in global_cfg:
+        global_cfg["custom_cards"] = []
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
     merged = _merge_page_configs(global_cfg, page_cfg)
     return {
         "user_id": user_id,
         "path": path,
         "labels": merged.get("labels") or {},
         "hidden": merged.get("hidden") or {},
+        "contents": merged.get("contents") or {},
+        "custom_cards": merged.get("custom_cards") or [],
         "global": global_cfg,
         "page": page_cfg,
     }
@@ -191,6 +204,8 @@ async def _parse_actions_with_claude(
 def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str, Any]]) -> Dict[str, Any]:
     labels = dict(current_cfg.get("labels") or {})
     hidden = dict(current_cfg.get("hidden") or {})
+    contents = dict(current_cfg.get("contents") or {})
+    custom_cards = list(current_cfg.get("custom_cards") or [])
 
     for action in actions:
         action_type = str(action.get("type") or "").strip().lower()
@@ -199,6 +214,8 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
         if action_type == "reset_page":
             labels = {}
             hidden = {}
+            contents = {}
+            custom_cards = []
             continue
 
         if not target:
@@ -221,8 +238,9 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
         if action_type == "reset_target":
             labels.pop(target, None)
             hidden.pop(target, None)
+            contents.pop(target, None)
 
-    return {"labels": labels, "hidden": hidden}
+    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards}
 
 def get_combined_system_prompt():
     base = ""
@@ -257,6 +275,15 @@ class ChatRequest(BaseModel):
     userId: Optional[str] = None
     currentPath: Optional[str] = "/"
     uiSnapshot: Optional[List[Dict[str, Any]]] = None
+
+
+class CustomizationUpdateRequest(BaseModel):
+    user_id: str = "manager"
+    path: str = "/"
+    labels: Optional[Dict[str, str]] = None
+    hidden: Optional[Dict[str, bool]] = None
+    contents: Optional[Dict[str, str]] = None
+    custom_cards: Optional[List[Dict[str, Any]]] = None
 
 class ChatResponse(BaseModel):
     response: str
@@ -327,7 +354,7 @@ async def chat(payload: ChatRequest):
             if user_msg.lower() in {"clear", "reset_page", "مسح", "اعادة الصفحة", "إعادة الصفحة"}:
                 data = _read_customizations()
                 user_node = data.get(user_id) or {}
-                user_node[current_path] = {"labels": {}, "hidden": {}}
+                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
                 data[user_id] = user_node
                 _write_customizations(data)
                 cfg = _get_user_page_config(user_id, current_path)
@@ -337,7 +364,12 @@ async def chat(payload: ChatRequest):
                     model="system",
                     mode="dev",
                     actions=[{"type": "reset_page"}],
-                    customization={"labels": cfg.get("labels", {}), "hidden": cfg.get("hidden", {})},
+                    customization={
+                        "labels": cfg.get("labels", {}),
+                        "hidden": cfg.get("hidden", {}),
+                        "contents": cfg.get("contents", {}),
+                        "custom_cards": cfg.get("custom_cards", []),
+                    },
                 )
 
             actions: List[Dict[str, Any]] = []
@@ -368,7 +400,7 @@ async def chat(payload: ChatRequest):
 
             data = _read_customizations()
             user_node = data.get(user_id) or {}
-            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}}
+            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
             updated_cfg = _apply_actions_to_config(page_cfg, actions)
             user_node[current_path] = updated_cfg
             data[user_id] = user_node
@@ -381,7 +413,12 @@ async def chat(payload: ChatRequest):
                 model="claude-sonnet-4.5",
                 mode="dev",
                 actions=actions,
-                customization={"labels": merged_cfg.get("labels", {}), "hidden": merged_cfg.get("hidden", {})},
+                customization={
+                    "labels": merged_cfg.get("labels", {}),
+                    "hidden": merged_cfg.get("hidden", {}),
+                    "contents": merged_cfg.get("contents", {}),
+                    "custom_cards": merged_cfg.get("custom_cards", []),
+                },
             )
 
         # --- Standard Chat Logic (Abu Fahad) ---
@@ -446,5 +483,38 @@ def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
             "path": path,
             "labels": cfg.get("labels", {}),
             "hidden": cfg.get("hidden", {}),
+            "contents": cfg.get("contents", {}),
+            "custom_cards": cfg.get("custom_cards", []),
+        },
+    }
+
+
+@router.put("/customization")
+def save_customization(payload: CustomizationUpdateRequest):
+    user_id = str(payload.user_id or "manager").strip() or "manager"
+    path = str(payload.path or "/").strip() or "/"
+    data = _read_customizations()
+    user_node = data.get(user_id) or {}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
+    updated_cfg = {
+        "labels": payload.labels if payload.labels is not None else page_cfg.get("labels") or {},
+        "hidden": payload.hidden if payload.hidden is not None else page_cfg.get("hidden") or {},
+        "contents": payload.contents if payload.contents is not None else page_cfg.get("contents") or {},
+        "custom_cards": payload.custom_cards if payload.custom_cards is not None else page_cfg.get("custom_cards") or [],
+    }
+    user_node[path] = updated_cfg
+    data[user_id] = user_node
+    _write_customizations(data)
+
+    cfg = _get_user_page_config(user_id, path)
+    return {
+        "success": True,
+        "data": {
+            "user_id": user_id,
+            "path": path,
+            "labels": cfg.get("labels", {}),
+            "hidden": cfg.get("hidden", {}),
+            "contents": cfg.get("contents", {}),
+            "custom_cards": cfg.get("custom_cards", []),
         },
     }

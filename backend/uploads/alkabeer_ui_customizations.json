@@ -28,5 +28,64 @@
         "test-element": true
       }
     }
+  },
+  "builder_test_user": {
+    "/ai-financial": {
+      "labels": {
+        "demo-field": "اسم مخصص"
+      },
+      "hidden": {
+        "demo-hidden": true
+      },
+      "contents": {
+        "demo-content": "قيمة مخصصة"
+      },
+      "custom_cards": [
+        {
+          "id": "demo-card",
+          "title": "كرت تجريبي",
+          "description": "وصف",
+          "fields": [
+            {
+              "id": "f1",
+              "label": "حقل",
+              "value": "123"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "builder_test_user_34315f5c": {
+    "/ai-financial": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    },
+    "/test-path-a": {
+      "labels": {
+        "path-a-label": "مسار أ"
+      },
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    },
+    "/test-path-b": {
+      "labels": {
+        "path-b-label": "مسار ب"
+      },
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    }
+  },
+  "local-admin": {
+    "/ai-financial": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": []
+    }
   }
 }

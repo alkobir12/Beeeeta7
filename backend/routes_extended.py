@@ -3880,6 +3880,11 @@ async def vehicle_financial_summary(vehicle_id: str):
     Returns workshop/suppliers/paid/balance + advance_paid.
     """
     try:
+        try:
+            uuid.UUID(str(vehicle_id))
+        except Exception:
+            raise HTTPException(status_code=404, detail="vehicle not found")
+
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
         total_workshop = 0.0
@@ -3891,6 +3896,18 @@ async def vehicle_financial_summary(vehicle_id: str):
             from supabase_service import SupabaseService
 
             supa = SupabaseService()
+            vehicle_check = (
+                supa.client.table("vehicles")
+                .select("id")
+                .eq("id", vehicle_id)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if not vehicle_check:
+                raise HTTPException(status_code=404, detail="vehicle not found")
+
             res = (
                 supa.client.table("vehicle_visits")
                 .select("id, notes")
@@ -3906,6 +3923,10 @@ async def vehicle_financial_summary(vehicle_id: str):
                 total_advance += fin['advance_paid']
 
         else:
+            exists = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0, "id": 1})
+            if not exists:
+                raise HTTPException(status_code=404, detail="vehicle not found")
+
             docs = await db.vehicle_visits.find({"vehicleId": vehicle_id}, {"_id": 0, "notes": 1}).to_list(2000)
             for d in docs:
                 parsed = _parse_notes_json(d.get('notes'))

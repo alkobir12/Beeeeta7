@@ -8,13 +8,14 @@ import os
 import asyncio
 import uuid
 import json
-from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import httpx
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from workshop_skill_catalog import build_skill_context, get_catalog_summary, get_skill_by_id, search_skills
 
 router = APIRouter(prefix="/api/workshop-bot")
 
@@ -220,7 +221,7 @@ def get_blackbox_agents(model_id: str) -> List[Dict[str, str]]:
 
 # Models
 class BotRequest(BaseModel):
-    mode: Optional[str] = "client"
+    mode: Optional[str] = "unified"
     message: str
     sound: Optional[str] = None
     smoke: Optional[str] = None
@@ -229,6 +230,7 @@ class BotRequest(BaseModel):
     developer_mode: Optional[bool] = False
     developer_prompt: Optional[str] = None
     session_id: Optional[str] = None
+    skill_ids: Optional[List[str]] = None
 
 
 class BotResponse(BaseModel):
@@ -275,10 +277,33 @@ async def store_bot_message(session_id: str, role: str, content: str, model: str
             "role": role,
             "content": content,
             "model": model,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         })
     except Exception as e:
         print(f"Bot message store failed: {e}")
+
+
+def _serialize_message(message: Dict[str, Any]) -> Dict[str, Any]:
+    created_at = message.get("created_at")
+    if hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+    return {
+        "session_id": str(message.get("session_id") or ""),
+        "role": str(message.get("role") or "assistant"),
+        "content": str(message.get("content") or ""),
+        "model": str(message.get("model") or ""),
+        "created_at": created_at,
+    }
+
+
+def _mode_instructions(mode: str) -> str:
+    normalized = str(mode or "unified").strip().lower()
+    return {
+        "admin": "أجب كمدير ورشة: منظم، تنفيذي، واضح في القرارات والأرقام.",
+        "tech": "أجب كفني محترف: التشخيص أولًا ثم خطوات الفحص ثم الاحتمالات.",
+        "client": "أجب بلطف وشرح مبسط يناسب العميل غير التقني.",
+        "unified": "تصرف كمساعد ورشة موحد: بدّل بين الإداري والفني وخدمة العملاء حسب السياق بدون تكرار.",
+    }.get(normalized, "تصرف كمساعد ورشة موحد يفهم السياق بسرعة.")
 
 
 def ensure_blackbox_config():
@@ -297,19 +322,25 @@ def ensure_blackbox_config():
 
 
 def build_workshop_system_prompt(req: BotRequest, engine: Optional[str]) -> str:
-    return (
-        "أنت مساعد ورشة سيارات ثنائي اللغة (عربي ثم إنجليزي).\n"
-        "قدّم إجابة عملية مختصرة مع خطوات فحص مقترحة ونصيحة أمان إن لزم.\n"
-        f"وضع المستخدم: {req.mode}.\n"
+    skill_context = build_skill_context(req.skill_ids or [])
+    prompt = (
+        "أنت مساعد ورشة سيارات متقدم، عملي، سريع، ومباشر.\n"
+        "أعطِ إجابة مفيدة بالعربية أولًا، وإذا احتجت أضف سطرًا إنجليزيًا مختصرًا فقط عند الحاجة.\n"
+        f"وضع المستخدم: {req.mode or 'unified'}.\n"
         f"نوع المكينة: {engine or 'غير محدد'}.\n"
-        "أجب بالعربية أولًا ثم بالإنجليزية في فقرة منفصلة."
+        f"تعليمات الوضع: {_mode_instructions(req.mode or 'unified')}\n"
+        "إن كان الطلب غامضًا فاسأل سؤال متابعة واحدًا واضحًا بدل تكرار نفس الجمل.\n"
+        "فضّل الخطوات العملية، واحذر من التخمين الجازم في الأعطال الحرجة."
     )
+    if skill_context:
+        prompt += f"\n\n=== سياق مهارات إضافي ===\n{skill_context}"
+    return prompt
 
 
 def build_blackbox_prompt(req: BotRequest, engine: Optional[str]) -> str:
-    if req.developer_mode and req.developer_prompt:
-        return f"{req.developer_prompt}\n\nUSER REQUEST:\n{req.message}"
     system_prompt = build_workshop_system_prompt(req, engine)
+    if req.developer_mode and req.developer_prompt:
+        system_prompt = f"{system_prompt}\n\n=== تعليمات المطور ===\n{req.developer_prompt}"
     return f"{system_prompt}\n\nرسالة المستخدم: {req.message}"
 
 
@@ -330,7 +361,9 @@ def extract_agent_text(execution: Dict[str, Any]) -> str:
 async def run_openai_chat(req: BotRequest, engine: Optional[str], session_id: str) -> str:
     if not EMERGENT_LLM_KEY:
         raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY is missing")
-    system_prompt = req.developer_prompt if req.developer_mode and req.developer_prompt else build_workshop_system_prompt(req, engine)
+    system_prompt = build_workshop_system_prompt(req, engine)
+    if req.developer_mode and req.developer_prompt:
+        system_prompt = f"{system_prompt}\n\n=== تعليمات المطور ===\n{req.developer_prompt}"
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=system_prompt)
     chat = chat.with_model("openai", "gpt-5.1")
     chat.extra_params = {"temperature": 1}
@@ -539,6 +572,77 @@ def get_models():
     for key, config in BLACKBOX_MODEL_REGISTRY.items():
         models.append({"id": key, "label": config["label"], "type": "single"})
     return {"models": models}
+
+
+@router.get("/catalog/summary")
+def get_catalog_summary_endpoint():
+    return {"summary": get_catalog_summary()}
+
+
+@router.get("/skills")
+def get_catalog_skills(
+    query: str = Query(""),
+    category: Optional[str] = Query(None),
+    limit: int = Query(24, ge=1, le=60),
+):
+    return {"skills": search_skills(query=query, category=category, limit=limit)}
+
+
+@router.get("/skills/{skill_id}")
+def get_catalog_skill_detail(skill_id: str):
+    skill = get_skill_by_id(skill_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail="skill not found")
+    return {"skill": skill}
+
+
+@router.get("/conversations")
+async def get_conversations(limit: int = Query(30, ge=1, le=100)):
+    if bot_db is None:
+        return {"conversations": []}
+
+    rows = await bot_db.bot_messages.find({}, {"_id": 0}).sort("created_at", 1).to_list(length=5000)
+    sessions: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        session_id = str(row.get("session_id") or "").strip()
+        if not session_id:
+            continue
+        created_at = row.get("created_at")
+        created_iso = created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at or "")
+        session = sessions.setdefault(
+            session_id,
+            {
+                "id": session_id,
+                "title": "محادثة جديدة",
+                "updated_at": created_iso,
+                "last_message": "",
+                "message_count": 0,
+            },
+        )
+        if row.get("role") == "user" and session["title"] == "محادثة جديدة":
+            session["title"] = str(row.get("content") or "محادثة جديدة").strip()[:42] or "محادثة جديدة"
+        session["updated_at"] = created_iso
+        session["last_message"] = str(row.get("content") or "").strip()[:80]
+        session["message_count"] += 1
+
+    ordered = sorted(sessions.values(), key=lambda item: str(item.get("updated_at") or ""), reverse=True)
+    return {"conversations": ordered[:limit]}
+
+
+@router.get("/conversations/{session_id}")
+async def get_conversation_messages(session_id: str):
+    if bot_db is None:
+        return {"messages": []}
+    rows = await bot_db.bot_messages.find({"session_id": session_id}, {"_id": 0}).sort("created_at", 1).to_list(length=1000)
+    return {"messages": [_serialize_message(row) for row in rows]}
+
+
+@router.delete("/conversations/{session_id}")
+async def delete_conversation(session_id: str):
+    if bot_db is None:
+        return {"success": True, "deleted": 0}
+    result = await bot_db.bot_messages.delete_many({"session_id": session_id})
+    return {"success": True, "deleted": result.deleted_count}
 
 
 @router.get("/health")

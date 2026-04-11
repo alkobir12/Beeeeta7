@@ -433,6 +433,32 @@ class SupabaseService:
         # The frontend likely expects camelCase.
         out = []
         for r in rows:
+            items = r.get("items") or []
+            workshop_total = r.get("workshop_total") or r.get("workshopTotal")
+            supplier_archive_total = r.get("supplier_archive_total") or r.get("supplierArchiveTotal") or r.get("total_suppliers")
+
+            if workshop_total is None:
+                workshop_calc = 0.0
+                supplier_calc = 0.0
+                if isinstance(items, list):
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        qty = float(item.get("quantity") or item.get("qty") or 1)
+                        price = float(item.get("price") or 0)
+                        line_total = float(item.get("total") or (qty * price))
+                        item_type = str(item.get("itemType") or item.get("type") or "").strip().lower()
+                        if item_type == "supplier":
+                            supplier_calc += line_total
+                        else:
+                            workshop_calc += line_total
+                current_total = float(r.get("total") or 0)
+                if workshop_calc <= 0 and current_total > 0:
+                    workshop_calc = max(current_total - supplier_calc, 0.0)
+                workshop_total = workshop_calc if workshop_calc > 0 else current_total
+                if supplier_archive_total is None:
+                    supplier_archive_total = supplier_calc
+
             out.append(
                 {
                     "id": r.get("id"),
@@ -447,6 +473,8 @@ class SupabaseService:
                     "items": r.get("items"),
                     "subtotal": r.get("subtotal"),
                     "total": r.get("total"),
+                    "workshopTotal": workshop_total,
+                    "supplierArchiveTotal": supplier_archive_total or 0,
                     "paymentMethod": r.get("payment_method") or r.get("paymentMethod"),
                     "paymentStatus": r.get("payment_status") or r.get("paymentStatus"),
                     "notes": r.get("notes"),
@@ -470,6 +498,31 @@ class SupabaseService:
         if not rows:
             return None
         r = rows[0]
+        items = r.get("items") or []
+        workshop_total = r.get("workshop_total") or r.get("workshopTotal")
+        supplier_archive_total = r.get("supplier_archive_total") or r.get("supplierArchiveTotal") or r.get("total_suppliers")
+        if workshop_total is None:
+            workshop_calc = 0.0
+            supplier_calc = 0.0
+            if isinstance(items, list):
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    qty = float(item.get("quantity") or item.get("qty") or 1)
+                    price = float(item.get("price") or 0)
+                    line_total = float(item.get("total") or (qty * price))
+                    item_type = str(item.get("itemType") or item.get("type") or "").strip().lower()
+                    if item_type == "supplier":
+                        supplier_calc += line_total
+                    else:
+                        workshop_calc += line_total
+            current_total = float(r.get("total") or 0)
+            if workshop_calc <= 0 and current_total > 0:
+                workshop_calc = max(current_total - supplier_calc, 0.0)
+            workshop_total = workshop_calc if workshop_calc > 0 else current_total
+            if supplier_archive_total is None:
+                supplier_archive_total = supplier_calc
+
         return {
             "id": r.get("id"),
             "type": r.get("type"),
@@ -483,6 +536,8 @@ class SupabaseService:
             "items": r.get("items"),
             "subtotal": r.get("subtotal"),
             "total": r.get("total"),
+            "workshopTotal": workshop_total,
+            "supplierArchiveTotal": supplier_archive_total or 0,
             "paymentMethod": r.get("payment_method"),
             "notes": r.get("notes"),
             "date": r.get("op_date"),

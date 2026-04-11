@@ -1,0 +1,8 @@
+﻿date,entry_id,operation_id,type,source,payment_method,description,debit,credit,net
+2026-04-09,a5ee7fb5-142b-4296-b7c1-80e2cd1b1a00,a5462789-99f9-48b0-8ebc-06fd8f893d34,purchase,operation,,ACCOUNT_CODE:6105 ACCOUNTING_TARGET:ملابس وسلامة مهنية,0.0,30.43,-30.43
+2026-04-09,c1abefef-05d3-4e6a-a57f-b6417c124b25,582bd0a9-0a52-488b-921c-992681f4341a,purchase,operation,,ACCOUNT_CODE:1102 ACCOUNTING_TARGET:البنك,0.0,105.0,-105.0
+2026-04-09,b0e5d44d-bfe0-474f-851d-66f9fe3d2920,d569f005-9de9-4f5f-abbd-fcc589ee2f36,payment_order,operation,,رواتب عمال ACCOUNT_CODE:2103 ACCOUNTING_TARGET:رواتب مستحقة,0.0,20000.0,-20000.0
+2026-04-09,51e1b8cd-fa25-443a-b4d1-5a558836c4b1,139f3138-9aed-45e6-8940-0b4774814998,purchase,operation,,ACCOUNT_CODE:1102 ACCOUNTING_TARGET:البنك,0.0,30.0,-30.0
+2026-04-09,f8f85870-732c-4a4d-ae05-276bb751a2d5,b4830cf7-087f-4301-8172-7dcefdccb189,purchase,operation,,ACCOUNT_CODE:1102 ACCOUNTING_TARGET:البنك,0.0,70.0,-70.0
+2026-04-08,dc4675c0-82ba-4ca9-be31-12855911eff4,4319b836-ee3d-48b3-ab7d-9f61cac71ae7,purchase,operation,,دواء  لابو خالد ACCOUNT_CODE:600103 ACCOUNTING_TARGET:بو خالد,0.0,230.0,-230.0
+2026-04-08,7e141cf0-9a54-4c33-a23c-90258494a4c6,4f93f3c1-feed-42b7-a1f1-aa791112a20d,purchase,operation,,فرشة حديد ACCOUNT_CODE:6000 ACCOUNTING_TARGET:المصروفات التشغيلية,0.0,20.0,-20.0

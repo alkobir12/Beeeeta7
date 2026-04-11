@@ -33,6 +33,15 @@
   - إعادة الفحص (dry-run) أصبحت `0 candidates`.
   - تقرير اختبار backend: `iteration_102.json` نجاح **100%**.
 
+- تم تنفيذ خطوة إغلاق فروقات المطابقة المتبقية (آخر 30 يوم):
+  - تشغيل `reconciliation/backfill-journals` بوضع apply
+  - إنشاء 25 قيدًا مفقودًا للعمليات
+  - حالة المطابقة أصبحت `matched=true` و `total_absolute_difference=0.0`.
+
+- تم توليد كشف سطر-بسطر للحسابات الرئيسية (آخر 30 يوم):
+  - `/app/memory/reports/account_1101_trace_last30.csv`
+  - `/app/memory/reports/account_1102_trace_last30.csv`
+
 ### توثيق مصدر كل رقم داخل القوائم المالية (10 Apr 2026)
 - تم إضافة تقرير backend جديد: `GET /api/finance/reports/operation-trace`
   - يوضح التجميع حسب **نوع العملية**

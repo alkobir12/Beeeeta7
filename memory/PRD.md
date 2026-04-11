@@ -17,6 +17,37 @@
 
 ## What's Been Implemented
 
+### Liquid Builder عام للموقع + تحكم مرئي/بوتي بالصفحات (11 Apr 2026)
+- تنفيذ **Liquid Builder** على مستوى الموقع من داخل `Layout.jsx`:
+  - زر عالمي `liquid-site-builder-toggle-button`
+  - لوحة تحرير مرئية تدعم:
+    - إعادة تسمية العناصر
+    - إخفاء/إظهار العناصر
+    - تعديل المحتوى الظاهر للعناصر
+    - إضافة/تعديل/حذف كروت مخصصة وحقولها
+- تم توسيع Schema تخصيصات البوت في `routes_alkabeer_bot.py` ليشمل:
+  - `labels`
+  - `hidden`
+  - `contents`
+  - `custom_cards`
+- إضافة endpoint حفظ مباشر للتخصيصات:
+  - `PUT /api/alkabeer-bot/customization`
+- الإبقاء على مسار `rrr` وتأكيد عمله مع schema الجديدة:
+  - الدخول لوضع المطور
+  - `EXIT`
+  - استمرار تكامل ChatWidget مع التخصيصات بدون regressions
+- إضافة مكونات جديدة للواجهة:
+  - `/app/frontend/src/components/LiquidSiteBuilder.jsx`
+  - `/app/frontend/src/components/PageCustomCardsDock.jsx`
+  - `/app/frontend/src/services/siteBuilderAPI.js`
+  - `/app/frontend/src/utils/pageCustomization.js`
+- تم حقن الكروت المخصصة داخل الصفحة الحالية عبر `PageCustomCardsDock`، مع واجهة أكثر **liquid / glass / animated** على مستوى الـ layout.
+- تم إصلاح تعارض z-index بين زر البوت العائم وزر الـ Liquid Builder/إخفاء القائمة.
+- نتيجة الاختبار الرسمية: `iteration_116.json`
+  - Backend: **14/14 PASS**
+  - Frontend: **100% PASS**
+  - اختبار إضافي متخصص frontend/backend: PASS بالكامل مع تنظيف أي كرت مؤقت بعد الاختبار.
+
 ### تحديث شامل لبوت الورشة داخل تبويب "ذكاء الورشة" (11 Apr 2026)
 - تم اعتماد الملف المرفق محليًا في:
   - `/app/backend/uploads/emergent_complete_all.json`

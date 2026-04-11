@@ -17,6 +17,41 @@
 
 ## What's Been Implemented
 
+### تحديث شامل لبوت الورشة داخل تبويب "ذكاء الورشة" (11 Apr 2026)
+- تم اعتماد الملف المرفق محليًا في:
+  - `/app/backend/uploads/emergent_complete_all.json`
+- إنشاء فهرس مهارات جديد:
+  - `/app/backend/workshop_skill_catalog.py`
+  - يحمّل **536 مهارة** و **283 برومبت** وملخص الفئات/الوكلاء.
+- تطوير Backend لبوت الورشة (`routes_workshop_bot.py`) بإضافات جديدة:
+  - `GET /api/workshop-bot/catalog/summary`
+  - `GET /api/workshop-bot/skills`
+  - `GET /api/workshop-bot/skills/{skill_id}`
+  - `GET /api/workshop-bot/conversations`
+  - `GET /api/workshop-bot/conversations/{session_id}`
+  - `DELETE /api/workshop-bot/conversations/{session_id}`
+- تم توسيع البوت لدعم:
+  - أوضاع: `admin / tech / client / unified`
+  - `skill_ids` لحقن مهارات مختارة داخل السياق
+  - جلسات محادثة محفوظة تعتمد على `session_id`
+  - تقليل التكرار في الردود عبر prompt موحد ومهارات إضافية محددة
+- إعادة بناء واجهة **ذكاء الورشة** بالكامل بأسلوب **Claude-like WebUI**:
+  - Sidebar للجلسات والمودات
+  - Main chat area حديثة
+  - Skill rail للبحث في المهارات واختيارها
+  - Composer مستقل للإرسال
+  - ملفات الواجهة الجديدة:
+    - `/app/frontend/src/components/WorkshopAIBot.jsx`
+    - `/app/frontend/src/components/workshop-bot/WorkshopBotSidebar.jsx`
+    - `/app/frontend/src/components/workshop-bot/WorkshopBotMessages.jsx`
+    - `/app/frontend/src/components/workshop-bot/WorkshopBotComposer.jsx`
+    - `/app/frontend/src/components/workshop-bot/WorkshopBotSkillRail.jsx`
+    - `/app/frontend/src/services/workshopBotAPI.js`
+- نتيجة الاختبار الرسمية: `iteration_115.json`
+  - Backend: **13/13 PASS**
+  - Frontend: **100% PASS**
+  - GPT-5.1 و KB mode والجلسات والمهارات والواجهة كلها confirmed working.
+
 ### سجل حذف جماعي + تصدير Excel للذمم + تحقق من البوت (11 Apr 2026)
 - إضافة **سجل تدقيق Audit Log** ثابت لعمليات الحذف الجماعي ومسح البيانات:
   - Backend helper جديد: `/app/backend/bulk_delete_audit.py`

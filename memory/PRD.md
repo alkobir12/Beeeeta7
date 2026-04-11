@@ -17,6 +17,24 @@
 
 ## What's Been Implemented
 
+### تنظيف أسرار Git + تدقيق 90 يوم قبل/بعد (11 Apr 2026)
+- تم تنظيف الملفات التي ظهرت في خطأ `SECRETS_DETECTED`:
+  - `/app/DEPLOYMENT_GUIDE.md`
+  - `/app/autoprofit-pro/apps/api/src/core/config.py`
+  - `/app/autoprofit-pro/infrastructure/docker-compose.yml`
+  - `/app/backend/apply_schema_via_api.py`
+- تم تحويل القيم الحساسة إلى placeholders/متغيرات بيئة، وإزالة أي مفاتيح مكشوفة من هذه الملفات.
+
+- تنفيذ التدقيق المماثل لعمليات المركبات آخر 90 يوم:
+  - تقرير قبل/بعد محفوظ: `/app/memory/reports/vehicle_ops_reclassify_90d_before_after.json`
+  - CSV للعمليات المتأثرة: `/app/memory/reports/vehicle_ops_reclassify_90d_changes.csv`
+  - النتيجة: `before_candidates=1` ثم `updated=1` ثم `after_candidates=0`
+  - المطابقة: `total_absolute_difference` تحسّن من `1850.0` إلى `0.0`.
+
+- إغلاق ملاحظة اختبار منخفضة:
+  - `workshopTotal/supplierArchiveTotal` أصبح يُحسب دائمًا في `/api/operations` و`/api/operations/{id}` عبر fallback من `items` عند غياب الحقول المخزنة.
+  - تحقق نهائي: `iteration_108.json` backend 100%.
+
 ### إصلاح جذري: منع ترحيل إجمالي ملف المركبة كإيراد ورشة (11 Apr 2026)
 - المشكلة التي عالجناها:
   - إجمالي العملية القادم من ملف المركبة كان يجمع (الورشة + الموردين) ويتم ترحيله كإيراد/ذمم، وهذا غير صحيح.

@@ -13,7 +13,7 @@ const formatMoney = (value) => {
   }
 };
 
-const StatCard = ({ title, value, subtitle, accent = 'slate', testId }) => {
+const StatCard = ({ title, value, subtitle, accent = 'slate', testId, onShowSource, sourceKey }) => {
   const accentMap = {
     emerald: {
       bg: 'rgba(16,185,129,0.10)',
@@ -72,11 +72,26 @@ const StatCard = ({ title, value, subtitle, accent = 'slate', testId }) => {
           {title}
         </div>
       )}
+      {typeof onShowSource === 'function' ? (
+        <button
+          type="button"
+          onClick={() => onShowSource(sourceKey)}
+          className="mt-2 text-[11px] px-2 py-1 rounded-lg"
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            color: 'rgba(186,230,253,0.95)',
+          }}
+          data-testid={`${testId}-source-button`}
+        >
+          عرض المصدر
+        </button>
+      ) : null}
     </div>
   );
 };
 
-export default function VehicleFinancialSummary({ summary, t }) {
+export default function VehicleFinancialSummary({ summary, t, onShowSource }) {
   const s = summary || {};
   const balance = Number(s.balance || 0);
 
@@ -96,6 +111,8 @@ export default function VehicleFinancialSummary({ summary, t }) {
         subtitle={safeT('vehicle_finance.workshop_due_hint', 'إيراد الورشة (ذمم العميل)')}
         accent="violet"
         testId="vehicle-financial-summary-workshop-due"
+        onShowSource={onShowSource}
+        sourceKey="workshop_due"
       />
       <StatCard
         title={safeT('vehicle_finance.suppliers_due', 'ذمم الموردين')}
@@ -103,18 +120,24 @@ export default function VehicleFinancialSummary({ summary, t }) {
         subtitle={safeT('vehicle_finance.suppliers_due_hint', 'أرشيف موردين (منفصل عن ربح الورشة)')}
         accent="rose"
         testId="vehicle-financial-summary-suppliers-due"
+        onShowSource={onShowSource}
+        sourceKey="suppliers_due"
       />
       <StatCard
         title={safeT('vehicle_finance.total_paid', 'المدفوع')}
         value={s.total_paid}
         accent="emerald"
         testId="vehicle-financial-summary-total-paid"
+        onShowSource={onShowSource}
+        sourceKey="paid"
       />
       <StatCard
         title={safeT('vehicle_finance.advance_paid', 'دفعة مقدمة')}
         value={s.advance_paid}
         accent="sky"
         testId="vehicle-financial-summary-advance-paid"
+        onShowSource={onShowSource}
+        sourceKey="advance"
       />
       <StatCard
         title={safeT('vehicle_finance.balance', 'المتبقي')}
@@ -122,6 +145,8 @@ export default function VehicleFinancialSummary({ summary, t }) {
         subtitle={balance < 0 ? safeT('vehicle_finance.credit', 'رصيد للعميل') : safeT('vehicle_finance.balance_hint', 'المتبقي للورشة فقط')}
         accent={balanceAccent}
         testId="vehicle-financial-summary-balance"
+        onShowSource={onShowSource}
+        sourceKey="balance"
       />
     </div>
   );

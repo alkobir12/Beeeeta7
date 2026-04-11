@@ -1726,6 +1726,8 @@ const VehicleDetails = () => {
   // Edit Vehicle & Customer State
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [isVehicleInfoCollapsed, setIsVehicleInfoCollapsed] = useState(true);
+  const [isCustomerInfoCollapsed, setIsCustomerInfoCollapsed] = useState(true);
   const [vehicleForm, setVehicleForm] = useState({});
   const [customerForm, setCustomerForm] = useState({});
   
@@ -1745,6 +1747,9 @@ const VehicleDetails = () => {
   const [waPreview, setWaPreview] = useState(null);
 
   const [financeSummary, setFinanceSummary] = useState(null);
+  const [financialSourceOpen, setFinancialSourceOpen] = useState(false);
+  const [financialSourceTitle, setFinancialSourceTitle] = useState('');
+  const [financialSourceRows, setFinancialSourceRows] = useState([]);
 
   
   const videoRef = useRef(null);
@@ -2164,6 +2169,125 @@ const VehicleDetails = () => {
     }
   };
 
+  const blockTitles = {
+    vehicle_info: 'معلومات المركبة',
+    visits: 'الزيارات',
+    financial_summary: 'الملخص المالي',
+    guidance: 'إرشادات الملف',
+    status_actions: 'الحالة والإجراءات',
+  };
+
+  const supplierArchiveRows = useMemo(() => {
+    const rows = [];
+    (visits || []).forEach((visit) => {
+      const visitDate = visit.entryDate || visit.entry_date || visit.createdAt || visit.created_at || '';
+      (visit.items || []).forEach((item) => {
+        if (String(item?.itemType || '').toLowerCase() !== 'supplier') return;
+        const qty = Number(item?.quantity || 1);
+        const price = Number(item?.price || 0);
+        const amount = Number(item?.total ?? (qty * price));
+        rows.push({
+          date: visitDate,
+          visitId: visit.id,
+          supplier: item?.name || 'مورد غير محدد',
+          movementType: 'توريد/مشتريات للزيارة',
+          qty,
+          price,
+          amount,
+          description: item?.name || '',
+        });
+      });
+    });
+    return rows.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [visits]);
+
+  const openFinancialSource = useCallback((sourceKey) => {
+    const allItems = (visits || []).flatMap((visit) =>
+      (visit.items || []).map((item) => {
+        const qty = Number(item?.quantity || 1);
+        const price = Number(item?.price || 0);
+        const amount = Number(item?.total ?? (qty * price));
+        return {
+          date: visit.entryDate || visit.entry_date || visit.createdAt || visit.created_at || '',
+          visitId: visit.id,
+          itemType: String(item?.itemType || '').toLowerCase(),
+          name: item?.name || '-',
+          qty,
+          price,
+          amount,
+        };
+      })
+    );
+
+    const allPayments = (visits || []).flatMap((visit) =>
+      (visit.payments || []).map((payment) => ({
+        date: payment.date || payment.createdAt || payment.created_at || visit.entryDate || '',
+        visitId: visit.id,
+        kind: payment.kind || 'payment',
+        amount: Number(payment.amount || 0),
+        method: payment.method || payment.payment_method || 'cash',
+      }))
+    );
+
+    let title = 'مصدر الرقم';
+    let rows = [];
+
+    if (sourceKey === 'workshop_due') {
+      title = 'مصدر رقم ذمم الورشة';
+      rows = allItems.filter((it) => it.itemType !== 'supplier').map((it) => ({
+        date: it.date,
+        visitId: it.visitId,
+        type: 'بند ورشة',
+        label: it.name,
+        amount: it.amount,
+        note: `الكمية ${it.qty} × السعر ${it.price}`,
+      }));
+    } else if (sourceKey === 'suppliers_due') {
+      title = 'مصدر رقم ذمم الموردين (أرشيف)';
+      rows = supplierArchiveRows.map((it) => ({
+        date: it.date,
+        visitId: it.visitId,
+        type: it.movementType,
+        label: it.supplier,
+        amount: it.amount,
+        note: `الكمية ${it.qty} × السعر ${it.price}`,
+      }));
+    } else if (sourceKey === 'paid') {
+      title = 'مصدر رقم المدفوع';
+      rows = allPayments.map((p) => ({
+        date: p.date,
+        visitId: p.visitId,
+        type: 'دفعة',
+        label: p.kind,
+        amount: p.amount,
+        note: `طريقة الدفع: ${p.method}`,
+      }));
+    } else if (sourceKey === 'advance') {
+      title = 'مصدر رقم الدفعة المقدمة';
+      rows = allPayments.filter((p) => String(p.kind || '').toLowerCase() === 'advance').map((p) => ({
+        date: p.date,
+        visitId: p.visitId,
+        type: 'دفعة مقدمة',
+        label: p.kind,
+        amount: p.amount,
+        note: `طريقة الدفع: ${p.method}`,
+      }));
+    } else if (sourceKey === 'balance') {
+      title = 'كيف تم احتساب المتبقي';
+      const summary = financeSummary || {};
+      rows = [
+        { date: '-', visitId: '-', type: 'ذمم الورشة', label: 'إجمالي', amount: Number(summary.total_workshop || 0), note: 'إيراد الورشة' },
+        { date: '-', visitId: '-', type: 'ذمم الموردين', label: 'إجمالي', amount: Number(summary.total_suppliers || 0), note: 'أرشيف منفصل' },
+        { date: '-', visitId: '-', type: 'المدفوع', label: 'إجمالي', amount: Number(summary.total_paid || 0), note: 'إجمالي الدفعات' },
+        { date: '-', visitId: '-', type: 'المتبقي', label: 'إجمالي', amount: Number(summary.balance || 0), note: 'المعادلة: (ذمم الورشة + ذمم الموردين) - المدفوع' },
+      ];
+    }
+
+    setFinancialSourceTitle(title);
+    setFinancialSourceRows(rows);
+    setFinancialSourceOpen(true);
+  }, [visits, supplierArchiveRows, financeSummary]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -2181,14 +2305,6 @@ const VehicleDetails = () => {
   );
 
   // MARKER: VehicleDetails content begins
-
-  const blockTitles = {
-    vehicle_info: 'معلومات المركبة',
-    visits: 'الزيارات',
-    financial_summary: 'الملخص المالي',
-    guidance: 'إرشادات الملف',
-    status_actions: 'الحالة والإجراءات',
-  };
 
   const renderBlock = (blockId) => {
     // On mobile we use lighter internal headings because the block already has a title.
@@ -2215,21 +2331,39 @@ const VehicleDetails = () => {
                       {t('vehicle_details.vehicle_info')}
                     </h3>
                   </div>
-                  <button
-                    onClick={() => setIsEditingVehicle(!isEditingVehicle)}
-                    className="p-2 rounded-xl"
-                    style={{
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(148,163,184,0.16)',
-                      color: 'rgba(226,232,240,0.85)',
-                    }}
-                    data-testid="vehicle-edit-toggle"
-                  >
-                    {isEditingVehicle ? <X size={16} /> : <Edit2 size={16} />}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsVehicleInfoCollapsed((v) => !v)}
+                      className="px-3 py-1.5 rounded-xl text-xs"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                        color: 'rgba(226,232,240,0.85)',
+                      }}
+                      data-testid="vehicle-info-collapse-toggle"
+                    >
+                      {isVehicleInfoCollapsed ? 'فتح' : 'إخفاء'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingVehicle(!isEditingVehicle);
+                        setIsVehicleInfoCollapsed(false);
+                      }}
+                      className="p-2 rounded-xl"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                        color: 'rgba(226,232,240,0.85)',
+                      }}
+                      data-testid="vehicle-edit-toggle"
+                    >
+                      {isEditingVehicle ? <X size={16} /> : <Edit2 size={16} />}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
+                {(!isVehicleInfoCollapsed || isEditingVehicle) ? (
+                <div className="space-y-3" data-testid="vehicle-info-content">
                   <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicles.plate_number')}</span>
                     {isEditingVehicle ? (
@@ -2381,6 +2515,11 @@ const VehicleDetails = () => {
                     </button>
                   )}
                 </div>
+                ) : (
+                  <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-info-collapsed-hint">
+                    البلوك منكمش — اضغط فتح لعرض التفاصيل.
+                  </div>
+                )}
               </div>
 
             {/* Customer Info */}
@@ -2402,21 +2541,39 @@ const VehicleDetails = () => {
                       {t('vehicle_details.customer_info')}
                     </h3>
                   </div>
-                  <button
-                    onClick={() => setIsEditingCustomer(!isEditingCustomer)}
-                    className="p-2 rounded-xl"
-                    style={{
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(148,163,184,0.16)',
-                      color: 'rgba(226,232,240,0.85)',
-                    }}
-                    data-testid="customer-edit-toggle"
-                  >
-                    {isEditingCustomer ? <X size={16} /> : <Edit2 size={16} />}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsCustomerInfoCollapsed((v) => !v)}
+                      className="px-3 py-1.5 rounded-xl text-xs"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                        color: 'rgba(226,232,240,0.85)',
+                      }}
+                      data-testid="customer-info-collapse-toggle"
+                    >
+                      {isCustomerInfoCollapsed ? 'فتح' : 'إخفاء'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingCustomer(!isEditingCustomer);
+                        setIsCustomerInfoCollapsed(false);
+                      }}
+                      className="p-2 rounded-xl"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                        color: 'rgba(226,232,240,0.85)',
+                      }}
+                      data-testid="customer-edit-toggle"
+                    >
+                      {isEditingCustomer ? <X size={16} /> : <Edit2 size={16} />}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
+                {(!isCustomerInfoCollapsed || isEditingCustomer) ? (
+                <div className="space-y-3" data-testid="customer-info-content">
                   <div className="flex flex-col py-2" style={{ borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>{t('vehicles_page.customer_name')}</span>
                     {isEditingCustomer ? (
@@ -2526,6 +2683,11 @@ const VehicleDetails = () => {
                     </button>
                   )}
                 </div>
+                ) : (
+                  <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="customer-info-collapsed-hint">
+                    البلوك منكمش — اضغط فتح لعرض التفاصيل.
+                  </div>
+                )}
               </div>
 
             {/* Files Section (Load on demand) */}
@@ -2650,11 +2812,62 @@ const VehicleDetails = () => {
       case 'financial_summary':
         return (
           <div
-            className="liquid-surface liquid-section"
+            className="liquid-surface liquid-section space-y-3"
             style={{ padding: 0, background: 'transparent', border: '0' }}
             data-testid="vehicle-financial-summary-block"
           >
-            <VehicleFinancialSummary summary={financeSummary || {}} t={t} />
+            <VehicleFinancialSummary summary={financeSummary || {}} t={t} onShowSource={openFinancialSource} />
+
+            <div
+              className="liquid-surface"
+              style={{
+                borderRadius: 16,
+                padding: 12,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+              data-testid="vehicle-supplier-archive-block"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold" style={{ color: 'rgba(248,250,252,0.95)' }} data-testid="vehicle-supplier-archive-title">
+                  سجل حركة الموردين (أرشيف فقط)
+                </h4>
+                <span className="text-[11px]" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-supplier-archive-count">
+                  عدد الحركات: {supplierArchiveRows.length}
+                </span>
+              </div>
+
+              {supplierArchiveRows.length === 0 ? (
+                <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-supplier-archive-empty">
+                  لا توجد حركات موردين مسجلة بعد.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs" data-testid="vehicle-supplier-archive-table">
+                    <thead>
+                      <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.18)', color: 'rgba(226,232,240,0.72)' }}>
+                        <th className="py-2 px-2 text-right">التاريخ</th>
+                        <th className="py-2 px-2 text-right">الزيارة</th>
+                        <th className="py-2 px-2 text-right">المورد</th>
+                        <th className="py-2 px-2 text-right">النوع</th>
+                        <th className="py-2 px-2 text-right">المبلغ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {supplierArchiveRows.slice(0, 50).map((row, idx) => (
+                        <tr key={`${row.visitId}-${idx}`} className="border-b" style={{ borderColor: 'rgba(148,163,184,0.10)', color: 'rgba(248,250,252,0.9)' }} data-testid={`vehicle-supplier-archive-row-${idx}`}>
+                          <td className="py-2 px-2">{row.date ? new Date(row.date).toLocaleDateString('ar-SA') : '-'}</td>
+                          <td className="py-2 px-2">{row.visitId || '-'}</td>
+                          <td className="py-2 px-2">{row.supplier}</td>
+                          <td className="py-2 px-2">{row.movementType}</td>
+                          <td className="py-2 px-2">{formatCurrency(row.amount)} ر.س</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -3167,6 +3380,73 @@ const VehicleDetails = () => {
 
 
       {/* Modals */}
+      {financialSourceOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" data-testid="vehicle-financial-source-modal-overlay">
+          <div
+            className="liquid-surface w-full max-w-3xl max-h-[85vh] overflow-hidden"
+            style={{
+              background: 'rgba(15,23,42,0.95)',
+              border: '1px solid rgba(148,163,184,0.22)',
+              borderRadius: 16,
+            }}
+            data-testid="vehicle-financial-source-modal"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(148,163,184,0.16)' }}>
+              <h3 className="text-sm font-extrabold" style={{ color: 'rgba(248,250,252,0.95)' }} data-testid="vehicle-financial-source-title">
+                {financialSourceTitle || 'مصدر الرقم'}
+              </h3>
+              <button
+                onClick={() => setFinancialSourceOpen(false)}
+                className="px-3 py-1.5 rounded-xl text-xs"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(148,163,184,0.18)',
+                  color: 'rgba(226,232,240,0.85)',
+                }}
+                data-testid="vehicle-financial-source-close"
+              >
+                إغلاق
+              </button>
+            </div>
+
+            <div className="p-4 overflow-auto max-h-[70vh]" data-testid="vehicle-financial-source-content">
+              {financialSourceRows.length === 0 ? (
+                <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-financial-source-empty">
+                  لا توجد بيانات مصدر ضمن الفترة الحالية.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs" data-testid="vehicle-financial-source-table">
+                    <thead>
+                      <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.18)', color: 'rgba(226,232,240,0.72)' }}>
+                        <th className="py-2 px-2 text-right">التاريخ</th>
+                        <th className="py-2 px-2 text-right">الزيارة</th>
+                        <th className="py-2 px-2 text-right">النوع</th>
+                        <th className="py-2 px-2 text-right">الوصف</th>
+                        <th className="py-2 px-2 text-right">المبلغ</th>
+                        <th className="py-2 px-2 text-right">ملاحظة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {financialSourceRows.map((row, idx) => (
+                        <tr key={`${row.visitId}-${idx}`} className="border-b" style={{ borderColor: 'rgba(148,163,184,0.10)', color: 'rgba(248,250,252,0.9)' }} data-testid={`vehicle-financial-source-row-${idx}`}>
+                          <td className="py-2 px-2">{row.date && row.date !== '-' ? new Date(row.date).toLocaleDateString('ar-SA') : '-'}</td>
+                          <td className="py-2 px-2">{row.visitId || '-'}</td>
+                          <td className="py-2 px-2">{row.type || '-'}</td>
+                          <td className="py-2 px-2">{row.label || '-'}</td>
+                          <td className="py-2 px-2">{formatCurrency(Number(row.amount || 0))} ر.س</td>
+                          <td className="py-2 px-2">{row.note || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
           <div

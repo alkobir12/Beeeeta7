@@ -24,7 +24,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://pos-performance-2.preview.emergentagent.com/api"
+BASE_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class AREndpointsTest:

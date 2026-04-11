@@ -24,6 +24,7 @@ except Exception:
     pdfplumber = None
 
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from bulk_delete_audit import record_bulk_delete_event
 from supabase_service import SupabaseService
 
 from visit_sync import _sync_visit_to_operation
@@ -74,6 +75,13 @@ def set_db(database):
     except Exception as e:
         templates_bucket = None
         print(f"GridFS bucket init failed: {e}")
+
+
+def _extract_request_actor(request: Optional[Request]) -> Dict[str, str]:
+    headers = getattr(request, "headers", {}) or {}
+    user_id = str(headers.get("x-user-id") or headers.get("x-user-name") or "system").strip() or "system"
+    user_role = str(headers.get("x-user-role") or "unknown").strip() or "unknown"
+    return {"user_id": user_id, "user_role": user_role}
 
 
 # --------------------- Settings ---------------------
@@ -794,7 +802,7 @@ async def operations_pending_analytics():
                             dt = dt.replace(tzinfo=None)
                         if dt < now:
                             overdue += 1
-                    except:
+                    except Exception:
                         pass
             return {"total": len(vehs), "byStatus": by_status, "overdue": overdue}
 
@@ -1748,16 +1756,18 @@ async def delete_operation(op_id: str):
 
 
 @router.delete("/operations")
-async def delete_all_operations():
+async def delete_all_operations(request: Request):
     """Delete all operations - for cleanup/reset"""
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        actor = _extract_request_actor(request)
         if provider == "supabase":
             supa = SupabaseService()
             # Delete all operations - use gt filter instead of neq
             try:
                 # Get all operations first
                 all_ops = supa.operations_list()
+                deleted_count = len(all_ops or [])
                 # Delete each one
                 for op in all_ops:
                     try:
@@ -1766,25 +1776,60 @@ async def delete_all_operations():
                         ).execute()
                     except:
                         pass
+                audit_event = record_bulk_delete_event(
+                    action="delete_all_operations",
+                    source_endpoint="/api/operations",
+                    user_id=actor["user_id"],
+                    user_role=actor["user_role"],
+                    items={"operations_deleted": deleted_count},
+                    meta={"provider": provider},
+                )
                 return {
                     "success": True,
                     "message": f"Deleted {len(all_ops)} operations",
+                    "audit_event": audit_event,
                 }
             except Exception as e:
+                audit_event = record_bulk_delete_event(
+                    action="delete_all_operations",
+                    source_endpoint="/api/operations",
+                    user_id=actor["user_id"],
+                    user_role=actor["user_role"],
+                    items={"operations_deleted": "all"},
+                    meta={"provider": provider, "note": str(e)},
+                )
                 return {
                     "success": True,
                     "message": "Operations table cleared",
                     "note": str(e),
+                    "audit_event": audit_event,
                 }
 
         if provider == "memory" or db is None:
             _mem_write("operations", [])
-            return {"success": True, "message": "All operations deleted"}
+            audit_event = record_bulk_delete_event(
+                action="delete_all_operations",
+                source_endpoint="/api/operations",
+                user_id=actor["user_id"],
+                user_role=actor["user_role"],
+                items={"operations_deleted": "all"},
+                meta={"provider": provider},
+            )
+            return {"success": True, "message": "All operations deleted", "audit_event": audit_event}
 
         result = await db.operations.delete_many({})
+        audit_event = record_bulk_delete_event(
+            action="delete_all_operations",
+            source_endpoint="/api/operations",
+            user_id=actor["user_id"],
+            user_role=actor["user_role"],
+            items={"operations_deleted": result.deleted_count},
+            meta={"provider": provider},
+        )
         return {
             "success": True,
             "message": f"Deleted {result.deleted_count} operations",
+            "audit_event": audit_event,
         }
     except HTTPException:
         raise
@@ -1793,7 +1838,7 @@ async def delete_all_operations():
 
 
 @router.delete("/cleanup/keep-debts-only")
-async def cleanup_keep_debts_only(confirm: str = Query(...)):
+async def cleanup_keep_debts_only(request: Request, confirm: str = Query(...)):
     """Delete journal entries + non-debt operations, keep debt operations only."""
     if confirm != "KEEP_DEBTS_ONLY":
         raise HTTPException(status_code=400, detail="confirm=KEEP_DEBTS_ONLY مطلوب")
@@ -1812,6 +1857,7 @@ async def cleanup_keep_debts_only(confirm: str = Query(...)):
 
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        actor = _extract_request_actor(request)
         result = {
             "operations_kept": 0,
             "operations_deleted": 0,
@@ -1854,7 +1900,15 @@ async def cleanup_keep_debts_only(confirm: str = Query(...)):
             result["operations_kept"] = len(keep_ids)
             result["operations_deleted"] = len(delete_ids)
             result["journal_entries_deleted"] = len(journal_ids)
-            return {"success": True, "data": result}
+            audit_event = record_bulk_delete_event(
+                action="cleanup_keep_debts_only",
+                source_endpoint="/api/cleanup/keep-debts-only",
+                user_id=actor["user_id"],
+                user_role=actor["user_role"],
+                items=result,
+                meta={"confirm": confirm, "provider": provider},
+            )
+            return {"success": True, "data": result, "audit_event": audit_event}
 
         if provider == "memory" or db is None:
             operations = _mem_read("operations")
@@ -1866,7 +1920,15 @@ async def cleanup_keep_debts_only(confirm: str = Query(...)):
             result["operations_kept"] = len(kept_ops)
             result["operations_deleted"] = deleted_count
             result["journal_entries_deleted"] = len(journals)
-            return {"success": True, "data": result}
+            audit_event = record_bulk_delete_event(
+                action="cleanup_keep_debts_only",
+                source_endpoint="/api/cleanup/keep-debts-only",
+                user_id=actor["user_id"],
+                user_role=actor["user_role"],
+                items=result,
+                meta={"confirm": confirm, "provider": provider},
+            )
+            return {"success": True, "data": result, "audit_event": audit_event}
 
         operations = await db.operations.find({}, {"_id": 0, "id": 1, "type": 1, "payment_method": 1, "paymentMethod": 1, "payment_status": 1, "paymentStatus": 1}).to_list(length=50000)
         keep_ids = []
@@ -1887,7 +1949,15 @@ async def cleanup_keep_debts_only(confirm: str = Query(...)):
         result["operations_kept"] = len(keep_ids)
         result["operations_deleted"] = len(delete_ids)
         result["journal_entries_deleted"] = je_result.deleted_count
-        return {"success": True, "data": result}
+        audit_event = record_bulk_delete_event(
+            action="cleanup_keep_debts_only",
+            source_endpoint="/api/cleanup/keep-debts-only",
+            user_id=actor["user_id"],
+            user_role=actor["user_role"],
+            items=result,
+            meta={"confirm": confirm, "provider": provider},
+        )
+        return {"success": True, "data": result, "audit_event": audit_event}
     except HTTPException:
         raise
     except Exception as e:

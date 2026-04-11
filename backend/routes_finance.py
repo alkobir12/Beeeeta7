@@ -1,15 +1,19 @@
-from fastapi import APIRouter, Query, Body, HTTPException
+from fastapi import APIRouter, Query, Body, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from accounting_auditor import AccountingSystemAuditor
+from bulk_delete_audit import list_bulk_delete_events, record_bulk_delete_event
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 import uuid
 import os
 import re
 import json
+import io
 from supabase import create_client
 from motor.motor_asyncio import AsyncIOMotorClient
+import openpyxl
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
@@ -85,6 +89,19 @@ def _safe_float(value) -> float:
         return float(value or 0)
     except Exception:
         return 0.0
+
+
+def _extract_request_actor(request: Optional[Request]) -> Dict[str, str]:
+    headers = getattr(request, "headers", {}) or {}
+    user_id = str(headers.get("x-user-id") or headers.get("x-user-name") or "system").strip() or "system"
+    user_role = str(headers.get("x-user-role") or "unknown").strip() or "unknown"
+    return {"user_id": user_id, "user_role": user_role}
+
+
+def _count_value(value: Any) -> Any:
+    if isinstance(value, float):
+        return round(value, 2)
+    return value
 
 
 def _normalize_date_string(value: Optional[str]) -> Optional[str]:
@@ -2841,6 +2858,163 @@ async def reports_ar_customers(
     )
 
 
+@router.get("/ar/ledger/export")
+async def export_ar_ledger_excel(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    as_of: Optional[str] = Query(None),
+    customer: Optional[str] = Query(None),
+):
+    ledger_response = await ar_ledger(
+        workshop_id=workshop_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    if not ledger_response.get("success"):
+        raise HTTPException(status_code=400, detail=ledger_response.get("error") or "تعذر تجهيز دفتر الذمم")
+
+    export_as_of = _parse_date_str(as_of) or _parse_date_str(end_date) or datetime.now().date().isoformat()
+    customers_response = await ar_customers(workshop_id=workshop_id, as_of=export_as_of, include_today=True)
+    aging_response = await ar_aging(workshop_id=workshop_id, as_of=export_as_of)
+    statement_response = None
+    if customer:
+        statement_response = await ar_customer_statement(
+            workshop_id=workshop_id,
+            customer=customer,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    workbook = openpyxl.Workbook()
+    summary_sheet = workbook.active
+    summary_sheet.title = "AR-1103-Summary"
+
+    ledger_data = ledger_response.get("data") or {}
+    customers_data = customers_response.get("data") or {}
+    aging_data = aging_response.get("data") or {}
+
+    summary_rows = [
+        ("ورشة", workshop_id),
+        ("الحساب", "1103 - ذمم مدينة عملاء"),
+        ("من", start_date or "بداية مفتوحة"),
+        ("إلى", end_date or export_as_of),
+        ("حتى تاريخ", export_as_of),
+        ("العميل المحدد", customer or "الكل"),
+        ("عدد سطور الدفتر", len(ledger_data.get("rows") or [])),
+        ("الرصيد الختامي", _safe_float(ledger_data.get("ending_balance"))),
+        ("إجمالي ذمم العملاء", _safe_float(customers_data.get("total_ar"))),
+    ]
+    for row_index, (label, value) in enumerate(summary_rows, start=1):
+        summary_sheet.cell(row=row_index, column=1, value=label)
+        summary_sheet.cell(row=row_index, column=2, value=value)
+
+    summary_sheet.cell(row=12, column=1, value="تقادم الذمم")
+    summary_sheet.append(["الفئة", "المبلغ"])
+    for label, value in [
+        ("0-30", _safe_float((aging_data.get("buckets") or {}).get("0_30"))),
+        ("31-60", _safe_float((aging_data.get("buckets") or {}).get("31_60"))),
+        ("61-90", _safe_float((aging_data.get("buckets") or {}).get("61_90"))),
+        ("90+", _safe_float((aging_data.get("buckets") or {}).get("90_plus"))),
+    ]:
+        summary_sheet.append([label, value])
+
+    customers_sheet = workbook.create_sheet("Customers")
+    customers_sheet.append(["العميل", "الرصيد"])
+    for row in customers_data.get("customers") or []:
+        customers_sheet.append([
+            row.get("customer") or "(غير معروف)",
+            _safe_float(row.get("balance")),
+        ])
+
+    ledger_sheet = workbook.create_sheet("AR-1103-Ledger")
+    ledger_sheet.append([
+        "التاريخ",
+        "العميل",
+        "النوع",
+        "المرجع",
+        "مدين",
+        "دائن",
+        "الرصيد الجاري",
+        "الوصف",
+        "المصدر",
+        "قيد اليومية",
+    ])
+    for row in ledger_data.get("rows") or []:
+        ledger_sheet.append([
+            str(row.get("date") or "")[:10],
+            row.get("customer") or "",
+            row.get("type") or "",
+            row.get("reference_id") or "",
+            _safe_float(row.get("debit")),
+            _safe_float(row.get("credit")),
+            _safe_float(row.get("running_balance")),
+            row.get("description") or "",
+            row.get("source") or "",
+            row.get("journal_entry_id") or "",
+        ])
+
+    aging_sheet = workbook.create_sheet("Open-Invoices")
+    aging_sheet.append([
+        "رقم العملية",
+        "العميل",
+        "تاريخ الفاتورة",
+        "تاريخ الاستحقاق",
+        "أيام التأخر",
+        "المتبقي",
+        "الفئة",
+    ])
+    for row in aging_data.get("open_invoices") or []:
+        aging_sheet.append([
+            row.get("operation_id") or "",
+            row.get("customer") or "",
+            row.get("invoice_date") or "",
+            row.get("due_date") or "",
+            _safe_float(row.get("days_past_due")),
+            _safe_float(row.get("remaining")),
+            row.get("bucket") or "",
+        ])
+
+    if statement_response and statement_response.get("success"):
+        statement_data = statement_response.get("data") or {}
+        statement_sheet = workbook.create_sheet("Customer-Statement")
+        statement_sheet.append(["العميل", statement_data.get("customer") or customer or ""])
+        statement_sheet.append(["الرصيد الختامي", _safe_float(statement_data.get("ending_balance"))])
+        statement_sheet.append([])
+        statement_sheet.append(["التاريخ", "النوع", "المرجع", "مدين", "دائن", "الرصيد الجاري", "الوصف"])
+        for row in statement_data.get("rows") or []:
+            statement_sheet.append([
+                str(row.get("date") or "")[:10],
+                row.get("type") or "",
+                row.get("reference_id") or "",
+                _safe_float(row.get("debit")),
+                _safe_float(row.get("credit")),
+                _safe_float(row.get("running_balance")),
+                row.get("description") or "",
+            ])
+
+    for sheet in workbook.worksheets:
+        sheet.freeze_panes = "A2"
+        for column in sheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                value = "" if cell.value is None else str(cell.value)
+                max_length = max(max_length, len(value))
+            sheet.column_dimensions[column_letter].width = min(max(max_length + 2, 12), 40)
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    filename = f"ar-1103-reconciliation-{export_as_of}.xlsx"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
+
+
 @router.get("/ar/customer-statement")
 async def ar_customer_statement(
     workshop_id: str = Query(...),
@@ -3619,6 +3793,7 @@ async def delete_budget(budget_id: str, workshop_id: str = Query(...)):
 
 @router.delete("/reset-all-data")
 async def reset_all_financial_data(
+    request: Request,
     workshop_id: str = Query(..., description="معرف الورشة"),
     confirm: str = Query(..., description="يجب أن تكون 'DELETE_ALL' للتأكيد")
 ):
@@ -3738,10 +3913,22 @@ async def reset_all_financial_data(
             except Exception as e:
                 print(f"Main DB deletion error: {e}")
         
+        actor = _extract_request_actor(request)
+        audit_event = record_bulk_delete_event(
+            action="reset_all_financial_data",
+            source_endpoint="/api/finance/reset-all-data",
+            workshop_id=workshop_id,
+            user_id=actor["user_id"],
+            user_role=actor["user_role"],
+            items={key: _count_value(value) for key, value in deleted_counts.items()},
+            meta={"confirm": confirm},
+        )
+
         return {
             "success": True,
             "message": "تم حذف جميع البيانات المالية بنجاح من جميع الأنظمة",
-            "deleted_counts": deleted_counts
+            "deleted_counts": deleted_counts,
+            "audit_event": audit_event,
         }
     
     except Exception as e:
@@ -3749,6 +3936,23 @@ async def reset_all_financial_data(
             "success": False,
             "message": f"حدث خطأ أثناء الحذف: {str(e)}"
         }
+
+
+@router.get("/audit-logs")
+async def get_bulk_delete_audit_logs(
+    workshop_id: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
+    limit: int = Query(30, ge=1, le=200),
+):
+    rows = list_bulk_delete_events(workshop_id=workshop_id, action=action, limit=limit)
+    return {
+        "success": True,
+        "data": {
+            "rows": rows,
+            "count": len(rows),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        },
+    }
 
 
 def _is_debt_related_operation(op: Dict[str, Any]) -> bool:

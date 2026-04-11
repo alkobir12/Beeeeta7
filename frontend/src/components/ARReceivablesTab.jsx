@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Download } from 'lucide-react';
 import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 
@@ -13,6 +14,7 @@ const ARReceivablesTab = () => {
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const customersQuery = useQuery({
     queryKey: ['ar-customers', workshopId, asOf],
@@ -59,6 +61,36 @@ const ARReceivablesTab = () => {
   const totalAR = customersQuery.data?.total_ar ?? 0;
   const buckets = agingQuery.data?.buckets || {};
 
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const response = await financeAPI.exportARLedgerExcel({
+        workshop_id: workshopId,
+        start_date: startDate,
+        end_date: endDate,
+        as_of: asOf,
+        customer: selectedCustomer || undefined,
+      });
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeCustomer = String(selectedCustomer || 'all-customers').replace(/[^\u0600-\u06FF\w-]+/g, '-');
+      link.href = url;
+      link.download = `ar-1103-${safeCustomer}-${endDate}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('AR export failed', error);
+      window.alert('تعذر تصدير ملف Excel الآن. حاول مرة أخرى بعد قليل.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex flex-col md:flex-row md:items-end gap-3">
@@ -70,6 +102,7 @@ const ARReceivablesTab = () => {
             onChange={(e) => setAsOf(e.target.value)}
             className="bg-transparent border-0 outline-none text-sm"
             style={{ color: 'var(--text-primary)' }}
+            data-testid="ar-as-of-date-input"
           />
         </div>
 
@@ -81,6 +114,7 @@ const ARReceivablesTab = () => {
             onChange={(e) => setStartDate(e.target.value)}
             className="bg-transparent border-0 outline-none text-sm"
             style={{ color: 'var(--text-primary)' }}
+            data-testid="ar-start-date-input"
           />
           <span style={{ color: 'var(--text-secondary)' }}>-</span>
           <input
@@ -89,32 +123,49 @@ const ARReceivablesTab = () => {
             onChange={(e) => setEndDate(e.target.value)}
             className="bg-transparent border-0 outline-none text-sm"
             style={{ color: 'var(--text-primary)' }}
+            data-testid="ar-end-date-input"
           />
         </div>
 
         <div className="flex-1" />
+
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting || ledgerQuery.isLoading}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition disabled:opacity-60"
+          style={{
+            backgroundColor: 'rgba(34, 197, 94, 0.14)',
+            border: '1px solid rgba(74, 222, 128, 0.22)',
+            color: '#d1fae5',
+          }}
+          data-testid="ar-export-excel-button"
+        >
+          <Download size={16} />
+          {exporting ? 'جاري التصدير...' : 'تصدير Excel للمطابقة'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>إجمالي ذمم العملاء</p>
-          <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{formatCurrency(totalAR)}</p>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>∑ أرصدة العملاء = رصيد الذمم</p>
+        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }} data-testid="ar-total-card">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }} data-testid="ar-total-card-title">إجمالي ذمم العملاء</p>
+          <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }} data-testid="ar-total-card-value">{formatCurrency(totalAR)}</p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }} data-testid="ar-total-card-note">∑ أرصدة العملاء = رصيد الذمم</p>
         </div>
 
-        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>تقادم الذمم</p>
-          <div className="mt-2 space-y-1 text-sm" style={{ color: 'var(--text-primary)' }}>
-            <div className="flex justify-between"><span>0-30 يوم</span><span className="font-mono">{formatCurrency(buckets['0_30'] || 0)}</span></div>
-            <div className="flex justify-between"><span>31-60 يوم</span><span className="font-mono">{formatCurrency(buckets['31_60'] || 0)}</span></div>
-            <div className="flex justify-between"><span>61-90 يوم</span><span className="font-mono">{formatCurrency(buckets['61_90'] || 0)}</span></div>
-            <div className="flex justify-between"><span>90+ يوم</span><span className="font-mono">{formatCurrency(buckets['90_plus'] || 0)}</span></div>
+        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }} data-testid="ar-aging-card">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }} data-testid="ar-aging-card-title">تقادم الذمم</p>
+          <div className="mt-2 space-y-1 text-sm" style={{ color: 'var(--text-primary)' }} data-testid="ar-aging-card-values">
+            <div className="flex justify-between"><span>0-30 يوم</span><span className="font-mono" data-testid="ar-aging-0-30">{formatCurrency(buckets['0_30'] || 0)}</span></div>
+            <div className="flex justify-between"><span>31-60 يوم</span><span className="font-mono" data-testid="ar-aging-31-60">{formatCurrency(buckets['31_60'] || 0)}</span></div>
+            <div className="flex justify-between"><span>61-90 يوم</span><span className="font-mono" data-testid="ar-aging-61-90">{formatCurrency(buckets['61_90'] || 0)}</span></div>
+            <div className="flex justify-between"><span>90+ يوم</span><span className="font-mono" data-testid="ar-aging-90-plus">{formatCurrency(buckets['90_plus'] || 0)}</span></div>
           </div>
         </div>
 
-        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>عدد العملاء المدينين</p>
-          <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{customers.length}</p>
+        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }} data-testid="ar-customers-count-card">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }} data-testid="ar-customers-count-card-title">عدد العملاء المدينين</p>
+          <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }} data-testid="ar-customers-count-card-value">{customers.length}</p>
         </div>
       </div>
 
@@ -157,6 +208,7 @@ const ARReceivablesTab = () => {
               onChange={(e) => setSelectedCustomer(e.target.value)}
               className="w-full rounded-lg px-3 py-2"
               style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+              data-testid="ar-customer-select"
             >
               <option value="">اختر عميل...</option>
               {customerNames.map((n) => (
@@ -164,7 +216,7 @@ const ARReceivablesTab = () => {
               ))}
             </select>
 
-            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div className="text-sm" style={{ color: 'var(--text-secondary)' }} data-testid="ar-statement-period-label">
               {selectedCustomer ? `الفترة: ${startDate} إلى ${endDate}` : 'اختر عميل لعرض كشف الحساب'}
             </div>
 

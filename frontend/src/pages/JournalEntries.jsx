@@ -61,6 +61,23 @@ const getEntryTypeConfig = (type) => {
   return configs[type] || configs.manual;
 };
 
+const getAuditHeaders = () => {
+  try {
+    const session = JSON.parse(localStorage.getItem('session') || '{}');
+    return {
+      'Content-Type': 'application/json',
+      'x-user-role': String(session?.role || '').toLowerCase(),
+      'x-user-id': String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager',
+    };
+  } catch {
+    return {
+      'Content-Type': 'application/json',
+      'x-user-role': '',
+      'x-user-id': 'manager',
+    };
+  }
+};
+
 const sanitizeEntryText = (value = '') => {
   if (!value) return '';
   return String(value)
@@ -288,7 +305,7 @@ export default function JournalEntries() {
       setResetKeepDebtsLoading(true);
       const response = await fetch(
         `${API_URL}/cleanup/keep-debts-only?confirm=KEEP_DEBTS_ONLY`,
-        { method: 'DELETE' }
+        { method: 'DELETE', headers: getAuditHeaders() }
       );
       const data = await response.json();
 

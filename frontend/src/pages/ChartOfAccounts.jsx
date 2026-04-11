@@ -61,6 +61,14 @@ export default function ChartOfAccounts() {
       return '';
     }
   })();
+  const sessionUserId = (() => {
+    try {
+      const session = JSON.parse(localStorage.getItem('session') || '{}');
+      return String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+    } catch {
+      return 'manager';
+    }
+  })();
   const canManageAccounts = ['admin', 'manager'].includes(sessionRole);
 
   const ensureManagerAccess = () => {
@@ -72,6 +80,7 @@ export default function ChartOfAccounts() {
   const getAuthHeaders = () => ({
     'Content-Type': 'application/json',
     'x-user-role': sessionRole,
+    'x-user-id': sessionUserId,
   });
 
   // جلب الحسابات من الـ API عند تحميل الصفحة
@@ -631,7 +640,7 @@ export default function ChartOfAccounts() {
                 const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
                 const response = await fetch(
                   `${API_URL}/finance/reset-all-data?workshop_id=${workshopId}&confirm=DELETE_ALL`,
-                  { method: 'DELETE' }
+                  { method: 'DELETE', headers: getAuthHeaders() }
                 );
                 const data = await response.json();
                 
@@ -652,6 +661,7 @@ export default function ChartOfAccounts() {
             }}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             title="حذف جميع البيانات المالية والبدء من الصفر"
+            data-testid="reset-financial-data-button"
           >
             <Trash2 size={20} />
             <span>إعادة تعيين الكل</span>

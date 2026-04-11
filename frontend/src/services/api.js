@@ -141,9 +141,11 @@ const financeAPI = {
   // AR (Receivables)
   getARCustomers: (params) => api.get('/finance/ar/customers', { params }),
   getARLedger: (params) => api.get('/finance/ar/ledger', { params }),
+  exportARLedgerExcel: (params) => api.get('/finance/ar/ledger/export', { params, responseType: 'blob' }),
   getARCustomerStatement: (params) => api.get('/finance/ar/customer-statement', { params }),
   getARAging: (params) => api.get('/finance/ar/aging', { params }),
   getARTurnover: (params) => api.get('/finance/ar/turnover', { params }),
+  getBulkDeleteAuditLogs: (params) => api.get('/finance/audit-logs', { params }),
 
   getInvoices: (params) => api.get('/invoices', { params }),
   createInvoice: (data) => api.post('/invoices', data),

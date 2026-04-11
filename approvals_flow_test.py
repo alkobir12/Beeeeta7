@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://pos-performance-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
 
 def log_test(test_name, status, details=""):
     """Log test results"""

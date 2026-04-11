@@ -6,7 +6,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pos-performance-2.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://repair-mgmt-fresh.preview.emergentagent.com').rstrip('/')
 
 
 class TestResetTotalsEndpoint:

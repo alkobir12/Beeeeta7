@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://pos-performance-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_USERNAME = "مدير"

@@ -18,6 +18,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import ARReceivablesTab from '../components/ARReceivablesTab';
+import { FinanceBulkDeleteAuditPanel } from '../components/FinanceBulkDeleteAuditPanel';
 
 const tabs = [
   { key: 'overview', label: 'نظرة عامة' },
@@ -201,6 +202,15 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
+  const bulkDeleteAuditQuery = useQuery({
+    queryKey: ['financial-bulk-delete-audit', workshopId],
+    queryFn: async () => {
+      const res = await financeAPI.getBulkDeleteAuditLogs({ workshop_id: workshopId, limit: 20 });
+      return unwrapApiData(res, { rows: [], count: 0 });
+    },
+    enabled: Boolean(workshopId),
+  });
+
   const chartAccountsQuery = useQuery({
     queryKey: ['financial-chart-of-accounts', workshopId],
     queryFn: async () => {
@@ -258,6 +268,7 @@ export default function ComprehensiveFinancial() {
     operationTraceQuery,
     receivablesSummaryQuery,
     reconciliationQuery,
+    bulkDeleteAuditQuery,
   ].some((query) => query.isError);
 
   const bsTotals = balanceSheetQuery.data?.totals || { assets: 0, liabilities: 0, equity: 0 };
@@ -269,6 +280,7 @@ export default function ComprehensiveFinancial() {
   const operationTraceData = operationTraceQuery.data || { rows: [], summary: { operations_total: 0, journal_total: 0, types_count: 0 } };
   const arSummary = receivablesSummaryQuery.data || { total_ar: 0, customers: [] };
   const reconciliation = reconciliationQuery.data || { summary: { matched: true, total_absolute_difference: 0 }, rows: [] };
+  const bulkDeleteAudit = bulkDeleteAuditQuery.data || { rows: [], count: 0 };
   const chartAccounts = chartAccountsQuery.data || [];
   const accountTree = accountTreeDetailsQuery.data || null;
   const salesOperationsData = salesOperationsQuery.data || null;
@@ -1303,58 +1315,62 @@ export default function ComprehensiveFinancial() {
         )}
 
         {activeTab === 'reconcile' && (
-          <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-reconciliation-panel">
-            <div className="mb-3 flex items-center gap-2 text-sm text-slate-100" data-testid="financial-reconcile-panel-summary">
-              {reconciliation.summary?.matched ? (
-                <ShieldCheck size={16} className="text-emerald-300" />
-              ) : (
-                <AlertTriangle size={16} className="text-amber-300" />
-              )}
-              <span>
-                {reconciliation.summary?.matched ? 'مطابقة كاملة بين العمليات والقيود' : 'يوجد اختلاف بين العمليات والقيود'}
-              </span>
-            </div>
-            <div className="mb-3 text-xs text-slate-300" data-testid="financial-reconcile-panel-metrics">
-              <span>قيود مفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}</span>
-              <span className="mx-2">|</span>
-              <span>قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}</span>
+          <div className="space-y-4" data-testid="financial-reconciliation-tab">
+            <div className="rounded-3xl border border-white/15 bg-white/5 p-4" data-testid="financial-reconciliation-panel">
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-100" data-testid="financial-reconcile-panel-summary">
+                {reconciliation.summary?.matched ? (
+                  <ShieldCheck size={16} className="text-emerald-300" />
+                ) : (
+                  <AlertTriangle size={16} className="text-amber-300" />
+                )}
+                <span>
+                  {reconciliation.summary?.matched ? 'مطابقة كاملة بين العمليات والقيود' : 'يوجد اختلاف بين العمليات والقيود'}
+                </span>
+              </div>
+              <div className="mb-3 text-xs text-slate-300" data-testid="financial-reconcile-panel-metrics">
+                <span>قيود مفقودة: {reconciliation.summary?.missing_operation_journals?.count || 0}</span>
+                <span className="mx-2">|</span>
+                <span>قيود غير مصنفة: {reconciliation.summary?.unclassified_journal_entries?.count || 0}</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-200">
+                      <th className="p-3 text-right">النوع</th>
+                      <th className="p-3 text-right">عدد العمليات</th>
+                      <th className="p-3 text-right">عدد القيود</th>
+                      <th className="p-3 text-right">إجمالي العمليات</th>
+                      <th className="p-3 text-right">إجمالي القيود</th>
+                      <th className="p-3 text-right">الفرق</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(reconciliation.rows || []).map((row, idx) => (
+                      <tr key={`${row.type}-${idx}`} className="border-b border-white/5 text-slate-100">
+                        <td className="p-3" data-testid={`financial-reconcile-type-${idx}`}>
+                          <div className="font-medium">{row.type_label_ar || reconcileTypeLabelMap[row.type] || row.type}</div>
+                          {(row.account_labels || []).length ? (
+                            <div className="text-[10px] text-slate-400 mt-1" data-testid={`financial-reconcile-type-accounts-${idx}`}>
+                              {(row.account_labels || []).join(' • ')}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="p-3" data-testid={`financial-reconcile-op-count-${idx}`}>{row.operations_count}</td>
+                        <td className="p-3" data-testid={`financial-reconcile-je-count-${idx}`}>{row.journal_entries_count}</td>
+                        <td className="p-3" data-testid={`financial-reconcile-op-total-${idx}`}>{formatCurrency(row.operations_total || 0)}</td>
+                        <td className="p-3" data-testid={`financial-reconcile-je-total-${idx}`}>{formatCurrency(row.journal_entries_total || 0)}</td>
+                        <td className={`p-3 ${Math.abs(Number(row.difference || 0)) < 0.01 ? 'text-emerald-300' : 'text-amber-300'}`} data-testid={`financial-reconcile-diff-${idx}`}>
+                          {formatCurrency(row.difference || 0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-slate-200">
-                    <th className="p-3 text-right">النوع</th>
-                    <th className="p-3 text-right">عدد العمليات</th>
-                    <th className="p-3 text-right">عدد القيود</th>
-                    <th className="p-3 text-right">إجمالي العمليات</th>
-                    <th className="p-3 text-right">إجمالي القيود</th>
-                    <th className="p-3 text-right">الفرق</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(reconciliation.rows || []).map((row, idx) => (
-                    <tr key={`${row.type}-${idx}`} className="border-b border-white/5 text-slate-100">
-                      <td className="p-3" data-testid={`financial-reconcile-type-${idx}`}>
-                        <div className="font-medium">{row.type_label_ar || reconcileTypeLabelMap[row.type] || row.type}</div>
-                        {(row.account_labels || []).length ? (
-                          <div className="text-[10px] text-slate-400 mt-1" data-testid={`financial-reconcile-type-accounts-${idx}`}>
-                            {(row.account_labels || []).join(' • ')}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="p-3" data-testid={`financial-reconcile-op-count-${idx}`}>{row.operations_count}</td>
-                      <td className="p-3" data-testid={`financial-reconcile-je-count-${idx}`}>{row.journal_entries_count}</td>
-                      <td className="p-3" data-testid={`financial-reconcile-op-total-${idx}`}>{formatCurrency(row.operations_total || 0)}</td>
-                      <td className="p-3" data-testid={`financial-reconcile-je-total-${idx}`}>{formatCurrency(row.journal_entries_total || 0)}</td>
-                      <td className={`p-3 ${Math.abs(Number(row.difference || 0)) < 0.01 ? 'text-emerald-300' : 'text-amber-300'}`} data-testid={`financial-reconcile-diff-${idx}`}>
-                        {formatCurrency(row.difference || 0)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <FinanceBulkDeleteAuditPanel rows={bulkDeleteAudit.rows || []} loading={bulkDeleteAuditQuery.isLoading && !bulkDeleteAuditQuery.data} />
           </div>
         )}
       </div>

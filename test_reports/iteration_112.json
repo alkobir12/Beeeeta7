@@ -5,7 +5,7 @@
     "minor": [
       {
         "endpoint": "/api/biz-accounts",
-        "issue": "1 test account remains: id=eb4589a8-cfd1-4132-8665-871b4503a7de, name='فرع الاختبار', code='TEST'",
+        "issue": "1 test account remains: id=repair-mgmt-fresh, name='فرع الاختبار', code='TEST'",
         "priority": "LOW"
       }
     ]
@@ -20,7 +20,7 @@
     "/app/test_reports/pytest/pytest_cleanup_verification_iter112.xml"
   ],
   "action_items": [
-    "Delete remaining test business account: id=eb4589a8-cfd1-4132-8665-871b4503a7de (فرع الاختبار/TEST)"
+    "Delete remaining test business account: id=repair-mgmt-fresh (فرع الاختبار/TEST)"
   ],
   "critical_code_review_comments": [],
   "updated_files": [

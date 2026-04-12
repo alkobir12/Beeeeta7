@@ -31,9 +31,14 @@
     - `تحديث/حذف حقل ...`
 - Frontend:
   - `LiquidSiteBuilder.jsx` أصبح يدعم ترتيب البلوكات داخل تبويب **التخطيط** عبر قائمة draggable
+  - تبويب **الكروت** أصبح يعرض **الكروت/البلوكات الحالية الفعلية للصفحة المختارة** وليس فقط الكروت المخصصة
   - `PageCustomCardsDock.jsx` أصبح يقرأ القيمة المرتبطة من `source_testid` إذا كانت متوفرة في الصفحة الحالية
   - `LiquidBuilderBotTab.jsx` أضيفت له quick actions جديدة لإدارة الكروت والحقول مباشرة
   - `pageCustomization.js` أصبح يطبّق `block_order` حيًا على الصفحة الحالية
+- تم إصلاح bug حرج في تحديث الكروت الحالية بعد التنقل بين الصفحات داخل الـ Builder:
+  - استخدام **scope-based snapshots** بدل مسح الـ DOM كاملًا
+  - إضافة **MutationObserver** لتحديث snapshots بعد اكتمال تبديل الصفحة فعليًا
+  - تحقق نهائي: `iteration_120.json` = **FIXED / PASS**
 - نتيجة الاختبار الرسمية: `iteration_118.json`
   - Backend: **15/15 PASS**
   - Frontend: **100% PASS**

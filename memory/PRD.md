@@ -17,6 +17,31 @@
 
 ## What's Been Implemented
 
+### سحب/إفلات البلوكات + ربط الحقول + أوامر كروت عبر البوت (11 Apr 2026)
+- توسيع تخصيصات Liquid Builder لتدعم:
+  - `block_order`
+  - `source_testid` داخل حقول الكروت المخصصة
+- Backend (`routes_alkabeer_bot.py`):
+  - حفظ واسترجاع `block_order` عبر customization API
+  - حفظ واسترجاع `source_testid` داخل الحقول
+  - دعم أوامر rrr الجديدة في dev mode:
+    - `اضف كرت ...`
+    - `احذف كرت ...`
+    - `اضف حقل ... = ... في كرت ...`
+    - `تحديث/حذف حقل ...`
+- Frontend:
+  - `LiquidSiteBuilder.jsx` أصبح يدعم ترتيب البلوكات داخل تبويب **التخطيط** عبر قائمة draggable
+  - `PageCustomCardsDock.jsx` أصبح يقرأ القيمة المرتبطة من `source_testid` إذا كانت متوفرة في الصفحة الحالية
+  - `LiquidBuilderBotTab.jsx` أضيفت له quick actions جديدة لإدارة الكروت والحقول مباشرة
+  - `pageCustomization.js` أصبح يطبّق `block_order` حيًا على الصفحة الحالية
+- نتيجة الاختبار الرسمية: `iteration_118.json`
+  - Backend: **15/15 PASS**
+  - Frontend: **100% PASS**
+  - تأكيد كامل لعمل:
+    - draggable blocks
+    - source binding
+    - أوامر add card / add field / EXIT
+
 ### توسعة Liquid Builder: اختيار صفحات + فلاتر/تجميع + بوت داخلي (11 Apr 2026)
 - تم توسيع `LiquidSiteBuilder.jsx` ليشمل:
   - **Page Selector** داخل الـ Builder لربط التحرير بجميع الصفحات الأساسية

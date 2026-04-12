@@ -67,7 +67,7 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
         </div>
       </div>
       <div className="flex flex-wrap gap-2" data-testid="liquid-site-builder-bot-quick-actions">
-        {['rrr', 'EXIT', 'اخف كرت صافي الربح', 'غير اسم زر تحديث إلى مزامنة'].map((item, index) => (
+        {['rrr', 'EXIT', 'اضف كرت متابعة سريعة', 'اضف حقل حالة = نشط في كرت متابعة سريعة', 'اخف كرت صافي الربح', 'غير اسم زر تحديث إلى مزامنة'].map((item, index) => (
           <button key={item} type="button" onClick={() => sendMessage(item)} className="rounded-full border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-slate-100" data-testid={`liquid-site-builder-bot-quick-${index}`}>
             {item}
           </button>

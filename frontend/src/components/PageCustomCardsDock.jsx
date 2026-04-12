@@ -3,6 +3,16 @@ import React from 'react';
 export const PageCustomCardsDock = ({ cards = [] }) => {
   if (!cards.length) return null;
 
+  const resolveFieldValue = (field) => {
+    if (typeof document === 'undefined') return field.value || '—';
+    if (field?.source_testid) {
+      const target = document.querySelector(`[data-testid="${field.source_testid}"]`);
+      const sourceText = (target?.textContent || '').trim();
+      if (sourceText) return sourceText;
+    }
+    return field.value || '—';
+  };
+
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3" data-testid="page-custom-cards-dock">
       {cards.map((card, index) => (
@@ -15,7 +25,8 @@ export const PageCustomCardsDock = ({ cards = [] }) => {
               {(card.fields || []).map((field, fieldIndex) => (
                 <div key={field.id || fieldIndex} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2" data-testid={`page-custom-card-field-${index}-${fieldIndex}`}>
                   <p className="text-[11px] text-slate-400">{field.label || 'حقل'}</p>
-                  <p className="mt-1 text-sm text-slate-100">{field.value || '—'}</p>
+                  <p className="mt-1 text-sm text-slate-100">{resolveFieldValue(field)}</p>
+                  {field.source_testid ? <p className="mt-1 text-[10px] text-cyan-200">مرتبط بـ {field.source_testid}</p> : null}
                 </div>
               ))}
             </div>

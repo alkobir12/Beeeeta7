@@ -54,12 +54,14 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
     contents.update(page_cfg.get("contents") or {})
 
     custom_cards = list(global_cfg.get("custom_cards") or []) + list(page_cfg.get("custom_cards") or [])
+    block_order = list(page_cfg.get("block_order") or [])
 
     return {
         "labels": labels,
         "hidden": hidden,
         "contents": contents,
         "custom_cards": custom_cards,
+        "block_order": block_order,
     }
 
 
@@ -71,7 +73,9 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         global_cfg["contents"] = {}
     if "custom_cards" not in global_cfg:
         global_cfg["custom_cards"] = []
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
+    if "block_order" not in global_cfg:
+        global_cfg["block_order"] = []
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": []}
     merged = _merge_page_configs(global_cfg, page_cfg)
     return {
         "user_id": user_id,
@@ -80,6 +84,7 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         "hidden": merged.get("hidden") or {},
         "contents": merged.get("contents") or {},
         "custom_cards": merged.get("custom_cards") or [],
+        "block_order": merged.get("block_order") or [],
         "global": global_cfg,
         "page": page_cfg,
     }
@@ -119,6 +124,44 @@ def _fallback_parse_actions(message: str, ui_snapshot: List[Dict[str, Any]]) -> 
     show_terms = ["اظهر", "أظهر", "إظهار", "show"]
     hide_terms = ["اخف", "إخفاء", "اخفاء", "hide"]
     rename_terms = ["غير اسم", "تغيير اسم", "rename"]
+
+    add_card_match = re.search(r"(?:اضف|أضف|add)\s+كرت\s+(.+)$", text, re.IGNORECASE)
+    if add_card_match:
+        title = add_card_match.group(1).strip()
+        if title:
+            return [{"type": "add_card", "title": title}]
+
+    delete_card_match = re.search(r"(?:احذف|حذف|delete)\s+كرت\s+(.+)$", text, re.IGNORECASE)
+    if delete_card_match:
+        title = delete_card_match.group(1).strip()
+        if title:
+            return [{"type": "delete_card", "card_title": title}]
+
+    add_field_match = re.search(r"(?:اضف|أضف)\s+حقل\s+(.+?)\s*[=:]\s*(.+?)\s+في\s+كرت\s+(.+)$", text, re.IGNORECASE)
+    if add_field_match:
+        return [{
+            "type": "add_field",
+            "field_label": add_field_match.group(1).strip(),
+            "field_value": add_field_match.group(2).strip(),
+            "card_title": add_field_match.group(3).strip(),
+        }]
+
+    update_field_match = re.search(r"(?:حدث|حدّث|تعديل|update)\s+حقل\s+(.+?)\s*[=:]\s*(.+?)\s+في\s+كرت\s+(.+)$", text, re.IGNORECASE)
+    if update_field_match:
+        return [{
+            "type": "update_field",
+            "field_label": update_field_match.group(1).strip(),
+            "field_value": update_field_match.group(2).strip(),
+            "card_title": update_field_match.group(3).strip(),
+        }]
+
+    delete_field_match = re.search(r"(?:احذف|حذف|delete)\s+حقل\s+(.+?)\s+من\s+كرت\s+(.+)$", text, re.IGNORECASE)
+    if delete_field_match:
+        return [{
+            "type": "delete_field",
+            "field_label": delete_field_match.group(1).strip(),
+            "card_title": delete_field_match.group(2).strip(),
+        }]
 
     def find_target(term_text: str) -> Optional[str]:
         term_text = term_text.strip().lower()
@@ -180,6 +223,11 @@ async def _parse_actions_with_claude(
         "    {\"type\": \"rename\", \"target_testid\": \"...\", \"new_label\": \"...\"},\n"
         "    {\"type\": \"hide\", \"target_testid\": \"...\"},\n"
         "    {\"type\": \"show\", \"target_testid\": \"...\"},\n"
+        "    {\"type\": \"add_card\", \"title\": \"...\"},\n"
+        "    {\"type\": \"delete_card\", \"card_title\": \"...\"},\n"
+        "    {\"type\": \"add_field\", \"card_title\": \"...\", \"field_label\": \"...\", \"field_value\": \"...\"},\n"
+        "    {\"type\": \"update_field\", \"card_title\": \"...\", \"field_label\": \"...\", \"field_value\": \"...\"},\n"
+        "    {\"type\": \"delete_field\", \"card_title\": \"...\", \"field_label\": \"...\"},\n"
         "    {\"type\": \"reset_target\", \"target_testid\": \"...\"},\n"
         "    {\"type\": \"reset_page\"}\n"
         "  ]\n"
@@ -206,6 +254,13 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
     hidden = dict(current_cfg.get("hidden") or {})
     contents = dict(current_cfg.get("contents") or {})
     custom_cards = list(current_cfg.get("custom_cards") or [])
+    block_order = list(current_cfg.get("block_order") or [])
+
+    def _find_card_index(card_title: str) -> int:
+        for index, card in enumerate(custom_cards):
+            if str(card.get("title") or "").strip() == str(card_title or "").strip():
+                return index
+        return -1
 
     for action in actions:
         action_type = str(action.get("type") or "").strip().lower()
@@ -216,6 +271,55 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             hidden = {}
             contents = {}
             custom_cards = []
+            block_order = []
+            continue
+
+        if action_type == "add_card":
+            title = str(action.get("title") or "كرت جديد").strip() or "كرت جديد"
+            custom_cards.append({
+                "id": f"card-{uuid.uuid4().hex[:8]}",
+                "title": title,
+                "description": "",
+                "fields": [],
+            })
+            continue
+
+        if action_type == "delete_card":
+            title = str(action.get("card_title") or "").strip()
+            custom_cards = [card for card in custom_cards if str(card.get("title") or "").strip() != title]
+            continue
+
+        if action_type == "add_field":
+            card_index = _find_card_index(str(action.get("card_title") or "").strip())
+            if card_index >= 0:
+                fields = list(custom_cards[card_index].get("fields") or [])
+                fields.append({
+                    "id": f"field-{uuid.uuid4().hex[:8]}",
+                    "label": str(action.get("field_label") or "حقل").strip(),
+                    "value": str(action.get("field_value") or "").strip(),
+                })
+                custom_cards[card_index]["fields"] = fields
+            continue
+
+        if action_type == "update_field":
+            card_index = _find_card_index(str(action.get("card_title") or "").strip())
+            if card_index >= 0:
+                fields = list(custom_cards[card_index].get("fields") or [])
+                label = str(action.get("field_label") or "").strip()
+                for field in fields:
+                    if str(field.get("label") or "").strip() == label:
+                        field["value"] = str(action.get("field_value") or "").strip()
+                custom_cards[card_index]["fields"] = fields
+            continue
+
+        if action_type == "delete_field":
+            card_index = _find_card_index(str(action.get("card_title") or "").strip())
+            if card_index >= 0:
+                label = str(action.get("field_label") or "").strip()
+                custom_cards[card_index]["fields"] = [
+                    field for field in list(custom_cards[card_index].get("fields") or [])
+                    if str(field.get("label") or "").strip() != label
+                ]
             continue
 
         if not target:
@@ -240,7 +344,7 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             hidden.pop(target, None)
             contents.pop(target, None)
 
-    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards}
+    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards, "block_order": block_order}
 
 def get_combined_system_prompt():
     base = ""
@@ -284,6 +388,7 @@ class CustomizationUpdateRequest(BaseModel):
     hidden: Optional[Dict[str, bool]] = None
     contents: Optional[Dict[str, str]] = None
     custom_cards: Optional[List[Dict[str, Any]]] = None
+    block_order: Optional[List[str]] = None
 
 class ChatResponse(BaseModel):
     response: str
@@ -354,7 +459,7 @@ async def chat(payload: ChatRequest):
             if user_msg.lower() in {"clear", "reset_page", "مسح", "اعادة الصفحة", "إعادة الصفحة"}:
                 data = _read_customizations()
                 user_node = data.get(user_id) or {}
-                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
+                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": []}
                 data[user_id] = user_node
                 _write_customizations(data)
                 cfg = _get_user_page_config(user_id, current_path)
@@ -369,6 +474,7 @@ async def chat(payload: ChatRequest):
                         "hidden": cfg.get("hidden", {}),
                         "contents": cfg.get("contents", {}),
                         "custom_cards": cfg.get("custom_cards", []),
+                        "block_order": cfg.get("block_order", []),
                     },
                 )
 
@@ -400,7 +506,7 @@ async def chat(payload: ChatRequest):
 
             data = _read_customizations()
             user_node = data.get(user_id) or {}
-            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
+            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": []}
             updated_cfg = _apply_actions_to_config(page_cfg, actions)
             user_node[current_path] = updated_cfg
             data[user_id] = user_node
@@ -418,6 +524,7 @@ async def chat(payload: ChatRequest):
                     "hidden": merged_cfg.get("hidden", {}),
                     "contents": merged_cfg.get("contents", {}),
                     "custom_cards": merged_cfg.get("custom_cards", []),
+                    "block_order": merged_cfg.get("block_order", []),
                 },
             )
 
@@ -485,6 +592,7 @@ def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
             "hidden": cfg.get("hidden", {}),
             "contents": cfg.get("contents", {}),
             "custom_cards": cfg.get("custom_cards", []),
+            "block_order": cfg.get("block_order", []),
         },
     }
 
@@ -495,12 +603,13 @@ def save_customization(payload: CustomizationUpdateRequest):
     path = str(payload.path or "/").strip() or "/"
     data = _read_customizations()
     user_node = data.get(user_id) or {}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": []}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": []}
     updated_cfg = {
         "labels": payload.labels if payload.labels is not None else page_cfg.get("labels") or {},
         "hidden": payload.hidden if payload.hidden is not None else page_cfg.get("hidden") or {},
         "contents": payload.contents if payload.contents is not None else page_cfg.get("contents") or {},
         "custom_cards": payload.custom_cards if payload.custom_cards is not None else page_cfg.get("custom_cards") or [],
+        "block_order": payload.block_order if payload.block_order is not None else page_cfg.get("block_order") or [],
     }
     user_node[path] = updated_cfg
     data[user_id] = user_node
@@ -516,5 +625,6 @@ def save_customization(payload: CustomizationUpdateRequest):
             "hidden": cfg.get("hidden", {}),
             "contents": cfg.get("contents", {}),
             "custom_cards": cfg.get("custom_cards", []),
+            "block_order": cfg.get("block_order", []),
         },
     }

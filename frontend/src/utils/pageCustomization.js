@@ -13,6 +13,26 @@ export const buildUiSnapshot = (limit = 260) => {
   }
 };
 
+const BLOCK_HINTS = ['card', 'panel', 'section', 'table', 'widget', 'dock', 'layout-block', 'summary'];
+
+export const buildBlockSnapshot = (limit = 120) => {
+  try {
+    return Array.from(document.querySelectorAll('[data-testid]'))
+      .filter((node) => {
+        const testid = String(node.getAttribute('data-testid') || '');
+        return BLOCK_HINTS.some((hint) => testid.includes(hint));
+      })
+      .slice(0, limit)
+      .map((node) => ({
+        testid: node.getAttribute('data-testid') || '',
+        text: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120),
+      }))
+      .filter((item) => item.testid);
+  } catch (_error) {
+    return [];
+  }
+};
+
 export const clearPageCustomizations = (appliedEntriesRef) => {
   const entries = appliedEntriesRef?.current || [];
   entries.forEach((entry) => {
@@ -23,6 +43,13 @@ export const clearPageCustomizations = (appliedEntriesRef) => {
       }
       if (entry.type === 'text') {
         entry.element.textContent = entry.prevText ?? '';
+      }
+      if (entry.type === 'reorder') {
+        if (entry.nextSibling && entry.nextSibling.parentNode === entry.parent) {
+          entry.parent.insertBefore(entry.element, entry.nextSibling);
+        } else {
+          entry.parent.appendChild(entry.element);
+        }
       }
     } catch (_error) {
       return;
@@ -38,6 +65,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   const labels = customization?.labels || {};
   const hidden = customization?.hidden || {};
   const contents = customization?.contents || {};
+  const blockOrder = customization?.block_order || [];
 
   Object.entries(hidden).forEach(([testid, hideValue]) => {
     if (!hideValue) return;
@@ -72,4 +100,27 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
     });
     element.textContent = String(newContent || '');
   });
+
+  if (Array.isArray(blockOrder) && blockOrder.length) {
+    const groups = new Map();
+    blockOrder.forEach((testid) => {
+      const element = document.querySelector(`[data-testid="${testid}"]`);
+      if (!element?.parentNode) return;
+      const parent = element.parentNode;
+      if (!groups.has(parent)) groups.set(parent, []);
+      groups.get(parent).push(element);
+    });
+
+    groups.forEach((elements, parent) => {
+      elements.forEach((element) => {
+        appliedEntriesRef.current.push({
+          type: 'reorder',
+          element,
+          parent,
+          nextSibling: element.nextSibling,
+        });
+      });
+      elements.forEach((element) => parent.appendChild(element));
+    });
+  }
 };

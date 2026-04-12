@@ -164,6 +164,226 @@
       "hidden": {},
       "contents": {},
       "custom_cards": []
+    },
+    "/": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-1ac8dba7",
+          "title": "متابعة سريعة",
+          "description": "",
+          "fields": [
+            {
+              "id": "field-64b5a395",
+              "label": "حالة",
+              "value": "نشط"
+            }
+          ]
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "builder_test_user_2": {
+    "/customers": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "bind-card",
+          "title": "بطاقة مرتبطة",
+          "description": "تجربة",
+          "fields": [
+            {
+              "id": "f1",
+              "label": "قيمة مرتبطة",
+              "value": "fallback",
+              "source_testid": "customers-page-title"
+            }
+          ]
+        }
+      ],
+      "block_order": [
+        "customers-page-title"
+      ]
+    }
+  },
+  "builder_test_user_3": {
+    "/customers": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-98d79717",
+          "title": "متابعة سريعة",
+          "description": "",
+          "fields": []
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "TEST_iter118": {
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
+    }
+  },
+  "TEST_block_order_d020cb": {
+    "/test-layout": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [
+        "block-summary-card",
+        "block-stats-panel",
+        "block-table-section"
+      ]
+    }
+  },
+  "TEST_persist_e9d48b": {
+    "/test-persist": {
+      "labels": {
+        "element-1": "New Label"
+      },
+      "hidden": {
+        "element-2": true
+      },
+      "contents": {
+        "element-3": "New Content"
+      },
+      "custom_cards": [
+        {
+          "id": "card-1",
+          "title": "Test Card",
+          "fields": []
+        }
+      ],
+      "block_order": [
+        "block-a",
+        "block-b"
+      ]
+    }
+  },
+  "TEST_source_f29b60": {
+    "/test-source": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-source-test",
+          "title": "متابعة سريعة",
+          "description": "كرت مرتبط بعناصر الصفحة",
+          "fields": [
+            {
+              "id": "field-1",
+              "label": "حالة",
+              "value": "نشط",
+              "source_testid": "status-badge-element"
+            },
+            {
+              "id": "field-2",
+              "label": "الرصيد",
+              "value": "0",
+              "source_testid": "balance-display"
+            }
+          ]
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "TEST_get_source_c44986": {
+    "/test-get-source": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-get-test",
+          "title": "Test Card",
+          "fields": [
+            {
+              "id": "f1",
+              "label": "Test",
+              "value": "Val",
+              "source_testid": "test-element"
+            }
+          ]
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "TEST_add_card_f6b20b": {
+    "/test-add-card": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-63a90d93",
+          "title": "متابعة سريعة",
+          "description": "",
+          "fields": []
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "TEST_add_field_01035b": {
+    "/test-add-field": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [
+        {
+          "id": "card-93b2a06b",
+          "title": "متابعة سريعة",
+          "description": "",
+          "fields": [
+            {
+              "id": "field-a035e38a",
+              "label": "حالة",
+              "value": "نشط"
+            }
+          ]
+        }
+      ],
+      "block_order": []
+    }
+  },
+  "TEST_paths_6684ac": {
+    "/dashboard": {
+      "labels": {
+        "dashboard-title": "لوحة التحكم"
+      },
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [
+        "dashboard-block-1"
+      ]
+    },
+    "/customers": {
+      "labels": {
+        "customers-title": "العملاء"
+      },
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [
+        "customers-block-1"
+      ]
     }
   }
 }

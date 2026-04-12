@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Droplets, GripVertical, Plus, Save, X } from 'lucide-react';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
-import { applyPageCustomizations, buildUiSnapshot } from '../utils/pageCustomization';
+import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
 import { LiquidBuilderBotTab } from './LiquidBuilderBotTab';
 
@@ -18,7 +18,8 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('elements');
   const [snapshot, setSnapshot] = useState([]);
-  const [config, setConfig] = useState({ labels: {}, hidden: {}, contents: {}, custom_cards: [] });
+  const [blockSnapshot, setBlockSnapshot] = useState([]);
+  const [config, setConfig] = useState({ labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] });
   const [saving, setSaving] = useState(false);
   const appliedRef = useRef([]);
   const [selectedPage, setSelectedPage] = useState(currentPath || '/');
@@ -37,8 +38,9 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   useEffect(() => {
     if (!canEdit || !isOpen) return;
     setSnapshot(buildUiSnapshot());
+    setBlockSnapshot(buildBlockSnapshot());
     siteBuilderAPI.getCustomization({ user_id: userId, path: selectedPage }).then((response) => {
-      const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [] };
+      const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] };
       setConfig(nextConfig);
     }).catch((error) => console.error('Failed to load builder customization', error));
   }, [canEdit, selectedPage, isOpen, userId]);
@@ -57,6 +59,9 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const itemsPerPage = 20;
   const totalElementPages = Math.max(1, Math.ceil(filteredSnapshot.length / itemsPerPage));
   const paginatedSnapshot = filteredSnapshot.slice((elementsPage - 1) * itemsPerPage, elementsPage * itemsPerPage);
+  const orderedBlocks = (config.block_order?.length ? config.block_order : blockSnapshot.map((item) => item.testid))
+    .map((testid) => blockSnapshot.find((item) => item.testid === testid))
+    .filter(Boolean);
 
   const updateConfig = (nextConfig) => {
     setConfig(nextConfig);
@@ -96,6 +101,16 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
     custom_cards: (config.custom_cards || []).map((card) => card.id === cardId ? { ...card, ...patch } : card),
   });
 
+  const reorderBlocks = (draggedId, targetId) => {
+    const working = [...(config.block_order?.length ? config.block_order : blockSnapshot.map((item) => item.testid))];
+    const from = working.indexOf(draggedId);
+    const to = working.indexOf(targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const [moved] = working.splice(from, 1);
+    working.splice(to, 0, moved);
+    updateConfig({ ...config, block_order: working });
+  };
+
   const addField = (cardId) => updateCard(cardId, {
     fields: [
       ...((config.custom_cards || []).find((card) => card.id === cardId)?.fields || []),
@@ -124,6 +139,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
         hidden: config.hidden || {},
         contents: config.contents || {},
         custom_cards: config.custom_cards || [],
+        block_order: config.block_order || [],
       });
       const nextData = response.data?.data || config;
       setConfig(nextData);
@@ -237,6 +253,10 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                         <div key={field.id} className="rounded-2xl border border-white/10 bg-slate-900/80 p-3" data-testid={`liquid-site-builder-card-field-${cardIndex}-${fieldIndex}`}>
                           <input value={field.label || ''} onChange={(event) => updateField(card.id, field.id, { label: event.target.value })} placeholder="اسم الحقل" className="mb-2 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-card-field-label-${cardIndex}-${fieldIndex}`} />
                           <input value={field.value || ''} onChange={(event) => updateField(card.id, field.id, { value: event.target.value })} placeholder="قيمة الحقل" className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-card-field-value-${cardIndex}-${fieldIndex}`} />
+                          <select value={field.source_testid || ''} onChange={(event) => updateField(card.id, field.id, { source_testid: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-card-field-source-${cardIndex}-${fieldIndex}`}>
+                            <option value="">بدون ربط مباشر</option>
+                            {snapshot.slice(0, 80).map((item) => <option key={item.testid} value={item.testid}>{item.testid}</option>)}
+                          </select>
                           <button type="button" onClick={() => removeField(card.id, field.id)} className="mt-2 text-[11px] text-rose-200" data-testid={`liquid-site-builder-card-field-delete-${cardIndex}-${fieldIndex}`}>حذف الحقل</button>
                         </div>
                       ))}
@@ -267,6 +287,25 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                 <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 text-xs text-slate-300" data-testid="liquid-site-builder-layout-groups-list">
                   {groupOptions.length ? groupOptions.join(' • ') : 'لا توجد مجموعات ظاهرة بعد على هذه الصفحة.'}
                 </div>
+                <div className="space-y-2" data-testid="liquid-site-builder-layout-blocks-list">
+                  {orderedBlocks.map((block, index) => (
+                    <div
+                      key={block.testid}
+                      draggable
+                      onDragStart={(event) => event.dataTransfer.setData('text/plain', block.testid)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        reorderBlocks(event.dataTransfer.getData('text/plain'), block.testid);
+                      }}
+                      className="rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2 text-xs text-slate-200"
+                      data-testid={`liquid-site-builder-layout-block-${index}`}
+                    >
+                      <div className="flex items-center gap-2 text-slate-400"><GripVertical size={12} /> {block.testid}</div>
+                      <div className="mt-1 text-slate-300">{block.text || 'بدون عنوان ظاهر'}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : activeTab === 'bot' ? (
               <LiquidBuilderBotTab
@@ -279,6 +318,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                   hidden: customization.hidden || config.hidden,
                   contents: customization.contents || config.contents,
                   custom_cards: customization.custom_cards || config.custom_cards,
+                  block_order: customization.block_order || config.block_order,
                 })}
               />
             ) : null}

@@ -17780,3 +17780,101 @@ The Liquid Builder expansion backend testing confirms **COMPLETE SUCCESS** for a
 - Data Persistence: All customization data saved and retrieved correctly
 
 ---
+
+## Liquid Builder Canvas Feature Testing (2026-04-12 10:46:00)
+
+### Test Objective (Arabic Request):
+اختبر آخر نسخة من Liquid Builder على https://repair-mgmt-fresh.preview.emergentagent.com
+
+المطلوب:
+1) سجل الدخول باسم مدير واذهب إلى /customers.
+2) فعّل زر Canvas وتأكد أن البلوكات الحالية تُلتقط ويظهر تحديدها/التعامل معها بصريًا.
+3) افتح تبويب الكروت داخل Liquid Builder وتأكد أن الكروت الحالية للصفحة تظهر.
+4) جرّب نسخ/لصق كرت مخصص مرة واحدة فقط وتأكد أنه لا يتضاعف بشكل غير طبيعي.
+5) جرّب أمرين في بوت الـ Builder: "اعرض لي كروت هذه الصفحة فقط" و"اعرض لي عناصر هذه الصفحة".
+
+### Test Environment:
+- Frontend URL: https://repair-mgmt-fresh.preview.emergentagent.com
+- Backend URL: https://repair-mgmt-fresh.preview.emergentagent.com/api
+- Testing Date: 2026-04-12 10:46:00
+- Test Focus: Canvas feature, current page cards display, copy/paste functionality, bot commands
+
+### Test Results Summary: ⚠️ PARTIAL PASS - Canvas & Bot Working, Copy/Paste Issue Detected
+
+#### Test Results:
+
+**1. ✅ Login and Navigation to /customers**
+- **Status**: ✅ PASSED
+- Login as 'مدير' successful
+- Navigation to /customers page successful
+- Customers page loaded correctly
+
+**2. ✅ Canvas Feature**
+- **Status**: ✅ PASSED
+- Canvas toggle button found: `data-testid="liquid-canvas-toggle-button"`
+- Canvas activated successfully
+- Selected block panel appeared: `data-testid="liquid-canvas-selected-block-panel"`
+- Visual block highlighting working (blocks show outline when Canvas is active)
+- Block selection working (clicking blocks shows selection panel)
+- Copy/Paste buttons available in Canvas panel
+
+**3. ✅ Cards Tab - Current Page Cards Display**
+- **Status**: ✅ PASSED
+- Cards tab opened successfully
+- Live cards section found: `data-testid="liquid-site-builder-live-cards-section"`
+- **Live cards count**: 105 كرت/بلوك (blocks from /customers page)
+- Live card elements displayed correctly
+- Custom cards section found: `data-testid="liquid-site-builder-custom-cards-section"`
+- Both sections (live cards and custom cards) displaying properly
+
+**4. ❌ Copy/Paste Custom Card**
+- **Status**: ❌ FAILED - Abnormal Duplication Detected
+- Initial custom cards: 0
+- After adding test card: 13 cards
+- After copying card: Clipboard type confirmed as 'custom-card'
+- After pasting ONCE: 26 cards (expected 14, got 26)
+- **Issue**: Pasting one card resulted in +13 cards instead of +1
+- **Root Cause**: Possible issue with `pasteCustomCard` function or state management causing multiple cards to be added
+
+**5. ✅ Bot Commands**
+- **Status**: ✅ PASSED (Both commands working)
+
+**Command 1: "اعرض لي كروت هذه الصفحة فقط"**
+- ✅ Command sent successfully
+- ✅ Bot switched to Cards tab automatically
+- ✅ Local command handler working correctly
+
+**Command 2: "اعرض لي عناصر هذه الصفحة"**
+- ✅ Command sent successfully
+- ✅ Bot switched to Elements tab automatically
+- ✅ Local command handler working correctly
+
+### Critical Issue Found:
+
+**❌ Copy/Paste Duplication Bug**
+- When pasting a custom card once, it creates 13 duplicate cards instead of 1
+- This suggests a potential issue in the `pasteCustomCard` function or React state update
+- The function at line 170-178 of LiquidSiteBuilder.jsx appears correct, but the actual behavior shows abnormal duplication
+- Possible causes:
+  1. Multiple event handlers attached to paste button
+  2. State update triggering multiple times
+  3. React re-render causing duplicate additions
+
+### Recommendations:
+
+1. **HIGH PRIORITY**: Fix copy/paste duplication bug
+   - Debug `pasteCustomCard` function
+   - Check if button onClick is being called multiple times
+   - Verify state update logic in `updateConfig`
+   - Add debouncing or prevent multiple rapid clicks
+
+2. **Canvas Feature**: Working well, no issues detected
+
+3. **Bot Commands**: Working perfectly, local command handling is excellent
+
+### Artifacts:
+- Screenshots: copy_paste_test.png, bot_cmd1.png, bot_cmd2.png
+- Console logs: /root/.emergent/automation_output/20260412_104600/console_20260412_104600.log
+
+---
+

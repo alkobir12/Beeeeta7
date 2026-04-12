@@ -33,7 +33,7 @@ export const buildUiSnapshot = (limit = 260) => {
   }
 };
 
-const BLOCK_HINTS = ['card', 'panel', 'section', 'table', 'widget', 'dock', 'layout-block', 'summary'];
+const BLOCK_HINTS = ['card', 'panel', 'section', 'table', 'widget', 'dock', 'layout-block', 'summary', 'page', 'stat', 'modal'];
 
 export const buildBlockSnapshot = (limit = 120) => {
   try {

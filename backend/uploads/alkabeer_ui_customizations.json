@@ -31,40 +31,11 @@
       "custom_cards": []
     },
     "/": {
-      "labels": {
-        "root-element": "تسمية الصفحة الرئيسية"
-      },
-      "hidden": {
-        "root-hidden-element": true
-      },
-      "contents": {
-        "root-content": "محتوى الصفحة الرئيسية"
-      },
-      "custom_cards": [
-        {
-          "id": "root-card-1",
-          "title": "كرت الصفحة الرئيسية",
-          "content": "محتوى كرت الصفحة الرئيسية"
-        },
-        {
-          "id": "card-81efb4b7",
-          "title": "متابعة سريعة",
-          "description": "",
-          "fields": [
-            {
-              "id": "field-fb1392f8",
-              "label": "حالة",
-              "value": "نشط"
-            }
-          ]
-        }
-      ],
-      "block_order": [
-        "header-section",
-        "main-content",
-        "sidebar",
-        "footer"
-      ]
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
     },
     "/test-reset-page": {
       "labels": {},
@@ -85,36 +56,10 @@
       "custom_cards": []
     },
     "/customers": {
-      "labels": {
-        "customers-element": "تسمية صفحة العملاء"
-      },
-      "hidden": {
-        "customers-hidden-element": false
-      },
-      "contents": {
-        "customers-content": "محتوى صفحة العملاء"
-      },
-      "custom_cards": [
-        {
-          "id": "test-card-1",
-          "title": "بطاقة اختبار",
-          "description": "بطاقة للاختبار",
-          "fields": [
-            {
-              "id": "field-1",
-              "label": "اسم العميل",
-              "value": "قيمة افتراضية",
-              "source_testid": "customer-name-input"
-            },
-            {
-              "id": "field-2",
-              "label": "رقم الهاتف",
-              "value": "",
-              "source_testid": "customer-phone-input"
-            }
-          ]
-        }
-      ],
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
       "block_order": []
     }
   },

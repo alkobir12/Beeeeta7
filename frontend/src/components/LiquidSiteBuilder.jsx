@@ -379,6 +379,14 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
 
   const inlineEditBlock = (testid, text) => updateElement(testid, 'contents', text);
 
+  const hideLiveBlock = (testid) => updateElement(testid, 'hidden', true);
+
+  const bindLiveBlock = (targetTestid, sourceTestid) => {
+    const source = snapshot.find((item) => item.testid === sourceTestid);
+    if (!source) return;
+    updateElement(targetTestid, 'contents', source.text || humanizeTestid(source.testid));
+  };
+
   const handleLocalBotCommand = async (message) => {
     const text = String(message || '').trim();
     if (!text) return { handled: false };
@@ -687,12 +695,15 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   return (
     <>
       <div className="fixed bottom-20 left-4 z-[75] lg:bottom-24 lg:left-6" data-testid="liquid-site-builder-toggle-wrap">
-        <button type="button" onClick={() => setIsOpen((value) => !value)} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/60 bg-white/80 px-4 text-sm font-semibold text-zinc-900 shadow-xl shadow-black/10 backdrop-blur-2xl transition hover:scale-[1.02]" data-testid="liquid-site-builder-toggle-button">
+        <button type="button" onClick={() => {
+          setCanvasActive(false);
+          setIsOpen((value) => !value);
+        }} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/60 bg-white/80 px-4 text-sm font-semibold text-zinc-900 shadow-xl shadow-black/10 backdrop-blur-2xl transition hover:scale-[1.02]" data-testid="liquid-site-builder-toggle-button">
           <Droplets size={16} className="text-violet-600" /> Liquid Builder
         </button>
       </div>
 
-      {isOpen ? (
+      {isOpen && !canvasActive ? (
         <div className="fixed inset-0 z-[80] bg-black/10 backdrop-blur-[2px] lg:bg-transparent lg:backdrop-blur-0">
           <div className="fixed inset-0 flex w-full flex-col bg-[#FCFCFC] shadow-2xl shadow-black/20 md:inset-y-4 md:right-4 md:left-auto md:h-[calc(100vh-32px)] md:w-[min(92vw,560px)] md:rounded-[32px] md:border md:border-zinc-200" data-testid="liquid-site-builder-panel">
             <div className="border-b border-zinc-200 px-5 py-4">
@@ -762,6 +773,18 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
         positions={config.positions || {}}
         onPositionChange={updateBlockPosition}
         onInlineEdit={inlineEditBlock}
+        onHideBlock={hideLiveBlock}
+        onSave={saveConfig}
+        onUndo={undoLast}
+        onRedo={redoLast}
+        canUndo={Boolean(undoStack.length)}
+        canRedo={Boolean(redoStack.length)}
+        availableSources={snapshot}
+        onBindBlock={bindLiveBlock}
+        onOpenBuilder={() => {
+          setCanvasActive(false);
+          setIsOpen(true);
+        }}
       />
     </>
   );

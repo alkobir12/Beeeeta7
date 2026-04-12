@@ -44,9 +44,9 @@ const draftStorageKey = (userId, path) => `liquid-builder-draft:${userId}:${path
 
 const humanizeTestid = (value = '') => String(value)
   .replace(/[-_]/g, ' ')
-  .replace(/(page|card|panel|section|widget|dock|value|title|button|list|block|editor|custom)/gi, '')
-  .replace(/[a-z]{1,3}/gi, '')
-  .replace(/\d+\b/g, '')
+  .replace(/\b(page|card|panel|section|widget|dock|value|title|button|list|block|editor|custom|customers|customer|loading|data|view|item|modal)\b/gi, '')
+  .replace(/\b[a-z]{1,3}\b/gi, '')
+  .replace(/\b\d+\b/g, '')
   .replace(/\s{2,}/g, ' ')
   .trim() || 'عنصر في الصفحة';
 

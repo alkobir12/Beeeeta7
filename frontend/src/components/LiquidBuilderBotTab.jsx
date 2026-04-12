@@ -110,9 +110,14 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
       </div>
 
       <div className="flex flex-wrap gap-2" data-testid="liquid-site-builder-bot-quick-actions">
-        {['اعرض لي كروت هذه الصفحة فقط', 'اعرض لي عناصر هذه الصفحة', 'rrr', 'EXIT'].map((item, index) => (
-          <button key={item} type="button" onClick={() => sendMessage(item)} className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50" data-testid={`liquid-site-builder-bot-quick-${index}`}>
-            {item}
+        {[
+          { label: 'اعرض لي كروت هذه الصفحة فقط', command: 'اعرض لي كروت هذه الصفحة فقط' },
+          { label: 'اعرض لي عناصر هذه الصفحة', command: 'اعرض لي عناصر هذه الصفحة' },
+          { label: 'تفعيل وضع المطور', command: 'rrr' },
+          { label: 'الخروج من وضع المطور', command: 'EXIT' },
+        ].map((item, index) => (
+          <button key={item.label} type="button" onClick={() => sendMessage(item.command)} className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50" data-testid={`liquid-site-builder-bot-quick-${index}`}>
+            {item.label}
           </button>
         ))}
       </div>

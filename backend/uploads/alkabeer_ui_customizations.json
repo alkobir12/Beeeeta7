@@ -184,6 +184,13 @@
         }
       ],
       "block_order": []
+    },
+    "/customers": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
     }
   },
   "builder_test_user_2": {

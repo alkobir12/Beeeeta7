@@ -241,10 +241,43 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
               </div>
             ) : activeTab === 'cards' ? (
               <div className="space-y-4" data-testid="liquid-site-builder-cards-tab">
-                <button type="button" onClick={() => updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), createCard()] })} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100" data-testid="liquid-site-builder-add-card-button">
-                  <Plus size={14} /> إضافة كرت
-                </button>
-                {(config.custom_cards || []).map((card, cardIndex) => (
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid="liquid-site-builder-live-cards-section">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">الكروت الحالية للصفحة المختارة</p>
+                      <p className="mt-1 text-xs text-slate-400">هذه هي البطاقات/البلوكات الظاهرة الآن على الصفحة ويمكن تعديلها مباشرة.</p>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-slate-900 px-3 py-1 text-[11px] text-slate-300" data-testid="liquid-site-builder-live-cards-count">{orderedBlocks.length} كرت/بلوك</span>
+                  </div>
+
+                  <div className="space-y-3" data-testid="liquid-site-builder-live-cards-list">
+                    {orderedBlocks.map((block, index) => (
+                      <div key={block.testid} className="rounded-2xl border border-white/10 bg-slate-900/80 p-3" data-testid={`liquid-site-builder-live-card-${index}`}>
+                        <p className="text-[11px] text-slate-400" data-testid={`liquid-site-builder-live-card-testid-${index}`}>{block.testid}</p>
+                        <p className="mt-2 text-sm text-slate-100" data-testid={`liquid-site-builder-live-card-text-${index}`}>{block.text || 'بدون نص ظاهر'}</p>
+                        <input value={config.labels?.[block.testid] || ''} onChange={(event) => updateElement(block.testid, 'labels', event.target.value)} placeholder="اسم بديل للكرت الحالي" className="mt-3 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-live-card-label-${index}`} />
+                        <input value={config.contents?.[block.testid] || ''} onChange={(event) => updateElement(block.testid, 'contents', event.target.value)} placeholder="محتوى بديل للكرت الحالي" className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-live-card-content-${index}`} />
+                        <label className="mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-slate-200" data-testid={`liquid-site-builder-live-card-visibility-${index}`}>
+                          <span>إخفاء هذا الكرت</span>
+                          <input type="checkbox" checked={Boolean(config.hidden?.[block.testid])} onChange={(event) => updateElement(block.testid, 'hidden', event.target.checked)} />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid="liquid-site-builder-custom-cards-section">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">الكروت المخصصة</p>
+                      <p className="mt-1 text-xs text-slate-400">أنشئ كروت إضافية أو اربط حقولها ببيانات حقيقية من الصفحة.</p>
+                    </div>
+                    <button type="button" onClick={() => updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), createCard()] })} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100" data-testid="liquid-site-builder-add-card-button">
+                      <Plus size={14} /> إضافة كرت
+                    </button>
+                  </div>
+
+                  {(config.custom_cards || []).map((card, cardIndex) => (
                   <div key={card.id} className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid={`liquid-site-builder-card-${cardIndex}`}>
                     <input value={card.title || ''} onChange={(event) => updateCard(card.id, { title: event.target.value })} placeholder="عنوان الكرت" className="mb-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none" data-testid={`liquid-site-builder-card-title-${cardIndex}`} />
                     <textarea value={card.description || ''} onChange={(event) => updateCard(card.id, { description: event.target.value })} placeholder="وصف مختصر" className="mb-3 min-h-[72px] w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-card-description-${cardIndex}`} />
@@ -266,7 +299,8 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                       <button type="button" onClick={() => updateConfig({ ...config, custom_cards: (config.custom_cards || []).filter((item) => item.id !== card.id) })} className="rounded-xl border border-rose-300/20 px-3 py-1 text-[11px] text-rose-200" data-testid={`liquid-site-builder-card-delete-${cardIndex}`}>حذف الكرت</button>
                     </div>
                   </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : activeTab === 'layout' ? (
               <div className="space-y-4" data-testid="liquid-site-builder-layout-tab">

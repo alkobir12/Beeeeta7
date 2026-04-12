@@ -1,0 +1,95 @@
+{
+  "summary": "Iteration 119 - Liquid Builder Live Cards Tab Testing. The live cards section was added to the cards tab and shows current page cards/blocks. However, there is a BUG: when switching pages via the page selector, the live cards don't update correctly - they continue showing cards from the previous page instead of the newly selected page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "LiquidSiteBuilder - Cards Tab",
+        "issue": "Live cards (blockSnapshot) don't refresh when switching pages. After navigating from dashboard to operations and back to dashboard, the live cards still show operations page cards (120 cards with testid 'operation-payment-chip-card') instead of dashboard cards (2 cards).",
+        "selector": "[data-testid='liquid-site-builder-live-cards-list']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_119.json"
+  ],
+  "action_items": [
+    "Fix blockSnapshot refresh timing in LiquidSiteBuilder.jsx - the buildBlockSnapshot() function runs immediately when selectedPage changes, but the DOM hasn't updated yet because React navigation is asynchronous. Need to add a delay or use a callback/effect that waits for the page content to load before rebuilding the block snapshot."
+  ],
+  "critical_code_review_comments": [
+    "In LiquidSiteBuilder.jsx lines 38-46, the useEffect that calls buildBlockSnapshot() runs when selectedPage changes, but the actual page DOM hasn't loaded yet. The navigation via navigate(path) is asynchronous, so buildBlockSnapshot() scans the old page's DOM instead of the new page's DOM."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A - frontend only testing",
+    "frontend": "85% - Live cards section works but page switching doesn't refresh cards correctly"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Live cards section was added to cards tab in Liquid Builder. Core features work: live cards section exists, shows count, has editable fields (label/content/visibility), custom cards section still works. BUG: When switching pages via page selector, blockSnapshot doesn't refresh - it shows cards from previous page. Root cause: buildBlockSnapshot() runs before new page DOM loads. Fix needed in useEffect timing.",
+  "features_tested": {
+    "live_cards_section": {
+      "selector": "[data-testid='liquid-site-builder-live-cards-section']",
+      "status": "PASS",
+      "note": "Section exists with title 'الكروت الحالية للصفحة المختارة'"
+    },
+    "live_cards_count": {
+      "selector": "[data-testid='liquid-site-builder-live-cards-count']",
+      "status": "PASS",
+      "note": "Shows count like '2 كرت/بلوك' on dashboard"
+    },
+    "live_cards_list": {
+      "selector": "[data-testid='liquid-site-builder-live-cards-list']",
+      "status": "PASS",
+      "note": "Shows individual live cards with testid and text"
+    },
+    "live_card_editable_fields": {
+      "selectors": [
+        "[data-testid='liquid-site-builder-live-card-label-0']",
+        "[data-testid='liquid-site-builder-live-card-content-0']",
+        "[data-testid='liquid-site-builder-live-card-visibility-0']"
+      ],
+      "status": "PASS",
+      "note": "Label input, content input, and visibility checkbox all present and editable"
+    },
+    "page_switching_updates_live_cards": {
+      "status": "FAIL",
+      "note": "BUG: Switching from dashboard (2 cards) to operations (120 cards) and back to dashboard still shows 120 cards with operations testids"
+    },
+    "custom_cards_section_regression": {
+      "selector": "[data-testid='liquid-site-builder-custom-cards-section']",
+      "status": "PASS",
+      "note": "Custom cards section still works - can add, edit, delete custom cards"
+    },
+    "no_crash_or_visual_overlap": {
+      "status": "PASS",
+      "note": "No crashes or visual issues observed"
+    }
+  },
+  "rca_of_the_issue": {
+    "bug": "Live cards don't update when switching pages",
+    "root_cause": "In LiquidSiteBuilder.jsx, the useEffect (lines 38-46) calls setBlockSnapshot(buildBlockSnapshot()) when selectedPage changes. However, buildBlockSnapshot() scans the current DOM for elements with data-testid containing block hints. When selectedPage changes, navigate(path) is called but the DOM hasn't updated yet because React navigation is asynchronous. So buildBlockSnapshot() captures the old page's DOM elements instead of the new page's elements.",
+    "reproduction_steps": [
+      "1. Login as مدير",
+      "2. Open Liquid Builder",
+      "3. Click on Cards tab (الكروت)",
+      "4. Note the live cards count on dashboard (2 كرت/بلوك)",
+      "5. Switch to /operations page using page selector",
+      "6. Note the live cards count changes to 120 كرت/بلوك",
+      "7. Switch back to dashboard (/)",
+      "8. BUG: Live cards count still shows 120 كرت/بلوك and cards have operations testids"
+    ],
+    "suggested_fix": "Add a delay or use a MutationObserver/useLayoutEffect to wait for the page content to load before calling buildBlockSnapshot(). Alternatively, listen for a custom event that fires when the page content is ready, or use a setTimeout with a reasonable delay (e.g., 500-1000ms) after navigation."
+  }
+}

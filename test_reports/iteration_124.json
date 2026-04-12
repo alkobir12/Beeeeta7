@@ -1,0 +1,87 @@
+{
+  "summary": "Iteration 124 - Mobile UX Full-Screen & Raw Labels Testing: Liquid Builder panel is now FULL SCREEN on mobile (390x844 viewport shows 390x844 panel). All 4 tabs work correctly. Most raw technical labels have been removed. Found 2 minor issues: (1) 'customers loading' raw text visible on /customers page cards, (2) Bot tab quick actions contain raw strings 'rrr' and 'EXIT'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/customers page - Cards tab",
+        "issues": ["Raw text 'customers loading' visible as card name - should be humanized to Arabic"],
+        "priority": "LOW"
+      },
+      {
+        "screen": "Bot tab - Quick Actions",
+        "issues": ["Raw strings 'rrr' and 'EXIT' visible in quick action buttons - should be replaced with Arabic labels"],
+        "priority": "LOW",
+        "file": "/app/frontend/src/components/LiquidBuilderBotTab.jsx",
+        "line": 113
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_124.json"
+  ],
+  "action_items": [
+    "MINOR: Add 'customers' and 'loading' to humanizeTestid filter list in LiquidSiteBuilder.jsx line 47",
+    "MINOR: Replace 'rrr' and 'EXIT' quick actions with Arabic labels in LiquidBuilderBotTab.jsx line 113"
+  ],
+  "critical_code_review_comments": [
+    "humanizeTestid function (line 45-51) should include more common English words like 'customers', 'loading', 'data', 'list', 'view' to prevent raw labels from appearing",
+    "Bot quick actions array contains debug/test strings ('rrr', 'EXIT') that should be removed or replaced"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "Skipped (frontend-only testing)",
+    "frontend": "95% - Core features working, 2 minor raw label issues"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Mobile UX verified - panel is full screen (390x844). All 4 tabs work. Drill-down, save, undo/redo all functional. Minor issues: 'customers loading' raw text on /customers, and 'rrr'/'EXIT' in bot quick actions.",
+  "features_tested": {
+    "mobile_full_screen": {
+      "status": "PASS",
+      "notes": "Panel dimensions 390x844 on mobile viewport - takes full screen"
+    },
+    "raw_labels_hidden": {
+      "status": "PARTIAL",
+      "notes": "Most raw labels hidden. Found: 'customers loading' on /customers page, 'rrr' and 'EXIT' in bot quick actions"
+    },
+    "four_tabs": {
+      "status": "PASS",
+      "testids": ["liquid-site-builder-tab-elements", "liquid-site-builder-tab-cards", "liquid-site-builder-tab-layout", "liquid-site-builder-tab-bot"]
+    },
+    "cards_tab_customers": {
+      "status": "PASS",
+      "notes": "Shows cards with count (1 كرت/بلوك), but card name shows raw 'customers loading'"
+    },
+    "drill_down_navigation": {
+      "status": "PASS",
+      "notes": "Clicking cards opens detail view, back button works"
+    },
+    "save_undo_redo": {
+      "status": "PASS",
+      "notes": "All action buttons present and functional"
+    },
+    "bot_tab": {
+      "status": "PASS",
+      "notes": "Input, send button, messages area all present. Quick actions have raw strings."
+    }
+  },
+  "regression_check": {
+    "page_selector": "PASS - 22 pages available",
+    "canvas_overlay": "PASS - Toggle button present",
+    "live_cards": "PASS - Shows correct count",
+    "custom_cards": "PASS - Add/paste buttons present",
+    "undo_redo": "PASS - Buttons present",
+    "save_publish": "PASS - Button present"
+  }
+}

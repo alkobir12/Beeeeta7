@@ -52,6 +52,14 @@ const humanizeTestid = (value = '') => String(value)
 
 const previewText = (value = '') => String(value).trim().replace(/\s+/g, ' ').slice(0, 80);
 
+const resolveDisplayName = (item, index, kind = 'عنصر') => {
+  const text = previewText(item?.text || '');
+  const humanized = humanizeTestid(item?.testid || '');
+  if (text && text.length >= 4) return text;
+  if (humanized && humanized !== 'عنصر في الصفحة') return humanized;
+  return `${kind} ${index + 1}`;
+};
+
 const MobileHandle = () => (
   <div className="mx-auto h-1.5 w-16 rounded-full bg-zinc-200 lg:hidden" />
 );
@@ -154,6 +162,8 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const orderedBlocks = (config.block_order?.length ? config.block_order : blockSnapshot.map((item) => item.testid))
     .map((testid) => blockSnapshot.find((item) => item.testid === testid))
     .filter(Boolean);
+  const namedElements = paginatedSnapshot.map((item, index) => ({ ...item, displayName: resolveDisplayName(item, index, 'عنصر') }));
+  const namedBlocks = orderedBlocks.map((item, index) => ({ ...item, displayName: resolveDisplayName(item, index, 'كرت') }));
 
   const currentElement = snapshot.find((item) => item.testid === detailView.id) || null;
   const currentLiveBlock = orderedBlocks.find((item) => item.testid === detailView.id) || null;
@@ -388,7 +398,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       }
     }
     if (text.includes('اربط هذا الكرت') && text.includes('أعلى 3')) {
-      const targetCard = (config.custom_cards || []).find((card) => card.id === selectedCardId) || (config.custom_cards || [0]);
+    const targetCard = (config.custom_cards || []).find((card) => card.id === selectedCardId) || (config.custom_cards || [])[0];
       if (!targetCard) {
         return { handled: true, reply: 'حدد كرتًا مخصصًا أولًا ثم أعد الطلب.' };
       }
@@ -422,7 +432,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
     if (!currentElement) return null;
     return (
       <div className="space-y-4" data-testid="liquid-site-builder-element-detail-view">
-        {renderDetailHeader('تحرير عنصر', humanizeTestid(currentElement.testid))}
+        {renderDetailHeader('تحرير عنصر', resolveDisplayName(currentElement, 0, 'عنصر'))}
         <div className="rounded-[24px] border border-zinc-200 bg-white p-4 shadow-sm">
           <div className="mb-3 rounded-[20px] bg-zinc-50 px-4 py-3 text-sm text-zinc-700">{previewText(currentElement.text) || 'بدون نص ظاهر'}</div>
           <input value={config.labels?.[currentElement.testid] || ''} onChange={(event) => updateElement(currentElement.testid, 'labels', event.target.value)} placeholder="اسم بديل يظهر لك داخل الواجهة" className="mb-3 w-full rounded-[20px] border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none" data-testid="liquid-site-builder-element-detail-label" />
@@ -431,7 +441,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
             <span>إخفاء هذا العنصر</span>
             <input type="checkbox" checked={Boolean(config.hidden?.[currentElement.testid])} onChange={(event) => updateElement(currentElement.testid, 'hidden', event.target.checked)} data-testid="liquid-site-builder-element-detail-visibility" />
           </label>
-          {showAdvanced ? <p className="mt-3 text-[11px] text-zinc-400">testid: {currentElement.testid}</p> : null}
+          {showAdvanced ? <p className="mt-3 text-[11px] text-zinc-400">الاسم الداخلي محفوظ في النظام وغير ظاهر للمستخدم.</p> : null}
         </div>
       </div>
     );
@@ -441,7 +451,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
     if (!currentLiveBlock) return null;
     return (
       <div className="space-y-4" data-testid="liquid-site-builder-live-card-detail-view">
-        {renderDetailHeader('تحرير كرت حالي', humanizeTestid(currentLiveBlock.testid))}
+        {renderDetailHeader('تحرير كرت حالي', resolveDisplayName(currentLiveBlock, 0, 'كرت'))}
         <div className="rounded-[24px] border border-zinc-200 bg-white p-4 shadow-sm">
           <div className="mb-3 rounded-[20px] bg-zinc-50 px-4 py-3 text-sm text-zinc-700">{previewText(currentLiveBlock.text) || 'بدون نص ظاهر'}</div>
           <input value={config.labels?.[currentLiveBlock.testid] || ''} onChange={(event) => updateElement(currentLiveBlock.testid, 'labels', event.target.value)} placeholder="اسم بديل للكرت الحالي" className="mb-3 w-full rounded-[20px] border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none" data-testid="liquid-site-builder-live-card-detail-label" />
@@ -454,7 +464,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
             <button type="button" onClick={() => copyLiveBlock(currentLiveBlock.testid)} className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 shadow-sm" data-testid="liquid-site-builder-live-card-detail-copy">نسخ</button>
             <button type="button" onClick={() => pasteLiveBlock(currentLiveBlock.testid)} disabled={!clipboard || clipboard.type !== 'live-block'} className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 shadow-sm disabled:opacity-50" data-testid="liquid-site-builder-live-card-detail-paste">لصق</button>
           </div>
-          {showAdvanced ? <p className="mt-3 text-[11px] text-zinc-400">testid: {currentLiveBlock.testid}</p> : null}
+          {showAdvanced ? <p className="mt-3 text-[11px] text-zinc-400">الاسم الداخلي محفوظ في النظام وغير ظاهر للمستخدم.</p> : null}
         </div>
       </div>
     );
@@ -478,11 +488,11 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
           <div className="space-y-3">
             {(currentCustomCard.fields || []).map((field, fieldIndex) => (
               <div key={field.id} className="rounded-[20px] border border-zinc-200 bg-zinc-50 p-3" data-testid={`liquid-site-builder-custom-editor-field-${fieldIndex}`}>
-                <input value={field.label || ''} onChange={(event) => updateField(currentCustomCard.id, field.id, { label: event.target.value })} placeholder="اسم الحقل" className="mb-2 w-full rounded-[16px] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none" data-testid={`liquid-site-builder-custom-editor-field-label-${fieldIndex}`} />
+                <input value={field.label || `حقل ${fieldIndex + 1}`} onChange={(event) => updateField(currentCustomCard.id, field.id, { label: event.target.value })} placeholder="اسم الحقل" className="mb-2 w-full rounded-[16px] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none" data-testid={`liquid-site-builder-custom-editor-field-label-${fieldIndex}`} />
                 <input value={field.value || ''} onChange={(event) => updateField(currentCustomCard.id, field.id, { value: event.target.value })} placeholder="القيمة" className="mb-2 w-full rounded-[16px] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none" data-testid={`liquid-site-builder-custom-editor-field-value-${fieldIndex}`} />
                 <select value={field.source_testid || ''} onChange={(event) => updateField(currentCustomCard.id, field.id, { source_testid: event.target.value })} className="w-full rounded-[16px] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none" data-testid={`liquid-site-builder-custom-editor-field-source-${fieldIndex}`}>
                   <option value="">ربط يدوي فقط</option>
-                  {snapshot.slice(0, 80).map((item) => <option key={item.testid} value={item.testid}>{humanizeTestid(item.testid)}</option>)}
+                  {snapshot.slice(0, 80).map((item, index) => <option key={item.testid} value={item.testid}>{resolveDisplayName(item, index, 'عنصر')}</option>)}
                 </select>
                 <button type="button" onClick={() => removeField(currentCustomCard.id, field.id)} className="mt-2 text-xs text-rose-600" data-testid={`liquid-site-builder-custom-editor-field-delete-${fieldIndex}`}>حذف الحقل</button>
               </div>
@@ -530,11 +540,11 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       </div>
 
       <div className="space-y-2">
-        {paginatedSnapshot.map((item, index) => (
+        {namedElements.map((item, index) => (
           <button key={item.testid} type="button" onClick={() => setDetailView({ type: 'element', id: item.testid })} className="w-full rounded-[24px] border border-zinc-200 bg-white px-4 py-4 text-right shadow-sm transition hover:border-zinc-300" data-testid={`liquid-site-builder-element-${index}`}>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-zinc-900">{humanizeTestid(item.testid)}</p>
+                <p className="text-sm font-semibold text-zinc-900">{item.displayName}</p>
                 <p className="mt-1 text-xs text-zinc-500">{previewText(item.text) || 'بدون نص ظاهر'}</p>
               </div>
               <PencilLine size={16} className="text-zinc-400" />
@@ -562,9 +572,9 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
           <span className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] text-zinc-600" data-testid="liquid-site-builder-live-cards-count">{orderedBlocks.length} كرت/بلوك</span>
         </div>
         <div className="space-y-2" data-testid="liquid-site-builder-live-cards-list">
-          {orderedBlocks.map((block, index) => (
+          {namedBlocks.map((block, index) => (
             <button key={block.testid} type="button" onClick={() => setDetailView({ type: 'live-card', id: block.testid })} className="w-full rounded-[22px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-right transition hover:bg-zinc-100" data-testid={`liquid-site-builder-live-card-${index}`}>
-              <p className="text-sm font-semibold text-zinc-900">{humanizeTestid(block.testid)}</p>
+              <p className="text-sm font-semibold text-zinc-900">{block.displayName}</p>
               <p className="mt-1 text-xs text-zinc-500">{previewText(block.text) || 'بدون نص ظاهر'}</p>
             </button>
           ))}
@@ -620,7 +630,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
         </div>
       </div>
       <div className="space-y-2" data-testid="liquid-site-builder-layout-blocks-list">
-        {orderedBlocks.map((block, index) => (
+        {namedBlocks.map((block, index) => (
           <div
             key={block.testid}
             draggable
@@ -636,7 +646,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
             <div className="flex items-center gap-3">
               <GripVertical size={15} className="text-zinc-400" />
               <div>
-                <p className="text-sm font-semibold text-zinc-900">{humanizeTestid(block.testid)}</p>
+                <p className="text-sm font-semibold text-zinc-900">{block.displayName}</p>
                 <p className="mt-1 text-xs text-zinc-500">{previewText(block.text) || 'بدون عنوان ظاهر'}</p>
               </div>
             </div>
@@ -684,7 +694,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
 
       {isOpen ? (
         <div className="fixed inset-0 z-[80] bg-black/10 backdrop-blur-[2px] lg:bg-transparent lg:backdrop-blur-0">
-          <div className="fixed inset-x-0 bottom-0 top-14 mx-auto flex w-full max-w-[430px] flex-col rounded-t-[32px] border border-zinc-200 bg-[#FCFCFC] shadow-2xl shadow-black/20 lg:top-5 lg:right-5 lg:left-auto lg:mx-0 lg:h-[calc(100vh-40px)] lg:rounded-[32px]" data-testid="liquid-site-builder-panel">
+          <div className="fixed inset-0 flex w-full flex-col bg-[#FCFCFC] shadow-2xl shadow-black/20 md:inset-y-4 md:right-4 md:left-auto md:h-[calc(100vh-32px)] md:w-[min(92vw,560px)] md:rounded-[32px] md:border md:border-zinc-200" data-testid="liquid-site-builder-panel">
             <div className="border-b border-zinc-200 px-5 py-4">
               <MobileHandle />
               <div className="mt-3 flex items-start justify-between gap-3">
@@ -718,7 +728,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4 md:px-5">
               {renderBody()}
             </div>
 

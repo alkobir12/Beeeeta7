@@ -17878,3 +17878,113 @@ The Liquid Builder expansion backend testing confirms **COMPLETE SUCCESS** for a
 
 ---
 
+
+
+## Canvas Block Capture & Copy/Paste Retest (2026-04-12 11:00)
+
+### Test Objective (Arabic Request):
+أعد اختبار نقطتين فقط على https://repair-mgmt-fresh.preview.emergentagent.com
+1) على /customers فعّل Canvas وتأكد أن هناك بلوكات/عناصر تُلتقط ولا تبقى 0.
+2) أضف كرتًا مخصصًا واحدًا ثم انسخه والصقه مرة واحدة فقط وتأكد أن العدد يصبح 0→1→2.
+
+### Test Environment:
+- Frontend URL: https://repair-mgmt-fresh.preview.emergentagent.com
+- Backend URL: https://repair-mgmt-fresh.preview.emergentagent.com/api
+- Testing Date: 2026-04-12 11:00:00
+- Test Focus: Canvas block capture verification, Custom card copy/paste single operation
+
+### Test Results Summary: ✅ PASS - BOTH TESTS SUCCESSFUL
+
+#### ✅ TEST 1: Canvas Block Capture - PASS
+**Status**: ✅ WORKING (Blocks are being captured, count > 0)
+
+**Test Procedure:**
+1. ✅ Logged in as 'مدير'
+2. ✅ Navigated to /customers page
+3. ✅ Opened Liquid Builder
+4. ✅ Switched to Layout tab (التخطيط)
+5. ✅ Verified elements count card
+
+**Results:**
+- **Elements Count**: 1 element captured on /customers page
+- **Draggable Blocks**: 1 block found in layout blocks list
+- **Verification**: Layout tab shows "عناصر الصفحة الحالية: 1"
+- **Conclusion**: ✅ Canvas is capturing blocks correctly (NOT 0)
+
+#### ✅ TEST 2: Custom Card Copy/Paste - PASS
+**Status**: ✅ WORKING (Correct progression 0→1→2)
+
+**Test Procedure:**
+1. ✅ Switched to Cards tab (الكروت)
+2. ✅ Verified initial custom cards count: 0
+3. ✅ Clicked "إضافة كرت" button
+4. ✅ Verified count after adding: 1 card
+5. ✅ Clicked "نسخ" button on first card
+6. ✅ Clicked "لصق كرت" button ONCE
+7. ✅ Verified final count: 2 cards
+
+**Results:**
+- **Initial Count**: 0 custom cards
+- **After Adding**: 1 custom card (0 → 1) ✅
+- **After Pasting ONCE**: 2 custom cards (1 → 2) ✅
+- **Cards Added**: 1
+- **Cards Pasted**: 1
+- **Progression**: 0 → 1 → 2 ✅ CORRECT
+- **Conclusion**: ✅ Copy/paste working correctly, no duplication bug
+
+#### 🔧 Technical Verification
+
+**Canvas Block Capture System**: ✅ WORKING
+- Layout tab correctly displays element count from /customers page
+- Block snapshot system capturing page elements
+- Draggable blocks list populated correctly
+- No "0 blocks" issue detected
+
+**Copy/Paste Functionality**: ✅ FIXED
+- Copy button: `data-testid="liquid-site-builder-custom-editor-copy-0"` working
+- Paste button: `data-testid="liquid-site-builder-paste-card-button"` working
+- Single paste operation adds exactly 1 card (not 13 as in previous bug)
+- Clipboard system working correctly
+- No abnormal duplication detected
+
+#### 📊 Test Results Comparison
+
+**Previous Test (2026-04-12 10:46):**
+- ❌ Copy/Paste: 0 → 13 → 26 (abnormal duplication)
+- Issue: Pasting once created 13 cards instead of 1
+
+**Current Test (2026-04-12 11:00):**
+- ✅ Copy/Paste: 0 → 1 → 2 (correct behavior)
+- Result: Pasting once creates exactly 1 card as expected
+
+**Conclusion**: The copy/paste duplication bug has been RESOLVED.
+
+### 🎯 Final Results
+
+| Test Case | Expected Result | Actual Result | Status |
+|-----------|----------------|---------------|--------|
+| **Canvas Block Capture** | Blocks > 0 | 1 block captured | ✅ PASS |
+| **Add Custom Card** | 0 → 1 | 0 → 1 | ✅ PASS |
+| **Copy/Paste Card** | 1 → 2 | 1 → 2 | ✅ PASS |
+| **Overall Progression** | 0 → 1 → 2 | 0 → 1 → 2 | ✅ PASS |
+
+### ✅ Conclusion
+
+**Status: ✅ BOTH TESTS PASSED**
+
+1. ✅ **Canvas Block Capture**: Working correctly, capturing 1 element on /customers page (NOT 0)
+2. ✅ **Copy/Paste Custom Card**: Working correctly, progression 0→1→2 as expected
+
+**No issues detected. Both features working as intended.**
+
+### Artifacts:
+- Screenshots:
+  - test1_layout_blocks.png (Layout tab showing 1 element)
+  - test2_before_copy.png (Before copying card)
+  - test2_after_paste.png (After pasting, showing 2 cards)
+- Console Logs: /root/.emergent/automation_output/20260412_105931/console_20260412_105931.log
+- Test Duration: ~30 seconds
+- Cleanup: ✅ Test cards removed successfully
+
+---
+

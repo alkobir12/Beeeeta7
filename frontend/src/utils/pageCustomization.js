@@ -39,7 +39,7 @@ export const buildBlockSnapshot = (limit = 120) => {
   try {
     const root = getSnapshotRoot();
     if (!root) return [];
-    return Array.from(root.querySelectorAll('[data-testid]'))
+    const matches = Array.from(root.querySelectorAll('[data-testid]'))
       .filter((node) => {
         const testid = String(node.getAttribute('data-testid') || '');
         return !isIgnoredTestid(testid) && BLOCK_HINTS.some((hint) => testid.includes(hint));
@@ -50,6 +50,8 @@ export const buildBlockSnapshot = (limit = 120) => {
         text: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120),
       }))
       .filter((item) => item.testid);
+    if (matches.length) return matches;
+    return buildUiSnapshot(limit);
   } catch (_error) {
     return [];
   }

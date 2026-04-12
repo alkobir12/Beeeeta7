@@ -45,7 +45,25 @@
           "id": "root-card-1",
           "title": "كرت الصفحة الرئيسية",
           "content": "محتوى كرت الصفحة الرئيسية"
+        },
+        {
+          "id": "card-81efb4b7",
+          "title": "متابعة سريعة",
+          "description": "",
+          "fields": [
+            {
+              "id": "field-fb1392f8",
+              "label": "حالة",
+              "value": "نشط"
+            }
+          ]
         }
+      ],
+      "block_order": [
+        "header-section",
+        "main-content",
+        "sidebar",
+        "footer"
       ]
     },
     "/test-reset-page": {
@@ -78,11 +96,26 @@
       },
       "custom_cards": [
         {
-          "id": "customers-card-1",
-          "title": "كرت صفحة العملاء",
-          "content": "محتوى كرت صفحة العملاء"
+          "id": "test-card-1",
+          "title": "بطاقة اختبار",
+          "description": "بطاقة للاختبار",
+          "fields": [
+            {
+              "id": "field-1",
+              "label": "اسم العميل",
+              "value": "قيمة افتراضية",
+              "source_testid": "customer-name-input"
+            },
+            {
+              "id": "field-2",
+              "label": "رقم الهاتف",
+              "value": "",
+              "source_testid": "customer-phone-input"
+            }
+          ]
         }
-      ]
+      ],
+      "block_order": []
     }
   },
   "test_dev_commands": {

@@ -17,6 +17,35 @@
 
 ## What's Been Implemented
 
+### دمج Liquid Live Editor داخل النظام الحالي (12 Apr 2026)
+- تم تحويل أفكار Liquid Live Editor إلى النظام الحالي بدل إنشاء محرر منفصل:
+  - Draft workflow عبر **localStorage أولًا**
+  - زر **حفظ ونشر التغييرات** لترحيل المسودة إلى backend
+  - أزرار **تراجع / إعادة / مسح المسودة** داخل الـ Builder
+- تم دعم حقول جديدة في تخصيصات backend (`routes_alkabeer_bot.py`):
+  - `positions`
+  - `contents`
+  - `block_order`
+- تم تطوير **Canvas مباشر** فوق الصفحة عبر:
+  - `/app/frontend/src/components/LiquidCanvasOverlay.jsx`
+  - تحديد البلوكات الحالية
+  - نسخ/لصق إعدادات البلوك
+  - دعم inline editing
+  - دعم Alt+Drag وتخزين المواضع محليًا/ثم نشرها
+- تم توسيع `LiquidSiteBuilder.jsx` ليدعم:
+  - local draft persistence
+  - undo/redo stacks
+  - clear draft reload from backend
+  - publish-to-backend flow
+- تم التأكد أن تبويب الكروت يعرض:
+  - الكروت الحالية للصفحة المختارة
+  - الكروت المخصصة
+  - نسخ/لصق الكرت المخصص **0→1→2** بشكل صحيح
+- نتيجة الاختبار الرسمية: `iteration_122.json`
+  - Backend: **13/13 PASS**
+  - Frontend: **100% PASS**
+  - التحقق الإضافي بواسطة الوكلاء المتخصصين: PASS
+
 ### سحب/إفلات البلوكات + ربط الحقول + أوامر كروت عبر البوت (11 Apr 2026)
 - توسيع تخصيصات Liquid Builder لتدعم:
   - `block_order`

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Bot, SendHorizontal } from 'lucide-react';
+import { ArrowLeft, Bot, SendHorizontal, Sparkles } from 'lucide-react';
 import { aiAPI } from '../services/api';
 
 const createSessionId = () => {
@@ -7,9 +7,17 @@ const createSessionId = () => {
   return `liquid-builder-bot-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 };
 
+const loadingSteps = [
+  'جار تحليل طلبك',
+  'تحديد التفاصيل الرئيسية',
+  'العثور على المعلومات ذات الصلة',
+  'المراجعة بعد جمع المعلومات',
+  'جار توليد الرد',
+];
+
 export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomizationReceived, onLocalCommand }) => {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'أنا بوت الـ Liquid Builder. اكتب rrr أو اطلب تعديلًا مباشرًا على الصفحة المختارة.' },
+    { role: 'assistant', content: 'مرحبًا، أنا مساعد Liquid Builder. اطلب تعديل الصفحة الحالية بلغة بسيطة وسأنفّذه أو أوجهك مباشرة.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +37,7 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
     try {
       const localResult = await onLocalCommand?.(message);
       if (localResult?.handled) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: localResult.reply || 'تم تنفيذ الأمر محليًا.' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: localResult.reply || 'تم تنفيذ الطلب.' }]);
         return;
       }
 
@@ -41,6 +49,7 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
         currentPath: selectedPage,
         uiSnapshot: snapshot,
       });
+
       const botText = response.data?.response || 'تم التنفيذ.';
       setMessages((prev) => [...prev, { role: 'assistant', content: botText }]);
       if (response.data?.customization) {
@@ -48,36 +57,86 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
       }
     } catch (error) {
       console.error('Liquid builder bot failed', error);
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'تعذر تنفيذ الطلب الآن.' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'تعذر تنفيذ الطلب الآن، حاول بصياغة أبسط.' }]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-3" data-testid="liquid-site-builder-bot-tab">
-      <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-white"><Bot size={15} /> بوت Liquid Builder</div>
-        <div className="max-h-[340px] space-y-2 overflow-y-auto" data-testid="liquid-site-builder-bot-messages">
-          {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={`rounded-2xl px-3 py-2 text-sm ${message.role === 'assistant' ? 'bg-slate-900 text-slate-100' : 'bg-cyan-500/15 text-cyan-50'}`} data-testid={`liquid-site-builder-bot-message-${index}`}>
-              {message.content}
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <input value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') sendMessage(); }} placeholder="اكتب أمر rrr أو طلب تعديل..." className="flex-1 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none" data-testid="liquid-site-builder-bot-input" />
-          <button type="button" onClick={() => sendMessage()} disabled={loading || !input.trim()} className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 disabled:opacity-50" data-testid="liquid-site-builder-bot-send-button">
-            <SendHorizontal size={15} />
-          </button>
+    <div className="space-y-4" data-testid="liquid-site-builder-bot-tab">
+      <div className="rounded-[28px] border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+            <Bot size={18} />
+          </div>
+          <div>
+            <p className="text-base font-semibold text-zinc-900">Kodee Builder</p>
+            <p className="text-xs text-zinc-500">الصفحة الحالية: {selectedPage}</p>
+          </div>
         </div>
       </div>
+
+      <div className="space-y-3" data-testid="liquid-site-builder-bot-messages">
+        {messages.map((message, index) => (
+          <div key={`${message.role}-${index}`} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'} data-testid={`liquid-site-builder-bot-message-${index}`}>
+            <div className={`max-w-[88%] rounded-[24px] px-4 py-3 text-sm leading-7 ${message.role === 'user' ? 'bg-zinc-100 text-zinc-900' : 'border border-zinc-200 bg-white text-zinc-800 shadow-sm'}`}>
+              {message.content}
+            </div>
+          </div>
+        ))}
+
+        {loading ? (
+          <div className="rounded-[28px] border border-zinc-200 bg-white p-4 shadow-sm" data-testid="liquid-site-builder-bot-loading-card">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-zinc-900">Kodee</p>
+                <p className="text-xs text-zinc-500">جاري تنفيذ طلبك</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-zinc-700">
+              {loadingSteps.map((step, index) => (
+                <div key={step} className="flex items-center gap-2" data-testid={`liquid-site-builder-bot-loading-step-${index}`}>
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${index < loadingSteps.length - 1 ? 'bg-zinc-300' : 'bg-violet-500 animate-pulse'}`} />
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap gap-2" data-testid="liquid-site-builder-bot-quick-actions">
-        {['rrr', 'EXIT', 'اضف كرت متابعة سريعة', 'اضف حقل حالة = نشط في كرت متابعة سريعة', 'اخف كرت صافي الربح', 'غير اسم زر تحديث إلى مزامنة'].map((item, index) => (
-          <button key={item} type="button" onClick={() => sendMessage(item)} className="rounded-full border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-slate-100" data-testid={`liquid-site-builder-bot-quick-${index}`}>
+        {['اعرض لي كروت هذه الصفحة فقط', 'اعرض لي عناصر هذه الصفحة', 'rrr', 'EXIT'].map((item, index) => (
+          <button key={item} type="button" onClick={() => sendMessage(item)} className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50" data-testid={`liquid-site-builder-bot-quick-${index}`}>
             {item}
           </button>
         ))}
+      </div>
+
+      <div className="rounded-[30px] border border-zinc-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') sendMessage();
+            }}
+            placeholder="اكتب سؤالك أو طلبك هنا"
+            className="flex-1 bg-transparent px-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
+            data-testid="liquid-site-builder-bot-input"
+          />
+          <button type="button" onClick={() => sendMessage()} disabled={loading || !input.trim()} className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-white disabled:opacity-50" data-testid="liquid-site-builder-bot-send-button">
+            <SendHorizontal size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-[24px] border border-zinc-200 bg-white px-4 py-3 text-xs text-zinc-500 shadow-sm">
+        اكتب طلبًا مركبًا مثل: <span className="font-medium text-zinc-800">انسخ تنسيق هذا الكرت إلى صفحة العملاء ثم اربطه بصافي الربح</span>
       </div>
     </div>
   );

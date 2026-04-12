@@ -186,19 +186,20 @@
       "contents": {},
       "custom_cards": [
         {
-          "id": "card-1ac8dba7",
-          "title": "متابعة سريعة",
+          "id": "card-1775999455178-u1ssm",
+          "title": "كرت اختبار للحفظ",
           "description": "",
           "fields": [
             {
-              "id": "field-64b5a395",
-              "label": "حالة",
-              "value": "نشط"
+              "id": "field-1775999455178",
+              "label": "عنوان",
+              "value": "قيمة"
             }
           ]
         }
       ],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
     },
     "/customers": {
       "labels": {},

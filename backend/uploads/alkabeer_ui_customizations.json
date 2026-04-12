@@ -61,6 +61,43 @@
       "contents": {},
       "custom_cards": [],
       "block_order": []
+    },
+    "/test": {
+      "labels": {},
+      "hidden": {},
+      "contents": {
+        "test_element": "test_content"
+      },
+      "custom_cards": [],
+      "block_order": [
+        "block1",
+        "block2",
+        "block3"
+      ],
+      "positions": {
+        "element1": {
+          "x": 100,
+          "y": 200
+        }
+      }
+    },
+    "/workflow_test": {
+      "labels": {},
+      "hidden": {},
+      "contents": {
+        "draft_element": "draft_content_123"
+      },
+      "custom_cards": [],
+      "block_order": [
+        "draft_block1",
+        "draft_block2"
+      ],
+      "positions": {
+        "draft_pos": {
+          "x": 150,
+          "y": 250
+        }
+      }
     }
   },
   "test_dev_commands": {

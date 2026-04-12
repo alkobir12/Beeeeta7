@@ -37,13 +37,34 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
 
   useEffect(() => {
     if (!canEdit || !isOpen) return;
-    setSnapshot(buildUiSnapshot());
-    setBlockSnapshot(buildBlockSnapshot());
     siteBuilderAPI.getCustomization({ user_id: userId, path: selectedPage }).then((response) => {
       const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] };
       setConfig(nextConfig);
     }).catch((error) => console.error('Failed to load builder customization', error));
   }, [canEdit, selectedPage, isOpen, userId]);
+
+  useEffect(() => {
+    if (!canEdit || !isOpen) return;
+    const refreshSnapshots = () => {
+      setSnapshot(buildUiSnapshot());
+      setBlockSnapshot(buildBlockSnapshot());
+    };
+
+    refreshSnapshots();
+    let debounceTimer = null;
+    const observer = new MutationObserver(() => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(refreshSnapshots, 180);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const slowTimer = window.setTimeout(refreshSnapshots, 2200);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(debounceTimer);
+      window.clearTimeout(slowTimer);
+    };
+  }, [canEdit, isOpen, currentPath]);
 
   if (!canEdit) return null;
 

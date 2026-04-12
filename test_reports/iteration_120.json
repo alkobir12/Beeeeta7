@@ -1,0 +1,65 @@
+{
+  "summary": "Iteration 120 - Bug Fix Verification: Live cards now correctly refresh when switching pages in Liquid Builder cards tab. The bug from iteration_119 is FIXED. Tested page switching between /, /operations, and /customers - live cards count and content are consistent across multiple visits to the same page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_120.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A - frontend only testing",
+    "frontend": "100% - All tests passed"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix verified. Live cards in Liquid Builder cards tab now correctly refresh when switching pages. The MutationObserver and scope-based snapshot fix in pageCustomization.js and LiquidSiteBuilder.jsx is working correctly.",
+  "features_tested": {
+    "bug_fix_page_switching_live_cards": {
+      "status": "PASS",
+      "test_results": {
+        "dashboard_first": "0 كرت/بلوك",
+        "operations": "3-4 كرت/بلوك with testid operation-payment-chip-card",
+        "customers": "0 كرت/بلوك",
+        "operations_second": "3-4 كرت/بلوك - CONSISTENT",
+        "dashboard_final": "0 كرت/بلوك - CONSISTENT"
+      },
+      "note": "Live cards count and first card testid are consistent across multiple visits to the same page"
+    },
+    "custom_cards_section_regression": {
+      "status": "PASS",
+      "tests": [
+        "Custom cards section exists",
+        "Add card button works",
+        "Custom card can be added and titled",
+        "Custom card can be deleted"
+      ]
+    },
+    "live_cards_section": {
+      "status": "PASS",
+      "tests": [
+        "Live cards section exists",
+        "Live cards count element works",
+        "Live cards list shows correct cards for each page"
+      ]
+    }
+  },
+  "rca_of_the_issue": {
+    "original_bug": "Live cards didn't refresh when switching pages (iteration_119)",
+    "fix_applied": "Scope-based snapshot fix in pageCustomization.js plus DOM refresh observer in LiquidSiteBuilder.jsx",
+    "verification": "CONFIRMED FIXED - Live cards now update correctly after page switching"
+  }
+}

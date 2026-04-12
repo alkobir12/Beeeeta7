@@ -1,13 +1,33 @@
+const IGNORED_TESTID_PREFIXES = [
+  'liquid-site-builder',
+  'workshop-bot',
+  'floating-sidebar',
+  'sidebar-',
+  'mobile-sidebar',
+  'app-sidebar',
+  'language-',
+  'permission-denied',
+];
+
+const getSnapshotRoot = () => {
+  if (typeof document === 'undefined') return null;
+  return document.querySelector('.content-area .animate-fade-in') || document.querySelector('main.content-area') || document.body;
+};
+
+const isIgnoredTestid = (testid) => IGNORED_TESTID_PREFIXES.some((prefix) => String(testid || '').startsWith(prefix));
+
 export const buildUiSnapshot = (limit = 260) => {
   try {
-    return Array.from(document.querySelectorAll('[data-testid]'))
+    const root = getSnapshotRoot();
+    if (!root) return [];
+    return Array.from(root.querySelectorAll('[data-testid]'))
       .slice(0, limit)
       .map((node) => ({
         testid: node.getAttribute('data-testid') || '',
         text: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120),
         tag: String(node.tagName || '').toLowerCase(),
       }))
-      .filter((item) => item.testid);
+      .filter((item) => item.testid && !isIgnoredTestid(item.testid));
   } catch (_error) {
     return [];
   }
@@ -17,10 +37,12 @@ const BLOCK_HINTS = ['card', 'panel', 'section', 'table', 'widget', 'dock', 'lay
 
 export const buildBlockSnapshot = (limit = 120) => {
   try {
-    return Array.from(document.querySelectorAll('[data-testid]'))
+    const root = getSnapshotRoot();
+    if (!root) return [];
+    return Array.from(root.querySelectorAll('[data-testid]'))
       .filter((node) => {
         const testid = String(node.getAttribute('data-testid') || '');
-        return BLOCK_HINTS.some((hint) => testid.includes(hint));
+        return !isIgnoredTestid(testid) && BLOCK_HINTS.some((hint) => testid.includes(hint));
       })
       .slice(0, limit)
       .map((node) => ({

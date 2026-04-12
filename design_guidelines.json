@@ -1,73 +1,106 @@
 {
-  "theme": "LIGHT",
-  "archetype": "3 (Pastel & Soft) mixed with Neo-Brutalist contrast",
-  "emotion": "Approachable, Optimistic, Tactile, and Powerful",
+  "theme": "light",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "design_philosophy": {
+    "core": "A high-end, function-first AI builder interface inspired by app.emergent.sh. It uses a liquid responsive split-screen layout designed for a chat-first workflow with real-time preview.",
+    "emotion": "Authoritative, intelligent, and highly structured.",
+    "rules": [
+      "Avoid generic SaaS gradients. Use stark contrasts, fine 1px borders, and generous padding.",
+      "UI must support Right-to-Left (RTL) natively as the core content is in Arabic.",
+      "The entire app should feel like a unified full-page IDE/builder workspace, not a scrolling landing page.",
+      "Optical clarity is key: Use 'Crystal Glass' for floating elements and solid backgrounds for main panels."
+    ]
+  },
   "typography": {
-    "headings": {
-      "font_family": "Manrope, sans-serif",
-      "weight": "font-bold",
-      "tracking": "tracking-tight",
-      "usage_rules": "Do NOT use Inter for headings. Use Manrope for a friendly, rounded 'Soft Utility' feel."
+    "primary_font": "Cabinet Grotesk",
+    "primary_font_fallback": "sans-serif",
+    "secondary_font": "Satoshi",
+    "secondary_font_fallback": "sans-serif",
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl tracking-tight font-bold text-zinc-950",
+      "h2": "text-2xl sm:text-3xl tracking-tight font-medium text-zinc-900",
+      "h3": "text-lg sm:text-xl font-medium text-zinc-900",
+      "body": "text-base leading-relaxed text-zinc-700 font-secondary",
+      "small_label": "text-xs font-semibold tracking-[0.1em] uppercase text-zinc-500",
+      "chat_text": "text-sm sm:text-base leading-relaxed"
     },
-    "body": {
-      "font_family": "Figtree, sans-serif",
-      "weight": "font-normal",
-      "usage_rules": "Clear, highly legible, modern."
+    "language_support": {
+      "direction": "rtl",
+      "note": "Apply dir='rtl' on the root HTML/body or main layout wrapper to correctly render Arabic text. Ensure all padding/margins use logical properties (e.g., ps, pe, ms, me) or are mirrored for RTL."
     }
   },
   "colors": {
-    "light_mode": {
-      "background": "bg-[#FCFCFC] (Soft Snow)",
-      "surface": "bg-white",
-      "border": "border-zinc-200",
-      "text_primary": "text-zinc-900",
-      "text_secondary": "text-zinc-500",
-      "primary_accent": "bg-[#FDE047] (Butter Yellow) with text-zinc-900",
-      "secondary_accent": "bg-[#E0E5D5] (Pale Sage) with text-zinc-900"
+    "background": {
+      "app": "bg-zinc-50",
+      "workspace": "bg-white",
+      "chat_panel": "bg-zinc-50/50"
     },
-    "dark_mode": {
-      "background": "bg-zinc-950",
-      "surface": "bg-zinc-900",
-      "border": "border-zinc-800",
-      "text_primary": "text-zinc-50",
-      "text_secondary": "text-zinc-400",
-      "primary_accent": "bg-[#EAB308] (Yellow 500) with text-zinc-950",
-      "secondary_accent": "bg-zinc-800 text-zinc-200"
+    "surface": {
+      "card": "bg-white",
+      "glass": "bg-white/70 backdrop-blur-xl border border-zinc-200/50",
+      "user_bubble": "bg-zinc-950 text-white",
+      "ai_bubble": "bg-white border border-zinc-200 text-zinc-900"
+    },
+    "border": {
+      "default": "border-zinc-200",
+      "focus": "border-zinc-950 ring-1 ring-zinc-950",
+      "divider": "border-zinc-100"
+    },
+    "accent": {
+      "primary": "bg-zinc-950 hover:bg-zinc-800 text-white",
+      "secondary": "bg-zinc-100 hover:bg-zinc-200 text-zinc-900",
+      "active": "bg-blue-600 text-white",
+      "agent_badge": "bg-zinc-100 text-zinc-600 border border-zinc-200"
     }
   },
   "layout_and_spacing": {
-    "widget_container": "w-full sm:w-[420px] max-h-[85vh] sm:max-h-[800px] flex flex-col shadow-2xl rounded-t-3xl sm:rounded-3xl border",
-    "internal_padding": "p-6",
-    "bento_grid": "Tight gaps (gap-4). Every pixel utilized.",
-    "alignment": "Left-aligned content for forms and lists. Centered empty states."
-  },
-  "surfaces_and_micro_themes": {
-    "floating_button": "Glassmorphism: backdrop-blur-2xl bg-white/70 border-white/40 (Light) or bg-black/60 border-white/10 (Dark). High saturation.",
-    "panels": "Solid backgrounds. No glassmorphism inside the dense editor to ensure readability.",
-    "inputs": "Neumorphism mix: flat background (bg-zinc-100/bg-zinc-800), 1px subtle border, sharp text."
-  },
-  "navigation_and_interactions": {
-    "tabs": "Keep the existing 4 tabs (Elements, Cards, Layout, Bot). Use a clean, pill-shaped segmented control design (Shadcn Tabs with rounded-full trigger styles).",
-    "drill_down_navigation": "CRITICAL: The requirement 'صفحه بعده صفحه متتابعه' means Stack Navigation. When a user clicks to edit a Custom Card, an Element, or any complex form, DO NOT expand it inline. Instead, slide in a new view from the side (like iOS settings or chat info). This nested view must have a 'Back' button in the header. The same goes for any secondary actions.",
-    "page_selector": "Instead of a basic <select>, use a sleek Shadcn DropdownMenu or an animated horizontally scrollable pill list at the top."
+    "app_shell": "h-screen w-full flex flex-col md:flex-row overflow-hidden bg-zinc-50",
+    "sidebar_or_chat_panel": "w-full md:w-[400px] lg:w-[480px] h-[50vh] md:h-full flex flex-col border-e border-zinc-200 bg-zinc-50/80 shrink-0",
+    "workspace_preview": "flex-1 h-[50vh] md:h-full flex flex-col bg-white relative overflow-hidden",
+    "spacing_scale": "Use generous padding: p-6 or p-8 inside panels. Gap-4 for dense UI elements like chat bubbles, Gap-8 for major layout sections.",
+    "step_progress": "A horizontal or vertical stepper indicating the current specialized agent phase."
   },
   "components": {
-    "buttons": "Rounded-xl or rounded-full. Generous padding (px-4 py-2). Active states must darken.",
-    "forms": "Use Shadcn Input, Textarea, and Select. Wrap in clean Label groups.",
-    "icons": "Use 'lucide-react' (already installed). Add Stroke width 2.5 for a stronger, bolder look."
+    "chat_input": "Sticky at the bottom of the chat panel. Should have a solid background (bg-white), rounded-xl, 1px border-zinc-200, shadow-sm. Use a textarea that auto-resizes. Send button should be an icon inside the input.",
+    "chat_message": "Flex layout. AI messages left-aligned (or right-aligned in RTL), User messages opposite. Include agent avatar/icon. Add Framer Motion 'layout' for smooth list updates.",
+    "agent_selector": "A visually distinct card or dropdown that shows the current active agent. Can use the provided abstract image textures as a subtle header background for the agent's profile.",
+    "stepper": "Step-by-step indicator showing: 1. التحليل (Analysis), 2. التعديل (Edit), 3. التوليد (Generate), 4. الكتابة (Write). Active step is bold text + solid dot, inactive steps are gray text + outlined dot.",
+    "workspace_pane": "A blank canvas area on the opposite side of the chat. Includes a top toolbar with 'Preview', 'Code', 'Export' segmented controls. Content dynamically changes based on the active step (e.g., showing a generated document, code, or charts)."
   },
   "motion": {
-    "transitions": "Use framer-motion for the drill-down stack navigation. x: 100% -> 0% with ease-out stiffness.",
-    "hover": "Subtle scale (scale-[1.02]) and border color darken."
+    "transitions": "Use spring animations for layout shifts (e.g., changing from Chat to Settings route).",
+    "chat": "Messages should slide up and fade in: { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3 } }",
+    "workspace": "Crossfade content in the workspace pane when the agent step changes."
+  },
+  "icons_and_assets": {
+    "library": "@phosphor-icons/react",
+    "usage": "Use Phoshor Icons (Duotone or Regular) for UI elements. Chat bubble, Robot, Sparkle, Code, Eye, PaperPlaneRight."
+  },
+  "image_urls": {
+    "agent_analysis": {
+      "url": "https://images.unsplash.com/photo-1682178559143-ba658a6ad434?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMG1ldGFsbGljJTIwZ2VvbWV0cmljfGVufDB8fHx8MTc3NjAwNTA4NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Close up shiny metal surface. Use as an avatar background or profile header for the 'Analysis' (التحليل) Agent."
+    },
+    "agent_edit": {
+      "url": "https://images.unsplash.com/photo-1688494952956-ccf8c0042a9d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMG1ldGFsbGljJTIwZ2VvbWV0cmljfGVufDB8fHx8MTc3NjAwNTA4NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Black and white curved metal surface. Use as an avatar background or profile header for the 'Edit' (التعديل) Agent."
+    },
+    "agent_generate": {
+      "url": "https://images.unsplash.com/photo-1773982594022-6c0d369b4fff?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG1ldGFsbGljJTIwZ2VvbWV0cmljfGVufDB8fHx8MTc3NjAwNTA4NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract metallic sculpture with flowing shapes. Use as an avatar background or profile header for the 'Generate' (التوليد) Agent."
+    },
+    "agent_write": {
+      "url": "https://images.unsplash.com/photo-1774391048185-f947203cf6c0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMG1ldGFsbGljJTIwZ2VvbWV0cmljfGVufDB8fHx8MTc3NjAwNTA4NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract metallic sculpture with pink and gray colors. Use as an avatar background or profile header for the 'Write' (الكتابة) Agent."
+    }
   },
   "instructions_to_main_agent": [
-    "Install 'framer-motion' if not present, to handle the drill-down page sliding animations.",
-    "Refactor LiquidSiteBuilder.jsx to replace inline editing with a 'Stack' state. For example: const [activeView, setActiveView] = useState({ type: 'main' }); When editing a card: setActiveView({ type: 'edit-card', cardId: 123 }).",
-    "When activeView is not 'main', render the drill-down view with a fixed header containing a '< Back' button. Only the current view should be visible in the chat-sized container.",
-    "Update LiquidBuilderBotTab.jsx to use the same soft utility styling, removing the raw cyan borders and replacing them with the new Pastel & Soft palette.",
-    "Ensure the floating toggle button uses the Crystal Glassmorphism pattern.",
-    "Make sure all text has proper contrast, especially over the Butter Yellow accent.",
-    "Ensure RTL/LTR direction is respected (use start/end classes like ps-4, pe-4, ms-auto instead of hardcoded left/right if the app supports Arabic). The prompt uses Arabic, so assume RTL layout for translations, but use generic Tailwind."
-  ],
-  "image_urls": {}
+    "Implement the UI as a full-screen application ('h-screen w-screen overflow-hidden') with two main columns: a Chat Panel (collapsible on mobile) and a Workspace Preview Panel.",
+    "Ensure RTL (Right-to-Left) layout is fully implemented by default using `<html dir='rtl'>` or applying RTL standard Tailwind practices (using ms, me, ps, pe, text-start).",
+    "Create a Step-by-Step progress component inside the Chat Panel or top header. The steps MUST be in Arabic: 1. التحليل (Analysis), 2. التعديل (Edit), 3. التوليد (Generate), 4. الكتابة (Write).",
+    "Each step corresponds to a 'Specialized Agent' chatting with the user. Show which agent is currently active.",
+    "Use Shadcn UI components but heavily customize them to match the Archetype 4 (Swiss & High Contrast) look—remove excessive border radii (use rounded-md or rounded-none) and remove soft shadows (use sharp 1px borders).",
+    "The Workspace Preview panel should display dynamic mock content based on the step (e.g., data charts during Analysis, a text editor during Edit/Write, a UI preview during Generate).",
+    "Add 'data-testid' attributes to all interactive elements for robust testing."
+  ]
 }

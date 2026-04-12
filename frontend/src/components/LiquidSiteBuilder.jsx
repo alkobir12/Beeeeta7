@@ -5,6 +5,7 @@ import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
 import { LiquidBuilderBotTab } from './LiquidBuilderBotTab';
+import { LiquidCanvasOverlay } from './LiquidCanvasOverlay';
 
 const createCard = () => ({
   id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -12,6 +13,14 @@ const createCard = () => ({
   description: '',
   fields: [{ id: `field-${Date.now()}`, label: 'عنوان', value: 'قيمة' }],
 });
+
+const loadClipboard = () => {
+  try {
+    return JSON.parse(localStorage.getItem('liquid-builder-clipboard') || 'null');
+  } catch {
+    return null;
+  }
+};
 
 export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }) => {
   const navigate = useNavigate();
@@ -27,6 +36,11 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const [groupFilter, setGroupFilter] = useState('all');
   const [onlyCustomized, setOnlyCustomized] = useState(false);
   const [elementsPage, setElementsPage] = useState(1);
+  const [selectedCardId, setSelectedCardId] = useState('');
+  const [cardMoveTargets, setCardMoveTargets] = useState({});
+  const [clipboard, setClipboard] = useState(() => loadClipboard());
+  const [canvasActive, setCanvasActive] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState('');
 
   const canEdit = useMemo(() => ['manager', 'admin', 'مدير'].includes(String(session?.role || '').toLowerCase()), [session?.role]);
   const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
@@ -84,6 +98,11 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
     .map((testid) => blockSnapshot.find((item) => item.testid === testid))
     .filter(Boolean);
 
+  const setClipboardData = (nextClipboard) => {
+    setClipboard(nextClipboard);
+    localStorage.setItem('liquid-builder-clipboard', JSON.stringify(nextClipboard));
+  };
+
   const updateConfig = (nextConfig) => {
     setConfig(nextConfig);
     if (selectedPage === currentPath) {
@@ -122,6 +141,42 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
     custom_cards: (config.custom_cards || []).map((card) => card.id === cardId ? { ...card, ...patch } : card),
   });
 
+  const copyLiveBlock = (testid) => {
+    setSelectedBlockId(testid);
+    setClipboardData({
+      type: 'live-block',
+      testid,
+      label: config.labels?.[testid] || '',
+      content: config.contents?.[testid] || '',
+      hidden: Boolean(config.hidden?.[testid]),
+    });
+  };
+
+  const pasteLiveBlock = (targetTestid = selectedBlockId) => {
+    if (!clipboard || clipboard.type !== 'live-block' || !targetTestid) return;
+    updateConfig({
+      ...config,
+      labels: { ...(config.labels || {}), [targetTestid]: clipboard.label || '' },
+      contents: { ...(config.contents || {}), [targetTestid]: clipboard.content || '' },
+      hidden: { ...(config.hidden || {}), [targetTestid]: clipboard.hidden || false },
+    });
+  };
+
+  const copyCustomCard = (card) => {
+    setSelectedCardId(card.id);
+    setClipboardData({ type: 'custom-card', card: { ...card, id: undefined } });
+  };
+
+  const pasteCustomCard = () => {
+    if (!clipboard || clipboard.type !== 'custom-card') return;
+    const nextCard = {
+      ...(clipboard.card || {}),
+      id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: `${clipboard.card?.title || 'كرت'} (نسخة)`,
+    };
+    updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), nextCard] });
+  };
+
   const reorderBlocks = (draggedId, targetId) => {
     const working = [...(config.block_order?.length ? config.block_order : blockSnapshot.map((item) => item.testid))];
     const from = working.indexOf(draggedId);
@@ -148,6 +203,67 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const removeField = (cardId, fieldId) => {
     const card = (config.custom_cards || []).find((item) => item.id === cardId);
     updateCard(cardId, { fields: (card?.fields || []).filter((field) => field.id !== fieldId) });
+  };
+
+  const moveCardToPage = async (cardId) => {
+    const targetPath = cardMoveTargets[cardId];
+    if (!targetPath || targetPath === selectedPage) return;
+    const card = (config.custom_cards || []).find((item) => item.id === cardId);
+    if (!card) return;
+    try {
+      const targetResponse = await siteBuilderAPI.getCustomization({ user_id: userId, path: targetPath });
+      const targetConfig = targetResponse.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] };
+      const movedCard = { ...card, id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+      await siteBuilderAPI.saveCustomization({
+        user_id: userId,
+        path: targetPath,
+        labels: targetConfig.labels || {},
+        hidden: targetConfig.hidden || {},
+        contents: targetConfig.contents || {},
+        custom_cards: [...(targetConfig.custom_cards || []), movedCard],
+        block_order: targetConfig.block_order || [],
+      });
+      updateConfig({ ...config, custom_cards: (config.custom_cards || []).filter((item) => item.id !== cardId) });
+    } catch (error) {
+      console.error('Failed to move card between pages', error);
+    }
+  };
+
+  const handleLocalBotCommand = async (message) => {
+    const text = String(message || '').trim();
+    if (!text) return { handled: false };
+    if (text.includes('اعرض') && text.includes('كروت') && text.includes('هذه الصفحة')) {
+      setActiveTab('cards');
+      return { handled: true, reply: 'تم عرض كروت الصفحة الحالية داخل التبويب.' };
+    }
+    if (text.includes('اعرض') && text.includes('عناصر')) {
+      setActiveTab('elements');
+      return { handled: true, reply: 'تم فتح تبويب العناصر للصفحة الحالية.' };
+    }
+    if (text.includes('انتقل') && text.includes('صفحة')) {
+      const matchedPage = LIQUID_BUILDER_PAGES.find((page) => text.includes(page.label) || text.includes(page.path));
+      if (matchedPage) {
+        navigateToPage(matchedPage.path);
+        return { handled: true, reply: `تم الانتقال إلى صفحة ${matchedPage.label}.` };
+      }
+    }
+    if (text.includes('اربط هذا الكرت') && text.includes('أعلى 3')) {
+      const targetCard = (config.custom_cards || []).find((card) => card.id === selectedCardId) || (config.custom_cards || [])[0];
+      if (!targetCard) {
+        return { handled: true, reply: 'لا يوجد كرت مخصص محدد حاليًا لربطه.' };
+      }
+      const topBlocks = orderedBlocks.slice(0, 3);
+      updateCard(targetCard.id, {
+        fields: topBlocks.map((block, index) => ({
+          id: `field-${Date.now()}-${index}`,
+          label: `مؤشر ${index + 1}`,
+          value: block.text,
+          source_testid: block.testid,
+        })),
+      });
+      return { handled: true, reply: `تم ربط الكرت "${targetCard.title}" بأعلى 3 بلوكات ظاهرة في الصفحة.` };
+    }
+    return { handled: false };
   };
 
   const saveConfig = async () => {
@@ -282,6 +398,10 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                           <span>إخفاء هذا الكرت</span>
                           <input type="checkbox" checked={Boolean(config.hidden?.[block.testid])} onChange={(event) => updateElement(block.testid, 'hidden', event.target.checked)} />
                         </label>
+                        <div className="mt-2 flex gap-2">
+                          <button type="button" onClick={() => copyLiveBlock(block.testid)} className="rounded-xl border border-white/10 px-3 py-1 text-[11px] text-slate-200" data-testid={`liquid-site-builder-live-card-copy-${index}`}>نسخ</button>
+                          <button type="button" onClick={() => pasteLiveBlock(block.testid)} disabled={!clipboard || clipboard.type !== 'live-block'} className="rounded-xl border border-white/10 px-3 py-1 text-[11px] text-slate-200 disabled:opacity-50" data-testid={`liquid-site-builder-live-card-paste-${index}`}>لصق</button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -293,13 +413,18 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                       <p className="text-sm font-semibold text-white">الكروت المخصصة</p>
                       <p className="mt-1 text-xs text-slate-400">أنشئ كروت إضافية أو اربط حقولها ببيانات حقيقية من الصفحة.</p>
                     </div>
-                    <button type="button" onClick={() => updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), createCard()] })} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100" data-testid="liquid-site-builder-add-card-button">
-                      <Plus size={14} /> إضافة كرت
-                    </button>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={pasteCustomCard} disabled={!clipboard || clipboard.type !== 'custom-card'} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 disabled:opacity-50" data-testid="liquid-site-builder-paste-card-button">
+                        لصق كرت
+                      </button>
+                      <button type="button" onClick={() => updateConfig({ ...config, custom_cards: [...(config.custom_cards || []), createCard()] })} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100" data-testid="liquid-site-builder-add-card-button">
+                        <Plus size={14} /> إضافة كرت
+                      </button>
+                    </div>
                   </div>
 
                   {(config.custom_cards || []).map((card, cardIndex) => (
-                  <div key={card.id} className="rounded-[24px] border border-white/10 bg-white/5 p-4" data-testid={`liquid-site-builder-card-${cardIndex}`}>
+                  <div key={card.id} onClick={() => setSelectedCardId(card.id)} className={`rounded-[24px] border p-4 ${selectedCardId === card.id ? 'border-cyan-300/40 bg-cyan-500/10' : 'border-white/10 bg-white/5'}`} data-testid={`liquid-site-builder-card-${cardIndex}`}>
                     <input value={card.title || ''} onChange={(event) => updateCard(card.id, { title: event.target.value })} placeholder="عنوان الكرت" className="mb-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none" data-testid={`liquid-site-builder-card-title-${cardIndex}`} />
                     <textarea value={card.description || ''} onChange={(event) => updateCard(card.id, { description: event.target.value })} placeholder="وصف مختصر" className="mb-3 min-h-[72px] w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-white outline-none" data-testid={`liquid-site-builder-card-description-${cardIndex}`} />
                     <div className="space-y-2">
@@ -317,6 +442,12 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" onClick={() => addField(card.id)} className="rounded-xl border border-white/10 px-3 py-1 text-[11px] text-slate-200" data-testid={`liquid-site-builder-card-add-field-${cardIndex}`}>إضافة حقل</button>
+                      <button type="button" onClick={() => copyCustomCard(card)} className="rounded-xl border border-white/10 px-3 py-1 text-[11px] text-slate-200" data-testid={`liquid-site-builder-card-copy-${cardIndex}`}>نسخ</button>
+                      <select value={cardMoveTargets[card.id] || ''} onChange={(event) => setCardMoveTargets((prev) => ({ ...prev, [card.id]: event.target.value }))} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-1 text-[11px] text-slate-100 outline-none" data-testid={`liquid-site-builder-card-move-select-${cardIndex}`}>
+                        <option value="">انقل إلى صفحة...</option>
+                        {LIQUID_BUILDER_PAGES.filter((page) => page.path !== selectedPage).map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
+                      </select>
+                      <button type="button" onClick={() => moveCardToPage(card.id)} className="rounded-xl border border-cyan-300/20 px-3 py-1 text-[11px] text-cyan-100" data-testid={`liquid-site-builder-card-move-${cardIndex}`}>نقل</button>
                       <button type="button" onClick={() => updateConfig({ ...config, custom_cards: (config.custom_cards || []).filter((item) => item.id !== card.id) })} className="rounded-xl border border-rose-300/20 px-3 py-1 text-[11px] text-rose-200" data-testid={`liquid-site-builder-card-delete-${cardIndex}`}>حذف الكرت</button>
                     </div>
                   </div>
@@ -367,6 +498,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                 session={session}
                 selectedPage={selectedPage}
                 snapshot={snapshot}
+                onLocalCommand={handleLocalBotCommand}
                 onCustomizationReceived={(customization) => updateConfig({
                   ...config,
                   labels: customization.labels || config.labels,
@@ -386,6 +518,17 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
           </div>
         </div>
       ) : null}
+      <LiquidCanvasOverlay
+        active={canvasActive}
+        blocks={orderedBlocks}
+        selectedBlockId={selectedBlockId}
+        onToggle={() => setCanvasActive((value) => !value)}
+        onSelectBlock={setSelectedBlockId}
+        onReorder={reorderBlocks}
+        onCopyBlock={copyLiveBlock}
+        onPasteBlock={pasteLiveBlock}
+        canPaste={Boolean(clipboard && clipboard.type === 'live-block')}
+      />
     </>
   );
 };

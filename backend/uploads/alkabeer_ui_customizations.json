@@ -224,6 +224,13 @@
       "contents": {},
       "custom_cards": [],
       "block_order": []
+    },
+    "/operations": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
     }
   },
   "builder_test_user_2": {
@@ -424,6 +431,43 @@
       "block_order": [
         "customers-block-1"
       ]
+    }
+  },
+  "test_user_121": {
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
+    },
+    "/source-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
+    },
+    "/target-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
+    },
+    "/test-bot-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
+    },
+    "/test-reset-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": []
     }
   }
 }

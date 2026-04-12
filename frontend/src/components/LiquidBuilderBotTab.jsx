@@ -7,7 +7,7 @@ const createSessionId = () => {
   return `liquid-builder-bot-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 };
 
-export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomizationReceived }) => {
+export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomizationReceived, onLocalCommand }) => {
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'أنا بوت الـ Liquid Builder. اكتب rrr أو اطلب تعديلًا مباشرًا على الصفحة المختارة.' },
   ]);
@@ -27,6 +27,12 @@ export const LiquidBuilderBotTab = ({ session, selectedPage, snapshot, onCustomi
     setInput('');
     setLoading(true);
     try {
+      const localResult = await onLocalCommand?.(message);
+      if (localResult?.handled) {
+        setMessages((prev) => [...prev, { role: 'assistant', content: localResult.reply || 'تم تنفيذ الأمر محليًا.' }]);
+        return;
+      }
+
       const response = await aiAPI.alkabeerChat({
         message,
         sessionId,

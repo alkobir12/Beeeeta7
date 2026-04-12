@@ -384,35 +384,50 @@
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
     },
     "/source-page": {
       "labels": {},
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
     },
     "/target-page": {
       "labels": {},
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
     },
     "/test-bot-page": {
       "labels": {},
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
     },
     "/test-reset-page": {
       "labels": {},
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {}
+    }
+  },
+  "TEST_iter122_316802": {
+    "/test-page-iter122": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {}
     }
   }
 }

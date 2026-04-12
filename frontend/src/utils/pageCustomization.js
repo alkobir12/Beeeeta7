@@ -75,6 +75,11 @@ export const clearPageCustomizations = (appliedEntriesRef) => {
           entry.parent.appendChild(entry.element);
         }
       }
+      if (entry.type === 'position') {
+        entry.element.style.position = entry.prevPosition ?? '';
+        entry.element.style.left = entry.prevLeft ?? '';
+        entry.element.style.top = entry.prevTop ?? '';
+      }
     } catch (_error) {
       return;
     }
@@ -90,6 +95,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   const hidden = customization?.hidden || {};
   const contents = customization?.contents || {};
   const blockOrder = customization?.block_order || [];
+  const positions = customization?.positions || {};
 
   Object.entries(hidden).forEach(([testid, hideValue]) => {
     if (!hideValue) return;
@@ -147,4 +153,21 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
       elements.forEach((element) => parent.appendChild(element));
     });
   }
+
+  Object.entries(positions).forEach(([testid, pos]) => {
+    const element = document.querySelector(`[data-testid="${testid}"]`);
+    if (!element) return;
+    appliedEntriesRef.current.push({
+      type: 'position',
+      element,
+      prevPosition: element.style.position,
+      prevLeft: element.style.left,
+      prevTop: element.style.top,
+    });
+    if (!element.style.position || element.style.position === 'static') {
+      element.style.position = 'relative';
+    }
+    element.style.left = `${Number(pos?.left || 0)}px`;
+    element.style.top = `${Number(pos?.top || 0)}px`;
+  });
 };

@@ -22,13 +22,17 @@ const loadClipboard = () => {
   }
 };
 
+const cloneConfig = (value) => JSON.parse(JSON.stringify(value || {}));
+
+const draftStorageKey = (userId, path) => `liquid-builder-draft:${userId}:${path}`;
+
 export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('elements');
   const [snapshot, setSnapshot] = useState([]);
   const [blockSnapshot, setBlockSnapshot] = useState([]);
-  const [config, setConfig] = useState({ labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] });
+  const [config, setConfig] = useState({ labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {} });
   const [saving, setSaving] = useState(false);
   const appliedRef = useRef([]);
   const [selectedPage, setSelectedPage] = useState(currentPath || '/');
@@ -41,6 +45,8 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   const [clipboard, setClipboard] = useState(() => loadClipboard());
   const [canvasActive, setCanvasActive] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState('');
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
 
   const canEdit = useMemo(() => ['manager', 'admin', 'مدير'].includes(String(session?.role || '').toLowerCase()), [session?.role]);
   const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
@@ -51,9 +57,22 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
 
   useEffect(() => {
     if (!canEdit || !isOpen) return;
+    const draft = localStorage.getItem(draftStorageKey(userId, selectedPage));
+    if (draft) {
+      try {
+        setConfig(JSON.parse(draft));
+        setUndoStack([]);
+        setRedoStack([]);
+        return;
+      } catch (_error) {
+        localStorage.removeItem(draftStorageKey(userId, selectedPage));
+      }
+    }
     siteBuilderAPI.getCustomization({ user_id: userId, path: selectedPage }).then((response) => {
-      const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [] };
+      const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {} };
       setConfig(nextConfig);
+      setUndoStack([]);
+      setRedoStack([]);
     }).catch((error) => console.error('Failed to load builder customization', error));
   }, [canEdit, selectedPage, isOpen, userId]);
 
@@ -104,6 +123,47 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
   };
 
   const updateConfig = (nextConfig) => {
+    setUndoStack((prev) => [...prev.slice(-39), cloneConfig(config)]);
+    setRedoStack([]);
+    setConfig(nextConfig);
+    localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(nextConfig));
+    if (selectedPage === currentPath) {
+      applyPageCustomizations(nextConfig, appliedRef);
+      window.dispatchEvent(new CustomEvent('page-customization-preview', { detail: nextConfig }));
+    }
+  };
+
+  const applyDraftConfig = (nextConfig) => {
+    setConfig(nextConfig);
+    localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(nextConfig));
+    if (selectedPage === currentPath) {
+      applyPageCustomizations(nextConfig, appliedRef);
+      window.dispatchEvent(new CustomEvent('page-customization-preview', { detail: nextConfig }));
+    }
+  };
+
+  const undoLast = () => {
+    if (!undoStack.length) return;
+    const previous = cloneConfig(undoStack[undoStack.length - 1]);
+    setUndoStack((prev) => prev.slice(0, -1));
+    setRedoStack((prev) => [...prev, cloneConfig(config)]);
+    applyDraftConfig(previous);
+  };
+
+  const redoLast = () => {
+    if (!redoStack.length) return;
+    const next = cloneConfig(redoStack[redoStack.length - 1]);
+    setRedoStack((prev) => prev.slice(0, -1));
+    setUndoStack((prev) => [...prev, cloneConfig(config)]);
+    applyDraftConfig(next);
+  };
+
+  const clearDraft = async () => {
+    localStorage.removeItem(draftStorageKey(userId, selectedPage));
+    setUndoStack([]);
+    setRedoStack([]);
+    const response = await siteBuilderAPI.getCustomization({ user_id: userId, path: selectedPage });
+    const nextConfig = response.data?.data || { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {} };
     setConfig(nextConfig);
     if (selectedPage === currentPath) {
       applyPageCustomizations(nextConfig, appliedRef);
@@ -149,6 +209,7 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       label: config.labels?.[testid] || '',
       content: config.contents?.[testid] || '',
       hidden: Boolean(config.hidden?.[testid]),
+      position: config.positions?.[testid] || { left: 0, top: 0 },
     });
   };
 
@@ -159,7 +220,22 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
       labels: { ...(config.labels || {}), [targetTestid]: clipboard.label || '' },
       contents: { ...(config.contents || {}), [targetTestid]: clipboard.content || '' },
       hidden: { ...(config.hidden || {}), [targetTestid]: clipboard.hidden || false },
+      positions: { ...(config.positions || {}), [targetTestid]: clipboard.position || { left: 0, top: 0 } },
     });
+  };
+
+  const updateBlockPosition = (testid, nextPosition) => {
+    updateConfig({
+      ...config,
+      positions: {
+        ...(config.positions || {}),
+        [testid]: nextPosition,
+      },
+    });
+  };
+
+  const inlineEditBlock = (testid, text) => {
+    updateElement(testid, 'contents', text);
   };
 
   const copyCustomCard = (card) => {
@@ -277,9 +353,13 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
         contents: config.contents || {},
         custom_cards: config.custom_cards || [],
         block_order: config.block_order || [],
+        positions: config.positions || {},
       });
       const nextData = response.data?.data || config;
       setConfig(nextData);
+      localStorage.removeItem(draftStorageKey(userId, selectedPage));
+      setUndoStack([]);
+      setRedoStack([]);
       if (selectedPage === currentPath) {
         applyPageCustomizations(nextData, appliedRef);
         window.dispatchEvent(new CustomEvent('page-customization-updated', { detail: nextData }));
@@ -506,14 +586,20 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
                   contents: customization.contents || config.contents,
                   custom_cards: customization.custom_cards || config.custom_cards,
                   block_order: customization.block_order || config.block_order,
+                  positions: customization.positions || config.positions,
                 })}
               />
             ) : null}
           </div>
 
-          <div className="border-t border-white/10 px-5 py-4">
+          <div className="border-t border-white/10 px-5 py-4 space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button type="button" onClick={undoLast} disabled={!undoStack.length} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-100 disabled:opacity-40" data-testid="liquid-site-builder-undo-button">تراجع</button>
+              <button type="button" onClick={redoLast} disabled={!redoStack.length} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-100 disabled:opacity-40" data-testid="liquid-site-builder-redo-button">إعادة</button>
+              <button type="button" onClick={clearDraft} className="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-200" data-testid="liquid-site-builder-clear-draft-button">مسح المسودة</button>
+            </div>
             <button type="button" onClick={saveConfig} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-60" data-testid="liquid-site-builder-save-button">
-              <Save size={15} /> {saving ? 'جار الحفظ...' : 'حفظ التغييرات'}
+              <Save size={15} /> {saving ? 'جار النشر...' : 'حفظ ونشر التغييرات'}
             </button>
           </div>
         </div>
@@ -528,6 +614,9 @@ export const LiquidSiteBuilder = ({ session, currentPath, onCustomizationSaved }
         onCopyBlock={copyLiveBlock}
         onPasteBlock={pasteLiveBlock}
         canPaste={Boolean(clipboard && clipboard.type === 'live-block')}
+        positions={config.positions || {}}
+        onPositionChange={updateBlockPosition}
+        onInlineEdit={inlineEditBlock}
       />
     </>
   );

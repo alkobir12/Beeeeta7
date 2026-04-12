@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Copy, Droplets, ClipboardPaste, X } from 'lucide-react';
 
-export const LiquidCanvasOverlay = ({ active, blocks = [], selectedBlockId, onToggle, onSelectBlock, onReorder, onCopyBlock, onPasteBlock, canPaste }) => {
+export const LiquidCanvasOverlay = ({ active, blocks = [], selectedBlockId, onToggle, onSelectBlock, onReorder, onCopyBlock, onPasteBlock, canPaste, positions = {}, onPositionChange, onInlineEdit }) => {
   useEffect(() => {
     if (!active) return undefined;
 
@@ -14,6 +14,7 @@ export const LiquidCanvasOverlay = ({ active, blocks = [], selectedBlockId, onTo
       const prevBoxShadow = element.style.boxShadow;
       const prevCursor = element.style.cursor;
       const prevDraggable = element.draggable;
+      const prevUserSelect = element.style.userSelect;
 
       element.style.outline = block.testid === selectedBlockId ? '2px solid rgba(34,211,238,0.95)' : '1px dashed rgba(34,211,238,0.45)';
       element.style.boxShadow = block.testid === selectedBlockId ? '0 0 0 6px rgba(34,211,238,0.12)' : 'none';
@@ -31,21 +32,65 @@ export const LiquidCanvasOverlay = ({ active, blocks = [], selectedBlockId, onTo
         event.preventDefault();
         onReorder(event.dataTransfer.getData('text/plain'), block.testid);
       };
+      const handleDblClick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onSelectBlock(block.testid);
+        element.contentEditable = 'true';
+        element.style.userSelect = 'text';
+        element.focus();
+
+        const finishEdit = () => {
+          element.contentEditable = 'false';
+          element.style.userSelect = prevUserSelect;
+          onInlineEdit?.(block.testid, (element.innerText || '').trim());
+          element.removeEventListener('blur', finishEdit);
+        };
+
+        element.addEventListener('blur', finishEdit);
+      };
+      const handleMouseDown = (event) => {
+        if (!event.altKey) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onSelectBlock(block.testid);
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const baseLeft = Number(positions?.[block.testid]?.left || 0);
+        const baseTop = Number(positions?.[block.testid]?.top || 0);
+
+        const move = (moveEvent) => onPositionChange?.(block.testid, {
+          left: baseLeft + (moveEvent.clientX - startX),
+          top: baseTop + (moveEvent.clientY - startY),
+        });
+        const up = () => {
+          document.removeEventListener('mousemove', move, true);
+          document.removeEventListener('mouseup', up, true);
+        };
+        document.addEventListener('mousemove', move, true);
+        document.addEventListener('mouseup', up, true);
+      };
 
       element.addEventListener('click', handleClick, true);
       element.addEventListener('dragstart', handleDragStart);
       element.addEventListener('dragover', handleDragOver);
       element.addEventListener('drop', handleDrop);
+      element.addEventListener('dblclick', handleDblClick, true);
+      element.addEventListener('mousedown', handleMouseDown, true);
 
       cleanups.push(() => {
         element.style.outline = prevOutline;
         element.style.boxShadow = prevBoxShadow;
         element.style.cursor = prevCursor;
         element.draggable = prevDraggable;
+        element.style.userSelect = prevUserSelect;
+        element.contentEditable = 'false';
         element.removeEventListener('click', handleClick, true);
         element.removeEventListener('dragstart', handleDragStart);
         element.removeEventListener('dragover', handleDragOver);
         element.removeEventListener('drop', handleDrop);
+        element.removeEventListener('dblclick', handleDblClick, true);
+        element.removeEventListener('mousedown', handleMouseDown, true);
       });
     });
 

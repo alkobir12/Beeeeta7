@@ -20,5 +20,4 @@ export const LIQUID_BUILDER_PAGES = [
   { path: '/users', label: 'المستخدمون' },
   { path: '/profile', label: 'ملف الورشة' },
   { path: '/settings', label: 'الإعدادات' },
-  { path: '/moltbot', label: 'MoltBot' },
 ];

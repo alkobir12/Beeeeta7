@@ -1,824 +1,504 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Bot, RefreshCw, Rocket, ShieldCheck, Sparkles, Globe } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Bot,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  GripVertical,
+  LayoutTemplate,
+  Link2,
+  Monitor,
+  PencilLine,
+  Plus,
+  Redo2,
+  Save,
+  Smartphone,
+  Tablet,
+  Undo2,
+} from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { resolveBackendBase } from '../utils/backendBase';
+import { siteBuilderAPI } from '../services/siteBuilderAPI';
+import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
+import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
+import { LiquidBuilderBotTab } from '../components/LiquidBuilderBotTab';
 
-const API_URL = (
-  process.env.NODE_ENV === 'production'
-    ? '/api'
-    : `${resolveBackendBase() || ''}/api`.replace('//api', '/api')
-);
+const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {} };
+const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
+const cloneConfig = (value) => JSON.parse(JSON.stringify(value || {}));
 
-const statusOptions = [
-  { value: 'draft', label: 'مسودة' },
-  { value: 'building', label: 'قيد البناء' },
-  { value: 'ready', label: 'جاهز' },
-  { value: 'archived', label: 'مؤرشف' },
-];
+const resolveDisplayName = (item, index, kind = 'بلوك') => {
+  const text = String(item?.text || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+  if (text.length >= 4) return text;
+  return `${kind} ${index + 1}`;
+};
 
-const MoltBot = () => {
+const createCard = () => ({
+  id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  title: 'كرت جديد',
+  description: '',
+  fields: [{ id: `field-${Date.now()}`, label: 'عنوان', value: 'قيمة' }],
+});
+
+const DEVICE_PRESETS = {
+  mobile: { width: 390, label: 'جوال', icon: Smartphone },
+  tablet: { width: 820, label: 'تابلت', icon: Tablet },
+  desktop: { width: 1280, label: 'سطح المكتب', icon: Monitor },
+};
+
+export default function MoltBot() {
   const { toast } = useToast();
-  const [projects, setProjects] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const iframeRef = useRef(null);
+  const previewRef = useRef(null);
+  const appliedRef = useRef([]);
+
+  const [selectedPage, setSelectedPage] = useState('/');
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewWindow, setPreviewWindow] = useState(null);
+  const [snapshot, setSnapshot] = useState([]);
+  const [blocks, setBlocks] = useState([]);
+  const [blockRects, setBlockRects] = useState([]);
+  const [config, setConfig] = useState(EMPTY_CONFIG);
+  const [selectedBlockId, setSelectedBlockId] = useState('');
+  const [selectedCustomCardId, setSelectedCustomCardId] = useState('');
+  const [leftTab, setLeftTab] = useState('properties');
+  const [deviceMode, setDeviceMode] = useState('desktop');
+  const [canvasActive, setCanvasActive] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [buildLoading, setBuildLoading] = useState(false);
-  const [buildPrompt, setBuildPrompt] = useState('');
-  const [buildResult, setBuildResult] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
-  const [mode, setMode] = useState('builder');
-  const [targetFilesInput, setTargetFilesInput] = useState('');
-  const [applyLoading, setApplyLoading] = useState(false);
-  const [previewStatus, setPreviewStatus] = useState(null);
-  const [lastPatchId, setLastPatchId] = useState(null);
-  const [filePreviewStatus, setFilePreviewStatus] = useState({});
-  const [filePatchIds, setFilePatchIds] = useState({});
-  const [chatMessages, setChatMessages] = useState([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    industry: '',
-    domain: ''
-  });
+  const [loading, setLoading] = useState(true);
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
 
   const session = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('session') || 'null');
-    } catch (e) {
-      return null;
+      return JSON.parse(localStorage.getItem('session') || '{}');
+    } catch {
+      return {};
     }
   }, []);
 
-  const canAccess = useMemo(() => {
-    const role = session?.role;
-    return role === 'manager' || role === 'admin';
-  }, [session]);
+  const canAccess = useMemo(() => ['manager', 'admin', 'مدير'].includes(String(session?.role || '').toLowerCase()), [session]);
+  const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+  const selectedBlock = useMemo(() => blocks.find((block) => block.testid === selectedBlockId) || null, [blocks, selectedBlockId]);
+  const selectedCustomCard = useMemo(() => (config.custom_cards || []).find((card) => card.id === selectedCustomCardId) || null, [config.custom_cards, selectedCustomCardId]);
+  const namedBlocks = useMemo(() => blocks.map((block, index) => ({ ...block, displayName: resolveDisplayName(block, index, 'بلوك') })), [blocks]);
 
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedId) || null,
-    [projects, selectedId]
-  );
-
-  const stats = useMemo(() => {
-    const total = projects.length;
-    const ready = projects.filter((p) => p.status === 'ready').length;
-    const resale = projects.filter((p) => p.resale_ready).length;
-    return { total, ready, resale };
-  }, [projects]);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_URL}/moltbot/projects`);
-      if (!res.ok) throw new Error('فشل تحميل المشاريع');
-      const data = await res.json();
-      setProjects(data);
-      if (data.length && !selectedId) setSelectedId(data[0].id);
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'تعذر تحميل مشاريع MoltBot', variant: 'destructive' });
-    } finally {
-      setLoading(false);
+  const readDraftOrRemote = async (path) => {
+    const draft = localStorage.getItem(draftStorageKey(userId, path));
+    if (draft) {
+      try {
+        return { ...EMPTY_CONFIG, ...JSON.parse(draft) };
+      } catch {
+        localStorage.removeItem(draftStorageKey(userId, path));
+      }
     }
+    const response = await siteBuilderAPI.getCustomization({ user_id: userId, path });
+    return { ...EMPTY_CONFIG, ...(response.data?.data || {}) };
   };
 
-  const loadMessages = async (session) => {
-    if (!session) return;
-    try {
-      setMessagesLoading(true);
-      const res = await fetch(`${API_URL}/moltbot/sessions/${session}/messages`);
-      if (!res.ok) throw new Error('failed');
-      const data = await res.json();
-      setChatMessages(data || []);
-    } catch (e) {
-      toast({ title: 'تنبيه', description: 'تعذر تحميل سجل المحادثة', variant: 'destructive' });
-    } finally {
-      setMessagesLoading(false);
-    }
+  const refreshSnapshots = () => {
+    if (!previewDoc || !previewWindow) return;
+    const nextSnapshot = buildUiSnapshot(260, previewDoc);
+    const nextBlocks = buildBlockSnapshot(180, previewDoc);
+    setSnapshot(nextSnapshot);
+    setBlocks(nextBlocks);
+
+    if (!previewRef.current) return;
+    const frameRect = previewRef.current.getBoundingClientRect();
+    const nextRects = nextBlocks.map((block) => {
+      const element = previewDoc.querySelector(`[data-testid="${block.testid}"]`);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        testid: block.testid,
+        text: block.text,
+        top: frameRect.top + rect.top,
+        left: frameRect.left + rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+    }).filter(Boolean);
+    setBlockRects(nextRects);
   };
 
   useEffect(() => {
-    if (canAccess) fetchProjects();
-  }, [canAccess]);
+    if (!canAccess) return;
+    setLoading(true);
+    readDraftOrRemote(selectedPage)
+      .then((nextConfig) => {
+        setConfig(nextConfig);
+        setUndoStack([]);
+        setRedoStack([]);
+      })
+      .catch(() => toast({ title: 'خطأ', description: 'تعذر تحميل إعدادات الصفحة', variant: 'destructive' }))
+      .finally(() => setLoading(false));
+  }, [selectedPage, canAccess]);
 
-  const handleCreate = async () => {
-    if (!form.name.trim()) {
-      toast({ title: 'تنبيه', description: 'أدخل اسم المشروع', variant: 'destructive' });
-      return;
-    }
+  useEffect(() => {
+    if (!previewDoc) return;
+    applyPageCustomizations(config, appliedRef, previewDoc);
+    localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
+    refreshSnapshots();
+  }, [config, previewDoc]);
+
+  useEffect(() => {
+    if (!previewWindow) return undefined;
+    const handler = () => window.requestAnimationFrame(refreshSnapshots);
+    previewWindow.addEventListener('scroll', handler, true);
+    window.addEventListener('resize', handler);
+    const timer = window.setInterval(handler, 800);
+    return () => {
+      previewWindow.removeEventListener('scroll', handler, true);
+      window.removeEventListener('resize', handler);
+      window.clearInterval(timer);
+    };
+  }, [previewWindow, previewDoc, selectedPage]);
+
+  const applyConfig = (nextConfig) => {
+    setUndoStack((prev) => [...prev.slice(-49), cloneConfig(config)]);
+    setRedoStack([]);
+    setConfig(nextConfig);
+  };
+
+  const undo = () => {
+    if (!undoStack.length) return;
+    const previous = cloneConfig(undoStack[undoStack.length - 1]);
+    setUndoStack((prev) => prev.slice(0, -1));
+    setRedoStack((prev) => [...prev, cloneConfig(config)]);
+    setConfig(previous);
+  };
+
+  const redo = () => {
+    if (!redoStack.length) return;
+    const next = cloneConfig(redoStack[redoStack.length - 1]);
+    setRedoStack((prev) => prev.slice(0, -1));
+    setUndoStack((prev) => [...prev, cloneConfig(config)]);
+    setConfig(next);
+  };
+
+  const save = async () => {
     try {
       setSaving(true);
-      const res = await fetch(`${API_URL}/moltbot/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          description: form.description.trim(),
-          industry: form.industry.trim(),
-          domain: form.domain.trim(),
-        })
-      });
-      if (!res.ok) throw new Error('create failed');
-      const created = await res.json();
-      setProjects((prev) => [created, ...prev]);
-      setSelectedId(created.id);
-      setForm({ name: '', description: '', industry: '', domain: '' });
-      toast({ title: 'تم', description: 'تم إنشاء المشروع بنجاح' });
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'تعذر إنشاء المشروع', variant: 'destructive' });
+      const response = await siteBuilderAPI.saveCustomization({ user_id: userId, path: selectedPage, ...config });
+      const nextData = { ...EMPTY_CONFIG, ...(response.data?.data || config) };
+      setConfig(nextData);
+      localStorage.removeItem(draftStorageKey(userId, selectedPage));
+      setUndoStack([]);
+      setRedoStack([]);
+      toast({ title: 'تم الحفظ', description: 'يمكنك الآن معاينة الصفحة المعدلة.' });
+      refreshSnapshots();
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر حفظ التعديلات', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const updateProject = async (updates) => {
-    if (!selectedProject) return;
+  const clearDraft = async () => {
+    localStorage.removeItem(draftStorageKey(userId, selectedPage));
+    setUndoStack([]);
+    setRedoStack([]);
+    const nextConfig = await readDraftOrRemote(selectedPage);
+    setConfig(nextConfig);
+  };
+
+  const updateElement = (testid, bucket, value) => applyConfig({
+    ...config,
+    [bucket]: {
+      ...(config[bucket] || {}),
+      [testid]: value,
+    },
+  });
+
+  const updatePosition = (testid, nextPosition) => applyConfig({
+    ...config,
+    positions: { ...(config.positions || {}), [testid]: nextPosition },
+  });
+
+  const reorderBlock = (draggedId, targetId) => {
+    const working = [...(config.block_order?.length ? config.block_order : blocks.map((item) => item.testid))];
+    const from = working.indexOf(draggedId);
+    const to = working.indexOf(targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const [moved] = working.splice(from, 1);
+    working.splice(to, 0, moved);
+    applyConfig({ ...config, block_order: working });
+  };
+
+  const updateCard = (cardId, patch) => applyConfig({
+    ...config,
+    custom_cards: (config.custom_cards || []).map((card) => card.id === cardId ? { ...card, ...patch } : card),
+  });
+
+  const addCard = () => {
+    const next = createCard();
+    applyConfig({ ...config, custom_cards: [...(config.custom_cards || []), next] });
+    setSelectedCustomCardId(next.id);
+    setLeftTab('properties');
+  };
+
+  const addField = (cardId) => updateCard(cardId, {
+    fields: [...((config.custom_cards || []).find((card) => card.id === cardId)?.fields || []), { id: `field-${Date.now()}`, label: 'حقل جديد', value: '' }],
+  });
+
+  const updateField = (cardId, fieldId, patch) => {
+    const card = (config.custom_cards || []).find((item) => item.id === cardId);
+    updateCard(cardId, { fields: (card?.fields || []).map((field) => field.id === fieldId ? { ...field, ...patch } : field) });
+  };
+
+  const deleteField = (cardId, fieldId) => {
+    const card = (config.custom_cards || []).find((item) => item.id === cardId);
+    updateCard(cardId, { fields: (card?.fields || []).filter((field) => field.id !== fieldId) });
+  };
+
+  const copyBlockStyle = () => {
+    if (!selectedBlock) return;
+    localStorage.setItem('moltbot-block-clipboard', JSON.stringify({
+      label: config.labels?.[selectedBlock.testid] || '',
+      content: config.contents?.[selectedBlock.testid] || '',
+      hidden: Boolean(config.hidden?.[selectedBlock.testid]),
+      position: config.positions?.[selectedBlock.testid] || { left: 0, top: 0 },
+    }));
+    toast({ title: 'تم', description: 'تم نسخ تنسيق البلوك.' });
+  };
+
+  const pasteBlockStyle = () => {
+    if (!selectedBlock) return;
     try {
-      setUpdating(true);
-      const res = await fetch(`${API_URL}/moltbot/projects/${selectedProject.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+      const data = JSON.parse(localStorage.getItem('moltbot-block-clipboard') || 'null');
+      if (!data) return;
+      applyConfig({
+        ...config,
+        labels: { ...(config.labels || {}), [selectedBlock.testid]: data.label || '' },
+        contents: { ...(config.contents || {}), [selectedBlock.testid]: data.content || '' },
+        hidden: { ...(config.hidden || {}), [selectedBlock.testid]: data.hidden || false },
+        positions: { ...(config.positions || {}), [selectedBlock.testid]: data.position || { left: 0, top: 0 } },
       });
-      if (!res.ok) throw new Error('update failed');
-      const updated = await res.json();
-      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'تعذر تحديث المشروع', variant: 'destructive' });
-    } finally {
-      setUpdating(false);
+    } catch {
+      return;
     }
   };
 
-  const runBuild = async () => {
-    if (!selectedProject) {
-      toast({ title: 'تنبيه', description: 'اختر مشروعاً أولاً', variant: 'destructive' });
-      return;
+  const handleBotLocalCommand = async (message) => {
+    const text = String(message || '').trim();
+    if (text.includes('اعرض') && text.includes('كروت')) {
+      setLeftTab('properties');
+      return { handled: true, reply: `الكروت الحالية المعروضة: ${blocks.length}` };
     }
-    if (!buildPrompt.trim()) {
-      toast({ title: 'تنبيه', description: 'أدخل وصف البناء المطلوب', variant: 'destructive' });
-      return;
+    if (text.includes('انتقل') && text.includes('صفحة')) {
+      const matched = LIQUID_BUILDER_PAGES.find((page) => text.includes(page.label));
+      if (matched) {
+        setSelectedPage(matched.path);
+        return { handled: true, reply: `تم الانتقال إلى صفحة ${matched.label}.` };
+      }
     }
-    try {
-      setBuildLoading(true);
-      const targetFiles = targetFilesInput
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
-      const res = await fetch(`${API_URL}/moltbot/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: selectedProject.id,
-          session_id: sessionId,
-          message: buildPrompt,
-          goal: selectedProject.description,
-          mode,
-          target_files: mode === 'editor' ? targetFiles : undefined,
-        })
-      });
-      if (!res.ok) throw new Error('chat failed');
-      const data = await res.json();
-      setBuildResult(data);
-      setSessionId(data.session_id);
-      setPreviewStatus(null);
-      setLastPatchId(null);
-      setFilePreviewStatus({});
-      setFilePatchIds({});
-      loadMessages(data.session_id);
-      fetchProjects();
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'تعذر تشغيل وكلاء MoltBot', variant: 'destructive' });
-    } finally {
-      setBuildLoading(false);
-    }
+    return { handled: false };
   };
 
   if (!canAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" data-testid="moltbot-access-denied">
-        <div className="max-w-lg text-center bg-white/5 border border-red-500/30 rounded-3xl p-10">
-          <h1 className="text-2xl font-bold text-red-400 mb-2">صلاحية الوصول مقيدة</h1>
-          <p className="text-sm text-muted-foreground">مولتبوت متاح للمديرين فقط. يرجى التواصل مع مدير النظام.</p>
+      <div className="flex min-h-screen items-center justify-center p-6" data-testid="moltbot-access-denied">
+        <div className="max-w-lg rounded-3xl border border-red-500/20 bg-red-500/5 p-10 text-center">
+          <h1 className="text-2xl font-bold text-red-500">صلاحية الوصول مقيدة</h1>
+          <p className="mt-2 text-sm text-slate-600">محرر الموقع الكامل متاح للمديرين فقط.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-10" data-testid="moltbot-page">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00E0FF] via-[#4F46E5] to-[#F97316] flex items-center justify-center text-white shadow-lg">
-                <Bot size={26} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">MoltBot</h1>
-                <p className="text-sm text-slate-300">منصة بناء مواقع مستقلة متعددة الوكلاء قابلة للبيع وإعادة التسويق.</p>
-              </div>
+    <div className="min-h-screen bg-[#130c12] text-white" data-testid="moltbot-site-editor-page">
+      <div className="sticky top-0 z-30 border-b border-amber-300/10 bg-[#160d14]/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4 px-4 py-3 lg:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={save} disabled={saving} className="rounded-2xl bg-amber-400 px-4 py-3 text-sm font-bold text-[#241512]" data-testid="moltbot-editor-save-button"><Save size={15} className="inline ml-2" />{saving ? 'جار الحفظ...' : 'حفظ'}</button>
+            <a href={selectedPage} target="_blank" rel="noreferrer" className="rounded-2xl border border-amber-300/20 bg-white/5 px-4 py-3 text-sm text-amber-100" data-testid="moltbot-editor-preview-link">معاينة</a>
+            <button onClick={clearDraft} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" data-testid="moltbot-editor-clear-draft-button">إعادة ضبط</button>
+            <button onClick={undo} disabled={!undoStack.length} className="rounded-2xl border border-white/10 bg-white/5 p-3 disabled:opacity-40" data-testid="moltbot-editor-undo-button"><Undo2 size={16} /></button>
+            <button onClick={redo} disabled={!redoStack.length} className="rounded-2xl border border-white/10 bg-white/5 p-3 disabled:opacity-40" data-testid="moltbot-editor-redo-button"><Redo2 size={16} /></button>
+            {Object.entries(DEVICE_PRESETS).map(([key, preset]) => {
+              const Icon = preset.icon;
+              return <button key={key} onClick={() => setDeviceMode(key)} className={`rounded-2xl border p-3 ${deviceMode === key ? 'border-amber-300/30 bg-amber-400/15 text-amber-100' : 'border-white/10 bg-white/5 text-white'}`} data-testid={`moltbot-editor-device-${key}`}><Icon size={16} /></button>;
+            })}
+          </div>
+          <div className="flex items-center gap-4">
+            <select value={selectedPage} onChange={(e) => setSelectedPage(e.target.value)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-page-select">
+              {LIQUID_BUILDER_PAGES.map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
+            </select>
+            <div className="hidden md:flex items-center gap-2 rounded-2xl border border-amber-300/10 bg-white/5 p-1" data-testid="moltbot-editor-page-tabs">
+              {LIQUID_BUILDER_PAGES.slice(0, 6).map((page) => (
+                <button key={page.path} onClick={() => setSelectedPage(page.path)} className={`rounded-2xl px-4 py-2 text-sm ${selectedPage === page.path ? 'bg-amber-400 text-[#241512] font-bold' : 'text-amber-50'}`} data-testid={`moltbot-editor-page-tab-${page.path.replace(/\//g, '-') || 'home'}`}>{page.label}</button>
+              ))}
             </div>
-          </div>
-          <button
-            onClick={fetchProjects}
-            className="px-4 py-2 rounded-xl bg-white/10 text-slate-100 border border-white/10 flex items-center gap-2 hover:bg-white/20"
-            data-testid="moltbot-refresh-projects"
-          >
-            <RefreshCw size={16} />
-            تحديث
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] rounded-2xl p-5 border border-white/10" data-testid="moltbot-stats-total">
-            <p className="text-sm text-slate-400">إجمالي المشاريع</p>
-            <h3 className="text-3xl font-semibold text-white mt-2">{stats.total}</h3>
-          </div>
-          <div className="bg-gradient-to-br from-[#0B1F1A] to-[#065F46] rounded-2xl p-5 border border-white/10" data-testid="moltbot-stats-ready">
-            <p className="text-sm text-slate-300">مشاريع جاهزة</p>
-            <h3 className="text-3xl font-semibold text-white mt-2">{stats.ready}</h3>
-          </div>
-          <div className="bg-gradient-to-br from-[#1F0A1E] to-[#7C2D12] rounded-2xl p-5 border border-white/10" data-testid="moltbot-stats-resale">
-            <p className="text-sm text-slate-300">جاهزة للبيع</p>
-            <h3 className="text-3xl font-semibold text-white mt-2">{stats.resale}</h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.9fr] gap-6">
-          <div className="space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">إنشاء مشروع جديد</h2>
-              <div className="space-y-3">
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="اسم المشروع"
-                  className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-2 text-sm text-white"
-                  data-testid="moltbot-project-name-input"
-                />
-                <input
-                  value={form.industry}
-                  onChange={(e) => setForm((prev) => ({ ...prev, industry: e.target.value }))}
-                  placeholder="النشاط / المجال"
-                  className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-2 text-sm text-white"
-                  data-testid="moltbot-project-industry-input"
-                />
-                <input
-                  value={form.domain}
-                  onChange={(e) => setForm((prev) => ({ ...prev, domain: e.target.value }))}
-                  placeholder="نطاق مبدئي (اختياري)"
-                  className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-2 text-sm text-white"
-                  data-testid="moltbot-project-domain-input"
-                />
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="وصف مختصر للمشروع"
-                  className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-2 text-sm text-white min-h-[90px]"
-                  data-testid="moltbot-project-description-input"
-                />
-                <button
-                  onClick={handleCreate}
-                  disabled={saving}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#38BDF8] via-[#6366F1] to-[#F97316] text-white py-2 text-sm font-semibold"
-                  data-testid="moltbot-create-project-button"
-                >
-                  {saving ? 'جارٍ الحفظ...' : 'إنشاء المشروع'}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6" data-testid="moltbot-projects-list">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">مشاريع MoltBot</h2>
-                {loading && <span className="text-xs text-slate-400">تحميل...</span>}
-              </div>
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {projects.length === 0 && (
-                  <p className="text-sm text-slate-400">لا توجد مشاريع بعد.</p>
-                )}
-                {projects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => setSelectedId(project.id)}
-                    className={`w-full text-right rounded-2xl p-4 border transition-all ${
-                      project.id === selectedId
-                        ? 'border-sky-400/60 bg-sky-500/10'
-                        : 'border-white/5 bg-white/5 hover:bg-white/10'
-                    }`}
-                    data-testid={`moltbot-project-card-${project.id}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-semibold text-white">{project.name}</h3>
-                        <p className="text-xs text-slate-400">{project.industry || 'مجال غير محدد'}</p>
-                      </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-slate-200">
-                        {statusOptions.find((s) => s.value === project.status)?.label || project.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-3 text-xs text-slate-400">
-                      <span>{project.domain || 'بدون نطاق'}</span>
-                      <span>{project.resale_ready ? 'جاهز للبيع' : 'خاص'}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <div className="flex items-start justify-between flex-wrap gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">لوحة التحكم التفصيلية</h2>
-                  <p className="text-sm text-slate-400">إدارة الموقع المستقل وخيارات إعادة البيع.</p>
-                </div>
-                {selectedProject && (
-                  <span className="inline-flex items-center gap-2 text-xs text-slate-300">
-                    <Globe size={14} />
-                    {selectedProject.domain || 'نطاق غير محدد'}
-                  </span>
-                )}
-              </div>
-
-              {!selectedProject ? (
-                <div className="mt-6 text-sm text-slate-400">اختر مشروعاً من القائمة لعرض التفاصيل.</div>
-              ) : (
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-xs text-slate-400">وصف المشروع</p>
-                    <p className="text-sm text-slate-100" data-testid="moltbot-project-description">{selectedProject.description || 'لا يوجد وصف بعد.'}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs text-slate-400">حالة المشروع</label>
-                      <select
-                        value={selectedProject.status}
-                        onChange={(e) => updateProject({ status: e.target.value })}
-                        disabled={updating}
-                        className="mt-1 w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
-                        data-testid="moltbot-project-status-select"
-                      >
-                        {statusOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value} className="text-slate-900">
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      onClick={() => updateProject({ resale_ready: !selectedProject.resale_ready })}
-                      disabled={updating}
-                      className="w-full rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 py-2 text-sm flex items-center justify-center gap-2"
-                      data-testid="moltbot-project-resale-toggle"
-                    >
-                      <ShieldCheck size={16} />
-                      {selectedProject.resale_ready ? 'إلغاء الجاهزية للبيع' : 'تحديد كجاهز للبيع'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <div className="flex items-center gap-3">
-                <Sparkles className="text-sky-400" />
-                <div>
-                  <h3 className="text-lg font-semibold text-white">وكلاء MoltBot متعددي النماذج</h3>
-                  <p className="text-xs text-slate-400">
-                    {mode === 'editor'
-                      ? 'تحرير مشروع FastAPI قائم عبر diff فقط بدون إعادة كتابة كاملة.'
-                      : 'توليد مخطط بناء شامل باستخدام GPT + Groq.'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2" data-testid="moltbot-mode-toggle">
-                <button
-                  onClick={() => setMode('builder')}
-                  className={`px-4 py-2 rounded-xl text-sm border ${
-                    mode === 'builder'
-                      ? 'bg-sky-500/20 border-sky-400 text-sky-100'
-                      : 'bg-white/5 border-white/10 text-slate-300'
-                  }`}
-                  data-testid="moltbot-builder-mode-button"
-                >
-                  بناء مشروع
-                </button>
-                <button
-                  onClick={() => setMode('editor')}
-                  className={`px-4 py-2 rounded-xl text-sm border ${
-                    mode === 'editor'
-                      ? 'bg-emerald-500/20 border-emerald-300 text-emerald-100'
-                      : 'bg-white/5 border-white/10 text-slate-300'
-                  }`}
-                  data-testid="moltbot-editor-mode-button"
-                >
-                  تحرير مشروع قائم
-                </button>
-              </div>
-              <textarea
-                value={buildPrompt}
-                onChange={(e) => setBuildPrompt(e.target.value)}
-                placeholder={
-                  mode === 'editor'
-                    ? 'صف التعديل المطلوب (إضافة صفحة، تعديل API، إصلاح خطأ) بلغة عربية واضحة.'
-                    : 'صف الموقع المطلوب (القطاع، الميزات، الجمهور المستهدف، أسلوب العلامة).'
-                }
-                className="mt-4 w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-sm text-white min-h-[140px]"
-                data-testid={mode === 'editor' ? 'moltbot-editor-prompt' : 'moltbot-build-prompt'}
-              />
-              {mode === 'editor' && (
-                <input
-                  value={targetFilesInput}
-                  onChange={(e) => setTargetFilesInput(e.target.value)}
-                  placeholder="ملفات مستهدفة (اختياري) — افصل بينها بفاصلة"
-                  className="mt-3 w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-2 text-sm text-white"
-                  data-testid="moltbot-editor-target-files"
-                />
-              )}
-              <button
-                onClick={runBuild}
-                disabled={buildLoading}
-                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#22D3EE] via-[#6366F1] to-[#A855F7] text-white py-3 text-sm font-semibold flex items-center justify-center gap-2"
-                data-testid="moltbot-run-build-button"
-              >
-                <Rocket size={18} />
-                {buildLoading
-                  ? 'جارٍ إرسال الطلب...'
-                  : mode === 'editor'
-                    ? 'إرسال طلب التعديل'
-                    : 'تشغيل البناء متعدد الوكلاء'}
-              </button>
-
-              {buildResult && (
-                <div className="mt-6 space-y-4" data-testid="moltbot-build-results">
-                  {buildResult.mode === 'editor' && buildResult.affected_files && (
-                    <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4" data-testid="moltbot-affected-files">
-                      <h4 className="text-sm font-semibold text-white mb-2">الملفات المتأثرة</h4>
-                      <ul className="text-xs text-slate-200 space-y-1">
-                        {buildResult.affected_files.map((file) => (
-                          <li key={file}>- {file}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {buildResult.mode === 'editor' && buildResult.blocked_files && buildResult.blocked_files.length > 0 && (
-                    <div className="bg-red-500/10 border border-red-400/30 rounded-2xl p-4" data-testid="moltbot-blocked-files">
-                      <h4 className="text-sm font-semibold text-red-200 mb-2">ملفات تم منع إعادة إنشائها</h4>
-                      <ul className="text-xs text-red-100 space-y-1">
-                        {buildResult.blocked_files.map((file) => (
-                          <li key={file}>- {file}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
-                    <h4 className="text-sm font-semibold text-white mb-2">الخلاصة الموحدة</h4>
-                    <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-summary-output">{buildResult.summary}</pre>
-                    {buildResult.mode === 'editor' && (
-                      <div className="mt-3 space-y-2">
-                        <button
-                          onClick={async () => {
-                            if (!selectedProject) return;
-                            if (!buildResult?.summary?.trim()) {
-                              toast({ title: 'تنبيه', description: 'لا يوجد patch للمعاينة', variant: 'destructive' });
-                              return;
-                            }
-                            if (buildResult.blocked_files && buildResult.blocked_files.length > 0) {
-                              toast({ title: 'تنبيه', description: 'يوجد ملفات محجوبة، راجع النتائج أولاً', variant: 'destructive' });
-                              return;
-                            }
-                            try {
-                              setApplyLoading(true);
-                              const res = await fetch(`${API_URL}/moltbot/apply`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  project_id: selectedProject.id,
-                                  patch: buildResult.summary,
-                                  session_id: buildResult.session_id,
-                                  dry_run: true
-                                })
-                              });
-                              const data = await res.json();
-                              if (!res.ok || data?.success === false) {
-                                setPreviewStatus({ success: false, message: data?.message || 'فشل التحقق من التعديل' });
-                                toast({ title: 'خطأ', description: data?.message || 'فشل التحقق من التعديل', variant: 'destructive' });
-                                return;
-                              }
-                              setPreviewStatus({ success: true, message: data?.message || 'الـ patch صالح للتطبيق' });
-                              toast({ title: 'نجاح', description: data?.message || 'الـ patch صالح للتطبيق' });
-                            } catch (e) {
-                              setPreviewStatus({ success: false, message: 'تعذر معاينة التعديل' });
-                              toast({ title: 'خطأ', description: 'تعذر معاينة التعديل', variant: 'destructive' });
-                            } finally {
-                              setApplyLoading(false);
-                            }
-                          }}
-                          disabled={applyLoading}
-                          className="w-full rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-100 py-2 text-sm"
-                          data-testid="moltbot-preview-patch-button"
-                        >
-                          {applyLoading ? 'جارٍ المعاينة...' : 'معاينة وفحص التعديل'}
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!selectedProject) return;
-                            if (!buildResult?.summary?.trim()) {
-                              toast({ title: 'تنبيه', description: 'لا يوجد patch للتطبيق', variant: 'destructive' });
-                              return;
-                            }
-                            if (!previewStatus?.success) {
-                              toast({ title: 'تنبيه', description: 'يجب معاينة التعديل أولاً بنجاح', variant: 'destructive' });
-                              return;
-                            }
-                            try {
-                              setApplyLoading(true);
-                              const res = await fetch(`${API_URL}/moltbot/apply`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  project_id: selectedProject.id,
-                                  patch: buildResult.summary,
-                                  session_id: buildResult.session_id
-                                })
-                              });
-                              const data = await res.json();
-                              if (!res.ok || data?.success === false) {
-                                toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق التعديل', variant: 'destructive' });
-                                return;
-                              }
-                              if (data?.patch_id) setLastPatchId(data.patch_id);
-                              toast({ title: 'تم', description: data?.message || 'تم تطبيق التعديل بنجاح' });
-                            } catch (e) {
-                              toast({ title: 'خطأ', description: 'تعذر تطبيق التعديل', variant: 'destructive' });
-                            } finally {
-                              setApplyLoading(false);
-                            }
-                          }}
-                          disabled={applyLoading}
-                          className="w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
-                          data-testid="moltbot-apply-patch-button"
-                        >
-                          {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق التعديل الآن'}
-                        </button>
-                        {previewStatus && (
-                          <div
-                            className={`text-xs rounded-xl px-3 py-2 border ${
-                              previewStatus.success
-                                ? 'border-emerald-400/40 text-emerald-100 bg-emerald-500/10'
-                                : 'border-red-400/40 text-red-100 bg-red-500/10'
-                            }`}
-                            data-testid="moltbot-preview-status"
-                          >
-                            {previewStatus.message}
-                          </div>
-                        )}
-                        {lastPatchId && (
-                          <button
-                            onClick={async () => {
-                              if (!selectedProject) return;
-                              try {
-                                setApplyLoading(true);
-                                const res = await fetch(`${API_URL}/moltbot/rollback`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    project_id: selectedProject.id,
-                                    patch_id: lastPatchId
-                                  })
-                                });
-                                const data = await res.json();
-                                if (!res.ok || data?.success === false) {
-                                  toast({ title: 'خطأ', description: data?.message || 'فشل التراجع عن التعديل', variant: 'destructive' });
-                                  return;
-                                }
-                                toast({ title: 'تم', description: data?.message || 'تم التراجع بنجاح' });
-                                setLastPatchId(null);
-                              } catch (e) {
-                                toast({ title: 'خطأ', description: 'تعذر التراجع عن التعديل', variant: 'destructive' });
-                              } finally {
-                                setApplyLoading(false);
-                              }
-                            }}
-                            disabled={applyLoading}
-                            className="w-full rounded-xl bg-red-500/20 border border-red-400/40 text-red-100 py-2 text-sm"
-                            data-testid="moltbot-rollback-button"
-                          >
-                            {applyLoading ? 'جارٍ التراجع...' : 'تراجع (Rollback)'}
-                          </button>
-                        )}
-                        {buildResult.patch_files && buildResult.patch_files.length > 0 && (
-                          <div className="space-y-3" data-testid="moltbot-file-patches">
-                            <h4 className="text-sm font-semibold text-white">تطبيق تدريجي (ملف بملف)</h4>
-                            {buildResult.patch_files.map((filePatch) => {
-                              const fileKey = filePatch.path || 'unknown-file';
-                              const preview = filePreviewStatus[fileKey];
-                              const patchId = filePatchIds[fileKey];
-                              const testIdSafe = fileKey.replace(/[^a-zA-Z0-9]/g, '-');
-                              return (
-                                <div key={fileKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs text-slate-200" data-testid={`moltbot-file-name-${testIdSafe}`}>{fileKey}</span>
-                                  </div>
-                                  <div className="mt-3 space-y-2">
-                                    <button
-                                      onClick={async () => {
-                                        if (!selectedProject) return;
-                                        try {
-                                          setApplyLoading(true);
-                                          const res = await fetch(`${API_URL}/moltbot/apply`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                              project_id: selectedProject.id,
-                                              patch: filePatch.patch,
-                                              session_id: buildResult.session_id,
-                                              dry_run: true
-                                            })
-                                          });
-                                          const data = await res.json();
-                                          if (!res.ok || data?.success === false) {
-                                            setFilePreviewStatus((prev) => ({
-                                              ...prev,
-                                              [fileKey]: { success: false, message: data?.message || 'فشل التحقق من الملف' }
-                                            }));
-                                            toast({ title: 'خطأ', description: data?.message || 'فشل التحقق من الملف', variant: 'destructive' });
-                                            return;
-                                          }
-                                          setFilePreviewStatus((prev) => ({
-                                            ...prev,
-                                            [fileKey]: { success: true, message: data?.message || 'الملف صالح للتطبيق' }
-                                          }));
-                                          toast({ title: 'نجاح', description: data?.message || 'الملف صالح للتطبيق' });
-                                        } catch (e) {
-                                          setFilePreviewStatus((prev) => ({
-                                            ...prev,
-                                            [fileKey]: { success: false, message: 'تعذر معاينة الملف' }
-                                          }));
-                                          toast({ title: 'خطأ', description: 'تعذر معاينة الملف', variant: 'destructive' });
-                                        } finally {
-                                          setApplyLoading(false);
-                                        }
-                                      }}
-                                      disabled={applyLoading}
-                                      className="w-full rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-100 py-2 text-sm"
-                                      data-testid={`moltbot-file-preview-${testIdSafe}`}
-                                    >
-                                      {applyLoading ? 'جارٍ المعاينة...' : 'معاينة هذا الملف'}
-                                    </button>
-                                    <button
-                                      onClick={async () => {
-                                        if (!selectedProject) return;
-                                        if (!preview?.success) {
-                                          toast({ title: 'تنبيه', description: 'يجب معاينة الملف أولاً', variant: 'destructive' });
-                                          return;
-                                        }
-                                        try {
-                                          setApplyLoading(true);
-                                          const res = await fetch(`${API_URL}/moltbot/apply`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                              project_id: selectedProject.id,
-                                              patch: filePatch.patch,
-                                              session_id: buildResult.session_id
-                                            })
-                                          });
-                                          const data = await res.json();
-                                          if (!res.ok || data?.success === false) {
-                                            toast({ title: 'خطأ', description: data?.message || 'فشل تطبيق الملف', variant: 'destructive' });
-                                            return;
-                                          }
-                                          if (data?.patch_id) {
-                                            setFilePatchIds((prev) => ({ ...prev, [fileKey]: data.patch_id }));
-                                          }
-                                          toast({ title: 'تم', description: data?.message || 'تم تطبيق الملف بنجاح' });
-                                        } catch (e) {
-                                          toast({ title: 'خطأ', description: 'تعذر تطبيق الملف', variant: 'destructive' });
-                                        } finally {
-                                          setApplyLoading(false);
-                                        }
-                                      }}
-                                      disabled={applyLoading}
-                                      className="w-full rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 py-2 text-sm"
-                                      data-testid={`moltbot-file-apply-${testIdSafe}`}
-                                    >
-                                      {applyLoading ? 'جارٍ التطبيق...' : 'تطبيق هذا الملف'}
-                                    </button>
-                                    {preview && (
-                                      <div
-                                        className={`text-xs rounded-xl px-3 py-2 border ${
-                                          preview.success
-                                            ? 'border-emerald-400/40 text-emerald-100 bg-emerald-500/10'
-                                            : 'border-red-400/40 text-red-100 bg-red-500/10'
-                                        }`}
-                                        data-testid={`moltbot-file-preview-status-${testIdSafe}`}
-                                      >
-                                        {preview.message}
-                                      </div>
-                                    )}
-                                    {patchId && (
-                                      <button
-                                        onClick={async () => {
-                                          if (!selectedProject) return;
-                                          try {
-                                            setApplyLoading(true);
-                                            const res = await fetch(`${API_URL}/moltbot/rollback`, {
-                                              method: 'POST',
-                                              headers: { 'Content-Type': 'application/json' },
-                                              body: JSON.stringify({
-                                                project_id: selectedProject.id,
-                                                patch_id: patchId
-                                              })
-                                            });
-                                            const data = await res.json();
-                                            if (!res.ok || data?.success === false) {
-                                              toast({ title: 'خطأ', description: data?.message || 'فشل التراجع عن الملف', variant: 'destructive' });
-                                              return;
-                                            }
-                                            toast({ title: 'تم', description: data?.message || 'تم التراجع بنجاح' });
-                                            setFilePatchIds((prev) => {
-                                              const next = { ...prev };
-                                              delete next[fileKey];
-                                              return next;
-                                            });
-                                          } catch (e) {
-                                            toast({ title: 'خطأ', description: 'تعذر التراجع عن الملف', variant: 'destructive' });
-                                          } finally {
-                                            setApplyLoading(false);
-                                          }
-                                        }}
-                                        disabled={applyLoading}
-                                        className="w-full rounded-xl bg-red-500/20 border border-red-400/40 text-red-100 py-2 text-sm"
-                                        data-testid={`moltbot-file-rollback-${testIdSafe}`}
-                                      >
-                                        {applyLoading ? 'جارٍ التراجع...' : 'Rollback هذا الملف'}
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <h5 className="text-xs font-semibold text-sky-300 mb-2">وكيل التخطيط (GPT)</h5>
-                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-planner-output">{buildResult.agents?.planner}</pre>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <h5 className="text-xs font-semibold text-emerald-300 mb-2">وكيل البناء (GPT)</h5>
-                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-builder-output">{buildResult.agents?.builder}</pre>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <h5 className="text-xs font-semibold text-amber-300 mb-2">وكيل المراجعة (Groq)</h5>
-                      <pre className="text-xs text-slate-200 whitespace-pre-wrap" data-testid="moltbot-agent-reviewer-output">{buildResult.agents?.reviewer}</pre>
-                    </div>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6" data-testid="moltbot-chat-history">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-white">سجل التفاعل</h4>
-                      {messagesLoading && <span className="text-xs text-slate-400">تحميل...</span>}
-                    </div>
-                    {chatMessages.length === 0 ? (
-                      <p className="text-xs text-slate-400">لا توجد رسائل بعد.</p>
-                    ) : (
-                      <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-                        {chatMessages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`rounded-2xl px-4 py-3 text-xs border ${
-                              msg.role === 'user'
-                                ? 'bg-sky-500/10 border-sky-400/40 text-sky-100'
-                                : 'bg-white/5 border-white/10 text-slate-200'
-                            }`}
-                            data-testid={`moltbot-message-${msg.id}`}
-                          >
-                            <div className="flex items-center justify-between mb-2 text-[11px] text-slate-400">
-                              <span>{msg.role === 'user' ? 'المستخدم' : `الوكيل: ${msg.agent || 'assistant'}`}</span>
-                              <span>{new Date(msg.created_at).toLocaleString('ar')}</span>
-                            </div>
-                            <pre className="whitespace-pre-wrap">{msg.content}</pre>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+            <div className="text-right">
+              <p className="text-xl font-bold text-amber-50">محرر الصفحات</p>
+              <p className="text-xs text-amber-100/60">MoltBot Studio</p>
             </div>
           </div>
         </div>
       </div>
+
+      <div className="mx-auto grid max-w-[1800px] gap-3 p-3 lg:grid-cols-[360px_minmax(0,1fr)_360px] lg:p-4">
+        <aside className="rounded-[28px] border border-amber-300/10 bg-[#1a1018] p-4" data-testid="moltbot-editor-left-sidebar">
+          <div className="mb-4 flex items-center gap-2">
+            <button onClick={() => setLeftTab('properties')} className={`rounded-full px-4 py-2 text-sm ${leftTab === 'properties' ? 'bg-amber-400 text-[#241512] font-bold' : 'bg-white/5 text-white'}`}>الخصائص</button>
+            <button onClick={() => setLeftTab('bot')} className={`rounded-full px-4 py-2 text-sm ${leftTab === 'bot' ? 'bg-amber-400 text-[#241512] font-bold' : 'bg-white/5 text-white'}`}>الوكيل</button>
+          </div>
+
+          {leftTab === 'bot' ? (
+            <LiquidBuilderBotTab session={session} selectedPage={selectedPage} snapshot={snapshot} onCustomizationReceived={(cust) => setConfig((prev) => ({ ...prev, ...cust }))} onLocalCommand={handleBotLocalCommand} />
+          ) : selectedCustomCard ? (
+            <div className="space-y-4" data-testid="moltbot-editor-custom-card-panel">
+              <div className="rounded-3xl border border-cyan-300/15 bg-[#130c12] p-4">
+                <p className="text-sm font-bold text-cyan-100">{selectedCustomCard.title || 'كرت مخصص'}</p>
+                <p className="mt-1 text-xs text-cyan-100/50">{(selectedCustomCard.fields || []).length} حقول</p>
+              </div>
+              <div className="space-y-3 rounded-3xl border border-cyan-300/15 bg-[#130c12] p-4">
+                <label className="text-xs text-cyan-100/60">عنوان الكرت</label>
+                <input value={selectedCustomCard.title || ''} onChange={(e) => updateCard(selectedCustomCard.id, { title: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-custom-card-title" />
+                <label className="text-xs text-cyan-100/60">الوصف</label>
+                <textarea value={selectedCustomCard.description || ''} onChange={(e) => updateCard(selectedCustomCard.id, { description: e.target.value })} className="min-h-[100px] w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-custom-card-description" />
+                <button onClick={() => addField(selectedCustomCard.id)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" data-testid="moltbot-editor-custom-card-add-field">إضافة حقل</button>
+              </div>
+              <div className="space-y-3 rounded-3xl border border-cyan-300/15 bg-[#130c12] p-4">
+                {(selectedCustomCard.fields || []).map((field, index) => (
+                  <div key={field.id} className="rounded-2xl border border-white/10 bg-white/5 p-3" data-testid={`moltbot-editor-custom-card-field-${index}`}>
+                    <input value={field.label || ''} onChange={(e) => updateField(selectedCustomCard.id, field.id, { label: e.target.value })} placeholder="اسم الحقل" className="mb-2 w-full rounded-xl border border-white/10 bg-[#120b13] px-3 py-2 text-sm text-white outline-none" />
+                    <input value={field.value || ''} onChange={(e) => updateField(selectedCustomCard.id, field.id, { value: e.target.value })} placeholder="قيمة الحقل" className="mb-2 w-full rounded-xl border border-white/10 bg-[#120b13] px-3 py-2 text-sm text-white outline-none" />
+                    <select value={field.source_testid || ''} onChange={(e) => updateField(selectedCustomCard.id, field.id, { source_testid: e.target.value })} className="w-full rounded-xl border border-white/10 bg-[#120b13] px-3 py-2 text-sm text-white outline-none">
+                      <option value="">بدون ربط</option>
+                      {snapshot.slice(0, 80).map((item) => <option key={item.testid} value={item.testid}>{resolveDisplayName(item, 0, 'عنصر')}</option>)}
+                    </select>
+                    <button onClick={() => deleteField(selectedCustomCard.id, field.id)} className="mt-2 text-xs text-rose-300">حذف الحقل</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setSelectedCustomCardId('')} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">العودة إلى خصائص الصفحة</button>
+            </div>
+          ) : selectedBlock ? (
+            <div className="space-y-4" data-testid="moltbot-editor-properties-panel">
+              <div className="rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
+                <p className="text-sm font-bold text-amber-50">{resolveDisplayName(selectedBlock, 0, 'بلوك')}</p>
+                    <p className="mt-1 text-xs text-amber-100/50">عنصر حي من الصفحة الحالية</p>
+              </div>
+
+              <div className="space-y-3 rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
+                <label className="text-xs text-amber-100/60">الاسم الظاهر</label>
+                <input value={config.labels?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'labels', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-label-input" />
+                <label className="text-xs text-amber-100/60">المحتوى</label>
+                <textarea value={config.contents?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'contents', e.target.value)} className="min-h-[120px] w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-content-input" />
+                <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <span className="text-sm text-white">ظاهر</span>
+                  <input type="checkbox" checked={!config.hidden?.[selectedBlock.testid]} onChange={(e) => updateElement(selectedBlock.testid, 'hidden', !e.target.checked)} data-testid="moltbot-editor-visibility-toggle" />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={copyBlockStyle} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" data-testid="moltbot-editor-copy-block-button"><Copy size={14} className="inline ml-2" />نسخ</button>
+                <button onClick={pasteBlockStyle} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" data-testid="moltbot-editor-paste-block-button"><Check size={14} className="inline ml-2" />لصق</button>
+                <button onClick={() => updateElement(selectedBlock.testid, 'hidden', true)} className="rounded-2xl border border-red-300/20 bg-red-500/10 px-4 py-3 text-sm text-red-200" data-testid="moltbot-editor-hide-block-button"><EyeOff size={14} className="inline ml-2" />إخفاء</button>
+                <button onClick={() => setCanvasActive((prev) => !prev)} className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100" data-testid="moltbot-editor-canvas-button"><PencilLine size={14} className="inline ml-2" />Canvas</button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-amber-300/15 bg-[#130c12] p-6 text-center text-sm text-amber-100/60" data-testid="moltbot-editor-empty-properties">اختر بلوكًا من المعاينة أو من قائمة اليمين لتعديل خصائصه.</div>
+          )}
+        </aside>
+
+        <section className="rounded-[32px] border border-amber-300/10 bg-[#120b13] p-3" data-testid="moltbot-editor-preview-column">
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-white">المعاينة الحية</p>
+              <p className="text-xs text-amber-100/50">{LIQUID_BUILDER_PAGES.find((page) => page.path === selectedPage)?.label || selectedPage}</p>
+            </div>
+            <button onClick={() => setCanvasActive((prev) => !prev)} className={`rounded-full px-4 py-2 text-sm ${canvasActive ? 'bg-cyan-400 text-[#241512] font-bold' : 'border border-white/10 bg-white/5 text-white'}`} data-testid="moltbot-editor-canvas-toggle">Canvas</button>
+          </div>
+          <div ref={previewRef} className="relative mx-auto overflow-hidden rounded-[28px] border border-amber-300/15 bg-black shadow-2xl shadow-black/35" style={{ width: `min(100%, ${DEVICE_PRESETS[deviceMode].width}px)`, minHeight: '78vh' }}>
+            <iframe
+              key={`${selectedPage}-${deviceMode}`}
+              ref={iframeRef}
+              title="moltbot-live-preview"
+              src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
+              className="h-[78vh] w-full border-0 bg-white"
+              data-testid="moltbot-editor-preview-iframe"
+              onLoad={() => {
+                const frame = iframeRef.current;
+                const doc = frame?.contentDocument;
+                const win = frame?.contentWindow;
+                setPreviewDoc(doc || null);
+                setPreviewWindow(win || null);
+                window.setTimeout(refreshSnapshots, 400);
+              }}
+            />
+
+            {canvasActive ? blockRects.map((item, index) => {
+              const frameRect = previewRef.current?.getBoundingClientRect();
+              if (!frameRect) return null;
+              return (
+                <button
+                  key={item.testid}
+                  type="button"
+                  onClick={() => setSelectedBlockId(item.testid)}
+                  className={`absolute z-20 rounded-full border px-3 py-1 text-[11px] shadow-lg backdrop-blur-md ${selectedBlockId === item.testid ? 'border-cyan-300 bg-cyan-400 text-[#241512]' : 'border-white/10 bg-black/70 text-white'}`}
+                  style={{ top: Math.max(6, item.top - frameRect.top - 14), left: Math.max(6, item.left - frameRect.left + 8) }}
+                  data-testid={`moltbot-editor-live-handle-${index}`}
+                >
+                  {resolveDisplayName(item, index, 'بلوك')}
+                </button>
+              );
+            }) : null}
+          </div>
+        </section>
+
+        <aside className="rounded-[28px] border border-amber-300/10 bg-[#1a1018] p-4" data-testid="moltbot-editor-right-sidebar">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-white">هيكل الصفحة</p>
+              <p className="text-xs text-amber-100/50">{blocks.length} بلوك • {(config.custom_cards || []).length} كروت مخصصة</p>
+            </div>
+            <button onClick={addCard} className="rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-[#241512]" data-testid="moltbot-editor-add-card-button"><Plus size={14} className="inline ml-2" />كرت</button>
+          </div>
+
+          <div className="space-y-3 overflow-y-auto max-h-[78vh] pr-1" data-testid="moltbot-editor-blocks-list">
+            {namedBlocks.map((block, index) => (
+              <div
+                key={block.testid}
+                draggable
+                onDragStart={(event) => event.dataTransfer.setData('text/plain', block.testid)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  reorderBlock(event.dataTransfer.getData('text/plain'), block.testid);
+                }}
+                onClick={() => { setSelectedBlockId(block.testid); setLeftTab('properties'); }}
+                className={`rounded-2xl border px-4 py-3 cursor-pointer ${selectedBlockId === block.testid ? 'border-amber-300/40 bg-amber-400/10' : 'border-white/10 bg-white/5'}`}
+                data-testid={`moltbot-editor-block-${index}`}
+              >
+                <div className="flex items-center gap-3">
+                  <GripVertical size={14} className="text-amber-100/50" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">{block.displayName}</p>
+                    <p className="truncate text-xs text-amber-100/50">بلوك قابل للتحرير</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {(config.custom_cards || []).length ? <div className="pt-3 text-xs font-bold text-amber-100/60">الكروت المخصصة</div> : null}
+            {(config.custom_cards || []).map((card, index) => (
+              <div key={card.id} onClick={() => { setSelectedCustomCardId(card.id); setLeftTab('properties'); }} className={`rounded-2xl border px-4 py-3 cursor-pointer ${selectedCustomCardId === card.id ? 'border-cyan-300/40 bg-cyan-500/10' : 'border-white/10 bg-white/5'}`} data-testid={`moltbot-editor-custom-card-${index}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{card.title || `كرت ${index + 1}`}</p>
+                    <p className="text-xs text-amber-100/50">{(card.fields || []).length} حقول</p>
+                  </div>
+                  <LayoutTemplate size={14} className="text-cyan-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
     </div>
   );
-};
-
-export default MoltBot;
+}

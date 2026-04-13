@@ -9,16 +9,16 @@ const IGNORED_TESTID_PREFIXES = [
   'permission-denied',
 ];
 
-const getSnapshotRoot = () => {
-  if (typeof document === 'undefined') return null;
-  return document.querySelector('.content-area .animate-fade-in') || document.querySelector('main.content-area') || document.body;
+const getSnapshotRoot = (targetDocument = document) => {
+  if (!targetDocument) return null;
+  return targetDocument.querySelector('.content-area .animate-fade-in') || targetDocument.querySelector('main.content-area') || targetDocument.body;
 };
 
 const isIgnoredTestid = (testid) => IGNORED_TESTID_PREFIXES.some((prefix) => String(testid || '').startsWith(prefix));
 
-export const buildUiSnapshot = (limit = 260) => {
+export const buildUiSnapshot = (limit = 260, targetDocument = document) => {
   try {
-    const root = getSnapshotRoot();
+    const root = getSnapshotRoot(targetDocument);
     if (!root) return [];
     return Array.from(root.querySelectorAll('[data-testid]'))
       .slice(0, limit)
@@ -35,9 +35,9 @@ export const buildUiSnapshot = (limit = 260) => {
 
 const BLOCK_HINTS = ['card', 'panel', 'section', 'table', 'widget', 'dock', 'layout-block', 'summary', 'page', 'stat', 'modal'];
 
-export const buildBlockSnapshot = (limit = 120) => {
+export const buildBlockSnapshot = (limit = 120, targetDocument = document) => {
   try {
-    const root = getSnapshotRoot();
+    const root = getSnapshotRoot(targetDocument);
     if (!root) return [];
     const matches = Array.from(root.querySelectorAll('[data-testid]'))
       .filter((node) => {
@@ -51,7 +51,7 @@ export const buildBlockSnapshot = (limit = 120) => {
       }))
       .filter((item) => item.testid);
     if (matches.length) return matches;
-    return buildUiSnapshot(limit);
+    return buildUiSnapshot(limit, targetDocument);
   } catch (_error) {
     return [];
   }
@@ -89,7 +89,7 @@ export const clearPageCustomizations = (appliedEntriesRef) => {
   }
 };
 
-export const applyPageCustomizations = (customization = {}, appliedEntriesRef) => {
+export const applyPageCustomizations = (customization = {}, appliedEntriesRef, targetDocument = document) => {
   clearPageCustomizations(appliedEntriesRef);
   const labels = customization?.labels || {};
   const hidden = customization?.hidden || {};
@@ -99,7 +99,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
 
   Object.entries(hidden).forEach(([testid, hideValue]) => {
     if (!hideValue) return;
-    const element = document.querySelector(`[data-testid="${testid}"]`);
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
     appliedEntriesRef.current.push({
       type: 'hide',
@@ -110,7 +110,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   });
 
   Object.entries(labels).forEach(([testid, newLabel]) => {
-    const element = document.querySelector(`[data-testid="${testid}"]`);
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
     appliedEntriesRef.current.push({
       type: 'text',
@@ -121,7 +121,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   });
 
   Object.entries(contents).forEach(([testid, newContent]) => {
-    const element = document.querySelector(`[data-testid="${testid}"]`);
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
     appliedEntriesRef.current.push({
       type: 'text',
@@ -134,7 +134,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   if (Array.isArray(blockOrder) && blockOrder.length) {
     const groups = new Map();
     blockOrder.forEach((testid) => {
-      const element = document.querySelector(`[data-testid="${testid}"]`);
+      const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
       if (!element?.parentNode) return;
       const parent = element.parentNode;
       if (!groups.has(parent)) groups.set(parent, []);
@@ -155,7 +155,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef) =
   }
 
   Object.entries(positions).forEach(([testid, pos]) => {
-    const element = document.querySelector(`[data-testid="${testid}"]`);
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
     appliedEntriesRef.current.push({
       type: 'position',

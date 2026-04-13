@@ -11,7 +11,6 @@ import { Toaster } from './ui/toaster';
 import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { PageCustomCardsDock } from './PageCustomCardsDock';
-import { LiquidSiteBuilder } from './LiquidSiteBuilder';
 
 
 
@@ -35,6 +34,8 @@ const Layout = ({ pageTitle }) => {
   });
   const { t } = useTranslation();
   const location = useLocation();
+  const isEditorPreview = useMemo(() => new URLSearchParams(location.search).get('editor-preview') === '1', [location.search]);
+  const isEditorWorkspace = isEditorPreview || location.pathname === '/moltbot';
   const readSession = () => {
     try {
       return JSON.parse(localStorage.getItem('session') || '{}');
@@ -154,14 +155,16 @@ const Layout = ({ pageTitle }) => {
       <div className="pointer-events-none absolute bottom-10 right-[12%] h-64 w-64 rounded-full bg-sky-500/10 blur-[110px] animate-pulse" />
       
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-        isCollapsed={desktopSidebarCollapsed}
-        isHidden={desktopSidebarHidden}
-      />
+      {isEditorWorkspace ? null : (
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+          isCollapsed={desktopSidebarCollapsed}
+          isHidden={desktopSidebarHidden}
+        />
+      )}
 
-      <div className="fixed bottom-4 left-4 z-[70] lg:bottom-6 lg:left-6" data-testid="floating-sidebar-visibility-wrapper">
+      {isEditorWorkspace ? null : <div className="fixed bottom-4 left-4 z-[70] lg:bottom-6 lg:left-6" data-testid="floating-sidebar-visibility-wrapper">
         <button
           type="button"
           onClick={toggleSidebarVisibility}
@@ -172,12 +175,12 @@ const Layout = ({ pageTitle }) => {
         >
           {isMobileViewport ? <Menu size={18} /> : desktopSidebarHidden ? <Eye size={18} /> : <EyeOff size={18} />}
         </button>
-      </div>
+      </div>}
       
       {/* Main Content */}
-      <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10, '--content-offset': contentOffset }}>
+      <main className="content-area" style={{ backgroundColor: 'transparent', position: 'relative', zIndex: 10, '--content-offset': isEditorWorkspace ? '0px' : contentOffset }}>
         {/* Mobile Header - Fixed at top */}
-        <div className="lg:hidden sticky top-0 z-40 mt-8 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-4 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
+        {isEditorWorkspace ? null : <div className="lg:hidden sticky top-0 z-40 mt-8 mb-4 rounded-[20px] border border-white/10 bg-slate-950/88 px-4 py-3 shadow-xl shadow-black/25 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -192,17 +195,17 @@ const Layout = ({ pageTitle }) => {
             </div>
             <span className="h-9 w-9" aria-hidden="true" />
           </div>
-        </div>
+        </div>}
 
         {/* Finance Alerts (Permanent Monitor) */}
-        <FinanceAlertsWidget
+        {isEditorWorkspace ? null : <FinanceAlertsWidget
           enabledPaths={[
             '/operations',
             '/accounting/chart-of-accounts',
             '/accounting/comprehensive',
             '/ai-financial',
           ]}
-        />
+        />}
         
         {/* Page Content */}
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 10 }}>
@@ -223,17 +226,16 @@ const Layout = ({ pageTitle }) => {
         </div>
 
         {/* AbuFahad Floating Chat (Finance only) */}
-        <AbuFahadFloatingChat
+        {isEditorWorkspace ? null : <AbuFahadFloatingChat
           enabledPaths={[
             '/operations',
             '/accounting/chart-of-accounts',
             '/accounting/comprehensive',
           ]}
-        />
+        />}
       </main>
         {/* Workshop Assistant Chat Widget */}
-        <ChatWidget />
-        <LiquidSiteBuilder session={session} currentPath={location.pathname || '/'} onCustomizationSaved={setPageCustomization} />
+        {isEditorWorkspace ? null : <ChatWidget />}
 
       
       {/* Toast Notifications */}

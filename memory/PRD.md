@@ -62,6 +62,28 @@
   - Frontend **100% PASS**
   - تم إصلاح bug كان يمنع تحديث `pageId` عند تغيير الصفحة داخل المحرر.
 
+### لوحة خصائص بصرية كاملة + رفع صور + ربط حي (13 Apr 2026)
+- تم اعتماد Schema لوحة الخصائص اليسرى داخل MoltBot Studio وتوسيعه عند الحاجة:
+  - **Content**: text / image_upload / image_url / link
+  - **Style**: color / background / fontSize / fontWeight / opacity
+  - **Layout**: padding / margin / width / height / alignment
+  - **Effects**: borderRadius / shadow / blur
+- Backend:
+  - توسيع customization schema لدعم:
+    - `styles`
+    - `assets`
+  - إضافة endpoints جديدة للأصول:
+    - `POST /api/alkabeer-bot/assets/upload`
+    - `GET /api/alkabeer-bot/assets/{asset_id}/download`
+- Frontend:
+  - لوحة الخصائص داخل `/app/frontend/src/pages/MoltBot.jsx` أصبحت تدعم live binding فوري على المعاينة
+  - رفع الصورة وربط رابطها بالبلوك المحدد
+  - تطبيق styles/assets حيًا عبر `pageCustomization.js`
+- نتيجة الاختبار الرسمية: `iteration_129.json`
+  - Backend **14/14 PASS**
+  - Frontend **100% PASS**
+  - تم تأكيد عمل upload endpoint + الحقول البصرية + التعديل الحي بلا regressions
+
 ### إعادة تصميم Liquid Builder بأسلوب Kodee أبسط وأوضح (12 Apr 2026)
 - تم تبسيط الواجهة جذريًا بعد ملاحظة المستخدم أن الشاشة معقدة وغير مفهومة.
 - الحفاظ على **نفس التبويبات الأربع**:

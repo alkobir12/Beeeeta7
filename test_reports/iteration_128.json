@@ -1,0 +1,107 @@
+{
+  "summary": "Iteration 128 - MoltBot Full-Page Site Editor Verification: Successfully verified the complete rewrite of /moltbot as a full-page site editor. All major features working: 3-column layout (properties/agent, live preview, blocks list), toolbar with save/preview/reset/undo/redo/device buttons, page selector, page_manifest fields visible, iframe preview with editor-preview=1, block selection activates properties panel, agent tab works. Layout correctly hides sidebar/chat in editor-preview mode. No regression from removing floating Liquid Builder.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_moltbot_manifest_iter127.py",
+    "/app/test_reports/pytest/pytest_moltbot_manifest_iter127.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MoltBot.jsx is a well-structured full-page editor with proper state management for undo/redo, draft storage, and page manifest",
+    "Layout.jsx correctly uses isEditorWorkspace to conditionally hide sidebar/chat/floating buttons in editor-preview mode",
+    "LiquidBuilderBotTab.jsx properly integrated as the agent tab within MoltBot editor",
+    "No floating Liquid Builder component in Layout - confirmed no regression"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% - API endpoints working (health, customization GET/PUT)",
+    "frontend": "100% - All MoltBot editor features verified"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "MoltBot full-page editor is complete and working. Key verified features: 3-column layout, toolbar buttons (save/preview/reset/undo/redo/device modes), page selector with tabs, page_manifest fields (pageId/version/status/device) visible in toolbar, iframe preview uses ?editor-preview=1, block selection from right sidebar activates properties panel on left, agent tab (الوكيل) shows LiquidBuilderBotTab. Layout hides sidebar/chat when ?editor-preview=1 is present. No floating Liquid Builder in Layout anymore.",
+  "features_tested": {
+    "moltbot_full_page_editor": {
+      "status": "PASS",
+      "testid": "moltbot-site-editor-page"
+    },
+    "three_column_layout": {
+      "status": "PASS",
+      "components": [
+        {"name": "Left sidebar (properties/agent)", "testid": "moltbot-editor-left-sidebar", "status": "PASS"},
+        {"name": "Preview column", "testid": "moltbot-editor-preview-column", "status": "PASS"},
+        {"name": "Right sidebar (blocks list)", "testid": "moltbot-editor-right-sidebar", "status": "PASS"}
+      ]
+    },
+    "toolbar_buttons": {
+      "status": "PASS",
+      "buttons": [
+        {"name": "Save", "testid": "moltbot-editor-save-button", "status": "PASS"},
+        {"name": "Preview", "testid": "moltbot-editor-preview-link", "status": "PASS"},
+        {"name": "Reset", "testid": "moltbot-editor-clear-draft-button", "status": "PASS"},
+        {"name": "Undo", "testid": "moltbot-editor-undo-button", "status": "PASS"},
+        {"name": "Redo", "testid": "moltbot-editor-redo-button", "status": "PASS"}
+      ]
+    },
+    "device_mode_buttons": {
+      "status": "PASS",
+      "buttons": [
+        {"name": "Mobile", "testid": "moltbot-editor-device-mobile", "status": "PASS"},
+        {"name": "Tablet", "testid": "moltbot-editor-device-tablet", "status": "PASS"},
+        {"name": "Desktop", "testid": "moltbot-editor-device-desktop", "status": "PASS"}
+      ]
+    },
+    "page_selector": {
+      "status": "PASS",
+      "testid": "moltbot-editor-page-select"
+    },
+    "page_manifest_fields": {
+      "status": "PASS",
+      "fields": [
+        {"name": "pageId", "testid": "moltbot-editor-manifest-pageid", "example": "pageId: home", "status": "PASS"},
+        {"name": "version", "testid": "moltbot-editor-manifest-version", "example": "version: draft", "status": "PASS"},
+        {"name": "status", "testid": "moltbot-editor-manifest-status", "example": "status: active", "status": "PASS"},
+        {"name": "device", "testid": "moltbot-editor-manifest-device", "example": "device: desktop", "status": "PASS"}
+      ]
+    },
+    "iframe_preview": {
+      "status": "PASS",
+      "testid": "moltbot-editor-preview-iframe",
+      "uses_editor_preview_param": true
+    },
+    "page_selection_updates_manifest": {
+      "status": "PASS",
+      "notes": "Selecting different page updates pageId in manifest"
+    },
+    "block_selection_activates_properties": {
+      "status": "PASS",
+      "notes": "Clicking block in right sidebar shows properties panel on left"
+    },
+    "agent_tab": {
+      "status": "PASS",
+      "testid": "liquid-site-builder-bot-tab",
+      "notes": "Agent tab (الوكيل) shows LiquidBuilderBotTab component"
+    },
+    "editor_preview_mode_hides_sidebar_chat": {
+      "status": "PASS",
+      "notes": "?editor-preview=1 correctly hides sidebar, chat widget, and floating sidebar button"
+    },
+    "no_floating_liquid_builder_in_layout": {
+      "status": "PASS",
+      "notes": "Confirmed no LiquidBuilder or FloatingLiquidBuilder components in Layout.jsx"
+    }
+  }
+}

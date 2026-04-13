@@ -20,6 +20,17 @@
 ### تحويل صفحة MoltBot إلى محرر موقع كامل الشاشة (13 Apr 2026)
 - إلغاء محتويات MoltBot القديمة واستبدالها بالكامل بمحرر موقع كامل:
   - `/app/frontend/src/pages/MoltBot.jsx`
+- إضافة دعم **Page Manifest** داخل المحرر والـ backend customization:
+  - `pageId`
+  - `version`
+  - `status`
+  - `device`
+  - `meta`
+  - `activeFlags`
+  - `timestamps`
+  - `uiState`
+  - `security`
+- تأكيد حفظ واسترجاع `page_manifest` عبر customization API.
 - التصميم الجديد مستلهم من المرجع المرفق:
   - شريط أدوات علوي للحفظ/المعاينة/التراجع/الإعادة/اختيار الجهاز/اختيار الصفحة
   - 3 مناطق رئيسية:
@@ -46,6 +57,10 @@
     - properties panel
     - bot tab
     - custom cards
+- تحقق إضافي بعد ربط الـ manifest: `iteration_127.json`
+  - Backend **10/10 PASS**
+  - Frontend **100% PASS**
+  - تم إصلاح bug كان يمنع تحديث `pageId` عند تغيير الصفحة داخل المحرر.
 
 ### إعادة تصميم Liquid Builder بأسلوب Kodee أبسط وأوضح (12 Apr 2026)
 - تم تبسيط الواجهة جذريًا بعد ملاحظة المستخدم أن الشاشة معقدة وغير مفهومة.

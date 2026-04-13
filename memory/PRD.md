@@ -99,9 +99,21 @@
   - Smart guides base structure
   - Live JSON sync
 - تم توصيله بالمعاينة الحية داخل MoltBot قدر الإمكان مع حفظ المواضع والأبعاد في التخصيصات.
+- تم إضافة **React Canvas Renderer Layer** كمحرّك أساسي للمعاينة داخل MoltBot Studio:
+  - `/app/frontend/src/lib/moltbot_full_responsive_engine.js`
+  - `/app/frontend/src/components/MoltBotCanvasRenderer.jsx`
+  - وضعان للمعاينة:
+    - Canvas (أساسي)
+    - Live iframe (ثانوي)
+- تم تحسين تجربة الـ Canvas بإضافة **auto-layout** أولي حتى لا تتراكب العناصر عند (0,0) عند غياب المواضع المحفوظة.
 - التحقق الرسمي: `iteration_130.json`
   - Backend **14/14 PASS**
   - Frontend **100% PASS**
+
+### تكامل Canvas Renderer الأساسي داخل MoltBot Studio (13 Apr 2026)
+- التحقق الرسمي: `iteration_131.json`
+  - Frontend **95% PASS** مع ملاحظة UX غير مانعة على تراكب العناصر عند غياب المواضع
+- تم إغلاق ملاحظة التراكب بإضافة auto-layout grid based positioning.
 
 ### إعادة تصميم Liquid Builder بأسلوب Kodee أبسط وأوضح (12 Apr 2026)
 - تم تبسيط الواجهة جذريًا بعد ملاحظة المستخدم أن الشاشة معقدة وغير مفهومة.

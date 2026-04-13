@@ -1,13 +1,17 @@
 
-from fastapi import APIRouter, HTTPException, Body, Query
+from fastapi import APIRouter, HTTPException, Body, Query, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import os
 import uuid
 import json
 import re
+import mimetypes
+import requests
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from dotenv import load_dotenv
+from fastapi.responses import Response
+from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
 
@@ -22,6 +26,14 @@ EXT_PROMPT_FILE = os.path.join(PROMPTS_DIR, "alkabeer_extensions.md")
 session_states = {}
 
 CUSTOMIZATION_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_ui_customizations.json")
+EDITOR_ASSETS_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_editor_assets.json")
+STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
+APP_NAME = "alkobir-editor"
+storage_key = None
+
+MONGO_URL = os.getenv("MONGO_URL")
+DB_NAME = os.getenv("DB_NAME")
+editor_db = AsyncIOMotorClient(MONGO_URL)[DB_NAME] if MONGO_URL and DB_NAME else None
 
 
 def _read_customizations() -> Dict[str, Any]:
@@ -43,6 +55,62 @@ def _write_customizations(data: Dict[str, Any]):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _read_editor_assets() -> List[Dict[str, Any]]:
+    try:
+        os.makedirs(os.path.dirname(EDITOR_ASSETS_FILE), exist_ok=True)
+        if not os.path.exists(EDITOR_ASSETS_FILE):
+            with open(EDITOR_ASSETS_FILE, "w", encoding="utf-8") as f:
+                json.dump([], f, ensure_ascii=False, indent=2)
+        with open(EDITOR_ASSETS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _write_editor_assets(rows: List[Dict[str, Any]]):
+    os.makedirs(os.path.dirname(EDITOR_ASSETS_FILE), exist_ok=True)
+    with open(EDITOR_ASSETS_FILE, "w", encoding="utf-8") as f:
+        json.dump(rows, f, ensure_ascii=False, indent=2)
+
+
+def _guess_content_type(filename: str, fallback: str = "application/octet-stream") -> str:
+    guessed, _ = mimetypes.guess_type(filename or "")
+    return guessed or fallback
+
+
+def _init_storage() -> str:
+    global storage_key
+    if storage_key:
+        return storage_key
+    emergent_key = os.getenv("EMERGENT_LLM_KEY")
+    if not emergent_key:
+        raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY غير مضبوط للتخزين")
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": emergent_key}, timeout=30)
+    resp.raise_for_status()
+    storage_key = resp.json()["storage_key"]
+    return storage_key
+
+
+def _put_object(path: str, data: bytes, content_type: str) -> Dict[str, Any]:
+    key = _init_storage()
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type},
+        data=data,
+        timeout=120,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _get_object(path: str) -> tuple[bytes, str]:
+    key = _init_storage()
+    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+
+
 def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) -> Dict[str, Any]:
     labels = dict(global_cfg.get("labels") or {})
     labels.update(page_cfg.get("labels") or {})
@@ -57,6 +125,10 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
     block_order = list(page_cfg.get("block_order") or [])
     positions = dict(global_cfg.get("positions") or {})
     positions.update(page_cfg.get("positions") or {})
+    styles = dict(global_cfg.get("styles") or {})
+    styles.update(page_cfg.get("styles") or {})
+    assets = dict(global_cfg.get("assets") or {})
+    assets.update(page_cfg.get("assets") or {})
     page_manifest = dict(page_cfg.get("page_manifest") or {})
 
     return {
@@ -66,6 +138,8 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
         "custom_cards": custom_cards,
         "block_order": block_order,
         "positions": positions,
+        "styles": styles,
+        "assets": assets,
         "page_manifest": page_manifest,
     }
 
@@ -82,7 +156,11 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         global_cfg["block_order"] = []
     if "positions" not in global_cfg:
         global_cfg["positions"] = {}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
+    if "styles" not in global_cfg:
+        global_cfg["styles"] = {}
+    if "assets" not in global_cfg:
+        global_cfg["assets"] = {}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "styles": {}, "assets": {}, "page_manifest": {}}
     merged = _merge_page_configs(global_cfg, page_cfg)
     return {
         "user_id": user_id,
@@ -93,6 +171,8 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         "custom_cards": merged.get("custom_cards") or [],
         "block_order": merged.get("block_order") or [],
         "positions": merged.get("positions") or {},
+        "styles": merged.get("styles") or {},
+        "assets": merged.get("assets") or {},
         "page_manifest": merged.get("page_manifest") or {},
         "global": global_cfg,
         "page": page_cfg,
@@ -265,6 +345,8 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
     custom_cards = list(current_cfg.get("custom_cards") or [])
     block_order = list(current_cfg.get("block_order") or [])
     positions = dict(current_cfg.get("positions") or {})
+    styles = dict(current_cfg.get("styles") or {})
+    assets = dict(current_cfg.get("assets") or {})
     page_manifest = dict(current_cfg.get("page_manifest") or {})
 
     def _find_card_index(card_title: str) -> int:
@@ -284,6 +366,8 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             custom_cards = []
             block_order = []
             positions = {}
+            styles = {}
+            assets = {}
             page_manifest = {}
             continue
 
@@ -357,7 +441,7 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             hidden.pop(target, None)
             contents.pop(target, None)
 
-    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards, "block_order": block_order, "positions": positions, "page_manifest": page_manifest}
+    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards, "block_order": block_order, "positions": positions, "styles": styles, "assets": assets, "page_manifest": page_manifest}
 
 def get_combined_system_prompt():
     base = ""
@@ -403,6 +487,8 @@ class CustomizationUpdateRequest(BaseModel):
     custom_cards: Optional[List[Dict[str, Any]]] = None
     block_order: Optional[List[str]] = None
     positions: Optional[Dict[str, Dict[str, Any]]] = None
+    styles: Optional[Dict[str, Dict[str, Any]]] = None
+    assets: Optional[Dict[str, Dict[str, Any]]] = None
     page_manifest: Optional[Dict[str, Any]] = None
 
 class ChatResponse(BaseModel):
@@ -474,7 +560,7 @@ async def chat(payload: ChatRequest):
             if user_msg.lower() in {"clear", "reset_page", "مسح", "اعادة الصفحة", "إعادة الصفحة"}:
                 data = _read_customizations()
                 user_node = data.get(user_id) or {}
-                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
+                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "styles": {}, "assets": {}, "page_manifest": {}}
                 data[user_id] = user_node
                 _write_customizations(data)
                 cfg = _get_user_page_config(user_id, current_path)
@@ -491,6 +577,8 @@ async def chat(payload: ChatRequest):
                         "custom_cards": cfg.get("custom_cards", []),
                         "block_order": cfg.get("block_order", []),
                         "positions": cfg.get("positions", {}),
+                        "styles": cfg.get("styles", {}),
+                        "assets": cfg.get("assets", {}),
                         "page_manifest": cfg.get("page_manifest", {}),
                     },
                 )
@@ -523,7 +611,7 @@ async def chat(payload: ChatRequest):
 
             data = _read_customizations()
             user_node = data.get(user_id) or {}
-            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
+            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "styles": {}, "assets": {}, "page_manifest": {}}
             updated_cfg = _apply_actions_to_config(page_cfg, actions)
             user_node[current_path] = updated_cfg
             data[user_id] = user_node
@@ -543,6 +631,8 @@ async def chat(payload: ChatRequest):
                     "custom_cards": merged_cfg.get("custom_cards", []),
                     "block_order": merged_cfg.get("block_order", []),
                     "positions": merged_cfg.get("positions", {}),
+                    "styles": merged_cfg.get("styles", {}),
+                    "assets": merged_cfg.get("assets", {}),
                     "page_manifest": merged_cfg.get("page_manifest", {}),
                 },
             )
@@ -613,6 +703,8 @@ def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
             "custom_cards": cfg.get("custom_cards", []),
             "block_order": cfg.get("block_order", []),
             "positions": cfg.get("positions", {}),
+            "styles": cfg.get("styles", {}),
+            "assets": cfg.get("assets", {}),
             "page_manifest": cfg.get("page_manifest", {}),
         },
     }
@@ -624,7 +716,7 @@ def save_customization(payload: CustomizationUpdateRequest):
     path = str(payload.path or "/").strip() or "/"
     data = _read_customizations()
     user_node = data.get(user_id) or {}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "styles": {}, "assets": {}, "page_manifest": {}}
     updated_cfg = {
         "labels": payload.labels if payload.labels is not None else page_cfg.get("labels") or {},
         "hidden": payload.hidden if payload.hidden is not None else page_cfg.get("hidden") or {},
@@ -632,6 +724,8 @@ def save_customization(payload: CustomizationUpdateRequest):
         "custom_cards": payload.custom_cards if payload.custom_cards is not None else page_cfg.get("custom_cards") or [],
         "block_order": payload.block_order if payload.block_order is not None else page_cfg.get("block_order") or [],
         "positions": payload.positions if payload.positions is not None else page_cfg.get("positions") or {},
+        "styles": payload.styles if payload.styles is not None else page_cfg.get("styles") or {},
+        "assets": payload.assets if payload.assets is not None else page_cfg.get("assets") or {},
         "page_manifest": payload.page_manifest if payload.page_manifest is not None else page_cfg.get("page_manifest") or {},
     }
     user_node[path] = updated_cfg
@@ -650,6 +744,59 @@ def save_customization(payload: CustomizationUpdateRequest):
             "custom_cards": cfg.get("custom_cards", []),
             "block_order": cfg.get("block_order", []),
             "positions": cfg.get("positions", {}),
+            "styles": cfg.get("styles", {}),
+            "assets": cfg.get("assets", {}),
             "page_manifest": cfg.get("page_manifest", {}),
         },
     }
+
+
+@router.post("/assets/upload")
+async def upload_editor_asset(user_id: str = Query("manager"), file: UploadFile = File(...)):
+    ext = (file.filename or "asset.bin").split(".")[-1] if "." in (file.filename or "") else "bin"
+    path = f"{APP_NAME}/uploads/{user_id}/{uuid.uuid4()}.{ext}"
+    data = await file.read()
+    content_type = file.content_type or _guess_content_type(file.filename or "asset.bin")
+    result = _put_object(path, data, content_type)
+
+    asset_id = str(uuid.uuid4())
+    record = {
+        "id": asset_id,
+        "storage_path": result["path"],
+        "original_filename": file.filename,
+        "content_type": content_type,
+        "size": result.get("size") or len(data),
+        "created_at": __import__("datetime").datetime.utcnow().isoformat(),
+        "is_deleted": False,
+    }
+
+    if editor_db is not None:
+        await editor_db.editor_assets.insert_one(record)
+    else:
+        rows = _read_editor_assets()
+        rows.append(record)
+        _write_editor_assets(rows)
+
+    return {
+        "success": True,
+        "asset": {
+            "id": asset_id,
+            "filename": file.filename,
+            "content_type": content_type,
+            "download_url": f"/api/alkabeer-bot/assets/{asset_id}/download",
+            "storage_path": result["path"],
+        }
+    }
+
+
+@router.get("/assets/{asset_id}/download")
+async def download_editor_asset(asset_id: str):
+    record = None
+    if editor_db is not None:
+        record = await editor_db.editor_assets.find_one({"id": asset_id, "is_deleted": False}, {"_id": 0})
+    else:
+        record = next((row for row in _read_editor_assets() if str(row.get("id")) == asset_id and not row.get("is_deleted")), None)
+    if not record:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    data, content_type = _get_object(record["storage_path"])
+    return Response(content=data, media_type=record.get("content_type") or content_type)

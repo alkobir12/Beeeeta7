@@ -23,7 +23,7 @@ import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
 import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { LiquidBuilderBotTab } from '../components/LiquidBuilderBotTab';
 
-const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {} };
+const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {}, styles: {}, assets: {} };
 const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
 const cloneConfig = (value) => JSON.parse(JSON.stringify(value || {}));
 
@@ -107,6 +107,7 @@ export default function MoltBot() {
   const [loading, setLoading] = useState(true);
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const session = useMemo(() => {
     try {
@@ -334,6 +335,8 @@ export default function MoltBot() {
       content: config.contents?.[selectedBlock.testid] || '',
       hidden: Boolean(config.hidden?.[selectedBlock.testid]),
       position: config.positions?.[selectedBlock.testid] || { left: 0, top: 0 },
+      styles: config.styles?.[selectedBlock.testid] || {},
+      assets: config.assets?.[selectedBlock.testid] || {},
     }));
     toast({ title: 'تم', description: 'تم نسخ تنسيق البلوك.' });
   };
@@ -349,6 +352,8 @@ export default function MoltBot() {
         contents: { ...(config.contents || {}), [selectedBlock.testid]: data.content || '' },
         hidden: { ...(config.hidden || {}), [selectedBlock.testid]: data.hidden || false },
         positions: { ...(config.positions || {}), [selectedBlock.testid]: data.position || { left: 0, top: 0 } },
+        styles: { ...(config.styles || {}), [selectedBlock.testid]: data.styles || {} },
+        assets: { ...(config.assets || {}), [selectedBlock.testid]: data.assets || {} },
       });
     } catch {
       return;
@@ -369,6 +374,46 @@ export default function MoltBot() {
       }
     }
     return { handled: false };
+  };
+
+  const updateStyle = (testid, key, value) => applyConfig({
+    ...config,
+    styles: {
+      ...(config.styles || {}),
+      [testid]: {
+        ...((config.styles || {})[testid] || {}),
+        [key]: value,
+      },
+    },
+  });
+
+  const updateAsset = (testid, key, value) => applyConfig({
+    ...config,
+    assets: {
+      ...(config.assets || {}),
+      [testid]: {
+        ...((config.assets || {})[testid] || {}),
+        [key]: value,
+      },
+    },
+  });
+
+  const uploadImage = async (file) => {
+    if (!file || !selectedBlock) return;
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(`/api/alkabeer-bot/assets/upload?user_id=${encodeURIComponent(userId)}`, { method: 'POST', body: formData });
+      if (!response.ok) throw new Error('upload failed');
+      const data = await response.json();
+      updateAsset(selectedBlock.testid, 'src', data.asset?.download_url || '');
+      toast({ title: 'تم الرفع', description: 'تم ربط الصورة بالبلوك الحالي.' });
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر رفع الصورة', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!canAccess) {
@@ -461,14 +506,51 @@ export default function MoltBot() {
             <div className="space-y-4" data-testid="moltbot-editor-properties-panel">
               <div className="rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
                 <p className="text-sm font-bold text-amber-50">{resolveDisplayName(selectedBlock, 0, 'بلوك')}</p>
-                    <p className="mt-1 text-xs text-amber-100/50">عنصر حي من الصفحة الحالية</p>
+                <p className="mt-1 text-xs text-amber-100/50">عنصر حي من الصفحة الحالية</p>
               </div>
 
               <div className="space-y-3 rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
-                <label className="text-xs text-amber-100/60">الاسم الظاهر</label>
-                <input value={config.labels?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'labels', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-label-input" />
-                <label className="text-xs text-amber-100/60">المحتوى</label>
-                <textarea value={config.contents?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'contents', e.target.value)} className="min-h-[120px] w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-content-input" />
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/50">Content</p>
+                <label className="text-xs text-amber-100/60">النص</label>
+                <textarea value={config.contents?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'contents', e.target.value)} className="min-h-[100px] w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none" data-testid="moltbot-editor-content-input" />
+                <label className="text-xs text-amber-100/60">الصورة (رابط)</label>
+                <input value={config.assets?.[selectedBlock.testid]?.src || ''} onChange={(e) => updateAsset(selectedBlock.testid, 'src', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-image-url-input" />
+                <label className="text-xs text-amber-100/60">رفع صورة</label>
+                <input type="file" accept="image/*" onChange={(e) => uploadImage(e.target.files?.[0])} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-image-upload-input" />
+                <label className="text-xs text-amber-100/60">الرابط</label>
+                <input value={config.assets?.[selectedBlock.testid]?.href || ''} onChange={(e) => updateAsset(selectedBlock.testid, 'href', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-link-input" />
+              </div>
+
+              <div className="space-y-3 rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/50">Style</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={config.styles?.[selectedBlock.testid]?.color || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'color', e.target.value)} placeholder="لون النص" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-style-color" />
+                  <input value={config.styles?.[selectedBlock.testid]?.backgroundColor || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'backgroundColor', e.target.value)} placeholder="الخلفية" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-style-background" />
+                  <input value={config.styles?.[selectedBlock.testid]?.fontSize || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'fontSize', e.target.value)} placeholder="حجم الخط" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-style-fontsize" />
+                  <input value={config.styles?.[selectedBlock.testid]?.fontWeight || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'fontWeight', e.target.value)} placeholder="وزن الخط" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-style-fontweight" />
+                  <input value={config.styles?.[selectedBlock.testid]?.opacity || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'opacity', e.target.value)} placeholder="الشفافية" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-style-opacity" />
+                  <input value={config.labels?.[selectedBlock.testid] || ''} onChange={(e) => updateElement(selectedBlock.testid, 'labels', e.target.value)} placeholder="اسم بديل" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-label-input" />
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/50">Layout</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={config.styles?.[selectedBlock.testid]?.padding || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'padding', e.target.value)} placeholder="Padding" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-layout-padding" />
+                  <input value={config.styles?.[selectedBlock.testid]?.margin || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'margin', e.target.value)} placeholder="Margin" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-layout-margin" />
+                  <input value={config.styles?.[selectedBlock.testid]?.width || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'width', e.target.value)} placeholder="Width" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-layout-width" />
+                  <input value={config.styles?.[selectedBlock.testid]?.height || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'height', e.target.value)} placeholder="Height" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-layout-height" />
+                  <input value={config.styles?.[selectedBlock.testid]?.textAlign || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'textAlign', e.target.value)} placeholder="Alignment" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-layout-alignment" />
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-3xl border border-amber-300/15 bg-[#130c12] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/50">Effects</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={config.styles?.[selectedBlock.testid]?.borderRadius || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'borderRadius', e.target.value)} placeholder="Border Radius" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-effects-radius" />
+                  <input value={config.styles?.[selectedBlock.testid]?.boxShadow || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'boxShadow', e.target.value)} placeholder="Shadow" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-effects-shadow" />
+                  <input value={config.styles?.[selectedBlock.testid]?.backdropFilter || ''} onChange={(e) => updateStyle(selectedBlock.testid, 'backdropFilter', e.target.value)} placeholder="Blur" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-editor-effects-blur" />
+                </div>
                 <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                   <span className="text-sm text-white">ظاهر</span>
                   <input type="checkbox" checked={!config.hidden?.[selectedBlock.testid]} onChange={(e) => updateElement(selectedBlock.testid, 'hidden', !e.target.checked)} data-testid="moltbot-editor-visibility-toggle" />

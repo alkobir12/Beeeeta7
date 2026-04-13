@@ -184,22 +184,47 @@
       "labels": {},
       "hidden": {},
       "contents": {},
-      "custom_cards": [
-        {
-          "id": "card-1775999455178-u1ssm",
-          "title": "كرت اختبار للحفظ",
-          "description": "",
-          "fields": [
-            {
-              "id": "field-1775999455178",
-              "label": "عنوان",
-              "value": "قيمة"
-            }
-          ]
-        }
-      ],
+      "custom_cards": [],
       "block_order": [],
-      "positions": {}
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {
+        "pageId": "home",
+        "version": {
+          "current": "draft",
+          "published": "published"
+        },
+        "status": "active",
+        "device": "desktop",
+        "meta": {
+          "title": "لوحة التحكم",
+          "description": "Visual editor page",
+          "slug": "home"
+        },
+        "activeFlags": {
+          "editable": true,
+          "locked": false,
+          "published": true,
+          "previewMode": false
+        },
+        "timestamps": {
+          "createdAt": null,
+          "updatedAt": "2026-04-13T20:55:23.048Z",
+          "publishedAt": "2026-04-13T20:55:23.048Z"
+        },
+        "uiState": {
+          "selectedElementId": "page-custom-cards-dock",
+          "hoverElementId": null,
+          "zoom": 100,
+          "grid": true,
+          "snap": true
+        },
+        "security": {
+          "isValid": true,
+          "lastValidatedAt": null
+        }
+      }
     },
     "/customers": {
       "labels": {},
@@ -496,6 +521,456 @@
       "custom_cards": [],
       "block_order": [],
       "positions": {},
+      "page_manifest": {}
+    }
+  },
+  "test_iter129": {
+    "/test-styles-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-assets-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-full-schema": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-content-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-style-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-layout-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-effects-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    }
+  },
+  "test_iter129_content": {
+    "/test-content-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-styles-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-assets-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-full-schema": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-style-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-layout-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-effects-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    }
+  },
+  "test_iter129_style": {
+    "/test-style-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-styles-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-assets-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-full-schema": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-content-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-layout-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-effects-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    }
+  },
+  "test_iter129_layout": {
+    "/test-layout-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-styles-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-assets-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-full-schema": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-content-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-style-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-effects-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    }
+  },
+  "test_iter129_effects": {
+    "/test-effects-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-styles-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-assets-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-full-schema": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-content-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-style-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/test-layout-fields": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
       "page_manifest": {}
     }
   }

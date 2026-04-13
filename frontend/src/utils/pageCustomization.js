@@ -80,6 +80,22 @@ export const clearPageCustomizations = (appliedEntriesRef) => {
         entry.element.style.left = entry.prevLeft ?? '';
         entry.element.style.top = entry.prevTop ?? '';
       }
+      if (entry.type === 'style-asset') {
+        if (entry.prevStyle) {
+          entry.element.setAttribute('style', entry.prevStyle);
+        } else {
+          entry.element.removeAttribute('style');
+        }
+        if (entry.prevSrc) {
+          entry.element.setAttribute('src', entry.prevSrc);
+        }
+        if (entry.prevHref) {
+          entry.element.setAttribute('href', entry.prevHref);
+        }
+        if (entry.prevBackgroundImage !== undefined) {
+          entry.element.style.backgroundImage = entry.prevBackgroundImage;
+        }
+      }
     } catch (_error) {
       return;
     }
@@ -96,11 +112,28 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef, t
   const contents = customization?.contents || {};
   const blockOrder = customization?.block_order || [];
   const positions = customization?.positions || {};
+  const styles = customization?.styles || {};
+  const assets = customization?.assets || {};
+  const touched = new Set();
+
+  const remember = (element) => {
+    if (!element || touched.has(element)) return;
+    touched.add(element);
+    appliedEntriesRef.current.push({
+      type: 'style-asset',
+      element,
+      prevStyle: element.getAttribute('style') || '',
+      prevSrc: element.getAttribute('src') || '',
+      prevHref: element.getAttribute('href') || '',
+      prevBackgroundImage: element.style.backgroundImage || '',
+    });
+  };
 
   Object.entries(hidden).forEach(([testid, hideValue]) => {
     if (!hideValue) return;
     const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
+    remember(element);
     appliedEntriesRef.current.push({
       type: 'hide',
       element,
@@ -112,6 +145,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef, t
   Object.entries(labels).forEach(([testid, newLabel]) => {
     const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
+    remember(element);
     appliedEntriesRef.current.push({
       type: 'text',
       element,
@@ -123,6 +157,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef, t
   Object.entries(contents).forEach(([testid, newContent]) => {
     const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
+    remember(element);
     appliedEntriesRef.current.push({
       type: 'text',
       element,
@@ -157,6 +192,7 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef, t
   Object.entries(positions).forEach(([testid, pos]) => {
     const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
     if (!element) return;
+    remember(element);
     appliedEntriesRef.current.push({
       type: 'position',
       element,
@@ -169,5 +205,33 @@ export const applyPageCustomizations = (customization = {}, appliedEntriesRef, t
     }
     element.style.left = `${Number(pos?.left || 0)}px`;
     element.style.top = `${Number(pos?.top || 0)}px`;
+  });
+
+  Object.entries(styles).forEach(([testid, styleMap]) => {
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
+    if (!element || !styleMap || typeof styleMap !== 'object') return;
+    remember(element);
+    Object.entries(styleMap).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      element.style[key] = String(value);
+    });
+  });
+
+  Object.entries(assets).forEach(([testid, asset]) => {
+    const element = targetDocument.querySelector(`[data-testid="${testid}"]`);
+    if (!element || !asset || typeof asset !== 'object') return;
+    remember(element);
+    const imageTarget = element.tagName === 'IMG' ? element : element.querySelector('img');
+    if (asset.src && imageTarget) {
+      imageTarget.setAttribute('src', asset.src);
+    } else if (asset.src) {
+      element.style.backgroundImage = `url(${asset.src})`;
+      element.style.backgroundSize = element.style.backgroundSize || 'cover';
+      element.style.backgroundPosition = element.style.backgroundPosition || 'center';
+    }
+    const linkTarget = element.tagName === 'A' ? element : element.querySelector('a');
+    if (asset.href && linkTarget) {
+      linkTarget.setAttribute('href', asset.href);
+    }
   });
 };

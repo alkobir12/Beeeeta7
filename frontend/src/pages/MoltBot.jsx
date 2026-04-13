@@ -23,6 +23,7 @@ import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
 import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { LiquidBuilderBotTab } from '../components/LiquidBuilderBotTab';
 import { useCanvasEngine } from '../hooks/useCanvasEngine';
+import { A_CanvasApp } from '../components/MoltBotCanvasRenderer';
 
 const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {}, styles: {}, assets: {} };
 const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
@@ -104,6 +105,7 @@ export default function MoltBot() {
   const [leftTab, setLeftTab] = useState('properties');
   const [deviceMode, setDeviceMode] = useState('desktop');
   const [canvasActive, setCanvasActive] = useState(true);
+  const [previewMode, setPreviewMode] = useState('canvas');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [undoStack, setUndoStack] = useState([]);
@@ -134,6 +136,42 @@ export default function MoltBot() {
     type: 'block',
   })), [blockRects]);
 
+  const canvasState = useMemo(() => ({
+    page: { device: deviceMode },
+    sections: [{
+      id: selectedPage,
+      elements: blocks.map((block, index) => ({
+        id: block.testid,
+        name: resolveDisplayName(block, index, 'بلوك'),
+        x: Number(config.positions?.[block.testid]?.left || 0),
+        y: Number(config.positions?.[block.testid]?.top || 0),
+        width: parseInt(config.styles?.[block.testid]?.width || '220', 10) || 220,
+        height: parseInt(config.styles?.[block.testid]?.height || '72', 10) || 72,
+        type: block.text ? 'text' : 'button',
+        content: {
+          text: config.contents?.[block.testid] || block.text || `بلوك ${index + 1}`,
+          src: config.assets?.[block.testid]?.src || '',
+          href: config.assets?.[block.testid]?.href || '',
+          alt: resolveDisplayName(block, index, 'بلوك'),
+        },
+        styles: {
+          color: config.styles?.[block.testid]?.color || '#f8fafc',
+          background: config.styles?.[block.testid]?.backgroundColor || 'rgba(255,255,255,0.04)',
+          fontSize: config.styles?.[block.testid]?.fontSize || '16px',
+          fontWeight: config.styles?.[block.testid]?.fontWeight || '500',
+          opacity: config.styles?.[block.testid]?.opacity || 1,
+          borderRadius: config.styles?.[block.testid]?.borderRadius || '20px',
+          boxShadow: config.styles?.[block.testid]?.boxShadow || 'none',
+          textAlign: config.styles?.[block.testid]?.textAlign || 'right',
+          padding: config.styles?.[block.testid]?.padding || '12px',
+          margin: config.styles?.[block.testid]?.margin || '0px',
+          backdropFilter: config.styles?.[block.testid]?.backdropFilter || config.styles?.[block.testid]?.filter || 'none',
+        },
+      })),
+    }],
+    selectedId: selectedBlockId,
+  }), [blocks, config, deviceMode, selectedBlockId, selectedPage]);
+
   const syncPreviewElement = (elementState) => {
     if (!previewDoc || !previewRef.current) return;
     const base = baseRectMap[elementState.id];
@@ -150,6 +188,34 @@ export default function MoltBot() {
     if (frameRect) {
       element.dataset.editorFrameLeft = String(frameRect.left);
     }
+  };
+
+  const handleCanvasStateChange = (nextState) => {
+    const nextElements = (nextState?.sections || []).flatMap((section) => section.elements || []);
+    const nextPositions = { ...(config.positions || {}) };
+    const nextStyles = { ...(config.styles || {}) };
+    nextElements.forEach((element) => {
+      nextPositions[element.id] = { left: Number(element.x || 0), top: Number(element.y || 0) };
+      nextStyles[element.id] = {
+        ...(nextStyles[element.id] || {}),
+        width: `${Math.max(24, Number(element.width || 0))}px`,
+        height: `${Math.max(24, Number(element.height || 0))}px`,
+        color: element.styles?.color,
+        backgroundColor: element.styles?.background,
+        fontSize: element.styles?.fontSize,
+        fontWeight: element.styles?.fontWeight,
+        opacity: element.styles?.opacity,
+        borderRadius: element.styles?.borderRadius,
+        boxShadow: element.styles?.boxShadow,
+        textAlign: element.styles?.textAlign,
+        padding: element.styles?.padding,
+        margin: element.styles?.margin,
+        backdropFilter: element.styles?.backdropFilter,
+      };
+    });
+    setSelectedBlockId(nextState?.selectedId || selectedBlockId);
+    setConfig((prev) => ({ ...prev, positions: nextPositions, styles: nextStyles }));
+    setPageManifest((prev) => ({ ...prev, device: nextState?.page?.device || prev.device }));
   };
 
   const canvasEngine = useCanvasEngine(
@@ -632,7 +698,10 @@ export default function MoltBot() {
               <p className="text-sm font-semibold text-white">المعاينة الحية</p>
               <p className="text-xs text-amber-100/50">{LIQUID_BUILDER_PAGES.find((page) => page.path === selectedPage)?.label || selectedPage}</p>
             </div>
-            <button onClick={() => setCanvasActive((prev) => !prev)} className={`rounded-full px-4 py-2 text-sm ${canvasActive ? 'bg-cyan-400 text-[#241512] font-bold' : 'border border-white/10 bg-white/5 text-white'}`} data-testid="moltbot-editor-canvas-toggle">Canvas</button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPreviewMode('canvas')} className={`rounded-full px-4 py-2 text-sm ${previewMode === 'canvas' ? 'bg-cyan-400 text-[#241512] font-bold' : 'border border-white/10 bg-white/5 text-white'}`} data-testid="moltbot-editor-preview-mode-canvas">Canvas</button>
+              <button onClick={() => setPreviewMode('iframe')} className={`rounded-full px-4 py-2 text-sm ${previewMode === 'iframe' ? 'bg-cyan-400 text-[#241512] font-bold' : 'border border-white/10 bg-white/5 text-white'}`} data-testid="moltbot-editor-preview-mode-iframe">Live</button>
+            </div>
           </div>
           <div ref={previewRef} className="relative mx-auto overflow-hidden rounded-[28px] border border-amber-300/15 bg-black shadow-2xl shadow-black/35" style={{ width: `min(100%, ${DEVICE_PRESETS[deviceMode].width}px)`, minHeight: '78vh' }}>
             <iframe
@@ -640,7 +709,7 @@ export default function MoltBot() {
               ref={iframeRef}
               title="moltbot-live-preview"
               src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
-              className="h-[78vh] w-full border-0 bg-white"
+              className={`h-[78vh] w-full border-0 bg-white ${previewMode === 'canvas' ? 'pointer-events-none opacity-0 absolute inset-0' : 'opacity-100'}`}
               data-testid="moltbot-editor-preview-iframe"
               onLoad={() => {
                 const frame = iframeRef.current;
@@ -651,6 +720,12 @@ export default function MoltBot() {
                 window.setTimeout(refreshSnapshots, 400);
               }}
             />
+
+            {previewMode === 'canvas' ? (
+              <div className="absolute inset-0 z-10 h-[78vh] w-full" data-testid="moltbot-editor-react-canvas-wrap">
+                <A_CanvasApp initialState={canvasState} onStateChange={handleCanvasStateChange} onSelectElement={(id) => { setSelectedBlockId(id); setLeftTab('properties'); }} />
+              </div>
+            ) : null}
 
             {canvasActive ? canvasEngine.state.elements.map((item, index) => {
               const frameRect = previewRef.current?.getBoundingClientRect();

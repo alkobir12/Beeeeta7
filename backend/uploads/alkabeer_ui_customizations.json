@@ -242,7 +242,46 @@
       "hidden": {},
       "contents": {},
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {
+        "pageId": "operations",
+        "version": {
+          "current": "draft",
+          "published": "published"
+        },
+        "status": "active",
+        "device": "desktop",
+        "meta": {
+          "title": "العمليات",
+          "description": "Visual editor page",
+          "slug": "operations"
+        },
+        "activeFlags": {
+          "editable": true,
+          "locked": false,
+          "published": true,
+          "previewMode": false
+        },
+        "timestamps": {
+          "createdAt": null,
+          "updatedAt": "2026-04-13T21:21:51.038Z",
+          "publishedAt": "2026-04-13T21:21:51.038Z"
+        },
+        "uiState": {
+          "selectedElementId": null,
+          "hoverElementId": null,
+          "zoom": 100,
+          "grid": true,
+          "snap": true
+        },
+        "security": {
+          "isValid": true,
+          "lastValidatedAt": null
+        }
+      }
     }
   },
   "builder_test_user_2": {

@@ -79,10 +79,29 @@
   - لوحة الخصائص داخل `/app/frontend/src/pages/MoltBot.jsx` أصبحت تدعم live binding فوري على المعاينة
   - رفع الصورة وربط رابطها بالبلوك المحدد
   - تطبيق styles/assets حيًا عبر `pageCustomization.js`
+  - تبني أقسام واضحة داخل اليسار:
+    - Content
+    - Style
+    - Layout
+    - Effects
 - نتيجة الاختبار الرسمية: `iteration_129.json`
   - Backend **14/14 PASS**
   - Frontend **100% PASS**
   - تم تأكيد عمل upload endpoint + الحقول البصرية + التعديل الحي بلا regressions
+
+### دمج محرك Canvas فعلي داخل MoltBot Studio (13 Apr 2026)
+- تم اعتماد hook منفصل لمحرك الـ Canvas:
+  - `/app/frontend/src/hooks/useCanvasEngine.js`
+- يدعم:
+  - Drag
+  - Resize
+  - Snap grid
+  - Smart guides base structure
+  - Live JSON sync
+- تم توصيله بالمعاينة الحية داخل MoltBot قدر الإمكان مع حفظ المواضع والأبعاد في التخصيصات.
+- التحقق الرسمي: `iteration_130.json`
+  - Backend **14/14 PASS**
+  - Frontend **100% PASS**
 
 ### إعادة تصميم Liquid Builder بأسلوب Kodee أبسط وأوضح (12 Apr 2026)
 - تم تبسيط الواجهة جذريًا بعد ملاحظة المستخدم أن الشاشة معقدة وغير مفهومة.

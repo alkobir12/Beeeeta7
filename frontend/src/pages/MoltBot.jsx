@@ -35,6 +35,18 @@ const resolveDisplayName = (item, index, kind = 'بلوك') => {
   return `${kind} ${index + 1}`;
 };
 
+const getAutoCanvasPosition = (index, device) => {
+  const columns = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+  const gapX = 260;
+  const gapY = 140;
+  const baseX = 40;
+  const baseY = 90;
+  return {
+    x: baseX + (index % columns) * gapX,
+    y: baseY + Math.floor(index / columns) * gapY,
+  };
+};
+
 const createCard = () => ({
   id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   title: 'كرت جديد',
@@ -141,10 +153,11 @@ export default function MoltBot() {
     sections: [{
       id: selectedPage,
       elements: blocks.map((block, index) => ({
+        ...getAutoCanvasPosition(index, deviceMode),
         id: block.testid,
         name: resolveDisplayName(block, index, 'بلوك'),
-        x: Number(config.positions?.[block.testid]?.left || 0),
-        y: Number(config.positions?.[block.testid]?.top || 0),
+        x: config.positions?.[block.testid]?.left !== undefined ? Number(config.positions?.[block.testid]?.left || 0) : getAutoCanvasPosition(index, deviceMode).x,
+        y: config.positions?.[block.testid]?.top !== undefined ? Number(config.positions?.[block.testid]?.top || 0) : getAutoCanvasPosition(index, deviceMode).y,
         width: parseInt(config.styles?.[block.testid]?.width || '220', 10) || 220,
         height: parseInt(config.styles?.[block.testid]?.height || '72', 10) || 72,
         type: block.text ? 'text' : 'button',

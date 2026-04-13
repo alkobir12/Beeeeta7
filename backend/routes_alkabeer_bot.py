@@ -57,6 +57,7 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
     block_order = list(page_cfg.get("block_order") or [])
     positions = dict(global_cfg.get("positions") or {})
     positions.update(page_cfg.get("positions") or {})
+    page_manifest = dict(page_cfg.get("page_manifest") or {})
 
     return {
         "labels": labels,
@@ -65,6 +66,7 @@ def _merge_page_configs(global_cfg: Dict[str, Any], page_cfg: Dict[str, Any]) ->
         "custom_cards": custom_cards,
         "block_order": block_order,
         "positions": positions,
+        "page_manifest": page_manifest,
     }
 
 
@@ -80,7 +82,7 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         global_cfg["block_order"] = []
     if "positions" not in global_cfg:
         global_cfg["positions"] = {}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
     merged = _merge_page_configs(global_cfg, page_cfg)
     return {
         "user_id": user_id,
@@ -91,6 +93,7 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         "custom_cards": merged.get("custom_cards") or [],
         "block_order": merged.get("block_order") or [],
         "positions": merged.get("positions") or {},
+        "page_manifest": merged.get("page_manifest") or {},
         "global": global_cfg,
         "page": page_cfg,
     }
@@ -262,6 +265,7 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
     custom_cards = list(current_cfg.get("custom_cards") or [])
     block_order = list(current_cfg.get("block_order") or [])
     positions = dict(current_cfg.get("positions") or {})
+    page_manifest = dict(current_cfg.get("page_manifest") or {})
 
     def _find_card_index(card_title: str) -> int:
         for index, card in enumerate(custom_cards):
@@ -280,6 +284,7 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             custom_cards = []
             block_order = []
             positions = {}
+            page_manifest = {}
             continue
 
         if action_type == "add_card":
@@ -352,7 +357,7 @@ def _apply_actions_to_config(current_cfg: Dict[str, Any], actions: List[Dict[str
             hidden.pop(target, None)
             contents.pop(target, None)
 
-    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards, "block_order": block_order, "positions": positions}
+    return {"labels": labels, "hidden": hidden, "contents": contents, "custom_cards": custom_cards, "block_order": block_order, "positions": positions, "page_manifest": page_manifest}
 
 def get_combined_system_prompt():
     base = ""
@@ -398,6 +403,7 @@ class CustomizationUpdateRequest(BaseModel):
     custom_cards: Optional[List[Dict[str, Any]]] = None
     block_order: Optional[List[str]] = None
     positions: Optional[Dict[str, Dict[str, Any]]] = None
+    page_manifest: Optional[Dict[str, Any]] = None
 
 class ChatResponse(BaseModel):
     response: str
@@ -468,7 +474,7 @@ async def chat(payload: ChatRequest):
             if user_msg.lower() in {"clear", "reset_page", "مسح", "اعادة الصفحة", "إعادة الصفحة"}:
                 data = _read_customizations()
                 user_node = data.get(user_id) or {}
-                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}}
+                user_node[current_path] = {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
                 data[user_id] = user_node
                 _write_customizations(data)
                 cfg = _get_user_page_config(user_id, current_path)
@@ -485,6 +491,7 @@ async def chat(payload: ChatRequest):
                         "custom_cards": cfg.get("custom_cards", []),
                         "block_order": cfg.get("block_order", []),
                         "positions": cfg.get("positions", {}),
+                        "page_manifest": cfg.get("page_manifest", {}),
                     },
                 )
 
@@ -516,7 +523,7 @@ async def chat(payload: ChatRequest):
 
             data = _read_customizations()
             user_node = data.get(user_id) or {}
-            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}}
+            page_cfg = user_node.get(current_path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
             updated_cfg = _apply_actions_to_config(page_cfg, actions)
             user_node[current_path] = updated_cfg
             data[user_id] = user_node
@@ -536,6 +543,7 @@ async def chat(payload: ChatRequest):
                     "custom_cards": merged_cfg.get("custom_cards", []),
                     "block_order": merged_cfg.get("block_order", []),
                     "positions": merged_cfg.get("positions", {}),
+                    "page_manifest": merged_cfg.get("page_manifest", {}),
                 },
             )
 
@@ -605,6 +613,7 @@ def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
             "custom_cards": cfg.get("custom_cards", []),
             "block_order": cfg.get("block_order", []),
             "positions": cfg.get("positions", {}),
+            "page_manifest": cfg.get("page_manifest", {}),
         },
     }
 
@@ -615,7 +624,7 @@ def save_customization(payload: CustomizationUpdateRequest):
     path = str(payload.path or "/").strip() or "/"
     data = _read_customizations()
     user_node = data.get(user_id) or {}
-    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}}
+    page_cfg = user_node.get(path) or {"labels": {}, "hidden": {}, "contents": {}, "custom_cards": [], "block_order": [], "positions": {}, "page_manifest": {}}
     updated_cfg = {
         "labels": payload.labels if payload.labels is not None else page_cfg.get("labels") or {},
         "hidden": payload.hidden if payload.hidden is not None else page_cfg.get("hidden") or {},
@@ -623,6 +632,7 @@ def save_customization(payload: CustomizationUpdateRequest):
         "custom_cards": payload.custom_cards if payload.custom_cards is not None else page_cfg.get("custom_cards") or [],
         "block_order": payload.block_order if payload.block_order is not None else page_cfg.get("block_order") or [],
         "positions": payload.positions if payload.positions is not None else page_cfg.get("positions") or {},
+        "page_manifest": payload.page_manifest if payload.page_manifest is not None else page_cfg.get("page_manifest") or {},
     }
     user_node[path] = updated_cfg
     data[user_id] = user_node
@@ -640,5 +650,6 @@ def save_customization(payload: CustomizationUpdateRequest):
             "custom_cards": cfg.get("custom_cards", []),
             "block_order": cfg.get("block_order", []),
             "positions": cfg.get("positions", {}),
+            "page_manifest": cfg.get("page_manifest", {}),
         },
     }

@@ -1,0 +1,107 @@
+{
+  "summary": "Iteration 127 - MoltBot Page Manifest Integration Testing: Successfully verified page_manifest integration in MoltBot editor. Backend API tests (10/10 passed) confirm page_manifest field is properly saved and retrieved. Frontend tests confirm manifest fields (pageId/version/status/device) are visible in toolbar. Fixed bug where pageId wasn't updating on page selection. Layout preview mode correctly hides sidebar/chat with ?editor-preview=1.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_moltbot_manifest_iter127.py",
+    "/app/test_reports/pytest/pytest_moltbot_manifest_iter127.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed bug in MoltBot.jsx: pageId was not updating when selectedPage changed - added pageId: slug to the useEffect that updates pageManifest",
+    "Backend routes_alkabeer_bot.py correctly handles page_manifest in both GET and PUT customization endpoints",
+    "Layout.jsx correctly uses isEditorWorkspace to hide sidebar/chat in editor-preview mode"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/MoltBot.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% - All 10 API tests passed",
+    "frontend": "100% - All MoltBot manifest features working correctly after fix"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "none required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "MoltBot page manifest integration is complete. Key features verified: pageId/version/status/device fields visible in toolbar, page selection updates pageId correctly (after fix), device mode updates manifest, save/preview/reset buttons work, iframe uses editor-preview=1, Layout hides sidebar/chat in editor-preview mode. No Liquid Builder floating component in Layout anymore.",
+  "features_tested": {
+    "backend_api": {
+      "status": "PASS",
+      "tests": [
+        {"name": "test_health_check", "status": "PASS"},
+        {"name": "test_get_customization_returns_page_manifest", "status": "PASS"},
+        {"name": "test_save_customization_with_page_manifest", "status": "PASS"},
+        {"name": "test_get_saved_manifest_persists", "status": "PASS"},
+        {"name": "test_update_manifest_version_to_published", "status": "PASS"},
+        {"name": "test_customization_with_all_fields", "status": "PASS"},
+        {"name": "test_cleanup_test_data", "status": "PASS"},
+        {"name": "test_chat_health", "status": "PASS"},
+        {"name": "test_chat_normal_mode", "status": "PASS"},
+        {"name": "test_dev_mode_entry_requires_manager", "status": "PASS"}
+      ]
+    },
+    "manifest_fields_in_toolbar": {
+      "status": "PASS",
+      "fields": [
+        {"testid": "moltbot-editor-manifest-pageid", "status": "PASS", "example": "pageId: home"},
+        {"testid": "moltbot-editor-manifest-version", "status": "PASS", "example": "version: draft"},
+        {"testid": "moltbot-editor-manifest-status", "status": "PASS", "example": "status: active"},
+        {"testid": "moltbot-editor-manifest-device", "status": "PASS", "example": "device: desktop"}
+      ]
+    },
+    "page_selection_updates_manifest": {
+      "status": "PASS",
+      "notes": "Fixed bug - pageId now correctly updates when page is changed via dropdown",
+      "fix_applied": "Added pageId: slug to useEffect in MoltBot.jsx"
+    },
+    "device_mode_updates_manifest": {
+      "status": "PASS",
+      "notes": "Clicking mobile/tablet/desktop buttons correctly updates device field in manifest"
+    },
+    "save_button": {
+      "status": "PASS",
+      "testid": "moltbot-editor-save-button"
+    },
+    "preview_link": {
+      "status": "PASS",
+      "testid": "moltbot-editor-preview-link"
+    },
+    "iframe_preview": {
+      "status": "PASS",
+      "testid": "moltbot-editor-preview-iframe",
+      "notes": "Correctly uses ?editor-preview=1 parameter"
+    },
+    "three_column_layout": {
+      "status": "PASS",
+      "components": [
+        {"testid": "moltbot-editor-left-sidebar", "status": "PASS"},
+        {"testid": "moltbot-editor-preview-column", "status": "PASS"},
+        {"testid": "moltbot-editor-right-sidebar", "status": "PASS"}
+      ]
+    },
+    "layout_preview_mode": {
+      "status": "PASS",
+      "notes": "?editor-preview=1 correctly hides sidebar and chat widgets"
+    },
+    "no_liquid_builder_floating_in_layout": {
+      "status": "PASS",
+      "notes": "Liquid Builder floating component removed from Layout.jsx - no regression"
+    }
+  },
+  "bug_fixed": {
+    "description": "pageId in manifest was not updating when page selection changed",
+    "file": "/app/frontend/src/pages/MoltBot.jsx",
+    "fix": "Added pageId: slug to the useEffect that updates pageManifest on selectedPage change",
+    "line_range": "184-199"
+  }
+}

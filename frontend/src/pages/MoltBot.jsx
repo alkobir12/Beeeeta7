@@ -46,6 +46,44 @@ const DEVICE_PRESETS = {
   desktop: { width: 1280, label: 'سطح المكتب', icon: Monitor },
 };
 
+const buildDefaultManifest = (path, device = 'desktop') => {
+  const page = LIQUID_BUILDER_PAGES.find((item) => item.path === path);
+  const slug = String(path || '/').replace(/^\//, '') || 'home';
+  return {
+    pageId: slug,
+    version: { current: 'draft', published: null },
+    status: 'active',
+    device,
+    meta: {
+      title: page?.label || 'صفحة',
+      description: 'Visual editor page',
+      slug,
+    },
+    activeFlags: {
+      editable: true,
+      locked: false,
+      published: false,
+      previewMode: false,
+    },
+    timestamps: {
+      createdAt: null,
+      updatedAt: null,
+      publishedAt: null,
+    },
+    uiState: {
+      selectedElementId: null,
+      hoverElementId: null,
+      zoom: 100,
+      grid: true,
+      snap: true,
+    },
+    security: {
+      isValid: true,
+      lastValidatedAt: null,
+    },
+  };
+};
+
 export default function MoltBot() {
   const { toast } = useToast();
   const iframeRef = useRef(null);
@@ -59,6 +97,7 @@ export default function MoltBot() {
   const [blocks, setBlocks] = useState([]);
   const [blockRects, setBlockRects] = useState([]);
   const [config, setConfig] = useState(EMPTY_CONFIG);
+  const [pageManifest, setPageManifest] = useState(buildDefaultManifest('/'));
   const [selectedBlockId, setSelectedBlockId] = useState('');
   const [selectedCustomCardId, setSelectedCustomCardId] = useState('');
   const [leftTab, setLeftTab] = useState('properties');
@@ -127,6 +166,7 @@ export default function MoltBot() {
     readDraftOrRemote(selectedPage)
       .then((nextConfig) => {
         setConfig(nextConfig);
+        setPageManifest({ ...buildDefaultManifest(selectedPage, deviceMode), ...(nextConfig.page_manifest || {}) });
         setUndoStack([]);
         setRedoStack([]);
       })
@@ -140,6 +180,24 @@ export default function MoltBot() {
     localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
     refreshSnapshots();
   }, [config, previewDoc]);
+
+  useEffect(() => {
+    const slug = String(selectedPage || '/').replace(/^\//, '') || 'home';
+    setPageManifest((prev) => ({
+      ...prev,
+      pageId: slug,
+      device: deviceMode,
+      meta: {
+        ...(prev.meta || {}),
+        title: LIQUID_BUILDER_PAGES.find((item) => item.path === selectedPage)?.label || prev.meta?.title,
+        slug,
+      },
+      uiState: {
+        ...(prev.uiState || {}),
+        selectedElementId: selectedBlockId || null,
+      },
+    }));
+  }, [deviceMode, selectedPage, selectedBlockId]);
 
   useEffect(() => {
     if (!previewWindow) return undefined;
@@ -179,9 +237,27 @@ export default function MoltBot() {
   const save = async () => {
     try {
       setSaving(true);
-      const response = await siteBuilderAPI.saveCustomization({ user_id: userId, path: selectedPage, ...config });
+      const manifestToSave = {
+        ...pageManifest,
+        version: {
+          current: pageManifest.version?.current || 'draft',
+          published: 'published',
+        },
+        activeFlags: {
+          ...(pageManifest.activeFlags || {}),
+          published: true,
+          previewMode: false,
+        },
+        timestamps: {
+          ...(pageManifest.timestamps || {}),
+          updatedAt: new Date().toISOString(),
+          publishedAt: new Date().toISOString(),
+        },
+      };
+      const response = await siteBuilderAPI.saveCustomization({ user_id: userId, path: selectedPage, ...config, page_manifest: manifestToSave });
       const nextData = { ...EMPTY_CONFIG, ...(response.data?.data || config) };
       setConfig(nextData);
+      setPageManifest(manifestToSave);
       localStorage.removeItem(draftStorageKey(userId, selectedPage));
       setUndoStack([]);
       setRedoStack([]);
@@ -335,6 +411,12 @@ export default function MoltBot() {
               <p className="text-xs text-amber-100/60">MoltBot Studio</p>
             </div>
           </div>
+        </div>
+        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-3 px-4 pb-3 text-xs text-amber-100/60 lg:px-6">
+          <span data-testid="moltbot-editor-manifest-pageid">pageId: {pageManifest.pageId}</span>
+          <span data-testid="moltbot-editor-manifest-version">version: {pageManifest.version?.current}</span>
+          <span data-testid="moltbot-editor-manifest-status">status: {pageManifest.status}</span>
+          <span data-testid="moltbot-editor-manifest-device">device: {pageManifest.device}</span>
         </div>
       </div>
 

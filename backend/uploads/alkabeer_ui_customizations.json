@@ -467,5 +467,36 @@
       "block_order": [],
       "positions": {}
     }
+  },
+  "TEST_manifest_user": {
+    "/test-manifest-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "page_manifest": {}
+    },
+    "/test-full-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "page_manifest": {}
+    }
+  },
+  "TEST_full_config": {
+    "/test-full-page": {
+      "labels": {},
+      "hidden": {},
+      "contents": {},
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "page_manifest": {}
+    }
   }
 }

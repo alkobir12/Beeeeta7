@@ -187,7 +187,11 @@
       "custom_cards": [],
       "block_order": [],
       "positions": {},
-      "styles": {},
+      "styles": {
+        "dashboard-stat-total-vehicles-value": {
+          "color": "#ff0000"
+        }
+      },
       "assets": {},
       "page_manifest": {
         "pageId": "home",
@@ -210,11 +214,11 @@
         },
         "timestamps": {
           "createdAt": null,
-          "updatedAt": "2026-04-13T20:55:23.048Z",
-          "publishedAt": "2026-04-13T20:55:23.048Z"
+          "updatedAt": "2026-04-13T21:09:44.652Z",
+          "publishedAt": "2026-04-13T21:09:44.652Z"
         },
         "uiState": {
-          "selectedElementId": "page-custom-cards-dock",
+          "selectedElementId": "dashboard-stat-total-vehicles-value",
           "hoverElementId": null,
           "zoom": 100,
           "grid": true,

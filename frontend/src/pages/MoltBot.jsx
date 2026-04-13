@@ -22,6 +22,7 @@ import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
 import { applyPageCustomizations, buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { LiquidBuilderBotTab } from '../components/LiquidBuilderBotTab';
+import { useCanvasEngine } from '../hooks/useCanvasEngine';
 
 const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {}, styles: {}, assets: {} };
 const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
@@ -122,6 +123,55 @@ export default function MoltBot() {
   const selectedBlock = useMemo(() => blocks.find((block) => block.testid === selectedBlockId) || null, [blocks, selectedBlockId]);
   const selectedCustomCard = useMemo(() => (config.custom_cards || []).find((card) => card.id === selectedCustomCardId) || null, [config.custom_cards, selectedCustomCardId]);
   const namedBlocks = useMemo(() => blocks.map((block, index) => ({ ...block, displayName: resolveDisplayName(block, index, 'بلوك') })), [blocks]);
+  const baseRectMap = useMemo(() => Object.fromEntries(blockRects.map((item) => [item.testid, item])), [blockRects]);
+
+  const canvasElements = useMemo(() => blockRects.map((item) => ({
+    id: item.testid,
+    x: item.left,
+    y: item.top,
+    width: item.width,
+    height: item.height,
+    type: 'block',
+  })), [blockRects]);
+
+  const syncPreviewElement = (elementState) => {
+    if (!previewDoc || !previewRef.current) return;
+    const base = baseRectMap[elementState.id];
+    const element = previewDoc.querySelector(`[data-testid="${elementState.id}"]`);
+    const frameRect = previewRef.current.getBoundingClientRect();
+    if (!element || !base) return;
+    const deltaLeft = elementState.x - (base.left || 0);
+    const deltaTop = elementState.y - (base.top || 0);
+    element.style.position = 'relative';
+    element.style.left = `${deltaLeft}px`;
+    element.style.top = `${deltaTop}px`;
+    element.style.width = `${Math.max(24, elementState.width)}px`;
+    element.style.height = `${Math.max(24, elementState.height)}px`;
+    if (frameRect) {
+      element.dataset.editorFrameLeft = String(frameRect.left);
+    }
+  };
+
+  const canvasEngine = useCanvasEngine(
+    { elements: canvasElements, selectedId: selectedBlockId },
+    {
+      onChange: (next) => {
+        next.elements.forEach(syncPreviewElement);
+      },
+      onCommit: (next) => {
+        const selected = next.elements.find((item) => item.id === next.selectedId) || next.elements.find((item) => item.id === selectedBlockId);
+        if (!selected) return;
+        const base = baseRectMap[selected.id];
+        if (!base) return;
+        updatePosition(selected.id, {
+          left: selected.x - base.left,
+          top: selected.y - base.top,
+        });
+        updateStyle(selected.id, 'width', `${Math.max(24, selected.width)}px`);
+        updateStyle(selected.id, 'height', `${Math.max(24, selected.height)}px`);
+      },
+    }
+  );
 
   const readDraftOrRemote = async (path) => {
     const draft = localStorage.getItem(draftStorageKey(userId, path));
@@ -147,7 +197,14 @@ export default function MoltBot() {
     const frameRect = previewRef.current.getBoundingClientRect();
     const nextRects = nextBlocks.map((block) => {
       const element = previewDoc.querySelector(`[data-testid="${block.testid}"]`);
-      if (!element) return null;
+      if (!element) return {
+        testid: block.testid,
+        text: block.text,
+        top: frameRect.top + 18 + (nextBlocks.indexOf(block) * 44),
+        left: frameRect.left + 18,
+        width: 220,
+        height: 42,
+      };
       const rect = element.getBoundingClientRect();
       return {
         testid: block.testid,
@@ -595,20 +652,29 @@ export default function MoltBot() {
               }}
             />
 
-            {canvasActive ? blockRects.map((item, index) => {
+            {canvasActive ? canvasEngine.state.elements.map((item, index) => {
               const frameRect = previewRef.current?.getBoundingClientRect();
               if (!frameRect) return null;
+              const selected = selectedBlockId === item.id;
               return (
-                <button
-                  key={item.testid}
-                  type="button"
-                  onClick={() => setSelectedBlockId(item.testid)}
-                  className={`absolute z-20 rounded-full border px-3 py-1 text-[11px] shadow-lg backdrop-blur-md ${selectedBlockId === item.testid ? 'border-cyan-300 bg-cyan-400 text-[#241512]' : 'border-white/10 bg-black/70 text-white'}`}
-                  style={{ top: Math.max(6, item.top - frameRect.top - 14), left: Math.max(6, item.left - frameRect.left + 8) }}
-                  data-testid={`moltbot-editor-live-handle-${index}`}
-                >
-                  {resolveDisplayName(item, index, 'بلوك')}
-                </button>
+                <div key={item.id} className="absolute z-20" style={{ top: item.y - frameRect.top, left: item.x - frameRect.left, width: item.width, height: item.height }} data-testid={`moltbot-editor-canvas-element-${index}`}>
+                  <div className={`pointer-events-none absolute inset-0 rounded-xl border-2 ${selected ? 'border-cyan-300 shadow-[0_0_0_4px_rgba(34,211,238,0.12)]' : 'border-white/30'}`} />
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedBlockId(item.id); canvasEngine.selectElement(item.id); }}
+                    onMouseDown={(event) => canvasEngine.startDrag(event, item.id)}
+                    className={`absolute -top-4 left-2 rounded-full px-3 py-1 text-[11px] shadow-lg backdrop-blur-md ${selected ? 'bg-cyan-400 text-[#241512]' : 'bg-black/75 text-white'}`}
+                    data-testid={`moltbot-editor-live-handle-${index}`}
+                  >
+                    <GripVertical size={12} className="inline ml-1" /> {resolveDisplayName(item, index, 'بلوك')}
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => canvasEngine.startResize(event, item.id, 'right-bottom')}
+                    className="absolute -bottom-2 -left-2 h-5 w-5 rounded-full border border-cyan-300 bg-cyan-400 shadow"
+                    data-testid={`moltbot-editor-live-resize-${index}`}
+                  />
+                </div>
               );
             }) : null}
           </div>
@@ -634,7 +700,7 @@ export default function MoltBot() {
                   event.preventDefault();
                   reorderBlock(event.dataTransfer.getData('text/plain'), block.testid);
                 }}
-                onClick={() => { setSelectedBlockId(block.testid); setLeftTab('properties'); }}
+                onClick={() => { setSelectedBlockId(block.testid); canvasEngine.selectElement(block.testid); setLeftTab('properties'); }}
                 className={`rounded-2xl border px-4 py-3 cursor-pointer ${selectedBlockId === block.testid ? 'border-amber-300/40 bg-amber-400/10' : 'border-white/10 bg-white/5'}`}
                 data-testid={`moltbot-editor-block-${index}`}
               >

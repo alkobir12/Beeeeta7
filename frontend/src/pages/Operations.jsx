@@ -253,7 +253,7 @@ const Operations = () => {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [activeOperationsTab, setActiveOperationsTab] = useState('rakan');
+  const [activeOperationsTab, setActiveOperationsTab] = useState('workshop');
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
   const [creditReminderDays, setCreditReminderDays] = useState(() => {
@@ -433,10 +433,11 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/operations`, { params });
       return res.data || [];
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     keepPreviousData: true,
+    initialData: cachedOperations.length ? cachedOperations : undefined,
     placeholderData: cachedOperations.length ? cachedOperations : undefined,
     onSuccess: (data) => {
       if (typeof window === 'undefined') return;
@@ -455,7 +456,7 @@ const Operations = () => {
     }
     const timer = window.setTimeout(() => {
       setIsDeferredDataEnabled(true);
-    }, 900);
+    }, 200);
     return () => window.clearTimeout(timer);
   }, [isDeferredDataEnabled, operationsQuery.isSuccess, cachedOperations.length]);
 

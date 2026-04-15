@@ -10,15 +10,18 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
         # 1. Parse items from notes
         notes_raw = visit_data.get("notes")
         items = []
+        payments = []
         if notes_raw:
             try:
                 if isinstance(notes_raw, str) and notes_raw.strip().startswith("{"):
                     import json
                     parsed = json.loads(notes_raw)
                     items = parsed.get("items", [])
+                    payments = parsed.get("payments", []) or []
                 elif isinstance(notes_raw, dict):
                     items = notes_raw.get("items", [])
-            except:
+                    payments = notes_raw.get("payments", []) or []
+            except Exception:
                 pass
         
         if not items:
@@ -48,11 +51,27 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                 v_res = supa_service.client.table("vehicles").select("customer_name").eq("id", vehicle_id).single().execute()
                 if v_res.data:
                     partner_name = v_res.data.get("customer_name") or "عميل"
-            except:
+            except Exception:
                 pass
 
         payment_status = visit_data.get("payment_status") or visit_data.get("paymentStatus")
-        payment_method = "cash" if str(payment_status).lower() == "paid" else "credit"
+
+        raw_payment_method = (
+            visit_data.get("payment_method")
+            or visit_data.get("paymentMethod")
+            or ((payments or [])[-1].get("method") if payments else None)
+            or ((payments or [])[-1].get("payment_method") if payments else None)
+        )
+
+        normalized_method = str(raw_payment_method or "").strip().lower()
+        if normalized_method in {"تحويل", "bank_transfer", "transfer", "bank"}:
+            payment_method = "transfer"
+        elif normalized_method in {"بطاقة", "card", "pos", "mada", "visa", "mastercard"}:
+            payment_method = "card"
+        elif normalized_method in {"نقد", "نقدي", "cash"}:
+            payment_method = "cash"
+        else:
+            payment_method = "cash" if str(payment_status).lower() == "paid" else "credit"
 
         op_data = {
             "id": visit_id,
@@ -64,9 +83,14 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
             "supplier_archive_total": total_suppliers,
             "total_combined": total_workshop + total_suppliers,
             "vehicle_id": vehicle_id,
+            "visit_id": visit_id,
             "partner_name": partner_name,
             "partner_type": "customer",
             "payment_method": payment_method,
+            "payment_status": payment_status or ("paid" if payment_method != "credit" else "unpaid"),
+            "scope": "vehicle",
+            "source": "vehicle_visit_sync",
+            "business_unit": "workshop",
             "notes": f"عملية من الزيارة {visit_id[:8]}",
             "op_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -91,6 +115,8 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                             "items": items, 
                             "total": total, 
                             "subtotal": total,
+                            "paymentMethod": payment_method,
+                            "paymentStatus": payment_status or ("paid" if payment_method != "credit" else "unpaid"),
                             "updatedAt": datetime.utcnow()
                         }}
                     )
@@ -98,9 +124,14 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                     op_data["id"] = str(uuid.uuid4())
                     op_data["visitId"] = visit_id
                     op_data["vehicleId"] = vehicle_id
+                    op_data["visitId"] = visit_id
                     op_data["partnerName"] = partner_name
                     op_data["partnerType"] = "customer"
-                    op_data["paymentMethod"] = "credit"
+                    op_data["paymentMethod"] = payment_method
+                    op_data["paymentStatus"] = payment_status or ("paid" if payment_method != "credit" else "unpaid")
+                    op_data["scope"] = "vehicle"
+                    op_data["source"] = "vehicle_visit_sync"
+                    op_data["businessUnit"] = "workshop"
                     op_data["date"] = datetime.utcnow()
                     op_data["createdAt"] = datetime.utcnow()
                     # Remove snake_case keys for Mongo if needed, or keep for compatibility

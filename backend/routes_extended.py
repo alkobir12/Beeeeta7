@@ -1466,6 +1466,11 @@ async def list_operations(
                 ops = [o for o in ops if o.get("type") == type]
             if vehicle_id:
                 ops = [o for o in ops if o.get("vehicleId") == vehicle_id]
+            ops = sorted(
+                ops,
+                key=lambda o: str(o.get("date") or o.get("op_date") or o.get("createdAt") or o.get("created_at") or o.get("updatedAt") or o.get("updated_at") or ""),
+                reverse=True,
+            )
             if offset:
                 ops = ops[offset:]
             if limit:

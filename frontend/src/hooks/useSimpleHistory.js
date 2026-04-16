@@ -38,6 +38,13 @@ export const useSimpleHistory = (initialData) => {
     return history[nextIndex];
   }, [history, index]);
 
+  const jumpTo = useCallback((nextIndex) => {
+    const idx = Number(nextIndex);
+    if (!Number.isFinite(idx) || idx < 0 || idx >= history.length) return null;
+    setIndex(idx);
+    return history[idx];
+  }, [history]);
+
   return {
     current: history[index],
     push,
@@ -46,6 +53,7 @@ export const useSimpleHistory = (initialData) => {
     reset,
     canUndo: index > 0,
     canRedo: index < history.length - 1,
+    jumpTo,
     history,
     index,
   };

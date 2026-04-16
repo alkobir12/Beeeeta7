@@ -63,6 +63,7 @@ const buildPageData = (path, blocks, config) => ({
   settings: {
     responsive: true,
     breakpoints: { mobile: 375, tablet: 768, desktop: 1280 },
+    previewSrc: `${path}${String(path).includes('?') ? '&' : '?'}editor-preview=1`,
   },
 });
 
@@ -89,10 +90,8 @@ const buildFallbackBlocks = (path, config) => {
 };
 
 const buildMeaningfulBlocks = (doc, path, config) => {
-  const blockSnapshot = buildBlockSnapshot(220, doc);
-  if (blockSnapshot.length >= 4) return blockSnapshot;
-
-  const uiSnapshot = buildUiSnapshot(400, doc)
+  const blockSnapshot = buildBlockSnapshot(260, doc);
+  const uiSnapshot = buildUiSnapshot(500, doc)
     .filter((item) => {
       const text = String(item?.text || '').trim();
       return text.length >= 3 && !/^\d+$/.test(text);
@@ -102,9 +101,19 @@ const buildMeaningfulBlocks = (doc, path, config) => {
       acc.push({ testid: item.testid, text: item.text });
       return acc;
     }, [])
-    .slice(0, 24);
+    .slice(0, 80);
 
-  return uiSnapshot.length ? uiSnapshot : buildFallbackBlocks(path, config);
+  const merged = [];
+  const seen = new Set();
+  [...blockSnapshot, ...uiSnapshot].forEach((item) => {
+    const key = String(item?.testid || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push({ testid: key, text: item?.text || '' });
+  });
+
+  if (merged.length >= 6) return merged;
+  return merged.length ? [...merged, ...buildFallbackBlocks(path, config)] : buildFallbackBlocks(path, config);
 };
 
 export default function MoltBotStudio() {
@@ -114,6 +123,13 @@ export default function MoltBotStudio() {
   const [config, setConfig] = useState(EMPTY_CONFIG);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState('');
+  const [historyRows, setHistoryRows] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [draftMeta, setDraftMeta] = useState({ version: 0, status: 'draft', updated_at: null });
 
   const session = useMemo(() => {
     try {
@@ -134,9 +150,33 @@ export default function MoltBotStudio() {
         localStorage.removeItem(draftStorageKey(userId, path));
       }
     }
-    const response = await siteBuilderAPI.getCustomization({ user_id: userId, path });
-    return normalizeConfig(response.data?.data || {});
+    const [draftRes, customizationRes] = await Promise.all([
+      siteBuilderAPI.getEditorDraft({ user_id: userId, path }).catch(() => null),
+      siteBuilderAPI.getCustomization({ user_id: userId, path }).catch(() => null),
+    ]);
+
+    const draftData = draftRes?.data?.data || null;
+    if (draftData?.config) {
+      setDraftMeta({
+        version: Number(draftData.version || 0),
+        status: String(draftData.status || 'draft'),
+        updated_at: draftData.updated_at || null,
+      });
+      return normalizeConfig(draftData.config || {});
+    }
+
+    setDraftMeta({ version: 0, status: 'published', updated_at: null });
+    return normalizeConfig(customizationRes?.data?.data || {});
   };
+
+  const loadCollabMeta = useCallback(async (pathArg = selectedPage) => {
+    const [historyRes, commentsRes] = await Promise.all([
+      siteBuilderAPI.getEditorHistory({ user_id: userId, path: pathArg, limit: 50 }).catch(() => ({ data: { data: [] } })),
+      siteBuilderAPI.getEditorComments({ path: pathArg, limit: 120 }).catch(() => ({ data: { data: [] } })),
+    ]);
+    setHistoryRows(Array.isArray(historyRes?.data?.data) ? historyRes.data.data : []);
+    setComments(Array.isArray(commentsRes?.data?.data) ? commentsRes.data.data : []);
+  }, [selectedPage, userId]);
 
   const rebuildPageData = useCallback((pathArg = selectedPage, configArg = config) => {
     const doc = hiddenFrameRef.current?.contentDocument;
@@ -162,10 +202,14 @@ export default function MoltBotStudio() {
   useEffect(() => {
     setLoading(true);
     setPageData(null);
+    setSelectedBlockId('');
     loadConfig(selectedPage)
-      .then((nextConfig) => setConfig(normalizeConfig(nextConfig)))
+      .then((nextConfig) => {
+        setConfig(normalizeConfig(nextConfig));
+        return loadCollabMeta(selectedPage);
+      })
       .catch(() => toast({ title: 'خطأ', description: 'تعذر تحميل الصفحة', variant: 'destructive' }));
-  }, [selectedPage, toast]);
+  }, [selectedPage, toast, loadCollabMeta]);
 
   useEffect(() => {
     localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
@@ -184,17 +228,110 @@ export default function MoltBotStudio() {
       };
     });
     try {
-      await siteBuilderAPI.saveCustomization({ user_id: userId, path: selectedPage, ...nextConfig });
+      setSavingDraft(true);
+      const draftRes = await siteBuilderAPI.saveEditorDraft({
+        user_id: userId,
+        path: selectedPage,
+        config: nextConfig,
+        note: 'manual_save',
+        status: 'draft',
+      });
       setConfig(nextConfig);
       setPageData(buildPageData(
         selectedPage,
         (data.blocks || []).map((block) => ({ testid: block.id, text: block.content || block.title || '' })),
         nextConfig,
       ));
-      localStorage.removeItem(draftStorageKey(userId, selectedPage));
-      toast({ title: 'تم الحفظ', description: 'تم حفظ الصفحة بنجاح' });
+      const saved = draftRes?.data?.data || {};
+      setDraftMeta({
+        version: Number(saved.version || draftMeta.version || 0),
+        status: String(saved.status || 'draft'),
+        updated_at: saved.updated_at || _nowIso(),
+      });
+      await loadCollabMeta(selectedPage);
+      toast({ title: 'تم حفظ المسودة', description: 'تم حفظ نسخة مسودة جديدة بنجاح' });
     } catch {
-      toast({ title: 'خطأ', description: 'تعذر حفظ الصفحة', variant: 'destructive' });
+      toast({ title: 'خطأ', description: 'تعذر حفظ المسودة', variant: 'destructive' });
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const _nowIso = () => new Date().toISOString();
+
+  const handlePublish = async (data) => {
+    const nextConfig = normalizeConfig(config);
+    (data.blocks || []).forEach((block) => {
+      nextConfig.labels[block.id] = block.title || '';
+      nextConfig.contents[block.id] = block.content || '';
+      nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };
+      nextConfig.assets[block.id] = {
+        ...(nextConfig.assets[block.id] || {}),
+        src: block.image || '',
+        href: block.link || '',
+      };
+    });
+
+    try {
+      setPublishing(true);
+      const publishRes = await siteBuilderAPI.publishEditorDraft({
+        user_id: userId,
+        path: selectedPage,
+        config: nextConfig,
+        note: 'publish',
+        status: 'published',
+      });
+      setConfig(nextConfig);
+      const published = publishRes?.data?.data || {};
+      setDraftMeta({
+        version: Number(published.version || draftMeta.version || 0),
+        status: 'published',
+        updated_at: published.updated_at || _nowIso(),
+      });
+      localStorage.removeItem(draftStorageKey(userId, selectedPage));
+      window.dispatchEvent(new CustomEvent('page-customization-updated', {
+        detail: {
+          path: selectedPage,
+          customization: nextConfig,
+        },
+      }));
+      await loadCollabMeta(selectedPage);
+      toast({ title: 'تم النشر', description: 'تم نشر التعديلات على الصفحة بنجاح' });
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر نشر التعديلات', variant: 'destructive' });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    const message = String(commentText || '').trim();
+    if (!message) {
+      toast({ title: 'تنبيه', description: 'اكتب تعليقًا قبل الإضافة', variant: 'destructive' });
+      return;
+    }
+    try {
+      await siteBuilderAPI.addEditorComment({
+        user_id: userId,
+        path: selectedPage,
+        block_id: selectedBlockId,
+        message,
+        author_name: session?.name || userId,
+      });
+      setCommentText('');
+      await loadCollabMeta(selectedPage);
+      toast({ title: 'تمت الإضافة', description: 'تم حفظ التعليق' });
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر حفظ التعليق', variant: 'destructive' });
+    }
+  };
+
+  const handleResolveComment = async (commentId, resolved) => {
+    try {
+      await siteBuilderAPI.updateEditorComment(commentId, { resolved: !resolved });
+      await loadCollabMeta(selectedPage);
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر تحديث التعليق', variant: 'destructive' });
     }
   };
 
@@ -203,11 +340,14 @@ export default function MoltBotStudio() {
       <div className="border-b border-white/10 bg-white/5 px-4 py-3 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">MoltBot Canvas Editor</h1>
-          <p className="text-xs text-white/60">تحرير حي للموقع مع معاينة Liquid</p>
+          <p className="text-xs text-white/60" data-testid="moltbot-editor-meta-status">نسخة {draftMeta.version || 0} • الحالة: {draftMeta.status === 'published' ? 'منشور' : 'مسودة'}</p>
         </div>
-        <select value={selectedPage} onChange={(e) => setSelectedPage(e.target.value)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-canvas-editor-page-select">
-          {LIQUID_BUILDER_PAGES.map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
-        </select>
+        <div className="flex items-center gap-2">
+          <div className="text-[11px] text-white/60" data-testid="moltbot-editor-save-state">{savingDraft ? 'جاري حفظ المسودة...' : publishing ? 'جاري النشر...' : draftMeta.updated_at ? `آخر تحديث: ${new Date(draftMeta.updated_at).toLocaleString('ar-SA')}` : 'لم يتم الحفظ بعد'}</div>
+          <select value={selectedPage} onChange={(e) => setSelectedPage(e.target.value)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-canvas-editor-page-select">
+            {LIQUID_BUILDER_PAGES.map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
+          </select>
+        </div>
       </div>
 
       <iframe
@@ -222,7 +362,70 @@ export default function MoltBotStudio() {
       {loading || !pageData ? (
         <div className="flex min-h-[70vh] items-center justify-center text-sm text-white/70" data-testid="moltbot-canvas-editor-loading">جاري تجهيز المحرر...</div>
       ) : (
-        <CanvasEditor key={`${selectedPage}-${pageData.blocks.length}`} pageData={pageData} onSave={handleSave} />
+        <>
+          <CanvasEditor
+            key={`${selectedPage}-${pageData.blocks.length}`}
+            pageData={pageData}
+            onSave={handleSave}
+            onPublish={handlePublish}
+            onSelectionChange={setSelectedBlockId}
+          />
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 border-t border-white/10 bg-[#0a1020]" data-testid="moltbot-editor-collab-panel">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4" data-testid="moltbot-editor-history-panel">
+              <h3 className="text-sm font-bold mb-3">History (Save)</h3>
+              <div className="space-y-2 max-h-56 overflow-y-auto" data-testid="moltbot-editor-history-list">
+                {historyRows.length ? historyRows.map((row, idx) => (
+                  <div key={row.id || idx} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2" data-testid={`moltbot-editor-history-item-${idx}`}>
+                    <div className="text-xs text-white/90">v{row.version || 0} • {row.status === 'published' ? 'منشور' : 'مسودة'}</div>
+                    <div className="text-[11px] text-white/60">{row.note || '-'} • {row.updated_at ? new Date(row.updated_at).toLocaleString('ar-SA') : '-'}</div>
+                  </div>
+                )) : <div className="text-xs text-white/60" data-testid="moltbot-editor-history-empty">لا يوجد تاريخ حفظ بعد</div>}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4" data-testid="moltbot-editor-comments-panel">
+              <h3 className="text-sm font-bold mb-2">Comments</h3>
+              <div className="text-[11px] text-white/60 mb-2" data-testid="moltbot-editor-comments-selected-block">العنصر المحدد: {selectedBlockId || 'غير محدد'}</div>
+              <div className="flex gap-2 mb-3">
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="أضف تعليقًا على العنصر/الصفحة"
+                  className="flex-1 rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none"
+                  data-testid="moltbot-editor-comment-input"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddComment}
+                  className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-3 py-2 text-sm"
+                  data-testid="moltbot-editor-comment-add-button"
+                >
+                  إضافة
+                </button>
+              </div>
+              <div className="space-y-2 max-h-52 overflow-y-auto" data-testid="moltbot-editor-comments-list">
+                {comments.length ? comments.map((comment, idx) => (
+                  <div key={comment.id || idx} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2" data-testid={`moltbot-editor-comment-item-${idx}`}>
+                    <div className="text-xs text-white/90">{comment.author_name || comment.user_id || 'مستخدم'} {comment.block_id ? `• ${comment.block_id}` : ''}</div>
+                    <div className="text-xs text-white/70 mt-1">{comment.message || '-'}</div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[11px] text-white/50">{comment.created_at ? new Date(comment.created_at).toLocaleString('ar-SA') : '-'}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleResolveComment(comment.id, Boolean(comment.resolved))}
+                        className="text-[11px] px-2 py-1 rounded border border-white/15 bg-white/10"
+                        data-testid={`moltbot-editor-comment-resolve-button-${idx}`}
+                      >
+                        {comment.resolved ? 'إعادة فتح' : 'تم الحل'}
+                      </button>
+                    </div>
+                  </div>
+                )) : <div className="text-xs text-white/60" data-testid="moltbot-editor-comments-empty">لا توجد تعليقات بعد</div>}
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

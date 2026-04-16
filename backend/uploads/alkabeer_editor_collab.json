@@ -1,0 +1,509 @@
+{
+  "drafts": [
+    {
+      "id": "c9b3d258-aede-4fa3-bf34-9e0d35c2006c",
+      "user_id": "manager",
+      "path": "/dashboard",
+      "status": "published",
+      "version": 2,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-card-title": "عنوان معدل من API"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-card-title": "محتوى معدل من API"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T08:18:39.489910+00:00",
+      "updated_at": "2026-04-16T08:18:39.489910+00:00"
+    },
+    {
+      "id": "77c64cf4-7a3a-4fa1-93d8-82f9f502c594",
+      "user_id": "manager",
+      "path": "/",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:40:59.221035+00:00",
+      "updated_at": "2026-04-16T12:40:59.221035+00:00"
+    },
+    {
+      "id": "31e7e566-b7fa-4d8d-9e71-f9f30d7798ef",
+      "user_id": "manager",
+      "path": "/operations",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "operations-active-tab-title": "TEST-/operations-1776343259"
+        },
+        "hidden": {},
+        "contents": {
+          "operations-active-tab-title": "TEST-/operations-1776343259"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:40:59.521449+00:00",
+      "updated_at": "2026-04-16T12:40:59.521449+00:00"
+    },
+    {
+      "id": "5179d8e1-cc8d-421b-a049-064f9f2690ce",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:41:47.011212+00:00",
+      "updated_at": "2026-04-16T12:41:47.011212+00:00"
+    },
+    {
+      "id": "a42f79da-8948-4546-86de-7ca9df6b1dba",
+      "user_id": "local-admin",
+      "path": "/operations",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "operations-active-tab-title": "LOCAL-/operations-1776343307"
+        },
+        "hidden": {},
+        "contents": {
+          "operations-active-tab-title": "LOCAL-/operations-1776343307"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:41:47.381483+00:00",
+      "updated_at": "2026-04-16T12:41:47.381483+00:00"
+    },
+    {
+      "id": "c4b9953a-3985-4c59-9b6f-abe484d60526",
+      "user_id": "manager",
+      "path": "/test-page-0b54fcc5",
+      "status": "draft",
+      "version": 1,
+      "note": "test_save",
+      "config": {
+        "labels": {
+          "test-block-1": "عنوان تجريبي"
+        },
+        "hidden": {},
+        "contents": {
+          "test-block-1": "محتوى تجريبي"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "test-block-1": {
+            "backgroundColor": "#f0f0f0"
+          }
+        },
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:38.617334+00:00",
+      "updated_at": "2026-04-16T12:52:38.617334+00:00"
+    },
+    {
+      "id": "abf4d53d-6dfe-4a5d-b155-9f8c849f5fcb",
+      "user_id": "manager",
+      "path": "/persist-test-2183fce5",
+      "status": "draft",
+      "version": 1,
+      "note": "persistence_test",
+      "config": {
+        "labels": {
+          "persist-block": "تسمية للحفظ"
+        },
+        "hidden": {},
+        "contents": {
+          "persist-block": "محتوى للحفظ"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:38.746814+00:00",
+      "updated_at": "2026-04-16T12:52:38.746814+00:00"
+    },
+    {
+      "id": "e13e9797-3ca9-4838-9b6f-f20ec3b7ce35",
+      "user_id": "manager",
+      "path": "/publish-test-31a9c42c",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "publish-block": "عنوان منشور"
+        },
+        "hidden": {},
+        "contents": {
+          "publish-block": "محتوى منشور"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:39.006377+00:00",
+      "updated_at": "2026-04-16T12:52:39.006377+00:00"
+    },
+    {
+      "id": "10b91566-89fc-4b9f-8b5c-abf8cfda85f6",
+      "user_id": "manager",
+      "path": "/history-test-6151ed45",
+      "status": "draft",
+      "version": 1,
+      "note": "history_test_1",
+      "config": {
+        "labels": {
+          "history-block": "تاريخ"
+        },
+        "hidden": {},
+        "contents": {},
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:39.802882+00:00",
+      "updated_at": "2026-04-16T12:52:39.802882+00:00"
+    }
+  ],
+  "history": [
+    {
+      "id": "8221a1cc-23ca-4d2b-9981-8f701070b958",
+      "user_id": "manager",
+      "path": "/dashboard",
+      "status": "draft",
+      "version": 1,
+      "note": "api_test_save",
+      "config": {
+        "labels": {
+          "dashboard-card-title": "عنوان معدل من API"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-card-title": "محتوى معدل من API"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T08:18:37.444865+00:00",
+      "updated_at": "2026-04-16T08:18:37.444865+00:00"
+    },
+    {
+      "id": "c9b3d258-aede-4fa3-bf34-9e0d35c2006c",
+      "user_id": "manager",
+      "path": "/dashboard",
+      "status": "published",
+      "version": 2,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-card-title": "عنوان معدل من API"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-card-title": "محتوى معدل من API"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T08:18:39.489910+00:00",
+      "updated_at": "2026-04-16T08:18:39.489910+00:00"
+    },
+    {
+      "id": "77c64cf4-7a3a-4fa1-93d8-82f9f502c594",
+      "user_id": "manager",
+      "path": "/",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:40:59.221035+00:00",
+      "updated_at": "2026-04-16T12:40:59.221035+00:00"
+    },
+    {
+      "id": "31e7e566-b7fa-4d8d-9e71-f9f30d7798ef",
+      "user_id": "manager",
+      "path": "/operations",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "operations-active-tab-title": "TEST-/operations-1776343259"
+        },
+        "hidden": {},
+        "contents": {
+          "operations-active-tab-title": "TEST-/operations-1776343259"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:40:59.521449+00:00",
+      "updated_at": "2026-04-16T12:40:59.521449+00:00"
+    },
+    {
+      "id": "5179d8e1-cc8d-421b-a049-064f9f2690ce",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+        },
+        "hidden": {},
+        "contents": {
+          "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:41:47.011212+00:00",
+      "updated_at": "2026-04-16T12:41:47.011212+00:00"
+    },
+    {
+      "id": "a42f79da-8948-4546-86de-7ca9df6b1dba",
+      "user_id": "local-admin",
+      "path": "/operations",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "operations-active-tab-title": "LOCAL-/operations-1776343307"
+        },
+        "hidden": {},
+        "contents": {
+          "operations-active-tab-title": "LOCAL-/operations-1776343307"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:41:47.381483+00:00",
+      "updated_at": "2026-04-16T12:41:47.381483+00:00"
+    },
+    {
+      "id": "c4b9953a-3985-4c59-9b6f-abe484d60526",
+      "user_id": "manager",
+      "path": "/test-page-0b54fcc5",
+      "status": "draft",
+      "version": 1,
+      "note": "test_save",
+      "config": {
+        "labels": {
+          "test-block-1": "عنوان تجريبي"
+        },
+        "hidden": {},
+        "contents": {
+          "test-block-1": "محتوى تجريبي"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "test-block-1": {
+            "backgroundColor": "#f0f0f0"
+          }
+        },
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:38.617334+00:00",
+      "updated_at": "2026-04-16T12:52:38.617334+00:00"
+    },
+    {
+      "id": "abf4d53d-6dfe-4a5d-b155-9f8c849f5fcb",
+      "user_id": "manager",
+      "path": "/persist-test-2183fce5",
+      "status": "draft",
+      "version": 1,
+      "note": "persistence_test",
+      "config": {
+        "labels": {
+          "persist-block": "تسمية للحفظ"
+        },
+        "hidden": {},
+        "contents": {
+          "persist-block": "محتوى للحفظ"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:38.746814+00:00",
+      "updated_at": "2026-04-16T12:52:38.746814+00:00"
+    },
+    {
+      "id": "e13e9797-3ca9-4838-9b6f-f20ec3b7ce35",
+      "user_id": "manager",
+      "path": "/publish-test-31a9c42c",
+      "status": "published",
+      "version": 1,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "publish-block": "عنوان منشور"
+        },
+        "hidden": {},
+        "contents": {
+          "publish-block": "محتوى منشور"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:39.006377+00:00",
+      "updated_at": "2026-04-16T12:52:39.006377+00:00"
+    },
+    {
+      "id": "10b91566-89fc-4b9f-8b5c-abf8cfda85f6",
+      "user_id": "manager",
+      "path": "/history-test-6151ed45",
+      "status": "draft",
+      "version": 1,
+      "note": "history_test_1",
+      "config": {
+        "labels": {
+          "history-block": "تاريخ"
+        },
+        "hidden": {},
+        "contents": {},
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {},
+        "assets": {},
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-16T12:52:39.802882+00:00",
+      "updated_at": "2026-04-16T12:52:39.802882+00:00"
+    }
+  ],
+  "comments": [
+    {
+      "id": "224f8b79-31b9-499a-8bca-378a73cd4655",
+      "path": "/",
+      "user_id": "manager",
+      "block_id": "test-block",
+      "message": "تعليق تجريبي 62039509",
+      "author_name": "مدير",
+      "resolved": false,
+      "created_at": "2026-04-16T12:52:40.455704+00:00",
+      "updated_at": "2026-04-16T12:52:40.455704+00:00"
+    },
+    {
+      "id": "5b966ed2-4721-4d16-a205-e6ca091e2b79",
+      "path": "/",
+      "user_id": "manager",
+      "block_id": "resolve-test-block",
+      "message": "تعليق للحل da14519d",
+      "author_name": "مدير",
+      "resolved": false,
+      "created_at": "2026-04-16T12:52:40.569174+00:00",
+      "updated_at": "2026-04-16T12:52:40.802680+00:00"
+    }
+  ]
+}

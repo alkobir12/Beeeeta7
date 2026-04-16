@@ -8,10 +8,16 @@ import json
 import re
 import mimetypes
 import requests
+from datetime import datetime, timezone
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from dotenv import load_dotenv
 from fastapi.responses import Response
 from motor.motor_asyncio import AsyncIOMotorClient
+
+try:
+    from supabase_service import SupabaseService
+except Exception:
+    SupabaseService = None
 
 load_dotenv()
 
@@ -27,6 +33,7 @@ session_states = {}
 
 CUSTOMIZATION_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_ui_customizations.json")
 EDITOR_ASSETS_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_editor_assets.json")
+EDITOR_COLLAB_FILE = os.path.join(os.path.dirname(__file__), "uploads", "alkabeer_editor_collab.json")
 STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
 APP_NAME = "alkobir-editor"
 storage_key = None
@@ -34,6 +41,12 @@ storage_key = None
 MONGO_URL = os.getenv("MONGO_URL")
 DB_NAME = os.getenv("DB_NAME")
 editor_db = AsyncIOMotorClient(MONGO_URL)[DB_NAME] if MONGO_URL and DB_NAME else None
+supa_service = SupabaseService() if SupabaseService else None
+
+EDITOR_DRAFTS_TABLE = os.getenv("MOLTBOT_DRAFTS_TABLE", "moltbot_editor_drafts")
+EDITOR_HISTORY_TABLE = os.getenv("MOLTBOT_HISTORY_TABLE", "moltbot_editor_history")
+EDITOR_COMMENTS_TABLE = os.getenv("MOLTBOT_COMMENTS_TABLE", "moltbot_editor_comments")
+_editor_table_status: Dict[str, bool] = {}
 
 
 def _read_customizations() -> Dict[str, Any]:
@@ -72,6 +85,58 @@ def _write_editor_assets(rows: List[Dict[str, Any]]):
     os.makedirs(os.path.dirname(EDITOR_ASSETS_FILE), exist_ok=True)
     with open(EDITOR_ASSETS_FILE, "w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2)
+
+
+def _read_editor_collab() -> Dict[str, Any]:
+    try:
+        os.makedirs(os.path.dirname(EDITOR_COLLAB_FILE), exist_ok=True)
+        if not os.path.exists(EDITOR_COLLAB_FILE):
+            with open(EDITOR_COLLAB_FILE, "w", encoding="utf-8") as f:
+                json.dump({"drafts": [], "history": [], "comments": []}, f, ensure_ascii=False, indent=2)
+        with open(EDITOR_COLLAB_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if not isinstance(data, dict):
+                return {"drafts": [], "history": [], "comments": []}
+            return {
+                "drafts": data.get("drafts") if isinstance(data.get("drafts"), list) else [],
+                "history": data.get("history") if isinstance(data.get("history"), list) else [],
+                "comments": data.get("comments") if isinstance(data.get("comments"), list) else [],
+            }
+    except Exception:
+        return {"drafts": [], "history": [], "comments": []}
+
+
+def _write_editor_collab(data: Dict[str, Any]):
+    os.makedirs(os.path.dirname(EDITOR_COLLAB_FILE), exist_ok=True)
+    payload = {
+        "drafts": data.get("drafts") if isinstance(data.get("drafts"), list) else [],
+        "history": data.get("history") if isinstance(data.get("history"), list) else [],
+        "comments": data.get("comments") if isinstance(data.get("comments"), list) else [],
+    }
+    with open(EDITOR_COLLAB_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+def _editor_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _editor_supabase_ready() -> bool:
+    return bool(supa_service and getattr(supa_service, "client", None) and not getattr(supa_service, "mock_mode", True))
+
+
+def _editor_table_available(table_name: str) -> bool:
+    if table_name in _editor_table_status:
+        return _editor_table_status[table_name]
+    if not _editor_supabase_ready():
+        _editor_table_status[table_name] = False
+        return False
+    try:
+        supa_service.client.table(table_name).select("id").limit(1).execute()
+        _editor_table_status[table_name] = True
+    except Exception:
+        _editor_table_status[table_name] = False
+    return _editor_table_status[table_name]
 
 
 def _guess_content_type(filename: str, fallback: str = "application/octet-stream") -> str:
@@ -177,6 +242,212 @@ def _get_user_page_config(user_id: str, path: str) -> Dict[str, Any]:
         "global": global_cfg,
         "page": page_cfg,
     }
+
+
+def _editor_sanitize_config(config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    config = config or {}
+    return {
+        "labels": config.get("labels") or {},
+        "hidden": config.get("hidden") or {},
+        "contents": config.get("contents") or {},
+        "custom_cards": config.get("custom_cards") or [],
+        "block_order": config.get("block_order") or [],
+        "positions": config.get("positions") or {},
+        "styles": config.get("styles") or {},
+        "assets": config.get("assets") or {},
+        "page_manifest": config.get("page_manifest") or {},
+    }
+
+
+def _editor_get_latest_draft(user_id: str, path: str) -> Optional[Dict[str, Any]]:
+    if _editor_table_available(EDITOR_DRAFTS_TABLE):
+        try:
+            rows = (
+                supa_service.client.table(EDITOR_DRAFTS_TABLE)
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("path", path)
+                .order("version", desc=True)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if rows:
+                return rows[0]
+        except Exception:
+            _editor_table_status[EDITOR_DRAFTS_TABLE] = False
+
+    collab = _read_editor_collab()
+    candidates = [
+        row for row in collab.get("drafts", [])
+        if str(row.get("user_id") or "") == user_id and str(row.get("path") or "") == path
+    ]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: int(row.get("version") or 0), reverse=True)
+    return candidates[0]
+
+
+def _editor_list_history(user_id: str, path: str, limit: int = 40) -> List[Dict[str, Any]]:
+    if _editor_table_available(EDITOR_HISTORY_TABLE):
+        try:
+            return (
+                supa_service.client.table(EDITOR_HISTORY_TABLE)
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("path", path)
+                .order("version", desc=True)
+                .limit(limit)
+                .execute()
+                .data
+                or []
+            )
+        except Exception:
+            _editor_table_status[EDITOR_HISTORY_TABLE] = False
+
+    collab = _read_editor_collab()
+    rows = [
+        row for row in collab.get("history", [])
+        if str(row.get("user_id") or "") == user_id and str(row.get("path") or "") == path
+    ]
+    rows.sort(key=lambda row: int(row.get("version") or 0), reverse=True)
+    return rows[:limit]
+
+
+def _editor_save_snapshot(user_id: str, path: str, config: Dict[str, Any], status: str = "draft", note: str = "manual_save") -> Dict[str, Any]:
+    safe_cfg = _editor_sanitize_config(config)
+    latest = _editor_get_latest_draft(user_id, path)
+    version = int(latest.get("version") or 0) + 1 if latest else 1
+    now_iso = _editor_now_iso()
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "path": path,
+        "status": status,
+        "version": version,
+        "note": note,
+        "config": safe_cfg,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+
+    if _editor_table_available(EDITOR_DRAFTS_TABLE) and _editor_table_available(EDITOR_HISTORY_TABLE):
+        try:
+            supa_service.client.table(EDITOR_DRAFTS_TABLE).insert(record).execute()
+            supa_service.client.table(EDITOR_HISTORY_TABLE).insert(record).execute()
+            return record
+        except Exception:
+            _editor_table_status[EDITOR_DRAFTS_TABLE] = False
+            _editor_table_status[EDITOR_HISTORY_TABLE] = False
+
+    collab = _read_editor_collab()
+    drafts = [
+        row for row in collab.get("drafts", [])
+        if not (str(row.get("user_id") or "") == user_id and str(row.get("path") or "") == path)
+    ]
+    drafts.append(record)
+    history = collab.get("history", [])
+    history.append(record)
+    collab["drafts"] = drafts
+    collab["history"] = history[-300:]
+    _write_editor_collab(collab)
+    return record
+
+
+def _editor_list_comments(path: str, user_id: Optional[str], limit: int = 120) -> List[Dict[str, Any]]:
+    if _editor_table_available(EDITOR_COMMENTS_TABLE):
+        try:
+            q = supa_service.client.table(EDITOR_COMMENTS_TABLE).select("*").eq("path", path)
+            if user_id:
+                q = q.eq("user_id", user_id)
+            return q.order("created_at", desc=True).limit(limit).execute().data or []
+        except Exception:
+            _editor_table_status[EDITOR_COMMENTS_TABLE] = False
+
+    collab = _read_editor_collab()
+    rows = [row for row in collab.get("comments", []) if str(row.get("path") or "") == path]
+    if user_id:
+        rows = [row for row in rows if str(row.get("user_id") or "") == user_id]
+    rows.sort(key=lambda row: str(row.get("created_at") or ""), reverse=True)
+    return rows[:limit]
+
+
+def _editor_add_comment(path: str, user_id: str, block_id: str, message: str, author_name: Optional[str]) -> Dict[str, Any]:
+    now_iso = _editor_now_iso()
+    row = {
+        "id": str(uuid.uuid4()),
+        "path": path,
+        "user_id": user_id,
+        "block_id": block_id,
+        "message": message,
+        "author_name": author_name or user_id,
+        "resolved": False,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    if _editor_table_available(EDITOR_COMMENTS_TABLE):
+        try:
+            inserted = supa_service.client.table(EDITOR_COMMENTS_TABLE).insert(row).execute().data or []
+            return inserted[0] if inserted else row
+        except Exception:
+            _editor_table_status[EDITOR_COMMENTS_TABLE] = False
+
+    collab = _read_editor_collab()
+    comments = collab.get("comments", [])
+    comments.append(row)
+    collab["comments"] = comments[-500:]
+    _write_editor_collab(collab)
+    return row
+
+
+def _editor_update_comment(comment_id: str, resolved: Optional[bool], message: Optional[str]) -> Optional[Dict[str, Any]]:
+    now_iso = _editor_now_iso()
+    if _editor_table_available(EDITOR_COMMENTS_TABLE):
+        try:
+            payload: Dict[str, Any] = {"updated_at": now_iso}
+            if resolved is not None:
+                payload["resolved"] = bool(resolved)
+            if message is not None:
+                payload["message"] = str(message)
+            rows = supa_service.client.table(EDITOR_COMMENTS_TABLE).update(payload).eq("id", comment_id).execute().data or []
+            return rows[0] if rows else None
+        except Exception:
+            _editor_table_status[EDITOR_COMMENTS_TABLE] = False
+
+    collab = _read_editor_collab()
+    updated = None
+    next_comments = []
+    for row in collab.get("comments", []):
+        if str(row.get("id") or "") != str(comment_id):
+            next_comments.append(row)
+            continue
+        updated = dict(row)
+        if resolved is not None:
+            updated["resolved"] = bool(resolved)
+        if message is not None:
+            updated["message"] = str(message)
+        updated["updated_at"] = now_iso
+        next_comments.append(updated)
+    collab["comments"] = next_comments
+    _write_editor_collab(collab)
+    return updated
+
+
+def _editor_delete_comment(comment_id: str) -> bool:
+    if _editor_table_available(EDITOR_COMMENTS_TABLE):
+        try:
+            supa_service.client.table(EDITOR_COMMENTS_TABLE).delete().eq("id", comment_id).execute()
+            return True
+        except Exception:
+            _editor_table_status[EDITOR_COMMENTS_TABLE] = False
+
+    collab = _read_editor_collab()
+    before = len(collab.get("comments", []))
+    collab["comments"] = [row for row in collab.get("comments", []) if str(row.get("id") or "") != str(comment_id)]
+    _write_editor_collab(collab)
+    return len(collab.get("comments", [])) < before
 
 
 def _extract_json_object(raw_text: str) -> Optional[Dict[str, Any]]:
@@ -491,6 +762,27 @@ class CustomizationUpdateRequest(BaseModel):
     assets: Optional[Dict[str, Dict[str, Any]]] = None
     page_manifest: Optional[Dict[str, Any]] = None
 
+
+class EditorDraftSaveRequest(BaseModel):
+    user_id: str = "manager"
+    path: str = "/"
+    config: Dict[str, Any] = {}
+    note: Optional[str] = "manual_save"
+    status: Optional[str] = "draft"
+
+
+class EditorCommentCreateRequest(BaseModel):
+    user_id: str = "manager"
+    path: str = "/"
+    block_id: Optional[str] = ""
+    message: str
+    author_name: Optional[str] = None
+
+
+class EditorCommentUpdateRequest(BaseModel):
+    resolved: Optional[bool] = None
+    message: Optional[str] = None
+
 class ChatResponse(BaseModel):
     response: str
     sessionId: str
@@ -749,6 +1041,122 @@ def save_customization(payload: CustomizationUpdateRequest):
             "page_manifest": cfg.get("page_manifest", {}),
         },
     }
+
+
+@router.get("/editor/draft")
+def get_editor_draft(user_id: str = Query("manager"), path: str = Query("/")):
+    latest = _editor_get_latest_draft(user_id, path)
+    if latest:
+        return {
+            "success": True,
+            "data": {
+                "id": latest.get("id"),
+                "user_id": user_id,
+                "path": path,
+                "version": int(latest.get("version") or 0),
+                "status": latest.get("status") or "draft",
+                "note": latest.get("note") or "",
+                "config": _editor_sanitize_config(latest.get("config") or {}),
+                "updated_at": latest.get("updated_at") or latest.get("created_at"),
+            },
+        }
+
+    cfg = _get_user_page_config(user_id, path)
+    return {
+        "success": True,
+        "data": {
+            "id": None,
+            "user_id": user_id,
+            "path": path,
+            "version": 0,
+            "status": "published",
+            "note": "fallback_from_customization",
+            "config": _editor_sanitize_config(cfg),
+            "updated_at": None,
+        },
+    }
+
+
+@router.post("/editor/draft/save")
+def save_editor_draft(payload: EditorDraftSaveRequest):
+    user_id = str(payload.user_id or "manager").strip() or "manager"
+    path = str(payload.path or "/").strip() or "/"
+    status = str(payload.status or "draft").strip().lower() or "draft"
+    note = str(payload.note or "manual_save").strip() or "manual_save"
+    record = _editor_save_snapshot(user_id, path, payload.config or {}, status=status, note=note)
+    return {"success": True, "data": record}
+
+
+@router.post("/editor/publish")
+def publish_editor_payload(payload: EditorDraftSaveRequest):
+    user_id = str(payload.user_id or "manager").strip() or "manager"
+    path = str(payload.path or "/").strip() or "/"
+    config = _editor_sanitize_config(payload.config or {})
+
+    # Publish to customization map (source of truth for live website)
+    save_customization(
+        CustomizationUpdateRequest(
+            user_id=user_id,
+            path=path,
+            labels=config.get("labels"),
+            hidden=config.get("hidden"),
+            contents=config.get("contents"),
+            custom_cards=config.get("custom_cards"),
+            block_order=config.get("block_order"),
+            positions=config.get("positions"),
+            styles=config.get("styles"),
+            assets=config.get("assets"),
+            page_manifest=config.get("page_manifest"),
+        )
+    )
+
+    record = _editor_save_snapshot(user_id, path, config, status="published", note="publish")
+    return {"success": True, "data": record}
+
+
+@router.get("/editor/history")
+def get_editor_history(user_id: str = Query("manager"), path: str = Query("/"), limit: int = Query(40)):
+    safe_limit = max(1, min(200, int(limit or 40)))
+    rows = _editor_list_history(user_id, path, safe_limit)
+    return {"success": True, "data": rows}
+
+
+@router.get("/editor/comments")
+def get_editor_comments(path: str = Query("/"), user_id: Optional[str] = Query(None), limit: int = Query(120)):
+    safe_limit = max(1, min(300, int(limit or 120)))
+    rows = _editor_list_comments(path, user_id, safe_limit)
+    return {"success": True, "data": rows}
+
+
+@router.post("/editor/comments")
+def add_editor_comment(payload: EditorCommentCreateRequest):
+    message = str(payload.message or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Comment message is required")
+    row = _editor_add_comment(
+        path=str(payload.path or "/").strip() or "/",
+        user_id=str(payload.user_id or "manager").strip() or "manager",
+        block_id=str(payload.block_id or "").strip(),
+        message=message,
+        author_name=payload.author_name,
+    )
+    return {"success": True, "data": row}
+
+
+@router.put("/editor/comments/{comment_id}")
+def update_editor_comment(comment_id: str, payload: EditorCommentUpdateRequest):
+    row = _editor_update_comment(comment_id, payload.resolved, payload.message)
+    if not row:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"success": True, "data": row}
+
+
+@router.delete("/editor/comments/{comment_id}")
+def delete_editor_comment(comment_id: str):
+    ok = _editor_delete_comment(comment_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"success": True}
 
 
 @router.post("/assets/upload")

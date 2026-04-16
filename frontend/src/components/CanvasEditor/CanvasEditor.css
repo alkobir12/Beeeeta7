@@ -33,6 +33,7 @@
 .toolbar button:disabled { opacity: 0.45; cursor: not-allowed; }
 .toolbar button.active { background: #3b82f6; border-color: #3b82f6; }
 .toolbar .btn-primary { background: #10b981; border-color: #10b981; }
+.toolbar .btn-secondary { background: #0ea5e9; border-color: #0ea5e9; }
 
 .editor-layout {
   display: grid;

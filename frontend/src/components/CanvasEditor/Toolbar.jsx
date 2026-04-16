@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Toolbar = ({ deviceMode, onDeviceChange, onSave, undo, redo, canUndo, canRedo }) => {
+const Toolbar = ({ deviceMode, onDeviceChange, onSave, onPublish, undo, redo, canUndo, canRedo }) => {
   return (
     <div className="toolbar" data-testid="canvas-editor-toolbar">
       <div className="toolbar-group history">
@@ -16,6 +16,7 @@ const Toolbar = ({ deviceMode, onDeviceChange, onSave, undo, redo, canUndo, canR
 
       <div className="toolbar-group actions">
         <button onClick={onSave} className="btn-primary" data-testid="canvas-editor-save-button">حفظ</button>
+        <button onClick={onPublish} className="btn-secondary" data-testid="canvas-editor-publish-button">نشر</button>
       </div>
     </div>
   );

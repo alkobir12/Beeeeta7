@@ -10,7 +10,16 @@ const SortableBlock = ({ block, selected, onSelect }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={`block-item ${selected ? 'selected' : ''}`} onClick={() => onSelect?.(block.id)} data-testid={`canvas-editor-block-item-${block.id}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`block-item ${selected ? 'selected' : ''}`}
+      onClick={() => onSelect?.(block.id)}
+      onPointerDown={() => onSelect?.(block.id)}
+      data-testid={`canvas-editor-block-item-${block.id}`}
+    >
       <span className="icon">{block.icon || '◼'}</span>
       <span className="name">{block.name || block.title || 'بلوك'}</span>
     </div>

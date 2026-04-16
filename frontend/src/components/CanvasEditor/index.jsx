@@ -29,8 +29,8 @@ const makeRenderedContent = (block) => {
 
 const stylesObjectToText = (styles = {}) => Object.entries(styles).filter(([, value]) => value !== undefined && value !== null && value !== '').map(([key, value]) => `${key}:${value}`).join(';');
 
-const CanvasEditor = ({ pageData, onSave }) => {
-  const { current, push, undo, redo, reset, canUndo, canRedo, history, index } = useSimpleHistory(pageData);
+const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
+  const { current, push, undo, redo, reset, canUndo, canRedo, history, index, jumpTo } = useSimpleHistory(pageData);
   const [selectedId, setSelectedId] = useState(null);
   const [deviceMode, setDeviceMode] = useState('desktop');
 
@@ -38,6 +38,10 @@ const CanvasEditor = ({ pageData, onSave }) => {
     reset(pageData);
     setSelectedId(null);
   }, [pageData, reset]);
+
+  useEffect(() => {
+    onSelectionChange?.(selectedId || '');
+  }, [selectedId, onSelectionChange]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -76,11 +80,39 @@ const CanvasEditor = ({ pageData, onSave }) => {
     stylesText: stylesObjectToText(block.styles),
   })), [current.blocks]);
 
+  const previewCustomization = useMemo(() => {
+    const labels = {};
+    const contents = {};
+    const styles = {};
+    const assets = {};
+    blocks.forEach((block) => {
+      labels[block.id] = block.title || '';
+      contents[block.id] = block.content || '';
+      styles[block.id] = block.styles || {};
+      assets[block.id] = { src: block.image || '', href: block.link || '' };
+    });
+    return {
+      labels,
+      contents,
+      styles,
+      assets,
+      hidden: {},
+      block_order: blocks.map((block) => block.id),
+      positions: {},
+    };
+  }, [blocks]);
+
   const currentStateId = history[index]?.id || String(index);
+
+  const handleJumpTo = (stateId) => {
+    const nextState = jumpTo(Number(stateId));
+    if (!nextState) return;
+    setSelectedId(null);
+  };
 
   return (
     <div className="canvas-editor" data-testid="canvas-editor-root">
-      <Toolbar deviceMode={deviceMode} onDeviceChange={setDeviceMode} onSave={() => onSave(current)} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+      <Toolbar deviceMode={deviceMode} onDeviceChange={setDeviceMode} onSave={() => onSave(current)} onPublish={() => onPublish?.(current)} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
 
       <div className="editor-layout">
         <BlockSidebar blocks={blocks} selectedId={selectedId} onSelect={setSelectedId} />
@@ -88,14 +120,21 @@ const CanvasEditor = ({ pageData, onSave }) => {
         <div className={`canvas-area ${deviceMode}`} data-testid="canvas-editor-center-area">
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={blocks.map((block) => block.id)} strategy={verticalListSortingStrategy}>
-              <PreviewFrame blocks={blocks} deviceMode={deviceMode} selectedId={selectedId} onSelect={setSelectedId} />
+              <PreviewFrame
+                blocks={blocks}
+                deviceMode={deviceMode}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                previewSrc={current?.settings?.previewSrc}
+                customization={previewCustomization}
+              />
             </SortableContext>
           </DndContext>
         </div>
 
         <div className="right-panel" data-testid="canvas-editor-right-panel">
           <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => setSelectedId(null)} />
-          <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={() => {}} />
+          <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={handleJumpTo} />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import { Eye, EyeOff, Menu } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
@@ -11,12 +11,15 @@ import { Toaster } from './ui/toaster';
 import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { PageCustomCardsDock } from './PageCustomCardsDock';
+import { applyPageCustomizations, clearPageCustomizations } from '../utils/pageCustomization';
 
 
 
 const Layout = ({ pageTitle }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pageCustomization, setPageCustomization] = useState({ custom_cards: [] });
+  const appliedCustomizationsRef = useRef([]);
+  const applyingCustomizationRef = useRef(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 1024);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
     try {
@@ -71,20 +74,79 @@ const Layout = ({ pageTitle }) => {
 
   useEffect(() => {
     const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+    let cancelled = false;
     siteBuilderAPI.getCustomization({ user_id: userId, path: location.pathname || '/' })
-      .then((response) => setPageCustomization(response.data?.data || { custom_cards: [] }))
-      .catch(() => setPageCustomization({ custom_cards: [] }));
-  }, [location.pathname, session]);
+      .then((response) => {
+        if (cancelled) return;
+        const nextCustomization = response.data?.data || { custom_cards: [] };
+        setPageCustomization(nextCustomization);
+        window.__moltbotCurrentCustomization = nextCustomization;
+      })
+      .catch(async () => {
+        try {
+          const params = new URLSearchParams({ user_id: userId, path: location.pathname || '/' });
+          const fallbackRes = await fetch(`/api/alkabeer-bot/customization?${params.toString()}`);
+          if (!fallbackRes.ok || cancelled) return;
+          const fallbackJson = await fallbackRes.json();
+          const fallbackCustomization = fallbackJson?.data || { custom_cards: [] };
+          setPageCustomization(fallbackCustomization);
+          window.__moltbotCurrentCustomization = fallbackCustomization;
+        } catch (_error) {
+          return;
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, session, isEditorWorkspace]);
+
+  useEffect(() => {
+    if (isEditorWorkspace) return undefined;
+    const applyNow = () => {
+      if (applyingCustomizationRef.current) return;
+      applyingCustomizationRef.current = true;
+      applyPageCustomizations(pageCustomization || {}, appliedCustomizationsRef);
+      window.setTimeout(() => {
+        applyingCustomizationRef.current = false;
+      }, 0);
+    };
+    applyNow();
+    const t1 = window.setTimeout(applyNow, 320);
+    const t2 = window.setTimeout(applyNow, 950);
+    const interval = window.setInterval(applyNow, 1200);
+
+    const root = document.querySelector('.content-area .animate-fade-in') || document.querySelector('main.content-area') || document.body;
+    const observer = new MutationObserver(() => {
+      if (applyingCustomizationRef.current) return;
+      window.requestAnimationFrame(applyNow);
+    });
+    observer.observe(root, { childList: true, subtree: true, characterData: true });
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearInterval(interval);
+      observer.disconnect();
+    };
+  }, [pageCustomization, location.pathname, isEditorWorkspace]);
+
+  useEffect(() => () => clearPageCustomizations(appliedCustomizationsRef), []);
 
   useEffect(() => {
     const handleCustomizationUpdate = (event) => {
-      if (event?.detail) {
-        setPageCustomization(event.detail);
+      const detail = event?.detail;
+      if (!detail) return;
+      const pathFromEvent = typeof detail.path === 'string' ? detail.path : '';
+      const customization = detail.customization || detail;
+      if (pathFromEvent && pathFromEvent !== location.pathname) return;
+      setPageCustomization(customization);
+      if (!isEditorWorkspace) {
+        applyPageCustomizations(customization, appliedCustomizationsRef);
       }
     };
     window.addEventListener('page-customization-updated', handleCustomizationUpdate);
     return () => window.removeEventListener('page-customization-updated', handleCustomizationUpdate);
-  }, []);
+  }, [location.pathname, isEditorWorkspace]);
 
   useEffect(() => {
     const handleSidebarPrefs = (event) => {

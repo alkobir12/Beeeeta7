@@ -31,11 +31,19 @@
       "custom_cards": []
     },
     "/": {
-      "labels": {},
+      "labels": {
+        "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+      },
       "hidden": {},
-      "contents": {},
+      "contents": {
+        "dashboard-stat-total-vehicles-ar-label": "TEST-/-1776343257"
+      },
       "custom_cards": [],
-      "block_order": []
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
     },
     "/test-reset-page": {
       "labels": {},
@@ -98,6 +106,68 @@
           "y": 250
         }
       }
+    },
+    "/dashboard": {
+      "labels": {
+        "dashboard-card-title": "عنوان معدل من API"
+      },
+      "hidden": {},
+      "contents": {
+        "dashboard-card-title": "محتوى معدل من API"
+      },
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/operations": {
+      "labels": {
+        "operations-active-tab-title": "TEST-/operations-1776343259"
+      },
+      "hidden": {},
+      "contents": {
+        "operations-active-tab-title": "TEST-/operations-1776343259"
+      },
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/publish-test-31a9c42c": {
+      "labels": {
+        "publish-block": "عنوان منشور"
+      },
+      "hidden": {},
+      "contents": {
+        "publish-block": "محتوى منشور"
+      },
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
+    },
+    "/custom-test-99ea1f1c": {
+      "labels": {
+        "custom-block": "تسمية مخصصة"
+      },
+      "hidden": {
+        "hidden-block": true
+      },
+      "contents": {
+        "content-block": "محتوى مخصص"
+      },
+      "custom_cards": [],
+      "block_order": [],
+      "positions": {},
+      "styles": {},
+      "assets": {},
+      "page_manifest": {}
     }
   },
   "test_dev_commands": {
@@ -181,54 +251,19 @@
       "custom_cards": []
     },
     "/": {
-      "labels": {},
+      "labels": {
+        "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+      },
       "hidden": {},
-      "contents": {},
+      "contents": {
+        "dashboard-stat-total-vehicles-ar-label": "LOCAL-/-1776343306"
+      },
       "custom_cards": [],
       "block_order": [],
       "positions": {},
-      "styles": {
-        "dashboard-stat-total-vehicles-value": {
-          "color": "#ff0000"
-        }
-      },
+      "styles": {},
       "assets": {},
-      "page_manifest": {
-        "pageId": "home",
-        "version": {
-          "current": "draft",
-          "published": "published"
-        },
-        "status": "active",
-        "device": "desktop",
-        "meta": {
-          "title": "لوحة التحكم",
-          "description": "Visual editor page",
-          "slug": "home"
-        },
-        "activeFlags": {
-          "editable": true,
-          "locked": false,
-          "published": true,
-          "previewMode": false
-        },
-        "timestamps": {
-          "createdAt": null,
-          "updatedAt": "2026-04-13T21:09:44.652Z",
-          "publishedAt": "2026-04-13T21:09:44.652Z"
-        },
-        "uiState": {
-          "selectedElementId": "dashboard-stat-total-vehicles-value",
-          "hoverElementId": null,
-          "zoom": 100,
-          "grid": true,
-          "snap": true
-        },
-        "security": {
-          "isValid": true,
-          "lastValidatedAt": null
-        }
-      }
+      "page_manifest": {}
     },
     "/customers": {
       "labels": {},
@@ -238,50 +273,19 @@
       "block_order": []
     },
     "/operations": {
-      "labels": {},
+      "labels": {
+        "operations-active-tab-title": "LOCAL-/operations-1776343307"
+      },
       "hidden": {},
-      "contents": {},
+      "contents": {
+        "operations-active-tab-title": "LOCAL-/operations-1776343307"
+      },
       "custom_cards": [],
       "block_order": [],
       "positions": {},
       "styles": {},
       "assets": {},
-      "page_manifest": {
-        "pageId": "operations",
-        "version": {
-          "current": "draft",
-          "published": "published"
-        },
-        "status": "active",
-        "device": "desktop",
-        "meta": {
-          "title": "العمليات",
-          "description": "Visual editor page",
-          "slug": "operations"
-        },
-        "activeFlags": {
-          "editable": true,
-          "locked": false,
-          "published": true,
-          "previewMode": false
-        },
-        "timestamps": {
-          "createdAt": null,
-          "updatedAt": "2026-04-13T21:21:51.038Z",
-          "publishedAt": "2026-04-13T21:21:51.038Z"
-        },
-        "uiState": {
-          "selectedElementId": null,
-          "hoverElementId": null,
-          "zoom": 100,
-          "grid": true,
-          "snap": true
-        },
-        "security": {
-          "isValid": true,
-          "lastValidatedAt": null
-        }
-      }
+      "page_manifest": {}
     }
   },
   "builder_test_user_2": {

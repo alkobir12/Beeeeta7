@@ -1,11 +1,83 @@
 import React, { useEffect, useRef } from 'react';
 import { Liquid } from 'liquidjs';
+import { applyPageCustomizations, clearPageCustomizations } from '../../utils/pageCustomization';
 
-const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect }) => {
+const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, customization }) => {
   const iframeRef = useRef(null);
   const engine = useRef(new Liquid());
+  const appliedCustomizationsRef = useRef([]);
 
   useEffect(() => {
+    if (!previewSrc || !iframeRef.current) return undefined;
+
+    const iframe = iframeRef.current;
+    const handleLoad = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+
+        applyPageCustomizations(customization || {}, appliedCustomizationsRef, doc);
+
+        const styleId = 'moltbot-editor-selection-style';
+        if (!doc.getElementById(styleId)) {
+          const styleTag = doc.createElement('style');
+          styleTag.id = styleId;
+          styleTag.textContent = '[data-moltbot-selected="1"]{outline:2px solid #38bdf8 !important; outline-offset:2px !important; border-radius:8px !important;}';
+          doc.head.appendChild(styleTag);
+        }
+
+        doc.addEventListener('click', (event) => {
+          const target = event.target?.closest?.('[data-testid]');
+          if (!target) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onSelect?.(target.getAttribute('data-testid') || '');
+        }, true);
+      } catch (_error) {
+        return;
+      }
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+      clearPageCustomizations(appliedCustomizationsRef);
+    };
+  }, [previewSrc, customization, onSelect]);
+
+  useEffect(() => {
+    if (!previewSrc || !iframeRef.current) return;
+    try {
+      const doc = iframeRef.current.contentDocument;
+      if (!doc) return;
+      doc.querySelectorAll('[data-moltbot-selected="1"]').forEach((node) => node.removeAttribute('data-moltbot-selected'));
+      if (!selectedId) return;
+      const safeId = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(selectedId)
+        : String(selectedId).replace(/"/g, '\\"');
+      const selectedNode = doc.querySelector(`[data-testid="${safeId}"]`);
+      if (selectedNode) {
+        selectedNode.setAttribute('data-moltbot-selected', '1');
+        selectedNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } catch (_error) {
+      return;
+    }
+  }, [selectedId, previewSrc]);
+
+  useEffect(() => {
+    if (!previewSrc || !iframeRef.current) return;
+    try {
+      const doc = iframeRef.current.contentDocument;
+      if (!doc) return;
+      applyPageCustomizations(customization || {}, appliedCustomizationsRef, doc);
+    } catch (_error) {
+      return;
+    }
+  }, [customization, previewSrc]);
+
+  useEffect(() => {
+    if (previewSrc) return undefined;
     let mounted = true;
 
     const writeDoc = (content) => {
@@ -66,12 +138,13 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect }) => {
     return () => {
       mounted = false;
     };
-  }, [blocks, selectedId, onSelect]);
+  }, [blocks, selectedId, onSelect, previewSrc]);
 
   return (
     <iframe
       ref={iframeRef}
       className={`preview-frame ${deviceMode}`}
+      src={previewSrc || undefined}
       style={{
         width: deviceMode === 'mobile' ? '375px' : deviceMode === 'tablet' ? '768px' : '100%',
         height: '100%',

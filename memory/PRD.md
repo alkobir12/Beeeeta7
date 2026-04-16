@@ -17,6 +17,24 @@
 
 ## What's Been Implemented
 
+### إصلاح حفظ رقم ملف المركبة + إظهار إيراد النقد/البنك في نظرة عامة المالية (16 Apr 2026)
+- تم إصلاح مشكلة عدم حفظ `fileNumber` من شاشة ملف المركبة عبر backend model:
+  - إضافة `fileNumber` إلى `VehicleUpdate` في `/app/backend/models.py`
+  - نتيجة: `PUT /api/vehicles/{id}` أصبح يحفظ رقم الملف فعليًا ويعيده في الاستجابة.
+- تم تحسين تقرير مبيعات شجرة الحسابات لإظهار فصل أوضح بين النقد والبنك:
+  - تحديث `/app/backend/routes_finance.py` لإضافة:
+    - `bank_component` لكل عملية
+    - `total_bank_component`
+    - `operations_bank_total`
+    - فصل `cash_component` ليعكس 1101 فقط، و`bank_component` لحساب 1102.
+- تم تحديث كرت **صافي الدخل** في `/app/frontend/src/pages/ComprehensiveFinancial.jsx` ليعرض:
+  - `إيراد نقد`
+  - `إيراد بنك`
+  - مع الإبقاء على رصيد حسابات 1101/1102 في التفاصيل.
+- تم التحقق بالاختبار:
+  - Self-test API + UI PASS
+  - Testing agent report: `/app/test_reports/iteration_132.json` (Backend 100% / Frontend 100%).
+
 ### إصلاحات صفحة العمليات + مزامنة زيارات المركبات (13 Apr 2026)
 - تم تنفيذ مجموعة إصلاحات مباشرة على صفحة العمليات والمزامنة من ملف المركبة:
   - فتح تبويب **عمليات الورشة** افتراضيًا عند دخول صفحة `/operations`

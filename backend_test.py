@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BACKEND_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 
 def test_get_customization():
     """Test GET /api/alkabeer-bot/customization"""

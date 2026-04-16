@@ -6,18 +6,11 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect }) => {
   const engine = useRef(new Liquid());
 
   useEffect(() => {
-    const render = async () => {
-      if (!iframeRef.current) return;
+    let mounted = true;
 
-      const template = blocks.map((block) => `
-        <div data-block-id="${block.id}" class="preview-block ${selectedId === block.id ? 'selected' : ''}" style="${block.stylesText || ''}">
-          ${block.liquidTemplate || block.renderedContent || block.content || ''}
-        </div>
-      `).join('');
-
-      const html = await engine.current.parseAndRender(template, { blocks });
-      const doc = iframeRef.current.contentDocument;
-      if (!doc) return;
+    const writeDoc = (content) => {
+      const doc = iframeRef.current?.contentDocument;
+      if (!doc || !mounted) return;
       doc.open();
       doc.write(`
         <!DOCTYPE html>
@@ -26,13 +19,14 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect }) => {
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
               body { font-family: system-ui; padding: 20px; background: #ffffff; }
-              .preview-block { position: relative; border: 2px solid transparent; margin-bottom: 16px; border-radius: 8px; transition: all 0.2s; }
+              .preview-block { position: relative; border: 2px solid transparent; margin-bottom: 16px; border-radius: 8px; transition: border-color .2s ease, box-shadow .2s ease; }
               .preview-block.selected { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
               .preview-block:hover { border-color: #e5e7eb; }
+              .preview-empty { padding: 32px 20px; border-radius: 12px; border: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 14px; }
               @media (max-width: 768px) { body { padding: 12px; } .preview-block { margin-bottom: 12px; } }
             </style>
           </head>
-          <body>${html}</body>
+          <body>${content}</body>
         </html>
       `);
       doc.close();
@@ -45,7 +39,33 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect }) => {
       });
     };
 
+    const render = async () => {
+      if (!iframeRef.current) return;
+      const safeBlocks = Array.isArray(blocks) ? blocks.filter((block) => block?.id) : [];
+      if (!safeBlocks.length) {
+        writeDoc('<div class="preview-empty">لا توجد عناصر متاحة للمعاينة الآن.</div>');
+        return;
+      }
+
+      try {
+        const template = safeBlocks.map((block) => `
+          <div data-block-id="${block.id}" class="preview-block ${selectedId === block.id ? 'selected' : ''}" style="${block.stylesText || ''}">
+            ${block.liquidTemplate || block.renderedContent || block.content || ''}
+          </div>
+        `).join('');
+
+        const html = await engine.current.parseAndRender(template, { blocks: safeBlocks });
+        writeDoc(html || '<div class="preview-empty">تعذر إنشاء المعاينة.</div>');
+      } catch (_error) {
+        writeDoc('<div class="preview-empty">حدث خطأ أثناء توليد المعاينة.</div>');
+      }
+    };
+
     render();
+
+    return () => {
+      mounted = false;
+    };
   }, [blocks, selectedId, onSelect]);
 
   return (

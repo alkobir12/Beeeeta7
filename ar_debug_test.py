@@ -7,7 +7,7 @@ Quick test to verify AR calculation after payments
 import requests
 import json
 
-BACKEND_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BACKEND_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def check_ar_calculation():

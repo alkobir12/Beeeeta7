@@ -6,7 +6,7 @@ Debug script to check what's stored in the invoice templates
 import requests
 import json
 
-BASE_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BASE_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 
 def debug_templates():
     print("🔍 Debugging Invoice Templates...")

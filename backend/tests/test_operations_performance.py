@@ -8,7 +8,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://repair-mgmt-fresh.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://moltbot-editor.preview.emergentagent.com').rstrip('/')
 
 
 class TestOperationsPerformance:

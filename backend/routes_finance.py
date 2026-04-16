@@ -1603,6 +1603,7 @@ async def get_account_tree_details(
             matched_debit = 0.0
             matched_credit = 0.0
             cash_component = 0.0
+            bank_component = 0.0
             receivable_component = 0.0
             counterpart_accounts = []
 
@@ -1620,8 +1621,10 @@ async def get_account_tree_details(
                     )
 
                 # مكونات التحصيل/الآجل (مفيد لحسابات الإيراد)
-                if line_code in {"1101", "1102"}:
+                if line_code == "1101":
                     cash_component += _safe_float(line.get("debit"))
+                if line_code == "1102":
+                    bank_component += _safe_float(line.get("debit"))
                 if line_code in {"1103", "113"}:
                     receivable_component += _safe_float(line.get("debit"))
 
@@ -1642,6 +1645,7 @@ async def get_account_tree_details(
                     "debit": round(matched_debit, 2),
                     "credit": round(matched_credit, 2),
                     "cash_component": round(cash_component, 2),
+                    "bank_component": round(bank_component, 2),
                     "receivable_component": round(receivable_component, 2),
                     "counterpart_accounts": counterpart_accounts[:6],
                 }
@@ -1704,21 +1708,31 @@ async def get_account_tree_details(
 
         operations.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
         operations_cash_total = 0.0
+        operations_bank_total = 0.0
         operations_credit_total = 0.0
         for item in operations:
             payment_method = str(item.get("operation_payment_method") or "").strip().lower()
             amount = _safe_float(item.get("credit"))
+            cash_component_value = _safe_float(item.get("cash_component"))
+            bank_component_value = _safe_float(item.get("bank_component"))
             if payment_method == "credit":
                 operations_credit_total += amount
+            elif payment_method in {"bank", "transfer", "card", "mada", "visa", "mastercard", "pos"}:
+                operations_bank_total += amount
             elif payment_method:
                 operations_cash_total += amount
+            else:
+                operations_cash_total += cash_component_value
+                operations_bank_total += bank_component_value
 
         summary = {
             "total_debit": round(sum(_safe_float(item.get("debit")) for item in operations), 2),
             "total_credit": round(sum(_safe_float(item.get("credit")) for item in operations), 2),
             "total_cash_component": round(sum(_safe_float(item.get("cash_component")) for item in operations), 2),
+            "total_bank_component": round(sum(_safe_float(item.get("bank_component")) for item in operations), 2),
             "total_receivable_component": round(sum(_safe_float(item.get("receivable_component")) for item in operations), 2),
             "operations_cash_total": round(operations_cash_total, 2),
+            "operations_bank_total": round(operations_bank_total, 2),
             "operations_credit_total": round(operations_credit_total, 2),
         }
         total_items = len(operations)
@@ -1784,8 +1798,10 @@ async def get_account_tree_details(
                         "total_debit": 0,
                         "total_credit": 0,
                         "total_cash_component": 0,
+                        "total_bank_component": 0,
                         "total_receivable_component": 0,
                         "operations_cash_total": 0,
+                        "operations_bank_total": 0,
                         "operations_credit_total": 0,
                     },
                     "pagination": {

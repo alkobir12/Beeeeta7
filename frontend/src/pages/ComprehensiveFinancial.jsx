@@ -342,10 +342,23 @@ export default function ComprehensiveFinancial() {
   const salesSummary = salesOperationsData?.operations?.summary || {
     total_credit: 0,
     total_cash_component: 0,
+    total_bank_component: 0,
     total_receivable_component: 0,
     operations_cash_total: 0,
+    operations_bank_total: 0,
     operations_credit_total: 0,
   };
+
+  const cashRevenueTotal = Number(
+    salesSummary.operations_cash_total
+    || salesSummary.total_cash_component
+    || 0
+  );
+  const bankRevenueTotal = Number(
+    salesSummary.operations_bank_total
+    || salesSummary.total_bank_component
+    || 0
+  );
 
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
   const isBalanceEquationHealthy = Math.abs((bsTotals.assets || 0) - ((bsTotals.liabilities || 0) + (bsTotals.equity || 0))) < 0.01;
@@ -452,13 +465,15 @@ export default function ComprehensiveFinancial() {
       key: 'net_income',
       title: 'صافي الدخل',
       value: formatCurrency(incomeTotals.net_income || 0),
-      subtitle: `الهامش: ${profitMargin.toFixed(1)}% • نقد: ${formatCurrency(cashAccountBalance)} • بنك: ${formatCurrency(bankAccountBalance)}`,
+      subtitle: `الهامش: ${profitMargin.toFixed(1)}% • إيراد نقد: ${formatCurrency(cashRevenueTotal)} • إيراد بنك: ${formatCurrency(bankRevenueTotal)}`,
       accent: incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
         `إجمالي الإيرادات: ${formatCurrency(incomeTotals.revenue || 0)}`,
         `إجمالي المصروفات: ${formatCurrency(incomeTotals.expenses || 0)}`,
-        `حساب النقد (عمليات نقدية): ${formatCurrency(cashAccountBalance)}`,
-        `حساب البنك (بطاقة/تحويل): ${formatCurrency(bankAccountBalance)}`,
+        `إجمالي إيراد النقد: ${formatCurrency(cashRevenueTotal)}`,
+        `إجمالي إيراد البنك/البطاقات: ${formatCurrency(bankRevenueTotal)}`,
+        `رصيد حساب النقد (1101): ${formatCurrency(cashAccountBalance)}`,
+        `رصيد حساب البنك (1102): ${formatCurrency(bankAccountBalance)}`,
         `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
       ],
       testId: 'financial-headline-net-income',
@@ -801,6 +816,7 @@ export default function ComprehensiveFinancial() {
                 <div className="text-xs text-cyan-100 space-y-1 text-left" data-testid="financial-sales-operations-summary">
                   <p>إجمالي البيع: <span className="font-semibold">{formatCurrency(salesSummary.total_credit || 0)}</span></p>
                   <p>المحصل نقدًا: <span className="font-semibold">{formatCurrency(salesSummary.operations_cash_total || 0)}</span></p>
+                  <p>المحصل بنك/بطاقة: <span className="font-semibold">{formatCurrency(salesSummary.operations_bank_total || 0)}</span></p>
                   <p>آجل غير مسدد: <span className="font-semibold">{formatCurrency(salesSummary.operations_credit_total || 0)}</span></p>
                 </div>
               </div>

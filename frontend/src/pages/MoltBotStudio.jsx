@@ -1,12 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CanvasEditor from '../components/CanvasEditor';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { LIQUID_BUILDER_PAGES } from '../constants/liquidBuilderPages';
-import { buildBlockSnapshot } from '../utils/pageCustomization';
+import { buildBlockSnapshot, buildUiSnapshot } from '../utils/pageCustomization';
 import { useToast } from '../hooks/use-toast';
 
 const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {}, styles: {}, assets: {}, page_manifest: {} };
 const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
+const toPageId = (path) => String(path || '/').replace(/^\//, '') || 'home';
+
+const normalizeConfig = (value = {}) => ({
+  ...EMPTY_CONFIG,
+  ...value,
+  labels: { ...(EMPTY_CONFIG.labels || {}), ...(value?.labels || {}) },
+  hidden: { ...(EMPTY_CONFIG.hidden || {}), ...(value?.hidden || {}) },
+  contents: { ...(EMPTY_CONFIG.contents || {}), ...(value?.contents || {}) },
+  positions: { ...(EMPTY_CONFIG.positions || {}), ...(value?.positions || {}) },
+  styles: { ...(EMPTY_CONFIG.styles || {}), ...(value?.styles || {}) },
+  assets: { ...(EMPTY_CONFIG.assets || {}), ...(value?.assets || {}) },
+  page_manifest: { ...(EMPTY_CONFIG.page_manifest || {}), ...(value?.page_manifest || {}) },
+  custom_cards: Array.isArray(value?.custom_cards) ? value.custom_cards : [],
+  block_order: Array.isArray(value?.block_order) ? value.block_order : [],
+});
 
 const resolveDisplayName = (item, index) => {
   const text = String(item?.text || '').trim().replace(/\s+/g, ' ').slice(0, 60);
@@ -30,10 +45,10 @@ const stylesToObject = (styles = {}) => ({
 });
 
 const buildPageData = (path, blocks, config) => ({
-  id: String(path || '/').replace(/^\//, '') || 'home',
+  id: toPageId(path),
   name: LIQUID_BUILDER_PAGES.find((page) => page.path === path)?.label || path,
-  blocks: blocks.map((block, index) => ({
-    id: block.testid,
+  blocks: (Array.isArray(blocks) ? blocks : []).map((block, index) => ({
+    id: block.testid || `moltbot-block-${index + 1}`,
     type: config.assets?.[block.testid]?.src ? 'image' : config.assets?.[block.testid]?.href ? 'button' : 'text',
     name: resolveDisplayName(block, index),
     title: config.labels?.[block.testid] || resolveDisplayName(block, index),
@@ -51,7 +66,48 @@ const buildPageData = (path, blocks, config) => ({
   },
 });
 
-export default function MoltBot() {
+const buildFallbackBlocks = (path, config) => {
+  const refs = new Set([
+    ...Object.keys(config.labels || {}),
+    ...Object.keys(config.contents || {}),
+    ...Object.keys(config.assets || {}),
+    ...Object.keys(config.styles || {}),
+  ]);
+
+  if (!refs.size) {
+    const pageLabel = LIQUID_BUILDER_PAGES.find((page) => page.path === path)?.label || 'الصفحة';
+    return [
+      { testid: `page-title-${String(path).replace(/\W+/g, '-')}`, text: pageLabel },
+      { testid: `page-description-${String(path).replace(/\W+/g, '-')}`, text: `محتوى ${pageLabel}` },
+    ];
+  }
+
+  return Array.from(refs).map((ref) => ({
+    testid: ref,
+    text: config.contents?.[ref] || config.labels?.[ref] || '',
+  }));
+};
+
+const buildMeaningfulBlocks = (doc, path, config) => {
+  const blockSnapshot = buildBlockSnapshot(220, doc);
+  if (blockSnapshot.length >= 4) return blockSnapshot;
+
+  const uiSnapshot = buildUiSnapshot(400, doc)
+    .filter((item) => {
+      const text = String(item?.text || '').trim();
+      return text.length >= 3 && !/^\d+$/.test(text);
+    })
+    .reduce((acc, item) => {
+      if (acc.some((entry) => entry.testid === item.testid)) return acc;
+      acc.push({ testid: item.testid, text: item.text });
+      return acc;
+    }, [])
+    .slice(0, 24);
+
+  return uiSnapshot.length ? uiSnapshot : buildFallbackBlocks(path, config);
+};
+
+export default function MoltBotStudio() {
   const { toast } = useToast();
   const hiddenFrameRef = useRef(null);
   const [selectedPage, setSelectedPage] = useState('/');
@@ -73,41 +129,50 @@ export default function MoltBot() {
     const draft = localStorage.getItem(draftStorageKey(userId, path));
     if (draft) {
       try {
-        return { ...EMPTY_CONFIG, ...JSON.parse(draft) };
+        return normalizeConfig(JSON.parse(draft));
       } catch {
         localStorage.removeItem(draftStorageKey(userId, path));
       }
     }
     const response = await siteBuilderAPI.getCustomization({ user_id: userId, path });
-    return { ...EMPTY_CONFIG, ...(response.data?.data || {}) };
+    return normalizeConfig(response.data?.data || {});
   };
 
-  const rebuildPageData = () => {
+  const rebuildPageData = useCallback((pathArg = selectedPage, configArg = config) => {
     const doc = hiddenFrameRef.current?.contentDocument;
     if (!doc) return;
-    const blocks = buildBlockSnapshot(220, doc);
-    setPageData(buildPageData(selectedPage, blocks, config));
+    const effectiveBlocks = buildMeaningfulBlocks(doc, pathArg, configArg);
+    setPageData(buildPageData(pathArg, effectiveBlocks, configArg));
     setLoading(false);
-  };
+  }, [selectedPage, config]);
 
   useEffect(() => {
     if (!pageData) return;
-    setPageData((prev) => prev ? buildPageData(selectedPage, prev.blocks.map((b) => ({ testid: b.id, text: b.content || b.title || '' })), config) : prev);
-  }, [config]);
+    setPageData((prev) => {
+      if (!prev || prev.id !== toPageId(selectedPage)) return prev;
+      const fallbackBlocks = buildFallbackBlocks(selectedPage, config);
+      const nextBlocks = (prev.blocks || []).map((block) => ({
+        testid: block.id,
+        text: block.content || block.title || '',
+      }));
+      return buildPageData(selectedPage, nextBlocks.length ? nextBlocks : fallbackBlocks, config);
+    });
+  }, [config, selectedPage]);
 
   useEffect(() => {
     setLoading(true);
+    setPageData(null);
     loadConfig(selectedPage)
-      .then((nextConfig) => setConfig(nextConfig))
+      .then((nextConfig) => setConfig(normalizeConfig(nextConfig)))
       .catch(() => toast({ title: 'خطأ', description: 'تعذر تحميل الصفحة', variant: 'destructive' }));
-  }, [selectedPage]);
+  }, [selectedPage, toast]);
 
   useEffect(() => {
     localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
   }, [config, selectedPage, userId]);
 
   const handleSave = async (data) => {
-    const nextConfig = { ...config };
+    const nextConfig = normalizeConfig(config);
     (data.blocks || []).forEach((block) => {
       nextConfig.labels[block.id] = block.title || '';
       nextConfig.contents[block.id] = block.content || '';
@@ -121,6 +186,11 @@ export default function MoltBot() {
     try {
       await siteBuilderAPI.saveCustomization({ user_id: userId, path: selectedPage, ...nextConfig });
       setConfig(nextConfig);
+      setPageData(buildPageData(
+        selectedPage,
+        (data.blocks || []).map((block) => ({ testid: block.id, text: block.content || block.title || '' })),
+        nextConfig,
+      ));
       localStorage.removeItem(draftStorageKey(userId, selectedPage));
       toast({ title: 'تم الحفظ', description: 'تم حفظ الصفحة بنجاح' });
     } catch {
@@ -146,13 +216,13 @@ export default function MoltBot() {
         title="hidden-source-preview"
         src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
         className="absolute pointer-events-none opacity-0 w-0 h-0"
-        onLoad={() => window.setTimeout(rebuildPageData, 500)}
+        onLoad={() => window.setTimeout(() => rebuildPageData(selectedPage, config), 450)}
       />
 
       {loading || !pageData ? (
         <div className="flex min-h-[70vh] items-center justify-center text-sm text-white/70" data-testid="moltbot-canvas-editor-loading">جاري تجهيز المحرر...</div>
       ) : (
-        <CanvasEditor pageData={pageData} onSave={handleSave} />
+        <CanvasEditor key={`${selectedPage}-${pageData.blocks.length}`} pageData={pageData} onSave={handleSave} />
       )}
     </div>
   );

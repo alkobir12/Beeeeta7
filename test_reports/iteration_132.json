@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 132 - Bug fix verification for two issues: (1) Vehicle fileNumber save issue, (2) Net Income card cash/bank revenue display. Both fixes verified working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_132.py",
+    "/app/test_reports/pytest/pytest_iteration_132.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "not required"
+  },
+  "seed_data_creation": "None - used existing vehicle data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Both bug fixes verified: (1) PUT /api/vehicles/{id} correctly saves fileNumber to database and returns it in response. Frontend VehicleDetails page edit mode allows updating fileNumber and persists after save. (2) /api/finance/reports/account-tree-details returns operations_cash_total and operations_bank_total in summary. ComprehensiveFinancial page Net Income card subtitle shows 'إيراد نقد' and 'إيراد بنك' values.",
+  "verified_fixes": {
+    "vehicle_file_number_save": {
+      "status": "FIXED",
+      "backend_test": "PUT /api/vehicles/{id} with fileNumber - PASSED",
+      "frontend_test": "Edit fileNumber in VehicleDetails, save, verify persistence - PASSED",
+      "evidence": "fileNumber changed from 'F-UI-2026-77' to 'TEST-1776323687' and persisted after save"
+    },
+    "net_income_cash_bank_display": {
+      "status": "FIXED",
+      "backend_test": "/api/finance/reports/account-tree-details returns operations_cash_total and operations_bank_total - PASSED",
+      "frontend_test": "Net Income card subtitle shows cash and bank revenue - PASSED",
+      "evidence": "Subtitle displays: 'الهامش: 52.7% • إيراد نقد: ‏٠ ر.س.‏ • إيراد بنك: ‏٤٬٥٠٠ ر.س.‏'"
+    }
+  }
+}

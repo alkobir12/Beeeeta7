@@ -1411,10 +1411,25 @@ def _build_operation_journal_entry(
 def _safe_insert_journal_entry(supa: SupabaseService, entry: Dict[str, Any]):
     if not entry:
         return None
+    payload = dict(entry)
     try:
-        return supa.client.table("journal_entries").insert(entry).execute().data
+        return supa.client.table("journal_entries").insert(payload).execute().data
     except Exception as error:
-        print(f"Journal entry insert failed, retry basic fields: {error}")
+        print(f"Journal entry insert failed, retry adaptive fields: {error}")
+        retry_payload = dict(payload)
+        for _ in range(12):
+            match = re.search(r"Could not find the '([^']+)' column", str(error))
+            if not match:
+                break
+            missing_field = match.group(1)
+            if missing_field not in retry_payload:
+                break
+            retry_payload.pop(missing_field, None)
+            try:
+                return supa.client.table("journal_entries").insert(retry_payload).execute().data
+            except Exception as retry_error:
+                error = retry_error
+
         basic = {
             k: entry.get(k)
             for k in [
@@ -1424,6 +1439,9 @@ def _safe_insert_journal_entry(supa: SupabaseService, entry: Dict[str, Any]):
                 "description",
                 "lines",
                 "total",
+                "source",
+                "transaction_type",
+                "reference_id",
             ]
         }
         try:

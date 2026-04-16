@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import uuid
+import re
 
 async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service=None):
     """
@@ -99,9 +100,25 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
 
         # 4. Upsert Operation
         if supa_service:
-            # Upsert using visit_id as operation id
-            supa_service.client.table("operations").upsert(op_data).execute()
-            print(f"✅ Synced Visit {visit_id} -> Upsert Operation {visit_id}")
+            # Upsert using visit_id as operation id.
+            # Some preview/prod Supabase schemas may miss optional columns.
+            # Retry safely by removing unknown columns reported by PostgREST.
+            payload = dict(op_data)
+            for _ in range(12):
+                try:
+                    supa_service.client.table("operations").upsert(payload).execute()
+                    print(f"✅ Synced Visit {visit_id} -> Upsert Operation {visit_id}")
+                    break
+                except Exception as sync_error:
+                    message = str(sync_error)
+                    missing_match = re.search(r"Could not find the '([^']+)' column", message)
+                    if not missing_match:
+                        raise
+                    missing_column = missing_match.group(1)
+                    if missing_column not in payload:
+                        raise
+                    payload.pop(missing_column, None)
+                    print(f"⚠️ Sync retry without missing column: {missing_column}")
         
         # MongoDB support (Legacy)
         else:

@@ -46,7 +46,7 @@ const JournalEntries = lazy(() => import("./pages/JournalEntries"));
 const ComprehensiveFinancial = lazy(() => import("./pages/ComprehensiveFinancial"));
 const AIFinancial = lazy(() => import("./pages/AIFinancial"));
 const SystemAudit = lazy(() => import("./pages/SystemAudit"));
-const MoltBot = lazy(() => import("./pages/MoltBot"));
+const MoltBot = lazy(() => import("./pages/MoltBotStudio"));
 const DebtFollowUp = lazy(() => import("./pages/DebtFollowUp"));
 
 // Loading component

@@ -13,7 +13,7 @@ import json
 import sys
 from datetime import datetime
 
-BASE_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BASE_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 
 def test_review_requirements():
     print("🧪 REVIEW REQUEST TEST: Invoice Template Import and Generation")

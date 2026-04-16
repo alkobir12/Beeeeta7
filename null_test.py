@@ -7,7 +7,7 @@ Test with null instead of empty string
 import requests
 import json
 
-API_URL = "https://repair-mgmt-fresh.preview.emergentagent.com"
+API_URL = "https://moltbot-editor.preview.emergentagent.com"
 
 def test_with_null_values():
     """اختبار مع null بدلاً من string فارغ"""

@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BACKEND_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 def debug_journal_entries():

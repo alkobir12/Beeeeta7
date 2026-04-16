@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://repair-mgmt-fresh.preview.emergentagent.com/api"
+BASE_URL = "https://moltbot-editor.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

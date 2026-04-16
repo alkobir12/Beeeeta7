@@ -47,6 +47,7 @@ class VehicleUpdate(BaseModel):
     status: Optional[str] = None
     technicianId: Optional[str] = None
     notes: Optional[str] = None
+    fileNumber: Optional[str] = None
     estimatedCompletion: Optional[datetime] = None
     completionDate: Optional[datetime] = None
     images: Optional[List[str]] = None

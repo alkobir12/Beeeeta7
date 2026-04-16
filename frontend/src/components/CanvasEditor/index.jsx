@@ -17,15 +17,27 @@ const makeRenderedContent = (block) => {
   if (block.type === 'button') {
     return `<a href="${block.link || '#'}" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;background:#111827;color:white;text-decoration:none;">${block.title || block.content || 'زر'}</a>`;
   }
-  return `<div>${block.content || block.title || block.name || ''}</div>`;
+  return `
+    <div style="padding:16px;border-radius:16px;background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);min-height:72px;display:flex;align-items:flex-start;justify-content:flex-start;color:#0f172a;line-height:1.8;">
+      <div>
+        <div style="font-weight:700;margin-bottom:6px;">${block.title || block.name || 'بلوك'}</div>
+        <div>${block.content || block.title || block.name || ''}</div>
+      </div>
+    </div>
+  `;
 };
 
 const stylesObjectToText = (styles = {}) => Object.entries(styles).filter(([, value]) => value !== undefined && value !== null && value !== '').map(([key, value]) => `${key}:${value}`).join(';');
 
 const CanvasEditor = ({ pageData, onSave }) => {
-  const { current, push, undo, redo, canUndo, canRedo, history, index } = useSimpleHistory(pageData);
+  const { current, push, undo, redo, reset, canUndo, canRedo, history, index } = useSimpleHistory(pageData);
   const [selectedId, setSelectedId] = useState(null);
   const [deviceMode, setDeviceMode] = useState('desktop');
+
+  useEffect(() => {
+    reset(pageData);
+    setSelectedId(null);
+  }, [pageData, reset]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

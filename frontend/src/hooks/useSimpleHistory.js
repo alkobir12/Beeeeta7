@@ -7,6 +7,12 @@ export const useSimpleHistory = (initialData) => {
   const [index, setIndex] = useState(0);
   const timeoutRef = useRef(null);
 
+  const reset = useCallback((nextData) => {
+    const cloned = deepClone(nextData);
+    setHistory([cloned]);
+    setIndex(0);
+  }, []);
+
   const push = useCallback((newData, delay = 300) => {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
@@ -37,6 +43,7 @@ export const useSimpleHistory = (initialData) => {
     push,
     undo,
     redo,
+    reset,
     canUndo: index > 0,
     canRedo: index < history.length - 1,
     history,

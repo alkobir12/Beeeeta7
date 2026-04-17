@@ -33,10 +33,12 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const { current, push, undo, redo, reset, canUndo, canRedo, history, index, jumpTo } = useSimpleHistory(pageData);
   const [selectedId, setSelectedId] = useState(null);
   const [deviceMode, setDeviceMode] = useState('desktop');
+  const [touchedIds, setTouchedIds] = useState({});
 
   useEffect(() => {
     reset(pageData);
     setSelectedId(null);
+    setTouchedIds({});
   }, [pageData, reset]);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
       blocks: current.blocks.map((block) => block.id === blockId ? { ...block, ...updates } : block),
     };
     push(newData);
+    setTouchedIds((prev) => ({ ...prev, [blockId]: true }));
   };
 
   const handleDragEnd = (event) => {
@@ -104,6 +107,28 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
 
   const currentStateId = history[index]?.id || String(index);
 
+  const handlePreviewSelect = (blockId) => {
+    const nextId = String(blockId || '').trim();
+    if (!nextId) return;
+    setSelectedId(nextId);
+    if (current.blocks.some((block) => block.id === nextId)) return;
+    const injectedBlock = {
+      id: nextId,
+      type: 'text',
+      name: nextId,
+      title: nextId,
+      content: '',
+      liquidTemplate: '',
+      styles: {},
+      image: '',
+      link: '',
+    };
+    push({
+      ...current,
+      blocks: [...current.blocks, injectedBlock],
+    });
+  };
+
   const handleJumpTo = (stateId) => {
     const nextState = jumpTo(Number(stateId));
     if (!nextState) return;
@@ -112,7 +137,16 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
 
   return (
     <div className="canvas-editor" data-testid="canvas-editor-root">
-      <Toolbar deviceMode={deviceMode} onDeviceChange={setDeviceMode} onSave={() => onSave(current)} onPublish={() => onPublish?.(current)} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+      <Toolbar
+        deviceMode={deviceMode}
+        onDeviceChange={setDeviceMode}
+        onSave={() => onSave(current, { touchedIds: Object.keys(touchedIds) })}
+        onPublish={() => onPublish?.(current, { touchedIds: Object.keys(touchedIds) })}
+        undo={undo}
+        redo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
 
       <div className="editor-layout">
         <BlockSidebar blocks={blocks} selectedId={selectedId} onSelect={setSelectedId} />
@@ -124,7 +158,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
                 blocks={blocks}
                 deviceMode={deviceMode}
                 selectedId={selectedId}
-                onSelect={setSelectedId}
+                onSelect={handlePreviewSelect}
                 previewSrc={current?.settings?.previewSrc}
                 customization={previewCustomization}
               />

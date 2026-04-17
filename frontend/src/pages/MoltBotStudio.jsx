@@ -234,9 +234,13 @@ export default function MoltBotStudio() {
     localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
   }, [config, selectedPage, userId]);
 
-  const handleSave = async (data) => {
+  const handleSave = async (data, meta = {}) => {
     const nextConfig = normalizeConfig(config);
-    (data.blocks || []).forEach((block) => {
+    const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
+    const targetBlocks = touched.size
+      ? (data.blocks || []).filter((block) => touched.has(block.id))
+      : (data.blocks || []);
+    targetBlocks.forEach((block) => {
       nextConfig.labels[block.id] = block.title || '';
       nextConfig.contents[block.id] = block.content || '';
       nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };
@@ -278,9 +282,13 @@ export default function MoltBotStudio() {
 
   const _nowIso = () => new Date().toISOString();
 
-  const handlePublish = async (data) => {
+  const handlePublish = async (data, meta = {}) => {
     const nextConfig = normalizeConfig(config);
-    (data.blocks || []).forEach((block) => {
+    const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
+    const targetBlocks = touched.size
+      ? (data.blocks || []).filter((block) => touched.has(block.id))
+      : (data.blocks || []);
+    targetBlocks.forEach((block) => {
       nextConfig.labels[block.id] = block.title || '';
       nextConfig.contents[block.id] = block.content || '';
       nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };

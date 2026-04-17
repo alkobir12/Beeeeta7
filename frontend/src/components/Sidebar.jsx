@@ -147,6 +147,17 @@ const Sidebar = ({
       setActiveCollapsedGroup((prev) => (prev === label ? '' : label));
       return;
     }
+    if (window.innerWidth < 1024) {
+      setCollapsedGroups((prev) => {
+        const next = {};
+        groupLabels.forEach((groupLabel) => {
+          next[groupLabel] = true;
+        });
+        next[label] = !prev[label];
+        return next;
+      });
+      return;
+    }
     setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
@@ -172,6 +183,10 @@ const Sidebar = ({
   };
 
   const [session, setSession] = useState(() => readSession());
+  const groupLabels = useMemo(
+    () => MENU_ITEMS.filter((item) => item.group && Array.isArray(item.children)).map((item) => item.label),
+    [MENU_ITEMS]
+  );
 
   useEffect(() => {
     const sync = () => setSession(readSession());
@@ -182,6 +197,35 @@ const Sidebar = ({
       window.removeEventListener('sessionUpdated', sync);
     };
   }, []);
+
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+    setCollapsedGroups((prev) => {
+      if (Object.keys(prev).length) return prev;
+      const next = {};
+      groupLabels.forEach((label) => {
+        next[label] = true;
+      });
+      return next;
+    });
+  }, [groupLabels]);
+
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+    const activeGroup = MENU_ITEMS.find(
+      (item) => item.group && item.children?.some((child) => child.path === location.pathname)
+    );
+    if (!activeGroup?.label) return;
+    setCollapsedGroups((prev) => {
+      if (prev[activeGroup.label] === false && Object.keys(prev).length) return prev;
+      const next = {};
+      groupLabels.forEach((label) => {
+        next[label] = true;
+      });
+      next[activeGroup.label] = false;
+      return next;
+    });
+  }, [location.pathname, groupLabels, MENU_ITEMS]);
 
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;

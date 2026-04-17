@@ -1,11 +1,11 @@
 {
   "drafts": [
     {
-      "id": "64bc9d54-c126-43da-8536-bfa1e49929de",
+      "id": "508b795d-20ca-47c9-85a1-3a89cc229573",
       "user_id": "local-admin",
       "path": "/",
       "status": "draft",
-      "version": 1,
+      "version": 2,
       "note": "manual_save",
       "config": {
         "labels": {
@@ -64,8 +64,8 @@
         },
         "page_manifest": {}
       },
-      "created_at": "2026-04-17T06:03:02.454169+00:00",
-      "updated_at": "2026-04-17T06:03:02.454169+00:00"
+      "created_at": "2026-04-17T06:32:01.402794+00:00",
+      "updated_at": "2026-04-17T06:32:01.402794+00:00"
     }
   ],
   "history": [
@@ -135,6 +135,73 @@
       },
       "created_at": "2026-04-17T06:03:02.454169+00:00",
       "updated_at": "2026-04-17T06:03:02.454169+00:00"
+    },
+    {
+      "id": "508b795d-20ca-47c9-85a1-3a89cc229573",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "draft",
+      "version": 2,
+      "note": "manual_save",
+      "config": {
+        "labels": {
+          "page-title--": "لوحة التحكم",
+          "page-description--": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title--": "لوحة التحكم",
+          "page-description--": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title--": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description--": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title--": {
+            "src": "",
+            "href": ""
+          },
+          "page-description--": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-17T06:32:01.402794+00:00",
+      "updated_at": "2026-04-17T06:32:01.402794+00:00"
     }
   ],
   "comments": [
@@ -148,6 +215,17 @@
       "resolved": false,
       "created_at": "2026-04-17T06:02:37.201934+00:00",
       "updated_at": "2026-04-17T06:02:37.201934+00:00"
+    },
+    {
+      "id": "43e9bce4-865a-47ae-8ae1-1c35671b7508",
+      "path": "/",
+      "user_id": "local-admin",
+      "block_id": "dashboard-stat-in-progress-value",
+      "message": "بب",
+      "author_name": "مدير",
+      "resolved": false,
+      "created_at": "2026-04-17T06:31:33.609388+00:00",
+      "updated_at": "2026-04-17T06:31:33.609388+00:00"
     }
   ]
 }

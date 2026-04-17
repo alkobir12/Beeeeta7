@@ -105,9 +105,15 @@ const buildMeaningfulBlocks = (doc, path, config) => {
 
   const merged = [];
   const seen = new Set();
+  const looksDynamicId = (value) => {
+    const key = String(value || '');
+    const hasUuid = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i.test(key);
+    const veryLongNumeric = /\d{7,}/.test(key);
+    return hasUuid || veryLongNumeric;
+  };
   [...blockSnapshot, ...uiSnapshot].forEach((item) => {
     const key = String(item?.testid || '').trim();
-    if (!key || key.startsWith('generated-') || seen.has(key)) return;
+    if (!key || key.startsWith('generated-') || looksDynamicId(key) || seen.has(key)) return;
     seen.add(key);
     merged.push({ testid: key, text: item?.text || '' });
   });
@@ -183,6 +189,19 @@ export default function MoltBotStudio() {
     if (!doc) return;
     const effectiveBlocks = buildMeaningfulBlocks(doc, pathArg, configArg);
     setPageData(buildPageData(pathArg, effectiveBlocks, configArg));
+    setLoading(false);
+  }, [selectedPage, config]);
+
+  const rebuildPageDataWithRetries = useCallback((pathArg = selectedPage, configArg = config, attempt = 0) => {
+    const doc = hiddenFrameRef.current?.contentDocument;
+    if (!doc) return;
+    const effectiveBlocks = buildMeaningfulBlocks(doc, pathArg, configArg);
+    setPageData(buildPageData(pathArg, effectiveBlocks, configArg));
+    const needRetry = effectiveBlocks.length < 10 && attempt < 3;
+    if (needRetry) {
+      window.setTimeout(() => rebuildPageDataWithRetries(pathArg, configArg, attempt + 1), 900 + (attempt * 550));
+      return;
+    }
     setLoading(false);
   }, [selectedPage, config]);
 
@@ -362,7 +381,7 @@ export default function MoltBotStudio() {
           title="hidden-source-preview"
           src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
           className="absolute pointer-events-none opacity-0 w-0 h-0"
-          onLoad={() => window.setTimeout(() => rebuildPageData(selectedPage, config), 450)}
+          onLoad={() => window.setTimeout(() => rebuildPageDataWithRetries(selectedPage, config, 0), 500)}
         />
       ) : null}
 

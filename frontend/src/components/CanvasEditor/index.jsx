@@ -64,7 +64,9 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const selectSingle = (blockId) => {
     setSelectedId(blockId);
     setSelectedIds([blockId]);
-    setMobilePanelOpen(true);
+    if (window.innerWidth >= 900) {
+      setMobilePanelOpen(true);
+    }
   };
 
   const toggleMultiSelect = (blockId) => {

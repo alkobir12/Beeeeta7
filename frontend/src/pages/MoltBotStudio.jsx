@@ -224,9 +224,9 @@ export default function MoltBotStudio() {
     if (!doc) return;
     const effectiveBlocks = buildMeaningfulBlocks(doc, pathArg, configArg);
     setPageData(buildPageData(pathArg, effectiveBlocks, configArg));
-    const needRetry = effectiveBlocks.length < 10 && attempt < 3;
+    const needRetry = effectiveBlocks.length < 8 && attempt < 1;
     if (needRetry) {
-      window.setTimeout(() => rebuildPageDataWithRetries(pathArg, configArg, attempt + 1), 900 + (attempt * 550));
+      window.setTimeout(() => rebuildPageDataWithRetries(pathArg, configArg, attempt + 1), 1200);
       return;
     }
     setLoading(false);

@@ -6,22 +6,22 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   const iframeRef = useRef(null);
   const engine = useRef(new Liquid());
   const appliedCustomizationsRef = useRef([]);
-  const [liveLoaded, setLiveLoaded] = useState(false);
+  const liveLoadedRef = useRef(false);
   const [forceFallback, setForceFallback] = useState(false);
 
   useEffect(() => {
     if (!previewSrc) {
-      setLiveLoaded(false);
+      liveLoadedRef.current = false;
       setForceFallback(false);
       return undefined;
     }
-    setLiveLoaded(false);
+    liveLoadedRef.current = false;
     setForceFallback(false);
     const timer = window.setTimeout(() => {
-      setForceFallback((prev) => (liveLoaded ? prev : true));
+      setForceFallback((prev) => (liveLoadedRef.current ? prev : true));
     }, 6500);
     return () => window.clearTimeout(timer);
-  }, [previewSrc, liveLoaded]);
+  }, [previewSrc]);
 
   useEffect(() => {
     if (!previewSrc || !iframeRef.current) return undefined;
@@ -31,7 +31,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       try {
         const doc = iframe.contentDocument;
         if (!doc) return;
-        setLiveLoaded(true);
+        liveLoadedRef.current = true;
         setForceFallback(false);
 
         applyPageCustomizations(customization || {}, appliedCustomizationsRef, doc);

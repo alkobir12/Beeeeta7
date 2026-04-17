@@ -7,15 +7,11 @@
       "hidden": {}
     },
     "/ai-financial": {
-      "labels": {
-        "test-element": "تسمية اختبار"
-      },
+      "labels": {},
       "hidden": {
         "test-hidden-element": true
       },
-      "contents": {
-        "test-content": "محتوى اختبار"
-      },
+      "contents": {},
       "custom_cards": [
         {
           "id": "test-card-1",
@@ -309,13 +305,9 @@
       "block_order": []
     },
     "/operations": {
-      "labels": {
-        "operations-active-tab-title": "API-TOOLS-1776416536"
-      },
+      "labels": {},
       "hidden": {},
-      "contents": {
-        "operations-active-tab-title": "API-TOOLS-1776416536"
-      },
+      "contents": {},
       "custom_cards": [],
       "block_order": [],
       "positions": {},

@@ -21,7 +21,10 @@ const SortableBlock = ({ block, selected, onSelect }) => {
       data-testid={`canvas-editor-block-item-${block.id}`}
     >
       <span className="icon">{block.icon || '◼'}</span>
-      <span className="name">{block.name || block.title || 'بلوك'}</span>
+      <div className="min-w-0 flex-1">
+        <span className="name block truncate">{block.name || block.title || 'بلوك'}</span>
+        <span className="text-[10px] text-white/60">{block.category || 'نص'}</span>
+      </div>
     </div>
   );
 };

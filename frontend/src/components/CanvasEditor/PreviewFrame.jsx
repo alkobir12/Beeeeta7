@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Liquid } from 'liquidjs';
 import { applyPageCustomizations, clearPageCustomizations } from '../../utils/pageCustomization';
 
@@ -6,6 +6,22 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   const iframeRef = useRef(null);
   const engine = useRef(new Liquid());
   const appliedCustomizationsRef = useRef([]);
+  const [liveLoaded, setLiveLoaded] = useState(false);
+  const [forceFallback, setForceFallback] = useState(false);
+
+  useEffect(() => {
+    if (!previewSrc) {
+      setLiveLoaded(false);
+      setForceFallback(false);
+      return undefined;
+    }
+    setLiveLoaded(false);
+    setForceFallback(false);
+    const timer = window.setTimeout(() => {
+      setForceFallback((prev) => (liveLoaded ? prev : true));
+    }, 6500);
+    return () => window.clearTimeout(timer);
+  }, [previewSrc, liveLoaded]);
 
   useEffect(() => {
     if (!previewSrc || !iframeRef.current) return undefined;
@@ -15,6 +31,8 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       try {
         const doc = iframe.contentDocument;
         if (!doc) return;
+        setLiveLoaded(true);
+        setForceFallback(false);
 
         applyPageCustomizations(customization || {}, appliedCustomizationsRef, doc);
 
@@ -38,6 +56,17 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
         };
         doc.__moltbotClickHandler = clickHandler;
         doc.addEventListener('click', clickHandler, true);
+
+        window.setTimeout(() => {
+          try {
+            const hasVisibleText = String(doc.body?.innerText || '').trim().length > 6;
+            if (!hasVisibleText) {
+              setForceFallback(true);
+            }
+          } catch (_error) {
+            setForceFallback(true);
+          }
+        }, 1400);
       } catch (_error) {
         return;
       }
@@ -60,7 +89,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   }, [previewSrc, customization, onSelect]);
 
   useEffect(() => {
-    if (!previewSrc || !iframeRef.current) return;
+    if (!previewSrc || forceFallback || !iframeRef.current) return;
     try {
       const doc = iframeRef.current.contentDocument;
       if (!doc) return;
@@ -77,10 +106,10 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     } catch (_error) {
       return;
     }
-  }, [selectedId, previewSrc]);
+  }, [selectedId, previewSrc, forceFallback]);
 
   useEffect(() => {
-    if (!previewSrc || !iframeRef.current) return;
+    if (!previewSrc || forceFallback || !iframeRef.current) return;
     try {
       const doc = iframeRef.current.contentDocument;
       if (!doc) return;
@@ -88,10 +117,10 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     } catch (_error) {
       return;
     }
-  }, [customization, previewSrc]);
+  }, [customization, previewSrc, forceFallback]);
 
   useEffect(() => {
-    if (previewSrc) return undefined;
+    if (previewSrc && !forceFallback) return undefined;
     let mounted = true;
 
     const writeDoc = (content) => {
@@ -136,7 +165,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       try {
         const template = safeBlocks.map((block) => `
           <div data-block-id="${block.id}" class="preview-block ${selectedId === block.id ? 'selected' : ''}" style="${block.stylesText || ''}">
-            ${block.liquidTemplate || block.renderedContent || block.content || ''}
+            ${block.liquidTemplate || block.renderedContent || block.content || block.title || block.id || 'عنصر قابل للتعديل'}
           </div>
         `).join('');
 
@@ -152,13 +181,13 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     return () => {
       mounted = false;
     };
-  }, [blocks, selectedId, onSelect, previewSrc]);
+  }, [blocks, selectedId, onSelect, previewSrc, forceFallback]);
 
   return (
     <iframe
       ref={iframeRef}
       className={`preview-frame ${deviceMode}`}
-      src={previewSrc || undefined}
+      src={previewSrc && !forceFallback ? previewSrc : undefined}
       style={{
         width: deviceMode === 'mobile' ? '375px' : deviceMode === 'tablet' ? '768px' : '100%',
         height: '100%',

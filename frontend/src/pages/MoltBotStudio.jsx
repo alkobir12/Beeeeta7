@@ -8,6 +8,7 @@ import { useToast } from '../hooks/use-toast';
 const EMPTY_CONFIG = { labels: {}, hidden: {}, contents: {}, custom_cards: [], block_order: [], positions: {}, styles: {}, assets: {}, page_manifest: {} };
 const draftStorageKey = (userId, path) => `moltbot-studio-draft:${userId}:${path}`;
 const toPageId = (path) => String(path || '/').replace(/^\//, '') || 'home';
+const LIVE_PREVIEW_PATHS = new Set(['/', '/operations', '/parts', '/accounting/comprehensive', '/settings']);
 
 const normalizeConfig = (value = {}) => ({
   ...EMPTY_CONFIG,
@@ -26,6 +27,18 @@ const normalizeConfig = (value = {}) => ({
 const resolveDisplayName = (item, index) => {
   const text = String(item?.text || '').trim().replace(/\s+/g, ' ').slice(0, 60);
   return text || `بلوك ${index + 1}`;
+};
+
+const classifyBlock = (testid = '') => {
+  const key = String(testid || '').toLowerCase();
+  if (key.includes('table') || key.includes('row') || key.includes('cell')) return 'جدول';
+  if (key.includes('card') || key.includes('stat')) return 'كرت';
+  if (key.includes('button') || key.includes('btn') || key.includes('submit')) return 'زر';
+  if (key.includes('input') || key.includes('field') || key.includes('select') || key.includes('textarea')) return 'حقل';
+  if (key.includes('title') || key.includes('heading') || key.includes('label')) return 'عنوان';
+  if (key.includes('image') || key.includes('icon') || key.includes('avatar')) return 'صورة';
+  if (key.includes('nav') || key.includes('menu') || key.includes('tab')) return 'تنقل';
+  return 'نص';
 };
 
 const stylesToObject = (styles = {}) => ({
@@ -50,6 +63,7 @@ const buildPageData = (path, blocks, config) => ({
   blocks: (Array.isArray(blocks) ? blocks : []).map((block, index) => ({
     id: block.testid || `moltbot-block-${index + 1}`,
     type: config.assets?.[block.testid]?.src ? 'image' : config.assets?.[block.testid]?.href ? 'button' : 'text',
+    category: classifyBlock(block.testid),
     name: resolveDisplayName(block, index),
     title: config.labels?.[block.testid] || resolveDisplayName(block, index),
     image: config.assets?.[block.testid]?.src || '',
@@ -63,7 +77,9 @@ const buildPageData = (path, blocks, config) => ({
   settings: {
     responsive: true,
     breakpoints: { mobile: 375, tablet: 768, desktop: 1280 },
-    previewSrc: `${path}${String(path).includes('?') ? '&' : '?'}editor-preview=1`,
+    previewSrc: LIVE_PREVIEW_PATHS.has(path)
+      ? `${path}${String(path).includes('?') ? '&' : '?'}editor-preview=1`
+      : '',
   },
 });
 
@@ -77,9 +93,10 @@ const buildFallbackBlocks = (path, config) => {
 
   if (!refs.size) {
     const pageLabel = LIQUID_BUILDER_PAGES.find((page) => page.path === path)?.label || 'الصفحة';
+    const slug = toPageId(path);
     return [
-      { testid: `page-title-${String(path).replace(/\W+/g, '-')}`, text: pageLabel },
-      { testid: `page-description-${String(path).replace(/\W+/g, '-')}`, text: `محتوى ${pageLabel}` },
+      { testid: `page-title-${slug}`, text: pageLabel },
+      { testid: `page-description-${slug}`, text: `محتوى ${pageLabel}` },
     ];
   }
 
@@ -113,13 +130,23 @@ const buildMeaningfulBlocks = (doc, path, config) => {
   };
   [...blockSnapshot, ...uiSnapshot].forEach((item) => {
     const key = String(item?.testid || '').trim();
-    if (!key || key.startsWith('generated-') || looksDynamicId(key) || seen.has(key)) return;
+    if (
+      !key
+      || key.startsWith('generated-')
+      || looksDynamicId(key)
+      || key.length > 120
+      || key.endsWith('--')
+      || key.includes('rrweb')
+      || seen.has(key)
+    ) return;
     seen.add(key);
     merged.push({ testid: key, text: item?.text || '' });
   });
 
-  if (merged.length >= 6) return merged;
-  return merged.length ? [...merged, ...buildFallbackBlocks(path, config)] : buildFallbackBlocks(path, config);
+  const clipped = merged.slice(0, 120);
+
+  if (clipped.length >= 6) return clipped;
+  return clipped.length ? [...clipped, ...buildFallbackBlocks(path, config)] : buildFallbackBlocks(path, config);
 };
 
 export default function MoltBotStudio() {
@@ -237,9 +264,15 @@ export default function MoltBotStudio() {
   const handleSave = async (data, meta = {}) => {
     const nextConfig = normalizeConfig(config);
     const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
-    const targetBlocks = touched.size
+    let targetBlocks = touched.size
       ? (data.blocks || []).filter((block) => touched.has(block.id))
       : (data.blocks || []);
+    if (meta?.selectedSnapshot?.id) {
+      const exists = targetBlocks.some((block) => block.id === meta.selectedSnapshot.id);
+      if (!exists) {
+        targetBlocks = [...targetBlocks, meta.selectedSnapshot];
+      }
+    }
     targetBlocks.forEach((block) => {
       nextConfig.labels[block.id] = block.title || '';
       nextConfig.contents[block.id] = block.content || '';
@@ -285,9 +318,15 @@ export default function MoltBotStudio() {
   const handlePublish = async (data, meta = {}) => {
     const nextConfig = normalizeConfig(config);
     const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
-    const targetBlocks = touched.size
+    let targetBlocks = touched.size
       ? (data.blocks || []).filter((block) => touched.has(block.id))
       : (data.blocks || []);
+    if (meta?.selectedSnapshot?.id) {
+      const exists = targetBlocks.some((block) => block.id === meta.selectedSnapshot.id);
+      if (!exists) {
+        targetBlocks = [...targetBlocks, meta.selectedSnapshot];
+      }
+    }
     targetBlocks.forEach((block) => {
       nextConfig.labels[block.id] = block.title || '';
       nextConfig.contents[block.id] = block.content || '';
@@ -301,6 +340,18 @@ export default function MoltBotStudio() {
 
     try {
       setPublishing(true);
+      try {
+        localStorage.setItem(`moltbot-published:${userId}:${selectedPage}`, JSON.stringify(nextConfig));
+      } catch (_error) {
+        // ignore storage errors
+      }
+      window.dispatchEvent(new CustomEvent('page-customization-updated', {
+        detail: {
+          path: selectedPage,
+          customization: nextConfig,
+        },
+      }));
+
       const publishRes = await siteBuilderAPI.publishEditorDraft({
         user_id: userId,
         path: selectedPage,
@@ -315,22 +366,11 @@ export default function MoltBotStudio() {
         status: 'published',
         updated_at: published.updated_at || _nowIso(),
       });
-      try {
-        localStorage.setItem(`moltbot-published:${userId}:${selectedPage}`, JSON.stringify(nextConfig));
-      } catch (_error) {
-        // ignore storage errors
-      }
       localStorage.removeItem(draftStorageKey(userId, selectedPage));
-      window.dispatchEvent(new CustomEvent('page-customization-updated', {
-        detail: {
-          path: selectedPage,
-          customization: nextConfig,
-        },
-      }));
       await loadCollabMeta(selectedPage);
       toast({ title: 'تم النشر', description: 'تم نشر التعديلات على الصفحة بنجاح' });
     } catch {
-      toast({ title: 'خطأ', description: 'تعذر نشر التعديلات', variant: 'destructive' });
+      toast({ title: 'تحذير', description: 'تم حفظ التعديل محليًا، وتعذر مزامنة الخادم الآن', variant: 'destructive' });
     } finally {
       setPublishing(false);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { useSimpleHistory } from '../../hooks/useSimpleHistory';
@@ -31,9 +31,14 @@ const stylesObjectToText = (styles = {}) => Object.entries(styles).filter(([, va
 
 const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const { current, push, undo, redo, reset, canUndo, canRedo, history, index, jumpTo } = useSimpleHistory(pageData);
+  const latestCurrentRef = useRef(current);
   const [selectedId, setSelectedId] = useState(null);
   const [deviceMode, setDeviceMode] = useState('desktop');
   const [touchedIds, setTouchedIds] = useState({});
+
+  useEffect(() => {
+    latestCurrentRef.current = current;
+  }, [current]);
 
   useEffect(() => {
     reset(pageData);
@@ -58,10 +63,25 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   }, [undo, redo, push]);
 
   const updateBlock = (blockId, updates) => {
+    const exists = current.blocks.some((block) => block.id === blockId);
+    const nextBlocks = exists
+      ? current.blocks.map((block) => block.id === blockId ? { ...block, ...updates } : block)
+      : [...current.blocks, {
+        id: blockId,
+        type: 'text',
+        name: blockId,
+        title: updates?.title || blockId,
+        content: updates?.content || '',
+        liquidTemplate: '',
+        styles: updates?.styles || {},
+        image: updates?.image || '',
+        link: updates?.link || '',
+      }];
     const newData = {
       ...current,
-      blocks: current.blocks.map((block) => block.id === blockId ? { ...block, ...updates } : block),
+      blocks: nextBlocks,
     };
+    latestCurrentRef.current = newData;
     push(newData);
     setTouchedIds((prev) => ({ ...prev, [blockId]: true }));
   };
@@ -140,8 +160,16 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
       <Toolbar
         deviceMode={deviceMode}
         onDeviceChange={setDeviceMode}
-        onSave={() => onSave(current, { touchedIds: Object.keys(touchedIds) })}
-        onPublish={() => onPublish?.(current, { touchedIds: Object.keys(touchedIds) })}
+        onSave={() => onSave(latestCurrentRef.current, {
+          touchedIds: Object.keys(touchedIds),
+          selectedId,
+          selectedSnapshot: latestCurrentRef.current.blocks.find((block) => block.id === selectedId) || null,
+        })}
+        onPublish={() => onPublish?.(latestCurrentRef.current, {
+          touchedIds: Object.keys(touchedIds),
+          selectedId,
+          selectedSnapshot: latestCurrentRef.current.blocks.find((block) => block.id === selectedId) || null,
+        })}
         undo={undo}
         redo={redo}
         canUndo={canUndo}

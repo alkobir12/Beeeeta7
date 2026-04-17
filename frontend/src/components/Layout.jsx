@@ -83,6 +83,10 @@ const Layout = ({ pageTitle }) => {
         const localCustomization = JSON.parse(localRaw);
         if (localCustomization && typeof localCustomization === 'object') {
           setPageCustomization(localCustomization);
+          window.__layoutCustomizationDebug = {
+            ...localCustomization,
+            __meta: { userId, path: location.pathname || '/', source: 'local-storage' },
+          };
         }
       }
     } catch (_error) {
@@ -94,6 +98,7 @@ const Layout = ({ pageTitle }) => {
         if (cancelled) return;
         const nextCustomization = response.data?.data || { custom_cards: [] };
         setPageCustomization(nextCustomization);
+        window.__layoutCustomizationDebug = { ...nextCustomization, __meta: { userId, path: location.pathname || '/', source: 'axios' } };
       })
       .catch(async () => {
         try {
@@ -103,12 +108,41 @@ const Layout = ({ pageTitle }) => {
           const fallbackJson = await fallbackRes.json();
           const fallbackCustomization = fallbackJson?.data || { custom_cards: [] };
           setPageCustomization(fallbackCustomization);
+          window.__layoutCustomizationDebug = { ...fallbackCustomization, __meta: { userId, path: location.pathname || '/', source: 'fallback-catch' } };
         } catch (_error) {
           return;
         }
       });
     return () => {
       cancelled = true;
+    };
+  }, [location.pathname, session, isEditorWorkspace]);
+
+  useEffect(() => {
+    if (isEditorWorkspace) return undefined;
+    const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+    let cancelled = false;
+
+    const pullCustomization = async () => {
+      try {
+        const params = new URLSearchParams({ user_id: userId, path: location.pathname || '/' });
+        const res = await fetch(`/api/alkabeer-bot/customization?${params.toString()}`);
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        const next = json?.data || { custom_cards: [] };
+        if (cancelled) return;
+        setPageCustomization(next);
+        window.__layoutCustomizationDebug = { ...next, __meta: { userId, path: location.pathname || '/', source: 'poll' } };
+      } catch (_error) {
+        return;
+      }
+    };
+
+    pullCustomization();
+    const intervalId = window.setInterval(pullCustomization, 7000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
     };
   }, [location.pathname, session, isEditorWorkspace]);
 
@@ -126,6 +160,7 @@ const Layout = ({ pageTitle }) => {
     const t1 = window.setTimeout(applyNow, 320);
     const t2 = window.setTimeout(applyNow, 950);
     const t3 = window.setTimeout(applyNow, 1800);
+    const keepAlive = window.setInterval(applyNow, 4000);
 
     const root = document.querySelector('.content-area .animate-fade-in') || document.querySelector('main.content-area') || document.body;
     let pendingApply = null;
@@ -143,6 +178,7 @@ const Layout = ({ pageTitle }) => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearTimeout(t3);
+      window.clearInterval(keepAlive);
       if (pendingApply) window.clearTimeout(pendingApply);
       observer.disconnect();
     };

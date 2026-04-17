@@ -43,6 +43,21 @@
   - Publish يرفع النسخة ويعكس التحديث في endpoint.
   - Mobile sidebar accordion يعمل بشكل صحيح.
 
+### أدوات المرفق (Editor Tools Integration) - دفعة تكامل (17 Apr 2026)
+- تم إضافة أدوات تكامل رئيسية داخل Canvas Editor:
+  - **Keyboard Shortcuts**: حفظ/نشر/تراجع/إعادة/نسخ/لصق/تكرار/حذف + لوحة مساعدة اختصارات.
+  - **Copy/Paste/Duplicate**: عبر toolbar + shortcuts مع clipboard محلي ومعرّفات جديدة تلقائيًا.
+  - **Layers Panel**: عرض الطبقات مع تحديد العنصر + إظهار/إخفاء + قفل/فتح.
+  - **Alignment Toolbar**: محاذاة النص + أدوات spacing/padding السريعة.
+  - **Export/Import**: تصدير JSON/HTML واستيراد JSON من الملف.
+- تحسينات اللمس والجوال:
+  - تكبير فعلي لأزرار toolbar على الشاشات الصغيرة.
+  - دعم تفاعل اللمس (touch-action) + haptic بسيط عند تحديد عنصر.
+  - تحويل right panel على الجوال إلى نمط bottom-sheet عملي.
+- تحسين المعاينة عبر الصفحات:
+  - live preview للصفحات الأساسية.
+  - fallback synthetic preview للصفحات التي كانت تظهر فارغة (مثل customers) لمنع الشاشة البيضاء.
+
 ### إصلاح حفظ رقم ملف المركبة + إظهار إيراد النقد/البنك في نظرة عامة المالية (16 Apr 2026)
 - تم إصلاح مشكلة عدم حفظ `fileNumber` من شاشة ملف المركبة عبر backend model:
   - إضافة `fileNumber` إلى `VehicleUpdate` في `/app/backend/models.py`

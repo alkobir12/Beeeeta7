@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { useSimpleHistory } from '../../hooks/useSimpleHistory';
+import { useClipboard } from '../../hooks/useClipboard';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { HistoryTimeline } from './HistoryTimeline';
 import PreviewFrame from './PreviewFrame';
 import PropertyPanel from './PropertyPanel';
 import BlockSidebar from './BlockSidebar';
 import Toolbar from './Toolbar';
+import { LayersPanel } from './LayersPanel';
+import { AlignmentToolbar } from './AlignmentToolbar';
+import { ExportImportDialog } from './ExportImportDialog';
 import './CanvasEditor.css';
 
 const makeRenderedContent = (block) => {
@@ -35,6 +40,8 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const [selectedId, setSelectedId] = useState(null);
   const [deviceMode, setDeviceMode] = useState('desktop');
   const [touchedIds, setTouchedIds] = useState({});
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const { writeClipboard, readClipboard, cloneWithNewId } = useClipboard();
 
   useEffect(() => {
     latestCurrentRef.current = current;
@@ -49,18 +56,6 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   useEffect(() => {
     onSelectionChange?.(selectedId || '');
   }, [selectedId, onSelectionChange]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        const newData = e.shiftKey ? redo() : undo();
-        if (newData) push(newData, 0);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, push]);
 
   const updateBlock = (blockId, updates) => {
     const exists = current.blocks.some((block) => block.id === blockId);
@@ -85,6 +80,103 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
     push(newData);
     setTouchedIds((prev) => ({ ...prev, [blockId]: true }));
   };
+
+  const applyStylePatch = (blockId, stylePatch = {}) => {
+    const target = current.blocks.find((block) => block.id === blockId);
+    updateBlock(blockId, { styles: { ...(target?.styles || {}), ...stylePatch } });
+  };
+
+  const copySelected = () => {
+    if (!selectedId) return;
+    const target = latestCurrentRef.current.blocks.find((block) => block.id === selectedId);
+    if (!target) return;
+    writeClipboard(target);
+  };
+
+  const pasteBlock = () => {
+    const source = readClipboard();
+    if (!source) return;
+    const clone = cloneWithNewId(source);
+    if (!clone) return;
+    const nextData = {
+      ...latestCurrentRef.current,
+      blocks: [...latestCurrentRef.current.blocks, clone],
+    };
+    latestCurrentRef.current = nextData;
+    push(nextData);
+    setSelectedId(clone.id);
+    setTouchedIds((prev) => ({ ...prev, [clone.id]: true }));
+  };
+
+  const duplicateSelected = () => {
+    if (!selectedId) return;
+    const target = latestCurrentRef.current.blocks.find((block) => block.id === selectedId);
+    if (!target) return;
+    const clone = cloneWithNewId(target);
+    if (!clone) return;
+    const nextData = {
+      ...latestCurrentRef.current,
+      blocks: [...latestCurrentRef.current.blocks, clone],
+    };
+    latestCurrentRef.current = nextData;
+    push(nextData);
+    setSelectedId(clone.id);
+    setTouchedIds((prev) => ({ ...prev, [clone.id]: true }));
+  };
+
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    const nextBlocks = latestCurrentRef.current.blocks.filter((block) => block.id !== selectedId);
+    const nextData = { ...latestCurrentRef.current, blocks: nextBlocks };
+    latestCurrentRef.current = nextData;
+    push(nextData);
+    setSelectedId(null);
+  };
+
+  const importPageData = (parsed) => {
+    const importedBlocks = Array.isArray(parsed?.blocks)
+      ? parsed.blocks.map((block, idx) => ({
+        id: block.id || `imported-${idx + 1}`,
+        type: block.type || 'text',
+        name: block.name || block.title || block.id || `عنصر ${idx + 1}`,
+        title: block.title || block.name || `عنصر ${idx + 1}`,
+        content: block.content || '',
+        liquidTemplate: block.liquidTemplate || '',
+        styles: block.styles || {},
+        image: block.image || '',
+        link: block.link || '',
+      }))
+      : [];
+    if (!importedBlocks.length) return;
+    const nextData = {
+      ...latestCurrentRef.current,
+      blocks: importedBlocks,
+    };
+    latestCurrentRef.current = nextData;
+    push(nextData);
+    setSelectedId(importedBlocks[0]?.id || null);
+  };
+
+  useKeyboardShortcuts({
+    onSave: () => onSave(latestCurrentRef.current, {
+      touchedIds: Object.keys(touchedIds),
+      selectedId,
+      selectedSnapshot: latestCurrentRef.current.blocks.find((block) => block.id === selectedId) || null,
+    }),
+    onPublish: () => onPublish?.(latestCurrentRef.current, {
+      touchedIds: Object.keys(touchedIds),
+      selectedId,
+      selectedSnapshot: latestCurrentRef.current.blocks.find((block) => block.id === selectedId) || null,
+    }),
+    onUndo: undo,
+    onRedo: redo,
+    onCopy: copySelected,
+    onPaste: pasteBlock,
+    onDuplicate: duplicateSelected,
+    onDelete: deleteSelected,
+    onDeselect: () => setSelectedId(null),
+    onToggleShortcuts: () => setShowShortcuts((v) => !v),
+  });
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -174,6 +266,12 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
         redo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onCopy={copySelected}
+        onPaste={pasteBlock}
+        onDuplicate={duplicateSelected}
+        onDelete={deleteSelected}
+        onToggleShortcuts={() => setShowShortcuts((v) => !v)}
+        extraRightSlot={<ExportImportDialog pageData={latestCurrentRef.current} onImport={importPageData} />}
       />
 
       <div className="editor-layout">
@@ -195,10 +293,37 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
         </div>
 
         <div className="right-panel" data-testid="canvas-editor-right-panel">
+          <AlignmentToolbar selectedBlock={selectedBlock} onStyleChange={applyStylePatch} />
           <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => setSelectedId(null)} />
+          <LayersPanel
+            blocks={blocks}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onToggleVisibility={(blockId, hidden) => applyStylePatch(blockId, { display: hidden ? '' : 'none' })}
+            onToggleLock={(blockId, locked) => updateBlock(blockId, { locked: !locked })}
+          />
           <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={handleJumpTo} />
         </div>
       </div>
+
+      {showShortcuts ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" data-testid="canvas-editor-shortcuts-modal">
+          <div className="w-[min(92vw,520px)] rounded-2xl border border-white/10 bg-[#0f172a] p-5 text-white">
+            <h3 className="text-sm font-bold mb-3">اختصارات لوحة المفاتيح</h3>
+            <ul className="space-y-2 text-xs text-white/80" data-testid="canvas-editor-shortcuts-list">
+              <li>Ctrl/Cmd + S: حفظ</li>
+              <li>Ctrl/Cmd + Shift + S: نشر</li>
+              <li>Ctrl/Cmd + Z / Y: تراجع / إعادة</li>
+              <li>Ctrl/Cmd + C / V / D: نسخ / لصق / تكرار</li>
+              <li>Delete: حذف العنصر المحدد</li>
+              <li>Shift + ?: فتح/إغلاق هذه اللوحة</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <button type="button" onClick={() => setShowShortcuts(false)} className="rounded border border-white/20 px-3 py-1 text-xs" data-testid="canvas-editor-shortcuts-close-button">إغلاق</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

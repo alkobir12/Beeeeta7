@@ -17,7 +17,14 @@ const SortableBlock = ({ block, selected, onSelect }) => {
       {...listeners}
       className={`block-item ${selected ? 'selected' : ''}`}
       onClick={() => onSelect?.(block.id)}
-      onPointerDown={() => onSelect?.(block.id)}
+      onPointerDown={() => {
+        onSelect?.(block.id);
+        if (navigator?.vibrate) navigator.vibrate(12);
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onSelect?.(block.id);
+      }}
       data-testid={`canvas-editor-block-item-${block.id}`}
     >
       <span className="icon">{block.icon || '◼'}</span>

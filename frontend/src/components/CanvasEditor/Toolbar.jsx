@@ -1,11 +1,33 @@
 import React from 'react';
 
-const Toolbar = ({ deviceMode, onDeviceChange, onSave, onPublish, undo, redo, canUndo, canRedo }) => {
+const Toolbar = ({
+  deviceMode,
+  onDeviceChange,
+  onSave,
+  onPublish,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  onCopy,
+  onPaste,
+  onDuplicate,
+  onDelete,
+  onToggleShortcuts,
+  extraRightSlot,
+}) => {
   return (
     <div className="toolbar" data-testid="canvas-editor-toolbar">
       <div className="toolbar-group history">
         <button onClick={undo} disabled={!canUndo} data-testid="canvas-editor-undo-button">↩️ تراجع</button>
         <button onClick={redo} disabled={!canRedo} data-testid="canvas-editor-redo-button">↪️ إعادة</button>
+      </div>
+
+      <div className="toolbar-group history">
+        <button onClick={onCopy} data-testid="canvas-editor-copy-button">نسخ</button>
+        <button onClick={onPaste} data-testid="canvas-editor-paste-button">لصق</button>
+        <button onClick={onDuplicate} data-testid="canvas-editor-duplicate-button">تكرار</button>
+        <button onClick={onDelete} data-testid="canvas-editor-delete-button">حذف</button>
       </div>
 
       <div className="toolbar-group devices">
@@ -17,6 +39,8 @@ const Toolbar = ({ deviceMode, onDeviceChange, onSave, onPublish, undo, redo, ca
       <div className="toolbar-group actions">
         <button onClick={onSave} className="btn-primary" data-testid="canvas-editor-save-button">حفظ</button>
         <button onClick={onPublish} className="btn-secondary" data-testid="canvas-editor-publish-button">نشر</button>
+        <button onClick={onToggleShortcuts} data-testid="canvas-editor-shortcuts-help-button">⌨️</button>
+        {extraRightSlot}
       </div>
     </div>
   );

@@ -17,6 +17,32 @@
 
 ## What's Been Implemented
 
+### MoltBot Stability + P2 Supabase Basics + Mobile Sidebar Accordion (17 Apr 2026)
+- تم تنفيذ أساسيات P2 داخل MoltBot:
+  - Backend APIs: `editor/draft`, `editor/draft/save`, `editor/publish`, `editor/history`, `editor/comments` (+ update/delete comment).
+  - حفظ النسخ history والتعليقات comments مع fallback محلي عند عدم توفر جداول Supabase.
+- تم تحسين محرر MoltBot عمليًا:
+  - اختيار مباشر من المعاينة (Preview click-to-select) مع إدراج العنصر تلقائيًا إذا لم يكن ضمن القائمة.
+  - منع النصوص الخام/المعرّفات الديناميكية في الالتقاط، وتقليل الضوضاء في customization storage.
+  - Publish/Save صار يعتمد لقطات التعديل الحقيقية (selected snapshot + touched ids).
+  - دعم خصائص تنسيق أوسع في Property Panel (font weight/line height/spacing/padding/margin/border/shadow/display).
+- تم تحسين المعاينة متعددة الصفحات:
+  - صفحات ثقيلة مثل `/customers` تستخدم معاينة تركيبية fallback بدل شاشة بيضاء.
+  - صفحات رئيسية (`/`, `/operations`, `/parts`, `/accounting/comprehensive`, `/settings`) تستخدم live preview.
+- تم تحسين دعم الجوال 100% للقائمة الجانبية:
+  - المجموعات على الموبايل أصبحت Accordion قابلة للطي/الفتح مع فتح مجموعة واحدة بشكل واضح.
+  - إغلاق تلقائي بعد التنقل مع overlay وزر إغلاق.
+- إصلاحات الأداء/الذاكرة:
+  - تخفيف mutation observer ومنع listener leaks في preview iframe.
+  - تقليل أسباب التجمّد التي كانت تؤدي إلى OOM.
+
+### Testing (17 Apr 2026)
+- auto_frontend_testing_agent: PASS
+  - `/moltbot` يظهر بالكامل (selector/history/comments).
+  - `/customers` preview غير فارغ (محتوى ظاهر).
+  - Publish يرفع النسخة ويعكس التحديث في endpoint.
+  - Mobile sidebar accordion يعمل بشكل صحيح.
+
 ### إصلاح حفظ رقم ملف المركبة + إظهار إيراد النقد/البنك في نظرة عامة المالية (16 Apr 2026)
 - تم إصلاح مشكلة عدم حفظ `fileNumber` من شاشة ملف المركبة عبر backend model:
   - إضافة `fileNumber` إلى `VehicleUpdate` في `/app/backend/models.py`

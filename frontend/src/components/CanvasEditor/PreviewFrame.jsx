@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Liquid } from 'liquidjs';
 import { applyPageCustomizations, clearPageCustomizations } from '../../utils/pageCustomization';
 
-const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, customization }) => {
+const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, customization, liveSyncEnabled = false }) => {
   const iframeRef = useRef(null);
   const engine = useRef(new Liquid());
   const appliedCustomizationsRef = useRef([]);
@@ -89,7 +89,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   }, [previewSrc, customization, onSelect]);
 
   useEffect(() => {
-    if (!previewSrc || forceFallback || !iframeRef.current) return;
+    if (!previewSrc || forceFallback || !liveSyncEnabled || !iframeRef.current) return;
     try {
       const doc = iframeRef.current.contentDocument;
       if (!doc) return;
@@ -117,7 +117,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     } catch (_error) {
       return;
     }
-  }, [customization, previewSrc, forceFallback]);
+  }, [customization, previewSrc, forceFallback, liveSyncEnabled]);
 
   useEffect(() => {
     if (previewSrc && !forceFallback) return undefined;

@@ -4,6 +4,42 @@ export const ExportImportDialog = ({ pageData, onImport }) => {
   const [open, setOpen] = useState(false);
   const fileInputRef = useRef(null);
 
+  const templates = [
+    {
+      id: 'dashboard-kpi-template',
+      label: 'قالب KPI Dashboard',
+      data: {
+        blocks: [
+          { id: 'template-kpi-title', title: 'لوحة مؤشرات الأداء', content: 'ملخص سريع للأرقام المهمة', type: 'text', styles: { fontSize: '22px', fontWeight: '700' } },
+          { id: 'template-kpi-card-1', title: 'إجمالي المركبات', content: '128', type: 'text', styles: { padding: '14px', borderRadius: '12px', backgroundColor: '#0f172a', color: '#ffffff' } },
+          { id: 'template-kpi-card-2', title: 'مركبات تحت الصيانة', content: '34', type: 'text', styles: { padding: '14px', borderRadius: '12px', backgroundColor: '#1e293b', color: '#ffffff' } },
+        ],
+      },
+    },
+    {
+      id: 'customers-list-template',
+      label: 'قالب صفحة العملاء',
+      data: {
+        blocks: [
+          { id: 'template-customers-title', title: 'إدارة العملاء', content: 'بحث، تصفية، وتحديث بيانات العملاء', type: 'text', styles: { fontSize: '20px', fontWeight: '700' } },
+          { id: 'template-customers-search', title: 'حقل بحث', content: 'ابحث باسم العميل أو رقم الهاتف', type: 'text', styles: { padding: '12px', border: '1px solid #334155', borderRadius: '10px' } },
+          { id: 'template-customers-table', title: 'جدول العملاء', content: 'الاسم | الهاتف | آخر زيارة | الحالة', type: 'text', styles: { padding: '14px', backgroundColor: '#f8fafc', borderRadius: '10px' } },
+        ],
+      },
+    },
+    {
+      id: 'reports-template',
+      label: 'قالب صفحة التقارير',
+      data: {
+        blocks: [
+          { id: 'template-reports-title', title: 'التقارير المالية', content: 'تحليل الأداء اليومي والأسبوعي', type: 'text', styles: { fontSize: '20px', fontWeight: '700' } },
+          { id: 'template-reports-chart', title: 'مخطط الإيرادات', content: 'منحنى الإيرادات الشهرية', type: 'text', styles: { padding: '16px', backgroundColor: '#0b1220', color: '#e2e8f0', borderRadius: '12px' } },
+          { id: 'template-reports-summary', title: 'ملخص', content: 'صافي الدخل | المصروفات | النقد المتاح', type: 'text', styles: { padding: '14px', borderRadius: '10px', backgroundColor: '#eff6ff' } },
+        ],
+      },
+    },
+  ];
+
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(pageData, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
@@ -51,6 +87,22 @@ export const ExportImportDialog = ({ pageData, onImport }) => {
           <button type="button" onClick={exportJson} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs mb-2" data-testid="export-json-button">تصدير JSON</button>
           <button type="button" onClick={exportHtml} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs mb-2" data-testid="export-html-button">تصدير HTML</button>
           <button type="button" onClick={triggerImport} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs" data-testid="import-json-button">استيراد JSON</button>
+          <div className="mt-3 pt-2 border-t border-white/10" data-testid="template-import-section">
+            <div className="text-[11px] text-cyan-200 mb-2">قوالب جاهزة</div>
+            <div className="space-y-2">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => { onImport?.(template.data); setOpen(false); }}
+                  className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs"
+                  data-testid={`template-import-button-${template.id}`}
+                >
+                  {template.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

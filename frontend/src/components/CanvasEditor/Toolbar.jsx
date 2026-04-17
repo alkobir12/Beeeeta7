@@ -14,6 +14,8 @@ const Toolbar = ({
   onDuplicate,
   onDelete,
   onToggleShortcuts,
+  liveSyncEnabled,
+  onToggleLiveSync,
   extraRightSlot,
 }) => {
   return (
@@ -39,6 +41,7 @@ const Toolbar = ({
       <div className="toolbar-group actions">
         <button onClick={onSave} className="btn-primary" data-testid="canvas-editor-save-button">حفظ</button>
         <button onClick={onPublish} className="btn-secondary" data-testid="canvas-editor-publish-button">نشر</button>
+        <button onClick={onToggleLiveSync} className={liveSyncEnabled ? 'active' : ''} data-testid="canvas-editor-live-sync-toggle">معاينة حية</button>
         <button onClick={onToggleShortcuts} data-testid="canvas-editor-shortcuts-help-button">⌨️</button>
         {extraRightSlot}
       </div>

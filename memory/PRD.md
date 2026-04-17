@@ -58,6 +58,24 @@
   - live preview للصفحات الأساسية.
   - fallback synthetic preview للصفحات التي كانت تظهر فارغة (مثل customers) لمنع الشاشة البيضاء.
 
+### طلبات متابعة المستخدم (17 Apr 2026 - Multi-select / Templates / Mobile / Preview)
+- **Multi-select حقيقي للمحاذاة الجماعية**:
+  - إضافة `selectedIds` داخل Canvas.
+  - دعم تحديد متعدد من Layers Panel عبر checkboxes.
+  - Alignment Toolbar يطبق التنسيق على مجموعة العناصر المحددة (وليس عنصرًا واحدًا فقط).
+- **ربط استيراد القوالب Templates داخل Export/Import**:
+  - إضافة قوالب جاهزة داخل قائمة التصدير/الاستيراد:
+    - KPI Dashboard Template
+    - Customers Page Template
+    - Reports Page Template
+  - استيراد القالب يحقن blocks جاهزة مباشرة في الـ Canvas.
+- **إصلاح تداخل الجوال**:
+  - جعل لوحة الخصائص في الجوال قابلة للفتح/الإغلاق عبر زر `canvas-editor-mobile-inspector-toggle` بدل تداخل دائم.
+  - تحسين سلوك toolbar والأزرار على الشاشات الصغيرة (حجم/spacing).
+- **تقليل التحديث اللاإرادي في المعاينة**:
+  - إضافة Toggle للتحكم في المزامنة الحية `canvas-editor-live-sync-toggle`.
+  - المعاينة الحية أصبحت اختيارية بدل تطبيق مستمر غير مرغوب.
+
 ### إصلاح حفظ رقم ملف المركبة + إظهار إيراد النقد/البنك في نظرة عامة المالية (16 Apr 2026)
 - تم إصلاح مشكلة عدم حفظ `fileNumber` من شاشة ملف المركبة عبر backend model:
   - إضافة `fileNumber` إلى `VehicleUpdate` في `/app/backend/models.py`

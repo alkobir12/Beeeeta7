@@ -38,9 +38,12 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const { current, push, undo, redo, reset, canUndo, canRedo, history, index, jumpTo } = useSimpleHistory(pageData);
   const latestCurrentRef = useRef(current);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [deviceMode, setDeviceMode] = useState('desktop');
   const [touchedIds, setTouchedIds] = useState({});
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const [liveSyncEnabled, setLiveSyncEnabled] = useState(false);
   const { writeClipboard, readClipboard, cloneWithNewId } = useClipboard();
 
   useEffect(() => {
@@ -50,12 +53,29 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   useEffect(() => {
     reset(pageData);
     setSelectedId(null);
+    setSelectedIds([]);
     setTouchedIds({});
   }, [pageData, reset]);
 
   useEffect(() => {
     onSelectionChange?.(selectedId || '');
   }, [selectedId, onSelectionChange]);
+
+  const selectSingle = (blockId) => {
+    setSelectedId(blockId);
+    setSelectedIds([blockId]);
+    setMobilePanelOpen(true);
+  };
+
+  const toggleMultiSelect = (blockId) => {
+    setSelectedIds((prev) => {
+      const exists = prev.includes(blockId);
+      const next = exists ? prev.filter((id) => id !== blockId) : [...prev, blockId];
+      if (next.length === 1) setSelectedId(next[0]);
+      if (!next.length) setSelectedId(null);
+      return next;
+    });
+  };
 
   const updateBlock = (blockId, updates) => {
     const exists = current.blocks.some((block) => block.id === blockId);
@@ -84,6 +104,11 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const applyStylePatch = (blockId, stylePatch = {}) => {
     const target = current.blocks.find((block) => block.id === blockId);
     updateBlock(blockId, { styles: { ...(target?.styles || {}), ...stylePatch } });
+  };
+
+  const applyStyleForSelection = (stylePatch = {}) => {
+    const targets = selectedIds.length ? selectedIds : selectedId ? [selectedId] : [];
+    targets.forEach((id) => applyStylePatch(id, stylePatch));
   };
 
   const copySelected = () => {
@@ -125,12 +150,15 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   };
 
   const deleteSelected = () => {
-    if (!selectedId) return;
-    const nextBlocks = latestCurrentRef.current.blocks.filter((block) => block.id !== selectedId);
+    const targets = selectedIds.length ? selectedIds : selectedId ? [selectedId] : [];
+    if (!targets.length) return;
+    const targetSet = new Set(targets);
+    const nextBlocks = latestCurrentRef.current.blocks.filter((block) => !targetSet.has(block.id));
     const nextData = { ...latestCurrentRef.current, blocks: nextBlocks };
     latestCurrentRef.current = nextData;
     push(nextData);
     setSelectedId(null);
+    setSelectedIds([]);
   };
 
   const importPageData = (parsed) => {
@@ -174,7 +202,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
     onPaste: pasteBlock,
     onDuplicate: duplicateSelected,
     onDelete: deleteSelected,
-    onDeselect: () => setSelectedId(null),
+    onDeselect: () => { setSelectedId(null); setSelectedIds([]); },
     onToggleShortcuts: () => setShowShortcuts((v) => !v),
   });
 
@@ -222,7 +250,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const handlePreviewSelect = (blockId) => {
     const nextId = String(blockId || '').trim();
     if (!nextId) return;
-    setSelectedId(nextId);
+    selectSingle(nextId);
     if (current.blocks.some((block) => block.id === nextId)) return;
     const injectedBlock = {
       id: nextId,
@@ -245,6 +273,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
     const nextState = jumpTo(Number(stateId));
     if (!nextState) return;
     setSelectedId(null);
+    setSelectedIds([]);
   };
 
   return (
@@ -271,11 +300,13 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
         onDuplicate={duplicateSelected}
         onDelete={deleteSelected}
         onToggleShortcuts={() => setShowShortcuts((v) => !v)}
+        liveSyncEnabled={liveSyncEnabled}
+        onToggleLiveSync={() => setLiveSyncEnabled((v) => !v)}
         extraRightSlot={<ExportImportDialog pageData={latestCurrentRef.current} onImport={importPageData} />}
       />
 
       <div className="editor-layout">
-        <BlockSidebar blocks={blocks} selectedId={selectedId} onSelect={setSelectedId} />
+        <BlockSidebar blocks={blocks} selectedId={selectedId} onSelect={selectSingle} />
 
         <div className={`canvas-area ${deviceMode}`} data-testid="canvas-editor-center-area">
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -287,24 +318,36 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
                 onSelect={handlePreviewSelect}
                 previewSrc={current?.settings?.previewSrc}
                 customization={previewCustomization}
+                liveSyncEnabled={liveSyncEnabled}
               />
             </SortableContext>
           </DndContext>
         </div>
 
-        <div className="right-panel" data-testid="canvas-editor-right-panel">
-          <AlignmentToolbar selectedBlock={selectedBlock} onStyleChange={applyStylePatch} />
-          <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => setSelectedId(null)} />
+        <div className={`right-panel ${mobilePanelOpen ? 'mobile-open' : 'mobile-collapsed'}`} data-testid="canvas-editor-right-panel">
+          <AlignmentToolbar selectedBlock={selectedBlock} selectedIds={selectedIds} onStyleChangeForSelection={applyStyleForSelection} />
+          <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => { setSelectedId(null); setSelectedIds([]); }} />
           <LayersPanel
             blocks={blocks}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            selectedIds={selectedIds}
+            onSelect={selectSingle}
+            onToggleMultiSelect={toggleMultiSelect}
             onToggleVisibility={(blockId, hidden) => applyStylePatch(blockId, { display: hidden ? '' : 'none' })}
             onToggleLock={(blockId, locked) => updateBlock(blockId, { locked: !locked })}
           />
           <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={handleJumpTo} />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setMobilePanelOpen((v) => !v)}
+        className="mobile-inspector-toggle"
+        data-testid="canvas-editor-mobile-inspector-toggle"
+      >
+        {mobilePanelOpen ? 'إخفاء اللوحة' : 'إظهار اللوحة'}
+      </button>
 
       {showShortcuts ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" data-testid="canvas-editor-shortcuts-modal">

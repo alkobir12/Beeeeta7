@@ -24,9 +24,49 @@ const normalizeConfig = (value = {}) => ({
   block_order: Array.isArray(value?.block_order) ? value.block_order : [],
 });
 
+const prettifyTestId = (testid = '') => {
+  const source = String(testid || '').trim();
+  if (!source) return '';
+  const cleaned = source
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\d+\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const dictionary = {
+    dashboard: 'لوحة التحكم',
+    operations: 'العمليات',
+    customers: 'العملاء',
+    vehicles: 'المركبات',
+    parts: 'المخزون',
+    title: 'العنوان',
+    label: 'التسمية',
+    button: 'زر',
+    input: 'حقل إدخال',
+    table: 'جدول',
+    card: 'كرت',
+    stat: 'إحصائية',
+    value: 'قيمة',
+    row: 'صف',
+    tab: 'تبويب',
+    menu: 'قائمة',
+    page: 'صفحة',
+    search: 'بحث',
+    filter: 'تصفية',
+    amount: 'مبلغ',
+    date: 'تاريخ',
+  };
+
+  const words = cleaned.split(' ').filter(Boolean).map((word) => dictionary[word.toLowerCase()] || word);
+  return words.join(' ').trim();
+};
+
 const resolveDisplayName = (item, index) => {
-  const text = String(item?.text || '').trim().replace(/\s+/g, ' ').slice(0, 60);
-  return text || `بلوك ${index + 1}`;
+  const rawText = String(item?.text || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+  const isNumericOnly = /^\d+(?:[.,]\d+)?$/.test(rawText);
+  const fromTestId = prettifyTestId(item?.testid || '');
+  if (rawText && !isNumericOnly) return rawText;
+  if (fromTestId) return fromTestId;
+  return `عنصر ${index + 1}`;
 };
 
 const classifyBlock = (testid = '') => {
@@ -60,19 +100,27 @@ const stylesToObject = (styles = {}) => ({
 const buildPageData = (path, blocks, config) => ({
   id: toPageId(path),
   name: LIQUID_BUILDER_PAGES.find((page) => page.path === path)?.label || path,
-  blocks: (Array.isArray(blocks) ? blocks : []).map((block, index) => ({
-    id: block.testid || `moltbot-block-${index + 1}`,
-    type: config.assets?.[block.testid]?.src ? 'image' : config.assets?.[block.testid]?.href ? 'button' : 'text',
-    category: classifyBlock(block.testid),
-    name: resolveDisplayName(block, index),
-    title: config.labels?.[block.testid] || resolveDisplayName(block, index),
-    image: config.assets?.[block.testid]?.src || '',
-    link: config.assets?.[block.testid]?.href || '',
-    content: config.contents?.[block.testid] || block.text || '',
-    liquidTemplate: '',
-    styles: stylesToObject(config.styles?.[block.testid] || {}),
-    stylesText: '',
-  })),
+  blocks: (Array.isArray(blocks) ? blocks : []).map((block, index) => {
+    const blockId = block.testid || `moltbot-block-${index + 1}`;
+    const fallbackLabel = resolveDisplayName({ ...block, testid: blockId }, index);
+    const savedLabel = String(config.labels?.[blockId] || '').trim();
+    const savedContent = String(config.contents?.[blockId] || '').trim();
+    const labelLooksNumeric = /^\d+(?:[.,]\d+)?$/.test(savedLabel);
+    const contentLooksNumeric = /^\d+(?:[.,]\d+)?$/.test(savedContent);
+    return {
+      id: blockId,
+      type: config.assets?.[blockId]?.src ? 'image' : config.assets?.[blockId]?.href ? 'button' : 'text',
+      category: classifyBlock(blockId),
+      name: fallbackLabel,
+      title: savedLabel && !labelLooksNumeric ? savedLabel : fallbackLabel,
+      image: config.assets?.[blockId]?.src || '',
+      link: config.assets?.[blockId]?.href || '',
+      content: savedContent && !contentLooksNumeric ? savedContent : (String(block.text || '').trim() || fallbackLabel),
+      liquidTemplate: '',
+      styles: stylesToObject(config.styles?.[blockId] || {}),
+      stylesText: '',
+    };
+  }),
   globalStyles: '',
   settings: {
     responsive: true,

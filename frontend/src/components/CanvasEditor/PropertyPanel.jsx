@@ -39,7 +39,7 @@ const buildDraftFromBlock = (block) => {
   };
 };
 
-const PropertyPanel = ({ block, onChange, onDeselect }) => {
+const PropertyPanel = ({ block, onChange, onDeselect, selectionMode = 'tap-select', onSelectionModeChange, onMobileConfirm }) => {
   if (!block) {
     return (
       <div className="property-panel empty" data-testid="canvas-editor-property-empty">
@@ -49,11 +49,17 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
   }
 
   const [draft, setDraft] = useState(() => buildDraftFromBlock(block));
-  const [mobileSelectMode, setMobileSelectMode] = useState('tap-select');
+  const [mobileSelectMode, setMobileSelectMode] = useState(selectionMode || 'tap-select');
+  const [mobileCategory, setMobileCategory] = useState('plant');
+  const [showMobileMore, setShowMobileMore] = useState(false);
 
   useEffect(() => {
     setDraft(buildDraftFromBlock(block));
   }, [block?.id]);
+
+  useEffect(() => {
+    setMobileSelectMode(selectionMode || 'tap-select');
+  }, [selectionMode]);
 
   const updateDraftField = (key, value) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -62,6 +68,11 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
   const commitDraftField = (key) => {
     if (!block?.id) return;
     const value = draft[key];
+    onChange(block.id, { [key]: value });
+  };
+
+  const commitDraftFieldValue = (key, value) => {
+    if (!block?.id) return;
     onChange(block.id, { [key]: value });
   };
 
@@ -86,12 +97,38 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
     });
   };
 
+  const commitDraftStyleValue = (key, value) => {
+    if (!block?.id) return;
+    const styles = block.styles || {};
+    onChange(block.id, {
+      styles: {
+        ...styles,
+        [key]: value,
+      },
+    });
+  };
+
   const mobileCategoryCards = [
-    { key: 'subject', label: 'Subject', emoji: '👤' },
-    { key: 'background', label: 'Background', emoji: '🖼️' },
-    { key: 'plant', label: 'Plant', emoji: '🌿' },
-    { key: 'architecture', label: 'Architecture', emoji: '🏛️' },
+    { key: 'subject', label: 'Subject', emoji: '👤', style: { fontWeight: '700', textAlign: 'center' } },
+    { key: 'background', label: 'Background', emoji: '🖼️', style: { backgroundColor: '#f1f5f9', color: '#0f172a' } },
+    { key: 'plant', label: 'Plant', emoji: '🌿', style: { color: '#166534', borderRadius: '14px' } },
+    { key: 'architecture', label: 'Architecture', emoji: '🏛️', style: { letterSpacing: '0.6px', fontWeight: '600' } },
   ];
+
+  const applyMobileCategoryPreset = (key) => {
+    const found = mobileCategoryCards.find((item) => item.key === key);
+    if (!found) return;
+    setMobileCategory(key);
+    Object.entries(found.style || {}).forEach(([styleKey, styleValue]) => {
+      updateDraftStyle(styleKey, styleValue);
+      commitDraftStyleValue(styleKey, styleValue);
+    });
+  };
+
+  const setSelectionMode = (mode) => {
+    setMobileSelectMode(mode);
+    onSelectionModeChange?.(mode);
+  };
 
   return (
     <div className="property-panel" data-testid="canvas-editor-property-panel">
@@ -102,14 +139,14 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
 
       <div className="mobile-shape-panel" data-testid="mobile-shape-panel">
         <div className="mobile-shape-gradient" data-testid="mobile-shape-gradient-row">
-          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '700'); commitDraftStyle('fontWeight'); }} data-testid="mobile-shape-font-strong-button">T</button>
-          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '400'); commitDraftStyle('fontWeight'); }} data-testid="mobile-shape-font-regular-button">Tt</button>
+          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '700'); commitDraftStyleValue('fontWeight', '700'); }} data-testid="mobile-shape-font-strong-button">T</button>
+          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '400'); commitDraftStyleValue('fontWeight', '400'); }} data-testid="mobile-shape-font-regular-button">Tt</button>
 
           <div className="mobile-align-pill" data-testid="mobile-shape-align-pill">
             <button
               type="button"
               className={`mobile-align-pill-btn ${draft.styles.textAlign === 'right' ? 'active' : ''}`}
-              onClick={() => { updateDraftStyle('textAlign', 'right'); commitDraftStyle('textAlign'); }}
+              onClick={() => { updateDraftStyle('textAlign', 'right'); commitDraftStyleValue('textAlign', 'right'); }}
               data-testid="mobile-shape-align-right"
             >
               ≡
@@ -117,7 +154,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
             <button
               type="button"
               className={`mobile-align-pill-btn ${draft.styles.textAlign === 'center' ? 'active' : ''}`}
-              onClick={() => { updateDraftStyle('textAlign', 'center'); commitDraftStyle('textAlign'); }}
+              onClick={() => { updateDraftStyle('textAlign', 'center'); commitDraftStyleValue('textAlign', 'center'); }}
               data-testid="mobile-shape-align-center"
             >
               ☰
@@ -125,14 +162,14 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
             <button
               type="button"
               className={`mobile-align-pill-btn ${draft.styles.textAlign === 'left' ? 'active' : ''}`}
-              onClick={() => { updateDraftStyle('textAlign', 'left'); commitDraftStyle('textAlign'); }}
+              onClick={() => { updateDraftStyle('textAlign', 'left'); commitDraftStyleValue('textAlign', 'left'); }}
               data-testid="mobile-shape-align-left"
             >
               ≣
             </button>
           </div>
 
-          <button type="button" className="mobile-circle-btn" data-testid="mobile-shape-more-button">•••</button>
+          <button type="button" className="mobile-circle-btn" onClick={() => setShowMobileMore((v) => !v)} data-testid="mobile-shape-more-button">•••</button>
         </div>
 
         <div className="mobile-shape-font-row" data-testid="mobile-shape-font-row">
@@ -152,7 +189,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
               value={draft.styles.fontWeight}
               onChange={(e) => {
                 updateDraftStyle('fontWeight', e.target.value);
-                commitDraftStyle('fontWeight');
+                commitDraftStyleValue('fontWeight', e.target.value);
               }}
             >
               <option value="400">Regular</option>
@@ -180,16 +217,25 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
               value={draft.styles.color || '#f6f605'}
               onChange={(e) => {
                 updateDraftStyle('color', e.target.value);
-                commitDraftStyle('color');
+                commitDraftStyleValue('color', e.target.value);
               }}
             />
             <span>Color</span>
           </div>
         </div>
 
+        {showMobileMore ? (
+          <div className="mobile-more-grid" data-testid="mobile-shape-more-grid">
+            <button type="button" className="mobile-more-chip" onClick={() => { updateDraftStyle('opacity', '0.85'); commitDraftStyleValue('opacity', '0.85'); }} data-testid="mobile-shape-more-opacity">Opacity</button>
+            <button type="button" className="mobile-more-chip" onClick={() => { updateDraftStyle('padding', '12px'); commitDraftStyleValue('padding', '12px'); }} data-testid="mobile-shape-more-padding">Padding</button>
+            <button type="button" className="mobile-more-chip" onClick={() => { updateDraftStyle('borderRadius', '14px'); commitDraftStyleValue('borderRadius', '14px'); }} data-testid="mobile-shape-more-radius">Radius</button>
+            <button type="button" className="mobile-more-chip" onClick={() => { updateDraftStyle('boxShadow', '0 8px 24px rgba(15,23,42,0.18)'); commitDraftStyleValue('boxShadow', '0 8px 24px rgba(15,23,42,0.18)'); }} data-testid="mobile-shape-more-shadow">Shadow</button>
+          </div>
+        ) : null}
+
         <div className="mobile-category-row" data-testid="mobile-shape-category-row">
           {mobileCategoryCards.map((item) => (
-            <button key={item.key} type="button" className={`mobile-category-card ${item.key === 'plant' ? 'active' : ''}`} data-testid={`mobile-shape-category-${item.key}`}>
+            <button key={item.key} type="button" className={`mobile-category-card ${item.key === mobileCategory ? 'active' : ''}`} onClick={() => applyMobileCategoryPreset(item.key)} data-testid={`mobile-shape-category-${item.key}`}>
               <div className="mobile-category-icon">{item.emoji}</div>
               <div className="mobile-category-label">{item.label}</div>
             </button>
@@ -200,7 +246,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
           <button
             type="button"
             className={`mobile-select-main ${mobileSelectMode === 'tap-select' ? 'active' : ''}`}
-            onClick={() => setMobileSelectMode('tap-select')}
+            onClick={() => setSelectionMode('tap-select')}
             data-testid="mobile-shape-tap-select-button"
           >
             Tap select
@@ -209,14 +255,14 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
           <button
             type="button"
             className={`mobile-select-secondary ${mobileSelectMode === 'quick-brush' ? 'active' : ''}`}
-            onClick={() => setMobileSelectMode('quick-brush')}
+            onClick={() => setSelectionMode('quick-brush')}
             data-testid="mobile-shape-quick-brush-button"
           >
             Quick select brush
           </button>
 
           <button type="button" className="mobile-icon-action" onClick={onDeselect} data-testid="mobile-shape-cancel-button">✕</button>
-          <button type="button" className="mobile-icon-action success" data-testid="mobile-shape-confirm-button">✓</button>
+          <button type="button" className="mobile-icon-action success" onClick={() => onMobileConfirm?.()} data-testid="mobile-shape-confirm-button">✓</button>
         </div>
       </div>
 
@@ -232,8 +278,8 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
             value={draft.title}
             onChange={(e) => updateDraftField('title', e.target.value)}
             onBlur={() => {
-              commitDraftField('title');
-              onChange(block.id, { content: draft.title });
+              commitDraftFieldValue('title', draft.title);
+              commitDraftFieldValue('content', draft.title);
             }}
             data-testid="canvas-editor-property-title"
           />
@@ -273,7 +319,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
           <input type="text" value={draft.styles.fontSize} onChange={(e) => updateDraftStyle('fontSize', e.target.value)} onBlur={() => commitDraftStyle('fontSize')} placeholder="مثال: 20px" data-testid="canvas-editor-style-fontsize" />
         </Field>
         <Field label="سماكة الخط">
-          <select value={draft.styles.fontWeight} onChange={(e) => { updateDraftStyle('fontWeight', e.target.value); commitDraftStyle('fontWeight'); }} data-testid="canvas-editor-style-fontweight">
+          <select value={draft.styles.fontWeight} onChange={(e) => { updateDraftStyle('fontWeight', e.target.value); commitDraftStyleValue('fontWeight', e.target.value); }} data-testid="canvas-editor-style-fontweight">
             <option value="">افتراضي</option>
             <option value="400">عادي 400</option>
             <option value="500">متوسط 500</option>
@@ -289,7 +335,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
           <input type="text" value={draft.styles.letterSpacing} onChange={(e) => updateDraftStyle('letterSpacing', e.target.value)} onBlur={() => commitDraftStyle('letterSpacing')} placeholder="مثال: 0.5px" data-testid="canvas-editor-style-letterspacing" />
         </Field>
         <Field label="محاذاة النص">
-          <select value={draft.styles.textAlign} onChange={(e) => { updateDraftStyle('textAlign', e.target.value); commitDraftStyle('textAlign'); }} data-testid="canvas-editor-style-textalign">
+          <select value={draft.styles.textAlign} onChange={(e) => { updateDraftStyle('textAlign', e.target.value); commitDraftStyleValue('textAlign', e.target.value); }} data-testid="canvas-editor-style-textalign">
             <option value="">افتراضي</option>
             <option value="right">يمين</option>
             <option value="center">وسط</option>
@@ -303,10 +349,10 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
         <summary className="panel-summary">الألوان والخلفية</summary>
         {sectionTitle('الألوان والخلفية')}
         <Field label="لون الخلفية">
-          <input type="color" value={draft.styles.backgroundColor} onChange={(e) => { updateDraftStyle('backgroundColor', e.target.value); commitDraftStyle('backgroundColor'); }} data-testid="canvas-editor-style-background" />
+          <input type="color" value={draft.styles.backgroundColor} onChange={(e) => { updateDraftStyle('backgroundColor', e.target.value); commitDraftStyleValue('backgroundColor', e.target.value); }} data-testid="canvas-editor-style-background" />
         </Field>
         <Field label="لون النص">
-          <input type="color" value={draft.styles.color} onChange={(e) => { updateDraftStyle('color', e.target.value); commitDraftStyle('color'); }} data-testid="canvas-editor-style-color" />
+          <input type="color" value={draft.styles.color} onChange={(e) => { updateDraftStyle('color', e.target.value); commitDraftStyleValue('color', e.target.value); }} data-testid="canvas-editor-style-color" />
         </Field>
         <Field label="الشفافية (0-1)">
           <input type="text" value={draft.styles.opacity} onChange={(e) => updateDraftStyle('opacity', e.target.value)} onBlur={() => commitDraftStyle('opacity')} placeholder="1" data-testid="canvas-editor-style-opacity" />
@@ -351,7 +397,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
         <summary className="panel-summary">الظهور</summary>
         {sectionTitle('الظهور')}
         <Field label="إظهار/إخفاء">
-          <select value={draft.styles.display} onChange={(e) => { updateDraftStyle('display', e.target.value); commitDraftStyle('display'); }} data-testid="canvas-editor-style-display">
+          <select value={draft.styles.display} onChange={(e) => { updateDraftStyle('display', e.target.value); commitDraftStyleValue('display', e.target.value); }} data-testid="canvas-editor-style-display">
             <option value="block">ظاهر</option>
             <option value="none">مخفي</option>
           </select>

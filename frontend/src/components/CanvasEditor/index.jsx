@@ -44,6 +44,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [liveSyncEnabled, setLiveSyncEnabled] = useState(false);
+  const [selectionMode, setSelectionMode] = useState('tap-select');
   const [showLayersPanel, setShowLayersPanel] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const { writeClipboard, readClipboard, cloneWithNewId } = useClipboard();
@@ -57,6 +58,7 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
     setSelectedId(null);
     setSelectedIds([]);
     setTouchedIds({});
+    setSelectionMode('tap-select');
   }, [pageData, reset]);
 
   useEffect(() => {
@@ -254,7 +256,11 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const handlePreviewSelect = (blockId) => {
     const nextId = String(blockId || '').trim();
     if (!nextId) return;
-    selectSingle(nextId);
+    if (selectionMode === 'quick-brush') {
+      toggleMultiSelect(nextId);
+    } else {
+      selectSingle(nextId);
+    }
     if (current.blocks.some((block) => block.id === nextId)) return;
     const injectedBlock = {
       id: nextId,
@@ -330,7 +336,14 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
 
         <div className={`right-panel ${mobilePanelOpen ? 'mobile-open' : 'mobile-hidden'}`} data-testid="canvas-editor-right-panel">
           <AlignmentToolbar selectedBlock={selectedBlock} selectedIds={selectedIds} onStyleChangeForSelection={applyStyleForSelection} />
-          <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => { setSelectedId(null); setSelectedIds([]); }} />
+          <PropertyPanel
+            block={selectedBlock}
+            onChange={updateBlock}
+            selectionMode={selectionMode}
+            onSelectionModeChange={setSelectionMode}
+            onDeselect={() => { setSelectedId(null); setSelectedIds([]); }}
+            onMobileConfirm={() => setMobilePanelOpen(false)}
+          />
 
           <button
             type="button"

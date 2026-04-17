@@ -240,6 +240,23 @@
 .mobile-category-icon { font-size: 18px; }
 .mobile-category-label { font-size: 10px; color: #6b7280; }
 
+.mobile-more-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-more-chip {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 8px 6px;
+  font-size: 10px;
+  text-align: center;
+}
+
 .mobile-select-tools-row {
   margin-top: 12px;
   display: grid;

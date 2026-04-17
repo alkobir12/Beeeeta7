@@ -368,7 +368,16 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
 
       <button
         type="button"
-        onClick={() => setMobilePanelOpen((v) => !v)}
+        onClick={() => {
+          setMobilePanelOpen((v) => {
+            const next = !v;
+            if (next && !selectedId && blocks.length) {
+              setSelectedId(blocks[0].id);
+              setSelectedIds([blocks[0].id]);
+            }
+            return next;
+          });
+        }}
         className="mobile-inspector-toggle"
         data-testid="canvas-editor-mobile-inspector-toggle"
       >

@@ -17,6 +17,7 @@ const buildDraftFromBlock = (block) => {
     image: block?.image || '',
     link: block?.link || '',
     styles: {
+      fontFamily: styles.fontFamily || '',
       fontSize: styles.fontSize || '',
       fontWeight: styles.fontWeight || '',
       lineHeight: styles.lineHeight || '',
@@ -48,6 +49,7 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
   }
 
   const [draft, setDraft] = useState(() => buildDraftFromBlock(block));
+  const [mobileSelectMode, setMobileSelectMode] = useState('tap-select');
 
   useEffect(() => {
     setDraft(buildDraftFromBlock(block));
@@ -84,11 +86,138 @@ const PropertyPanel = ({ block, onChange, onDeselect }) => {
     });
   };
 
+  const mobileCategoryCards = [
+    { key: 'subject', label: 'Subject', emoji: '👤' },
+    { key: 'background', label: 'Background', emoji: '🖼️' },
+    { key: 'plant', label: 'Plant', emoji: '🌿' },
+    { key: 'architecture', label: 'Architecture', emoji: '🏛️' },
+  ];
+
   return (
     <div className="property-panel" data-testid="canvas-editor-property-panel">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold">{block.name || block.title || 'عنصر'}</h3>
         <button onClick={onDeselect} className="text-xs opacity-70">إلغاء</button>
+      </div>
+
+      <div className="mobile-shape-panel" data-testid="mobile-shape-panel">
+        <div className="mobile-shape-gradient" data-testid="mobile-shape-gradient-row">
+          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '700'); commitDraftStyle('fontWeight'); }} data-testid="mobile-shape-font-strong-button">T</button>
+          <button type="button" className="mobile-circle-btn" onClick={() => { updateDraftStyle('fontWeight', '400'); commitDraftStyle('fontWeight'); }} data-testid="mobile-shape-font-regular-button">Tt</button>
+
+          <div className="mobile-align-pill" data-testid="mobile-shape-align-pill">
+            <button
+              type="button"
+              className={`mobile-align-pill-btn ${draft.styles.textAlign === 'right' ? 'active' : ''}`}
+              onClick={() => { updateDraftStyle('textAlign', 'right'); commitDraftStyle('textAlign'); }}
+              data-testid="mobile-shape-align-right"
+            >
+              ≡
+            </button>
+            <button
+              type="button"
+              className={`mobile-align-pill-btn ${draft.styles.textAlign === 'center' ? 'active' : ''}`}
+              onClick={() => { updateDraftStyle('textAlign', 'center'); commitDraftStyle('textAlign'); }}
+              data-testid="mobile-shape-align-center"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className={`mobile-align-pill-btn ${draft.styles.textAlign === 'left' ? 'active' : ''}`}
+              onClick={() => { updateDraftStyle('textAlign', 'left'); commitDraftStyle('textAlign'); }}
+              data-testid="mobile-shape-align-left"
+            >
+              ≣
+            </button>
+          </div>
+
+          <button type="button" className="mobile-circle-btn" data-testid="mobile-shape-more-button">•••</button>
+        </div>
+
+        <div className="mobile-shape-font-row" data-testid="mobile-shape-font-row">
+          <div className="mobile-control-card" data-testid="mobile-shape-font-family-card">
+            <input
+              type="text"
+              value={draft.styles.fontFamily}
+              onChange={(e) => updateDraftStyle('fontFamily', e.target.value)}
+              onBlur={() => commitDraftStyle('fontFamily')}
+              placeholder="Major Mono"
+            />
+            <span>Font Family</span>
+          </div>
+
+          <div className="mobile-control-card" data-testid="mobile-shape-style-card">
+            <select
+              value={draft.styles.fontWeight}
+              onChange={(e) => {
+                updateDraftStyle('fontWeight', e.target.value);
+                commitDraftStyle('fontWeight');
+              }}
+            >
+              <option value="400">Regular</option>
+              <option value="500">Medium</option>
+              <option value="600">SemiBold</option>
+              <option value="700">Bold</option>
+            </select>
+            <span>Style</span>
+          </div>
+
+          <div className="mobile-control-card compact" data-testid="mobile-shape-size-card">
+            <input
+              type="text"
+              value={draft.styles.fontSize}
+              onChange={(e) => updateDraftStyle('fontSize', e.target.value)}
+              onBlur={() => commitDraftStyle('fontSize')}
+              placeholder="16"
+            />
+            <span>Size</span>
+          </div>
+
+          <div className="mobile-control-card compact" data-testid="mobile-shape-color-card">
+            <input
+              type="color"
+              value={draft.styles.color || '#f6f605'}
+              onChange={(e) => {
+                updateDraftStyle('color', e.target.value);
+                commitDraftStyle('color');
+              }}
+            />
+            <span>Color</span>
+          </div>
+        </div>
+
+        <div className="mobile-category-row" data-testid="mobile-shape-category-row">
+          {mobileCategoryCards.map((item) => (
+            <button key={item.key} type="button" className={`mobile-category-card ${item.key === 'plant' ? 'active' : ''}`} data-testid={`mobile-shape-category-${item.key}`}>
+              <div className="mobile-category-icon">{item.emoji}</div>
+              <div className="mobile-category-label">{item.label}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="mobile-select-tools-row" data-testid="mobile-shape-select-tools-row">
+          <button
+            type="button"
+            className={`mobile-select-main ${mobileSelectMode === 'tap-select' ? 'active' : ''}`}
+            onClick={() => setMobileSelectMode('tap-select')}
+            data-testid="mobile-shape-tap-select-button"
+          >
+            Tap select
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-select-secondary ${mobileSelectMode === 'quick-brush' ? 'active' : ''}`}
+            onClick={() => setMobileSelectMode('quick-brush')}
+            data-testid="mobile-shape-quick-brush-button"
+          >
+            Quick select brush
+          </button>
+
+          <button type="button" className="mobile-icon-action" onClick={onDeselect} data-testid="mobile-shape-cancel-button">✕</button>
+          <button type="button" className="mobile-icon-action success" data-testid="mobile-shape-confirm-button">✓</button>
+        </div>
       </div>
 
       <details className="panel-section" open>

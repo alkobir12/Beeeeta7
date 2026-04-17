@@ -44,6 +44,8 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [liveSyncEnabled, setLiveSyncEnabled] = useState(false);
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const { writeClipboard, readClipboard, cloneWithNewId } = useClipboard();
 
   useEffect(() => {
@@ -326,19 +328,41 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
           </DndContext>
         </div>
 
-        <div className={`right-panel ${mobilePanelOpen ? 'mobile-open' : 'mobile-collapsed'}`} data-testid="canvas-editor-right-panel">
+        <div className={`right-panel ${mobilePanelOpen ? 'mobile-open' : 'mobile-hidden'}`} data-testid="canvas-editor-right-panel">
           <AlignmentToolbar selectedBlock={selectedBlock} selectedIds={selectedIds} onStyleChangeForSelection={applyStyleForSelection} />
           <PropertyPanel block={selectedBlock} onChange={updateBlock} onDeselect={() => { setSelectedId(null); setSelectedIds([]); }} />
-          <LayersPanel
-            blocks={blocks}
-            selectedId={selectedId}
-            selectedIds={selectedIds}
-            onSelect={selectSingle}
-            onToggleMultiSelect={toggleMultiSelect}
-            onToggleVisibility={(blockId, hidden) => applyStylePatch(blockId, { display: hidden ? '' : 'none' })}
-            onToggleLock={(blockId, locked) => updateBlock(blockId, { locked: !locked })}
-          />
-          <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={handleJumpTo} />
+
+          <button
+            type="button"
+            onClick={() => setShowLayersPanel((v) => !v)}
+            className="right-panel-section-toggle"
+            data-testid="canvas-editor-layers-toggle"
+          >
+            {showLayersPanel ? 'إخفاء الطبقات' : 'إظهار الطبقات'}
+          </button>
+          {showLayersPanel ? (
+            <LayersPanel
+              blocks={blocks}
+              selectedId={selectedId}
+              selectedIds={selectedIds}
+              onSelect={selectSingle}
+              onToggleMultiSelect={toggleMultiSelect}
+              onToggleVisibility={(blockId, hidden) => applyStylePatch(blockId, { display: hidden ? '' : 'none' })}
+              onToggleLock={(blockId, locked) => updateBlock(blockId, { locked: !locked })}
+            />
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setShowHistoryPanel((v) => !v)}
+            className="right-panel-section-toggle"
+            data-testid="canvas-editor-history-toggle"
+          >
+            {showHistoryPanel ? 'إخفاء السجل' : 'إظهار السجل'}
+          </button>
+          {showHistoryPanel ? (
+            <HistoryTimeline history={history.map((item, i) => ({ id: String(i), timestamp: Date.now() - (history.length - i) * 1000, data: item, label: i === 0 ? 'بداية التصميم' : `تعديل ${i}`, type: i === 0 ? 'initial' : 'content' }))} currentStateId={currentStateId} onJumpTo={handleJumpTo} />
+          ) : null}
         </div>
       </div>
 

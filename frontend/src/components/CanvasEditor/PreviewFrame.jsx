@@ -10,9 +10,9 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   const [forceFallback, setForceFallback] = useState(false);
 
   useEffect(() => {
-    if (!previewSrc) {
+    if (!previewSrc || !liveSyncEnabled) {
       liveLoadedRef.current = false;
-      setForceFallback(false);
+      setForceFallback(true);
       return undefined;
     }
     liveLoadedRef.current = false;
@@ -21,10 +21,10 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       setForceFallback((prev) => (liveLoadedRef.current ? prev : true));
     }, 6500);
     return () => window.clearTimeout(timer);
-  }, [previewSrc]);
+  }, [previewSrc, liveSyncEnabled]);
 
   useEffect(() => {
-    if (!previewSrc || !iframeRef.current) return undefined;
+    if (!previewSrc || !liveSyncEnabled || !iframeRef.current) return undefined;
 
     const iframe = iframeRef.current;
     const handleLoad = () => {
@@ -86,7 +86,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       }
       clearPageCustomizations(appliedCustomizationsRef);
     };
-  }, [previewSrc, customization, onSelect]);
+  }, [previewSrc, customization, onSelect, liveSyncEnabled]);
 
   useEffect(() => {
     if (!previewSrc || forceFallback || !liveSyncEnabled || !iframeRef.current) return;
@@ -106,10 +106,10 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     } catch (_error) {
       return;
     }
-  }, [selectedId, previewSrc, forceFallback]);
+  }, [selectedId, previewSrc, forceFallback, liveSyncEnabled]);
 
   useEffect(() => {
-    if (!previewSrc || forceFallback || !iframeRef.current) return;
+    if (!previewSrc || !liveSyncEnabled || forceFallback || !iframeRef.current) return;
     try {
       const doc = iframeRef.current.contentDocument;
       if (!doc) return;
@@ -120,7 +120,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
   }, [customization, previewSrc, forceFallback, liveSyncEnabled]);
 
   useEffect(() => {
-    if (previewSrc && !forceFallback) return undefined;
+    if (previewSrc && liveSyncEnabled && !forceFallback) return undefined;
     let mounted = true;
 
     const writeDoc = (content) => {
@@ -187,7 +187,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     <iframe
       ref={iframeRef}
       className={`preview-frame ${deviceMode}`}
-      src={previewSrc && !forceFallback ? previewSrc : undefined}
+      src={previewSrc && liveSyncEnabled && !forceFallback ? previewSrc : undefined}
       style={{
         width: deviceMode === 'mobile' ? '375px' : deviceMode === 'tablet' ? '768px' : '100%',
         height: '100%',

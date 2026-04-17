@@ -110,17 +110,20 @@ const ChatWidget = () => {
 
   const getPageSnapshot = useCallback(() => buildUiSnapshot(220), []);
 
-  const fetchAndApplyCustomizations = useCallback(async () => {
+  const fetchAndApplyCustomizations = useCallback(async (signal) => {
     try {
-      const res = await fetch(`${API_BASE}/alkabeer-bot/customization?user_id=${encodeURIComponent(sessionInfo.userId)}&path=${encodeURIComponent(currentPath)}`);
+      const res = await fetch(`/api/alkabeer-bot/customization?user_id=${encodeURIComponent(sessionInfo.userId)}&path=${encodeURIComponent(currentPath)}`, { signal });
+      if (!res.ok) return;
       const data = await res.json();
       if (data?.success && data?.data) {
         setTimeout(() => applyCustomizations(data.data), 80);
       }
     } catch (e) {
-      console.error('Failed to fetch customizations', e);
+      if (e?.name !== 'AbortError') {
+        console.error('Failed to fetch customizations', e);
+      }
     }
-  }, [API_BASE, sessionInfo.userId, currentPath, applyCustomizations]);
+  }, [sessionInfo.userId, currentPath, applyCustomizations]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !chatSessionId) return;
@@ -128,18 +131,23 @@ const ChatWidget = () => {
   }, [chatSessionId]);
 
   useEffect(() => {
-    fetchAndApplyCustomizations();
-  }, [fetchAndApplyCustomizations, currentPath]);
+    const controller = new AbortController();
+    fetchAndApplyCustomizations(controller.signal);
+    return () => controller.abort();
+  }, [fetchAndApplyCustomizations]);
 
   useEffect(() => {
     const handleCustomizationUpdate = (event) => {
-      if (event?.detail) {
-        applyCustomizations(event.detail);
-      }
+      const detail = event?.detail;
+      if (!detail) return;
+      const payload = detail.customization || detail;
+      const payloadPath = detail.path || currentPath;
+      if (payloadPath !== currentPath) return;
+      applyCustomizations(payload);
     };
     window.addEventListener('page-customization-updated', handleCustomizationUpdate);
     return () => window.removeEventListener('page-customization-updated', handleCustomizationUpdate);
-  }, [applyCustomizations]);
+  }, [applyCustomizations, currentPath]);
 
   const resetChatSession = useCallback(() => {
     const nextSessionId = createWorkshopBotSessionId();

@@ -26,13 +26,18 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
           doc.head.appendChild(styleTag);
         }
 
-        doc.addEventListener('click', (event) => {
+        if (doc.__moltbotClickHandler) {
+          doc.removeEventListener('click', doc.__moltbotClickHandler, true);
+        }
+        const clickHandler = (event) => {
           const target = event.target?.closest?.('[data-testid]');
           if (!target) return;
           event.preventDefault();
           event.stopPropagation();
           onSelect?.(target.getAttribute('data-testid') || '');
-        }, true);
+        };
+        doc.__moltbotClickHandler = clickHandler;
+        doc.addEventListener('click', clickHandler, true);
       } catch (_error) {
         return;
       }
@@ -41,6 +46,15 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
     iframe.addEventListener('load', handleLoad);
     return () => {
       iframe.removeEventListener('load', handleLoad);
+      try {
+        const doc = iframe.contentDocument;
+        if (doc?.__moltbotClickHandler) {
+          doc.removeEventListener('click', doc.__moltbotClickHandler, true);
+          delete doc.__moltbotClickHandler;
+        }
+      } catch (_error) {
+        // ignore
+      }
       clearPageCustomizations(appliedCustomizationsRef);
     };
   }, [previewSrc, customization, onSelect]);

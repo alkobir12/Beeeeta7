@@ -107,7 +107,7 @@ const buildMeaningfulBlocks = (doc, path, config) => {
   const seen = new Set();
   [...blockSnapshot, ...uiSnapshot].forEach((item) => {
     const key = String(item?.testid || '').trim();
-    if (!key || seen.has(key)) return;
+    if (!key || key.startsWith('generated-') || seen.has(key)) return;
     seen.add(key);
     merged.push({ testid: key, text: item?.text || '' });
   });
@@ -288,6 +288,11 @@ export default function MoltBotStudio() {
         status: 'published',
         updated_at: published.updated_at || _nowIso(),
       });
+      try {
+        localStorage.setItem(`moltbot-published:${userId}:${selectedPage}`, JSON.stringify(nextConfig));
+      } catch (_error) {
+        // ignore storage errors
+      }
       localStorage.removeItem(draftStorageKey(userId, selectedPage));
       window.dispatchEvent(new CustomEvent('page-customization-updated', {
         detail: {
@@ -350,14 +355,16 @@ export default function MoltBotStudio() {
         </div>
       </div>
 
-      <iframe
-        key={selectedPage}
-        ref={hiddenFrameRef}
-        title="hidden-source-preview"
-        src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
-        className="absolute pointer-events-none opacity-0 w-0 h-0"
-        onLoad={() => window.setTimeout(() => rebuildPageData(selectedPage, config), 450)}
-      />
+      {loading ? (
+        <iframe
+          key={selectedPage}
+          ref={hiddenFrameRef}
+          title="hidden-source-preview"
+          src={`${selectedPage}${selectedPage.includes('?') ? '&' : '?'}editor-preview=1`}
+          className="absolute pointer-events-none opacity-0 w-0 h-0"
+          onLoad={() => window.setTimeout(() => rebuildPageData(selectedPage, config), 450)}
+        />
+      ) : null}
 
       {loading || !pageData ? (
         <div className="flex min-h-[70vh] items-center justify-center text-sm text-white/70" data-testid="moltbot-canvas-editor-loading">جاري تجهيز المحرر...</div>

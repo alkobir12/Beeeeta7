@@ -75,12 +75,25 @@ const Layout = ({ pageTitle }) => {
   useEffect(() => {
     const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
     let cancelled = false;
+
+    try {
+      const localKey = `moltbot-published:${userId}:${location.pathname || '/'}`;
+      const localRaw = window.localStorage.getItem(localKey);
+      if (localRaw) {
+        const localCustomization = JSON.parse(localRaw);
+        if (localCustomization && typeof localCustomization === 'object') {
+          setPageCustomization(localCustomization);
+        }
+      }
+    } catch (_error) {
+      // ignore local fallback parse errors
+    }
+
     siteBuilderAPI.getCustomization({ user_id: userId, path: location.pathname || '/' })
       .then((response) => {
         if (cancelled) return;
         const nextCustomization = response.data?.data || { custom_cards: [] };
         setPageCustomization(nextCustomization);
-        window.__moltbotCurrentCustomization = nextCustomization;
       })
       .catch(async () => {
         try {
@@ -90,7 +103,6 @@ const Layout = ({ pageTitle }) => {
           const fallbackJson = await fallbackRes.json();
           const fallbackCustomization = fallbackJson?.data || { custom_cards: [] };
           setPageCustomization(fallbackCustomization);
-          window.__moltbotCurrentCustomization = fallbackCustomization;
         } catch (_error) {
           return;
         }
@@ -113,19 +125,25 @@ const Layout = ({ pageTitle }) => {
     applyNow();
     const t1 = window.setTimeout(applyNow, 320);
     const t2 = window.setTimeout(applyNow, 950);
-    const interval = window.setInterval(applyNow, 1200);
+    const t3 = window.setTimeout(applyNow, 1800);
 
     const root = document.querySelector('.content-area .animate-fade-in') || document.querySelector('main.content-area') || document.body;
+    let pendingApply = null;
     const observer = new MutationObserver(() => {
       if (applyingCustomizationRef.current) return;
-      window.requestAnimationFrame(applyNow);
+      if (pendingApply) return;
+      pendingApply = window.setTimeout(() => {
+        pendingApply = null;
+        applyNow();
+      }, 140);
     });
-    observer.observe(root, { childList: true, subtree: true, characterData: true });
+    observer.observe(root, { childList: true, subtree: true });
 
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
-      window.clearInterval(interval);
+      window.clearTimeout(t3);
+      if (pendingApply) window.clearTimeout(pendingApply);
       observer.disconnect();
     };
   }, [pageCustomization, location.pathname, isEditorWorkspace]);

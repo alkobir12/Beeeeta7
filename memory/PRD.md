@@ -17,6 +17,20 @@
 
 ## What's Been Implemented
 
+### إصلاح حرج: قائمة الموردين داخل ملف المركبة + تنظيف بيانات الاختبار (18 Apr 2026)
+- تم إصلاح مشكلة عدم ظهور الموردين في بنود الزيارة داخل `VehicleDetails.jsx` عبر:
+  - إضافة `normalizePartyCatalog` لتوحيد صيغ بيانات الأسماء (`name / supplierName / customerName`) ومنع الفراغات/التكرار.
+  - تمرير `workshop_id` عند تحميل الموردين لضمان نفس سياق صفحة الموردين.
+  - دعم حفظ المورد الجديد تلقائيًا عند إدخاله يدويًا كبند `supplier` داخل الزيارة (ثم إلحاقه مباشرة بقائمة الموردين في الواجهة).
+- تم التحقق الشامل عبر testing agent:
+  - التقرير: `/app/test_reports/iteration_135.json`
+  - النتيجة: Backend 100% / Frontend 100%
+  - البنود المؤكدة: ظهور الموردين في dropdown + حفظ المورد اليدوي + مزامنة الزيارة للعمليات + صحة mapping (1101/1102).
+- تنظيف بيانات الاختبار بعد التحقق:
+  - حذف مورد الاختبار `مورد اختبار T1` (مذكور أيضًا في تقرير الاختبار).
+  - إزالة أثره من الزيارة/العملية المرتبطة عبر تحديث الزيارة وإعادة المزامنة.
+  - تأكيد نهائي: لا توجد بقايا `TEST_` أو `مورد اختبار T1` في suppliers/visits/operations.
+
 ### MoltBot Stability + P2 Supabase Basics + Mobile Sidebar Accordion (17 Apr 2026)
 - تم تنفيذ أساسيات P2 داخل MoltBot:
   - Backend APIs: `editor/draft`, `editor/draft/save`, `editor/publish`, `editor/history`, `editor/comments` (+ update/delete comment).

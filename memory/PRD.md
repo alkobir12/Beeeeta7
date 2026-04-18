@@ -17,6 +17,29 @@
 
 ## What's Been Implemented
 
+### إضافة Component Presets + نشر فعلي للتحقق من الجاهزية (18 Apr 2026)
+- تم تنفيذ **Component Presets جاهزة بنقرة واحدة** داخل Smart Binding في MoltBot:
+  - `Preset KPI`
+  - `Preset Card`
+  - `Preset Table`
+  - `Preset Button`
+- كل Preset يضيف كرتًا مخصصًا تلقائيًا مع حقول جاهزة + اقتراح ربط ذكي `source_testid`.
+- تم تنفيذ طلب المستخدم عمليًا:
+  - تحرير كرت/حقل فعلي داخل الاستديو.
+  - تنفيذ النشر عبر التدفق الكامل: `Publish -> Visual Diff -> Checklist -> Confirm Publish`.
+  - تأكيد حفظ التغييرات على backend عبر APIs.
+- تم إصلاح مشكلة التنبيه المزعج `Failed to fetch customizations` عبر تحسين التعامل مع أخطاء الشبكة المتوقعة في `ChatWidget`.
+
+### Testing (iteration_140)
+- التقرير: `/app/test_reports/iteration_140.json`
+- النتيجة: **Frontend 100% + Backend 100% PASS**
+- مؤشرات مؤكدة:
+  - جميع أزرار Presets تعمل.
+  - تحرير الكرت والحقول يعمل.
+  - النشر المؤكد يعمل ويزيد الإصدار (من 5 إلى 7 حسب التقرير).
+  - APIs (`/api/alkabeer-bot/customization`, `/api/alkabeer-bot/editor/history`) تعكس النتائج بعد النشر.
+  - لا توجد أخطاء Console من نوع `Failed to fetch customizations` في الاختبار الأخير.
+
 ### تحسين شامل دقيق لصفحة MoltBot (18 Apr 2026)
 - بناءً على طلب المستخدم (تحسين الأداء + الواجهة بدون تعقيد):
   - **تحسين أداء:** تحويل حفظ المسودة المحلي (autosave) إلى debounce `420ms` بدل الكتابة المباشرة مع كل تغيير.

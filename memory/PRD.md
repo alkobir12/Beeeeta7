@@ -17,6 +17,28 @@
 
 ## What's Been Implemented
 
+### تحسين واجهة MoltBot لتوزيع Canva أفضل (18 Apr 2026)
+- تم تحديث واجهة المحرر بدون تغيير الأدوات الحالية:
+  - إعادة تنظيم Toolbar (هوية أوضح + تقسيم المجموعات + أدوات متقدمة ضمن كتلة مرتبة).
+  - تحسين توزيع 3 أعمدة (يسار العناصر / الوسط المعاينة / يمين الخصائص) بشكل أنظف على Desktop/Tablet.
+  - تحسين بصري شامل للـ CanvasEditor (`CanvasEditor.css`) بأسلوب Canva فاتح مع تباين أفضل ومسافات أدق.
+- تم الحفاظ على سلوك الجوال كما طلب المستخدم:
+  - زر إظهار/إخفاء لوحة الخصائص السفلي بقي بنفس الآلية.
+  - لم يتم تغيير منطق الأدوات أو وظائف التحرير.
+- تحديثات واجهة إضافية متوافقة:
+  - BlockSidebar / LayersPanel / AlignmentToolbar / ExportImportDialog أصبحت متناسقة بصريًا مع نفس الوظائف.
+  - تحسين واجهة صفحة `MoltBotStudio.jsx` (الهيدر + Panels الخاصة بالتاريخ والتعليقات) لقراءة أوضح.
+- إصلاح ملاحظة الاختبار الخاصة بـ mobile overflow:
+  - ضبط `PreviewFrame` ليستخدم عرضًا responsive (`min(..., 100%)`).
+  - إضافة حماية `overflow-x: hidden` على مستوى التطبيق والصفحة.
+
+### التحقق
+- Smoke screenshot PASS بعد التحديث على `/moltbot`.
+- تقرير testing agent: `/app/test_reports/iteration_136.json`
+  - Frontend: **100% PASS**
+  - تم تأكيد: الأدوات الحالية تعمل + layout الجديد يعمل + سلوك mobile panel محفوظ.
+- تم إصلاح الملاحظة المنخفضة (9px mobile overflow) بعد التقرير عبر self-test بقياسات فعلية (390/390).
+
 ### معالجة فرق الإنتاج/Preview في الموردين (18 Apr 2026)
 - تم التحقق أن المشكلة في الإنتاج ليست من الواجهة فقط: endpoint الإنتاج `GET /api/suppliers` كان يعيد قائمة فارغة، بينما preview يعيد الموردين بشكل طبيعي.
 - أُضيف fallback Backend في `/app/backend/server.py` داخل `get_suppliers`:

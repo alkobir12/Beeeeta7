@@ -189,7 +189,11 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
       className={`preview-frame ${deviceMode}`}
       src={previewSrc && liveSyncEnabled && !forceFallback ? previewSrc : undefined}
       style={{
-        width: deviceMode === 'mobile' ? '375px' : deviceMode === 'tablet' ? '768px' : '100%',
+        width: deviceMode === 'mobile'
+          ? 'min(375px, 100%)'
+          : deviceMode === 'tablet'
+          ? 'min(768px, 100%)'
+          : '100%',
         height: '100%',
         border: 'none',
         borderRadius: '8px',

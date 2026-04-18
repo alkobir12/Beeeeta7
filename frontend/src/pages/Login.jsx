@@ -230,8 +230,8 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background Elements for 'Fluid' feel */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-200/30 rounded-full blur-[100px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[100px] pointer-events-none" aria-hidden="true" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-200/30 rounded-full blur-[100px] pointer-events-none" aria-hidden="true" />
 
       <div className="w-full max-w-[400px] z-10 animate-fade-in">
         <div className="apple-card p-10 flex flex-col items-center text-center">

@@ -456,7 +456,7 @@ export default function MoltBotStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6ff] text-slate-900" data-testid="moltbot-canvas-editor-page">
+    <div className="min-h-screen bg-[#f3f6ff] text-slate-900 overflow-x-hidden" data-testid="moltbot-canvas-editor-page">
       <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-sm">
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900">MoltBot Canvas Editor</h1>

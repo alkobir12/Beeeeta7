@@ -487,7 +487,14 @@ export default function MoltBotStudio() {
     }
   }, []);
 
-  const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+  const actorUserId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+  const customizationScopeId = useMemo(() => {
+    const workshopId = String(process.env.REACT_APP_WORKSHOP_ID || '').trim();
+    if (!workshopId) {
+      throw new Error('REACT_APP_WORKSHOP_ID is required for MoltBot publish scope');
+    }
+    return `workshop:${workshopId}`;
+  }, []);
   const studioRootStyle = useMemo(() => ({ fontFamily: "'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif" }), []);
   const panelCardClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
 
@@ -604,17 +611,17 @@ export default function MoltBotStudio() {
   };
 
   const loadConfig = async (path) => {
-    const draft = localStorage.getItem(draftStorageKey(userId, path));
+    const draft = localStorage.getItem(draftStorageKey(customizationScopeId, path));
     if (draft) {
       try {
         return normalizeConfig(JSON.parse(draft));
       } catch {
-        localStorage.removeItem(draftStorageKey(userId, path));
+        localStorage.removeItem(draftStorageKey(customizationScopeId, path));
       }
     }
     const [draftRes, customizationRes] = await Promise.all([
-      siteBuilderAPI.getEditorDraft({ user_id: userId, path }).catch(() => null),
-      siteBuilderAPI.getCustomization({ user_id: userId, path }).catch(() => null),
+      siteBuilderAPI.getEditorDraft({ user_id: customizationScopeId, path }).catch(() => null),
+      siteBuilderAPI.getCustomization({ user_id: customizationScopeId, path }).catch(() => null),
     ]);
 
     const draftData = draftRes?.data?.data || null;
@@ -633,12 +640,12 @@ export default function MoltBotStudio() {
 
   const loadCollabMeta = useCallback(async (pathArg = selectedPage) => {
     const [historyRes, commentsRes] = await Promise.all([
-      siteBuilderAPI.getEditorHistory({ user_id: userId, path: pathArg, limit: 50 }).catch(() => ({ data: { data: [] } })),
+      siteBuilderAPI.getEditorHistory({ user_id: customizationScopeId, path: pathArg, limit: 50 }).catch(() => ({ data: { data: [] } })),
       siteBuilderAPI.getEditorComments({ path: pathArg, limit: 120 }).catch(() => ({ data: { data: [] } })),
     ]);
     setHistoryRows(Array.isArray(historyRes?.data?.data) ? historyRes.data.data : []);
     setComments(Array.isArray(commentsRes?.data?.data) ? commentsRes.data.data : []);
-  }, [selectedPage, userId]);
+  }, [selectedPage, customizationScopeId]);
 
   const rebuildPageData = useCallback((pathArg = selectedPage, configArg = config) => {
     const doc = hiddenFrameRef.current?.contentDocument;
@@ -688,17 +695,17 @@ export default function MoltBotStudio() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
+      localStorage.setItem(draftStorageKey(customizationScopeId, selectedPage), JSON.stringify(config));
     }, 420);
     return () => window.clearTimeout(timer);
-  }, [config, selectedPage, userId]);
+  }, [config, selectedPage, customizationScopeId]);
 
   const handleSave = async (data, meta = {}) => {
     const nextConfig = makeConfigFromEditorData(config, data, meta);
     try {
       setSavingDraft(true);
       const draftRes = await siteBuilderAPI.saveEditorDraft({
-        user_id: userId,
+        user_id: customizationScopeId,
         path: selectedPage,
         config: nextConfig,
         note: 'manual_save',
@@ -731,7 +738,7 @@ export default function MoltBotStudio() {
     try {
       setPublishing(true);
       try {
-        localStorage.setItem(`moltbot-published:${userId}:${selectedPage}`, JSON.stringify(nextConfig));
+        localStorage.setItem(`moltbot-published:${customizationScopeId}:${selectedPage}`, JSON.stringify(nextConfig));
       } catch (_error) {
         // ignore storage errors
       }
@@ -743,7 +750,7 @@ export default function MoltBotStudio() {
       }));
 
       const publishRes = await siteBuilderAPI.publishEditorDraft({
-        user_id: userId,
+        user_id: customizationScopeId,
         path: selectedPage,
         config: nextConfig,
         note: 'publish',
@@ -756,7 +763,7 @@ export default function MoltBotStudio() {
         status: 'published',
         updated_at: published.updated_at || _nowIso(),
       });
-      localStorage.removeItem(draftStorageKey(userId, selectedPage));
+      localStorage.removeItem(draftStorageKey(customizationScopeId, selectedPage));
       await loadCollabMeta(selectedPage);
       toast({ title: 'تم النشر', description: 'تم نشر التعديلات على الصفحة بنجاح' });
     } catch {
@@ -770,7 +777,7 @@ export default function MoltBotStudio() {
     const nextConfig = makeConfigFromEditorData(config, data, meta);
     try {
       let publishedBase = null;
-      const localPublished = localStorage.getItem(`moltbot-published:${userId}:${selectedPage}`);
+      const localPublished = localStorage.getItem(`moltbot-published:${customizationScopeId}:${selectedPage}`);
       if (localPublished) {
         try {
           publishedBase = normalizeConfig(JSON.parse(localPublished));
@@ -822,11 +829,11 @@ export default function MoltBotStudio() {
     }
     try {
       await siteBuilderAPI.addEditorComment({
-        user_id: userId,
+        user_id: customizationScopeId,
         path: selectedPage,
         block_id: selectedBlockId,
         message,
-        author_name: session?.name || userId,
+        author_name: session?.name || actorUserId,
       });
       setCommentText('');
       await loadCollabMeta(selectedPage);

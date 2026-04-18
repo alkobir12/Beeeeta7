@@ -100,6 +100,11 @@ const ChatWidget = () => {
     }
   }, []);
 
+  const customizationScopeId = useMemo(() => {
+    const workshopId = String(process.env.REACT_APP_WORKSHOP_ID || '').trim();
+    return workshopId ? `workshop:${workshopId}` : sessionInfo.userId;
+  }, [sessionInfo.userId]);
+
   const clearAppliedCustomizations = useCallback(() => {
     clearPageCustomizations(appliedCustomizationsRef);
   }, []);
@@ -112,7 +117,7 @@ const ChatWidget = () => {
 
   const fetchAndApplyCustomizations = useCallback(async (signal) => {
     try {
-      const res = await fetch(`/api/alkabeer-bot/customization?user_id=${encodeURIComponent(sessionInfo.userId)}&path=${encodeURIComponent(currentPath)}`, { signal });
+      const res = await fetch(`/api/alkabeer-bot/customization?user_id=${encodeURIComponent(customizationScopeId)}&path=${encodeURIComponent(currentPath)}`, { signal });
       if (!res.ok) return;
       const data = await res.json();
       if (data?.success && data?.data) {
@@ -129,7 +134,7 @@ const ChatWidget = () => {
         console.error('Failed to fetch customizations', e);
       }
     }
-  }, [sessionInfo.userId, currentPath, applyCustomizations]);
+  }, [customizationScopeId, currentPath, applyCustomizations]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !chatSessionId) return;

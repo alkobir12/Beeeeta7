@@ -248,19 +248,39 @@
     },
     "/": {
       "labels": {
-        "page-title-home": "لوحة التحكم",
-        "page-description-home": "محتوى لوحة التحكم"
+        "dashboard-stat-technicians-value": "لوحة التحكم إحصائية technicians قيمة",
+        "dashboard-stat-total-vehicles-value": "لوحة التحكم إحصائية total المركبات قيمة",
+        "dashboard-stat-total-vehicles-active-value": "لوحة التحكم إحصائية total المركبات active قيمة",
+        "dashboard-stat-total-vehicles-ready-value": "لوحة التحكم إحصائية total المركبات ready قيمة",
+        "dashboard-stat-in-progress-value": "لوحة التحكم إحصائية in progress قيمة",
+        "dashboard-stat-waiting-parts-value": "لوحة التحكم إحصائية waiting المخزون قيمة",
+        "dashboard-stat-diagnosis-value": "لوحة التحكم إحصائية diagnosis قيمة",
+        "dashboard-stat-ready-value": "لوحة التحكم إحصائية ready قيمة",
+        "dashboard-stat-ready-waiting-value": "لوحة التحكم إحصائية ready waiting قيمة",
+        "dashboard-stat-delivering-value": "لوحة التحكم إحصائية delivering قيمة",
+        "dashboard-stat-busy-technicians-value": "لوحة التحكم إحصائية busy technicians قيمة",
+        "dashboard-stat-free-technicians-value": "لوحة التحكم إحصائية free technicians قيمة"
       },
       "hidden": {},
       "contents": {
-        "page-title-home": "لوحة التحكم",
-        "page-description-home": "محتوى لوحة التحكم"
+        "dashboard-stat-technicians-value": "5",
+        "dashboard-stat-total-vehicles-value": "12",
+        "dashboard-stat-total-vehicles-active-value": "9",
+        "dashboard-stat-total-vehicles-ready-value": "3",
+        "dashboard-stat-in-progress-value": "9",
+        "dashboard-stat-waiting-parts-value": "1",
+        "dashboard-stat-diagnosis-value": "2",
+        "dashboard-stat-ready-value": "3",
+        "dashboard-stat-ready-waiting-value": "3",
+        "dashboard-stat-delivering-value": "0",
+        "dashboard-stat-busy-technicians-value": "0",
+        "dashboard-stat-free-technicians-value": "3"
       },
       "custom_cards": [],
       "block_order": [],
       "positions": {},
       "styles": {
-        "page-title-home": {
+        "dashboard-stat-technicians-value": {
           "backgroundColor": "",
           "color": "",
           "fontSize": "",
@@ -275,7 +295,157 @@
           "boxShadow": "",
           "backdropFilter": ""
         },
-        "page-description-home": {
+        "dashboard-stat-total-vehicles-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-total-vehicles-active-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-total-vehicles-ready-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-in-progress-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-waiting-parts-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-diagnosis-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-ready-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-ready-waiting-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-delivering-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-busy-technicians-value": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "dashboard-stat-free-technicians-value": {
           "backgroundColor": "",
           "color": "",
           "fontSize": "",
@@ -292,11 +462,51 @@
         }
       },
       "assets": {
-        "page-title-home": {
+        "dashboard-stat-technicians-value": {
           "src": "",
           "href": ""
         },
-        "page-description-home": {
+        "dashboard-stat-total-vehicles-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-total-vehicles-active-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-total-vehicles-ready-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-in-progress-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-waiting-parts-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-diagnosis-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-ready-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-ready-waiting-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-delivering-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-busy-technicians-value": {
+          "src": "",
+          "href": ""
+        },
+        "dashboard-stat-free-technicians-value": {
           "src": "",
           "href": ""
         }
@@ -311,14 +521,62 @@
       "block_order": []
     },
     "/operations": {
-      "labels": {},
+      "labels": {
+        "operations-active-tab-title": "API-TOOLS-1776416536",
+        "guidance-stepper": "إرشادات صفحة العملياتأنت تنشئ عملية ورشة تشغيلية مستقلة عن ا",
+        "operation-status-select": "صادرةمسودة"
+      },
       "hidden": {},
-      "contents": {},
+      "contents": {
+        "operations-active-tab-title": "API-TOOLS-1776416536",
+        "guidance-stepper": "إرشادات صفحة العملياتأنت تنشئ عملية ورشة تشغيلية مستقلة عن المركبات. راجع القيد قبل الحفظ.إخفاء•اختيار الحساب والطرفاختر",
+        "operation-status-select": "صادرةمسودة"
+      },
       "custom_cards": [],
       "block_order": [],
       "positions": {},
-      "styles": {},
-      "assets": {},
+      "styles": {
+        "guidance-stepper": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "operation-status-select": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        }
+      },
+      "assets": {
+        "guidance-stepper": {
+          "src": "",
+          "href": ""
+        },
+        "operation-status-select": {
+          "src": "",
+          "href": ""
+        }
+      },
       "page_manifest": {}
     }
   },
@@ -1052,6 +1310,85 @@
       "positions": {},
       "styles": {},
       "assets": {},
+      "page_manifest": {}
+    }
+  },
+  "workshop:finmodule-sync": {
+    "/": {
+      "labels": {
+        "page-title-home": "لوحة التحكم",
+        "page-description-home": "محتوى لوحة التحكم"
+      },
+      "hidden": {},
+      "contents": {
+        "page-title-home": "لوحة التحكم",
+        "page-description-home": "محتوى لوحة التحكم"
+      },
+      "custom_cards": [
+        {
+          "id": "preset-card-button-1776545521924",
+          "title": "زر جاهزية مباشر",
+          "description": "زر جاهز مع نص وحالة",
+          "fields": [
+            {
+              "id": "preset-field-button-1776545521924-0",
+              "label": "نص الزر المباشر",
+              "value": "تحديث مباشر من المحرر",
+              "source_testid": "page-description-home"
+            },
+            {
+              "id": "preset-field-button-1776545521924-1",
+              "label": "حالة الزر",
+              "value": "مفعل",
+              "source_testid": "page-title-home"
+            }
+          ]
+        }
+      ],
+      "block_order": [],
+      "positions": {},
+      "styles": {
+        "page-title-home": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        },
+        "page-description-home": {
+          "backgroundColor": "",
+          "color": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "opacity": "",
+          "padding": "",
+          "margin": "",
+          "width": "",
+          "height": "",
+          "textAlign": "",
+          "borderRadius": "",
+          "boxShadow": "",
+          "backdropFilter": ""
+        }
+      },
+      "assets": {
+        "page-title-home": {
+          "src": "",
+          "href": ""
+        },
+        "page-description-home": {
+          "src": "",
+          "href": ""
+        }
+      },
       "page_manifest": {}
     }
   }

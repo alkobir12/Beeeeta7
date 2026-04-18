@@ -39,6 +39,10 @@ const Layout = ({ pageTitle }) => {
   const location = useLocation();
   const isEditorPreview = useMemo(() => new URLSearchParams(location.search).get('editor-preview') === '1', [location.search]);
   const isEditorWorkspace = isEditorPreview || location.pathname === '/moltbot';
+  const customizationScopeId = useMemo(() => {
+    const workshopId = String(process.env.REACT_APP_WORKSHOP_ID || '').trim();
+    return workshopId ? `workshop:${workshopId}` : '';
+  }, []);
   const readSession = () => {
     try {
       return JSON.parse(localStorage.getItem('session') || '{}');
@@ -73,7 +77,8 @@ const Layout = ({ pageTitle }) => {
   }, []);
 
   useEffect(() => {
-    const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+    const userId = customizationScopeId;
+    if (!userId) return undefined;
     let cancelled = false;
 
     try {
@@ -116,7 +121,7 @@ const Layout = ({ pageTitle }) => {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname, session, isEditorWorkspace]);
+  }, [location.pathname, session, isEditorWorkspace, customizationScopeId]);
 
   useEffect(() => {
     if (isEditorWorkspace) return undefined;

@@ -253,8 +253,9 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
 
   const currentStateId = history[index]?.id || String(index);
 
-  const handlePreviewSelect = (blockId) => {
-    const nextId = String(blockId || '').trim();
+  const handlePreviewSelect = (selection) => {
+    const selectionObject = selection && typeof selection === 'object' ? selection : null;
+    const nextId = String(selectionObject?.id || selection || '').trim();
     if (!nextId) return;
     if (selectionMode === 'quick-brush') {
       toggleMultiSelect(nextId);
@@ -266,10 +267,12 @@ const CanvasEditor = ({ pageData, onSave, onPublish, onSelectionChange }) => {
       id: nextId,
       type: 'text',
       name: nextId,
-      title: nextId,
-      content: '',
+      title: selectionObject?.text || nextId,
+      content: selectionObject?.text || '',
       liquidTemplate: '',
-      styles: {},
+      styles: {
+        ...(selectionObject?.styles || {}),
+      },
       image: '',
       link: '',
     };

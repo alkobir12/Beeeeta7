@@ -48,11 +48,39 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
           doc.removeEventListener('click', doc.__moltbotClickHandler, true);
         }
         const clickHandler = (event) => {
-          const target = event.target?.closest?.('[data-testid]');
+          const target = event.target?.closest?.('[data-testid]') || event.target?.closest?.('*');
           if (!target) return;
           event.preventDefault();
           event.stopPropagation();
-          onSelect?.(target.getAttribute('data-testid') || '');
+
+          let testId = target.getAttribute('data-testid') || '';
+          if (!testId) {
+            const elementId = String(target.id || '').trim();
+            const primaryClass = String(target.className || '').trim().split(/\s+/).filter(Boolean)[0] || '';
+            const tag = String(target.tagName || 'node').toLowerCase();
+            const index = Array.from(doc.querySelectorAll(tag)).indexOf(target);
+            testId = elementId
+              ? `live-id-${elementId}`
+              : primaryClass
+              ? `live-class-${primaryClass.replace(/[^a-zA-Z0-9_-]/g, '')}`
+              : `live-node-${tag}-${Math.max(index, 0)}`;
+            target.setAttribute('data-testid', testId);
+          }
+
+          const computed = doc.defaultView?.getComputedStyle?.(target);
+          const selectedPayload = {
+            id: testId,
+            text: String(target.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 180),
+            tag: String(target.tagName || '').toLowerCase(),
+            styles: {
+              textAlign: computed?.textAlign || '',
+              color: computed?.color || '',
+              backgroundColor: computed?.backgroundColor || '',
+              fontSize: computed?.fontSize || '',
+              fontWeight: computed?.fontWeight || '',
+            },
+          };
+          onSelect?.(selectedPayload);
         };
         doc.__moltbotClickHandler = clickHandler;
         doc.addEventListener('click', clickHandler, true);

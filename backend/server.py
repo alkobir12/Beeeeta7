@@ -195,6 +195,61 @@ def _is_suppliers_table_missing(err: Exception) -> bool:
     return "PGRST205" in message and "suppliers" in message
 
 
+async def _derive_suppliers_from_parts(provider: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Fallback: build supplier rows from parts.supplier values when suppliers source is empty."""
+    active_provider = (provider or DB_PROVIDER or "mongo").lower()
+
+    def _build_rows(names: List[str]) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        now_utc = datetime.now(timezone.utc)
+        for idx, name in enumerate(sorted(set(names))):
+            clean_name = (name or "").strip()
+            if not clean_name:
+                continue
+            stable_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"supplier::{clean_name}")
+            rows.append(
+                {
+                    "id": f"derived-{idx}-{stable_id.hex[:12]}",
+                    "name": clean_name,
+                    "phone": "",
+                    "contactPerson": "",
+                    "email": "",
+                    "address": "",
+                    "city": "",
+                    "category": "مستخرج من قطع الغيار",
+                    "rating": 5.0,
+                    "createdAt": now_utc,
+                }
+            )
+        return rows
+
+    try:
+        if active_provider == "supabase":
+            if supabase_service.client and not supabase_service.mock_mode:
+                res = supabase_service.client.table("parts").select("supplier").execute()
+                names = [str((row or {}).get("supplier") or "").strip() for row in (res.data or [])]
+                rows = _build_rows([n for n in names if n])
+                if rows:
+                    return rows
+            mem_parts = _mem_read("parts")
+            names = [str((row or {}).get("supplier") or "").strip() for row in mem_parts]
+            return _build_rows([n for n in names if n])
+
+        if active_provider == "memory":
+            mem_parts = _mem_read("parts")
+            names = [str((row or {}).get("supplier") or "").strip() for row in mem_parts]
+            return _build_rows([n for n in names if n])
+
+        if db is not None:
+            part_rows = await db.parts.find({}, {"_id": 0, "supplier": 1}).to_list(5000)
+            names = [str((row or {}).get("supplier") or "").strip() for row in part_rows]
+            return _build_rows([n for n in names if n])
+    except Exception as e:
+        print(f"derive suppliers from parts failed: {e}")
+
+    return []
+
+
 def _is_suppliers_table_missing(err: Exception) -> bool:
     message = str(err)
     return "PGRST205" in message and "suppliers" in message
@@ -2628,6 +2683,8 @@ async def get_suppliers(
     if DB_PROVIDER == "supabase":
         if not SUPPLIERS_TABLE_AVAILABLE:
             rows = _mem_read("suppliers")
+            if not rows:
+                rows = await _derive_suppliers_from_parts("supabase")
             financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
             if sync_accounts:
                 await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2640,6 +2697,8 @@ async def get_suppliers(
             if supabase_service.client and not supabase_service.mock_mode:
                 res = supabase_service.client.table("suppliers").select("*").execute()
                 rows = res.data or []
+                if not rows:
+                    rows = await _derive_suppliers_from_parts("supabase")
                 financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
                 if sync_accounts:
                     await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2654,6 +2713,8 @@ async def get_suppliers(
             else:
                 print(f"Supabase suppliers error: {e}")
             rows = _mem_read("suppliers")
+            if not rows:
+                rows = await _derive_suppliers_from_parts("supabase")
             financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
             if sync_accounts:
                 await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2663,6 +2724,8 @@ async def get_suppliers(
                 enriched.append({**row, **summary})
             return [Supplier(**r) for r in enriched]
         rows = _mem_read("suppliers")
+        if not rows:
+            rows = await _derive_suppliers_from_parts("supabase")
         financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
         if sync_accounts:
             await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2674,6 +2737,8 @@ async def get_suppliers(
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("suppliers")
+        if not rows:
+            rows = await _derive_suppliers_from_parts("memory")
         financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
         if sync_accounts:
             await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2688,6 +2753,8 @@ async def get_suppliers(
     for s in suppliers:
         s.pop("_id", None)
         normalized.append(s)
+    if not normalized:
+        normalized = await _derive_suppliers_from_parts("mongo")
     financial_map = await _build_partner_financial_map("supplier", normalized, workshop_id)
     if sync_accounts:
         await _safe_sync_partner_subaccounts("supplier", normalized, financial_map)

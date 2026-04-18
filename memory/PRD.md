@@ -17,6 +17,13 @@
 
 ## What's Been Implemented
 
+### معالجة فرق الإنتاج/Preview في الموردين (18 Apr 2026)
+- تم التحقق أن المشكلة في الإنتاج ليست من الواجهة فقط: endpoint الإنتاج `GET /api/suppliers` كان يعيد قائمة فارغة، بينما preview يعيد الموردين بشكل طبيعي.
+- أُضيف fallback Backend في `/app/backend/server.py` داخل `get_suppliers`:
+  - إذا كانت مصادر الموردين فارغة (خصوصًا في وضع supabase/memory)، يتم اشتقاق قائمة موردين تلقائيًا من حقول `parts.supplier`.
+  - ينطبق على مسارات supabase/memory/mongo بشكل آمن، مع الحفاظ على التوافق مع response model.
+- تحقق سريع بعد التعديل على preview: `GET /api/suppliers` ما زال يعمل ويعيد البيانات (status 200).
+
 ### إصلاح حرج: قائمة الموردين داخل ملف المركبة + تنظيف بيانات الاختبار (18 Apr 2026)
 - تم إصلاح مشكلة عدم ظهور الموردين في بنود الزيارة داخل `VehicleDetails.jsx` عبر:
   - إضافة `normalizePartyCatalog` لتوحيد صيغ بيانات الأسماء (`name / supplierName / customerName`) ومنع الفراغات/التكرار.

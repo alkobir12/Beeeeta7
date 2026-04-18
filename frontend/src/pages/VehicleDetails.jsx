@@ -45,6 +45,44 @@ import { resolveBackendBase } from '../utils/backendBase';
 
 // --- Helper Components ---
 
+const pickEntityName = (row) => {
+  if (!row || typeof row !== 'object') return '';
+  return (
+    row.name ||
+    row.fullName ||
+    row.customerName ||
+    row.customer_name ||
+    row.supplierName ||
+    row.supplier_name ||
+    row.title ||
+    ''
+  )
+    .toString()
+    .trim();
+};
+
+const normalizePartyCatalog = (rows = [], entityPrefix = 'entity') => {
+  if (!Array.isArray(rows)) return [];
+  const seen = new Set();
+  const normalized = [];
+
+  rows.forEach((row, index) => {
+    const name = pickEntityName(row);
+    if (!name) return;
+    const normalizedKey = name.toLowerCase();
+    if (seen.has(normalizedKey)) return;
+    seen.add(normalizedKey);
+
+    normalized.push({
+      ...row,
+      id: row?.id || row?._id || `${entityPrefix}-${index}-${normalizedKey}`,
+      name,
+    });
+  });
+
+  return normalized;
+};
+
 const VisitItemRow = ({
   item,
   isEditing,
@@ -576,6 +614,7 @@ const VisitCard = ({
   customersCatalog = [],
   onServiceAdded,
   onPartAdded,
+  onSupplierAdded,
   canDelete = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
@@ -635,6 +674,7 @@ const VisitCard = ({
     const normalize = (val) => (val || '').trim().toLowerCase();
     const serviceNames = new Set(servicesCatalog.map((s) => normalize(s.name)));
     const partNames = new Set(partsCatalog.map((p) => normalize(p.name)));
+    const supplierNames = new Set(suppliersCatalog.map((s) => normalize(s.name)));
 
     const newServices = items
       .filter((it) => it.itemType === 'service' && normalize(it.name))
@@ -649,6 +689,12 @@ const VisitCard = ({
     );
     const uniqueParts = Array.from(
       new Map(newParts.map((it) => [normalize(it.name), it])).values()
+    );
+    const newSuppliers = items
+      .filter((it) => it.itemType === 'supplier' && normalize(it.name))
+      .filter((it) => !supplierNames.has(normalize(it.name)));
+    const uniqueSuppliers = Array.from(
+      new Map(newSuppliers.map((it) => [normalize(it.name), it])).values()
     );
 
     for (const svc of uniqueServices) {
@@ -686,6 +732,25 @@ const VisitCard = ({
         partNames.add(normalize(part.name));
       } catch (e) {
         console.error('Error creating part:', e);
+      }
+    }
+
+    for (const supplier of uniqueSuppliers) {
+      try {
+        const payload = {
+          name: supplier.name.trim(),
+          phone: '',
+          contactPerson: '',
+          email: '',
+          address: '',
+          city: '',
+          category: '',
+        };
+        const res = await supplierAPI.create(payload);
+        onSupplierAdded?.(res.data || payload);
+        supplierNames.add(normalize(supplier.name));
+      } catch (e) {
+        console.error('Error creating supplier:', e);
       }
     }
   };
@@ -1750,6 +1815,7 @@ const VehicleDetails = () => {
   const [financialSourceOpen, setFinancialSourceOpen] = useState(false);
   const [financialSourceTitle, setFinancialSourceTitle] = useState('');
   const [financialSourceRows, setFinancialSourceRows] = useState([]);
+  const workshopId = process.env.REACT_APP_WORKSHOP_ID;
 
   
   const videoRef = useRef(null);
@@ -1778,6 +1844,20 @@ const VehicleDetails = () => {
     setPartsCatalog((prev) => {
       const exists = prev.some((p) => p.id === part.id || (p.name || '').trim() === (part.name || '').trim());
       return exists ? prev : [...prev, part];
+    });
+  }, []);
+
+  const appendSupplier = useCallback((supplier) => {
+    if (!supplier) return;
+    const normalizedSupplier = normalizePartyCatalog([supplier], 'supplier')[0];
+    if (!normalizedSupplier) return;
+    setSuppliersCatalog((prev) => {
+      const exists = prev.some(
+        (s) =>
+          s.id === normalizedSupplier.id ||
+          (s.name || '').trim().toLowerCase() === (normalizedSupplier.name || '').trim().toLowerCase()
+      );
+      return exists ? prev : [...prev, normalizedSupplier];
     });
   }, []);
 
@@ -1947,7 +2027,9 @@ const VehicleDetails = () => {
 
       const servicesPromise = serviceAPI.getAll().catch(() => ({ data: [] }));
       const partsPromise = partAPI.getAll().catch(() => ({ data: [] }));
-      const suppliersPromise = supplierAPI.getAll().catch(() => ({ data: [] }));
+      const suppliersPromise = supplierAPI
+        .getAll(workshopId ? { workshop_id: workshopId } : {})
+        .catch(() => ({ data: [] }));
       const customersPromise = customerAPI.getAll().catch(() => ({ data: [] }));
 
       const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes] = await Promise.all([
@@ -1962,8 +2044,8 @@ const VehicleDetails = () => {
       setVehicleFiles(filesRes.files || []);
       setServicesCatalog(normalizeListPayload(servicesRes, ['services']));
       setPartsCatalog(normalizeListPayload(partsRes, ['parts']));
-      setSuppliersCatalog(normalizeListPayload(suppliersRes, ['suppliers']));
-      setCustomersCatalog(normalizeListPayload(customersRes, ['customers']));
+      setSuppliersCatalog(normalizePartyCatalog(normalizeListPayload(suppliersRes, ['suppliers']), 'supplier'));
+      setCustomersCatalog(normalizePartyCatalog(normalizeListPayload(customersRes, ['customers']), 'customer'));
       
       const approvalsRows = normalizeListPayload(approvalsRes, ['approvals']);
       const approvalsByVisit = new Map();
@@ -1982,7 +2064,7 @@ const VehicleDetails = () => {
     } finally {
       setLoadingProgress(100);
     }
-  }, [id, API_URL, toast, normalizeListPayload]);
+  }, [id, API_URL, toast, normalizeListPayload, workshopId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -3018,6 +3100,7 @@ const VehicleDetails = () => {
                       customersCatalog={customersCatalog}
                       onServiceAdded={appendService}
                       onPartAdded={appendPart}
+                      onSupplierAdded={appendSupplier}
                       canDelete={canDeleteVisit}
                     />
                   );

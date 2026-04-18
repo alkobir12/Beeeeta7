@@ -26,11 +26,11 @@
       "updated_at": "2026-04-17T09:02:16.822330+00:00"
     },
     {
-      "id": "34fb0a44-9905-4cfa-a5c8-5978eec5f909",
+      "id": "101a5898-cecc-4422-9003-5baa33f17903",
       "user_id": "local-admin",
       "path": "/",
       "status": "published",
-      "version": 4,
+      "version": 7,
       "note": "publish",
       "config": {
         "labels": {
@@ -42,27 +42,7 @@
           "page-title-home": "لوحة التحكم",
           "page-description-home": "محتوى لوحة التحكم"
         },
-        "custom_cards": [
-          {
-            "id": "smart-card-1776542245930",
-            "title": "كرت اختبار ذكي",
-            "description": "كرت مخصص مرتبط بعناصر الصفحة",
-            "fields": [
-              {
-                "id": "smart-field-1776542245930",
-                "label": "اسم العميل",
-                "value": "قيمة افتراضية",
-                "source_testid": "page-title-home"
-              },
-              {
-                "id": "smart-field-1776542246912-f4f",
-                "label": "حقل 2",
-                "value": "",
-                "source_testid": "page-title-home"
-              }
-            ]
-          }
-        ],
+        "custom_cards": [],
         "block_order": [],
         "positions": {},
         "styles": {
@@ -109,8 +89,8 @@
         },
         "page_manifest": {}
       },
-      "created_at": "2026-04-18T19:57:32.786170+00:00",
-      "updated_at": "2026-04-18T19:57:32.786170+00:00"
+      "created_at": "2026-04-18T20:35:09.105580+00:00",
+      "updated_at": "2026-04-18T20:35:09.105580+00:00"
     }
   ],
   "history": [
@@ -451,6 +431,259 @@
       },
       "created_at": "2026-04-18T19:57:32.786170+00:00",
       "updated_at": "2026-04-18T19:57:32.786170+00:00"
+    },
+    {
+      "id": "f962bf54-8616-45d8-8c42-fa97e198f41e",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 5,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [
+          {
+            "id": "preset-card-kpi-1776544203051",
+            "title": "بطاقة جاهزية اختبار",
+            "description": "كرت جاهز لمؤشرات الورشة السريعة",
+            "fields": [
+              {
+                "id": "preset-field-kpi-1776544203051-0",
+                "label": "إيراد اليوم",
+                "value": "12500",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "preset-field-kpi-1776544203051-1",
+                "label": "العمليات المفتوحة",
+                "value": "0",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "preset-field-kpi-1776544203051-2",
+                "label": "صافي الدخل",
+                "value": "0",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T20:30:08.017245+00:00",
+      "updated_at": "2026-04-18T20:30:08.017245+00:00"
+    },
+    {
+      "id": "494ebe52-6fd5-465a-9cfd-bc6f724261b8",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 6,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [
+          {
+            "id": "preset-card-kpi-1776544408354",
+            "title": "مؤشرات الأداء",
+            "description": "كرت جاهز لمؤشرات الورشة السريعة",
+            "fields": [
+              {
+                "id": "preset-field-kpi-1776544408354-0",
+                "label": "إجمالي الإيراد",
+                "value": "0",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "preset-field-kpi-1776544408354-1",
+                "label": "العمليات المفتوحة",
+                "value": "0",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "preset-field-kpi-1776544408354-2",
+                "label": "صافي الدخل",
+                "value": "0",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T20:33:31.970692+00:00",
+      "updated_at": "2026-04-18T20:33:31.970692+00:00"
+    },
+    {
+      "id": "101a5898-cecc-4422-9003-5baa33f17903",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 7,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T20:35:09.105580+00:00",
+      "updated_at": "2026-04-18T20:35:09.105580+00:00"
     }
   ],
   "comments": [

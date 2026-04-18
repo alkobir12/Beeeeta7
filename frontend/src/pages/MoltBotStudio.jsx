@@ -413,6 +413,51 @@ const buildPublishChecklist = (data, nextConfig) => {
   };
 };
 
+const COMPONENT_PRESETS = [
+  {
+    id: 'kpi',
+    title: 'Preset KPI',
+    cardTitle: 'مؤشرات الأداء',
+    description: 'كرت جاهز لمؤشرات الورشة السريعة',
+    fields: [
+      { label: 'إجمالي الإيراد', value: '0', source_testid: '' },
+      { label: 'العمليات المفتوحة', value: '0', source_testid: '' },
+      { label: 'صافي الدخل', value: '0', source_testid: '' },
+    ],
+  },
+  {
+    id: 'card',
+    title: 'Preset Card',
+    cardTitle: 'بطاقة ملخص',
+    description: 'بطاقة ملخص عامة لعنصر أو قسم',
+    fields: [
+      { label: 'العنوان', value: 'عنوان البطاقة', source_testid: '' },
+      { label: 'الوصف', value: 'وصف مختصر', source_testid: '' },
+    ],
+  },
+  {
+    id: 'table',
+    title: 'Preset Table',
+    cardTitle: 'جدول مختصر',
+    description: 'مصفوفة جاهزة لعناوين جدول',
+    fields: [
+      { label: 'العمود 1', value: 'الاسم', source_testid: '' },
+      { label: 'العمود 2', value: 'الحالة', source_testid: '' },
+      { label: 'العمود 3', value: 'القيمة', source_testid: '' },
+    ],
+  },
+  {
+    id: 'button',
+    title: 'Preset Button',
+    cardTitle: 'زر إجراء',
+    description: 'زر جاهز مع نص وحالة',
+    fields: [
+      { label: 'نص الزر', value: 'تنفيذ', source_testid: '' },
+      { label: 'حالة الزر', value: 'مفعل', source_testid: '' },
+    ],
+  },
+];
+
 export default function MoltBotStudio() {
   const { toast } = useToast();
   const hiddenFrameRef = useRef(null);
@@ -483,6 +528,27 @@ export default function MoltBotStudio() {
     };
     updateCustomCards([...(customCards || []), nextCard]);
     setSelectedSmartCardId(nextCard.id);
+  };
+
+  const addPresetCard = (presetId) => {
+    const preset = COMPONENT_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    const now = Date.now();
+    const nextCard = {
+      id: `preset-card-${preset.id}-${now}`,
+      title: preset.cardTitle,
+      description: preset.description,
+      fields: (preset.fields || []).map((field, index) => ({
+        id: `preset-field-${preset.id}-${now}-${index}`,
+        label: field.label,
+        value: field.value,
+        source_testid: suggestSmartSourceTestid(field, pageData?.blocks || []),
+      })),
+    };
+    updateCustomCards([...(customCards || []), nextCard]);
+    setSelectedSmartCardId(nextCard.id);
+    setStudioPanelTab('binding');
+    toast({ title: 'تمت إضافة Preset', description: `${preset.title} تمت إضافته بنقرة واحدة.` });
   };
 
   const updateSmartCard = (cardId, patch) => {
@@ -916,6 +982,20 @@ export default function MoltBotStudio() {
                 >
                   + كرت جديد
                 </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mb-3" data-testid="moltbot-editor-presets-grid">
+                {COMPONENT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => addPresetCard(preset.id)}
+                    className="rounded-lg border border-slate-300 bg-white px-2 py-2 text-[11px] text-slate-700 hover:bg-slate-50"
+                    data-testid={`moltbot-editor-preset-button-${preset.id}`}
+                  >
+                    {preset.title}
+                  </button>
+                ))}
               </div>
 
               {customCards.length ? (

@@ -256,27 +256,7 @@
         "page-title-home": "لوحة التحكم",
         "page-description-home": "محتوى لوحة التحكم"
       },
-      "custom_cards": [
-        {
-          "id": "smart-card-1776542245930",
-          "title": "كرت اختبار ذكي",
-          "description": "كرت مخصص مرتبط بعناصر الصفحة",
-          "fields": [
-            {
-              "id": "smart-field-1776542245930",
-              "label": "اسم العميل",
-              "value": "قيمة افتراضية",
-              "source_testid": "page-title-home"
-            },
-            {
-              "id": "smart-field-1776542246912-f4f",
-              "label": "حقل 2",
-              "value": "",
-              "source_testid": "page-title-home"
-            }
-          ]
-        }
-      ],
+      "custom_cards": [],
       "block_order": [],
       "positions": {},
       "styles": {

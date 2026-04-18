@@ -119,7 +119,13 @@ const ChatWidget = () => {
         setTimeout(() => applyCustomizations(data.data), 80);
       }
     } catch (e) {
-      if (e?.name !== 'AbortError') {
+      const message = String(e?.message || '').toLowerCase();
+      const isExpectedNetworkAbort =
+        e?.name === 'AbortError'
+        || message.includes('failed to fetch')
+        || message.includes('load failed')
+        || message.includes('networkerror');
+      if (!isExpectedNetworkAbort) {
         console.error('Failed to fetch customizations', e);
       }
     }

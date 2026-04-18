@@ -456,15 +456,15 @@ export default function MoltBotStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-white" data-testid="moltbot-canvas-editor-page">
-      <div className="border-b border-white/10 bg-white/5 px-4 py-3 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#f3f6ff] text-slate-900" data-testid="moltbot-canvas-editor-page">
+      <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold">MoltBot Canvas Editor</h1>
-          <p className="text-xs text-white/60" data-testid="moltbot-editor-meta-status">نسخة {draftMeta.version || 0} • الحالة: {draftMeta.status === 'published' ? 'منشور' : 'مسودة'}</p>
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900">MoltBot Canvas Editor</h1>
+          <p className="text-xs text-slate-500" data-testid="moltbot-editor-meta-status">نسخة {draftMeta.version || 0} • الحالة: {draftMeta.status === 'published' ? 'منشور' : 'مسودة'}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="text-[11px] text-white/60" data-testid="moltbot-editor-save-state">{savingDraft ? 'جاري حفظ المسودة...' : publishing ? 'جاري النشر...' : draftMeta.updated_at ? `آخر تحديث: ${new Date(draftMeta.updated_at).toLocaleString('ar-SA')}` : 'لم يتم الحفظ بعد'}</div>
-          <select value={selectedPage} onChange={(e) => setSelectedPage(e.target.value)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none" data-testid="moltbot-canvas-editor-page-select">
+        <div className="flex items-center gap-2 flex-wrap md:justify-end">
+          <div className="text-[11px] text-slate-500" data-testid="moltbot-editor-save-state">{savingDraft ? 'جاري حفظ المسودة...' : publishing ? 'جاري النشر...' : draftMeta.updated_at ? `آخر تحديث: ${new Date(draftMeta.updated_at).toLocaleString('ar-SA')}` : 'لم يتم الحفظ بعد'}</div>
+          <select value={selectedPage} onChange={(e) => setSelectedPage(e.target.value)} className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none min-w-[180px]" data-testid="moltbot-canvas-editor-page-select">
             {LIQUID_BUILDER_PAGES.map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
           </select>
         </div>
@@ -482,7 +482,7 @@ export default function MoltBotStudio() {
       ) : null}
 
       {loading || !pageData ? (
-        <div className="flex min-h-[70vh] items-center justify-center text-sm text-white/70" data-testid="moltbot-canvas-editor-loading">جاري تجهيز المحرر...</div>
+        <div className="flex min-h-[70vh] items-center justify-center text-sm text-slate-600" data-testid="moltbot-canvas-editor-loading">جاري تجهيز المحرر...</div>
       ) : (
         <>
           <CanvasEditor
@@ -493,34 +493,34 @@ export default function MoltBotStudio() {
             onSelectionChange={setSelectedBlockId}
           />
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 border-t border-white/10 bg-[#0a1020]" data-testid="moltbot-editor-collab-panel">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4" data-testid="moltbot-editor-history-panel">
-              <h3 className="text-sm font-bold mb-3">History (Save)</h3>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 border-t border-slate-200 bg-[#eef3ff]" data-testid="moltbot-editor-collab-panel">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-history-panel">
+              <h3 className="text-sm font-bold mb-3 text-slate-900">History (Save)</h3>
               <div className="space-y-2 max-h-56 overflow-y-auto" data-testid="moltbot-editor-history-list">
                 {historyRows.length ? historyRows.map((row, idx) => (
-                  <div key={row.id || idx} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2" data-testid={`moltbot-editor-history-item-${idx}`}>
-                    <div className="text-xs text-white/90">v{row.version || 0} • {row.status === 'published' ? 'منشور' : 'مسودة'}</div>
-                    <div className="text-[11px] text-white/60">{row.note || '-'} • {row.updated_at ? new Date(row.updated_at).toLocaleString('ar-SA') : '-'}</div>
+                  <div key={row.id || idx} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2" data-testid={`moltbot-editor-history-item-${idx}`}>
+                    <div className="text-xs text-slate-800">v{row.version || 0} • {row.status === 'published' ? 'منشور' : 'مسودة'}</div>
+                    <div className="text-[11px] text-slate-500">{row.note || '-'} • {row.updated_at ? new Date(row.updated_at).toLocaleString('ar-SA') : '-'}</div>
                   </div>
-                )) : <div className="text-xs text-white/60" data-testid="moltbot-editor-history-empty">لا يوجد تاريخ حفظ بعد</div>}
+                )) : <div className="text-xs text-slate-500" data-testid="moltbot-editor-history-empty">لا يوجد تاريخ حفظ بعد</div>}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4" data-testid="moltbot-editor-comments-panel">
-              <h3 className="text-sm font-bold mb-2">Comments</h3>
-              <div className="text-[11px] text-white/60 mb-2" data-testid="moltbot-editor-comments-selected-block">العنصر المحدد: {selectedBlockId || 'غير محدد'}</div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-comments-panel">
+              <h3 className="text-sm font-bold mb-2 text-slate-900">Comments</h3>
+              <div className="text-[11px] text-slate-500 mb-2" data-testid="moltbot-editor-comments-selected-block">العنصر المحدد: {selectedBlockId || 'غير محدد'}</div>
               <div className="flex gap-2 mb-3">
                 <input
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="أضف تعليقًا على العنصر/الصفحة"
-                  className="flex-1 rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none"
+                  className="flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none"
                   data-testid="moltbot-editor-comment-input"
                 />
                 <button
                   type="button"
                   onClick={handleAddComment}
-                  className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-3 py-2 text-sm"
+                  className="rounded-xl border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm text-cyan-900"
                   data-testid="moltbot-editor-comment-add-button"
                 >
                   إضافة
@@ -528,22 +528,22 @@ export default function MoltBotStudio() {
               </div>
               <div className="space-y-2 max-h-52 overflow-y-auto" data-testid="moltbot-editor-comments-list">
                 {comments.length ? comments.map((comment, idx) => (
-                  <div key={comment.id || idx} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2" data-testid={`moltbot-editor-comment-item-${idx}`}>
-                    <div className="text-xs text-white/90">{comment.author_name || comment.user_id || 'مستخدم'} {comment.block_id ? `• ${comment.block_id}` : ''}</div>
-                    <div className="text-xs text-white/70 mt-1">{comment.message || '-'}</div>
+                  <div key={comment.id || idx} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2" data-testid={`moltbot-editor-comment-item-${idx}`}>
+                    <div className="text-xs text-slate-800">{comment.author_name || comment.user_id || 'مستخدم'} {comment.block_id ? `• ${comment.block_id}` : ''}</div>
+                    <div className="text-xs text-slate-600 mt-1">{comment.message || '-'}</div>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-white/50">{comment.created_at ? new Date(comment.created_at).toLocaleString('ar-SA') : '-'}</span>
+                      <span className="text-[11px] text-slate-500">{comment.created_at ? new Date(comment.created_at).toLocaleString('ar-SA') : '-'}</span>
                       <button
                         type="button"
                         onClick={() => handleResolveComment(comment.id, Boolean(comment.resolved))}
-                        className="text-[11px] px-2 py-1 rounded border border-white/15 bg-white/10"
+                        className="text-[11px] px-2 py-1 rounded border border-slate-300 bg-white"
                         data-testid={`moltbot-editor-comment-resolve-button-${idx}`}
                       >
                         {comment.resolved ? 'إعادة فتح' : 'تم الحل'}
                       </button>
                     </div>
                   </div>
-                )) : <div className="text-xs text-white/60" data-testid="moltbot-editor-comments-empty">لا توجد تعليقات بعد</div>}
+                )) : <div className="text-xs text-slate-500" data-testid="moltbot-editor-comments-empty">لا توجد تعليقات بعد</div>}
               </div>
             </div>
           </div>

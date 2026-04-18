@@ -78,24 +78,24 @@ export const ExportImportDialog = ({ pageData, onImport }) => {
 
   return (
     <div className="relative" data-testid="export-import-root">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="rounded border border-white/15 bg-white/5 px-3 py-1 text-xs" data-testid="export-import-toggle-button">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="export-import-toggle" data-testid="export-import-toggle-button">
         تصدير / استيراد
       </button>
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={onFileChange} data-testid="export-import-file-input" />
       {open ? (
-        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1324] p-3 shadow-2xl z-30" data-testid="export-import-menu">
-          <button type="button" onClick={exportJson} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs mb-2" data-testid="export-json-button">تصدير JSON</button>
-          <button type="button" onClick={exportHtml} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs mb-2" data-testid="export-html-button">تصدير HTML</button>
-          <button type="button" onClick={triggerImport} className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs" data-testid="import-json-button">استيراد JSON</button>
-          <div className="mt-3 pt-2 border-t border-white/10" data-testid="template-import-section">
-            <div className="text-[11px] text-cyan-200 mb-2">قوالب جاهزة</div>
+        <div className="export-import-menu" data-testid="export-import-menu">
+          <button type="button" onClick={exportJson} className="export-import-menu-button" data-testid="export-json-button">تصدير JSON</button>
+          <button type="button" onClick={exportHtml} className="export-import-menu-button" data-testid="export-html-button">تصدير HTML</button>
+          <button type="button" onClick={triggerImport} className="export-import-menu-button" data-testid="import-json-button">استيراد JSON</button>
+          <div className="export-import-template-section" data-testid="template-import-section">
+            <div className="export-import-template-title">قوالب جاهزة</div>
             <div className="space-y-2">
               {templates.map((template) => (
                 <button
                   key={template.id}
                   type="button"
                   onClick={() => { onImport?.(template.data); setOpen(false); }}
-                  className="w-full text-right rounded border border-white/15 bg-white/5 px-3 py-2 text-xs"
+                  className="export-import-menu-button"
                   data-testid={`template-import-button-${template.id}`}
                 >
                   {template.label}

@@ -22,6 +22,14 @@ const Toolbar = ({
 
   return (
     <div className="toolbar" data-testid="canvas-editor-toolbar">
+      <div className="toolbar-group brand" data-testid="canvas-editor-toolbar-brand">
+        <div className="toolbar-brand-badge" aria-hidden="true">M</div>
+        <div className="toolbar-brand-copy">
+          <strong>MoltBot Studio</strong>
+          <span>Canvas Workflow</span>
+        </div>
+      </div>
+
       <div className="toolbar-group history">
         <button onClick={undo} disabled={!canUndo} data-testid="canvas-editor-undo-button">↩️ تراجع</button>
         <button onClick={redo} disabled={!canRedo} data-testid="canvas-editor-redo-button">↪️ إعادة</button>
@@ -34,12 +42,14 @@ const Toolbar = ({
       </div>
 
       <div className="toolbar-group actions">
-        <button onClick={onSave} className="btn-primary" data-testid="canvas-editor-save-button">حفظ</button>
-        <button onClick={onPublish} className="btn-secondary" data-testid="canvas-editor-publish-button">نشر</button>
-        <button onClick={() => setShowAdvanced((v) => !v)} data-testid="canvas-editor-advanced-toggle-button">أدوات +</button>
+        <div className="toolbar-actions-inline">
+          <button onClick={onSave} className="btn-primary" data-testid="canvas-editor-save-button">حفظ</button>
+          <button onClick={onPublish} className="btn-secondary" data-testid="canvas-editor-publish-button">نشر</button>
+          <button onClick={() => setShowAdvanced((v) => !v)} data-testid="canvas-editor-advanced-toggle-button">أدوات +</button>
+        </div>
 
         {showAdvanced ? (
-          <div className="toolbar-group history" data-testid="canvas-editor-advanced-tools-group">
+          <div className="toolbar-advanced-tools" data-testid="canvas-editor-advanced-tools-group">
             <button onClick={onCopy} data-testid="canvas-editor-copy-button">نسخ</button>
             <button onClick={onPaste} data-testid="canvas-editor-paste-button">لصق</button>
             <button onClick={onDuplicate} data-testid="canvas-editor-duplicate-button">تكرار</button>

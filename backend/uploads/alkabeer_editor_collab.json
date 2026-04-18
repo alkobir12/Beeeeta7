@@ -1,73 +1,6 @@
 {
   "drafts": [
     {
-      "id": "508b795d-20ca-47c9-85a1-3a89cc229573",
-      "user_id": "local-admin",
-      "path": "/",
-      "status": "draft",
-      "version": 2,
-      "note": "manual_save",
-      "config": {
-        "labels": {
-          "page-title--": "لوحة التحكم",
-          "page-description--": "محتوى لوحة التحكم"
-        },
-        "hidden": {},
-        "contents": {
-          "page-title--": "لوحة التحكم",
-          "page-description--": "محتوى لوحة التحكم"
-        },
-        "custom_cards": [],
-        "block_order": [],
-        "positions": {},
-        "styles": {
-          "page-title--": {
-            "backgroundColor": "",
-            "color": "",
-            "fontSize": "",
-            "fontWeight": "",
-            "opacity": "",
-            "padding": "",
-            "margin": "",
-            "width": "",
-            "height": "",
-            "textAlign": "",
-            "borderRadius": "",
-            "boxShadow": "",
-            "backdropFilter": ""
-          },
-          "page-description--": {
-            "backgroundColor": "",
-            "color": "",
-            "fontSize": "",
-            "fontWeight": "",
-            "opacity": "",
-            "padding": "",
-            "margin": "",
-            "width": "",
-            "height": "",
-            "textAlign": "",
-            "borderRadius": "",
-            "boxShadow": "",
-            "backdropFilter": ""
-          }
-        },
-        "assets": {
-          "page-title--": {
-            "src": "",
-            "href": ""
-          },
-          "page-description--": {
-            "src": "",
-            "href": ""
-          }
-        },
-        "page_manifest": {}
-      },
-      "created_at": "2026-04-17T06:32:01.402794+00:00",
-      "updated_at": "2026-04-17T06:32:01.402794+00:00"
-    },
-    {
       "id": "0c6de7e8-d5ac-4df9-ba81-736a22a4b15a",
       "user_id": "local-admin",
       "path": "/operations",
@@ -91,6 +24,73 @@
       },
       "created_at": "2026-04-17T09:02:16.822330+00:00",
       "updated_at": "2026-04-17T09:02:16.822330+00:00"
+    },
+    {
+      "id": "73af2429-6a70-4b33-b333-ee50b4c38687",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "draft",
+      "version": 3,
+      "note": "manual_save",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T19:38:34.088426+00:00",
+      "updated_at": "2026-04-18T19:38:34.088426+00:00"
     }
   ],
   "history": [
@@ -277,6 +277,73 @@
       },
       "created_at": "2026-04-17T09:02:16.822330+00:00",
       "updated_at": "2026-04-17T09:02:16.822330+00:00"
+    },
+    {
+      "id": "73af2429-6a70-4b33-b333-ee50b4c38687",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "draft",
+      "version": 3,
+      "note": "manual_save",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T19:38:34.088426+00:00",
+      "updated_at": "2026-04-18T19:38:34.088426+00:00"
     }
   ],
   "comments": [

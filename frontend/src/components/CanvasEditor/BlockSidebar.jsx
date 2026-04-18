@@ -39,8 +39,16 @@ const SortableBlock = ({ block, selected, onSelect }) => {
 const BlockSidebar = ({ blocks = [], selectedId, onSelect }) => {
   return (
     <div className="block-sidebar" data-testid="canvas-editor-block-sidebar">
-      <h4>البلوكات</h4>
-      {blocks.map((block) => <SortableBlock key={block.id} block={block} selected={selectedId === block.id} onSelect={onSelect} />)}
+      <div className="block-sidebar-header" data-testid="canvas-editor-block-sidebar-header">
+        <h4>العناصر</h4>
+        <span data-testid="canvas-editor-block-sidebar-count">{blocks.length}</span>
+      </div>
+      <div className="block-sidebar-subtitle" data-testid="canvas-editor-block-sidebar-subtitle">
+        اسحب/اختر العنصر للتعديل داخل اللوحة
+      </div>
+      <div className="block-sidebar-list" data-testid="canvas-editor-block-sidebar-list">
+        {blocks.map((block) => <SortableBlock key={block.id} block={block} selected={selectedId === block.id} onSelect={onSelect} />)}
+      </div>
     </div>
   );
 };

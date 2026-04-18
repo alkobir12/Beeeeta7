@@ -17,6 +17,25 @@
 
 ## What's Been Implemented
 
+### Smart Binding + Visual Diff داخل MoltBot Studio (18 Apr 2026)
+- تم تنفيذ **Smart Binding Panel** داخل صفحة `/moltbot` مع إدارة كاملة للكروت المخصصة:
+  - إضافة/حذف كرت مخصص.
+  - إضافة/حذف حقول داخل الكرت.
+  - تعديل `label / value / source_testid` لكل حقل.
+  - زر **اقتراح ذكي** لكل حقل (اقتراح أفضل `source_testid` بالاعتماد على تشابه النص مع بلوكات الصفحة).
+  - زر **تطبيق ذكي لكل الحقول** على مستوى الكرت.
+- تم تنفيذ **Visual Diff قبل النشر**:
+  - عند الضغط على نشر، لا يتم النشر مباشرة.
+  - تظهر نافذة مقارنة تحتوي: عدّاد التغييرات + مقاييس (Labels/Contents/Styles/Assets/Hidden/Positions) + أهم العناصر المتأثرة.
+  - أزرار واضحة: `إلغاء` و`نشر الآن`.
+  - `إلغاء` يغلق النافذة بدون نشر، و`نشر الآن` يكمل publish flow.
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_137.json`
+  - Frontend: **100% PASS**
+  - تم التحقق من كل سيناريوهات Smart Binding وVisual Diff على Desktop + Mobile.
+  - لا توجد أخطاء وظيفية مانعة؛ فقط warning Console غير مانع متعلق customizations fetch في بعض الجلسات.
+
 ### تحسين واجهة MoltBot لتوزيع Canva أفضل (18 Apr 2026)
 - تم تحديث واجهة المحرر بدون تغيير الأدوات الحالية:
   - إعادة تنظيم Toolbar (هوية أوضح + تقسيم المجموعات + أدوات متقدمة ضمن كتلة مرتبة).

@@ -17,6 +17,25 @@
 
 ## What's Been Implemented
 
+### تحسين شامل دقيق لصفحة MoltBot (18 Apr 2026)
+- بناءً على طلب المستخدم (تحسين الأداء + الواجهة بدون تعقيد):
+  - **تحسين أداء:** تحويل حفظ المسودة المحلي (autosave) إلى debounce `420ms` بدل الكتابة المباشرة مع كل تغيير.
+  - **تحسين واجهة:** إضافة شريط حالة مختصر (Health Chips) يوضح حالة الأداء والواجهة والخط.
+  - **تحسين تجربة الجوال:** إضافة تبويبات مبسطة للوحات السفلية (`History / Comments / Binding`) مع إظهار لوحة واحدة في كل مرة على الشاشات الصغيرة.
+  - **الحفاظ على التدفقات السابقة:** Smart Binding + Visual Diff + Pre-Publish Checklist بقيت تعمل كما هي.
+- توحيد الخط مع خط الموقع تم الإبقاء عليه (`Parastoo`) في الصفحة والمحرر والمعاينة.
+
+### Testing (iteration_139)
+- التقرير: `/app/test_reports/iteration_139.json`
+- النتيجة: **Frontend 100% PASS**
+- تم التحقق من:
+  - مطابقة الخط.
+  - debounce autosave.
+  - عمل تبويبات الجوال.
+  - عمل Visual Diff + Checklist + publish gating.
+  - عدم وجود overflow أفقي على Desktop/Mobile.
+- ملاحظة غير مانعة مستمرة: warning Console متعلق `Failed to fetch customizations` (شبكة/بيئة) بدون تأثير وظيفي.
+
 ### MoltBot Studio — نسخة مبسطة بدون تعقيد (18 Apr 2026)
 - تم تنفيذ **Pre-Publish Checklist** مبسط داخل نافذة Visual Diff قبل النشر، بعناصر واضحة (6 فحوصات):
   1) وجود عناصر داخل الصفحة

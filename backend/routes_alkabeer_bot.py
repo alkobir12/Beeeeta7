@@ -315,6 +315,117 @@ def _editor_list_history(user_id: str, path: str, limit: int = 40) -> List[Dict[
     return rows[:limit]
 
 
+def _editor_get_latest_published(user_id: str, path: str) -> Optional[Dict[str, Any]]:
+    if _editor_table_available(EDITOR_HISTORY_TABLE):
+        try:
+            rows = (
+                supa_service.client.table(EDITOR_HISTORY_TABLE)
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("path", path)
+                .eq("status", "published")
+                .order("version", desc=True)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if rows:
+                return rows[0]
+        except Exception:
+            _editor_table_status[EDITOR_HISTORY_TABLE] = False
+
+    collab = _read_editor_collab()
+    rows = [
+        row for row in collab.get("history", [])
+        if str(row.get("user_id") or "") == user_id
+        and str(row.get("path") or "") == path
+        and str(row.get("status") or "").lower() == "published"
+    ]
+    rows.sort(key=lambda row: int(row.get("version") or 0), reverse=True)
+    return rows[0] if rows else None
+
+
+def _editor_get_latest_published_any(path: str) -> Optional[Dict[str, Any]]:
+    if _editor_table_available(EDITOR_HISTORY_TABLE):
+        try:
+            rows = (
+                supa_service.client.table(EDITOR_HISTORY_TABLE)
+                .select("*")
+                .eq("path", path)
+                .eq("status", "published")
+                .order("updated_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if rows:
+                return rows[0]
+        except Exception:
+            _editor_table_status[EDITOR_HISTORY_TABLE] = False
+
+    collab = _read_editor_collab()
+    rows = [
+        row for row in collab.get("history", [])
+        if str(row.get("path") or "") == path
+        and str(row.get("status") or "").lower() == "published"
+    ]
+    rows.sort(key=lambda row: str(row.get("updated_at") or row.get("created_at") or ""), reverse=True)
+    return rows[0] if rows else None
+
+
+def _editor_config_has_content(config: Optional[Dict[str, Any]]) -> bool:
+    safe_cfg = _editor_sanitize_config(config or {})
+    return any([
+        bool(safe_cfg.get("labels")),
+        bool(safe_cfg.get("hidden")),
+        bool(safe_cfg.get("contents")),
+        bool(safe_cfg.get("custom_cards")),
+        bool(safe_cfg.get("block_order")),
+        bool(safe_cfg.get("positions")),
+        bool(safe_cfg.get("styles")),
+        bool(safe_cfg.get("assets")),
+        bool(safe_cfg.get("page_manifest")),
+    ])
+
+
+def _resolve_customization_with_fallback(user_id: str, path: str) -> Dict[str, Any]:
+    normalized_user = str(user_id or "manager").strip() or "manager"
+    normalized_path = str(path or "/").strip() or "/"
+
+    direct_cfg = _get_user_page_config(normalized_user, normalized_path)
+    direct_payload = _editor_sanitize_config(direct_cfg)
+    if _editor_config_has_content(direct_payload):
+        return {
+            "resolved_user_id": normalized_user,
+            "config": direct_payload,
+        }
+
+    direct_published = _editor_get_latest_published(normalized_user, normalized_path)
+    if direct_published:
+        published_cfg = _editor_sanitize_config(direct_published.get("config") or {})
+        if _editor_config_has_content(published_cfg):
+            return {
+                "resolved_user_id": normalized_user,
+                "config": published_cfg,
+            }
+
+    latest_any = _editor_get_latest_published_any(normalized_path)
+    if latest_any:
+        published_cfg = _editor_sanitize_config(latest_any.get("config") or {})
+        if _editor_config_has_content(published_cfg):
+            return {
+                "resolved_user_id": str(latest_any.get("user_id") or normalized_user),
+                "config": published_cfg,
+            }
+
+    return {
+        "resolved_user_id": normalized_user,
+        "config": direct_payload,
+    }
+
+
 def _editor_save_snapshot(user_id: str, path: str, config: Dict[str, Any], status: str = "draft", note: str = "manual_save") -> Dict[str, Any]:
     safe_cfg = _editor_sanitize_config(config)
     latest = _editor_get_latest_draft(user_id, path)
@@ -983,11 +1094,14 @@ def health():
 
 @router.get("/customization")
 def get_customization(user_id: str = Query("manager"), path: str = Query("/")):
-    cfg = _get_user_page_config(user_id, path)
+    resolved = _resolve_customization_with_fallback(user_id, path)
+    cfg = resolved.get("config") or {}
+    resolved_user_id = str(resolved.get("resolved_user_id") or user_id)
     return {
         "success": True,
         "data": {
             "user_id": user_id,
+            "resolved_user_id": resolved_user_id,
             "path": path,
             "labels": cfg.get("labels", {}),
             "hidden": cfg.get("hidden", {}),

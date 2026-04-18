@@ -1327,13 +1327,13 @@
       "custom_cards": [
         {
           "id": "preset-card-button-1776545521924",
-          "title": "زر جاهزية مباشر",
+          "title": "بطاقة DOM-CHECK-20260418-210202",
           "description": "زر جاهز مع نص وحالة",
           "fields": [
             {
               "id": "preset-field-button-1776545521924-0",
-              "label": "نص الزر المباشر",
-              "value": "تحديث مباشر من المحرر",
+              "label": "عنوان فحص الدومين",
+              "value": "DOM-CHECK-20260418-210202",
               "source_testid": "page-description-home"
             },
             {

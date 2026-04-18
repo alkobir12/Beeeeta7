@@ -247,14 +247,40 @@
       "custom_cards": []
     },
     "/": {
-      "labels": {},
+      "labels": {
+        "page-title-home": "لوحة التحكم",
+        "page-description-home": "محتوى لوحة التحكم"
+      },
       "hidden": {},
-      "contents": {},
-      "custom_cards": [],
+      "contents": {
+        "page-title-home": "لوحة التحكم",
+        "page-description-home": "محتوى لوحة التحكم"
+      },
+      "custom_cards": [
+        {
+          "id": "smart-card-1776542245930",
+          "title": "كرت اختبار ذكي",
+          "description": "كرت مخصص مرتبط بعناصر الصفحة",
+          "fields": [
+            {
+              "id": "smart-field-1776542245930",
+              "label": "اسم العميل",
+              "value": "قيمة افتراضية",
+              "source_testid": "page-title-home"
+            },
+            {
+              "id": "smart-field-1776542246912-f4f",
+              "label": "حقل 2",
+              "value": "",
+              "source_testid": "page-title-home"
+            }
+          ]
+        }
+      ],
       "block_order": [],
       "positions": {},
       "styles": {
-        "page-title--": {
+        "page-title-home": {
           "backgroundColor": "",
           "color": "",
           "fontSize": "",
@@ -269,7 +295,7 @@
           "boxShadow": "",
           "backdropFilter": ""
         },
-        "page-description--": {
+        "page-description-home": {
           "backgroundColor": "",
           "color": "",
           "fontSize": "",
@@ -286,11 +312,11 @@
         }
       },
       "assets": {
-        "page-title--": {
+        "page-title-home": {
           "src": "",
           "href": ""
         },
-        "page-description--": {
+        "page-description-home": {
           "src": "",
           "href": ""
         }

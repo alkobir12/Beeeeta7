@@ -197,6 +197,150 @@ const buildMeaningfulBlocks = (doc, path, config) => {
   return clipped.length ? [...clipped, ...buildFallbackBlocks(path, config)] : buildFallbackBlocks(path, config);
 };
 
+const normalizeBindingText = (value = '') => String(value || '')
+  .toLowerCase()
+  .replace(/[^\p{L}\p{N}\s_-]/gu, ' ')
+  .replace(/[\s_-]+/g, ' ')
+  .trim();
+
+const tokenizeBinding = (value = '') => normalizeBindingText(value)
+  .split(' ')
+  .map((word) => word.trim())
+  .filter((word) => word.length >= 2);
+
+const scoreBindingCandidate = (field, block) => {
+  const labelTokens = tokenizeBinding(field?.label || '');
+  const valueTokens = tokenizeBinding(field?.value || '');
+  const idTokens = tokenizeBinding(field?.source_testid || '');
+  const fieldTokens = Array.from(new Set([...labelTokens, ...valueTokens, ...idTokens]));
+  if (!fieldTokens.length) return 0;
+
+  const candidateText = normalizeBindingText([
+    block?.id,
+    block?.name,
+    block?.title,
+    block?.content,
+    block?.category,
+  ].filter(Boolean).join(' '));
+
+  let score = 0;
+  fieldTokens.forEach((token) => {
+    if (candidateText.includes(` ${token} `) || candidateText.startsWith(`${token} `) || candidateText.endsWith(` ${token}`)) {
+      score += 3;
+    } else if (candidateText.includes(token)) {
+      score += 1;
+    }
+  });
+
+  const financialHints = ['مبلغ', 'رصيد', 'إجمالي', 'صافي', 'income', 'balance', 'amount', 'total'];
+  const hasFinancialHint = fieldTokens.some((token) => financialHints.some((hint) => token.includes(hint)));
+  if (hasFinancialHint && /amount|balance|total|income|stat|summary/.test(String(block?.id || '').toLowerCase())) {
+    score += 2;
+  }
+
+  return score;
+};
+
+const suggestSmartSourceTestid = (field, blocks = []) => {
+  if (!Array.isArray(blocks) || !blocks.length) return '';
+  let best = { id: '', score: 0 };
+  blocks.forEach((block) => {
+    const score = scoreBindingCandidate(field, block);
+    if (score > best.score) {
+      best = { id: block.id, score };
+    }
+  });
+  return best.score > 0 ? best.id : blocks[0]?.id || '';
+};
+
+const stableSerialize = (value) => {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) return `[${value.map((item) => stableSerialize(item)).join(',')}]`;
+  if (typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${key}:${stableSerialize(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+};
+
+const makeConfigFromEditorData = (baseConfig, data, meta = {}) => {
+  const nextConfig = normalizeConfig(baseConfig || {});
+  const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
+  let targetBlocks = touched.size
+    ? (data?.blocks || []).filter((block) => touched.has(block.id))
+    : (data?.blocks || []);
+
+  if (meta?.selectedSnapshot?.id) {
+    const exists = targetBlocks.some((block) => block.id === meta.selectedSnapshot.id);
+    if (!exists) targetBlocks = [...targetBlocks, meta.selectedSnapshot];
+  }
+
+  targetBlocks.forEach((block) => {
+    nextConfig.labels[block.id] = block.title || '';
+    nextConfig.contents[block.id] = block.content || '';
+    nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };
+    nextConfig.assets[block.id] = {
+      ...(nextConfig.assets[block.id] || {}),
+      src: block.image || '',
+      href: block.link || '',
+    };
+  });
+
+  return nextConfig;
+};
+
+const collectChangedKeys = (prevBucket = {}, nextBucket = {}) => {
+  const keySet = new Set([...Object.keys(prevBucket || {}), ...Object.keys(nextBucket || {})]);
+  const changed = [];
+  keySet.forEach((key) => {
+    if (stableSerialize(prevBucket?.[key]) !== stableSerialize(nextBucket?.[key])) changed.push(key);
+  });
+  return changed;
+};
+
+const buildVisualDiffSummary = (prevConfig, nextConfig) => {
+  const labelsChanged = collectChangedKeys(prevConfig?.labels || {}, nextConfig?.labels || {});
+  const contentsChanged = collectChangedKeys(prevConfig?.contents || {}, nextConfig?.contents || {});
+  const stylesChanged = collectChangedKeys(prevConfig?.styles || {}, nextConfig?.styles || {});
+  const assetsChanged = collectChangedKeys(prevConfig?.assets || {}, nextConfig?.assets || {});
+  const hiddenChanged = collectChangedKeys(prevConfig?.hidden || {}, nextConfig?.hidden || {});
+  const positionsChanged = collectChangedKeys(prevConfig?.positions || {}, nextConfig?.positions || {});
+  const blockOrderChanged = stableSerialize(prevConfig?.block_order || []) !== stableSerialize(nextConfig?.block_order || []);
+  const customCardsChanged = stableSerialize(prevConfig?.custom_cards || []) !== stableSerialize(nextConfig?.custom_cards || []);
+  const pageManifestChanged = stableSerialize(prevConfig?.page_manifest || {}) !== stableSerialize(nextConfig?.page_manifest || {});
+
+  const touchedKeys = Array.from(new Set([
+    ...labelsChanged,
+    ...contentsChanged,
+    ...stylesChanged,
+    ...assetsChanged,
+    ...hiddenChanged,
+    ...positionsChanged,
+  ]));
+
+  return {
+    labelsChanged,
+    contentsChanged,
+    stylesChanged,
+    assetsChanged,
+    hiddenChanged,
+    positionsChanged,
+    blockOrderChanged,
+    customCardsChanged,
+    pageManifestChanged,
+    touchedKeys,
+    totalChanges:
+      labelsChanged.length
+      + contentsChanged.length
+      + stylesChanged.length
+      + assetsChanged.length
+      + hiddenChanged.length
+      + positionsChanged.length
+      + (blockOrderChanged ? 1 : 0)
+      + (customCardsChanged ? 1 : 0)
+      + (pageManifestChanged ? 1 : 0),
+  };
+};
+
 export default function MoltBotStudio() {
   const { toast } = useToast();
   const hiddenFrameRef = useRef(null);
@@ -211,6 +355,10 @@ export default function MoltBotStudio() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [draftMeta, setDraftMeta] = useState({ version: 0, status: 'draft', updated_at: null });
+  const [selectedSmartCardId, setSelectedSmartCardId] = useState('');
+  const [visualDiffOpen, setVisualDiffOpen] = useState(false);
+  const [visualDiffSummary, setVisualDiffSummary] = useState(null);
+  const [pendingPublishConfig, setPendingPublishConfig] = useState(null);
 
   const session = useMemo(() => {
     try {
@@ -221,6 +369,97 @@ export default function MoltBotStudio() {
   }, []);
 
   const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+
+  const customCards = useMemo(() => Array.isArray(config?.custom_cards) ? config.custom_cards : [], [config?.custom_cards]);
+  const selectedSmartCard = useMemo(
+    () => customCards.find((card) => card.id === selectedSmartCardId) || customCards[0] || null,
+    [customCards, selectedSmartCardId],
+  );
+
+  useEffect(() => {
+    if (!customCards.length) {
+      setSelectedSmartCardId('');
+      return;
+    }
+    if (!selectedSmartCardId || !customCards.some((card) => card.id === selectedSmartCardId)) {
+      setSelectedSmartCardId(customCards[0].id);
+    }
+  }, [customCards, selectedSmartCardId]);
+
+  const updateCustomCards = (nextCards) => {
+    setConfig((prev) => normalizeConfig({ ...prev, custom_cards: nextCards }));
+  };
+
+  const addSmartCard = () => {
+    const now = Date.now();
+    const nextCard = {
+      id: `smart-card-${now}`,
+      title: `كرت ذكي ${customCards.length + 1}`,
+      description: 'كرت مخصص مرتبط بعناصر الصفحة',
+      fields: [
+        {
+          id: `smart-field-${now}`,
+          label: 'حقل 1',
+          value: '',
+          source_testid: pageData?.blocks?.[0]?.id || '',
+        },
+      ],
+    };
+    updateCustomCards([...(customCards || []), nextCard]);
+    setSelectedSmartCardId(nextCard.id);
+  };
+
+  const updateSmartCard = (cardId, patch) => {
+    const next = customCards.map((card) => (card.id === cardId ? { ...card, ...patch } : card));
+    updateCustomCards(next);
+  };
+
+  const removeSmartCard = (cardId) => {
+    const next = customCards.filter((card) => card.id !== cardId);
+    updateCustomCards(next);
+  };
+
+  const addSmartField = (cardId) => {
+    const card = customCards.find((item) => item.id === cardId);
+    if (!card) return;
+    const nextField = {
+      id: `smart-field-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      label: `حقل ${((card.fields || []).length || 0) + 1}`,
+      value: '',
+      source_testid: '',
+    };
+    updateSmartCard(cardId, { fields: [...(card.fields || []), nextField] });
+  };
+
+  const updateSmartField = (cardId, fieldId, patch) => {
+    const card = customCards.find((item) => item.id === cardId);
+    if (!card) return;
+    const fields = (card.fields || []).map((field) => (field.id === fieldId ? { ...field, ...patch } : field));
+    updateSmartCard(cardId, { fields });
+  };
+
+  const removeSmartField = (cardId, fieldId) => {
+    const card = customCards.find((item) => item.id === cardId);
+    if (!card) return;
+    const fields = (card.fields || []).filter((field) => field.id !== fieldId);
+    updateSmartCard(cardId, { fields });
+  };
+
+  const applySmartSuggestionToField = (cardId, field) => {
+    const suggestion = suggestSmartSourceTestid(field, pageData?.blocks || []);
+    if (!suggestion) return;
+    updateSmartField(cardId, field.id, { source_testid: suggestion });
+  };
+
+  const applySmartSuggestionToCard = (cardId) => {
+    const card = customCards.find((item) => item.id === cardId);
+    if (!card) return;
+    const fields = (card.fields || []).map((field) => ({
+      ...field,
+      source_testid: suggestSmartSourceTestid(field, pageData?.blocks || []),
+    }));
+    updateSmartCard(cardId, { fields });
+  };
 
   const loadConfig = async (path) => {
     const draft = localStorage.getItem(draftStorageKey(userId, path));
@@ -310,27 +549,7 @@ export default function MoltBotStudio() {
   }, [config, selectedPage, userId]);
 
   const handleSave = async (data, meta = {}) => {
-    const nextConfig = normalizeConfig(config);
-    const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
-    let targetBlocks = touched.size
-      ? (data.blocks || []).filter((block) => touched.has(block.id))
-      : (data.blocks || []);
-    if (meta?.selectedSnapshot?.id) {
-      const exists = targetBlocks.some((block) => block.id === meta.selectedSnapshot.id);
-      if (!exists) {
-        targetBlocks = [...targetBlocks, meta.selectedSnapshot];
-      }
-    }
-    targetBlocks.forEach((block) => {
-      nextConfig.labels[block.id] = block.title || '';
-      nextConfig.contents[block.id] = block.content || '';
-      nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };
-      nextConfig.assets[block.id] = {
-        ...(nextConfig.assets[block.id] || {}),
-        src: block.image || '',
-        href: block.link || '',
-      };
-    });
+    const nextConfig = makeConfigFromEditorData(config, data, meta);
     try {
       setSavingDraft(true);
       const draftRes = await siteBuilderAPI.saveEditorDraft({
@@ -363,29 +582,7 @@ export default function MoltBotStudio() {
 
   const _nowIso = () => new Date().toISOString();
 
-  const handlePublish = async (data, meta = {}) => {
-    const nextConfig = normalizeConfig(config);
-    const touched = new Set(Array.isArray(meta?.touchedIds) ? meta.touchedIds : []);
-    let targetBlocks = touched.size
-      ? (data.blocks || []).filter((block) => touched.has(block.id))
-      : (data.blocks || []);
-    if (meta?.selectedSnapshot?.id) {
-      const exists = targetBlocks.some((block) => block.id === meta.selectedSnapshot.id);
-      if (!exists) {
-        targetBlocks = [...targetBlocks, meta.selectedSnapshot];
-      }
-    }
-    targetBlocks.forEach((block) => {
-      nextConfig.labels[block.id] = block.title || '';
-      nextConfig.contents[block.id] = block.content || '';
-      nextConfig.styles[block.id] = { ...(nextConfig.styles[block.id] || {}), ...(block.styles || {}) };
-      nextConfig.assets[block.id] = {
-        ...(nextConfig.assets[block.id] || {}),
-        src: block.image || '',
-        href: block.link || '',
-      };
-    });
-
+  const executePublish = async (nextConfig) => {
     try {
       setPublishing(true);
       try {
@@ -422,6 +619,39 @@ export default function MoltBotStudio() {
     } finally {
       setPublishing(false);
     }
+  };
+
+  const handlePublish = async (data, meta = {}) => {
+    const nextConfig = makeConfigFromEditorData(config, data, meta);
+    try {
+      let publishedBase = null;
+      const localPublished = localStorage.getItem(`moltbot-published:${userId}:${selectedPage}`);
+      if (localPublished) {
+        try {
+          publishedBase = normalizeConfig(JSON.parse(localPublished));
+        } catch (_error) {
+          publishedBase = null;
+        }
+      }
+
+      const baseline = publishedBase || normalizeConfig(config);
+      const summary = buildVisualDiffSummary(baseline, nextConfig);
+      setPendingPublishConfig(nextConfig);
+      setVisualDiffSummary(summary);
+      setVisualDiffOpen(true);
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر تجهيز مقارنة النشر', variant: 'destructive' });
+    }
+  };
+
+  const handleConfirmPublishFromDiff = async () => {
+    if (!pendingPublishConfig) {
+      setVisualDiffOpen(false);
+      return;
+    }
+    setVisualDiffOpen(false);
+    await executePublish(pendingPublishConfig);
+    setPendingPublishConfig(null);
   };
 
   const handleAddComment = async () => {
@@ -493,7 +723,7 @@ export default function MoltBotStudio() {
             onSelectionChange={setSelectedBlockId}
           />
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 border-t border-slate-200 bg-[#eef3ff]" data-testid="moltbot-editor-collab-panel">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 p-4 border-t border-slate-200 bg-[#eef3ff]" data-testid="moltbot-editor-collab-panel">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-history-panel">
               <h3 className="text-sm font-bold mb-3 text-slate-900">History (Save)</h3>
               <div className="space-y-2 max-h-56 overflow-y-auto" data-testid="moltbot-editor-history-list">
@@ -546,7 +776,182 @@ export default function MoltBotStudio() {
                 )) : <div className="text-xs text-slate-500" data-testid="moltbot-editor-comments-empty">لا توجد تعليقات بعد</div>}
               </div>
             </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-smart-binding-panel">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <h3 className="text-sm font-bold text-slate-900" data-testid="moltbot-editor-smart-binding-title">Smart Binding</h3>
+                <button
+                  type="button"
+                  onClick={addSmartCard}
+                  className="rounded-lg border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] text-sky-900"
+                  data-testid="moltbot-editor-smart-binding-add-card-button"
+                >
+                  + كرت جديد
+                </button>
+              </div>
+
+              {customCards.length ? (
+                <div className="space-y-3" data-testid="moltbot-editor-smart-binding-body">
+                  <select
+                    value={selectedSmartCard?.id || ''}
+                    onChange={(e) => setSelectedSmartCardId(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900"
+                    data-testid="moltbot-editor-smart-binding-card-select"
+                  >
+                    {customCards.map((card) => <option key={card.id} value={card.id}>{card.title || card.id}</option>)}
+                  </select>
+
+                  {selectedSmartCard ? (
+                    <>
+                      <input
+                        value={selectedSmartCard.title || ''}
+                        onChange={(e) => updateSmartCard(selectedSmartCard.id, { title: e.target.value })}
+                        placeholder="عنوان الكرت"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900"
+                        data-testid="moltbot-editor-smart-binding-card-title-input"
+                      />
+
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => applySmartSuggestionToCard(selectedSmartCard.id)}
+                          className="rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-900"
+                          data-testid="moltbot-editor-smart-binding-apply-all-button"
+                        >
+                          تطبيق ذكي لكل الحقول
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addSmartField(selectedSmartCard.id)}
+                          className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
+                          data-testid="moltbot-editor-smart-binding-add-field-button"
+                        >
+                          + حقل
+                        </button>
+                      </div>
+
+                      <div className="max-h-56 overflow-y-auto space-y-2" data-testid="moltbot-editor-smart-binding-fields-list">
+                        {(selectedSmartCard.fields || []).length ? (selectedSmartCard.fields || []).map((field, idx) => (
+                          <div key={field.id || idx} className="rounded-xl border border-slate-200 bg-slate-50 p-2" data-testid={`moltbot-editor-smart-binding-field-${idx}`}>
+                            <input
+                              value={field.label || ''}
+                              onChange={(e) => updateSmartField(selectedSmartCard.id, field.id, { label: e.target.value })}
+                              placeholder="اسم الحقل"
+                              className="mb-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-900"
+                              data-testid={`moltbot-editor-smart-binding-field-label-${idx}`}
+                            />
+                            <input
+                              value={field.value || ''}
+                              onChange={(e) => updateSmartField(selectedSmartCard.id, field.id, { value: e.target.value })}
+                              placeholder="قيمة افتراضية"
+                              className="mb-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-900"
+                              data-testid={`moltbot-editor-smart-binding-field-value-${idx}`}
+                            />
+                            <select
+                              value={field.source_testid || ''}
+                              onChange={(e) => updateSmartField(selectedSmartCard.id, field.id, { source_testid: e.target.value })}
+                              className="mb-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-900"
+                              data-testid={`moltbot-editor-smart-binding-field-source-${idx}`}
+                            >
+                              <option value="">بدون ربط</option>
+                              {(pageData?.blocks || []).map((block) => (
+                                <option key={block.id} value={block.id}>{block.title || block.name || block.id}</option>
+                              ))}
+                            </select>
+                            <div className="flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={() => applySmartSuggestionToField(selectedSmartCard.id, field)}
+                                className="rounded-lg border border-cyan-300 bg-cyan-50 px-2 py-1 text-[11px] text-cyan-900"
+                                data-testid={`moltbot-editor-smart-binding-field-suggest-${idx}`}
+                              >
+                                اقتراح ذكي
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeSmartField(selectedSmartCard.id, field.id)}
+                                className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] text-rose-700"
+                                data-testid={`moltbot-editor-smart-binding-field-delete-${idx}`}
+                              >
+                                حذف
+                              </button>
+                            </div>
+                          </div>
+                        )) : (
+                          <div className="text-xs text-slate-500" data-testid="moltbot-editor-smart-binding-fields-empty">لا توجد حقول بعد</div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSmartCard(selectedSmartCard.id)}
+                        className="w-full rounded-lg border border-rose-300 bg-rose-50 px-2 py-2 text-[11px] text-rose-700"
+                        data-testid="moltbot-editor-smart-binding-delete-card-button"
+                      >
+                        حذف الكرت المحدد
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500" data-testid="moltbot-editor-smart-binding-empty">لا توجد كروت مخصصة بعد. أضف كرتًا ثم فعّل الاقتراح الذكي.</div>
+              )}
+            </div>
           </div>
+
+          {visualDiffOpen ? (
+            <div className="fixed inset-0 z-[90] bg-slate-950/35 backdrop-blur-sm flex items-center justify-center p-4" data-testid="moltbot-visual-diff-modal">
+              <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl" data-testid="moltbot-visual-diff-modal-card">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900" data-testid="moltbot-visual-diff-title">Visual Diff قبل النشر</h3>
+                    <p className="text-xs text-slate-500" data-testid="moltbot-visual-diff-subtitle">مراجعة سريعة للتغييرات قبل اعتمادها على الصفحة.</p>
+                  </div>
+                  <span className="rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-900" data-testid="moltbot-visual-diff-total">{visualDiffSummary?.totalChanges || 0} تغييرات</span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs mb-3" data-testid="moltbot-visual-diff-metrics">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Labels: {visualDiffSummary?.labelsChanged?.length || 0}</div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Contents: {visualDiffSummary?.contentsChanged?.length || 0}</div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Styles: {visualDiffSummary?.stylesChanged?.length || 0}</div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Assets: {visualDiffSummary?.assetsChanged?.length || 0}</div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Hidden: {visualDiffSummary?.hiddenChanged?.length || 0}</div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Positions: {visualDiffSummary?.positionsChanged?.length || 0}</div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mb-3" data-testid="moltbot-visual-diff-keys-box">
+                  <p className="text-xs font-semibold text-slate-700 mb-2">أهم العناصر المتأثرة</p>
+                  <div className="flex flex-wrap gap-2" data-testid="moltbot-visual-diff-keys-list">
+                    {(visualDiffSummary?.touchedKeys || []).slice(0, 12).map((key) => (
+                      <span key={key} className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700" data-testid={`moltbot-visual-diff-key-${key}`}>
+                        {key}
+                      </span>
+                    ))}
+                    {!(visualDiffSummary?.touchedKeys || []).length ? <span className="text-[11px] text-slate-500">لا توجد فروقات على العناصر، قد يكون التغيير فقط في إعدادات عامة.</span> : null}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2" data-testid="moltbot-visual-diff-actions">
+                  <button
+                    type="button"
+                    onClick={() => { setVisualDiffOpen(false); setPendingPublishConfig(null); }}
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
+                    data-testid="moltbot-visual-diff-cancel-button"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmPublishFromDiff}
+                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900"
+                    data-testid="moltbot-visual-diff-confirm-publish-button"
+                  >
+                    نشر الآن
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </div>

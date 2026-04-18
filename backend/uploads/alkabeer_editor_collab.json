@@ -26,12 +26,12 @@
       "updated_at": "2026-04-17T09:02:16.822330+00:00"
     },
     {
-      "id": "73af2429-6a70-4b33-b333-ee50b4c38687",
+      "id": "34fb0a44-9905-4cfa-a5c8-5978eec5f909",
       "user_id": "local-admin",
       "path": "/",
-      "status": "draft",
-      "version": 3,
-      "note": "manual_save",
+      "status": "published",
+      "version": 4,
+      "note": "publish",
       "config": {
         "labels": {
           "page-title-home": "لوحة التحكم",
@@ -42,7 +42,27 @@
           "page-title-home": "لوحة التحكم",
           "page-description-home": "محتوى لوحة التحكم"
         },
-        "custom_cards": [],
+        "custom_cards": [
+          {
+            "id": "smart-card-1776542245930",
+            "title": "كرت اختبار ذكي",
+            "description": "كرت مخصص مرتبط بعناصر الصفحة",
+            "fields": [
+              {
+                "id": "smart-field-1776542245930",
+                "label": "اسم العميل",
+                "value": "قيمة افتراضية",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "smart-field-1776542246912-f4f",
+                "label": "حقل 2",
+                "value": "",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
         "block_order": [],
         "positions": {},
         "styles": {
@@ -89,8 +109,8 @@
         },
         "page_manifest": {}
       },
-      "created_at": "2026-04-18T19:38:34.088426+00:00",
-      "updated_at": "2026-04-18T19:38:34.088426+00:00"
+      "created_at": "2026-04-18T19:57:32.786170+00:00",
+      "updated_at": "2026-04-18T19:57:32.786170+00:00"
     }
   ],
   "history": [
@@ -344,6 +364,93 @@
       },
       "created_at": "2026-04-18T19:38:34.088426+00:00",
       "updated_at": "2026-04-18T19:38:34.088426+00:00"
+    },
+    {
+      "id": "34fb0a44-9905-4cfa-a5c8-5978eec5f909",
+      "user_id": "local-admin",
+      "path": "/",
+      "status": "published",
+      "version": 4,
+      "note": "publish",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم"
+        },
+        "custom_cards": [
+          {
+            "id": "smart-card-1776542245930",
+            "title": "كرت اختبار ذكي",
+            "description": "كرت مخصص مرتبط بعناصر الصفحة",
+            "fields": [
+              {
+                "id": "smart-field-1776542245930",
+                "label": "اسم العميل",
+                "value": "قيمة افتراضية",
+                "source_testid": "page-title-home"
+              },
+              {
+                "id": "smart-field-1776542246912-f4f",
+                "label": "حقل 2",
+                "value": "",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-18T19:57:32.786170+00:00",
+      "updated_at": "2026-04-18T19:57:32.786170+00:00"
     }
   ],
   "comments": [

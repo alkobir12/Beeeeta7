@@ -17,6 +17,29 @@
 
 ## What's Been Implemented
 
+### حل تحديث الدومين مباشرة من داخل MoltBot + اختيار حي للعناصر (18 Apr 2026)
+- تم تنفيذ ربط النشر على **Scope الورشة** بدل المستخدم الفردي:
+  - `user_id = workshop:<REACT_APP_WORKSHOP_ID>`
+  - الهدف: أي نشر من داخل MoltBot يُخزن في قاعدة البيانات على مستوى الورشة ويظهر لجميع المستخدمين/الدومين بنفس المصدر.
+- الملفات المحدثة لضمان الاستهلاك بنفس الـscope:
+  - `MoltBotStudio.jsx` (save/publish/history/draft keys)
+  - `Layout.jsx` (fetch customization)
+  - `ChatWidget.jsx` (fetch customization + تهدئة أخطاء الشبكة المتوقعة)
+- تم إضافة/تحسين التحديد من المعاينة الحية:
+  - النقر على العنصر داخل iframe يحدد العنصر بالمحرر.
+  - إذا العنصر لا يملك `data-testid` يتم توليد معرف حي تلقائي (`live-*`) لضمان إمكانية التعديل.
+  - يتم التقاط نص العنصر وبعض خصائصه الأولية للمساعدة في التحرير/النقل.
+
+### Testing (iteration_141)
+- التقرير: `/app/test_reports/iteration_141.json`
+- النتيجة: **Frontend 100% + Backend 100% PASS**
+- تم التحقق من:
+  - `customization API` و `history API` على `workshop:finmodule-sync` ✅
+  - إضافة Presets بنقرة واحدة ✅
+  - تحرير كرت/حقل + نشر من داخل الاستديو ✅
+  - تحديث حالة النشر إلى "منشور" ✅
+  - التحديد الحي وتحديث لوحة الخصائص ✅
+
 ### إضافة Component Presets + نشر فعلي للتحقق من الجاهزية (18 Apr 2026)
 - تم تنفيذ **Component Presets جاهزة بنقرة واحدة** داخل Smart Binding في MoltBot:
   - `Preset KPI`

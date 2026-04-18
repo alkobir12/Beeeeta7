@@ -17,6 +17,31 @@
 
 ## What's Been Implemented
 
+### MoltBot Studio — نسخة مبسطة بدون تعقيد (18 Apr 2026)
+- تم تنفيذ **Pre-Publish Checklist** مبسط داخل نافذة Visual Diff قبل النشر، بعناصر واضحة (6 فحوصات):
+  1) وجود عناصر داخل الصفحة
+  2) عدم تكرار معرفات العناصر
+  3) اكتمال العناوين
+  4) عدم فراغ المحتوى
+  5) ربط حقول Smart Binding
+  6) صحة روابط الأصول
+- منطق النشر أصبح أكثر أمانًا وبسيطًا:
+  - إذا وُجدت عناصر **حرجة** في الـ Checklist يتم تعطيل زر النشر النهائي.
+  - إذا كانت فقط تنبيهات (Warnings) يبقى النشر متاحًا.
+- تم توحيد خط MoltBot مع خط الموقع بالكامل:
+  - `MoltBotStudio.jsx` + `CanvasEditor.css` + معاينة iframe في `PreviewFrame.jsx` كلها الآن تستخدم `Parastoo`.
+
+### Testing (iteration_138)
+- تقرير الاختبار: `/app/test_reports/iteration_138.json`
+- النتيجة: **Frontend 100% PASS**
+- تم التأكيد على:
+  - مطابقة الخط لخط الموقع.
+  - ظهور Visual Diff قبل النشر.
+  - ظهور Checklist بـ 6 عناصر.
+  - تعطيل زر "نشر الآن" عند الحالات الحرجة.
+  - عدم وجود overflow أفقي على Desktop وMobile.
+- ملاحظة غير مانعة: Warning Console متكرر متعلق `customizations fetch` (شبكة/بيئة) لكنه لا يكسر أي تدفق وظيفي.
+
 ### Smart Binding + Visual Diff داخل MoltBot Studio (18 Apr 2026)
 - تم تنفيذ **Smart Binding Panel** داخل صفحة `/moltbot` مع إدارة كاملة للكروت المخصصة:
   - إضافة/حذف كرت مخصص.

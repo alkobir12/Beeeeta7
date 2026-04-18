@@ -432,6 +432,7 @@ export default function MoltBotStudio() {
   const [visualDiffSummary, setVisualDiffSummary] = useState(null);
   const [pendingPublishConfig, setPendingPublishConfig] = useState(null);
   const [publishChecklist, setPublishChecklist] = useState(null);
+  const [studioPanelTab, setStudioPanelTab] = useState('history');
 
   const session = useMemo(() => {
     try {
@@ -442,6 +443,8 @@ export default function MoltBotStudio() {
   }, []);
 
   const userId = String(session?.id || session?.userId || session?.name || 'manager').trim() || 'manager';
+  const studioRootStyle = useMemo(() => ({ fontFamily: "'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif" }), []);
+  const panelCardClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
 
   const customCards = useMemo(() => Array.isArray(config?.custom_cards) ? config.custom_cards : [], [config?.custom_cards]);
   const selectedSmartCard = useMemo(
@@ -618,7 +621,10 @@ export default function MoltBotStudio() {
   }, [selectedPage, toast, loadCollabMeta]);
 
   useEffect(() => {
-    localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
+    const timer = window.setTimeout(() => {
+      localStorage.setItem(draftStorageKey(userId, selectedPage), JSON.stringify(config));
+    }, 420);
+    return () => window.clearTimeout(timer);
   }, [config, selectedPage, userId]);
 
   const handleSave = async (data, meta = {}) => {
@@ -710,6 +716,10 @@ export default function MoltBotStudio() {
       const baseline = publishedBase || normalizeConfig(config);
       const summary = buildVisualDiffSummary(baseline, nextConfig);
       const checklist = buildPublishChecklist(data, nextConfig);
+      if (summary.totalChanges === 0 && checklist.canPublish) {
+        toast({ title: 'لا يوجد تغييرات', description: 'لم يتم اكتشاف أي فرق جديد للنشر.' });
+        return;
+      }
       setPendingPublishConfig(nextConfig);
       setVisualDiffSummary(summary);
       setPublishChecklist(checklist);
@@ -770,11 +780,7 @@ export default function MoltBotStudio() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#f3f6ff] text-slate-900 overflow-x-hidden"
-      style={{ fontFamily: "'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif" }}
-      data-testid="moltbot-canvas-editor-page"
-    >
+    <div className="min-h-screen bg-[#f3f6ff] text-slate-900 overflow-x-hidden" style={studioRootStyle} data-testid="moltbot-canvas-editor-page">
       <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-sm">
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900">MoltBot Canvas Editor</h1>
@@ -786,6 +792,12 @@ export default function MoltBotStudio() {
             {LIQUID_BUILDER_PAGES.map((page) => <option key={page.path} value={page.path}>{page.label}</option>)}
           </select>
         </div>
+      </div>
+
+      <div className="mx-3 mt-2 flex flex-wrap items-center gap-2" data-testid="moltbot-editor-health-strip">
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-800" data-testid="moltbot-editor-health-performance-chip">تحسين أداء: فعال</span>
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] text-sky-800" data-testid="moltbot-editor-health-ui-chip">واجهة مبسطة: فعال</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700" data-testid="moltbot-editor-health-font-chip">الخط: Parastoo</span>
       </div>
 
       {loading ? (
@@ -811,8 +823,36 @@ export default function MoltBotStudio() {
             onSelectionChange={setSelectedBlockId}
           />
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 p-4 border-t border-slate-200 bg-[#eef3ff]" data-testid="moltbot-editor-collab-panel">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-history-panel">
+          <div className="p-4 border-t border-slate-200 bg-[#eef3ff]" data-testid="moltbot-editor-collab-panel">
+            <div className="mb-3 grid grid-cols-3 gap-2 xl:hidden" data-testid="moltbot-editor-collab-tabs">
+              <button
+                type="button"
+                onClick={() => setStudioPanelTab('history')}
+                className={`rounded-xl border px-2 py-2 text-xs ${studioPanelTab === 'history' ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="moltbot-editor-collab-tab-history"
+              >
+                History
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioPanelTab('comments')}
+                className={`rounded-xl border px-2 py-2 text-xs ${studioPanelTab === 'comments' ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="moltbot-editor-collab-tab-comments"
+              >
+                Comments
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioPanelTab('binding')}
+                className={`rounded-xl border px-2 py-2 text-xs ${studioPanelTab === 'binding' ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="moltbot-editor-collab-tab-binding"
+              >
+                Binding
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className={`${panelCardClass} ${studioPanelTab === 'history' ? 'block' : 'hidden xl:block'}`} data-testid="moltbot-editor-history-panel">
               <h3 className="text-sm font-bold mb-3 text-slate-900">History (Save)</h3>
               <div className="space-y-2 max-h-56 overflow-y-auto" data-testid="moltbot-editor-history-list">
                 {historyRows.length ? historyRows.map((row, idx) => (
@@ -824,7 +864,7 @@ export default function MoltBotStudio() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-comments-panel">
+            <div className={`${panelCardClass} ${studioPanelTab === 'comments' ? 'block' : 'hidden xl:block'}`} data-testid="moltbot-editor-comments-panel">
               <h3 className="text-sm font-bold mb-2 text-slate-900">Comments</h3>
               <div className="text-[11px] text-slate-500 mb-2" data-testid="moltbot-editor-comments-selected-block">العنصر المحدد: {selectedBlockId || 'غير محدد'}</div>
               <div className="flex gap-2 mb-3">
@@ -865,7 +905,7 @@ export default function MoltBotStudio() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="moltbot-editor-smart-binding-panel">
+            <div className={`${panelCardClass} ${studioPanelTab === 'binding' ? 'block' : 'hidden xl:block'}`} data-testid="moltbot-editor-smart-binding-panel">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <h3 className="text-sm font-bold text-slate-900" data-testid="moltbot-editor-smart-binding-title">Smart Binding</h3>
                 <button
@@ -984,6 +1024,7 @@ export default function MoltBotStudio() {
               ) : (
                 <div className="text-xs text-slate-500" data-testid="moltbot-editor-smart-binding-empty">لا توجد كروت مخصصة بعد. أضف كرتًا ثم فعّل الاقتراح الذكي.</div>
               )}
+            </div>
             </div>
           </div>
 

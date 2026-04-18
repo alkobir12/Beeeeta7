@@ -133,7 +133,7 @@ const PreviewFrame = ({ blocks, deviceMode, selectedId, onSelect, previewSrc, cu
           <head>
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: system-ui; padding: 20px; background: #ffffff; }
+              body { font-family: 'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif; padding: 20px; background: #ffffff; }
               .preview-block { position: relative; border: 2px solid transparent; margin-bottom: 16px; border-radius: 8px; transition: border-color .2s ease, box-shadow .2s ease; }
               .preview-block.selected { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
               .preview-block:hover { border-color: #e5e7eb; }

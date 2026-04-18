@@ -341,6 +341,78 @@ const buildVisualDiffSummary = (prevConfig, nextConfig) => {
   };
 };
 
+const buildPublishChecklist = (data, nextConfig) => {
+  const blocks = Array.isArray(data?.blocks) ? data.blocks : [];
+  const blockIds = blocks.map((block) => String(block?.id || '').trim()).filter(Boolean);
+  const uniqueIds = new Set(blockIds);
+  const duplicateIdsCount = blockIds.length - uniqueIds.size;
+
+  const emptyTitleCount = blocks.filter((block) => !String(block?.title || '').trim()).length;
+  const emptyContentCount = blocks.filter((block) => !String(block?.content || '').trim()).length;
+  const brokenAssetCount = Object.values(nextConfig?.assets || {}).filter((asset) => {
+    const href = String(asset?.href || '').trim();
+    if (!href) return false;
+    return !href.startsWith('/') && !/^https?:\/\//i.test(href) && !href.startsWith('#');
+  }).length;
+
+  const smartFields = (nextConfig?.custom_cards || []).flatMap((card) => card?.fields || []);
+  const unboundSmartFieldsCount = smartFields.filter((field) => {
+    const hasSource = String(field?.source_testid || '').trim().length > 0;
+    const hasValue = String(field?.value || '').trim().length > 0;
+    return !hasSource && !hasValue;
+  }).length;
+
+  const checks = [
+    {
+      id: 'has-blocks',
+      label: 'وجود عناصر داخل الصفحة',
+      status: blocks.length > 0 ? 'pass' : 'critical',
+      hint: blocks.length > 0 ? `${blocks.length} عناصر` : 'الصفحة فارغة',
+    },
+    {
+      id: 'duplicate-ids',
+      label: 'عدم تكرار معرفات العناصر',
+      status: duplicateIdsCount === 0 ? 'pass' : 'critical',
+      hint: duplicateIdsCount === 0 ? 'لا يوجد تكرار' : `${duplicateIdsCount} معرف مكرر`,
+    },
+    {
+      id: 'titles',
+      label: 'عناوين العناصر مكتملة',
+      status: emptyTitleCount === 0 ? 'pass' : 'warn',
+      hint: emptyTitleCount === 0 ? 'كل العناوين مكتملة' : `${emptyTitleCount} عنصر بدون عنوان`,
+    },
+    {
+      id: 'contents',
+      label: 'محتوى العناصر غير فارغ',
+      status: emptyContentCount <= Math.max(1, Math.floor(blocks.length * 0.3)) ? 'pass' : 'warn',
+      hint: emptyContentCount ? `${emptyContentCount} عناصر بمحتوى فارغ` : 'المحتوى جاهز',
+    },
+    {
+      id: 'smart-binding',
+      label: 'حقول Smart Binding مرتبطة',
+      status: unboundSmartFieldsCount === 0 ? 'pass' : 'warn',
+      hint: unboundSmartFieldsCount === 0 ? 'لا توجد حقول غير مربوطة' : `${unboundSmartFieldsCount} حقل بدون ربط/قيمة`,
+    },
+    {
+      id: 'assets-links',
+      label: 'روابط الأصول صحيحة',
+      status: brokenAssetCount === 0 ? 'pass' : 'warn',
+      hint: brokenAssetCount === 0 ? 'لا توجد روابط مشبوهة' : `${brokenAssetCount} روابط تحتاج مراجعة`,
+    },
+  ];
+
+  const criticalCount = checks.filter((check) => check.status === 'critical').length;
+  const warnCount = checks.filter((check) => check.status === 'warn').length;
+
+  return {
+    checks,
+    criticalCount,
+    warnCount,
+    passCount: checks.length - criticalCount - warnCount,
+    canPublish: criticalCount === 0,
+  };
+};
+
 export default function MoltBotStudio() {
   const { toast } = useToast();
   const hiddenFrameRef = useRef(null);
@@ -359,6 +431,7 @@ export default function MoltBotStudio() {
   const [visualDiffOpen, setVisualDiffOpen] = useState(false);
   const [visualDiffSummary, setVisualDiffSummary] = useState(null);
   const [pendingPublishConfig, setPendingPublishConfig] = useState(null);
+  const [publishChecklist, setPublishChecklist] = useState(null);
 
   const session = useMemo(() => {
     try {
@@ -636,8 +709,10 @@ export default function MoltBotStudio() {
 
       const baseline = publishedBase || normalizeConfig(config);
       const summary = buildVisualDiffSummary(baseline, nextConfig);
+      const checklist = buildPublishChecklist(data, nextConfig);
       setPendingPublishConfig(nextConfig);
       setVisualDiffSummary(summary);
+      setPublishChecklist(checklist);
       setVisualDiffOpen(true);
     } catch {
       toast({ title: 'خطأ', description: 'تعذر تجهيز مقارنة النشر', variant: 'destructive' });
@@ -645,11 +720,20 @@ export default function MoltBotStudio() {
   };
 
   const handleConfirmPublishFromDiff = async () => {
+    if (publishChecklist && !publishChecklist.canPublish) {
+      toast({
+        title: 'تعذر النشر',
+        description: 'يوجد عناصر حرجة في Checklist النشر. أصلحها ثم أعد المحاولة.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!pendingPublishConfig) {
       setVisualDiffOpen(false);
       return;
     }
     setVisualDiffOpen(false);
+    setPublishChecklist(null);
     await executePublish(pendingPublishConfig);
     setPendingPublishConfig(null);
   };
@@ -686,7 +770,11 @@ export default function MoltBotStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6ff] text-slate-900 overflow-x-hidden" data-testid="moltbot-canvas-editor-page">
+    <div
+      className="min-h-screen bg-[#f3f6ff] text-slate-900 overflow-x-hidden"
+      style={{ fontFamily: "'Parastoo', 'Noto Naskh Arabic', 'Tahoma', sans-serif" }}
+      data-testid="moltbot-canvas-editor-page"
+    >
       <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-sm">
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900">MoltBot Canvas Editor</h1>
@@ -931,10 +1019,38 @@ export default function MoltBotStudio() {
                   </div>
                 </div>
 
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mb-3" data-testid="moltbot-publish-checklist-box">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-xs font-semibold text-slate-700" data-testid="moltbot-publish-checklist-title">Pre-Publish Checklist</p>
+                    <span className="text-[11px] text-slate-600" data-testid="moltbot-publish-checklist-summary">
+                      ✅ {publishChecklist?.passCount || 0} • ⚠️ {publishChecklist?.warnCount || 0} • ⛔ {publishChecklist?.criticalCount || 0}
+                    </span>
+                  </div>
+                  <div className="space-y-2" data-testid="moltbot-publish-checklist-list">
+                    {(publishChecklist?.checks || []).map((check) => {
+                      const badgeClass = check.status === 'critical'
+                        ? 'bg-rose-100 text-rose-800 border-rose-200'
+                        : check.status === 'warn'
+                        ? 'bg-amber-100 text-amber-800 border-amber-200'
+                        : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                      const label = check.status === 'critical' ? 'حرج' : check.status === 'warn' ? 'تنبيه' : 'جاهز';
+                      return (
+                        <div key={check.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2" data-testid={`moltbot-publish-checklist-item-${check.id}`}>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-medium text-slate-800">{check.label}</p>
+                            <p className="text-[11px] text-slate-500">{check.hint}</p>
+                          </div>
+                          <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] ${badgeClass}`} data-testid={`moltbot-publish-checklist-badge-${check.id}`}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-end gap-2" data-testid="moltbot-visual-diff-actions">
                   <button
                     type="button"
-                    onClick={() => { setVisualDiffOpen(false); setPendingPublishConfig(null); }}
+                    onClick={() => { setVisualDiffOpen(false); setPendingPublishConfig(null); setPublishChecklist(null); }}
                     className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
                     data-testid="moltbot-visual-diff-cancel-button"
                   >
@@ -943,10 +1059,11 @@ export default function MoltBotStudio() {
                   <button
                     type="button"
                     onClick={handleConfirmPublishFromDiff}
-                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900"
+                    disabled={Boolean(publishChecklist && !publishChecklist.canPublish)}
+                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="moltbot-visual-diff-confirm-publish-button"
                   >
-                    نشر الآن
+                    {publishChecklist && !publishChecklist.canPublish ? 'اصلح العناصر الحرجة أولًا' : 'نشر الآن'}
                   </button>
                 </div>
               </div>

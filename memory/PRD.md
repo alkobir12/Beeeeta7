@@ -17,6 +17,29 @@
 
 ## What's Been Implemented
 
+### سداد الآجل: اختيار وسيلة السداد الإجباري (19 Apr 2026)
+- تم تنفيذ تحسين تدفق "تأكيد سداد الآجل" بحيث يحدد المستخدم وسيلة السداد قبل التأكيد:
+  - `نقد` أو `تحويل/بطاقة/بنك` داخل `ConfirmPaymentDialog`.
+  - data-testid جديد: `confirm-payment-dialog-method-select`.
+- تم تمرير الوسيلة من الواجهة إلى API (`payment_method`) داخل `Operations.jsx`.
+- تم تحديث Backend endpoint `POST /api/operations/{op_id}/confirm-payment`:
+  - قبول `payment_method` صراحةً (يدعم cash/bank + aliases مثل transfer/card).
+  - توجيه القيد إلى الحساب الصحيح:
+    - cash ⟶ 1101
+    - bank/transfer/card ⟶ 1102
+  - في السداد الجزئي: يبقى `payment_method=credit` و`status=partial` مع حفظ `settlement_method` حسب الوسيلة المختارة.
+  - في السداد الكامل: يتم تحديث `payment_method` إلى الوسيلة المختارة (`cash` أو `bank`) مع `status=paid`.
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_144.json`
+  - Backend: **100% (10/10)**
+  - Frontend: **100%**
+- تم التحقق من:
+  - ظهور اختيار وسيلة السداد في النافذة.
+  - إرسال `payment_method` من الواجهة.
+  - إنشاء قيد 1101 للنقد و1102 للبنك.
+  - صحة سلوك السداد الجزئي/الكامل.
+
 ### إصلاح ربط طرق الدفع بالحسابات 1101/1102 + Backfill مالي (19 Apr 2026)
 - تم تنفيذ تحسينات حاسمة في Backend المالي (`routes_finance.py`):
   - إضافة توحيد ذكي لطرق الدفع (`_normalize_payment_method`) يدعم العربية والإنجليزية:

@@ -347,12 +347,12 @@
       "updated_at": "2026-04-18T20:41:16.123400+00:00"
     },
     {
-      "id": "1b40225f-404c-4bd0-9b44-1014bc1d540e",
+      "id": "b74d5e50-83c8-42d4-9bbe-c034c0c62d77",
       "user_id": "workshop:finmodule-sync",
       "path": "/",
-      "status": "published",
-      "version": 5,
-      "note": "publish",
+      "status": "draft",
+      "version": 7,
+      "note": "manual_save",
       "config": {
         "labels": {
           "page-title-home": "لوحة التحكم",
@@ -829,8 +829,8 @@
         },
         "page_manifest": {}
       },
-      "created_at": "2026-04-18T21:07:05.052755+00:00",
-      "updated_at": "2026-04-18T21:07:05.052755+00:00"
+      "created_at": "2026-04-19T19:59:30.415239+00:00",
+      "updated_at": "2026-04-19T19:59:30.415239+00:00"
     }
   ],
   "history": [
@@ -3448,6 +3448,978 @@
       },
       "created_at": "2026-04-18T21:07:05.052755+00:00",
       "updated_at": "2026-04-18T21:07:05.052755+00:00"
+    },
+    {
+      "id": "44a528ea-08d5-47ac-a419-e788acc87389",
+      "user_id": "workshop:finmodule-sync",
+      "path": "/",
+      "status": "draft",
+      "version": 6,
+      "note": "manual_save",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم",
+          "page-custom-cards-dock": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص",
+          "page-custom-card-0": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص",
+          "page-custom-card-title-0": "بطاقة DOM-CHECK-20260418-210202",
+          "page-custom-card-description-0": "زر جاهز مع نص وحالة",
+          "page-custom-card-fields-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-desc",
+          "page-custom-card-field-0-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-desc",
+          "page-custom-card-field-0-1": "حالة الزرمفعلمرتبط بـ page-title-home",
+          "dashboard-stat-total-vehicles-value": "لوحة التحكم إحصائية total المركبات قيمة",
+          "dashboard-stat-total-vehicles-active-value": "لوحة التحكم إحصائية total المركبات active قيمة",
+          "dashboard-stat-total-vehicles-ready-value": "لوحة التحكم إحصائية total المركبات ready قيمة",
+          "dashboard-stat-in-progress-value": "لوحة التحكم إحصائية in progress قيمة",
+          "dashboard-stat-waiting-parts-value": "لوحة التحكم إحصائية waiting المخزون قيمة",
+          "dashboard-stat-diagnosis-value": "لوحة التحكم إحصائية diagnosis قيمة",
+          "dashboard-stat-ready-value": "لوحة التحكم إحصائية ready قيمة",
+          "dashboard-stat-ready-waiting-value": "لوحة التحكم إحصائية ready waiting قيمة",
+          "dashboard-stat-delivering-value": "لوحة التحكم إحصائية delivering قيمة",
+          "dashboard-stat-technicians-value": "لوحة التحكم إحصائية technicians قيمة",
+          "dashboard-stat-busy-technicians-value": "لوحة التحكم إحصائية busy technicians قيمة",
+          "dashboard-stat-free-technicians-value": "لوحة التحكم إحصائية free technicians قيمة"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم",
+          "page-custom-cards-dock": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-ho",
+          "page-custom-card-0": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-ho",
+          "page-custom-card-title-0": "بطاقة DOM-CHECK-20260418-210202",
+          "page-custom-card-description-0": "زر جاهز مع نص وحالة",
+          "page-custom-card-fields-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-homeحالة الزرمفعلمرتبط بـ page-title-home",
+          "page-custom-card-field-0-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-home",
+          "page-custom-card-field-0-1": "حالة الزرمفعلمرتبط بـ page-title-home",
+          "dashboard-stat-total-vehicles-value": "12",
+          "dashboard-stat-total-vehicles-active-value": "9",
+          "dashboard-stat-total-vehicles-ready-value": "3",
+          "dashboard-stat-in-progress-value": "9",
+          "dashboard-stat-waiting-parts-value": "1",
+          "dashboard-stat-diagnosis-value": "2",
+          "dashboard-stat-ready-value": "3",
+          "dashboard-stat-ready-waiting-value": "3",
+          "dashboard-stat-delivering-value": "0",
+          "dashboard-stat-technicians-value": "3",
+          "dashboard-stat-busy-technicians-value": "0",
+          "dashboard-stat-free-technicians-value": "3"
+        },
+        "custom_cards": [
+          {
+            "id": "preset-card-button-1776545521924",
+            "title": "بطاقة DOM-CHECK-20260418-210202",
+            "description": "زر جاهز مع نص وحالة",
+            "fields": [
+              {
+                "id": "preset-field-button-1776545521924-0",
+                "label": "عنوان فحص الدومين",
+                "value": "DOM-CHECK-20260418-210202",
+                "source_testid": "page-description-home"
+              },
+              {
+                "id": "preset-field-button-1776545521924-1",
+                "label": "حالة الزر",
+                "value": "مفعل",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-cards-dock": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-title-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-description-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-fields-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-field-0-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-field-0-1": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-active-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-ready-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-in-progress-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-waiting-parts-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-diagnosis-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-ready-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-ready-waiting-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-delivering-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-busy-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-free-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-cards-dock": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-title-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-description-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-fields-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-field-0-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-field-0-1": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-active-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-ready-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-in-progress-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-waiting-parts-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-diagnosis-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-ready-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-ready-waiting-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-delivering-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-technicians-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-busy-technicians-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-free-technicians-value": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-19T19:59:22.404208+00:00",
+      "updated_at": "2026-04-19T19:59:22.404208+00:00"
+    },
+    {
+      "id": "b74d5e50-83c8-42d4-9bbe-c034c0c62d77",
+      "user_id": "workshop:finmodule-sync",
+      "path": "/",
+      "status": "draft",
+      "version": 7,
+      "note": "manual_save",
+      "config": {
+        "labels": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم",
+          "page-custom-cards-dock": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص",
+          "page-custom-card-0": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص",
+          "page-custom-card-title-0": "بطاقة DOM-CHECK-20260418-210202",
+          "page-custom-card-description-0": "زر جاهز مع نص وحالة",
+          "page-custom-card-fields-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-desc",
+          "page-custom-card-field-0-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-desc",
+          "page-custom-card-field-0-1": "حالة الزرمفعلمرتبط بـ page-title-home",
+          "dashboard-stat-total-vehicles-value": "لوحة التحكم إحصائية total المركبات قيمة",
+          "dashboard-stat-total-vehicles-active-value": "لوحة التحكم إحصائية total المركبات active قيمة",
+          "dashboard-stat-total-vehicles-ready-value": "لوحة التحكم إحصائية total المركبات ready قيمة",
+          "dashboard-stat-in-progress-value": "لوحة التحكم إحصائية in progress قيمة",
+          "dashboard-stat-waiting-parts-value": "لوحة التحكم إحصائية waiting المخزون قيمة",
+          "dashboard-stat-diagnosis-value": "لوحة التحكم إحصائية diagnosis قيمة",
+          "dashboard-stat-ready-value": "لوحة التحكم إحصائية ready قيمة",
+          "dashboard-stat-ready-waiting-value": "لوحة التحكم إحصائية ready waiting قيمة",
+          "dashboard-stat-delivering-value": "لوحة التحكم إحصائية delivering قيمة",
+          "dashboard-stat-technicians-value": "لوحة التحكم إحصائية technicians قيمة",
+          "dashboard-stat-busy-technicians-value": "لوحة التحكم إحصائية busy technicians قيمة",
+          "dashboard-stat-free-technicians-value": "لوحة التحكم إحصائية free technicians قيمة"
+        },
+        "hidden": {},
+        "contents": {
+          "page-title-home": "لوحة التحكم",
+          "page-description-home": "محتوى لوحة التحكم",
+          "page-custom-cards-dock": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-ho",
+          "page-custom-card-0": "بطاقة DOM-CHECK-20260418-210202زر جاهز مع نص وحالةعنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-ho",
+          "page-custom-card-title-0": "بطاقة DOM-CHECK-20260418-210202",
+          "page-custom-card-description-0": "زر جاهز مع نص وحالة",
+          "page-custom-card-fields-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-homeحالة الزرمفعلمرتبط بـ page-title-home",
+          "page-custom-card-field-0-0": "عنوان فحص الدومينDOM-CHECK-20260418-210202مرتبط بـ page-description-home",
+          "page-custom-card-field-0-1": "حالة الزرمفعلمرتبط بـ page-title-home",
+          "dashboard-stat-total-vehicles-value": "12",
+          "dashboard-stat-total-vehicles-active-value": "9",
+          "dashboard-stat-total-vehicles-ready-value": "3",
+          "dashboard-stat-in-progress-value": "9",
+          "dashboard-stat-waiting-parts-value": "1",
+          "dashboard-stat-diagnosis-value": "2",
+          "dashboard-stat-ready-value": "3",
+          "dashboard-stat-ready-waiting-value": "3",
+          "dashboard-stat-delivering-value": "0",
+          "dashboard-stat-technicians-value": "3",
+          "dashboard-stat-busy-technicians-value": "0",
+          "dashboard-stat-free-technicians-value": "3"
+        },
+        "custom_cards": [
+          {
+            "id": "preset-card-button-1776545521924",
+            "title": "بطاقة DOM-CHECK-20260418-210202",
+            "description": "زر جاهز مع نص وحالة",
+            "fields": [
+              {
+                "id": "preset-field-button-1776545521924-0",
+                "label": "عنوان فحص الدومين",
+                "value": "DOM-CHECK-20260418-210202",
+                "source_testid": "page-description-home"
+              },
+              {
+                "id": "preset-field-button-1776545521924-1",
+                "label": "حالة الزر",
+                "value": "مفعل",
+                "source_testid": "page-title-home"
+              }
+            ]
+          }
+        ],
+        "block_order": [],
+        "positions": {},
+        "styles": {
+          "page-title-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-description-home": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-cards-dock": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-title-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-description-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-fields-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-field-0-0": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "page-custom-card-field-0-1": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-active-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-total-vehicles-ready-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-in-progress-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-waiting-parts-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-diagnosis-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-ready-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-ready-waiting-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-delivering-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-busy-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          },
+          "dashboard-stat-free-technicians-value": {
+            "backgroundColor": "",
+            "color": "",
+            "fontSize": "",
+            "fontWeight": "",
+            "opacity": "",
+            "padding": "",
+            "margin": "",
+            "width": "",
+            "height": "",
+            "textAlign": "",
+            "borderRadius": "",
+            "boxShadow": "",
+            "backdropFilter": ""
+          }
+        },
+        "assets": {
+          "page-title-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-description-home": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-cards-dock": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-title-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-description-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-fields-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-field-0-0": {
+            "src": "",
+            "href": ""
+          },
+          "page-custom-card-field-0-1": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-active-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-total-vehicles-ready-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-in-progress-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-waiting-parts-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-diagnosis-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-ready-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-ready-waiting-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-delivering-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-technicians-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-busy-technicians-value": {
+            "src": "",
+            "href": ""
+          },
+          "dashboard-stat-free-technicians-value": {
+            "src": "",
+            "href": ""
+          }
+        },
+        "page_manifest": {}
+      },
+      "created_at": "2026-04-19T19:59:30.415239+00:00",
+      "updated_at": "2026-04-19T19:59:30.415239+00:00"
     }
   ],
   "comments": [

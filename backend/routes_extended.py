@@ -8,6 +8,8 @@ import uuid
 import os
 import io
 import re
+import base64
+import mimetypes
 
 # Optional deps used in some endpoints
 try:
@@ -56,6 +58,64 @@ def _mem_write(name: str, items: list):
             json.dump(items, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+
+def _safe_filename(value: str) -> str:
+    raw = re.sub(r"[^\w.\-]+", "_", str(value or "").strip())
+    return raw[:120] or f"receipt_{uuid.uuid4().hex[:8]}.bin"
+
+
+def _save_operation_payment_receipt(op_id: str, receipt_payload: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    if not isinstance(receipt_payload, dict):
+        return None
+
+    base64_value = str(receipt_payload.get("base64") or receipt_payload.get("data") or "").strip()
+    if not base64_value:
+        return None
+
+    mime_type = str(receipt_payload.get("mimeType") or receipt_payload.get("type") or "application/octet-stream")
+    original_name = str(receipt_payload.get("name") or "receipt.bin")
+
+    if base64_value.startswith("data:"):
+        try:
+            header, body = base64_value.split(",", 1)
+            if ";base64" in header:
+                mime_candidate = header.split(";")[0].replace("data:", "").strip()
+                if mime_candidate:
+                    mime_type = mime_candidate
+            base64_value = body
+        except Exception:
+            return None
+
+    try:
+        binary = base64.b64decode(base64_value, validate=False)
+    except Exception:
+        return None
+
+    if not binary:
+        return None
+
+    # 6MB hard cap for safety
+    if len(binary) > 6 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="receipt file too large (max 6MB)")
+
+    ext = os.path.splitext(original_name)[1].strip().lower()
+    if not ext:
+        ext = mimetypes.guess_extension(mime_type) or ".bin"
+    filename = _safe_filename(f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}{ext}")
+
+    base_dir = os.path.join(os.path.dirname(__file__), "uploads", "operation_payment_receipts", op_id)
+    os.makedirs(base_dir, exist_ok=True)
+    file_path = os.path.join(base_dir, filename)
+
+    with open(file_path, "wb") as f:
+        f.write(binary)
+
+    return {
+        "filename": filename,
+        "mime_type": mime_type,
+        "url": f"/api/operations/{op_id}/payment-receipts/{filename}",
+    }
 
 
 # --------------------- DB bind ---------------------
@@ -1987,6 +2047,26 @@ async def cleanup_keep_debts_only(request: Request, confirm: str = Query(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/operations/{op_id}/payment-receipts/{filename}")
+async def get_operation_payment_receipt(op_id: str, filename: str):
+    safe_name = _safe_filename(filename)
+    file_path = os.path.join(
+        os.path.dirname(__file__),
+        "uploads",
+        "operation_payment_receipts",
+        op_id,
+        safe_name,
+    )
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="receipt not found")
+
+    guessed_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+    with open(file_path, "rb") as f:
+        payload = f.read()
+    headers = {"Content-Disposition": f'inline; filename="{safe_name}"'}
+    return StreamingResponse(io.BytesIO(payload), media_type=guessed_type, headers=headers)
+
+
 @router.post("/operations/{op_id}/confirm-payment")
 async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(None)):
     """تأكيد سداد عملية آجل.
@@ -2199,6 +2279,9 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
                 raise HTTPException(status_code=400, detail="unsupported operation type")
 
         pay_date = (payload or {}).get("date")
+        receipt_info = _save_operation_payment_receipt(op_id, (payload or {}).get("receipt") or {})
+        if receipt_info and receipt_info.get("url"):
+            desc = f"{desc} | إيصال: {receipt_info.get('filename')}"
         entry_source = "operation_payment" if has_base_operation_entry else "operation_payment_income"
         entry = {
             "id": str(uuid.uuid4()),
@@ -2211,6 +2294,9 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             "transaction_type": "payment",
             "reference_id": op_id,
         }
+        if receipt_info:
+            entry["receipt_url"] = receipt_info.get("url")
+            entry["receipt_name"] = receipt_info.get("filename")
         _safe_insert_journal_entry(supa, entry)
 
         remaining_after = max(0.0, remaining - pay_amount)
@@ -2218,12 +2304,36 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         new_method = settlement_method if new_status == "paid" else "credit"
 
         try:
-            supa.client.table("operations").update({
+            update_payload = {
                 "payment_method": new_method,
                 "paymentMethod": new_method,
                 "payment_status": new_status,
                 "paymentStatus": new_status,
-            }).eq("id", op_id).execute()
+            }
+            if receipt_info and receipt_info.get("url"):
+                prev_notes = str(op_row.get("notes") or "").strip()
+                receipt_line = f"[PAYMENT_RECEIPT] {receipt_info.get('url')}"
+                update_payload["notes"] = f"{prev_notes}\n{receipt_line}".strip()
+            try:
+                supa.client.table("operations").update(update_payload).eq("id", op_id).execute()
+            except Exception as update_error:
+                retry_payload = dict(update_payload)
+                for _ in range(10):
+                    match = re.search(r"Could not find the '([^']+)' column", str(update_error))
+                    if not match:
+                        break
+                    missing_col = match.group(1)
+                    if missing_col not in retry_payload:
+                        break
+                    retry_payload.pop(missing_col, None)
+                    try:
+                        supa.client.table("operations").update(retry_payload).eq("id", op_id).execute()
+                        update_error = None
+                        break
+                    except Exception as retry_error:
+                        update_error = retry_error
+                if update_error:
+                    print(f"confirm-payment operation update skipped: {update_error}")
         except Exception:
             pass
 
@@ -2241,6 +2351,8 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
                 "status": new_status,
                 "payment_method": new_method,
                 "settlement_method": settlement_method,
+                "receipt_url": receipt_info.get("url") if receipt_info else None,
+                "receipt_name": receipt_info.get("filename") if receipt_info else None,
             },
         }
 

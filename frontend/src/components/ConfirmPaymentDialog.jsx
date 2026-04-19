@@ -19,6 +19,8 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
   const [amountStr, setAmountStr] = useState('');
   const [dateStr, setDateStr] = useState(todayISO());
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [encodingReceipt, setEncodingReceipt] = useState(false);
 
   // Reset fields when dialog opens
   // (Avoid useEffect reset to satisfy strict lint rules)
@@ -27,8 +29,35 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
       setAmountStr('');
       setDateStr(todayISO());
       setPaymentMethod('cash');
+      setReceiptFile(null);
     }
     onOpenChange(v);
+  };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('file_read_failed'));
+    reader.readAsDataURL(file);
+  });
+
+  const handleSubmit = async () => {
+    if (parsed.error) return;
+    let receipt = null;
+    if (receiptFile) {
+      setEncodingReceipt(true);
+      try {
+        const base64 = await fileToBase64(receiptFile);
+        receipt = {
+          name: receiptFile.name,
+          mimeType: receiptFile.type || 'application/octet-stream',
+          base64,
+        };
+      } finally {
+        setEncodingReceipt(false);
+      }
+    }
+    onConfirm({ amount: parsed.amount, date: dateStr || todayISO(), paymentMethod, receipt });
   };
 
   const parsed = useMemo(() => {
@@ -79,6 +108,24 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
             <label className="text-sm font-medium">تاريخ السداد</label>
             <Input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} />
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="confirm-payment-dialog-receipt-input">إرفاق إيصال (اختياري)</label>
+            <input
+              id="confirm-payment-dialog-receipt-input"
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setReceiptFile(file);
+              }}
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              data-testid="confirm-payment-dialog-receipt-input"
+            />
+            {receiptFile ? (
+              <div className="text-xs text-emerald-700" data-testid="confirm-payment-dialog-receipt-name">✓ {receiptFile.name}</div>
+            ) : null}
+          </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
@@ -90,14 +137,11 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
             إلغاء
           </Button>
           <Button
-            onClick={() => {
-              if (parsed.error) return;
-              onConfirm({ amount: parsed.amount, date: dateStr || todayISO(), paymentMethod });
-            }}
-            disabled={loading || !!parsed.error}
+            onClick={handleSubmit}
+            disabled={loading || encodingReceipt || !!parsed.error}
             data-testid="confirm-payment-dialog-submit"
           >
-            تأكيد
+            {loading || encodingReceipt ? 'جارٍ التنفيذ...' : 'تأكيد'}
           </Button>
         </DialogFooter>
       </DialogContent>

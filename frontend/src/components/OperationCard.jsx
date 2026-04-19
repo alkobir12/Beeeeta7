@@ -11,6 +11,7 @@ import {
   CreditCard,
   FileText,
   Landmark,
+  Link2,
 } from 'lucide-react';
 
 const formatDateTime = (dateLike, isRTL) => {
@@ -182,6 +183,16 @@ export default function OperationCard({
     const toAccount = sanitizeAccountingText(targetAccountName);
     return `قيد محاسبي: من حساب ${fromAccount || t('operations.account') || 'الحساب'} إلى حساب ${toAccount || t('operations.account') || 'الحساب'}`;
   }, [operation, targetAccountName, t]);
+
+  const paymentReceiptUrl = useMemo(() => {
+    const notes = String(operation?.notes || '');
+    const match = notes.match(/\[PAYMENT_RECEIPT\]\s*(\S+)/i);
+    if (!match?.[1]) return '';
+    const candidate = String(match[1]).trim();
+    if (!candidate) return '';
+    if (candidate.startsWith('http://') || candidate.startsWith('https://')) return candidate;
+    return candidate.startsWith('/') ? candidate : `/${candidate}`;
+  }, [operation?.notes]);
 
   const accountCode = useMemo(
     () => resolveAccountCode(operation, chartAccount, businessAccount),
@@ -652,6 +663,17 @@ export default function OperationCard({
             <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70">
               <div className="text-[10px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>
               <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{sanitizeAccountingText(operation.notes) || operation.notes}</div>
+              {paymentReceiptUrl ? (
+                <a
+                  href={paymentReceiptUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-[11px] text-emerald-200"
+                  data-testid={`operation-card-payment-receipt-link-${operation.id}`}
+                >
+                  <Link2 size={12} /> عرض إيصال السداد
+                </a>
+              ) : null}
             </div>
           ) : null}
 

@@ -3166,7 +3166,7 @@ const Operations = () => {
           setConfirmOpen(v);
           if (!v) setConfirmTarget(null);
         }}
-        onConfirm={async ({ amount, date, paymentMethod }) => {
+        onConfirm={async ({ amount, date, paymentMethod, receipt }) => {
           if (!confirmTarget?.id) return;
           try {
             await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
@@ -3174,6 +3174,7 @@ const Operations = () => {
               amount,
               date,
               payment_method: paymentMethod || 'cash',
+              receipt: receipt || null,
             });
             setConfirmOpen(false);
             setConfirmTarget(null);

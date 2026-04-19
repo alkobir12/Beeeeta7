@@ -133,6 +133,7 @@ const financeAPI = {
   getReconciliation: (params) => api.get('/finance/reports/reconciliation', { params }),
   getOperationTrace: (params) => api.get('/finance/reports/operation-trace', { params }),
   getAccountTreeDetails: (params) => api.get('/finance/reports/account-tree-details', { params }),
+  reclassifyPaymentAccounts: (params) => api.post('/finance/reports/reclassify-payment-accounts', null, { params }),
   getBudgets: (params) => api.get('/finance/budgets', { params }),
   createBudget: (data) => api.post('/finance/budgets', data),
   updateBudget: (id, data) => api.put(`/finance/budgets/${id}`, data),

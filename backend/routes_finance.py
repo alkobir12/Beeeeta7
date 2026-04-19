@@ -91,6 +91,27 @@ def _safe_float(value) -> float:
         return 0.0
 
 
+def _normalize_payment_method(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+
+    bank_like = {
+        "bank", "transfer", "bank_transfer", "card", "pos", "mada", "visa", "mastercard",
+        "بطاقة", "بطاقه", "شبكة", "تحويل", "تحويل_بنكي", "تحويل بنكي", "بنك",
+    }
+    cash_like = {"cash", "نقد", "نقدي", "كاش"}
+    credit_like = {"credit", "اجل", "آجل", "unpaid", "pending", "partial"}
+
+    if raw in credit_like:
+        return "credit"
+    if raw in bank_like:
+        return "bank"
+    if raw in cash_like:
+        return "cash"
+    return raw
+
+
 def _extract_request_actor(request: Optional[Request]) -> Dict[str, str]:
     headers = getattr(request, "headers", {}) or {}
     user_id = str(headers.get("x-user-id") or headers.get("x-user-name") or "system").strip() or "system"
@@ -1009,9 +1030,9 @@ def _build_repair_journal_entry_from_operation(
     if total <= 0:
         return None
 
-    payment_method = str(operation.get("payment_method") or operation.get("paymentMethod") or "cash").strip().lower()
+    payment_method = _normalize_payment_method(operation.get("payment_method") or operation.get("paymentMethod") or "cash")
     is_credit = payment_method == "credit"
-    cash_code = "1102" if payment_method in {"bank", "transfer", "card", "pos", "mada", "visa", "mastercard"} else "1101"
+    cash_code = "1102" if payment_method == "bank" else "1101"
     selected_code = (
         operation.get("accounting_account_code")
         or operation.get("accountCode")
@@ -1657,9 +1678,9 @@ async def get_account_tree_details(
                 op_row = operation_map.get(ref) or {}
                 visit_id = str(op_row.get("visit_id") or op_row.get("visitId") or "").strip()
                 visit_row = visit_map.get(visit_id) or {}
-                operations[-1]["operation_payment_method"] = str(
+                operations[-1]["operation_payment_method"] = _normalize_payment_method(
                     op_row.get("payment_method") or op_row.get("paymentMethod") or ""
-                ).strip().lower()
+                )
 
                 customer_label = (
                     op_row.get("partner_name")
@@ -1711,13 +1732,13 @@ async def get_account_tree_details(
         operations_bank_total = 0.0
         operations_credit_total = 0.0
         for item in operations:
-            payment_method = str(item.get("operation_payment_method") or "").strip().lower()
+            payment_method = _normalize_payment_method(item.get("operation_payment_method") or "")
             amount = _safe_float(item.get("credit"))
             cash_component_value = _safe_float(item.get("cash_component"))
             bank_component_value = _safe_float(item.get("bank_component"))
             if payment_method == "credit":
                 operations_credit_total += amount
-            elif payment_method in {"bank", "transfer", "card", "mada", "visa", "mastercard", "pos"}:
+            elif payment_method == "bank":
                 operations_bank_total += amount
             elif payment_method:
                 operations_cash_total += amount
@@ -3316,7 +3337,7 @@ async def get_operation_trace_report(
             })
             row["operations_count"] += 1
             row["operations_total"] += _safe_float(op.get("total"))
-            pay_method = str(op.get("payment_method") or op.get("paymentMethod") or "unknown").lower()
+            pay_method = _normalize_payment_method(op.get("payment_method") or op.get("paymentMethod") or "unknown")
             row["payment_methods"][pay_method] = row["payment_methods"].get(pay_method, 0) + 1
 
         def account_bucket(code: str) -> str:
@@ -3450,9 +3471,8 @@ async def reclassify_payment_accounts(
     بحسب طريقة الدفع في العملية المرجعية.
     """
     end_date = end_date or datetime.now().strftime("%Y-%m-%d")
-    start_date = start_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    start_date = start_date or "2000-01-01"
 
-    bank_methods = {"bank", "transfer", "card", "pos", "mada", "visa", "mastercard"}
     account_id_to_code_local = {
         "acc-1101": "1101",
         "acc-1102": "1102",
@@ -3473,7 +3493,7 @@ async def reclassify_payment_accounts(
             op_id = str(op.get("id") or "").strip()
             if not op_id:
                 continue
-            method = str(op.get("payment_method") or op.get("paymentMethod") or "").strip().lower() or "cash"
+            method = _normalize_payment_method(op.get("payment_method") or op.get("paymentMethod") or "cash") or "cash"
             op_method[op_id] = method
 
         entries = _fetch_journal_entries(
@@ -3496,7 +3516,7 @@ async def reclassify_payment_accounts(
             method = op_method[ref]
             if method == "credit":
                 continue
-            expected_cash = "1102" if method in bank_methods else "1101"
+            expected_cash = "1102" if method == "bank" else "1101"
 
             lines = entry.get("lines") or []
             if not isinstance(lines, list) or not lines:

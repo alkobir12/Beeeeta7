@@ -121,6 +121,8 @@ export default function ComprehensiveFinancial() {
   });
   const [budgetDraft, setBudgetDraft] = useState({ name: '', category: 'operating', planned: '', actual: '', notes: '' });
   const [trialSearch, setTrialSearch] = useState('');
+  const [isReclassifyingPayments, setIsReclassifyingPayments] = useState(false);
+  const [lastReclassifyResult, setLastReclassifyResult] = useState(null);
 
   const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
   const shouldLoadCashFlow = activeTab === 'cashflow';
@@ -329,6 +331,16 @@ export default function ComprehensiveFinancial() {
     return trimmed;
   };
 
+  const normalizeAccountCode = (value) => String(value || '').trim().replace(/^acc-/, '');
+  const normalizePaymentMethod = (value) => {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    if (['credit', 'اجل', 'آجل', 'unpaid', 'pending', 'partial'].includes(raw)) return 'credit';
+    if (['bank', 'transfer', 'bank_transfer', 'card', 'pos', 'mada', 'visa', 'mastercard', 'بطاقة', 'بطاقه', 'تحويل', 'بنك', 'شبكة'].includes(raw)) return 'bank';
+    if (['cash', 'نقد', 'نقدي', 'كاش'].includes(raw)) return 'cash';
+    return raw;
+  };
+
   const reconcileTypeLabelMap = {
     sale: 'بيع',
     purchase: 'شراء',
@@ -429,7 +441,7 @@ export default function ComprehensiveFinancial() {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
-      const normalizedCode = String(code || '').trim();
+      const normalizedCode = normalizeAccountCode(code);
       if (
         normalizedCode.startsWith('1101')
         || normalizedName.includes('النقد')
@@ -447,7 +459,7 @@ export default function ComprehensiveFinancial() {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
-      const normalizedCode = String(code || '').trim();
+      const normalizedCode = normalizeAccountCode(code);
       if (
         normalizedCode.startsWith('1102')
         || normalizedName.includes('البنك')
@@ -459,6 +471,20 @@ export default function ComprehensiveFinancial() {
       return sum;
     }, 0);
   }, [assetAccountEntries, accountNameMap]);
+
+  const salesPaymentBreakdown = useMemo(() => {
+    const rows = salesOperationsData?.operations?.items || [];
+    const summary = { cash: 0, bank: 0, credit: 0, unknown: 0 };
+    rows.forEach((row) => {
+      const method = normalizePaymentMethod(row?.operation_payment_method);
+      const amount = Number(row?.credit || 0);
+      if (method === 'cash') summary.cash += amount;
+      else if (method === 'bank') summary.bank += amount;
+      else if (method === 'credit') summary.credit += amount;
+      else summary.unknown += amount;
+    });
+    return summary;
+  }, [salesOperationsData]);
 
   const topCards = [
     {
@@ -472,6 +498,7 @@ export default function ComprehensiveFinancial() {
         `إجمالي المصروفات: ${formatCurrency(incomeTotals.expenses || 0)}`,
         `إجمالي إيراد النقد: ${formatCurrency(cashRevenueTotal)}`,
         `إجمالي إيراد البنك/البطاقات: ${formatCurrency(bankRevenueTotal)}`,
+        `تفصيل طرق الدفع - نقد: ${formatCurrency(salesPaymentBreakdown.cash)} • بنك/بطاقة: ${formatCurrency(salesPaymentBreakdown.bank)} • آجل: ${formatCurrency(salesPaymentBreakdown.credit)}`,
         `رصيد حساب النقد (1101): ${formatCurrency(cashAccountBalance)}`,
         `رصيد حساب البنك (1102): ${formatCurrency(bankAccountBalance)}`,
         `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
@@ -560,6 +587,23 @@ export default function ComprehensiveFinancial() {
     queryClient.invalidateQueries({ queryKey: ['financial-budgets', workshopId, budgetMonth] });
   };
 
+  const handleReclassifyPayments = async () => {
+    try {
+      setIsReclassifyingPayments(true);
+      const res = await financeAPI.reclassifyPaymentAccounts({
+        workshop_id: workshopId,
+        start_date: '2000-01-01',
+        end_date: endDate,
+        apply_changes: true,
+      });
+      const payload = unwrapApiData(res, { candidates: 0, updated: 0 });
+      setLastReclassifyResult(payload);
+      refreshAll();
+    } finally {
+      setIsReclassifyingPayments(false);
+    }
+  };
+
   if (!workshopId) {
     return (
       <div className="max-w-4xl mx-auto p-6" dir="rtl">
@@ -606,6 +650,12 @@ export default function ComprehensiveFinancial() {
           </div>
         )}
 
+        {lastReclassifyResult ? (
+          <div className="mb-4 rounded-2xl border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-100" data-testid="financial-reclassify-result-banner">
+            تم تصحيح ربط طرق الدفع بالحسابات: مرشحات {Number(lastReclassifyResult.candidates || 0)} • تم تحديث {Number(lastReclassifyResult.updated || 0)}
+          </div>
+        ) : null}
+
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight" data-testid="financial-dashboard-main-title">
@@ -642,6 +692,15 @@ export default function ComprehensiveFinancial() {
             >
               <RefreshCw size={16} />
               تحديث
+            </button>
+            <button
+              onClick={handleReclassifyPayments}
+              disabled={isReclassifyingPayments}
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200/40 bg-emerald-500/20 px-3 py-2 text-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              data-testid="financial-reclassify-payments-button"
+            >
+              <ShieldCheck size={16} />
+              {isReclassifyingPayments ? 'جاري التصحيح...' : 'تصحيح ربط الدفع 1101/1102'}
             </button>
           </div>
         </div>

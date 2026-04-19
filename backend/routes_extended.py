@@ -2076,11 +2076,27 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         if pay_amount <= 0:
             return {"success": True, "message": "no remaining amount to confirm"}
 
-        # Choose cash/bank account for settlement
-        payment_method = (op_row.get("payment_method") or "cash").lower()
-        cash_code = "1101"
-        if payment_method in ("transfer", "bank", "card", "pos", "mada", "visa", "mastercard"):
-            cash_code = "1102"
+        # Choose cash/bank account for settlement based on explicit selected method
+        requested_method_raw = str(
+            (payload or {}).get("payment_method")
+            or (payload or {}).get("paymentMethod")
+            or "cash"
+        ).strip().lower()
+
+        bank_aliases = {
+            "bank", "transfer", "bank_transfer", "card", "pos", "mada", "visa", "mastercard",
+            "بطاقة", "بطاقه", "تحويل", "بنك", "شبكة",
+        }
+        cash_aliases = {"cash", "نقد", "نقدي", "كاش"}
+
+        if requested_method_raw in bank_aliases:
+            settlement_method = "bank"
+        elif requested_method_raw in cash_aliases:
+            settlement_method = "cash"
+        else:
+            raise HTTPException(status_code=400, detail="payment_method must be cash or bank")
+
+        cash_code = "1102" if settlement_method == "bank" else "1101"
 
         op_account_code = str(op_row.get("account") or op_row.get("accountCode") or "").strip()
         if not op_account_code:
@@ -2199,7 +2215,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 
         remaining_after = max(0.0, remaining - pay_amount)
         new_status = "paid" if remaining_after <= 0.0001 else "partial"
-        new_method = "cash" if new_status == "paid" else "credit"
+        new_method = settlement_method if new_status == "paid" else "credit"
 
         try:
             supa.client.table("operations").update({
@@ -2222,6 +2238,9 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             "data": {
                 "paid": round(pay_amount, 2),
                 "remaining": round(remaining_after, 2),
+                "status": new_status,
+                "payment_method": new_method,
+                "settlement_method": settlement_method,
             },
         }
 

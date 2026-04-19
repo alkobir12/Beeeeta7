@@ -18,6 +18,7 @@ const todayISO = () => new Date().toISOString().split('T')[0];
 const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }) => {
   const [amountStr, setAmountStr] = useState('');
   const [dateStr, setDateStr] = useState(todayISO());
+  const [paymentMethod, setPaymentMethod] = useState('cash');
 
   // Reset fields when dialog opens
   // (Avoid useEffect reset to satisfy strict lint rules)
@@ -25,6 +26,7 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
     if (v) {
       setAmountStr('');
       setDateStr(todayISO());
+      setPaymentMethod('cash');
     }
     onOpenChange(v);
   };
@@ -48,6 +50,20 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="confirm-payment-method-select">وسيلة السداد</label>
+            <select
+              id="confirm-payment-method-select"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
+              data-testid="confirm-payment-dialog-method-select"
+            >
+              <option value="cash">نقد</option>
+              <option value="bank">تحويل/بطاقة/بنك</option>
+            </select>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">مبلغ السداد (اختياري)</label>
             <Input
@@ -76,7 +92,7 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
           <Button
             onClick={() => {
               if (parsed.error) return;
-              onConfirm({ amount: parsed.amount, date: dateStr || todayISO() });
+              onConfirm({ amount: parsed.amount, date: dateStr || todayISO(), paymentMethod });
             }}
             disabled={loading || !!parsed.error}
             data-testid="confirm-payment-dialog-submit"

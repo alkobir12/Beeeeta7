@@ -17,6 +17,34 @@
 
 ## What's Been Implemented
 
+### إصلاح ربط طرق الدفع بالحسابات 1101/1102 + Backfill مالي (19 Apr 2026)
+- تم تنفيذ تحسينات حاسمة في Backend المالي (`routes_finance.py`):
+  - إضافة توحيد ذكي لطرق الدفع (`_normalize_payment_method`) يدعم العربية والإنجليزية:
+    - نقد/cash ⟶ cash ⟶ 1101
+    - بنك/بطاقة/تحويل (bank/card/transfer/بطاقة/تحويل...) ⟶ bank ⟶ 1102
+    - آجل/credit ⟶ credit
+  - تطبيق التوحيد على:
+    - بناء القيود من العمليات.
+    - تفصيل `account-tree-details` لإجمالي النقد/البنك/الآجل.
+    - endpoint إعادة التصنيف `reclassify-payment-accounts`.
+  - جعل Backfill الافتراضي شاملاً تاريخيًا (`start_date = 2000-01-01`) عند عدم تمرير تاريخ.
+- تحسينات Frontend في `ComprehensiveFinancial.jsx`:
+  - إصلاح قراءة أكواد الحسابات (تطبيع `acc-1101/acc-1102`) حتى لا تظهر أرصدة 1101/1102 بشكل غير دقيق.
+  - إضافة تفصيل أوضح داخل بطاقة صافي الدخل لطرق الدفع (نقد/بنك/آجل).
+  - إضافة زر تنفيذي واضح: `تصحيح ربط الدفع 1101/1102` (data-testid: `financial-reclassify-payments-button`).
+  - إضافة Banner نتيجة التصحيح (عدد المرشحات + المحدث).
+- تم تنفيذ Backfill والتحقق في preview.
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_143.json`
+  - Backend: **100% (8/8)**
+  - Frontend: **100%**
+- التحقق شمل:
+  - endpoint التصحيح (dry-run + apply)
+  - تفصيل account-tree-details للنقد/البنك/الآجل
+  - سلامة صفحة القوائم المالية + وجود زر التصحيح + ظهور التفصيل داخل بطاقة صافي الدخل
+  - عدم وجود regressions.
+
 ### Archive Full Edit Mode — تحرير كامل ملف المركبة من صفحة الأرشيف (19 Apr 2026)
 - تم تنفيذ وضع تحرير كامل من الأرشيف بدون تغيير الواجهة الأساسية:
   - من `/archive` أصبح دخول الملف عبر `?source=archive&editMode=full`.

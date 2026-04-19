@@ -17,6 +17,36 @@
 
 ## What's Been Implemented
 
+### إضافة إرفاق إيصال عند تأكيد سداد الآجل (19 Apr 2026)
+- تم إضافة دعم إرفاق إيصال داخل نافذة تأكيد السداد:
+  - حقل رفع ملف (اختياري) يقبل `image/*,.pdf`.
+  - حفظ اسم الملف المعروض داخل النافذة بعد الاختيار.
+  - استمرار دعم اختيار وسيلة السداد (نقد/بنك).
+- تدفق الإرسال:
+  - الواجهة تحول الملف إلى Base64 وترسله في payload تحت `receipt` مع `payment_method`.
+- Backend:
+  - إضافة حفظ فعلي للإيصالات في مسار:
+    - `backend/uploads/operation_payment_receipts/{op_id}/...`
+  - endpoint جديد لعرض الإيصال:
+    - `GET /api/operations/{op_id}/payment-receipts/{filename}`
+  - endpoint `confirm-payment` أصبح يرجّع:
+    - `receipt_url`, `receipt_name`
+  - إضافة marker في ملاحظات العملية:
+    - `[PAYMENT_RECEIPT] <url>`
+- عرض الإيصال في الواجهة:
+  - `OperationCard` يستخرج marker ويعرض رابط: **عرض إيصال السداد**.
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_145.json`
+  - Backend: **100% (8/8)**
+  - Frontend: **100%**
+- تم التحقق من:
+  - وجود input الإيصال وlabel والـdata-testid.
+  - عمل confirm-payment مع/بدون إيصال.
+  - حفظ الملف وإرجاع `receipt_url`.
+  - endpoint جلب الإيصال (200) و404 عند الملف غير الموجود.
+  - وجود marker في notes + صحة ظهور الرابط في الكود.
+
 ### سداد الآجل: اختيار وسيلة السداد الإجباري (19 Apr 2026)
 - تم تنفيذ تحسين تدفق "تأكيد سداد الآجل" بحيث يحدد المستخدم وسيلة السداد قبل التأكيد:
   - `نقد` أو `تحويل/بطاقة/بنك` داخل `ConfirmPaymentDialog`.

@@ -683,9 +683,32 @@ const VisitCard = ({
       parsedPayments = [];
     }
 
-    setItems(parsedItems);
+    const normalizedItems = (Array.isArray(parsedItems) ? parsedItems : []).map((item, idx) => {
+      const quantity = Number(item?.quantity ?? item?.qty ?? 1) || 1;
+      const price = Number(item?.price ?? 0) || 0;
+      return {
+        id: item?.id || `item-${visit.id}-${idx}`,
+        itemType: item?.itemType || 'service',
+        name: item?.name ?? '',
+        details: item?.details ?? '',
+        quantity,
+        qty: quantity,
+        price,
+        discount: Number(item?.discount ?? 0) || 0,
+        total: Number(item?.total ?? (quantity * price)) || 0,
+        taxRate: Number(item?.taxRate ?? 0) || 0,
+        taxAmount: Number(item?.taxAmount ?? 0) || 0,
+        unit: item?.unit ?? '',
+        supplierName: item?.supplierName ?? '',
+        customerName: item?.customerName ?? '',
+        source_testid: item?.source_testid ?? '',
+        sku: item?.sku ?? '',
+      };
+    });
+
+    setItems(normalizedItems);
     setPayments(parsedPayments);
-    setStatus(visit.status);
+    setStatus(visit.status || 'in_progress');
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
     setIsEditing(archiveMode || (visit.status || '').toLowerCase() === 'in_progress');

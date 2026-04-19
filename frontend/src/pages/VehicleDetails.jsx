@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Car, User, Phone, Calendar, Wrench, CheckCircle, FileText, Upload, Printer, Receipt, Clock, Trash2, Camera, X, Scan, Plus, ChevronDown, ChevronUp, Edit2, Save, XCircle, FileCheck, ClipboardList, MessageCircle } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import GuidanceStepper from '../components/GuidanceStepper';
@@ -42,6 +42,29 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { userLayoutsAPI } from '../services/userLayoutsAPI';
 import { resolveBackendBase } from '../utils/backendBase';
+
+const ARCHIVE_AUDIT_KEY = 'vehicle-archive-edit-audit-v1';
+
+const appendArchiveAudit = (payload = {}) => {
+  try {
+    const raw = localStorage.getItem(ARCHIVE_AUDIT_KEY);
+    const rows = raw ? JSON.parse(raw) : [];
+    const entry = {
+      timestamp: new Date().toISOString(),
+      action: payload.action || 'archive_edit',
+      actionLabel: payload.actionLabel || 'تعديل من الأرشيف',
+      vehicleId: payload.vehicleId || '',
+      plateNumber: payload.plateNumber || '',
+      fileNumber: payload.fileNumber || '',
+      details: payload.details || {},
+      timeLabel: new Date().toLocaleString('ar-SA'),
+    };
+    const next = [entry, ...(Array.isArray(rows) ? rows : [])].slice(0, 120);
+    localStorage.setItem(ARCHIVE_AUDIT_KEY, JSON.stringify(next));
+  } catch {
+    // ignore storage errors
+  }
+};
 
 // --- Helper Components ---
 
@@ -616,6 +639,8 @@ const VisitCard = ({
   onPartAdded,
   onSupplierAdded,
   canDelete = false,
+  archiveMode = false,
+  onAuditEvent,
 }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
@@ -663,7 +688,7 @@ const VisitCard = ({
     setStatus(visit.status);
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
-    setIsEditing((visit.status || '').toLowerCase() === 'in_progress');
+    setIsEditing(archiveMode || (visit.status || '').toLowerCase() === 'in_progress');
 
     if (whatsappNotificationRef.current) {
       setWhatsappNotification(whatsappNotificationRef.current);
@@ -776,8 +801,16 @@ const VisitCard = ({
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
 
-      setIsEditing(false);
+      setIsEditing(archiveMode);
       onUpdate?.();
+      onAuditEvent?.({
+        action: 'visit_save',
+        actionLabel: 'حفظ تعديل زيارة',
+        visitId: visit.id,
+        status,
+        itemsCount: items.length,
+        totalAmount,
+      });
       toast({ title: 'تم الحفظ', description: `تم حفظ ${items.length} بند بنجاح` });
     } catch (e) {
       console.error('Save visit error:', e);
@@ -794,6 +827,11 @@ const VisitCard = ({
       setIsEditing(true);
       setIsExpanded(true);
       onUpdate?.();
+      onAuditEvent?.({
+        action: 'visit_reopen',
+        actionLabel: 'إعادة فتح زيارة للتعديل',
+        visitId: visit.id,
+      });
       toast({ title: 'تم', description: 'تم إعادة فتح الزيارة للتعديل' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل إعادة فتح الزيارة', variant: 'destructive' });
@@ -855,6 +893,13 @@ const VisitCard = ({
       setStatus('completed');
       setIsEditing(false);
       onUpdate?.();
+      onAuditEvent?.({
+        action: 'visit_close',
+        actionLabel: 'حفظ وإغلاق زيارة',
+        visitId: visit.id,
+        itemsCount: items.length,
+        totalAmount,
+      });
 
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {
@@ -1578,7 +1623,7 @@ const VisitCard = ({
                 }}
                 data-testid={`visit-reopen-button-${visit.id}`}
               >
-                <Edit2 size={14} /> إعادة فتح للتعديل
+                <Edit2 size={14} /> {archiveMode ? 'إعادة فتح تلقائي للتعديل' : 'إعادة فتح للتعديل'}
               </button>
             )}
 
@@ -1611,7 +1656,13 @@ const VehicleDetails = () => {
   const isRTL = i18n.language === 'ar';
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  const isArchiveSource = useMemo(() => {
+    const params = new URLSearchParams(location.search || '');
+    return params.get('source') === 'archive' || params.get('editMode') === 'full';
+  }, [location.search]);
 
   const DEFAULT_BLOCKS = useMemo(
     () => [
@@ -1816,6 +1867,15 @@ const VehicleDetails = () => {
   const [financialSourceTitle, setFinancialSourceTitle] = useState('');
   const [financialSourceRows, setFinancialSourceRows] = useState([]);
   const workshopId = process.env.REACT_APP_WORKSHOP_ID;
+
+  useEffect(() => {
+    if (!isArchiveSource) return;
+    setIsEditingVehicle(true);
+    setIsEditingCustomer(true);
+    setIsVehicleInfoCollapsed(false);
+    setIsCustomerInfoCollapsed(false);
+    setVisitFilter('all');
+  }, [isArchiveSource]);
 
   
   const videoRef = useRef(null);
@@ -2073,6 +2133,20 @@ const VehicleDetails = () => {
     try {
       await vehicleAPI.update(id, vehicleForm);
       setVehicle(prev => ({ ...prev, ...vehicleForm }));
+      if (isArchiveSource) {
+        appendArchiveAudit({
+          action: 'vehicle_update',
+          actionLabel: 'تحديث بيانات المركبة من الأرشيف',
+          vehicleId: id,
+          plateNumber: vehicleForm?.plateNumber || vehicle?.plateNumber || '-',
+          fileNumber: vehicleForm?.fileNumber || vehicle?.fileNumber || '-',
+          details: {
+            brand: vehicleForm?.brand,
+            model: vehicleForm?.model,
+            vin: vehicleForm?.vin,
+          },
+        });
+      }
       setIsEditingVehicle(false);
       toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات المركبة' });
     } catch (e) {
@@ -2105,12 +2179,42 @@ const VehicleDetails = () => {
         customerPhone: customerForm.phone,
         customerEmail: customerForm.email 
       }));
+      if (isArchiveSource) {
+        appendArchiveAudit({
+          action: 'customer_update',
+          actionLabel: 'تحديث بيانات العميل من الأرشيف',
+          vehicleId: id,
+          plateNumber: vehicle?.plateNumber || vehicleForm?.plateNumber || '-',
+          fileNumber: vehicleForm?.fileNumber || vehicle?.fileNumber || '-',
+          details: {
+            name: customerForm.name,
+            phone: customerForm.phone,
+          },
+        });
+      }
       setIsEditingCustomer(false);
       toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات العميل' });
     } catch (e) {
       toast({ title: 'خطأ', description: 'فشل تحديث بيانات العميل', variant: 'destructive' });
     }
   };
+
+  const handleArchiveAuditEvent = useCallback((event = {}) => {
+    if (!isArchiveSource) return;
+    appendArchiveAudit({
+      action: event.action || 'archive_edit',
+      actionLabel: event.actionLabel || 'تعديل من الأرشيف',
+      vehicleId: id,
+      plateNumber: vehicle?.plateNumber || vehicleForm?.plateNumber || '-',
+      fileNumber: vehicleForm?.fileNumber || vehicle?.fileNumber || '-',
+      details: {
+        visitId: event.visitId,
+        status: event.status,
+        itemsCount: event.itemsCount,
+        totalAmount: event.totalAmount,
+      },
+    });
+  }, [isArchiveSource, id, vehicle?.plateNumber, vehicle?.fileNumber, vehicleForm?.plateNumber, vehicleForm?.fileNumber]);
 
   const requestDeleteVisit = (visitId) => {
     const v = visits.find((x) => x.id === visitId) || visits.find((x) => x.visitId === visitId);
@@ -2123,6 +2227,11 @@ const VehicleDetails = () => {
     try {
       setDeleteVisitLoading(true);
       await visitAPI.delete(deleteVisitTarget.id);
+      handleArchiveAuditEvent({
+        action: 'visit_delete',
+        actionLabel: 'حذف زيارة من الأرشيف',
+        visitId: deleteVisitTarget.id,
+      });
       toast({ title: 'تم الحذف', description: 'تم حذف الزيارة بنجاح' });
       setDeleteVisitOpen(false);
       setDeleteVisitTarget(null);
@@ -2171,6 +2280,10 @@ const VehicleDetails = () => {
         technicianId: null, // Default none
         notes: JSON.stringify({ items: [], text: '' })
       });
+      handleArchiveAuditEvent({
+        action: 'visit_create',
+        actionLabel: 'إنشاء زيارة جديدة من الأرشيف',
+      });
       toast({ title: 'تم', description: 'تم فتح زيارة جديدة' });
       setCreateVisitConfirmAt(null);
       fetchData();
@@ -2187,6 +2300,19 @@ const VehicleDetails = () => {
         notes, 
         technicianId: assignedTech || null
       });
+      if (isArchiveSource) {
+        appendArchiveAudit({
+          action: 'vehicle_status_update',
+          actionLabel: 'تحديث حالة المركبة من الأرشيف',
+          vehicleId: id,
+          plateNumber: vehicle?.plateNumber || vehicleForm?.plateNumber || '-',
+          fileNumber: vehicleForm?.fileNumber || vehicle?.fileNumber || '-',
+          details: {
+            status,
+            assignedTech,
+          },
+        });
+      }
       toast({ title: 'تم الحفظ', description: 'تم تحديث حالة المركبة' });
       fetchData();
     } catch (e) {
@@ -3102,6 +3228,8 @@ const VehicleDetails = () => {
                       onPartAdded={appendPart}
                       onSupplierAdded={appendSupplier}
                       canDelete={canDeleteVisit}
+                      archiveMode={isArchiveSource}
+                      onAuditEvent={handleArchiveAuditEvent}
                     />
                   );
                 })
@@ -3247,6 +3375,23 @@ const VehicleDetails = () => {
         option { color: #0f172a; }
       `}</style>
 
+      {isArchiveSource && (
+        <div
+          className="mx-4 sm:mx-0 rounded-2xl px-4 py-3"
+          style={{
+            background: 'rgba(56,189,248,0.12)',
+            border: '1px solid rgba(56,189,248,0.28)',
+            color: 'rgba(186,230,253,0.95)',
+          }}
+          data-testid="vehicle-archive-edit-mode-banner"
+        >
+          <div className="text-sm font-bold">وضع تحرير الأرشيف مفعل</div>
+          <div className="text-xs mt-1" style={{ color: 'rgba(226,232,240,0.82)' }}>
+            يمكنك تعديل بيانات المركبة والعميل والزيارات والبنود بالكامل. يتم تسجيل التعديلات في سجل الأرشيف.
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div
         className="liquid-surface"
@@ -3262,7 +3407,7 @@ const VehicleDetails = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(isArchiveSource ? '/archive' : '/')}
               className="p-2 rounded-xl transition-colors"
               style={{
                 background: 'rgba(255,255,255,0.06)',

@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Search, Calendar, User, Phone, FileText, MoreVertical, Wrench, Trash2 } from 'lucide-react';
+import { Car, Search, Calendar, User, Phone, FileText, MoreVertical, Wrench, Trash2, History } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { vehicleAPI } from '../services/api';
 import { getStatusLabel, getStatusColor } from '../mock/data';
 
 const VehicleArchive = () => {
+  const ARCHIVE_AUDIT_KEY = 'vehicle-archive-edit-audit-v1';
   const { toast } = useToast();
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('delivered'); // Default to delivered
+  const [archiveAuditRows, setArchiveAuditRows] = useState([]);
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => {
+    fetchVehicles();
+    try {
+      const raw = localStorage.getItem(ARCHIVE_AUDIT_KEY);
+      const rows = raw ? JSON.parse(raw) : [];
+      setArchiveAuditRows(Array.isArray(rows) ? rows.slice(0, 20) : []);
+    } catch {
+      setArchiveAuditRows([]);
+    }
+  }, []);
 
   const fetchVehicles = async () => {
     try {
@@ -67,6 +78,30 @@ const VehicleArchive = () => {
           </div>
         </div>
 
+        <div className="apple-card p-4" data-testid="vehicle-archive-audit-panel">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 text-slate-700" data-testid="vehicle-archive-audit-title">
+              <History size={16} />
+              <span className="font-semibold text-sm">سجل تعديلات الأرشيف</span>
+            </div>
+            <span className="text-xs text-slate-500" data-testid="vehicle-archive-audit-count">{archiveAuditRows.length} سجل</span>
+          </div>
+          {archiveAuditRows.length === 0 ? (
+            <div className="text-xs text-slate-500" data-testid="vehicle-archive-audit-empty">لا توجد تعديلات مسجلة من الأرشيف بعد.</div>
+          ) : (
+            <div className="space-y-2 max-h-44 overflow-y-auto" data-testid="vehicle-archive-audit-list">
+              {archiveAuditRows.map((row, idx) => (
+                <div key={`${row.timestamp}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2" data-testid={`vehicle-archive-audit-row-${idx}`}>
+                  <div className="text-xs font-semibold text-slate-700">{row.actionLabel || row.action || 'تعديل'}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    {row.plateNumber || '-'} • {row.fileNumber || '-'} • {row.timeLabel || '-'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="apple-card p-4 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -88,7 +123,7 @@ const VehicleArchive = () => {
             </div>
           ) : (
             filteredVehicles.map(vehicle => (
-              <div key={vehicle.id} onClick={() => navigate(`/vehicle/${vehicle.id}`)} className="apple-card p-5 hover:shadow-md transition-all cursor-pointer group">
+              <div key={vehicle.id} onClick={() => navigate(`/vehicle/${vehicle.id}?source=archive&editMode=full`)} className="apple-card p-5 hover:shadow-md transition-all cursor-pointer group" data-testid={`vehicle-archive-card-${vehicle.id}`}>
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg">
@@ -109,6 +144,16 @@ const VehicleArchive = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity self-start md:self-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/vehicle/${vehicle.id}?source=archive&editMode=full`);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-cyan-50 text-cyan-700 text-xs font-semibold border border-cyan-200"
+                      data-testid={`vehicle-archive-edit-button-${vehicle.id}`}
+                    >
+                      تحرير شامل
+                    </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(vehicle.id); }} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"><Trash2 size={18} /></button>
                     <button className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"><MoreVertical size={18} /></button>
                   </div>

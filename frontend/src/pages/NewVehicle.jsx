@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Save, User, Car, Wrench, Plus, Check, Search } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -23,7 +23,9 @@ const NewVehicle = () => {
   
   // Customer Search State
   const [customerSearch, setCustomerSearch] = useState('');
-  const [customerResults, setCustomerResults] = useState([]);
+  const [debouncedCustomerSearch, setDebouncedCustomerSearch] = useState('');
+  const [customerDirectory, setCustomerDirectory] = useState([]);
+  const [remoteCustomerResults, setRemoteCustomerResults] = useState([]);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
   const [existingCustomerId, setExistingCustomerId] = useState(null);
 
@@ -40,44 +42,136 @@ const NewVehicle = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedCustomerSearch(customerSearch.trim());
+    }, 220);
+    return () => clearTimeout(timeout);
+  }, [customerSearch]);
+
   // Fetch Services & Technicians
   const fetchData = async () => {
     try {
-      const [servicesRes, techniciansRes] = await Promise.all([
+      const [servicesRes, techniciansRes, customersRes] = await Promise.allSettled([
         serviceAPI.getAll(),
-        technicianAPI.getAll()
+        technicianAPI.getAll(),
+        customerAPI.getAll(),
       ]);
-      setServices(servicesRes.data);
-      setTechnicians(techniciansRes.data);
+      if (servicesRes.status === 'fulfilled') {
+        setServices(Array.isArray(servicesRes.value?.data) ? servicesRes.value.data : []);
+      }
+      if (techniciansRes.status === 'fulfilled') {
+        setTechnicians(Array.isArray(techniciansRes.value?.data) ? techniciansRes.value.data : []);
+      }
+      if (customersRes.status === 'fulfilled') {
+        setCustomerDirectory(Array.isArray(customersRes.value?.data) ? customersRes.value.data : []);
+      }
     } catch (error) { console.error(error); }
   };
 
-  // Search Customers Live
+  const normalizeSearchString = (value) => String(value || '').toLowerCase().trim();
+  const normalizePlateSearch = (value) => String(value || '').toLowerCase().replace(/\s|-/g, '').trim();
+  const readCustomerPlate = (customer) => {
+    const candidates = [
+      customer?.vehiclePlate,
+      customer?.plateNumber,
+      customer?.plate,
+      customer?.latestVehiclePlate,
+    ];
+    const first = candidates.find((v) => String(v || '').trim().length > 0);
+    return String(first || '').trim();
+  };
+
+  const customerSearchIndex = useMemo(() => {
+    return (Array.isArray(customerDirectory) ? customerDirectory : []).map((customer) => {
+      const plate = readCustomerPlate(customer);
+      return {
+        customer,
+        name: normalizeSearchString(customer?.name),
+        phone: String(customer?.phone || '').trim(),
+        fileNumber: normalizeSearchString(customer?.fileNumber),
+        plateRaw: plate,
+        plate: normalizePlateSearch(plate),
+      };
+    });
+  }, [customerDirectory]);
+
+  const customerResults = useMemo(() => {
+    const q = normalizeSearchString(debouncedCustomerSearch);
+    const qPlate = normalizePlateSearch(debouncedCustomerSearch);
+    if (!q || q.length < 2) return [];
+
+    const localMatches = customerSearchIndex.filter((entry) => (
+      entry.name.includes(q)
+      || entry.phone.includes(debouncedCustomerSearch)
+      || entry.fileNumber.includes(q)
+      || (qPlate && entry.plate.includes(qPlate))
+    ));
+
+    const combined = [];
+    const seen = new Set();
+    const pushUnique = (customer) => {
+      if (!customer) return;
+      const key = String(customer.id || customer.phone || customer.name || Math.random());
+      if (seen.has(key)) return;
+      seen.add(key);
+      combined.push(customer);
+    };
+
+    localMatches.forEach((entry) => pushUnique(entry.customer));
+    (remoteCustomerResults || []).forEach((entry) => pushUnique(entry));
+
+    return combined.slice(0, 8);
+  }, [customerSearchIndex, debouncedCustomerSearch, remoteCustomerResults]);
+
   useEffect(() => {
-    const searchCustomers = async () => {
-      if (!customerSearch || customerSearch.length < 2) {
-        setCustomerResults([]);
-        return;
-      }
+    setShowCustomerResults(customerSearch.length >= 2 && customerResults.length > 0);
+  }, [customerSearch, customerResults]);
+
+  useEffect(() => {
+    const tryWarmCustomerDirectory = async () => {
+      if ((customerDirectory || []).length > 0) return;
+      if (!customerSearch || customerSearch.trim().length < 2) return;
       try {
-        const res = await customerAPI.getAll(); // Ideally use a search API
-        const all = res.data || [];
-        const filtered = all.filter(c => 
-          c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
-          c.phone.includes(customerSearch) ||
-          String(c.fileNumber || '').toLowerCase().includes(customerSearch.toLowerCase())
-        );
-        setCustomerResults(filtered.slice(0, 5));
-        setShowCustomerResults(true);
-      } catch (e) {
-        console.error("Customer search failed", e);
+        const res = await customerAPI.getAll();
+        setCustomerDirectory(Array.isArray(res?.data) ? res.data : []);
+      } catch {
+        // ignore; fallback to empty results
       }
     };
-    
-    // Debounce
-    const timeout = setTimeout(searchCustomers, 300);
-    return () => clearTimeout(timeout);
-  }, [customerSearch]);
+    tryWarmCustomerDirectory();
+  }, [customerDirectory, customerSearch]);
+
+  useEffect(() => {
+    let active = true;
+    const query = String(debouncedCustomerSearch || '').trim();
+    if (query.length < 2) {
+      setRemoteCustomerResults([]);
+      return () => { active = false; };
+    }
+
+    const fetchRemoteMatches = async () => {
+      try {
+        const res = await vehicleAPI.archiveSearch(query, 8);
+        if (!active) return;
+        const rows = Array.isArray(res?.data) ? res.data : (res?.data?.data || []);
+        const mapped = rows.map((row, idx) => ({
+          id: row.customerId || row.customer_id || row.id || `remote-${idx}`,
+          name: row.customerName || row.customer_name || row.name || 'عميل',
+          phone: row.customerPhone || row.customer_phone || row.phone || '',
+          email: row.customerEmail || row.customer_email || row.email || '',
+          vehiclePlate: row.plateNumber || row.plate || row.vehiclePlate || '',
+          fileNumber: row.fileNumber || row.file_number || '',
+        }));
+        setRemoteCustomerResults(mapped);
+      } catch {
+        if (active) setRemoteCustomerResults([]);
+      }
+    };
+
+    fetchRemoteMatches();
+    return () => { active = false; };
+  }, [debouncedCustomerSearch]);
 
   const selectCustomer = (customer) => {
     setFormData(prev => ({
@@ -88,6 +182,8 @@ const NewVehicle = () => {
     }));
     setExistingCustomerId(customer.id);
     setCustomerSearch('');
+    setDebouncedCustomerSearch('');
+    setRemoteCustomerResults([]);
     setShowCustomerResults(false);
     toast({ title: 'تم اختيار العميل', description: `تم اختيار العميل: ${customer.name}` });
   };
@@ -206,10 +302,11 @@ const NewVehicle = () => {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 className="apple-input pr-10"
-                placeholder="ابحث عن عميل مسجل (الاسم أو الجوال)..."
+                placeholder="ابحث عن عميل مسجل (الاسم أو الجوال أو رقم اللوحة)..."
                 value={customerSearch}
                 onChange={e => setCustomerSearch(e.target.value)}
                 onFocus={() => { if(customerSearch) setShowCustomerResults(true); }}
+                data-testid="new-vehicle-customer-search-input"
               />
             </div>
             
@@ -220,10 +317,12 @@ const NewVehicle = () => {
                     key={c.id} 
                     onClick={() => selectCustomer(c)}
                     className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0"
+                    data-testid={`new-vehicle-customer-search-result-${c.id}`}
                   >
                     <div className="font-bold text-gray-900">{c.name}</div>
                     <div className="text-xs text-gray-500 flex gap-3">
                       <span>📱 {c.phone}</span>
+                      {(c.vehiclePlate || c.plateNumber || c.plate) && <span>🚘 {c.vehiclePlate || c.plateNumber || c.plate}</span>}
                       {c.email && <span>✉️ {c.email}</span>}
                     </div>
                   </div>

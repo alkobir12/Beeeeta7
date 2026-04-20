@@ -108,12 +108,7 @@ export default function ComprehensiveFinancial() {
     expenses: false,
     parts_profit: false,
   });
-  const [startDate, setStartDate] = useState(() => {
-    const end = new Date();
-    const start = new Date(end);
-    start.setDate(end.getDate() - 14);
-    return safeDate(start);
-  });
+  const [startDate, setStartDate] = useState('2000-01-01');
   const [endDate, setEndDate] = useState(() => safeDate(new Date()));
   const [budgetMonth, setBudgetMonth] = useState(() => {
     const now = new Date();

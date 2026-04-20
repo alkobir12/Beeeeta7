@@ -50,6 +50,17 @@ const NewVehicle = () => {
     return () => clearTimeout(timeout);
   }, [customerSearch]);
 
+  const normalizeListPayload = (payload, keys = []) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.rows)) return payload.rows;
+    for (const key of keys) {
+      if (Array.isArray(payload?.[key])) return payload[key];
+      if (Array.isArray(payload?.data?.[key])) return payload.data[key];
+    }
+    return [];
+  };
+
   // Fetch Services & Technicians
   const fetchData = async () => {
     try {
@@ -60,16 +71,16 @@ const NewVehicle = () => {
         vehicleAPI.getAll(),
       ]);
       if (servicesRes.status === 'fulfilled') {
-        setServices(Array.isArray(servicesRes.value?.data) ? servicesRes.value.data : []);
+        setServices(normalizeListPayload(servicesRes.value?.data, ['services']));
       }
       if (techniciansRes.status === 'fulfilled') {
-        setTechnicians(Array.isArray(techniciansRes.value?.data) ? techniciansRes.value.data : []);
+        setTechnicians(normalizeListPayload(techniciansRes.value?.data, ['technicians', 'users']));
       }
       if (customersRes.status === 'fulfilled') {
-        setCustomerDirectory(Array.isArray(customersRes.value?.data) ? customersRes.value.data : []);
+        setCustomerDirectory(normalizeListPayload(customersRes.value?.data, ['customers']));
       }
       if (vehiclesRes.status === 'fulfilled') {
-        setVehicleDirectory(Array.isArray(vehiclesRes.value?.data) ? vehiclesRes.value.data : []);
+        setVehicleDirectory(normalizeListPayload(vehiclesRes.value?.data, ['vehicles']));
       }
     } catch (error) { console.error(error); }
   };
@@ -213,7 +224,7 @@ const NewVehicle = () => {
       if (!customerSearch || customerSearch.trim().length < 2) return;
       try {
         const res = await customerAPI.getAll();
-        setCustomerDirectory(Array.isArray(res?.data) ? res.data : []);
+        setCustomerDirectory(normalizeListPayload(res?.data, ['customers']));
       } catch {
         // ignore; fallback to empty results
       }

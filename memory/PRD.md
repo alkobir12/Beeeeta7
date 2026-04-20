@@ -17,6 +17,26 @@
 
 ## What's Been Implemented
 
+### Bug Fix: VehicleDetails runtime error (openQuickPrintDialog) — 20 Apr 2026
+- تم إصلاح خطأ runtime في صفحة ملف المركبة:
+  - الخطأ: `Can't find variable: openQuickPrintDialog` عند الضغط على زر "طباعة الزيارة" داخل VisitCard.
+- السبب:
+  - VisitCard كان يستدعي `openQuickPrintDialog` مباشرة بدون أن تكون ضمن scope المحلي.
+- الإصلاح:
+  - تمرير callback صريح من `VehicleDetails` إلى `VisitCard` عبر prop:
+    - `onOpenQuickPrintDialog={openQuickPrintDialog}`
+  - استخدام الاستدعاء الآمن داخل VisitCard:
+    - `onOpenQuickPrintDialog?.({ type, visitId })`
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_146.json`
+  - Frontend: **100% PASS**
+- تم التحقق من:
+  - تحميل VehicleDetails بدون runtime errors.
+  - عمل زر طباعة الزيارة داخل VisitCard وفتح QuickPrintDialog.
+  - استمرار عمل قائمة الطباعة من رأس الصفحة بدون regressions.
+  - 0 Console errors مرتبطة بالخطأ السابق.
+
 ### إضافة إرفاق إيصال عند تأكيد سداد الآجل (19 Apr 2026)
 - تم إضافة دعم إرفاق إيصال داخل نافذة تأكيد السداد:
   - حقل رفع ملف (اختياري) يقبل `image/*,.pdf`.

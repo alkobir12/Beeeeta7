@@ -262,7 +262,30 @@ const Customers = () => {
     });
   };
 
-  const printCollectionReceipt = ({ customer, amount, operationId, date }) => {
+  const loadWorkshopPrintInfo = async () => {
+    try {
+      const [settingsRes, profileRes] = await Promise.all([
+        api.get('/settings').catch(() => ({ data: {} })),
+        api.get('/profile').catch(() => ({ data: {} })),
+      ]);
+      const settings = settingsRes?.data || {};
+      const profile = profileRes?.data?.profile || profileRes?.data?.data || profileRes?.data || {};
+      return {
+        name: settings?.workshopName || profile?.business_name || profile?.name || 'الورشة',
+        address: settings?.workshopAddress || profile?.address || '',
+        phone: settings?.workshopPhone || profile?.phone || profile?.phone_number || '',
+      };
+    } catch {
+      return {
+        name: 'الورشة',
+        address: '',
+        phone: '',
+      };
+    }
+  };
+
+  const printCollectionReceipt = async ({ customer, amount, operationId, date }) => {
+    const workshop = await loadWorkshopPrintInfo();
     const win = window.open('', '_blank', 'noopener,noreferrer');
     if (!win) return;
     const html = `
@@ -276,17 +299,42 @@ const Customers = () => {
             h1 { margin: 0 0 16px; font-size: 22px; }
             p { margin: 8px 0; font-size: 14px; }
             .amount { font-size: 24px; font-weight: 700; color: #0369a1; }
+            table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+            th, td { border: 1px solid #e2e8f0; padding: 8px; font-size: 12px; text-align: center; }
+            th { background: #f8fafc; }
           </style>
         </head>
         <body>
           <div class="card">
             <h1>إيصال دفع</h1>
+            <p>الورشة: <strong>${workshop?.name || '-'}</strong></p>
+            <p>هاتف الورشة: <strong>${workshop?.phone || '-'}</strong></p>
+            <p>عنوان الورشة: <strong>${workshop?.address || '-'}</strong></p>
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:12px 0;" />
             <p>العميل: <strong>${customer?.name || '-'}</strong></p>
             <p>رقم الجوال: <strong>${customer?.phone || '-'}</strong></p>
             <p>رقم العملية: <strong>${operationId || '-'}</strong></p>
             <p>التاريخ: <strong>${date || new Date().toLocaleDateString('ar-SA')}</strong></p>
             <p>المبلغ:</p>
             <p class="amount">${Number(amount || 0).toLocaleString('ar-SA')} ر.س</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>البند</th>
+                  <th>الكمية</th>
+                  <th>السعر</th>
+                  <th>الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>تسديد ذمة عميل (آجل)</td>
+                  <td>1</td>
+                  <td>${Number(amount || 0).toLocaleString('ar-SA')}</td>
+                  <td>${Number(amount || 0).toLocaleString('ar-SA')}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <script>window.print();</script>
         </body>
@@ -335,7 +383,7 @@ const Customers = () => {
       await fetchCustomers();
 
       if (collectionModal.issueReceipt) {
-        printCollectionReceipt({
+        await printCollectionReceipt({
           customer,
           amount,
           operationId: response?.data?.id,

@@ -1,0 +1,85 @@
+{
+  "summary": "Frontend testing for NewVehicle smart plate search with Arabic/English digit normalization. Found 1 bug: single-character plate search doesn't show results due to showCustomerResults condition. All other features working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "NewVehicle.jsx",
+        "issue": "Single-character plate search ('0', 'ا') doesn't show results dropdown",
+        "selector": "[data-testid='new-vehicle-customer-search-input']",
+        "priority": "MEDIUM",
+        "root_cause": "Line 152-154: showCustomerResults requires customerSearch.length >= 2, but allowSingleCharacterPlateSearch (line 125) is for q.length === 1. These conditions conflict.",
+        "fix": "Update line 152-154 to: setShowCustomerResults((customerSearch.length >= 2 || (customerSearch.length === 1 && customerResults.length > 0)) && customerResults.length > 0)"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "single_char_plate_search_0": {
+      "status": "FAIL",
+      "details": "Search '0' returns no dropdown due to showCustomerResults condition requiring length >= 2"
+    },
+    "partial_plate_search_000": {
+      "status": "PASS",
+      "details": "Search '000' returns 6 results"
+    },
+    "full_plate_search_0000": {
+      "status": "PASS",
+      "details": "Search '0000' returns 4 results with plate displayed (🚘 0000)"
+    },
+    "arabic_digits_search": {
+      "status": "PASS",
+      "details": "Search '٠٠٠' (Arabic zeros) returns 6 results - normalizeArabicDigits working correctly"
+    },
+    "regression_name_search": {
+      "status": "PASS",
+      "details": "Search 'محمد' returns 8 results"
+    },
+    "regression_phone_search": {
+      "status": "PASS",
+      "details": "Search '055' returns 8 results"
+    },
+    "customer_selection": {
+      "status": "PASS",
+      "details": "Clicking result populates customer fields and shows 'عميل مسجل' badge"
+    },
+    "results_display_plate": {
+      "status": "PASS",
+      "details": "Results show plate icon (🚘) when customer has plate data"
+    },
+    "debounce_and_cache": {
+      "status": "PASS",
+      "details": "220ms debounce working, local cache + remote archiveSearch fallback active"
+    }
+  },
+  "code_review": {
+    "normalizeArabicDigits": "Line 74 - Correctly converts Arabic/Persian digits (٠-٩, ۰-۹) to English (0-9)",
+    "normalizePlateCanonical": "Lines 76-91 - Transliterates Arabic letters to English equivalents for matching",
+    "allowSingleCharacterPlateSearch": "Line 125 - Logic exists but blocked by showCustomerResults condition",
+    "showCustomerResults_bug": "Lines 152-154 - Requires length >= 2, blocking single-char plate searches"
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix showCustomerResults condition (line 152-154) to allow single-character plate searches when results exist"
+  ],
+  "critical_code_review_comments": [
+    "BUG: allowSingleCharacterPlateSearch (line 125) is implemented but blocked by showCustomerResults condition (line 152-154) which requires customerSearch.length >= 2"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "88% (7/8 tests passed)"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "not required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "NewVehicle smart plate search tested. Arabic digit normalization (٠٠٠→000) working. Single-char plate search has bug - showCustomerResults blocks it. Fix needed in line 152-154."
+}

@@ -70,7 +70,27 @@ const NewVehicle = () => {
   };
 
   const normalizeSearchString = (value) => String(value || '').toLowerCase().trim();
-  const normalizePlateSearch = (value) => String(value || '').toLowerCase().replace(/\s|-/g, '').trim();
+
+  const normalizeArabicDigits = (value) => String(value || '').replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+
+  const normalizePlateCanonical = (value) => {
+    const transliterationMap = {
+      ا: 'a', أ: 'a', إ: 'a', آ: 'a', ع: 'a',
+      ب: 'b', ت: 't', ث: 'th', ج: 'j', ح: 'h', خ: 'kh',
+      د: 'd', ذ: 'dh', ر: 'r', ز: 'z', س: 's', ش: 'sh',
+      ص: 's', ض: 'd', ط: 't', ظ: 'z', غ: 'gh',
+      ف: 'f', ق: 'q', ك: 'k', ل: 'l', م: 'm', ن: 'n',
+      ه: 'h', ة: 'h', و: 'w', ي: 'y', ى: 'y',
+      p: 'p', v: 'v', g: 'g',
+    };
+    const cleaned = normalizeArabicDigits(value)
+      .toLowerCase()
+      .replace(/\s|-/g, '')
+      .replace(/[^\u0600-\u06FF0-9a-z]/g, '');
+    return Array.from(cleaned).map((char) => transliterationMap[char] || char).join('');
+  };
+
+  const normalizePlateSearch = (value) => normalizePlateCanonical(value);
   const readCustomerPlate = (customer) => {
     const candidates = [
       customer?.vehiclePlate,
@@ -92,6 +112,7 @@ const NewVehicle = () => {
         fileNumber: normalizeSearchString(customer?.fileNumber),
         plateRaw: plate,
         plate: normalizePlateSearch(plate),
+        plateCanonical: normalizePlateCanonical(plate),
       };
     });
   }, [customerDirectory]);
@@ -99,13 +120,17 @@ const NewVehicle = () => {
   const customerResults = useMemo(() => {
     const q = normalizeSearchString(debouncedCustomerSearch);
     const qPlate = normalizePlateSearch(debouncedCustomerSearch);
-    if (!q || q.length < 2) return [];
+    const qPlateCanonical = normalizePlateCanonical(debouncedCustomerSearch);
+    if (!q) return [];
+    const allowSingleCharacterPlateSearch = q.length === 1;
 
     const localMatches = customerSearchIndex.filter((entry) => (
-      entry.name.includes(q)
-      || entry.phone.includes(debouncedCustomerSearch)
-      || entry.fileNumber.includes(q)
+      ((q.length >= 2) && entry.name.includes(q))
+      || ((q.length >= 2) && entry.phone.includes(normalizeArabicDigits(debouncedCustomerSearch)))
+      || ((q.length >= 2) && entry.fileNumber.includes(q))
       || (qPlate && entry.plate.includes(qPlate))
+      || (qPlateCanonical && entry.plateCanonical.includes(qPlateCanonical))
+      || (allowSingleCharacterPlateSearch && (entry.plate.startsWith(qPlate) || entry.plateCanonical.startsWith(qPlateCanonical)))
     ));
 
     const combined = [];
@@ -145,7 +170,7 @@ const NewVehicle = () => {
   useEffect(() => {
     let active = true;
     const query = String(debouncedCustomerSearch || '').trim();
-    if (query.length < 2) {
+    if (query.length < 1) {
       setRemoteCustomerResults([]);
       return () => { active = false; };
     }

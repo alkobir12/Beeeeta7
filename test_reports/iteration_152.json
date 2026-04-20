@@ -1,0 +1,125 @@
+{
+  "summary": "Frontend testing for NewVehicle plate search and ComprehensiveFinancial net income card. Both features have critical issues: 1) NewVehicle search dropdown not appearing despite data being available via API (116 customers, 83 vehicles). 2) ComprehensiveFinancial showing all zeros for net income, cash/bank revenue, and account balances 1101/1102 despite API returning non-zero values (Net Income: 10,649.5 SAR, Cash 1101: 14,989 SAR, Bank 1102: 3,346 SAR).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "NewVehicle",
+        "issue": "Customer search dropdown not appearing when typing in search box. Tested with: '0', '0000', 'ابو خالد', '٠٠٠'. No dropdown appears despite API returning 116 customers and 83 vehicles.",
+        "selector": "[data-testid='new-vehicle-customer-search-input']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "ComprehensiveFinancial",
+        "issue": "Net income card showing all zeros. API returns: net_income=10,649.5, revenue=19,161, expenses=8,511.5. UI shows: 0 SAR for all values.",
+        "selector": "[data-testid='financial-headline-net-income']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "ComprehensiveFinancial",
+        "issue": "Cash/Bank revenue in subtitle showing zeros. API returns cash account 1101=14,989 SAR, bank account 1102=3,346 SAR. UI shows: 0 SAR for both.",
+        "selector": "[data-testid='financial-headline-net-income-subtitle']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "ComprehensiveFinancial",
+        "issue": "Payment method breakdown (نقد/بنك/آجل) in expanded details showing all zeros despite API having data.",
+        "selector": "[data-testid='financial-headline-net-income-details']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "ComprehensiveFinancial",
+        "issue": "Account balances 1101 (النقد) and 1102 (البنك) showing zeros in expanded details. API shows 1101=14,989 SAR, 1102=3,346 SAR.",
+        "selector": "[data-testid='financial-headline-net-income-details']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "NewVehicle customer search",
+        "issue": "Search input accepts text but dropdown with results never appears. customerDirectory and vehicleDirectory may not be loading into React state correctly.",
+        "affected_selectors": [".absolute.z-10.w-full.bg-white", "[data-testid^='new-vehicle-customer-search-result']"]
+      },
+      {
+        "flow": "ComprehensiveFinancial data display",
+        "issue": "API calls succeed (verified via curl) but data not rendering in UI. Possible issue with React Query data unwrapping or state management.",
+        "affected_selectors": ["[data-testid='financial-headline-net-income']", "[data-testid='financial-headline-net-income-subtitle']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_results": {
+    "new_vehicle_single_char_search_0": {
+      "status": "FAIL",
+      "details": "Search '0' - no dropdown appeared"
+    },
+    "new_vehicle_plate_search_0000": {
+      "status": "FAIL",
+      "details": "Search '0000' - no dropdown appeared (customer 'ابو خالد الكبير' has plate '0000' in DB)"
+    },
+    "new_vehicle_name_search": {
+      "status": "FAIL",
+      "details": "Search 'ابو خالد' - no dropdown appeared"
+    },
+    "new_vehicle_arabic_digits_search": {
+      "status": "NOT_TESTED",
+      "details": "Could not test as dropdown never appears"
+    },
+    "financial_net_income_value": {
+      "status": "FAIL",
+      "details": "Shows 0 SAR, expected ~10,649.5 SAR from API"
+    },
+    "financial_cash_bank_revenue": {
+      "status": "FAIL",
+      "details": "Shows 0 SAR for both cash and bank revenue"
+    },
+    "financial_payment_breakdown": {
+      "status": "FAIL",
+      "details": "Shows 0 SAR for نقد/بنك/آجل breakdown"
+    },
+    "financial_account_1101_balance": {
+      "status": "FAIL",
+      "details": "Shows 0 SAR, expected 14,989 SAR from API"
+    },
+    "financial_account_1102_balance": {
+      "status": "FAIL",
+      "details": "Shows 0 SAR, expected 3,346 SAR from API"
+    }
+  },
+  "api_verification": {
+    "customers_api": "PASS - Returns 116 customers",
+    "vehicles_api": "PASS - Returns 83 vehicles",
+    "finance_income_statement_api": "PASS - Returns net_income=10,649.5, revenue=19,161, expenses=8,511.5",
+    "finance_balance_sheet_api": "PASS - Returns assets=18,785 including 1101=14,989, 1102=3,346"
+  },
+  "test_report_links": [],
+  "action_items": [
+    "CRITICAL: Fix NewVehicle customer search dropdown - data loads via API but dropdown never appears. Check customerDirectory/vehicleDirectory state loading and showCustomerResults condition.",
+    "CRITICAL: Fix ComprehensiveFinancial data display - API returns correct values but UI shows all zeros. Check React Query data unwrapping (unwrapApiData function) and state binding.",
+    "Verify workshopId is being passed correctly to finance API calls",
+    "Check if incomeStatementQuery.data and balanceSheetQuery.data are being populated correctly"
+  ],
+  "critical_code_review_comments": [
+    "NewVehicle.jsx: customerResults useMemo depends on customerSearchIndex and vehicleSearchIndex which depend on customerDirectory and vehicleDirectory. If these arrays are empty, no results will show.",
+    "NewVehicle.jsx: showCustomerResults condition at line 204-208 may be blocking dropdown display if customerResults.length is 0",
+    "ComprehensiveFinancial.jsx: incomeTotals defaults to {revenue:0, expenses:0, net_income:0} if incomeStatementQuery.data is null/undefined. Check if data is being unwrapped correctly.",
+    "ComprehensiveFinancial.jsx: salesSummary fallback at line 354-362 may be returning zeros if salesOperationsData is not loading"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "0% (0/9 tests passed)"
+  },
+  "test_credentials": {
+    "username": "مدير",
+    "password": "not required"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Both NewVehicle search and ComprehensiveFinancial have critical data display issues. APIs return correct data but UI shows zeros/no results. Previous iteration 151 reported search was working - this is a regression. Route for financial page is /accounting/comprehensive not /comprehensive-financial.",
+  "rca_of_the_issue": "Root cause appears to be React state not being populated with API data. For NewVehicle: customerDirectory and vehicleDirectory arrays may be empty despite API returning data. For ComprehensiveFinancial: incomeStatementQuery.data and balanceSheetQuery.data may not be unwrapping correctly. Both issues suggest a data flow problem between API response and React state."
+}

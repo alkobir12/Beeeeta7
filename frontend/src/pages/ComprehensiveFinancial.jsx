@@ -478,13 +478,38 @@ export default function ComprehensiveFinancial() {
     rows.forEach((row) => {
       const method = normalizePaymentMethod(row?.operation_payment_method);
       const amount = Number(row?.credit || 0);
-      if (method === 'cash') summary.cash += amount;
-      else if (method === 'bank') summary.bank += amount;
+      const cashComponent = Number(row?.cash_component || row?.cashComponent || 0);
+      const bankComponent = Number(row?.bank_component || row?.bankComponent || 0);
+      if (method === 'cash') summary.cash += amount || cashComponent;
+      else if (method === 'bank') summary.bank += amount || bankComponent;
       else if (method === 'credit') summary.credit += amount;
-      else summary.unknown += amount;
+      else {
+        summary.cash += cashComponent;
+        summary.bank += bankComponent;
+        const residual = Math.max(0, amount - cashComponent - bankComponent);
+        summary.credit += residual;
+        summary.unknown += amount;
+      }
     });
+
+    if ((summary.cash + summary.bank + summary.credit) <= 0) {
+      summary.cash = Number(salesSummary.operations_cash_total || salesSummary.total_cash_component || 0);
+      summary.bank = Number(salesSummary.operations_bank_total || salesSummary.total_bank_component || 0);
+      summary.credit = Number(salesSummary.operations_credit_total || 0);
+    }
+
     return summary;
-  }, [salesOperationsData]);
+  }, [salesOperationsData, salesSummary]);
+
+  const normalizedCashAccountBalance = useMemo(() => {
+    if (Math.abs(cashAccountBalance) > 0.0001) return cashAccountBalance;
+    return Number(salesSummary.operations_cash_total || salesSummary.total_cash_component || 0);
+  }, [cashAccountBalance, salesSummary]);
+
+  const normalizedBankAccountBalance = useMemo(() => {
+    if (Math.abs(bankAccountBalance) > 0.0001) return bankAccountBalance;
+    return Number(salesSummary.operations_bank_total || salesSummary.total_bank_component || 0);
+  }, [bankAccountBalance, salesSummary]);
 
   const topCards = [
     {
@@ -499,8 +524,8 @@ export default function ComprehensiveFinancial() {
         `إجمالي إيراد النقد: ${formatCurrency(cashRevenueTotal)}`,
         `إجمالي إيراد البنك/البطاقات: ${formatCurrency(bankRevenueTotal)}`,
         `تفصيل طرق الدفع - نقد: ${formatCurrency(salesPaymentBreakdown.cash)} • بنك/بطاقة: ${formatCurrency(salesPaymentBreakdown.bank)} • آجل: ${formatCurrency(salesPaymentBreakdown.credit)}`,
-        `رصيد حساب النقد (1101): ${formatCurrency(cashAccountBalance)}`,
-        `رصيد حساب البنك (1102): ${formatCurrency(bankAccountBalance)}`,
+        `رصيد حساب النقد (1101): ${formatCurrency(normalizedCashAccountBalance)}`,
+        `رصيد حساب البنك (1102): ${formatCurrency(normalizedBankAccountBalance)}`,
         `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
       ],
       testId: 'financial-headline-net-income',

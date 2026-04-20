@@ -25,6 +25,7 @@ const NewVehicle = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [debouncedCustomerSearch, setDebouncedCustomerSearch] = useState('');
   const [customerDirectory, setCustomerDirectory] = useState([]);
+  const [vehicleDirectory, setVehicleDirectory] = useState([]);
   const [remoteCustomerResults, setRemoteCustomerResults] = useState([]);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
   const [existingCustomerId, setExistingCustomerId] = useState(null);
@@ -52,10 +53,11 @@ const NewVehicle = () => {
   // Fetch Services & Technicians
   const fetchData = async () => {
     try {
-      const [servicesRes, techniciansRes, customersRes] = await Promise.allSettled([
+      const [servicesRes, techniciansRes, customersRes, vehiclesRes] = await Promise.allSettled([
         serviceAPI.getAll(),
         technicianAPI.getAll(),
         customerAPI.getAll(),
+        vehicleAPI.getAll(),
       ]);
       if (servicesRes.status === 'fulfilled') {
         setServices(Array.isArray(servicesRes.value?.data) ? servicesRes.value.data : []);
@@ -65,6 +67,9 @@ const NewVehicle = () => {
       }
       if (customersRes.status === 'fulfilled') {
         setCustomerDirectory(Array.isArray(customersRes.value?.data) ? customersRes.value.data : []);
+      }
+      if (vehiclesRes.status === 'fulfilled') {
+        setVehicleDirectory(Array.isArray(vehiclesRes.value?.data) ? vehiclesRes.value.data : []);
       }
     } catch (error) { console.error(error); }
   };
@@ -117,6 +122,20 @@ const NewVehicle = () => {
     });
   }, [customerDirectory]);
 
+  const vehicleSearchIndex = useMemo(() => {
+    return (Array.isArray(vehicleDirectory) ? vehicleDirectory : []).map((vehicle, idx) => {
+      const plateRaw = String(vehicle?.plateNumber || vehicle?.plate || vehicle?.vehiclePlate || '').trim();
+      return {
+        id: vehicle?.id || `vehicle-${idx}`,
+        customerName: String(vehicle?.customerName || '').trim(),
+        customerPhone: String(vehicle?.customerPhone || '').trim(),
+        plateRaw,
+        plate: normalizePlateSearch(plateRaw),
+        plateCanonical: normalizePlateCanonical(plateRaw),
+      };
+    });
+  }, [vehicleDirectory]);
+
   const customerResults = useMemo(() => {
     const q = normalizeSearchString(debouncedCustomerSearch);
     const qPlate = normalizePlateSearch(debouncedCustomerSearch);
@@ -135,6 +154,38 @@ const NewVehicle = () => {
 
     const combined = [];
     const seen = new Set();
+
+    const customerByName = new Map(
+      customerSearchIndex
+        .filter((entry) => entry.name)
+        .map((entry) => [entry.name, entry.customer])
+    );
+
+    const vehiclePlateMatches = vehicleSearchIndex
+      .filter((entry) => (
+        (qPlate && entry.plate.includes(qPlate))
+        || (qPlateCanonical && entry.plateCanonical.includes(qPlateCanonical))
+        || (allowSingleCharacterPlateSearch && (entry.plate.startsWith(qPlate) || entry.plateCanonical.startsWith(qPlateCanonical)))
+      ))
+      .slice(0, 12)
+      .map((entry) => {
+        const fromCustomer = customerByName.get(normalizeSearchString(entry.customerName));
+        if (fromCustomer) {
+          return {
+            ...fromCustomer,
+            vehiclePlate: fromCustomer.vehiclePlate || entry.plateRaw,
+          };
+        }
+        return {
+          id: `vehicle-match-${entry.id}`,
+          name: entry.customerName || 'عميل',
+          phone: entry.customerPhone || '',
+          email: '',
+          vehiclePlate: entry.plateRaw,
+          fileNumber: '',
+        };
+      });
+
     const pushUnique = (customer) => {
       if (!customer) return;
       const key = String(customer.id || customer.phone || customer.name || Math.random());
@@ -144,10 +195,11 @@ const NewVehicle = () => {
     };
 
     localMatches.forEach((entry) => pushUnique(entry.customer));
+    vehiclePlateMatches.forEach((entry) => pushUnique(entry));
     (remoteCustomerResults || []).forEach((entry) => pushUnique(entry));
 
     return combined.slice(0, 8);
-  }, [customerSearchIndex, debouncedCustomerSearch, remoteCustomerResults]);
+  }, [customerSearchIndex, vehicleSearchIndex, debouncedCustomerSearch, remoteCustomerResults]);
 
   useEffect(() => {
     const q = String(customerSearch || '').trim();

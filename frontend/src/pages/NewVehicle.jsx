@@ -150,7 +150,9 @@ const NewVehicle = () => {
   }, [customerSearchIndex, debouncedCustomerSearch, remoteCustomerResults]);
 
   useEffect(() => {
-    setShowCustomerResults(customerSearch.length >= 2 && customerResults.length > 0);
+    const q = String(customerSearch || '').trim();
+    const canShowByLength = q.length >= 2 || (q.length === 1 && customerResults.length > 0);
+    setShowCustomerResults(canShowByLength && customerResults.length > 0);
   }, [customerSearch, customerResults]);
 
   useEffect(() => {

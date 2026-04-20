@@ -17,6 +17,28 @@
 
 ## What's Been Implemented
 
+### توحيد/تحقق مسارات الطباعة عبر الصفحات (20 Apr 2026)
+- تم التحقق الشامل من أزرار الطباعة الأساسية في preview عبر الصفحات:
+  - `VehicleDetails`:
+    - طباعة الزيارة من `VisitCard`.
+    - قائمة الطباعة من الهيدر (فاتورة / عرض سعر / تشخيص).
+  - `Operations`:
+    - طباعة بطاقة العملية (`OperationCard`).
+  - `Customers`:
+    - تحسين إيصال التحصيل المطبوع ليشمل:
+      - بيانات الورشة (الاسم/الهاتف/العنوان) من `/settings` و`/profile`.
+      - بيانات العميل.
+      - جدول بند واضح (تسديد ذمة عميل).
+- تم تعديل `printCollectionReceipt` ليصبح async ويحمّل بيانات الورشة قبل الطباعة.
+
+### Testing
+- تقرير testing agent: `/app/test_reports/iteration_148.json`
+  - Frontend: **100% PASS**
+- نتائج موثقة:
+  - كل أزرار الطباعة المذكورة تعمل.
+  - معاينات الطباعة غير فارغة وتحتوي بيانات الورشة/العميل/البنود.
+  - لا توجد أخطاء Console مانعة أثناء الطباعة.
+
 ### Bug Fix: VehicleDetails runtime error (openQuickPrintDialog) — 20 Apr 2026
 - تم إصلاح خطأ runtime في صفحة ملف المركبة:
   - الخطأ: `Can't find variable: openQuickPrintDialog` عند الضغط على زر "طباعة الزيارة" داخل VisitCard.

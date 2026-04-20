@@ -641,6 +641,7 @@ const VisitCard = ({
   canDelete = false,
   archiveMode = false,
   onAuditEvent,
+  onOpenQuickPrintDialog,
 }) => {
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
@@ -1566,7 +1567,7 @@ const VisitCard = ({
                 const vId = visit.id;
                 const st = (visit.status || '').toLowerCase();
                 const type = st === 'quotation' ? 'quote' : st === 'diagnosis' ? 'diagnosis' : 'invoice';
-                openQuickPrintDialog({ type, visitId: vId });
+                onOpenQuickPrintDialog?.({ type, visitId: vId });
               }}
               className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
               style={{
@@ -3253,6 +3254,7 @@ const VehicleDetails = () => {
                       canDelete={canDeleteVisit}
                       archiveMode={isArchiveSource}
                       onAuditEvent={handleArchiveAuditEvent}
+                      onOpenQuickPrintDialog={openQuickPrintDialog}
                     />
                   );
                 })

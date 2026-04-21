@@ -62,30 +62,6 @@ frontend/node_modules/.cache/default-development/45.pack
 frontend/node_modules/.cache/default-development/46.pack
 frontend/node_modules/.cache/default-development/8.pack_
 frontend/node_modules/.cache/default-development/29.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
 frontend/node_modules/.cache/default-development/47.pack
 frontend/node_modules/.cache/default-development/49.pack
 frontend/node_modules/.cache/default-development/53.pack
@@ -103,41 +79,10 @@ frontend/node_modules/.cache/default-development/66.pack
 frontend/node_modules/.cache/default-development/65.pack
 frontend/node_modules/.cache/default-development/67.pack
 frontend/node_modules/.cache/default-development/68.pack
--e 
-# Environment and credential files
-.env
-.env.*
-*.env
-credentials.json
-*.pem
-*.key
-.credentials
--e 
-# Environment and credential files
-.env
-.env.*
-*.env
-credentials.json
-*.pem
-*.key
-.credentials
 frontend/node_modules/.cache/default-development/70.pack
 frontend/node_modules/.cache/default-development/71.pack
 frontend/node_modules/.cache/default-development/73.pack
--e 
-# Environment and credential files
-.env
-.env.*
-*.env
-credentials.json
-*.pem
-*.key
-.credentials
--e 
-# Environment and credential files
-.env
-.env.*
-*.env
+# Credential files (keep secrets out of git)
 credentials.json
 *.pem
 *.key

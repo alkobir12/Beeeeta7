@@ -125,6 +125,7 @@ export default function ComprehensiveFinancial() {
   const [trialSearch, setTrialSearch] = useState('');
   const [isReclassifyingPayments, setIsReclassifyingPayments] = useState(false);
   const [lastReclassifyResult, setLastReclassifyResult] = useState(null);
+  const [directCoreFallback, setDirectCoreFallback] = useState({ income: null, balance: null });
 
   const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
   const shouldLoadCashFlow = activeTab === 'cashflow';
@@ -137,7 +138,9 @@ export default function ComprehensiveFinancial() {
       return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
-    placeholderData: (previousData) => previousData,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
     retry: 2,
   });
 
@@ -148,7 +151,9 @@ export default function ComprehensiveFinancial() {
       return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
-    placeholderData: (previousData) => previousData,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
     retry: 2,
   });
 
@@ -265,11 +270,45 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
-  const coreLoading = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some(
+  useEffect(() => {
+    let cancelled = false;
+
+    const runDirectCoreFallback = async () => {
+      if (!workshopId) {
+        if (!cancelled) setDirectCoreFallback({ income: null, balance: null });
+        return;
+      }
+
+      try {
+        const [incomeRes, balanceRes] = await Promise.all([
+          financeAPI.getIncomeStatement(commonParams),
+          financeAPI.getBalanceSheet({ workshop_id: workshopId, as_of_date: endDate }),
+        ]);
+
+        const income = incomeRes?.data?.success === false ? null : unwrapApiData(incomeRes, null);
+        const balance = balanceRes?.data?.success === false ? null : unwrapApiData(balanceRes, null);
+
+        if (!cancelled) {
+          setDirectCoreFallback({ income, balance });
+        }
+      } catch (_error) {
+        // keep last successful fallback snapshot
+      }
+    };
+
+    runDirectCoreFallback();
+    return () => {
+      cancelled = true;
+    };
+  }, [workshopId, startDate, endDate]);
+
+  const hasDirectCoreFallback = Boolean(directCoreFallback?.income && directCoreFallback?.balance);
+
+  const coreLoading = Boolean(workshopId) && !hasDirectCoreFallback && [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isLoading && !query.data
   );
 
-  const hasCoreError = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some(
+  const hasCoreError = Boolean(workshopId) && !hasDirectCoreFallback && [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isError && !query.data
   );
 
@@ -283,9 +322,25 @@ export default function ComprehensiveFinancial() {
     bulkDeleteAuditQuery,
   ].some((query) => query.isError);
 
-  const bsTotals = balanceSheetQuery.data?.totals || { assets: 0, liabilities: 0, equity: 0 };
-  const bsDetails = balanceSheetQuery.data?.details || {};
-  const incomeTotals = incomeStatementQuery.data?.totals || { revenue: 0, expenses: 0, net_income: 0 };
+  const balanceData = (() => {
+    const queryData = balanceSheetQuery.data;
+    const totals = queryData?.totals || {};
+    const hasQueryValues = Number(totals.assets || 0) !== 0 || Number(totals.liabilities || 0) !== 0 || Number(totals.equity || 0) !== 0;
+    if (hasQueryValues) return queryData;
+    return directCoreFallback.balance || queryData || null;
+  })();
+
+  const incomeData = (() => {
+    const queryData = incomeStatementQuery.data;
+    const totals = queryData?.totals || {};
+    const hasQueryValues = Number(totals.revenue || 0) !== 0 || Number(totals.expenses || 0) !== 0 || Number(totals.net_income || 0) !== 0;
+    if (hasQueryValues) return queryData;
+    return directCoreFallback.income || queryData || null;
+  })();
+
+  const bsTotals = balanceData?.totals || { assets: 0, liabilities: 0, equity: 0 };
+  const bsDetails = balanceData?.details || {};
+  const incomeTotals = incomeData?.totals || { revenue: 0, expenses: 0, net_income: 0 };
   const cashFlow = cashFlowQuery.data || {};
   const trialBalance = trialBalanceQuery.data || { accounts: [], totals: { total_debit: 0, total_credit: 0 } };
   const budgetsData = budgetsQuery.data || { rows: [], totals: { planned: 0, actual: 0, variance: 0 } };
@@ -317,8 +372,8 @@ export default function ComprehensiveFinancial() {
     return map;
   }, [chartAccounts]);
 
-  const revenueEntries = Object.entries(incomeStatementQuery.data?.details?.revenue_by_account || {});
-  const expenseEntries = Object.entries(incomeStatementQuery.data?.details?.expenses_by_account || {});
+  const revenueEntries = Object.entries(incomeData?.details?.revenue_by_account || {});
+  const expenseEntries = Object.entries(incomeData?.details?.expenses_by_account || {});
 
   const parseEntryAmount = (entryValue) => {
     if (typeof entryValue === 'number') return Number(entryValue || 0);
@@ -359,7 +414,7 @@ export default function ComprehensiveFinancial() {
   };
 
   const currentCashBalance = Number((incomeTotals.revenue || 0) - (incomeTotals.expenses || 0));
-  const salesSummary = incomeStatementQuery.data?.sales_summary || salesOperationsData?.operations?.summary || {
+  const salesSummary = incomeData?.sales_summary || salesOperationsData?.operations?.summary || {
     operations_total: 0,
     operations_count: 0,
     total_credit: 0,

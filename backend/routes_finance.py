@@ -566,41 +566,45 @@ async def get_income_statement(
         total_revenue = sum(float(v.get("amount") or 0) for v in revenue_accounts.values())
         total_expenses = sum(float(v.get("amount") or 0) for v in expense_accounts.values())
 
-        operations = _fetch_operations_for_reconciliation(
-            workshop_id=effective_workshop_id,
-            start_date=start_date,
-            end_date=end_date,
-        )
         operations_cash_total = 0.0
         operations_bank_total = 0.0
         operations_credit_total = 0.0
         operations_sales_total = 0.0
         operations_sales_count = 0
 
-        for op in operations:
-            op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
-            if op_type != "sale":
-                continue
-
-            amount = _safe_float(op.get("total"))
-            if amount <= 0:
-                continue
-
-            operations_sales_count += 1
-            operations_sales_total += amount
-
-            op_method = _normalize_payment_method(
-                op.get("payment_method") or op.get("paymentMethod") or ""
+        # لا نسمح لفشل fetch ثانوي (sales summary) بإرجاع التقرير كاملًا بصفر.
+        try:
+            operations = _fetch_operations_for_reconciliation(
+                workshop_id=effective_workshop_id,
+                start_date=start_date,
+                end_date=end_date,
             )
-            op_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
-            is_credit = op_method == "credit" or op_status in {"credit", "unpaid", "pending", "partial"}
+            for op in operations:
+                op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
+                if op_type != "sale":
+                    continue
 
-            if is_credit:
-                operations_credit_total += amount
-            elif op_method == "bank":
-                operations_bank_total += amount
-            else:
-                operations_cash_total += amount
+                amount = _safe_float(op.get("total"))
+                if amount <= 0:
+                    continue
+
+                operations_sales_count += 1
+                operations_sales_total += amount
+
+                op_method = _normalize_payment_method(
+                    op.get("payment_method") or op.get("paymentMethod") or ""
+                )
+                op_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
+                is_credit = op_method == "credit" or op_status in {"credit", "unpaid", "pending", "partial"}
+
+                if is_credit:
+                    operations_credit_total += amount
+                elif op_method == "bank":
+                    operations_bank_total += amount
+                else:
+                    operations_cash_total += amount
+        except Exception as operations_error:
+            print(f"Income statement sales summary skipped: {operations_error}")
         
         net_income = total_revenue - total_expenses
         

@@ -94,6 +94,13 @@ const unwrapApiData = (response, fallback = null) => {
   return fallback;
 };
 
+const ensureSuccessResponse = (response) => {
+  if (response?.data?.success === false) {
+    throw new Error(response?.data?.message || 'finance api returned success=false');
+  }
+  return response;
+};
+
 export default function ComprehensiveFinancial() {
   const queryClient = useQueryClient();
   const workshopId = useMemo(() => resolveWorkshopId(), []);
@@ -126,19 +133,23 @@ export default function ComprehensiveFinancial() {
   const balanceSheetQuery = useQuery({
     queryKey: ['financial-balance-sheet', workshopId, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getBalanceSheet({ workshop_id: workshopId, as_of_date: endDate });
+      const res = ensureSuccessResponse(await financeAPI.getBalanceSheet({ workshop_id: workshopId, as_of_date: endDate }));
       return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
+    placeholderData: (previousData) => previousData,
+    retry: 2,
   });
 
   const incomeStatementQuery = useQuery({
     queryKey: ['financial-income-statement', workshopId, startDate, endDate],
     queryFn: async () => {
-      const res = await financeAPI.getIncomeStatement(commonParams);
+      const res = ensureSuccessResponse(await financeAPI.getIncomeStatement(commonParams));
       return unwrapApiData(res, null);
     },
     enabled: Boolean(workshopId),
+    placeholderData: (previousData) => previousData,
+    retry: 2,
   });
 
   const cashFlowQuery = useQuery({
@@ -258,7 +269,9 @@ export default function ComprehensiveFinancial() {
     (query) => query.isLoading && !query.data
   );
 
-  const hasCoreError = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some((query) => query.isError);
+  const hasCoreError = Boolean(workshopId) && [balanceSheetQuery, incomeStatementQuery].some(
+    (query) => query.isError && !query.data
+  );
 
   const hasNonBlockingError = [
     cashFlowQuery,

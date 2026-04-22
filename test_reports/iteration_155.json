@@ -1,0 +1,89 @@
+{
+  "summary": "Tested financial dashboard stability after iteration_154 fix. Backend APIs working correctly (200 OK, correct data). Frontend has intermittent data display issue - sometimes shows correct values, sometimes shows zeros despite API returning correct data.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ComprehensiveFinancial",
+        "issue": "Intermittent data display - values show zeros despite API returning correct data. Loading state banner remains visible even after data should have loaded. Issue is not consistent - sometimes data loads correctly after 15-20 seconds, other times it never loads.",
+        "selector": "[data-testid='financial-headline-net-income']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Financial Dashboard Data Loading",
+        "issue": "React Query state management issue - API returns 200 OK with correct data but UI sometimes doesn't update. The coreLoading state remains true and data shows zeros. This appears to be a timing/caching issue with React Query.",
+        "affected_selectors": [
+          "[data-testid='financial-headline-net-income']",
+          "[data-testid='financial-headline-net-income-subtitle']",
+          "[data-testid='financial-loading-state']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_finance_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Investigate React Query caching/state management issue in ComprehensiveFinancial.jsx",
+    "The ensureSuccessResponse and hasCoreError fixes are working correctly - API errors are handled properly",
+    "The issue is that successful API responses are not always updating the UI state",
+    "Consider adding staleTime: 0 or refetchOnMount: 'always' to the useQuery options",
+    "Check if placeholderData is interfering with the data update",
+    "The subtitle correctly shows cash/bank breakdown when data loads (إيراد نقد: ١٠٠ ر.س.‏ • إيراد بنك: ٤,٥٠٠ ر.س.‏)"
+  ],
+  "critical_code_review_comments": [
+    "Backend API income-statement correctly returns sales_summary with operations_cash_total=100, operations_bank_total=4500, operations_credit_total=27406",
+    "Frontend code correctly reads salesSummary from incomeStatementQuery.data?.sales_summary",
+    "The ensureSuccessResponse function correctly throws error when success=false",
+    "The hasCoreError check correctly shows error state when API fails",
+    "The intermittent display issue suggests React Query is not always triggering re-renders when data arrives"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "50%"
+  },
+  "test_credentials": "Username: مدير, Password: not required (preview bypass)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend APIs are working correctly. The income-statement API returns sales_summary with correct payment breakdown (cash=100, bank=4500, credit=27406). Frontend sometimes displays data correctly (showing 11,300 SAR net income with cash/bank breakdown in subtitle) but other times shows zeros. The issue is intermittent and appears to be related to React Query state management. When data loads correctly, the subtitle shows: الهامش: 46.7% • إيراد نقد: ١٠٠ ر.س.‏ • إيراد بنك: ٤,٥٠٠ ر.س.‏",
+  "api_verification": {
+    "income_statement": {
+      "endpoint": "GET /api/finance/reports/income-statement",
+      "status": "WORKING",
+      "response_sample": {
+        "success": true,
+        "totals": {"revenue": 24181.0, "expenses": 12881.5, "net_income": 11299.5},
+        "sales_summary": {"operations_cash_total": 100.0, "operations_bank_total": 4500.0, "operations_credit_total": 27406.0}
+      }
+    },
+    "balance_sheet": {
+      "endpoint": "GET /api/finance/reports/balance-sheet",
+      "status": "WORKING"
+    }
+  },
+  "rca_of_the_issue": {
+    "root_cause": "React Query state management issue - the useQuery hooks are not consistently updating the UI when API data arrives",
+    "reproduction_steps": [
+      "1. Navigate to /accounting/comprehensive",
+      "2. Wait for page to load",
+      "3. Observe that values show zeros despite API returning 200 OK with correct data",
+      "4. Sometimes data loads after 15-20 seconds, sometimes it never loads",
+      "5. Clicking refresh button sometimes helps, sometimes doesn't"
+    ],
+    "potential_fixes": [
+      "Add staleTime: 0 to useQuery options to prevent stale data",
+      "Add refetchOnMount: 'always' to force refetch on component mount",
+      "Remove placeholderData option which may be interfering with updates",
+      "Add explicit refetch call after component mounts"
+    ]
+  }
+}

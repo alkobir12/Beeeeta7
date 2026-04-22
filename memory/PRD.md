@@ -17,6 +17,33 @@
 
 ## What's Been Implemented
 
+### إصلاح محوري: فصل مصادر الدخل + إنهاء مشكلة الأصفار المتقطعة في المالية (22 Apr 2026)
+- Backend (`routes_finance.py`):
+  - توسيع جلب العمليات ليشمل `payment_status/paymentStatus` أثناء بناء ملخص المبيعات.
+  - تطوير `GET /api/finance/reports/income-statement` لإرجاع `sales_summary` مباشر من العمليات:
+    - `operations_total`
+    - `operations_count`
+    - `operations_cash_total`
+    - `operations_bank_total`
+    - `operations_credit_total`
+  - منع احتساب بعض قيود `operation_payment_income` كمضاعفة عند وجود قيد أساس مرتبط بنفس `reference_id`.
+  - جعل حساب `sales_summary` غير حاجز (non-fatal): فشل الجزء الفرعي لا يُسقط التقرير كاملًا إلى أصفار.
+- Frontend (`ComprehensiveFinancial.jsx`):
+  - اعتماد `incomeData.sales_summary` كمصدر أساسي لتفصيل نقد/بنك/آجل بدل الاعتماد على summary شجري قديم غير مستقر.
+  - إضافة hardening للقراءة:
+    - `ensureSuccessResponse` لمنع تمرير استجابة `success=false` كبيانات صفرية.
+    - `directCoreFallback` (fallback مباشر) عند تعثر React Query.
+  - إصلاح LOW UX bug: بنر التحميل الأساسي لم يعد يبقى ظاهرًا بشكل دائم بعد مهلة التحميل.
+
+### Testing
+- تقارير الوكيل:
+  - `/app/test_reports/iteration_154.json` → كشف intermittent zeros.
+  - `/app/test_reports/iteration_155.json` → استمرار متقطع (قبل hardening النهائي).
+  - `/app/test_reports/iteration_156.json` → **PASS**: لا يوجد intermittent zeros، backend ثابت، subtitle نقد/بنك صحيح.
+- تحقق ذاتي إضافي:
+  - تكرار طلب `income-statement` (20 مرة) بدون أي سقوط إلى صفر.
+  - تحقق واجهة بصري (smoke) + اختفاء بنر التحميل بعد الإصلاح النهائي.
+
 ### Fix Verification: البحث باللوحة + كرت الدخل (20 Apr 2026)
 - تم معالجة السبب الجذري لعدم ظهور نتائج البحث في `NewVehicle`:
   - تحسين parsing لحمولات API (Array/Object wrappers) لضمان تعبئة `customerDirectory` و`vehicleDirectory` دائمًا.

@@ -126,6 +126,7 @@ export default function ComprehensiveFinancial() {
   const [isReclassifyingPayments, setIsReclassifyingPayments] = useState(false);
   const [lastReclassifyResult, setLastReclassifyResult] = useState(null);
   const [directCoreFallback, setDirectCoreFallback] = useState({ income: null, balance: null });
+  const [coreLoadingGraceExpired, setCoreLoadingGraceExpired] = useState(false);
 
   const commonParams = useMemo(() => ({ workshop_id: workshopId, start_date: startDate, end_date: endDate }), [workshopId, startDate, endDate]);
   const shouldLoadCashFlow = activeTab === 'cashflow';
@@ -302,13 +303,25 @@ export default function ComprehensiveFinancial() {
     };
   }, [workshopId, startDate, endDate]);
 
-  const hasDirectCoreFallback = Boolean(directCoreFallback?.income && directCoreFallback?.balance);
+  useEffect(() => {
+    setCoreLoadingGraceExpired(false);
+    const timeoutId = setTimeout(() => setCoreLoadingGraceExpired(true), 8000);
+    return () => clearTimeout(timeoutId);
+  }, [workshopId, startDate, endDate]);
 
-  const coreLoading = Boolean(workshopId) && !hasDirectCoreFallback && [balanceSheetQuery, incomeStatementQuery].some(
+  const hasDirectCoreFallback = Boolean(directCoreFallback?.income || directCoreFallback?.balance);
+  const hasAnyCoreSnapshot = Boolean(
+    balanceSheetQuery.data
+    || incomeStatementQuery.data
+    || directCoreFallback?.income
+    || directCoreFallback?.balance
+  );
+
+  const coreLoading = Boolean(workshopId) && !hasAnyCoreSnapshot && !coreLoadingGraceExpired && [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isLoading && !query.data
   );
 
-  const hasCoreError = Boolean(workshopId) && !hasDirectCoreFallback && [balanceSheetQuery, incomeStatementQuery].some(
+  const hasCoreError = Boolean(workshopId) && !hasAnyCoreSnapshot && [balanceSheetQuery, incomeStatementQuery].some(
     (query) => query.isError && !query.data
   );
 

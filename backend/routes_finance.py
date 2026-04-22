@@ -509,10 +509,27 @@ async def get_income_statement(
             include_rakan=False,
         )
 
+        references_with_base_entries = {
+            str(entry.get("reference_id") or "").strip()
+            for entry in entries
+            if str(entry.get("reference_id") or "").strip()
+            and str(entry.get("source") or "").strip().lower()
+            not in {"operation_payment", "operation_payment_income"}
+        }
+
         revenue_accounts: Dict[str, Dict[str, Any]] = {}
         expense_accounts: Dict[str, Dict[str, Any]] = {}
 
         for entry in entries:
+            entry_source = str(entry.get("source") or "").strip().lower()
+            entry_reference = str(entry.get("reference_id") or "").strip()
+            if (
+                entry_source == "operation_payment_income"
+                and entry_reference
+                and entry_reference in references_with_base_entries
+            ):
+                continue
+
             for line in entry.get("lines", []) or []:
                 normalized = _normalize_line(line, id_to_code, code_to_name)
                 if not normalized:
@@ -548,6 +565,42 @@ async def get_income_statement(
 
         total_revenue = sum(float(v.get("amount") or 0) for v in revenue_accounts.values())
         total_expenses = sum(float(v.get("amount") or 0) for v in expense_accounts.values())
+
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=effective_workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        operations_cash_total = 0.0
+        operations_bank_total = 0.0
+        operations_credit_total = 0.0
+        operations_sales_total = 0.0
+        operations_sales_count = 0
+
+        for op in operations:
+            op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
+            if op_type != "sale":
+                continue
+
+            amount = _safe_float(op.get("total"))
+            if amount <= 0:
+                continue
+
+            operations_sales_count += 1
+            operations_sales_total += amount
+
+            op_method = _normalize_payment_method(
+                op.get("payment_method") or op.get("paymentMethod") or ""
+            )
+            op_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
+            is_credit = op_method == "credit" or op_status in {"credit", "unpaid", "pending", "partial"}
+
+            if is_credit:
+                operations_credit_total += amount
+            elif op_method == "bank":
+                operations_bank_total += amount
+            else:
+                operations_cash_total += amount
         
         net_income = total_revenue - total_expenses
         
@@ -559,6 +612,13 @@ async def get_income_statement(
                     "revenue": round(total_revenue, 2),
                     "expenses": round(total_expenses, 2),
                     "net_income": round(net_income, 2),
+                },
+                "sales_summary": {
+                    "operations_total": round(operations_sales_total, 2),
+                    "operations_count": int(operations_sales_count),
+                    "operations_cash_total": round(operations_cash_total, 2),
+                    "operations_bank_total": round(operations_bank_total, 2),
+                    "operations_credit_total": round(operations_credit_total, 2),
                 },
                 "details": {
                     "revenue_by_account": revenue_accounts,
@@ -575,6 +635,13 @@ async def get_income_statement(
             "data": {
                 "period": {"start_date": start_date, "end_date": end_date},
                 "totals": {"revenue": 0, "expenses": 0, "net_income": 0},
+                "sales_summary": {
+                    "operations_total": 0,
+                    "operations_count": 0,
+                    "operations_cash_total": 0,
+                    "operations_bank_total": 0,
+                    "operations_credit_total": 0,
+                },
                 "details": {"revenue_by_account": {}, "expenses_by_account": {}},
             },
         }
@@ -859,7 +926,7 @@ def _fetch_operations_for_reconciliation(
 
     def _run(scoped: bool):
         preferred_select = (
-            "id,type,total,payment_method,scope,source,business_unit,op_date,workshop_id,notes"
+            "id,type,total,payment_method,paymentMethod,payment_status,paymentStatus,scope,source,business_unit,op_date,workshop_id,notes"
         )
         try:
             return _build(scoped, preferred_select).execute().data or []
@@ -867,7 +934,7 @@ def _fetch_operations_for_reconciliation(
             if "does not exist" not in str(schema_error).lower():
                 raise
             try:
-                fallback_select = "id,type,total,payment_method,source,op_date,workshop_id,notes"
+                fallback_select = "id,type,total,payment_method,paymentMethod,payment_status,paymentStatus,source,op_date,workshop_id,notes"
                 return _build(scoped, fallback_select).execute().data or []
             except Exception:
                 return _build(scoped, "*").execute().data or []

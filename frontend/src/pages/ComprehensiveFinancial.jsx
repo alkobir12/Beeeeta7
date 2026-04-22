@@ -346,7 +346,9 @@ export default function ComprehensiveFinancial() {
   };
 
   const currentCashBalance = Number((incomeTotals.revenue || 0) - (incomeTotals.expenses || 0));
-  const salesSummary = salesOperationsData?.operations?.summary || {
+  const salesSummary = incomeStatementQuery.data?.sales_summary || salesOperationsData?.operations?.summary || {
+    operations_total: 0,
+    operations_count: 0,
     total_credit: 0,
     total_cash_component: 0,
     total_bank_component: 0,
@@ -358,13 +360,13 @@ export default function ComprehensiveFinancial() {
 
   const cashRevenueTotal = Number(
     salesSummary.operations_cash_total
-    || salesSummary.total_cash_component
-    || 0
+    ?? salesSummary.total_cash_component
+    ?? 0
   );
   const bankRevenueTotal = Number(
     salesSummary.operations_bank_total
-    || salesSummary.total_bank_component
-    || 0
+    ?? salesSummary.total_bank_component
+    ?? 0
   );
 
   const profitMargin = incomeTotals.revenue > 0 ? (incomeTotals.net_income / incomeTotals.revenue) * 100 : 0;
@@ -467,34 +469,12 @@ export default function ComprehensiveFinancial() {
     }, 0);
   }, [assetAccountEntries, accountNameMap]);
 
-  const salesPaymentBreakdown = useMemo(() => {
-    const rows = salesOperationsData?.operations?.items || [];
-    const summary = { cash: 0, bank: 0, credit: 0, unknown: 0 };
-    rows.forEach((row) => {
-      const method = normalizePaymentMethod(row?.operation_payment_method);
-      const amount = Number(row?.credit || 0);
-      const cashComponent = Number(row?.cash_component || row?.cashComponent || 0);
-      const bankComponent = Number(row?.bank_component || row?.bankComponent || 0);
-      if (method === 'cash') summary.cash += amount || cashComponent;
-      else if (method === 'bank') summary.bank += amount || bankComponent;
-      else if (method === 'credit') summary.credit += amount;
-      else {
-        summary.cash += cashComponent;
-        summary.bank += bankComponent;
-        const residual = Math.max(0, amount - cashComponent - bankComponent);
-        summary.credit += residual;
-        summary.unknown += amount;
-      }
-    });
-
-    if ((summary.cash + summary.bank + summary.credit) <= 0) {
-      summary.cash = Number(salesSummary.operations_cash_total || salesSummary.total_cash_component || 0);
-      summary.bank = Number(salesSummary.operations_bank_total || salesSummary.total_bank_component || 0);
-      summary.credit = Number(salesSummary.operations_credit_total || 0);
-    }
-
-    return summary;
-  }, [salesOperationsData, salesSummary]);
+  const salesPaymentBreakdown = useMemo(() => ({
+    cash: Number(salesSummary.operations_cash_total ?? salesSummary.total_cash_component ?? 0),
+    bank: Number(salesSummary.operations_bank_total ?? salesSummary.total_bank_component ?? 0),
+    credit: Number(salesSummary.operations_credit_total ?? 0),
+    unknown: 0,
+  }), [salesSummary]);
 
   const normalizedCashAccountBalance = useMemo(() => {
     if (Math.abs(cashAccountBalance) > 0.0001) return cashAccountBalance;
@@ -893,7 +873,7 @@ export default function ComprehensiveFinancial() {
                   <p className="text-[11px] text-cyan-200/80">يعرض البيع الكلي، المحصل نقدًا، والذمم غير المسددة.</p>
                 </div>
                 <div className="text-xs text-cyan-100 space-y-1 text-left" data-testid="financial-sales-operations-summary">
-                  <p>إجمالي البيع: <span className="font-semibold">{formatCurrency(salesSummary.total_credit || 0)}</span></p>
+                  <p>إجمالي البيع: <span className="font-semibold">{formatCurrency(salesSummary.operations_total || salesSummary.total_credit || 0)}</span></p>
                   <p>المحصل نقدًا: <span className="font-semibold">{formatCurrency(salesSummary.operations_cash_total || 0)}</span></p>
                   <p>المحصل بنك/بطاقة: <span className="font-semibold">{formatCurrency(salesSummary.operations_bank_total || 0)}</span></p>
                   <p>آجل غير مسدد: <span className="font-semibold">{formatCurrency(salesSummary.operations_credit_total || 0)}</span></p>

@@ -2125,6 +2125,14 @@ async def get_chart_of_accounts(
                 "name_ar": "حساب العملاء (ذمم)",
                 "type": "asset",
                 "balance": 0,
+            },
+            {
+                "id": "1104",
+                "code": "1104",
+                "name": "POS",
+                "name_ar": "نقاط بيع",
+                "type": "asset",
+                "balance": 0,
             }
         ]
         existing_codes = {acc.get("code") for acc in results}
@@ -3642,6 +3650,234 @@ async def reclassify_payment_accounts(
                 "updated": 0,
                 "changes": [],
                 "applied": apply_changes,
+            },
+        }
+
+
+@router.post("/reports/apply-bank-revenue-policy")
+async def apply_bank_revenue_policy(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    apply_changes: bool = Query(True),
+):
+    """
+    سياسة مالك الورشة:
+    1) تحويل جميع الحركات على 1101 -> 1102 (لتصفير الكاش تاريخيًا)
+    2) تحويل عمليات البيع/الخدمة النقدية إلى bank في جدول operations
+    3) التأكد من وجود حساب نقاط بيع 1104 كحساب فرعي تحت البنك 1102
+    """
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+    start_date = start_date or "2000-01-01"
+
+    cash_accounts = {"1101", "acc-1101"}
+    bank_account_by_style = {
+        "1101": "1102",
+        "acc-1101": "acc-1102",
+    }
+    bank_like_names = {"1101", "acc-1101", "النقد", "كاش", "cash", ""}
+
+    async def _ensure_pos_under_bank() -> Dict[str, Any]:
+        result = {"created": False, "updated": False, "account": None}
+        try:
+            if supabase:
+                rows = supabase.table("accounts").select("id,code,name,parent_id,type,is_system").execute().data or []
+                by_code = {str(r.get("code") or "").strip(): r for r in rows}
+                bank = by_code.get("1102")
+                current_assets = by_code.get("1100")
+                pos = by_code.get("1104")
+
+                target_parent = (bank or {}).get("id") or (current_assets or {}).get("id")
+                if not pos and apply_changes:
+                    new_row = {
+                        "id": f"acc-{uuid.uuid4().hex[:12]}",
+                        "code": "1104",
+                        "name": "نقاط بيع",
+                        "name_en": "POS",
+                        "type": "asset",
+                        "parent_id": target_parent,
+                        "is_system": True,
+                        "balance": 0.0,
+                    }
+                    inserted = supabase.table("accounts").insert(new_row).execute().data or [new_row]
+                    result["created"] = True
+                    result["account"] = inserted[0]
+                elif pos:
+                    needs_update = (
+                        str(pos.get("name") or "") != "نقاط بيع"
+                        or str(pos.get("parent_id") or "") != str(target_parent or "")
+                    )
+                    if needs_update and apply_changes:
+                        updated = (
+                            supabase.table("accounts")
+                            .update({"name": "نقاط بيع", "name_en": "POS", "parent_id": target_parent})
+                            .eq("id", pos.get("id"))
+                            .execute()
+                            .data
+                            or [pos]
+                        )
+                        result["updated"] = True
+                        result["account"] = updated[0]
+                    else:
+                        result["account"] = pos
+                return result
+
+            if db is not None:
+                rows = await db.accounts.find(
+                    {"code": {"$in": ["1100", "1102", "1104"]}},
+                    {"_id": 0},
+                ).to_list(length=20)
+                by_code = {str(r.get("code") or "").strip(): r for r in rows}
+                bank = by_code.get("1102")
+                current_assets = by_code.get("1100")
+                pos = by_code.get("1104")
+                target_parent = (bank or {}).get("id") or (current_assets or {}).get("id")
+
+                if not pos and apply_changes:
+                    doc = {
+                        "id": f"acc-{uuid.uuid4().hex[:12]}",
+                        "code": "1104",
+                        "name": "نقاط بيع",
+                        "nameEn": "POS",
+                        "type": "asset",
+                        "parentId": target_parent,
+                        "isSystem": True,
+                        "balance": 0.0,
+                    }
+                    await db.accounts.insert_one(doc)
+                    result["created"] = True
+                    result["account"] = doc
+                elif pos:
+                    needs_update = (
+                        str(pos.get("name") or "") != "نقاط بيع"
+                        or str(pos.get("parentId") or "") != str(target_parent or "")
+                    )
+                    if needs_update and apply_changes:
+                        await db.accounts.update_one(
+                            {"id": pos.get("id")},
+                            {"$set": {"name": "نقاط بيع", "nameEn": "POS", "parentId": target_parent}},
+                        )
+                        updated_doc = await db.accounts.find_one({"id": pos.get("id")}, {"_id": 0})
+                        result["updated"] = True
+                        result["account"] = updated_doc or pos
+                    else:
+                        result["account"] = pos
+                return result
+        except Exception as pos_error:
+            result["error"] = str(pos_error)
+        return result
+
+    try:
+        pos_result = await _ensure_pos_under_bank()
+
+        entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=30000,
+            include_rakan=True,
+        )
+
+        changed_entries = []
+        updated_entries = 0
+        for entry in entries:
+            entry_id = str(entry.get("id") or "").strip()
+            lines = entry.get("lines") or []
+            if not entry_id or not isinstance(lines, list) or not lines:
+                continue
+
+            has_change = False
+            new_lines = []
+            for line in lines:
+                if not isinstance(line, dict):
+                    new_lines.append(line)
+                    continue
+
+                current_account = str(line.get("account") or "").strip()
+                if current_account in cash_accounts:
+                    target_account = bank_account_by_style.get(current_account, "1102")
+                    new_line = {**line, "account": target_account}
+                    current_name = str(new_line.get("account_name") or "").strip().lower()
+                    if current_name in bank_like_names:
+                        new_line["account_name"] = "البنك"
+                    has_change = True
+                    new_lines.append(new_line)
+                    continue
+
+                new_lines.append(line)
+
+            if has_change:
+                changed_entries.append(entry_id)
+                if apply_changes:
+                    if supabase:
+                        supabase.table("journal_entries").update({"lines": new_lines}).eq("id", entry_id).execute()
+                        updated_entries += 1
+                    elif db is not None:
+                        await db.journal_entries.update_one({"id": entry_id}, {"$set": {"lines": new_lines}})
+                        updated_entries += 1
+
+        operations = _fetch_operations_for_reconciliation(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        op_candidates = []
+        op_updated = 0
+        for op in operations:
+            op_id = str(op.get("id") or "").strip()
+            if not op_id:
+                continue
+            op_type = _normalize_operation_type_for_reconciliation(op.get("type"))
+            if op_type != "sale":
+                continue
+
+            method = _normalize_payment_method(op.get("payment_method") or op.get("paymentMethod") or "")
+            if method in {"", "bank", "credit"}:
+                continue
+
+            op_candidates.append(op_id)
+            if apply_changes:
+                if supabase:
+                    try:
+                        supabase.table("operations").update({"payment_method": "bank", "paymentMethod": "bank"}).eq("id", op_id).execute()
+                    except Exception:
+                        supabase.table("operations").update({"payment_method": "bank"}).eq("id", op_id).execute()
+                    op_updated += 1
+                elif db is not None:
+                    await db.operations.update_one(
+                        {"id": op_id},
+                        {"$set": {"payment_method": "bank", "paymentMethod": "bank"}},
+                    )
+                    op_updated += 1
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "applied": apply_changes,
+                "pos_account": pos_result,
+                "journal": {
+                    "candidates": len(changed_entries),
+                    "updated": updated_entries,
+                    "sample_entry_ids": changed_entries[:50],
+                },
+                "operations": {
+                    "candidates": len(op_candidates),
+                    "updated": op_updated,
+                    "sample_operation_ids": op_candidates[:50],
+                },
+            },
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "applied": apply_changes,
+                "journal": {"candidates": 0, "updated": 0, "sample_entry_ids": []},
+                "operations": {"candidates": 0, "updated": 0, "sample_operation_ids": []},
             },
         }
 

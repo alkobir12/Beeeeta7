@@ -106,6 +106,10 @@ export default function ChartOfAccountsLiquid() {
   const [sheetAccountId, setSheetAccountId] = useState('');
   const [exporting, setExporting] = useState(false);
   const [resettingAccounts, setResettingAccounts] = useState(false);
+  const [reindexingCodes, setReindexingCodes] = useState(false);
+  const [applyingBankPolicy, setApplyingBankPolicy] = useState(false);
+  const [reconciliationLoading, setReconciliationLoading] = useState(false);
+  const [reconciliationReport, setReconciliationReport] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
@@ -180,6 +184,11 @@ export default function ChartOfAccountsLiquid() {
     fetchTree();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, typeFilter, hideZero]);
+
+  useEffect(() => {
+    fetchReconciliationReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workshopId]);
 
   const loadAccountDetails = async (accountId) => {
     if (detailsCache[accountId] || loadingDetails[accountId]) return;
@@ -268,6 +277,77 @@ export default function ChartOfAccountsLiquid() {
     }
   };
 
+  const reindexDisplayCodes = async () => {
+    setReindexingCodes(true);
+    try {
+      const res = await fetch(`${API_URL}/accounts/reindex-display-codes`, { method: 'POST' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.detail || json?.error || 'تعذر إعادة الترقيم');
+      }
+      await fetchTree();
+      await fetchReconciliationReport();
+      alert(`تمت إعادة الترقيم بنجاح من 001 (${json?.data?.count || 0} حساب)`);
+    } catch (error) {
+      alert(error?.message || 'تعذر إعادة الترقيم');
+    } finally {
+      setReindexingCodes(false);
+    }
+  };
+
+  const applyBankRevenuePolicy = async () => {
+    const ok = window.confirm('سيتم تحويل ربط الإيرادات التاريخية للبنك وتصفير الكاش تاريخيًا + التأكد من حساب نقاط البيع. هل تريد المتابعة؟');
+    if (!ok) return;
+
+    setApplyingBankPolicy(true);
+    try {
+      const params = new URLSearchParams({
+        workshop_id: workshopId,
+        apply_changes: 'true',
+      });
+      const res = await fetch(`${API_URL}/finance/reports/apply-bank-revenue-policy?${params.toString()}`, {
+        method: 'POST',
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.detail || json?.error || json?.message || 'تعذر تطبيق السياسة');
+      }
+
+      await fetchTree();
+      await fetchReconciliationReport();
+
+      const journalUpdated = json?.data?.journal?.updated || 0;
+      const operationsUpdated = json?.data?.operations?.updated || 0;
+      const posCreated = json?.data?.pos_account?.created ? 'تم إنشاء POS' : 'POS موجود';
+      alert(`تم تطبيق السياسة بنجاح\nقيود محدثة: ${journalUpdated}\nعمليات محدثة: ${operationsUpdated}\n${posCreated}`);
+    } catch (error) {
+      alert(error?.message || 'تعذر تطبيق السياسة');
+    } finally {
+      setApplyingBankPolicy(false);
+    }
+  };
+
+  const fetchReconciliationReport = async () => {
+    setReconciliationLoading(true);
+    try {
+      const params = new URLSearchParams({ workshop_id: workshopId });
+      const res = await fetch(`${API_URL}/accounts/reconciliation-report?${params.toString()}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.detail || json?.error || 'تعذر تحميل تقرير التطابق');
+      }
+      setReconciliationReport(json?.data || null);
+    } catch (error) {
+      setReconciliationReport({
+        summary: { accounts_count: 0, matched_count: 0, mismatched_count: 0, max_abs_difference: 0 },
+        rows: [],
+        error: error?.message || 'تعذر تحميل تقرير التطابق',
+      });
+    } finally {
+      setReconciliationLoading(false);
+    }
+  };
+
   const accountById = useMemo(() => {
     const map = {};
     const stack = [...accountsData];
@@ -279,6 +359,19 @@ export default function ChartOfAccountsLiquid() {
     }
     return map;
   }, [accountsData]);
+
+  const accountByCode = useMemo(() => {
+    const map = {};
+    Object.values(accountById).forEach((acc) => {
+      if (!acc?.code) return;
+      map[String(acc.code)] = acc;
+    });
+    return map;
+  }, [accountById]);
+
+  const bankBalance = Number(accountByCode['1102']?.balance || 0);
+  const cashBalance = Number(accountByCode['1101']?.balance || 0);
+  const posBalance = Number(accountByCode['1104']?.balance || 0);
 
   const selectedSheetAccount = sheetAccountId ? accountById[sheetAccountId] : null;
 
@@ -379,6 +472,12 @@ export default function ChartOfAccountsLiquid() {
                   <span className="w-4" />
                 )}
 
+                <span
+                  className="text-[10px] text-cyan-100 font-mono rounded-full border border-cyan-300/40 bg-cyan-500/20 px-2 py-0.5"
+                  data-testid={`coa-account-display-code-${account.id}`}
+                >
+                  {account.display_code || '---'}
+                </span>
                 <span className="text-xs text-amber-200 font-mono" data-testid={`coa-account-code-${account.id}`}>{account.code}</span>
                 <span className="text-sm text-slate-100 truncate" data-testid={`coa-account-name-${account.id}`}>{highlight(account.name, searchQuery)}</span>
                 <span className={`text-[10px] border rounded-full px-2 py-0.5 ${typeBadgeClass[account.type] || 'bg-white/10 border-white/20'}`}>
@@ -445,8 +544,38 @@ export default function ChartOfAccountsLiquid() {
               إخفاء الأرصدة الصفرية
             </label>
 
-            {!isMobile && (
-              <div className="inline-flex items-center gap-2 md:mr-auto">
+            <div className="flex flex-wrap items-center gap-2 md:mr-auto">
+              <button
+                type="button"
+                onClick={reindexDisplayCodes}
+                disabled={reindexingCodes}
+                className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 text-cyan-50 px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                data-testid="coa-reindex-display-codes-button"
+              >
+                <Filter size={14} /> {reindexingCodes ? 'جارٍ إعادة الترقيم...' : 'إعادة ترقيم 001'}
+              </button>
+
+              <button
+                type="button"
+                onClick={applyBankRevenuePolicy}
+                disabled={applyingBankPolicy}
+                className="rounded-xl border border-emerald-300/40 bg-emerald-500/20 text-emerald-50 px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                data-testid="coa-apply-bank-policy-button"
+              >
+                <Filter size={14} /> {applyingBankPolicy ? 'جارٍ التطبيق...' : 'تطبيق سياسة البنك/الكاش'}
+              </button>
+
+              <button
+                type="button"
+                onClick={fetchReconciliationReport}
+                disabled={reconciliationLoading}
+                className="rounded-xl border border-indigo-300/40 bg-indigo-500/20 text-indigo-50 px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                data-testid="coa-refresh-reconciliation-button"
+              >
+                <Download size={14} /> {reconciliationLoading ? 'جارٍ التدقيق...' : 'تحديث تدقيق التطابق'}
+              </button>
+
+              {!isMobile && (
                 <button
                   type="button"
                   onClick={resetAccounts}
@@ -456,6 +585,9 @@ export default function ChartOfAccountsLiquid() {
                 >
                   <Filter size={14} /> {resettingAccounts ? 'جارٍ إعادة الضبط...' : 'إعادة ضبط الحسابات'}
                 </button>
+              )}
+
+              {!isMobile && (
                 <button
                   type="button"
                   onClick={exportExcel}
@@ -465,12 +597,19 @@ export default function ChartOfAccountsLiquid() {
                 >
                   <Download size={14} /> {exporting ? 'جاري التصدير...' : 'تصدير Excel'}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="mt-3 text-xs text-slate-200 rounded-xl bg-white/5 p-2" data-testid="coa-summary-bar">
             إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | صافي الربح: {formatCurrency(summary.net_profit)}
+          </div>
+
+          <div className="mt-2 text-xs text-slate-100 rounded-xl border border-white/10 bg-slate-950/40 p-2 flex flex-wrap gap-3" data-testid="coa-cash-bank-pos-summary-bar">
+            <span data-testid="coa-bank-balance-summary">البنك (1102): {formatCurrency(bankBalance)}</span>
+            <span data-testid="coa-cash-balance-summary">النقد (1101): {formatCurrency(cashBalance)}</span>
+            <span data-testid="coa-pos-balance-summary">نقاط بيع (1104): {formatCurrency(posBalance)}</span>
+            <span data-testid="coa-revenue-summary">إجمالي الإيراد: {formatCurrency(summary.revenue || 0)}</span>
           </div>
         </div>
 
@@ -496,6 +635,70 @@ export default function ChartOfAccountsLiquid() {
             </div>
           </div>
         )}
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-testid="coa-reconciliation-panel">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm font-semibold text-slate-100" data-testid="coa-reconciliation-title">تدقيق تطابق مبالغ الحسابات</h2>
+            <button
+              type="button"
+              onClick={fetchReconciliationReport}
+              disabled={reconciliationLoading}
+              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-50"
+              data-testid="coa-reconciliation-refresh-inline-button"
+            >
+              {reconciliationLoading ? 'جارٍ الفحص...' : 'إعادة الفحص'}
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-200 flex flex-wrap gap-3" data-testid="coa-reconciliation-summary">
+            <span>إجمالي الحسابات: {reconciliationReport?.summary?.accounts_count || 0}</span>
+            <span>مطابق: {reconciliationReport?.summary?.matched_count || 0}</span>
+            <span>غير مطابق: {reconciliationReport?.summary?.mismatched_count || 0}</span>
+            <span>أكبر فرق: {formatCurrency(reconciliationReport?.summary?.max_abs_difference || 0)}</span>
+          </div>
+
+          {!!reconciliationReport?.error && (
+            <div className="mt-2 text-xs text-rose-200" data-testid="coa-reconciliation-error-message">
+              {reconciliationReport.error}
+            </div>
+          )}
+
+          <div className="mt-3 overflow-x-auto" data-testid="coa-reconciliation-table-wrap">
+            <table className="w-full min-w-[760px] text-xs" data-testid="coa-reconciliation-table">
+              <thead>
+                <tr className="text-slate-300 border-b border-white/10">
+                  <th className="p-2 text-right">ترقيم</th>
+                  <th className="p-2 text-right">الكود</th>
+                  <th className="p-2 text-right">الحساب</th>
+                  <th className="p-2 text-right">الرصيد</th>
+                  <th className="p-2 text-right">الرصيد المتوقع</th>
+                  <th className="p-2 text-right">الفرق</th>
+                  <th className="p-2 text-right">الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reconciliationReport?.rows || []).slice(0, 30).map((row, idx) => (
+                  <tr key={`${row.account_id}-${idx}`} className="border-b border-white/5" data-testid={`coa-reconciliation-row-${idx}`}>
+                    <td className="p-2 font-mono">{row.display_code || '---'}</td>
+                    <td className="p-2 font-mono">{row.code}</td>
+                    <td className="p-2">{row.name}</td>
+                    <td className="p-2">{formatCurrency(row.balance || 0)}</td>
+                    <td className="p-2">{formatCurrency(row.expected_balance || 0)}</td>
+                    <td className="p-2">{formatCurrency(row.difference || 0)}</td>
+                    <td className="p-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 ${row.matched ? 'bg-emerald-500/20 text-emerald-100' : 'bg-rose-500/20 text-rose-100'}`}
+                        data-testid={`coa-reconciliation-status-${idx}`}
+                      >
+                        {row.matched ? 'مطابق' : 'يحتاج مراجعة'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {loading ? (
           <div className="space-y-3" data-testid="coa-loading-skeleton">
@@ -545,7 +748,7 @@ export default function ChartOfAccountsLiquid() {
                 <GripHorizontal size={16} className="text-slate-400" />
                 <div>
                   <p className="text-sm text-slate-100">{selectedSheetAccount.name}</p>
-                  <p className="text-xs text-slate-400">{selectedSheetAccount.code}</p>
+                  <p className="text-xs text-slate-400">{selectedSheetAccount.display_code || '---'} • {selectedSheetAccount.code}</p>
                 </div>
               </div>
               <button type="button" onClick={() => setSheetAccountId('')} data-testid="coa-mobile-sheet-close">

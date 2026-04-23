@@ -5226,6 +5226,50 @@ async def _account_usage_map() -> Dict[str, str]:
         return {}
 
 
+async def _account_display_codes_map() -> Dict[str, str]:
+    try:
+        if db is not None:
+            rows = await db.account_display_codes.find({}, {"_id": 0}).to_list(5000)
+            return {
+                str(row.get("accountId")): str(row.get("displayCode"))
+                for row in rows
+                if row.get("accountId") and row.get("displayCode")
+            }
+
+        rows = _mem_read("account_display_codes")
+        return {
+            str(row.get("accountId")): str(row.get("displayCode"))
+            for row in rows
+            if row.get("accountId") and row.get("displayCode")
+        }
+    except Exception:
+        return {}
+
+
+async def _set_account_display_code(account_id: str, display_code: str):
+    doc = {
+        "accountId": account_id,
+        "displayCode": display_code,
+        "updatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+    if db is not None:
+        await db.account_display_codes.update_one(
+            {"accountId": account_id}, {"$set": doc}, upsert=True
+        )
+        return
+
+    rows = _mem_read("account_display_codes")
+    replaced = False
+    for i, row in enumerate(rows):
+        if row.get("accountId") == account_id:
+            rows[i] = doc
+            replaced = True
+            break
+    if not replaced:
+        rows.append(doc)
+    _mem_write("account_display_codes", rows)
+
+
 async def _set_account_usage(account_id: str, last_used_at: str):
     doc = {"accountId": account_id, "lastUsedAt": last_used_at}
     if db is not None:
@@ -5248,6 +5292,7 @@ def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": str(raw.get("id") or ""),
         "code": str(raw.get("code") or ""),
+        "display_code": str(raw.get("display_code") or raw.get("displayCode") or ""),
         "name": raw.get("name") or raw.get("name_ar") or raw.get("code") or "",
         "type": raw.get("type") or "asset",
         "parent_id": raw.get("parent_id") or raw.get("parentId") or None,
@@ -5276,7 +5321,7 @@ def _apply_account_filters(
     if hide_zero and abs(float(account.get("balance") or 0)) < 0.0001:
         return False
     if search_q:
-        hay = f"{account.get('code','')} {account.get('name','')}".lower()
+        hay = f"{account.get('display_code','')} {account.get('code','')} {account.get('name','')}".lower()
         if search_q not in hay:
             return False
     return True
@@ -5289,6 +5334,7 @@ async def list_accounts():
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
         overrides = await _account_status_overrides_map()
+        display_overrides = await _account_display_codes_map()
 
         if provider == "supabase":
             from supabase_service import SupabaseService
@@ -5303,6 +5349,9 @@ async def list_accounts():
                 item["active"] = bool(
                     overrides.get(str(item.get("id")), True if base_active is None else base_active)
                 )
+                display_code = display_overrides.get(str(item.get("id")))
+                if display_code:
+                    item["display_code"] = display_code
             return items
 
         # MongoDB fallback
@@ -5314,6 +5363,9 @@ async def list_accounts():
             doc["active"] = bool(
                 overrides.get(str(doc.get("id")), True if base_active is None else base_active)
             )
+            display_code = display_overrides.get(str(doc.get("id")))
+            if display_code:
+                doc["displayCode"] = display_code
         return docs
     except HTTPException:
         raise
@@ -5597,6 +5649,18 @@ async def accounts_tree(
                 acc["total_credit"] += credit
                 acc["activity_volume"] = acc["total_debit"] + acc["total_credit"]
 
+        # اعتماد الرصيد من القيود الفعلية لضمان التطابق (بدل الاعتماد على قيمة مخزنة قديمة)
+        for acc in normalized:
+            debit = float(acc.get("total_debit") or 0)
+            credit = float(acc.get("total_credit") or 0)
+            acc_type = str(acc.get("type") or "").strip().lower()
+            if acc_type in {"asset", "expense"}:
+                computed_balance = debit - credit
+            else:
+                computed_balance = credit - debit
+            acc["balance"] = round(computed_balance, 2)
+            acc["warning_negative"] = acc["balance"] < 0 and acc_type in {"asset", "expense"}
+
         type_filter = str(type or "all").strip().lower()
         search_q = str(search or "").strip().lower()
         visible_accounts = [
@@ -5618,9 +5682,18 @@ async def accounts_tree(
             parent = str(acc.get("parent_id") or "")
             by_parent.setdefault(parent, []).append(acc)
 
+        def _sort_key(acc: Dict[str, Any]):
+            display_code = str(acc.get("display_code") or "").strip()
+            if display_code.isdigit():
+                return (0, int(display_code), display_code)
+            code = str(acc.get("code") or "").strip()
+            if code.isdigit():
+                return (1, int(code), code)
+            return (2, code)
+
         def build_node(acc: Dict[str, Any], level: int = 0) -> Dict[str, Any]:
             children = by_parent.get(acc["id"], [])
-            children = sorted(children, key=lambda x: x.get("activity_volume", 0), reverse=True)
+            children = sorted(children, key=_sort_key)
             return {
                 **acc,
                 "level": level,
@@ -5629,7 +5702,7 @@ async def accounts_tree(
 
         # Flatten on active search (as requested)
         if search_q:
-            flat_nodes = sorted(visible_accounts, key=lambda x: x.get("activity_volume", 0), reverse=True)
+            flat_nodes = sorted(visible_accounts, key=_sort_key)
             return {
                 "success": True,
                 "data": {
@@ -5644,7 +5717,7 @@ async def accounts_tree(
             for acc in visible_accounts
             if not acc.get("parent_id") or str(acc.get("parent_id")) not in visible_ids
         ]
-        roots = sorted(roots, key=lambda x: x.get("activity_volume", 0), reverse=True)
+        roots = sorted(roots, key=_sort_key)
 
         return {
             "success": True,
@@ -5654,6 +5727,50 @@ async def accounts_tree(
                 "accounts": [build_node(root, 0) for root in roots],
             },
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/accounts/reindex-display-codes")
+async def reindex_account_display_codes():
+    """إعادة ترقيم دليل الحسابات بشكل متسلسل يبدأ من 001 (ترقيم عرضي فعلي محفوظ في DB)."""
+    try:
+        raw_accounts = await list_accounts()
+        normalized = [_normalize_account_row(acc) for acc in (raw_accounts or [])]
+        candidates = [acc for acc in normalized if acc.get("id")]
+
+        def sort_key(acc: Dict[str, Any]):
+            code = str(acc.get("code") or "").strip()
+            if code.isdigit():
+                return (0, int(code), code)
+            return (1, code)
+
+        candidates.sort(key=sort_key)
+
+        changed = []
+        for idx, acc in enumerate(candidates, start=1):
+            display_code = f"{idx:03d}"
+            await _set_account_display_code(str(acc.get("id")), display_code)
+            changed.append(
+                {
+                    "account_id": acc.get("id"),
+                    "code": acc.get("code"),
+                    "name": acc.get("name"),
+                    "display_code": display_code,
+                }
+            )
+
+        return {
+            "success": True,
+            "data": {
+                "count": len(changed),
+                "first_display_code": changed[0]["display_code"] if changed else None,
+                "last_display_code": changed[-1]["display_code"] if changed else None,
+                "sample": changed[:50],
+            },
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -5812,6 +5929,7 @@ async def export_accounts(
 
     export_rows = [
         {
+            "display_code": r.get("display_code") or "",
             "code": r.get("code"),
             "name": r.get("name"),
             "type": r.get("type"),
@@ -5824,6 +5942,92 @@ async def export_accounts(
     ]
 
     return {"success": True, "data": {"summary": data.get("summary", {}), "rows": export_rows}}
+
+
+@router.get("/accounts/reconciliation-report")
+async def accounts_reconciliation_report(
+    workshop_id: str = Query("finmodule-sync"),
+):
+    """تقرير تدقيق ربط المبالغ: مقارنة الرصيد مع (مدين-دائن) أو (دائن-مدين) حسب نوع الحساب."""
+    try:
+        payload = await accounts_tree(
+            workshop_id=workshop_id,
+            type="all",
+            hideZero=False,
+            search="",
+        )
+        data = payload.get("data", {})
+        mode = data.get("mode")
+
+        rows: List[Dict[str, Any]] = []
+        if mode == "flat":
+            rows = list(data.get("accounts", []) or [])
+        else:
+            def flatten(nodes: List[Dict[str, Any]]):
+                for node in nodes or []:
+                    rows.append({k: v for k, v in node.items() if k != "children"})
+                    flatten(node.get("children", []) or [])
+
+            flatten(data.get("accounts", []) or [])
+
+        report_rows = []
+        matched = 0
+        mismatched = 0
+        max_abs_diff = 0.0
+
+        for row in rows:
+            debit = float(row.get("total_debit") or 0)
+            credit = float(row.get("total_credit") or 0)
+            balance = float(row.get("balance") or 0)
+            acc_type = str(row.get("type") or "").strip().lower()
+
+            if acc_type in {"asset", "expense"}:
+                expected_balance = debit - credit
+            else:
+                expected_balance = credit - debit
+
+            difference = round(balance - expected_balance, 2)
+            is_matched = abs(difference) <= 0.01
+            if is_matched:
+                matched += 1
+            else:
+                mismatched += 1
+            max_abs_diff = max(max_abs_diff, abs(difference))
+
+            report_rows.append(
+                {
+                    "account_id": row.get("id"),
+                    "display_code": row.get("display_code") or "",
+                    "code": row.get("code"),
+                    "name": row.get("name"),
+                    "type": acc_type,
+                    "balance": round(balance, 2),
+                    "total_debit": round(debit, 2),
+                    "total_credit": round(credit, 2),
+                    "expected_balance": round(expected_balance, 2),
+                    "difference": difference,
+                    "matched": is_matched,
+                }
+            )
+
+        report_rows.sort(key=lambda r: abs(float(r.get("difference") or 0)), reverse=True)
+
+        return {
+            "success": True,
+            "data": {
+                "summary": {
+                    "accounts_count": len(report_rows),
+                    "matched_count": matched,
+                    "mismatched_count": mismatched,
+                    "max_abs_difference": round(max_abs_diff, 2),
+                },
+                "rows": report_rows,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/accounts/init-defaults")
@@ -5882,6 +6086,16 @@ async def init_default_accounts():
                     "name_en": "Bank",
                     "type": "asset",
                     "parent_id": "acc-1100",
+                    "is_system": True,
+                    "balance": 0.0,
+                },
+                {
+                    "id": "acc-1104",
+                    "code": "1104",
+                    "name": "نقاط بيع",
+                    "name_en": "POS",
+                    "type": "asset",
+                    "parent_id": "acc-1102",
                     "is_system": True,
                     "balance": 0.0,
                 },
@@ -6302,6 +6516,16 @@ async def init_default_accounts():
                 "nameEn": "Bank",
                 "type": "asset",
                 "parentId": "acc-1100",
+                "isSystem": True,
+                "balance": 0.0,
+            },
+            {
+                "id": "acc-1104",
+                "code": "1104",
+                "name": "نقاط بيع",
+                "nameEn": "POS",
+                "type": "asset",
+                "parentId": "acc-1102",
                 "isSystem": True,
                 "balance": 0.0,
             },

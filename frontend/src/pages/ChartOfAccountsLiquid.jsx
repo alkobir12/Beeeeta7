@@ -369,9 +369,18 @@ export default function ChartOfAccountsLiquid() {
     return map;
   }, [accountById]);
 
-  const bankBalance = Number(accountByCode['1102']?.balance || 0);
-  const cashBalance = Number(accountByCode['1101']?.balance || 0);
-  const posBalance = Number(accountByCode['1104']?.balance || 0);
+  const accountByLegacyCode = useMemo(() => {
+    const map = {};
+    Object.values(accountById).forEach((acc) => {
+      if (!acc?.legacy_code) return;
+      map[String(acc.legacy_code)] = acc;
+    });
+    return map;
+  }, [accountById]);
+
+  const bankBalance = Number((accountByLegacyCode['1102'] || accountByCode['1102'])?.balance || 0);
+  const cashBalance = Number((accountByLegacyCode['1101'] || accountByCode['1101'])?.balance || 0);
+  const posBalance = Number((accountByLegacyCode['1104'] || accountByCode['1104'])?.balance || 0);
 
   const selectedSheetAccount = sheetAccountId ? accountById[sheetAccountId] : null;
 
@@ -472,12 +481,6 @@ export default function ChartOfAccountsLiquid() {
                   <span className="w-4" />
                 )}
 
-                <span
-                  className="text-[10px] text-cyan-100 font-mono rounded-full border border-cyan-300/40 bg-cyan-500/20 px-2 py-0.5"
-                  data-testid={`coa-account-display-code-${account.id}`}
-                >
-                  {account.display_code || '---'}
-                </span>
                 <span className="text-xs text-amber-200 font-mono" data-testid={`coa-account-code-${account.id}`}>{account.code}</span>
                 <span className="text-sm text-slate-100 truncate" data-testid={`coa-account-name-${account.id}`}>{highlight(account.name, searchQuery)}</span>
                 <span className={`text-[10px] border rounded-full px-2 py-0.5 ${typeBadgeClass[account.type] || 'bg-white/10 border-white/20'}`}>
@@ -667,7 +670,6 @@ export default function ChartOfAccountsLiquid() {
             <table className="w-full min-w-[760px] text-xs" data-testid="coa-reconciliation-table">
               <thead>
                 <tr className="text-slate-300 border-b border-white/10">
-                  <th className="p-2 text-right">ترقيم</th>
                   <th className="p-2 text-right">الكود</th>
                   <th className="p-2 text-right">الحساب</th>
                   <th className="p-2 text-right">الرصيد</th>
@@ -679,7 +681,6 @@ export default function ChartOfAccountsLiquid() {
               <tbody>
                 {(reconciliationReport?.rows || []).slice(0, 30).map((row, idx) => (
                   <tr key={`${row.account_id}-${idx}`} className="border-b border-white/5" data-testid={`coa-reconciliation-row-${idx}`}>
-                    <td className="p-2 font-mono">{row.display_code || '---'}</td>
                     <td className="p-2 font-mono">{row.code}</td>
                     <td className="p-2">{row.name}</td>
                     <td className="p-2">{formatCurrency(row.balance || 0)}</td>
@@ -748,7 +749,7 @@ export default function ChartOfAccountsLiquid() {
                 <GripHorizontal size={16} className="text-slate-400" />
                 <div>
                   <p className="text-sm text-slate-100">{selectedSheetAccount.name}</p>
-                  <p className="text-xs text-slate-400">{selectedSheetAccount.display_code || '---'} • {selectedSheetAccount.code}</p>
+                  <p className="text-xs text-slate-400">{selectedSheetAccount.code}</p>
                 </div>
               </div>
               <button type="button" onClick={() => setSheetAccountId('')} data-testid="coa-mobile-sheet-close">

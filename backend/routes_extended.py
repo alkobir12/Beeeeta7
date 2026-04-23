@@ -5270,6 +5270,50 @@ async def _set_account_display_code(account_id: str, display_code: str):
     _mem_write("account_display_codes", rows)
 
 
+async def _account_code_aliases_map() -> Dict[str, str]:
+    """Map account_id -> legacy/original code before reindexing."""
+    try:
+        if db is not None:
+            rows = await db.account_code_aliases.find({}, {"_id": 0}).to_list(5000)
+            return {
+                str(row.get("accountId")): str(row.get("legacyCode"))
+                for row in rows
+                if row.get("accountId") and row.get("legacyCode")
+            }
+        rows = _mem_read("account_code_aliases")
+        return {
+            str(row.get("accountId")): str(row.get("legacyCode"))
+            for row in rows
+            if row.get("accountId") and row.get("legacyCode")
+        }
+    except Exception:
+        return {}
+
+
+async def _set_account_code_alias(account_id: str, legacy_code: str):
+    doc = {
+        "accountId": account_id,
+        "legacyCode": legacy_code,
+        "updatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+    if db is not None:
+        await db.account_code_aliases.update_one(
+            {"accountId": account_id}, {"$set": doc}, upsert=True
+        )
+        return
+
+    rows = _mem_read("account_code_aliases")
+    replaced = False
+    for i, row in enumerate(rows):
+        if row.get("accountId") == account_id:
+            rows[i] = doc
+            replaced = True
+            break
+    if not replaced:
+        rows.append(doc)
+    _mem_write("account_code_aliases", rows)
+
+
 async def _set_account_usage(account_id: str, last_used_at: str):
     doc = {"accountId": account_id, "lastUsedAt": last_used_at}
     if db is not None:
@@ -5292,7 +5336,7 @@ def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": str(raw.get("id") or ""),
         "code": str(raw.get("code") or ""),
-        "display_code": str(raw.get("display_code") or raw.get("displayCode") or ""),
+        "legacy_code": str(raw.get("legacy_code") or raw.get("legacyCode") or ""),
         "name": raw.get("name") or raw.get("name_ar") or raw.get("code") or "",
         "type": raw.get("type") or "asset",
         "parent_id": raw.get("parent_id") or raw.get("parentId") or None,
@@ -5303,10 +5347,16 @@ def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _line_account_code(line: Dict[str, Any], id_to_code: Dict[str, str]) -> str:
+def _line_account_code(
+    line: Dict[str, Any],
+    id_to_code: Dict[str, str],
+    legacy_to_current: Optional[Dict[str, str]] = None,
+) -> str:
     raw = str(line.get("account") or line.get("account_code") or "").strip()
     if raw in id_to_code:
         return id_to_code[raw]
+    if legacy_to_current and raw in legacy_to_current:
+        return legacy_to_current[raw]
     return raw
 
 
@@ -5321,7 +5371,7 @@ def _apply_account_filters(
     if hide_zero and abs(float(account.get("balance") or 0)) < 0.0001:
         return False
     if search_q:
-        hay = f"{account.get('display_code','')} {account.get('code','')} {account.get('name','')}".lower()
+        hay = f"{account.get('code','')} {account.get('name','')}".lower()
         if search_q not in hay:
             return False
     return True
@@ -5334,7 +5384,7 @@ async def list_accounts():
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
         overrides = await _account_status_overrides_map()
-        display_overrides = await _account_display_codes_map()
+        code_aliases = await _account_code_aliases_map()
 
         if provider == "supabase":
             from supabase_service import SupabaseService
@@ -5349,9 +5399,9 @@ async def list_accounts():
                 item["active"] = bool(
                     overrides.get(str(item.get("id")), True if base_active is None else base_active)
                 )
-                display_code = display_overrides.get(str(item.get("id")))
-                if display_code:
-                    item["display_code"] = display_code
+                legacy_code = code_aliases.get(str(item.get("id")))
+                if legacy_code:
+                    item["legacy_code"] = legacy_code
             return items
 
         # MongoDB fallback
@@ -5363,9 +5413,9 @@ async def list_accounts():
             doc["active"] = bool(
                 overrides.get(str(doc.get("id")), True if base_active is None else base_active)
             )
-            display_code = display_overrides.get(str(doc.get("id")))
-            if display_code:
-                doc["displayCode"] = display_code
+            legacy_code = code_aliases.get(str(doc.get("id")))
+            if legacy_code:
+                doc["legacyCode"] = legacy_code
         return docs
     except HTTPException:
         raise
@@ -5621,6 +5671,11 @@ async def accounts_tree(
 
         id_to_code = {acc["id"]: acc["code"] for acc in normalized if acc.get("id") and acc.get("code")}
         code_to_acc = {acc["code"]: acc for acc in normalized if acc.get("code")}
+        legacy_to_current = {
+            str(acc.get("legacy_code") or "").strip(): str(acc.get("code") or "").strip()
+            for acc in normalized
+            if str(acc.get("legacy_code") or "").strip() and str(acc.get("code") or "").strip()
+        }
 
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
@@ -5639,6 +5694,8 @@ async def accounts_tree(
         for entry in rows:
             for line in entry.get("lines", []) or []:
                 code = _line_account_code(line, id_to_code)
+                if code not in code_to_acc:
+                    code = legacy_to_current.get(code, code)
                 acc = code_to_acc.get(code)
                 if not acc:
                     continue
@@ -5683,13 +5740,10 @@ async def accounts_tree(
             by_parent.setdefault(parent, []).append(acc)
 
         def _sort_key(acc: Dict[str, Any]):
-            display_code = str(acc.get("display_code") or "").strip()
-            if display_code.isdigit():
-                return (0, int(display_code), display_code)
             code = str(acc.get("code") or "").strip()
             if code.isdigit():
-                return (1, int(code), code)
-            return (2, code)
+                return (0, int(code), code)
+            return (1, code)
 
         def build_node(acc: Dict[str, Any], level: int = 0) -> Dict[str, Any]:
             children = by_parent.get(acc["id"], [])
@@ -5733,11 +5787,12 @@ async def accounts_tree(
 
 @router.post("/accounts/reindex-display-codes")
 async def reindex_account_display_codes():
-    """إعادة ترقيم دليل الحسابات بشكل متسلسل يبدأ من 001 (ترقيم عرضي فعلي محفوظ في DB)."""
+    """إعادة ترقيم كود الحساب نفسه بشكل متسلسل يبدأ من 001 مع حفظ الكود الأصلي كـ legacy alias."""
     try:
         raw_accounts = await list_accounts()
         normalized = [_normalize_account_row(acc) for acc in (raw_accounts or [])]
         candidates = [acc for acc in normalized if acc.get("id")]
+        alias_map = await _account_code_aliases_map()
 
         def sort_key(acc: Dict[str, Any]):
             code = str(acc.get("code") or "").strip()
@@ -5748,15 +5803,30 @@ async def reindex_account_display_codes():
         candidates.sort(key=sort_key)
 
         changed = []
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+
         for idx, acc in enumerate(candidates, start=1):
-            display_code = f"{idx:03d}"
-            await _set_account_display_code(str(acc.get("id")), display_code)
+            account_id = str(acc.get("id"))
+            old_code = str(acc.get("code") or "").strip()
+            new_code = f"{idx:03d}"
+            legacy_code = str(alias_map.get(account_id) or old_code)
+
+            await _set_account_code_alias(account_id, legacy_code)
+
+            if old_code != new_code:
+                if provider == "supabase":
+                    supa = SupabaseService()
+                    supa.client.table("accounts").update({"code": new_code}).eq("id", account_id).execute()
+                elif db is not None:
+                    await db.accounts.update_one({"id": account_id}, {"$set": {"code": new_code}})
+
             changed.append(
                 {
-                    "account_id": acc.get("id"),
-                    "code": acc.get("code"),
+                    "account_id": account_id,
+                    "old_code": old_code,
+                    "new_code": new_code,
+                    "legacy_code": legacy_code,
                     "name": acc.get("name"),
-                    "display_code": display_code,
                 }
             )
 
@@ -5764,8 +5834,8 @@ async def reindex_account_display_codes():
             "success": True,
             "data": {
                 "count": len(changed),
-                "first_display_code": changed[0]["display_code"] if changed else None,
-                "last_display_code": changed[-1]["display_code"] if changed else None,
+                "first_code": changed[0]["new_code"] if changed else None,
+                "last_code": changed[-1]["new_code"] if changed else None,
                 "sample": changed[:50],
             },
         }
@@ -5791,6 +5861,11 @@ async def account_transactions(
 
         id_to_code = {acc["id"]: acc["code"] for acc in normalized if acc.get("id") and acc.get("code")}
         target_code = target["code"]
+        legacy_to_current = {
+            str(acc.get("legacy_code") or "").strip(): str(acc.get("code") or "").strip()
+            for acc in normalized
+            if str(acc.get("legacy_code") or "").strip() and str(acc.get("code") or "").strip()
+        }
 
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
@@ -5814,6 +5889,8 @@ async def account_transactions(
             credit = 0.0
             for line in row.get("lines", []) or []:
                 code = _line_account_code(line, id_to_code)
+                if code not in id_to_code.values():
+                    code = legacy_to_current.get(code, code)
                 if code == target_code:
                     debit += float(line.get("debit") or 0)
                     credit += float(line.get("credit") or 0)
@@ -5929,7 +6006,6 @@ async def export_accounts(
 
     export_rows = [
         {
-            "display_code": r.get("display_code") or "",
             "code": r.get("code"),
             "name": r.get("name"),
             "type": r.get("type"),
@@ -5997,7 +6073,6 @@ async def accounts_reconciliation_report(
             report_rows.append(
                 {
                     "account_id": row.get("id"),
-                    "display_code": row.get("display_code") or "",
                     "code": row.get("code"),
                     "name": row.get("name"),
                     "type": acc_type,

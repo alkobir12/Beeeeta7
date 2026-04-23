@@ -251,10 +251,6 @@ def _fetch_accounts():
             if not code or code in seen_codes:
                 continue
 
-            # Remove legacy codes (e.g., 101/411/521) to avoid duplicates.
-            if code.isdigit() and int(code) < 1000:
-                continue
-
             seen_codes.add(code)
             if not a.get("name_ar"):
                 a["name_ar"] = a.get("name")
@@ -2080,22 +2076,53 @@ async def get_chart_of_accounts(
                 continue
             merged_by_code[code] = acc
 
+        alias_to_current: Dict[str, str] = {}
+        for acc in merged_accounts:
+            current_code = str(acc.get("code") or "").strip()
+            legacy_code = str(acc.get("legacy_code") or acc.get("legacyCode") or "").strip()
+            if current_code and legacy_code:
+                alias_to_current[legacy_code] = current_code
+
+        if db is not None:
+            try:
+                alias_rows = await db.account_code_aliases.find({}, {"_id": 0, "accountId": 1, "legacyCode": 1}).to_list(length=5000)
+                account_id_to_current = {
+                    str(acc.get("id") or "").strip(): str(acc.get("code") or "").strip()
+                    for acc in merged_accounts
+                    if str(acc.get("id") or "").strip() and str(acc.get("code") or "").strip()
+                }
+                for row in alias_rows:
+                    account_id = str(row.get("accountId") or "").strip()
+                    legacy_code = str(row.get("legacyCode") or "").strip()
+                    current_code = account_id_to_current.get(account_id)
+                    if legacy_code and current_code:
+                        alias_to_current[legacy_code] = current_code
+            except Exception:
+                pass
+
+        balances_by_current: Dict[str, Dict[str, float]] = {}
+
         for code, data in accounts_balances.items():
-            if code not in merged_by_code:
-                merged_by_code[code] = {
-                    "id": code,
-                    "code": code,
+            mapped_code = alias_to_current.get(code, code)
+            if mapped_code not in merged_by_code:
+                merged_by_code[mapped_code] = {
+                    "id": mapped_code,
+                    "code": mapped_code,
                     "name": data.get("name") or code_to_name.get(code) or code,
                     "name_ar": data.get("name") or code_to_name.get(code) or code,
-                    "type": code_to_type.get(code) or "other",
+                    "type": code_to_type.get(mapped_code) or code_to_type.get(code) or "other",
                 }
+
+            bucket = balances_by_current.setdefault(mapped_code, {"debit": 0.0, "credit": 0.0})
+            bucket["debit"] += _safe_float(data.get("debit"))
+            bucket["credit"] += _safe_float(data.get("credit"))
 
         results = []
         for code in sorted(merged_by_code.keys()):
             acc = merged_by_code[code]
             acc_type = acc.get("type") or "asset"
-            debit = accounts_balances.get(code, {}).get("debit", 0)
-            credit = accounts_balances.get(code, {}).get("credit", 0)
+            debit = balances_by_current.get(code, {}).get("debit", 0)
+            credit = balances_by_current.get(code, {}).get("credit", 0)
 
             if acc_type in ("asset", "expense"):
                 balance = debit - credit

@@ -1,0 +1,1047 @@
+[
+  {
+    "accountId": "acc-1000",
+    "legacyCode": "1000",
+    "updatedAt": "2026-04-23T23:39:47.017545+00:00"
+  },
+  {
+    "accountId": "acc-1100",
+    "legacyCode": "1100",
+    "updatedAt": "2026-04-23T23:39:47.018560+00:00"
+  },
+  {
+    "accountId": "acc-1101",
+    "legacyCode": "1101",
+    "updatedAt": "2026-04-23T23:39:47.021405+00:00"
+  },
+  {
+    "accountId": "acc-1102",
+    "legacyCode": "1102",
+    "updatedAt": "2026-04-23T23:39:47.024018+00:00"
+  },
+  {
+    "accountId": "acc-1103",
+    "legacyCode": "1103",
+    "updatedAt": "2026-04-23T23:39:47.026618+00:00"
+  },
+  {
+    "accountId": "acc-c6b07a262ad8",
+    "legacyCode": "1104",
+    "updatedAt": "2026-04-23T23:39:47.029241+00:00"
+  },
+  {
+    "accountId": "acc-1105",
+    "legacyCode": "1105",
+    "updatedAt": "2026-04-23T23:39:47.031956+00:00"
+  },
+  {
+    "accountId": "acc-1106",
+    "legacyCode": "1106",
+    "updatedAt": "2026-04-23T23:39:47.034582+00:00"
+  },
+  {
+    "accountId": "acc-1200",
+    "legacyCode": "1200",
+    "updatedAt": "2026-04-23T23:39:47.037210+00:00"
+  },
+  {
+    "accountId": "acc-1201",
+    "legacyCode": "1201",
+    "updatedAt": "2026-04-23T23:39:47.039849+00:00"
+  },
+  {
+    "accountId": "acc-1202",
+    "legacyCode": "1202",
+    "updatedAt": "2026-04-23T23:39:47.043250+00:00"
+  },
+  {
+    "accountId": "acc-1203",
+    "legacyCode": "1203",
+    "updatedAt": "2026-04-23T23:39:47.045809+00:00"
+  },
+  {
+    "accountId": "acc-1207",
+    "legacyCode": "1207",
+    "updatedAt": "2026-04-23T23:39:47.048492+00:00"
+  },
+  {
+    "accountId": "acc-2000",
+    "legacyCode": "2000",
+    "updatedAt": "2026-04-23T23:39:47.051107+00:00"
+  },
+  {
+    "accountId": "acc-2100",
+    "legacyCode": "2100",
+    "updatedAt": "2026-04-23T23:39:47.053677+00:00"
+  },
+  {
+    "accountId": "acc-2101",
+    "legacyCode": "2101",
+    "updatedAt": "2026-04-23T23:39:47.056339+00:00"
+  },
+  {
+    "accountId": "acc-2102",
+    "legacyCode": "2102",
+    "updatedAt": "2026-04-23T23:39:47.058903+00:00"
+  },
+  {
+    "accountId": "acc-2103",
+    "legacyCode": "2103",
+    "updatedAt": "2026-04-23T23:39:47.061547+00:00"
+  },
+  {
+    "accountId": "acc-3000",
+    "legacyCode": "3000",
+    "updatedAt": "2026-04-23T23:39:47.064228+00:00"
+  },
+  {
+    "accountId": "acc-3100",
+    "legacyCode": "3100",
+    "updatedAt": "2026-04-23T23:39:47.066782+00:00"
+  },
+  {
+    "accountId": "acc-3101",
+    "legacyCode": "3101",
+    "updatedAt": "2026-04-23T23:39:47.069440+00:00"
+  },
+  {
+    "accountId": "acc-3102",
+    "legacyCode": "3102",
+    "updatedAt": "2026-04-23T23:39:47.072131+00:00"
+  },
+  {
+    "accountId": "acc-3103",
+    "legacyCode": "3103",
+    "updatedAt": "2026-04-23T23:39:47.074797+00:00"
+  },
+  {
+    "accountId": "acc-3104",
+    "legacyCode": "3104",
+    "updatedAt": "2026-04-23T23:39:47.077359+00:00"
+  },
+  {
+    "accountId": "acc-4000",
+    "legacyCode": "4000",
+    "updatedAt": "2026-04-23T23:39:47.080064+00:00"
+  },
+  {
+    "accountId": "acc-4100",
+    "legacyCode": "4100",
+    "updatedAt": "2026-04-23T23:39:47.082744+00:00"
+  },
+  {
+    "accountId": "acc-4101",
+    "legacyCode": "4101",
+    "updatedAt": "2026-04-23T23:39:47.085322+00:00"
+  },
+  {
+    "accountId": "acc-4102",
+    "legacyCode": "4102",
+    "updatedAt": "2026-04-23T23:39:47.087944+00:00"
+  },
+  {
+    "accountId": "acc-4103",
+    "legacyCode": "4103",
+    "updatedAt": "2026-04-23T23:39:47.090729+00:00"
+  },
+  {
+    "accountId": "acc-5000",
+    "legacyCode": "5000",
+    "updatedAt": "2026-04-23T23:39:47.093406+00:00"
+  },
+  {
+    "accountId": "acc-5100",
+    "legacyCode": "5100",
+    "updatedAt": "2026-04-23T23:39:47.096002+00:00"
+  },
+  {
+    "accountId": "acc-5101",
+    "legacyCode": "5101",
+    "updatedAt": "2026-04-23T23:39:47.098595+00:00"
+  },
+  {
+    "accountId": "acc-5102",
+    "legacyCode": "5102",
+    "updatedAt": "2026-04-23T23:39:47.101153+00:00"
+  },
+  {
+    "accountId": "acc-5103",
+    "legacyCode": "5103",
+    "updatedAt": "2026-04-23T23:39:47.103788+00:00"
+  },
+  {
+    "accountId": "acc-6000",
+    "legacyCode": "6000",
+    "updatedAt": "2026-04-23T23:39:47.106351+00:00"
+  },
+  {
+    "accountId": "acc-6100",
+    "legacyCode": "6100",
+    "updatedAt": "2026-04-23T23:39:47.108989+00:00"
+  },
+  {
+    "accountId": "acc-6101",
+    "legacyCode": "6101",
+    "updatedAt": "2026-04-23T23:39:47.111695+00:00"
+  },
+  {
+    "accountId": "acc-6102",
+    "legacyCode": "6102",
+    "updatedAt": "2026-04-23T23:39:47.114441+00:00"
+  },
+  {
+    "accountId": "acc-6103",
+    "legacyCode": "6103",
+    "updatedAt": "2026-04-23T23:39:47.117039+00:00"
+  },
+  {
+    "accountId": "acc-6104",
+    "legacyCode": "6104",
+    "updatedAt": "2026-04-23T23:39:47.120228+00:00"
+  },
+  {
+    "accountId": "acc-6105",
+    "legacyCode": "6105",
+    "updatedAt": "2026-04-23T23:39:47.122815+00:00"
+  },
+  {
+    "accountId": "2e3a7e2b-959e-47e6-8e44-4da9a6503a61",
+    "legacyCode": "40012",
+    "updatedAt": "2026-04-23T23:39:47.125549+00:00"
+  },
+  {
+    "accountId": "29ccae2d-2151-45a4-bd1c-515390b59333",
+    "legacyCode": "50001",
+    "updatedAt": "2026-04-23T23:39:47.128163+00:00"
+  },
+  {
+    "accountId": "0ae1790d-bba5-4350-a1c9-5409ffd490fd",
+    "legacyCode": "50002",
+    "updatedAt": "2026-04-23T23:39:47.130774+00:00"
+  },
+  {
+    "accountId": "16f39b3b-89c6-437d-811f-c527ce8c9701",
+    "legacyCode": "50021",
+    "updatedAt": "2026-04-23T23:39:47.133362+00:00"
+  },
+  {
+    "accountId": "7bd88ac0-ad1c-45f6-9887-8731188f1b60",
+    "legacyCode": "50031",
+    "updatedAt": "2026-04-23T23:39:47.135967+00:00"
+  },
+  {
+    "accountId": "c5143266-7c17-4962-99cf-fbae438de846",
+    "legacyCode": "61001",
+    "updatedAt": "2026-04-23T23:39:47.138557+00:00"
+  },
+  {
+    "accountId": "d1e44791-179b-46b2-aac5-2ed6338e6540",
+    "legacyCode": "500021",
+    "updatedAt": "2026-04-23T23:39:47.141286+00:00"
+  },
+  {
+    "accountId": "35935d8b-6cb5-49b4-97d5-cab897cdffd9",
+    "legacyCode": "600102",
+    "updatedAt": "2026-04-23T23:39:47.143897+00:00"
+  },
+  {
+    "accountId": "038169f1-26c0-487b-9744-a2caf08aba76",
+    "legacyCode": "600103",
+    "updatedAt": "2026-04-23T23:39:47.146597+00:00"
+  },
+  {
+    "accountId": "69f4579c-7fbf-46c9-88a1-1f592ffd1aa9",
+    "legacyCode": "600105",
+    "updatedAt": "2026-04-23T23:39:47.149155+00:00"
+  },
+  {
+    "accountId": "e6a5b69f-9f5b-4aeb-a0b3-faf4fe180fa8",
+    "legacyCode": "600106",
+    "updatedAt": "2026-04-23T23:39:47.151727+00:00"
+  },
+  {
+    "accountId": "96773d4c-ddf5-402e-8368-e4765788bb72",
+    "legacyCode": "5000101",
+    "updatedAt": "2026-04-23T23:39:47.154286+00:00"
+  },
+  {
+    "accountId": "b0b5cf1f-83cc-4c50-a540-183c81d3e97d",
+    "legacyCode": "5000102",
+    "updatedAt": "2026-04-23T23:39:47.156951+00:00"
+  },
+  {
+    "accountId": "3fd73058-8b39-4abd-8b09-7d724a68ec8c",
+    "legacyCode": "5000103",
+    "updatedAt": "2026-04-23T23:39:47.159667+00:00"
+  },
+  {
+    "accountId": "85aa7dce-3f2f-454b-b548-23dc9c400d37",
+    "legacyCode": "5000104",
+    "updatedAt": "2026-04-23T23:39:47.162215+00:00"
+  },
+  {
+    "accountId": "8a5a2c00-6839-40aa-bf96-29978b7cddab",
+    "legacyCode": "5000105",
+    "updatedAt": "2026-04-23T23:39:47.164846+00:00"
+  },
+  {
+    "accountId": "ccc33262-b7f5-44d6-89b5-4bd3da59866e",
+    "legacyCode": "5000106",
+    "updatedAt": "2026-04-23T23:39:47.167465+00:00"
+  },
+  {
+    "accountId": "acc-customer-d10ac37d-5e8e-4ace-9504-c26001c3f945",
+    "legacyCode": "11030003",
+    "updatedAt": "2026-04-23T23:39:47.170085+00:00"
+  },
+  {
+    "accountId": "acc-customer-fcefcc2a-1edd-4ad0-b647-fb4444008a07",
+    "legacyCode": "11030004",
+    "updatedAt": "2026-04-23T23:39:47.172679+00:00"
+  },
+  {
+    "accountId": "acc-customer-aa3e964b-beb7-450a-91c2-2a006074527a",
+    "legacyCode": "11030006",
+    "updatedAt": "2026-04-23T23:39:47.175214+00:00"
+  },
+  {
+    "accountId": "acc-customer-6c3cc86f-8006-46a3-869b-f5437208b647",
+    "legacyCode": "11030007",
+    "updatedAt": "2026-04-23T23:39:47.177754+00:00"
+  },
+  {
+    "accountId": "acc-customer-18df3beb-aefd-4fbb-8221-d462b5a7ecfa",
+    "legacyCode": "11030008",
+    "updatedAt": "2026-04-23T23:39:47.180492+00:00"
+  },
+  {
+    "accountId": "acc-customer-e2f15c38-ba42-4442-a04b-fc20b355a04c",
+    "legacyCode": "11030009",
+    "updatedAt": "2026-04-23T23:39:47.183155+00:00"
+  },
+  {
+    "accountId": "acc-customer-4c977b74-e227-4126-8b72-c1f1c436623d",
+    "legacyCode": "11030010",
+    "updatedAt": "2026-04-23T23:39:47.185836+00:00"
+  },
+  {
+    "accountId": "acc-customer-ac9d3e9c-4ffc-4ea3-a6ba-c0ae74f95082",
+    "legacyCode": "11030011",
+    "updatedAt": "2026-04-23T23:39:47.188529+00:00"
+  },
+  {
+    "accountId": "acc-customer-418df582-c9a4-4a6c-b2cd-42ca64c9951b",
+    "legacyCode": "11030012",
+    "updatedAt": "2026-04-23T23:39:47.191695+00:00"
+  },
+  {
+    "accountId": "acc-customer-9c8970f9-1b42-494d-ba57-ef3aeae944ed",
+    "legacyCode": "11030013",
+    "updatedAt": "2026-04-23T23:39:47.194238+00:00"
+  },
+  {
+    "accountId": "acc-customer-8d78254a-2389-4f12-aaf2-273dfbe4bd09",
+    "legacyCode": "11030014",
+    "updatedAt": "2026-04-23T23:39:47.196938+00:00"
+  },
+  {
+    "accountId": "acc-customer-cae5d187-dd6c-4377-8045-5b593cfb9613",
+    "legacyCode": "11030015",
+    "updatedAt": "2026-04-23T23:39:47.199625+00:00"
+  },
+  {
+    "accountId": "acc-customer-f6fb97b7-0f07-4555-b7ad-724869bbef5c",
+    "legacyCode": "11030016",
+    "updatedAt": "2026-04-23T23:39:47.202313+00:00"
+  },
+  {
+    "accountId": "acc-customer-548ff592-b27d-42a5-b458-6f98edf238e8",
+    "legacyCode": "11030017",
+    "updatedAt": "2026-04-23T23:39:47.205024+00:00"
+  },
+  {
+    "accountId": "acc-customer-720d91ed-18b3-4ab5-9deb-937f57d663f9",
+    "legacyCode": "11030018",
+    "updatedAt": "2026-04-23T23:39:47.207811+00:00"
+  },
+  {
+    "accountId": "acc-customer-52dce7bf-2baa-4c68-8461-5fb5ba4b4351",
+    "legacyCode": "11030019",
+    "updatedAt": "2026-04-23T23:39:47.210389+00:00"
+  },
+  {
+    "accountId": "acc-customer-7624d660-ceb0-450f-904a-0bada613d825",
+    "legacyCode": "11030020",
+    "updatedAt": "2026-04-23T23:39:47.213008+00:00"
+  },
+  {
+    "accountId": "acc-customer-7350d160-5820-40d7-b8b0-5d82a377d8aa",
+    "legacyCode": "11030021",
+    "updatedAt": "2026-04-23T23:39:47.215564+00:00"
+  },
+  {
+    "accountId": "acc-customer-a277e642-48e8-428f-825f-d5dc4ea9ef6b",
+    "legacyCode": "11030022",
+    "updatedAt": "2026-04-23T23:39:47.218168+00:00"
+  },
+  {
+    "accountId": "acc-customer-928f6387-6a94-4cf3-8f75-7ac1856bc84b",
+    "legacyCode": "11030023",
+    "updatedAt": "2026-04-23T23:39:47.220850+00:00"
+  },
+  {
+    "accountId": "acc-customer-522f1655-98e4-4bd3-9675-9d7750ec0482",
+    "legacyCode": "11030024",
+    "updatedAt": "2026-04-23T23:39:47.223570+00:00"
+  },
+  {
+    "accountId": "acc-customer-bc7ec975-32f6-4b98-b030-7c81039f9710",
+    "legacyCode": "11030025",
+    "updatedAt": "2026-04-23T23:39:47.226405+00:00"
+  },
+  {
+    "accountId": "acc-customer-4b09f1a9-ec6e-4080-a650-9f5533ca4663",
+    "legacyCode": "11030026",
+    "updatedAt": "2026-04-23T23:39:47.229055+00:00"
+  },
+  {
+    "accountId": "acc-customer-41188f8f-db7d-4552-b309-60a956aec055",
+    "legacyCode": "11030027",
+    "updatedAt": "2026-04-23T23:39:47.231661+00:00"
+  },
+  {
+    "accountId": "acc-customer-d876cb34-6ff2-42ad-8d56-c5da79c8e3f9",
+    "legacyCode": "11030028",
+    "updatedAt": "2026-04-23T23:39:47.234326+00:00"
+  },
+  {
+    "accountId": "acc-customer-0d9864ab-26e1-4ce2-9c92-dd19e0472598",
+    "legacyCode": "11030029",
+    "updatedAt": "2026-04-23T23:39:47.236940+00:00"
+  },
+  {
+    "accountId": "acc-customer-caa15e0e-0bd8-4bc9-84f8-bc6dd910167f",
+    "legacyCode": "11030030",
+    "updatedAt": "2026-04-23T23:39:47.239607+00:00"
+  },
+  {
+    "accountId": "acc-customer-2bfe5f46-97d5-4575-a3bc-1058170ebe7f",
+    "legacyCode": "11030031",
+    "updatedAt": "2026-04-23T23:39:47.242310+00:00"
+  },
+  {
+    "accountId": "acc-customer-54f01a74-526e-4832-9f86-2aaf7efee08f",
+    "legacyCode": "11030032",
+    "updatedAt": "2026-04-23T23:39:47.244945+00:00"
+  },
+  {
+    "accountId": "acc-customer-d52db355-d2e1-4c58-9b1b-c96064185b16",
+    "legacyCode": "11030033",
+    "updatedAt": "2026-04-23T23:39:47.248138+00:00"
+  },
+  {
+    "accountId": "acc-customer-74a2a4bd-fedc-451e-9f0d-c5958f820eb2",
+    "legacyCode": "11030034",
+    "updatedAt": "2026-04-23T23:39:47.250744+00:00"
+  },
+  {
+    "accountId": "acc-customer-e2dda76d-0903-4a5b-9deb-b4270c4bddec",
+    "legacyCode": "11030035",
+    "updatedAt": "2026-04-23T23:39:47.253246+00:00"
+  },
+  {
+    "accountId": "acc-customer-b38579f7-6206-4503-a09e-c6023c8ab0a4",
+    "legacyCode": "11030036",
+    "updatedAt": "2026-04-23T23:39:47.255907+00:00"
+  },
+  {
+    "accountId": "acc-customer-f761b836-7f65-47ba-915a-41c354cb2ada",
+    "legacyCode": "11030037",
+    "updatedAt": "2026-04-23T23:39:47.258458+00:00"
+  },
+  {
+    "accountId": "acc-customer-e3ba7a3b-b682-41f8-a0de-e942ae8d23e7",
+    "legacyCode": "11030038",
+    "updatedAt": "2026-04-23T23:39:47.261154+00:00"
+  },
+  {
+    "accountId": "acc-customer-4abe6ba8-2f66-418d-8666-756d73f69ecf",
+    "legacyCode": "11030039",
+    "updatedAt": "2026-04-23T23:39:47.263772+00:00"
+  },
+  {
+    "accountId": "acc-customer-3ceea115-c0b1-46bc-a713-f67c1f405dee",
+    "legacyCode": "11030040",
+    "updatedAt": "2026-04-23T23:39:47.266404+00:00"
+  },
+  {
+    "accountId": "acc-customer-7e4ffbf9-594b-4505-a1c0-7d25fda729b6",
+    "legacyCode": "11030042",
+    "updatedAt": "2026-04-23T23:39:47.268901+00:00"
+  },
+  {
+    "accountId": "acc-customer-ed430cfe-b585-4341-bbbe-47451f9db867",
+    "legacyCode": "11030043",
+    "updatedAt": "2026-04-23T23:39:47.271401+00:00"
+  },
+  {
+    "accountId": "acc-customer-5f61c3b6-3a4a-4fae-b099-bcc9eebf1e54",
+    "legacyCode": "11030044",
+    "updatedAt": "2026-04-23T23:39:47.273849+00:00"
+  },
+  {
+    "accountId": "acc-customer-371e4be5-1139-4804-9ecf-851bdd3febef",
+    "legacyCode": "11030045",
+    "updatedAt": "2026-04-23T23:39:47.277125+00:00"
+  },
+  {
+    "accountId": "acc-customer-5f813077-439a-474a-b422-8ea31c6c3c4e",
+    "legacyCode": "11030046",
+    "updatedAt": "2026-04-23T23:39:47.279594+00:00"
+  },
+  {
+    "accountId": "acc-customer-582f3219-8f65-4500-bbd3-3bf97d9e4443",
+    "legacyCode": "11030047",
+    "updatedAt": "2026-04-23T23:39:47.282098+00:00"
+  },
+  {
+    "accountId": "acc-customer-407b86c0-15d0-4957-9131-7ddae59d8bee",
+    "legacyCode": "11030048",
+    "updatedAt": "2026-04-23T23:39:47.284635+00:00"
+  },
+  {
+    "accountId": "acc-customer-2530da37-90fc-428b-9fb6-235cac2c7cc5",
+    "legacyCode": "11030049",
+    "updatedAt": "2026-04-23T23:39:47.287063+00:00"
+  },
+  {
+    "accountId": "acc-customer-357b6e5d-0c81-46d0-bc63-3208adcaec0e",
+    "legacyCode": "11030050",
+    "updatedAt": "2026-04-23T23:39:47.289557+00:00"
+  },
+  {
+    "accountId": "acc-customer-e720c328-60a4-4193-b0b4-d217c9f49b5c",
+    "legacyCode": "11030051",
+    "updatedAt": "2026-04-23T23:39:47.292053+00:00"
+  },
+  {
+    "accountId": "acc-customer-b62060af-cf26-48a8-933b-0b43ba4cb5d0",
+    "legacyCode": "11030052",
+    "updatedAt": "2026-04-23T23:39:47.294473+00:00"
+  },
+  {
+    "accountId": "acc-customer-a012991f-c574-404e-953d-a7132ba2463a",
+    "legacyCode": "11030053",
+    "updatedAt": "2026-04-23T23:39:47.296869+00:00"
+  },
+  {
+    "accountId": "acc-customer-66ad9792-2af5-4438-b019-936fb95b979a",
+    "legacyCode": "11030055",
+    "updatedAt": "2026-04-23T23:39:47.299364+00:00"
+  },
+  {
+    "accountId": "acc-customer-a1d0fbdf-d102-4916-85c8-4735e2d9117b",
+    "legacyCode": "11030056",
+    "updatedAt": "2026-04-23T23:39:47.302063+00:00"
+  },
+  {
+    "accountId": "acc-customer-67517c62-717a-4e36-a86d-237f01e5ac5f",
+    "legacyCode": "11030057",
+    "updatedAt": "2026-04-23T23:39:47.304780+00:00"
+  },
+  {
+    "accountId": "acc-customer-98ea1abc-be31-4898-9290-236053c1027d",
+    "legacyCode": "11030058",
+    "updatedAt": "2026-04-23T23:39:47.307310+00:00"
+  },
+  {
+    "accountId": "acc-customer-7c9e866f-0b1f-4226-8479-a77c0209f831",
+    "legacyCode": "11030061",
+    "updatedAt": "2026-04-23T23:39:47.309784+00:00"
+  },
+  {
+    "accountId": "acc-customer-5d742f83-9ece-430e-8c25-10fb8ec82c45",
+    "legacyCode": "11030062",
+    "updatedAt": "2026-04-23T23:39:47.312226+00:00"
+  },
+  {
+    "accountId": "acc-customer-6aa29cb1-83c0-422f-9332-6bf0a123c32f",
+    "legacyCode": "11030063",
+    "updatedAt": "2026-04-23T23:39:47.314651+00:00"
+  },
+  {
+    "accountId": "acc-customer-0c34f5c9-cfef-494d-ad5d-41a7f252eaea",
+    "legacyCode": "11030064",
+    "updatedAt": "2026-04-23T23:39:47.317118+00:00"
+  },
+  {
+    "accountId": "acc-customer-58806436-0aee-46d1-a32e-ed7e0ce9c261",
+    "legacyCode": "11030065",
+    "updatedAt": "2026-04-23T23:39:47.319586+00:00"
+  },
+  {
+    "accountId": "acc-customer-039417d5-b761-4759-be6c-0a830952d02d",
+    "legacyCode": "11030066",
+    "updatedAt": "2026-04-23T23:39:47.322195+00:00"
+  },
+  {
+    "accountId": "acc-customer-2723dcfa-f0d4-46ff-9066-8788dd4d36c6",
+    "legacyCode": "11030067",
+    "updatedAt": "2026-04-23T23:39:47.324807+00:00"
+  },
+  {
+    "accountId": "acc-customer-e34520b3-1b4f-4846-a403-952a5547fefa",
+    "legacyCode": "11030068",
+    "updatedAt": "2026-04-23T23:39:47.327379+00:00"
+  },
+  {
+    "accountId": "acc-customer-5e7150c4-0c06-4d73-92f8-17222021f7f7",
+    "legacyCode": "11030069",
+    "updatedAt": "2026-04-23T23:39:47.329948+00:00"
+  },
+  {
+    "accountId": "acc-customer-3e756cdc-c168-4976-b8e8-26b40e8e792b",
+    "legacyCode": "11030070",
+    "updatedAt": "2026-04-23T23:39:47.332606+00:00"
+  },
+  {
+    "accountId": "acc-customer-555cfba9-1319-4155-b2e2-b8e6c40a7a4e",
+    "legacyCode": "11030071",
+    "updatedAt": "2026-04-23T23:39:47.335268+00:00"
+  },
+  {
+    "accountId": "acc-customer-97b9d0f1-04f3-4198-8394-b09e3b23ed19",
+    "legacyCode": "11030072",
+    "updatedAt": "2026-04-23T23:39:47.337812+00:00"
+  },
+  {
+    "accountId": "acc-customer-bf49a8de-267e-4e1f-ae12-0549708ca864",
+    "legacyCode": "11030073",
+    "updatedAt": "2026-04-23T23:39:47.340413+00:00"
+  },
+  {
+    "accountId": "acc-customer-69416afa-9e92-43d4-9e6d-c18b43f416ee",
+    "legacyCode": "11030074",
+    "updatedAt": "2026-04-23T23:39:47.343083+00:00"
+  },
+  {
+    "accountId": "acc-customer-5c8140f9-f7b3-4947-86b1-67cc1ff943f7",
+    "legacyCode": "11030075",
+    "updatedAt": "2026-04-23T23:39:47.345820+00:00"
+  },
+  {
+    "accountId": "acc-customer-f115f19e-a555-4297-b3fa-fbca8f3ba266",
+    "legacyCode": "11030076",
+    "updatedAt": "2026-04-23T23:39:47.348650+00:00"
+  },
+  {
+    "accountId": "acc-customer-5b954b7f-69f3-458d-a96b-26ba05813b3e",
+    "legacyCode": "11030077",
+    "updatedAt": "2026-04-23T23:39:47.351259+00:00"
+  },
+  {
+    "accountId": "acc-customer-12c6fda2-3ee4-49e5-95e8-2ed0e609e756",
+    "legacyCode": "11030078",
+    "updatedAt": "2026-04-23T23:39:47.353955+00:00"
+  },
+  {
+    "accountId": "acc-customer-6c84be21-7a6c-479d-a749-ffa484ddaf87",
+    "legacyCode": "11030080",
+    "updatedAt": "2026-04-23T23:39:47.356628+00:00"
+  },
+  {
+    "accountId": "acc-customer-949ba9c1-06ca-4a28-83e0-d974b7ddc6db",
+    "legacyCode": "11030084",
+    "updatedAt": "2026-04-23T23:39:47.359304+00:00"
+  },
+  {
+    "accountId": "acc-customer-b00ae384-a4b3-4ae8-bc8e-c7f66da5452e",
+    "legacyCode": "11030085",
+    "updatedAt": "2026-04-23T23:39:47.361962+00:00"
+  },
+  {
+    "accountId": "acc-customer-9a49beea-739b-4a3c-8077-038d5785636d",
+    "legacyCode": "11030086",
+    "updatedAt": "2026-04-23T23:39:47.364559+00:00"
+  },
+  {
+    "accountId": "acc-customer-c0bc0b2c-0d35-42d1-ae0b-8d8476a1c6a9",
+    "legacyCode": "11030097",
+    "updatedAt": "2026-04-23T23:39:47.367118+00:00"
+  },
+  {
+    "accountId": "acc-customer-f82d430c-421c-4adb-99e4-d9e730978538",
+    "legacyCode": "11030098",
+    "updatedAt": "2026-04-23T23:39:47.369958+00:00"
+  },
+  {
+    "accountId": "acc-customer-41ab7413-1647-4084-aa8c-2b4c68d92701",
+    "legacyCode": "11030099",
+    "updatedAt": "2026-04-23T23:39:47.372725+00:00"
+  },
+  {
+    "accountId": "acc-customer-a09210e0-2c6d-4ad0-93b8-9fc9a37d9d5d",
+    "legacyCode": "11030100",
+    "updatedAt": "2026-04-23T23:39:47.375343+00:00"
+  },
+  {
+    "accountId": "acc-customer-0f6e12de-0d2f-4574-bffb-3bd09ebc173e",
+    "legacyCode": "11030101",
+    "updatedAt": "2026-04-23T23:39:47.377970+00:00"
+  },
+  {
+    "accountId": "acc-customer-fdc903af-38db-4a9a-86e5-a94a029e25f2",
+    "legacyCode": "11030102",
+    "updatedAt": "2026-04-23T23:39:47.380503+00:00"
+  },
+  {
+    "accountId": "acc-customer-6aa3039c-808a-4843-89bc-bdc852598531",
+    "legacyCode": "11030103",
+    "updatedAt": "2026-04-23T23:39:47.383127+00:00"
+  },
+  {
+    "accountId": "acc-customer-fe87c726-3803-49fe-b05f-3152dbfebd4b",
+    "legacyCode": "11030104",
+    "updatedAt": "2026-04-23T23:39:47.385720+00:00"
+  },
+  {
+    "accountId": "acc-customer-6e89167b-796a-402b-9edd-835edb53a4e5",
+    "legacyCode": "11030105",
+    "updatedAt": "2026-04-23T23:39:47.388387+00:00"
+  },
+  {
+    "accountId": "acc-customer-e434b3b8-dd94-4cea-991c-45af961b912f",
+    "legacyCode": "11030106",
+    "updatedAt": "2026-04-23T23:39:47.391199+00:00"
+  },
+  {
+    "accountId": "acc-customer-d6451509-c890-4fac-a250-ec657f24f545",
+    "legacyCode": "11030107",
+    "updatedAt": "2026-04-23T23:39:47.393891+00:00"
+  },
+  {
+    "accountId": "acc-customer-b362a84b-2623-4270-9f92-6b48aa2769a7",
+    "legacyCode": "11030111",
+    "updatedAt": "2026-04-23T23:39:47.396581+00:00"
+  },
+  {
+    "accountId": "acc-customer-00fd5458-7373-4697-9a22-8c59cac44888",
+    "legacyCode": "11030113",
+    "updatedAt": "2026-04-23T23:39:47.399267+00:00"
+  },
+  {
+    "accountId": "acc-customer-5740158f-5344-4084-b74d-832244964671",
+    "legacyCode": "11030114",
+    "updatedAt": "2026-04-23T23:39:47.401954+00:00"
+  },
+  {
+    "accountId": "acc-customer-d2ef7f50-057a-48e4-b558-b2c9946987fe",
+    "legacyCode": "11030117",
+    "updatedAt": "2026-04-23T23:39:47.404588+00:00"
+  },
+  {
+    "accountId": "acc-customer-f56ffb5d-2641-4abc-af49-92339bb24b0e",
+    "legacyCode": "11030129",
+    "updatedAt": "2026-04-23T23:39:47.407308+00:00"
+  },
+  {
+    "accountId": "acc-supplier-b1590306-e82e-45c1-9794-c2ff7a8f33eb",
+    "legacyCode": "21010001",
+    "updatedAt": "2026-04-23T23:39:47.409900+00:00"
+  },
+  {
+    "accountId": "acc-supplier-502bd6fd-fba9-4994-bd79-c0f1e79210a7",
+    "legacyCode": "21010002",
+    "updatedAt": "2026-04-23T23:39:47.412664+00:00"
+  },
+  {
+    "accountId": "acc-supplier-dec1e2a3-8784-4e6a-9219-925389de011c",
+    "legacyCode": "21010003",
+    "updatedAt": "2026-04-23T23:39:47.415359+00:00"
+  },
+  {
+    "accountId": "acc-supplier-d83c54c3-c962-402e-95de-7acbce3ce734",
+    "legacyCode": "21010004",
+    "updatedAt": "2026-04-23T23:39:47.418021+00:00"
+  },
+  {
+    "accountId": "acc-supplier-991616a4-0644-4b55-88d9-5e24d4186449",
+    "legacyCode": "21010005",
+    "updatedAt": "2026-04-23T23:39:47.420577+00:00"
+  },
+  {
+    "accountId": "acc-supplier-d6c179ea-2dc1-4eba-9ef2-54e28dca816f",
+    "legacyCode": "21010006",
+    "updatedAt": "2026-04-23T23:39:47.423151+00:00"
+  },
+  {
+    "accountId": "acc-supplier-da85eb30-1a11-479e-b598-d9b4b7fb8580",
+    "legacyCode": "21010007",
+    "updatedAt": "2026-04-23T23:39:47.425934+00:00"
+  },
+  {
+    "accountId": "acc-supplier-4ab00754-8025-495b-9736-722a89c855de",
+    "legacyCode": "21010008",
+    "updatedAt": "2026-04-23T23:39:47.428642+00:00"
+  },
+  {
+    "accountId": "acc-supplier-31e1ca2b-69b0-4b92-a3ea-63ffc2fe6d39",
+    "legacyCode": "21010009",
+    "updatedAt": "2026-04-23T23:39:47.431215+00:00"
+  },
+  {
+    "accountId": "acc-supplier-90a1ad40-f732-45de-8d4a-2967099ed0a4",
+    "legacyCode": "21010010",
+    "updatedAt": "2026-04-23T23:39:47.433922+00:00"
+  },
+  {
+    "accountId": "acc-supplier-bfd5c3d1-7e6b-46ec-b8bf-02fc5690d6ce",
+    "legacyCode": "21010011",
+    "updatedAt": "2026-04-23T23:39:47.436568+00:00"
+  },
+  {
+    "accountId": "acc-supplier-14e005c5-7619-4c07-b616-92e7be4da2d3",
+    "legacyCode": "21010012",
+    "updatedAt": "2026-04-23T23:39:47.439178+00:00"
+  },
+  {
+    "accountId": "acc-supplier-d0d9cf0e-e2e1-47ef-90eb-8a6b7ae14930",
+    "legacyCode": "21010013",
+    "updatedAt": "2026-04-23T23:39:47.442183+00:00"
+  },
+  {
+    "accountId": "acc-supplier-78d5e225-3fbf-42f0-b824-c5a86886ef72",
+    "legacyCode": "21010017",
+    "updatedAt": "2026-04-23T23:39:47.444892+00:00"
+  },
+  {
+    "accountId": "acc-supplier-4e17b603-3d4b-47de-8e1e-d353d2751a7c",
+    "legacyCode": "21010018",
+    "updatedAt": "2026-04-23T23:39:47.447544+00:00"
+  },
+  {
+    "accountId": "acc-supplier-13261f27-cad4-4e7e-b1c2-18ed80c8cb08",
+    "legacyCode": "21010019",
+    "updatedAt": "2026-04-23T23:39:47.450108+00:00"
+  },
+  {
+    "accountId": "acc-supplier-42f814b9-3f5d-4467-8cf7-f07ab3c4d7ce",
+    "legacyCode": "21010020",
+    "updatedAt": "2026-04-23T23:39:47.452799+00:00"
+  },
+  {
+    "accountId": "acc-supplier-6f61c7dc-dfdc-4f9c-9b19-621cbddef11f",
+    "legacyCode": "21010021",
+    "updatedAt": "2026-04-23T23:39:47.455520+00:00"
+  },
+  {
+    "accountId": "acc-supplier-eab7a13e-3b5c-44bc-8b24-6ce7eda25dc7",
+    "legacyCode": "21010022",
+    "updatedAt": "2026-04-23T23:39:47.458442+00:00"
+  },
+  {
+    "accountId": "acc-supplier-0a65c728-e510-4970-8a95-d7dd319688f1",
+    "legacyCode": "21010023",
+    "updatedAt": "2026-04-23T23:39:47.461060+00:00"
+  },
+  {
+    "accountId": "acc-supplier-cba7ab3f-b6ba-46b1-94e0-11c462b823bd",
+    "legacyCode": "21010024",
+    "updatedAt": "2026-04-23T23:39:47.463728+00:00"
+  },
+  {
+    "accountId": "acc-supplier-db4de468-cde5-44f8-b732-2acc483309fd",
+    "legacyCode": "21010025",
+    "updatedAt": "2026-04-23T23:39:47.466344+00:00"
+  },
+  {
+    "accountId": "acc-supplier-e00e004e-cf64-45ff-9f29-64c3218a56c4",
+    "legacyCode": "21010026",
+    "updatedAt": "2026-04-23T23:39:47.469079+00:00"
+  },
+  {
+    "accountId": "acc-supplier-17bdeca6-3718-4429-9217-afa609fde6d3",
+    "legacyCode": "21010027",
+    "updatedAt": "2026-04-23T23:39:47.471806+00:00"
+  },
+  {
+    "accountId": "acc-supplier-b7dd42f9-6501-4924-ac82-15dea8b276bf",
+    "legacyCode": "21010028",
+    "updatedAt": "2026-04-23T23:39:47.474561+00:00"
+  },
+  {
+    "accountId": "acc-supplier-65dfcf90-bf9c-49c5-bda1-b723e3d2b2ec",
+    "legacyCode": "21010029",
+    "updatedAt": "2026-04-23T23:39:47.477229+00:00"
+  },
+  {
+    "accountId": "acc-supplier-98cb57f8-0228-469c-9b2a-f0df6aa07698",
+    "legacyCode": "21010030",
+    "updatedAt": "2026-04-23T23:39:47.480266+00:00"
+  },
+  {
+    "accountId": "acc-supplier-a4f76552-315f-4386-b448-11ac4665731c",
+    "legacyCode": "21010031",
+    "updatedAt": "2026-04-23T23:39:47.482949+00:00"
+  },
+  {
+    "accountId": "acc-supplier-8b77f13f-08f9-425a-b33c-0a089e34e4cb",
+    "legacyCode": "21010032",
+    "updatedAt": "2026-04-23T23:39:47.485632+00:00"
+  },
+  {
+    "accountId": "acc-supplier-c5ca2fac-7b43-439a-b305-a3fddc37b009",
+    "legacyCode": "21010033",
+    "updatedAt": "2026-04-23T23:39:47.488327+00:00"
+  },
+  {
+    "accountId": "acc-supplier-c0cdaf1c-08d8-4b58-b68d-94c726633a3e",
+    "legacyCode": "21010034",
+    "updatedAt": "2026-04-23T23:39:47.491116+00:00"
+  },
+  {
+    "accountId": "acc-supplier-9bae5213-022a-4432-b91e-2ed6fc641a47",
+    "legacyCode": "21010035",
+    "updatedAt": "2026-04-23T23:39:47.493810+00:00"
+  },
+  {
+    "accountId": "acc-supplier-31d545cf-bfc2-4efd-a1d2-02cc0bd20b65",
+    "legacyCode": "21010036",
+    "updatedAt": "2026-04-23T23:39:47.496654+00:00"
+  },
+  {
+    "accountId": "acc-supplier-9e818869-0792-4cf1-9d1b-13565539a138",
+    "legacyCode": "21010037",
+    "updatedAt": "2026-04-23T23:39:47.499229+00:00"
+  },
+  {
+    "accountId": "acc-supplier-54747203-dcd3-4865-bb66-991ebb946cb5",
+    "legacyCode": "21010038",
+    "updatedAt": "2026-04-23T23:39:47.501821+00:00"
+  },
+  {
+    "accountId": "acc-supplier-5a364d86-3ff8-4858-80cd-ddee823e7235",
+    "legacyCode": "21010039",
+    "updatedAt": "2026-04-23T23:39:47.504423+00:00"
+  },
+  {
+    "accountId": "acc-supplier-b392a3ec-7c39-408e-9a2d-25cd37f456c3",
+    "legacyCode": "21010040",
+    "updatedAt": "2026-04-23T23:39:47.507062+00:00"
+  },
+  {
+    "accountId": "acc-supplier-dec5e4eb-ec88-4655-8c3a-2719f54089e0",
+    "legacyCode": "21010041",
+    "updatedAt": "2026-04-23T23:39:47.509726+00:00"
+  },
+  {
+    "accountId": "acc-supplier-386e3029-4f53-47fb-8056-4afb1aca06de",
+    "legacyCode": "21010042",
+    "updatedAt": "2026-04-23T23:39:47.512357+00:00"
+  },
+  {
+    "accountId": "acc-supplier-f11f0b31-e04c-4699-8f28-0d239d370b19",
+    "legacyCode": "21010043",
+    "updatedAt": "2026-04-23T23:39:47.514996+00:00"
+  },
+  {
+    "accountId": "acc-supplier-161b3831-1a6f-4e05-87dc-b85223cf7700",
+    "legacyCode": "21010044",
+    "updatedAt": "2026-04-23T23:39:47.517687+00:00"
+  },
+  {
+    "accountId": "acc-supplier-aeb9cf39-9e02-4590-b2e7-b45e3691d038",
+    "legacyCode": "21010045",
+    "updatedAt": "2026-04-23T23:39:47.520321+00:00"
+  },
+  {
+    "accountId": "acc-supplier-cccc63dc-1b07-4513-811c-c847b981fffb",
+    "legacyCode": "21010046",
+    "updatedAt": "2026-04-23T23:39:47.522908+00:00"
+  },
+  {
+    "accountId": "acc-supplier-adca2168-0069-481e-a84b-92b8a5350c81",
+    "legacyCode": "21010047",
+    "updatedAt": "2026-04-23T23:39:47.525512+00:00"
+  },
+  {
+    "accountId": "acc-supplier-f78fe780-7559-4a32-9d26-d23490724c6e",
+    "legacyCode": "21010048",
+    "updatedAt": "2026-04-23T23:39:47.528289+00:00"
+  },
+  {
+    "accountId": "acc-supplier-42048df2-becc-47af-9ec9-a5feb981e717",
+    "legacyCode": "21010049",
+    "updatedAt": "2026-04-23T23:39:47.530959+00:00"
+  },
+  {
+    "accountId": "acc-supplier-fd736772-9d7b-45a0-ab82-23fe5f76c6d3",
+    "legacyCode": "21010050",
+    "updatedAt": "2026-04-23T23:39:47.533710+00:00"
+  },
+  {
+    "accountId": "acc-supplier-eb1a3a46-ddbf-449f-a56c-023980d796c6",
+    "legacyCode": "21010051",
+    "updatedAt": "2026-04-23T23:39:47.536431+00:00"
+  },
+  {
+    "accountId": "acc-supplier-18ea2cce-04b4-4624-8f7a-8e3f5c4ad258",
+    "legacyCode": "21010052",
+    "updatedAt": "2026-04-23T23:39:47.539193+00:00"
+  },
+  {
+    "accountId": "acc-supplier-13b6f679-8ece-4c4e-880f-e1a38d99806c",
+    "legacyCode": "21010053",
+    "updatedAt": "2026-04-23T23:39:47.541978+00:00"
+  },
+  {
+    "accountId": "acc-supplier-0a7ef06c-0545-4d59-a5b5-93be905594e4",
+    "legacyCode": "21010054",
+    "updatedAt": "2026-04-23T23:39:47.544591+00:00"
+  },
+  {
+    "accountId": "acc-supplier-bab8f614-856d-4950-bf85-a1f868d28155",
+    "legacyCode": "21010055",
+    "updatedAt": "2026-04-23T23:39:47.547384+00:00"
+  },
+  {
+    "accountId": "acc-supplier-9197597f-c3b7-4391-bd3b-750071a20aaf",
+    "legacyCode": "21010056",
+    "updatedAt": "2026-04-23T23:39:47.550017+00:00"
+  },
+  {
+    "accountId": "acc-supplier-8f9159d7-b9ce-48c9-b4ec-33d0e12572eb",
+    "legacyCode": "21010057",
+    "updatedAt": "2026-04-23T23:39:47.552591+00:00"
+  },
+  {
+    "accountId": "acc-supplier-ffa3f813-49df-41f8-97a3-d24887933d41",
+    "legacyCode": "21010058",
+    "updatedAt": "2026-04-23T23:39:47.555183+00:00"
+  },
+  {
+    "accountId": "acc-supplier-0add1fbe-29e7-4273-be9e-96325b8095f3",
+    "legacyCode": "21010059",
+    "updatedAt": "2026-04-23T23:39:47.557756+00:00"
+  },
+  {
+    "accountId": "acc-supplier-12250d46-76b5-4ae4-9cdf-30e775ec0b13",
+    "legacyCode": "21010060",
+    "updatedAt": "2026-04-23T23:39:47.560433+00:00"
+  },
+  {
+    "accountId": "acc-supplier-7db6aa1c-b5c6-4617-b9b7-0317a4c135bb",
+    "legacyCode": "21010061",
+    "updatedAt": "2026-04-23T23:39:47.563141+00:00"
+  },
+  {
+    "accountId": "acc-supplier-c284c922-5907-40c8-94ce-248c0e0cb5dc",
+    "legacyCode": "21010062",
+    "updatedAt": "2026-04-23T23:39:47.565967+00:00"
+  },
+  {
+    "accountId": "acc-supplier-54d552ff-ff47-4093-a246-ca045000e606",
+    "legacyCode": "21010063",
+    "updatedAt": "2026-04-23T23:39:47.568675+00:00"
+  }
+]

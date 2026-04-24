@@ -24,7 +24,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://moltbot-editor.preview.emergentagent.com/api"
+BASE_URL = "https://finance-auditor-bot.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class AREndpointsTest:

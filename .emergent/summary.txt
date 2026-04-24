@@ -1,119 +1,82 @@
-<analysis>**original_problem_statement:**
-The user's primary goal is to enforce strict financial separation between their main workshop business and a new entity, Rakan Parts. All transactions related to Rakan Parts must be isolated and not affect the workshop's financial records. Additionally, the user requested continuous UX/UI improvements across the app (Dashboard, Journal Entries, Operations, Customers), printing fixes (fetching correct workshop data), and severe performance optimizations (fixing an 8-second delay on the Operations page and slow dashboard cards).
+<analysis>### handover summary
 
-**PRODUCT REQUIREMENTS:**
-1. Rakan Parts Identification (Accounts starting with 5000).
-2. Financial Isolation in reports and views.
-3. Flexible POS/Operations entry with inline price editing and unified item selection.
-4. Glassmorphism UI enhancements in Journal Entries.
-5. Accurate document printing (invoices/receipts) with proper workshop profile data.
-6. Lightning-fast load times for Operations list and Dashboard widgets.
+**original_problem_statement:**
+The user is maintaining an ERP for an auto repair workshop. Recent extensive requests involve deep financial restructuring: re-coding all accounts to a 001, 002, 003 sequence, ensuring strict double-entry balancing, overhauling the AI Finance Auditor (External Auditor bot with strict state machine and evidence uploads), and manually adjusting financial balances to match real-world cash/bank/POS distributions.
 
-**User's preferred language**: Arabic (العربية). You MUST respond in the user's preferred language only.
+**User's preferred language**: Arabic (العربية)
+(You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only)
 
-**what currently exists?**
-A full-stack React (frontend) and FastAPI (backend) ERP system for an auto repair workshop. The system features a dual-ledger accounting setup separating the main workshop from Rakan Parts. It includes modules for Inventory, Operations (POS), Customers, Vehicles, Journal Entries, and Document Printing. The backend relies primarily on Supabase with some MongoDB fallback.
+**what currently exists?** 
+A React SPA + FastAPI backend ERP. It features a complete financial module (Chart of Accounts, Journal Entries, Comprehensive Dashboard, and an AI Finance Bot). All legacy account codes (1101, 1102, etc.) were recently migrated to sequential codes (001, 002, etc.). The AI Finance Bot acts as an External Auditor with a strict state machine, interactive action cards, and an evidence upload system.
 
-**Last working item**:
-- **Last item agent was working:** Optimizing the load speed of the Operations page (which currently takes ~8 seconds to fetch data) and the Service Type card in the Dashboard. The agent was attempting to locate the operations backend route to fix the bottleneck but failed due to looking in the wrong directory ( instead of  or ).
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend/Backend testing agent + Manual testing via curl/screenshot tool logging in as مدير.
-- **User Testing Done:** N
+**Last working item**: 
+    - Last item agent was working: Creating adjustment journal entries to force the system's financial balances to exactly match the user's real-world numbers (Bank = 16150, Cash = 0, POS = 2000).
+    - Status: IN PROGRESS
+    - Agent Testing Done: N
+    - Which testing method agent to use? Both (backend bash to verify exact balances, and frontend testing agent for UI verification).
+    - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1: Severe API Latency on Operations Page (P0)**
-     - **Attempted fixes:** The previous agent tried to add frontend React Query caching (), but the user reported the initial fetch still takes 8 seconds. The agent attempted to view  which does not exist.
-     - **Next debug checklist:** 
-       - Check  (around line 1180 ) and  to identify slow DB queries.
-       - Implement backend pagination, limit default payload, or add database indexes.
-     - **Why fix this issue and what will be achieved with the fix?** 8 seconds is unacceptable for POS entry; fixing this ensures business operations are not blocked.
-     - **Status:** IN PROGRESS
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** Both
-     - **Blocked on other issue:** None
-
-  - **Issue 2: Slow Data Fetch on Dashboard Service Type Card (P0)**
-     - **Attempted fixes:** None yet.
-     - **Next debug checklist:** 
-       - Inspect  to find which API endpoint feeds the Service Type card.
-       - Optimize the corresponding backend route in  or .
-     - **Why fix this issue and what will be achieved with the fix?** Improves user experience and perceived app performance upon login.
-     - **Status:** NOT STARTED
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** Both
-     - **Blocked on other issue:** None
-
-  - **Issue 3: Customer Balances and Payment Orders missing Supplier Option (P1)**
-     - **Attempted fixes:** None yet. Mentioned by user in earlier messages but overridden by performance complaints.
-     - **Next debug checklist:** Check Operations page payload logic for payment orders to ensure Suppliers can be selected and balances are accurate.
-     - **Why fix this issue and what will be achieved with the fix?** Crucial for proper accounting of debts and supplier payments.
-     - **Status:** NOT STARTED
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** Both
-     - **Blocked on other issue:** None
+  - Issue 1: Adjusting Account Balances to match Reality (Bank=16150, Cash=0, POS=2000) (P0)
+     - Attempted fixes: Agent fetched the current balances (Bank is 7356.5, Cash is 0, POS is 0) and was about to write the logic/script to draft journal entries to adjust these to the target values without breaking the overall net profit.
+     - Next debug checklist: 
+       - Identify the exact new codes for Bank (004) and POS (006).
+       - Create an adjustment journal entry (or multiple) via  or a custom python script.
+       - Ensure the offset account used for the adjustment is appropriate (e.g., an owner's equity or reconciliation discrepancy account) so that Net Profit remains correct and the Trial Balance remains balanced.
+     - Why fix this issue and what will be achieved with the fix? User explicitly requested the application to mirror their real-world cash/bank/POS balances to reflect actual accounting status.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  - **Task 1: Backend Performance Audit & Optimization (P0)**
-     - **Where to resume:** Find the  endpoint in  or  and optimize it.
-     - **What will be achieved with this?** Instant loading times.
-     - **Status:** IN PROGRESS
-     - **Should Test frontend/backend/both after fix?** Both
-     - **Blocked on something:** None
+  - None
 
 **Upcoming and Future Tasks**
-  - **P1**: Add Supplier selection explicitly to payment order types (سداد مديونية لعميل/مورد).
-  - **P2**: Complete the Liquid System/Glassmorphism redesign for all remaining pages.
-  - **P2**: Advanced User Roles and Permissions matrix UI.
+  - **P1:** Complete the Auto-Linking + Contradiction Engine + Escalation Workflow for the AI Finance Bot (as proposed by the agent and implicitly accepted by the user).
+  - **P2:** Add OCR/document verification for uploaded evidence in the Finance Bot.
 
 **Completed work in this session**
--  fixed to stop ignoring  files (blocking deployment) (DONE)
-- Journal Entries UI revamped to match glassmorphism styling (DONE)
-- Fixed Document Generator (Print/WhatsApp) to fetch correct Workshop Profile data (Name, Phone, Tax Number) (DONE)
-- Unified item select/custom input and inline price editing in Operations page (DONE)
-- Added visual indicators for payment status (green/red) and an overdue credit operations reminder card (DONE)
-- Prevented duplicate operation submissions via saving overlay lock (DONE)
-- Ordered operations list to show newest first (DONE)
+- Fixed financial duplication between cash/bank logic.
+- Overhauled Chart of Accounts: Renumbered actual account codes to 001, 002, etc., and hid legacy codes completely.
+- Chart of Accounts UI: Made rows fully clickable for expanding/collapsing, added collapsible reconciliation report.
+- AI Finance Bot: Implemented External Auditor mode with a strict state machine (open, probing, pending_evidence, resolved, escalated), Single Question Hard Guard, and interactive Action Cards (, ).
+- Added Evidence Upload feature for the Finance Bot.
+- Adjusted Net Profit formula to .
+- Fixed mismatch between  summary and .
+- Created  to correct trial balance discrepancies.
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Missing supplier debt payment option in Operations.
-   - Debug checklist:  form types and  for handling payment_order with suppliers.
-   - Why to solve this issue and what will be achieved with this? Accounts payable tracking.
-   - Should Test frontend/backend/both after fix: Both
-   - Is recurring issue? N
+   - None.
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None from immediate prior, but UI missing fields and slow queries have recurred.
-  - Recurrence count: 0
-  - Status: N/A
+  - Issue recurrence in previous fork: Financial accounts duplication/mismatch.
+  - Recurrence count: 1 (Addressed successfully in this session, but user is refining exact manual distributions now).
+  - Status: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- React SPA with React Query for state/caching.
-- Tailwind CSS with CRACO overlay.
-- FastAPI backend serving multiple routers.
-- Supabase used heavily for primary models, MongoDB fallback for older logs.
--  handles HTML template generation which is converted to PDF on frontend or sent via WhatsApp.
+- React SPA with TailwindCSS.
+- FastAPI backend with MongoDB / Supabase.
+- Strict State Machine logic for AI Bot (probing, pending_evidence, etc.).
+- Account Code Mapping: Legacy codes (1101, 1102) mapped to sequential codes (001, 002).
 
 **key DB schema**
-  - operations: {id, type, amount, items, paymentMethod, paymentStatus, partnerId, visitId}
-  - journal_entries: {id, total_debit, total_credit, source}
-  - workshop_profile: {name, phone, address, tax_number, commercial_register}
+  - : 
+  - : 
 
 **changes in tech stack**
-  - None
+  - None strictly.
 
 **All files of reference**
--  (Must optimize GET operations here)
-- 
-- 
--  (Updated to track envs)
+  -  (Handles COA and Journal Entries)
+  -  (Handles Auditor AI logic & state)
+  -  (Chat UI & Action Cards)
 
 **Areas that need refactoring**:
--  is over 6000 lines long and needs segmentation (Optional/Future).
-- The  endpoint is highly unoptimized, fetching too much relational data at once.
+- Legacy code fallbacks: The transition from legacy codes (1101, 1102) to new sequential codes (001, 002, 003...) required stripping hardcoded codes from the frontend. Be careful not to reintroduce hardcoded legacy strings in frontend components.
 
 **key api endpoints**
 - 
@@ -122,54 +85,44 @@ A full-stack React (frontend) and FastAPI (backend) ERP system for an auto repai
 - 
 
 **Critical Info for New Agent**
-- **Do NOT look for **. The operations endpoints are mostly located in  and .
-- The user is extremely frustrated by the 8-second load time on the Operations page. **This is your absolute P0.** Do whatever is necessary to the backend endpoint (pagination, limit, removing N+1 queries) to make it instant.
-- The user wants to test via the credentials: Username:  (No password specified, check  or bypass if local). Use playwright screenshots to verify load states.
-- ALWAYS respond in Arabic.
+- **LANGUAGE:** You MUST strictly communicate with the user in **Arabic**.
+- **ACCOUNT CODES:** Legacy codes (1101, 1102, 1103) were entirely replaced by , , ... The backend maps them using  in the DB. **DO NOT** use hardcoded '1101', '1102' in frontend components anymore. (Bank is currently 004, Cash is 003, POS is 006 - always verify via backend script before assuming).
+- **FINANCE BOT:** Must adhere strictly to the Single Question Hard Guard and state machine logic. Do not break the additive  JSON structures applied to the findings.
 
 **documents and test reports created in this job**
-  - /app/test_reports/iteration_34.json (Testing agent output)
+  - 
 
-**Last 10 User Messages and any pending HUMAN messages**
-1. User: حتى الآن جلب بيانات العمليات يستغرق ٨ ثواني اجعله فوري سجل الدخول باسم مدير واختبر سرعة الدخول ثم اجعلها اسرع ثم اختبر بعد التحسين استدعي الوكيل المختص 2- في لوحة التحكم يوجد تاخير جلب بيانات نوع الخدمه في نفس الكرت انظر للصوره المرفقه اجعله فوري
-2. User: اسم المستخدم:مدير عند الدخول على صفحة العمليات في preview يوجد تاخير جدا لجلب العمليات اجله فوري او تحميل
-3. User: دمج حقول العناصر جيد لكن لا يعمل بشكل جيد ولا تظهر الأسعار عند اختيار قطعه يجب حقل سعر الحبه يكون في الحقول الرئيسيه ليس بعد اضافة الصنف ايضاً هل العملاء لديهم ارصده مثال الآن أريد إنشاء امر دفع لسداد مديونية لعميل لم اعرف و المورد لايمكن لايوجد خيار
-4. User: اعمل تحسين اداء الموقع كامل vCPU واجعله سريع حدث جميع الأدوات وغيرها إلى آخر إصدار
-5. User: حتى الآن لم يظهر الحقل في preview ايضاً الحقل المحدده بخط احمر ادمجها حيث يمكن اختيار صنف او كتابه جديد استدعي الوكيل المختص
-6. User: مازال الحقل لايظهر في preview حتى بعد اضافة قطعه
-7. User: في صفحة العمليات في preview أضف حقل سعر الحبه قابل للتعديل داخل بلوك العناصر
-8. User: ترتيب العمليات عشوائي اجعله يبدا في اخر العمليات
-9. User: اجعل فقط التنبيه يكون اذا مضى على العمليه اسبوع بشكل متغير ليس ثابت وعدد منفصل ايضا العدد في بطاقة التنبيه يجب ان يكون مفتوح ليس محصورا على اسبوع فقط
-10. User: ظهرت بشكل جيد لكن العدد غير صحيح وغير مطابق للعمليات في preview
+**Last 10 User Messages and any pending HUMAN messages** 
+1. User: Asked for full logic of Auditor to see missing parts. Also requested removal of all old account codes from custom pages.
+2. User: Provided JSON config for Audit Interactive Loop (Action cards, state machine) to be applied via incremental patch without rebuilding.
+3. User: Mismatch between financial pages. Audit as expert. (Agent fixed  vs  summary).
+4. **[PENDING HUMAN MESSAGE]**: Realistic financial situation is not matching. Bank: 16150, Cash: 0, POS: 2000. Ajel: matches. Net amount is correct but distribution is wrong. Fix entries or add new ones if necessary.
 
 **Project Health Check:**
-- Broken: Operations page load time (unacceptably slow API). Dashboard service type card load time.
+- **Broken**: The current cash/bank/pos distribution does not match the user's real-world business numbers. Requires immediate manual journal adjustments via backend script.
 
 **3rd Party Integrations**
 - Supabase (Database) — requires User API Key
-- MongoDB (Database fallback) — requires User API Key
-- OpenAI GPT-4o (Emergent LLM Key Applicability)
-- Blackbox AI (Chatbot) — requires User API Key
-- Hostinger VPS (User discussed deployment, but app remains on Emergent infra).
+- MongoDB (Database) — requires User API Key
+- Claude / OpenAI (Emergent LLM Key Applicability) - Used for the Finance Auditor Bot.
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (extensively up to iteration 165)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: []
-  - Known regressions: Slow load times caused by unoptimized operations fetch query.
+  - Test files created: 
+  - Known regressions: None currently, but trial balances must be carefully watched when adjusting entries.
 
 **Credentials to test flow:**
-Username: 
+- Username: 
+- Password: Not required (bypassed locally/preview)
 
 **What agent forgot to execute**
-- The agent forgot that the operations endpoints are housed in  and wasted time looking for a  directory.
-- The agent did not actually fix the backend response time for , they only added frontend caching which doesn't solve the initial 8-second delay.
+- The agent successfully grabbed the current balances from the backend to analyze the delta, but was interrupted before it could write and apply the Journal Entry correction to fix the Bank/POS/Cash balances.
 
 **Debugging checklist for current issue**
-    Issue: Operations page API takes 8 seconds to load.
-    
+    Issue: Adjusting Account Balances to Reality (Bank=16150, POS=2000, Cash=0).
+
     Backend files to check: 
-    -  (Search for  or )
-    -  (Search for  method)
-    
-    Action: Check for N+1 queries (e.g., fetching related items, visits, or partners in a loop). Implement  and  (pagination) or reduce the payload size by avoiding full table scans. Make sure  is utilizing indexed columns.</analysis>
+    - Run a bash python script to fetch exact  for Bank, POS, and Cash.
+    - Call the  function or insert directly into Supabase/MongoDB to apply the offset values (e.g., increasing Bank by ~8793.5, increasing POS by 2000, and balancing via a suitable equity/reconciliation account). 
+    - Ensure  and trial balance show no tb_unbalanced alerts after the adjustment.</analysis>

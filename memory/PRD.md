@@ -2054,7 +2054,7 @@
 ## Test Credentials
 - Username: مدير
 - Workshop ID: finmodule-sync
-- API URL: https://moltbot-editor.preview.emergentagent.com
+- API URL: https://finance-auditor-bot.preview.emergentagent.com
 - Groq API Key: configured in backend/.env
 
 ## Key Files

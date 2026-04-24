@@ -17,6 +17,31 @@
 
 ## What's Been Implemented
 
+### تدقيق عدم التطابق بين الصفحات المالية + إصلاح جذري (24 Apr 2026)
+- تم تنفيذ تدقيق رقمي بين الصفحات/الواجهات المالية وكشف السبب الجذري:
+  - `accounts/tree` كان يحسب (الإيراد/المصروف/الصافي) بمنطق مستقل عن `income-statement`.
+  - هذا سبب تعارضًا مباشرًا في الأرقام بين الصفحات.
+
+- الإصلاح المطبق:
+  - Backend (`routes_extended.py`):
+    - توحيد مصدر الربحية في `GET /api/accounts/tree` ليقرأ مباشرة من `get_income_statement`.
+    - إضافة `summary.financial_source = 'income_statement'` لتوثيق مصدر الرقم.
+    - تحسين إضافي لربط الأكواد legacy أثناء قراءة قيود اليومية لتقليل فقد التصنيف.
+  - Frontend (`ChartOfAccountsLiquid.jsx`):
+    - اعتماد `incomeSnapshot` من `income-statement` لعرض الإيرادات/المصروفات/الصافي في شريط الملخص.
+
+### نتيجة التدقيق بعد الإصلاح
+- الفرق (Delta) أصبح صفرًا بالكامل:
+  - Revenue Delta = 0
+  - Expenses Delta = 0
+  - Net Profit Delta = 0
+
+### Testing
+- تقرير تحقق نهائي: `/app/test_reports/iteration_165.json`
+  - Backend: 11/11 PASS
+  - Frontend: PASS
+  - Verdict: ✅ mismatch بين الصفحات المالية تم حله.
+
 ### Audit Interactive Loop — Incremental Patch Mode (24 Apr 2026)
 - تم تنفيذ الترقيع الإضافي على نفس بنية المدقق بدون إعادة بناء:
   - الحفاظ على: findings pipeline + state machine + hard guard + session persistence + evidence linking.

@@ -15,6 +15,27 @@
 
 ---
 
+
+### Manual Reality Adjustment for Bank/POS/Cash + Legacy Code Mapping Fix (24 Apr 2026)
+- **User request**: ضبط الأرصدة لتطابق الواقع (البنك=16,150، الصندوق=0، نقاط بيع=2,000) — التوزيع كان خاطئاً.
+- **Action taken**:
+  - تم إنشاء قيد تسوية ترحيل (Journal Entry `3c677452-cf86-471d-baf7-b192ef5ad9fa`):
+    - مدين: البنك (004) 8,793.5 + نقاط البيع (006) 2,000
+    - دائن: حساب فروقات ترحيل (211) 10,793.5 — حساب equity محايد بدون تأثير على الإيرادات/المصروفات.
+- **Backend fix (`routes_finance.py`)**:
+  - `_build_account_maps`: إضافة `legacy_to_current` map بحيث تُحقن أكواد legacy في `id_to_code` للسماح بربط قيود اليومية القديمة (1102, 4001, 50021, 600102 إلخ) بالأكواد الحالية (004, 025, 045, 049 …).
+  - `_fetch_accounts`: تحميل `legacy_code` من `account_code_aliases.json` (وعند توفرها من Mongo) وتلقيمها على صفوف الحسابات.
+  - النتيجة: `balance-sheet` لم يعد يعرض البنك مزدوجاً (004 + 1102) بل يدمجهما في 004.
+  - أثر جانبي مطلوب: قائمة الدخل أصبحت تعترف بمصروفات legacy كانت مخفية سابقاً (≈ 4,652.5 ر.س.) → صافي الربح يعكس الواقع الآن (13,020.5 بدلاً من 18,061 المتضخم).
+- **Frontend fix (`ChartOfAccountsLiquid.jsx`)**:
+  - تحسين `findAccountByName` للملخص العلوي ليطابق الاسم بالضبط (`النقد`/`البنك`/`نقاط بيع`) ضمن نوع `asset` فقط، مع تفضيل الحساب ذي النشاط/الرصيد غير الصفري عند وجود تكرار في الأسماء (مثل تكرار "نقاط بيع" بين 006 و 210).
+- **Verification**:
+  - Tree summary: Bank=16,150 ✅, POS=2,000 ✅, Cash=0 ✅, Customer=450 ✅
+  - Reconciliation report: 211/211 accounts matched, 0 mismatched, max diff=0
+  - شريط الملخص يعرض: البنك (004) 16,150، النقد (003) 0، نقاط بيع (006) 2,000 ✅
+  - All API responses 200 (perf ~3.5s per call after warm-up).
+
+
 ## What's Been Implemented
 
 ### تدقيق عدم التطابق بين الصفحات المالية + إصلاح جذري (24 Apr 2026)

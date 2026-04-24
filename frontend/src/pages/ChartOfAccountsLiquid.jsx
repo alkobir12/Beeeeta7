@@ -391,10 +391,32 @@ export default function ChartOfAccountsLiquid() {
     return map;
   }, [accountsData]);
 
-  const findAccountByName = (keywords = []) => Object.values(accountById).find((acc) => {
-    const name = String(acc?.name || '').toLowerCase();
-    return keywords.some((k) => name.includes(k));
-  }) || null;
+  const findAccountByName = (keywords = []) => {
+    const candidates = Object.values(accountById).filter((acc) => {
+      if (acc?.type && acc.type !== 'asset') return false;
+      const name = String(acc?.name || '').trim();
+      if (!name) return false;
+      const lower = name.toLowerCase();
+      return keywords.some((k) => {
+        const key = k.toLowerCase();
+        return lower === key || lower === `ال${key}`;
+      });
+    });
+    if (candidates.length === 0) return null;
+    // Prefer the account with non-zero activity (or balance), then smallest code.
+    candidates.sort((a, b) => {
+      const aActive = (Number(a.transaction_count || 0) > 0 || Math.abs(Number(a.balance || 0)) > 0) ? 1 : 0;
+      const bActive = (Number(b.transaction_count || 0) > 0 || Math.abs(Number(b.balance || 0)) > 0) ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+      const aCode = String(a.code || '');
+      const bCode = String(b.code || '');
+      const aNum = parseInt(aCode, 10);
+      const bNum = parseInt(bCode, 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return aCode.localeCompare(bCode);
+    });
+    return candidates[0];
+  };
 
   const bankAccountNode = findAccountByName(['بنك', 'bank']);
   const cashAccountNode = findAccountByName(['نقد', 'cash', 'صندوق']);

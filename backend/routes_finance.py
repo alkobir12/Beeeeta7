@@ -209,6 +209,56 @@ def _is_rakan_journal_entry(entry: Dict[str, Any], id_to_code: Dict[str, str]) -
     return False
 
 
+_ACCOUNT_ALIAS_CACHE: Dict[str, str] = {}
+_ACCOUNT_ALIAS_CACHE_AT: float = 0.0
+
+
+def _fetch_account_code_aliases() -> Dict[str, str]:
+    """Sync read of account_code_aliases (account_id -> legacy_code).
+    Tries MongoDB first then falls back to the on-disk JSON used by routes_extended.
+    Cached for 30 seconds to avoid hitting Mongo per request."""
+    global _ACCOUNT_ALIAS_CACHE, _ACCOUNT_ALIAS_CACHE_AT
+    import time
+    now = time.time()
+    if _ACCOUNT_ALIAS_CACHE and (now - _ACCOUNT_ALIAS_CACHE_AT) < 30:
+        return _ACCOUNT_ALIAS_CACHE
+
+    out: Dict[str, str] = {}
+
+    # 1) Try MongoDB
+    try:
+        from pymongo import MongoClient
+        mongo_uri = os.getenv("MONGO_URL")
+        db_name = os.getenv("DB_NAME")
+        if mongo_uri and db_name:
+            client = MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
+            db_local = client[db_name]
+            rows = list(db_local["account_code_aliases"].find({}, {"_id": 0}))
+            client.close()
+            for row in rows:
+                if row.get("accountId") and row.get("legacyCode"):
+                    out[str(row["accountId"])] = str(row["legacyCode"])
+    except Exception as e:
+        print(f"_fetch_account_code_aliases (mongo) failed: {e}")
+
+    # 2) Fallback to on-disk JSON (used by routes_extended _mem_read)
+    if not out:
+        try:
+            p = os.path.join(os.path.dirname(__file__), "uploads", "account_code_aliases.json")
+            if os.path.exists(p):
+                with open(p, "r", encoding="utf-8") as f:
+                    rows = json.load(f) or []
+                for row in rows:
+                    if row.get("accountId") and row.get("legacyCode"):
+                        out[str(row["accountId"])] = str(row["legacyCode"])
+        except Exception as e:
+            print(f"_fetch_account_code_aliases (file) failed: {e}")
+
+    _ACCOUNT_ALIAS_CACHE = out
+    _ACCOUNT_ALIAS_CACHE_AT = now
+    return out
+
+
 def _fetch_accounts():
     if not supabase:
         raise Exception("Supabase not connected")
@@ -262,6 +312,16 @@ def _fetch_accounts():
     else:
         add_list(secondary_accounts)
 
+    # Hydrate legacy_code from MongoDB account_code_aliases (account_id -> legacy_code)
+    # so trial-balance / balance-sheet can map old journal lines (1102, 1101 ...)
+    # to the current sequential codes (004, 003 ...).
+    aliases = _fetch_account_code_aliases()
+    if aliases:
+        for acc in merged:
+            aid = str(acc.get("id") or "").strip()
+            if aid and aid in aliases and not acc.get("legacy_code"):
+                acc["legacy_code"] = aliases[aid]
+
     return merged
 
 
@@ -269,6 +329,7 @@ def _build_account_maps(accounts):
     id_to_code = {}
     code_to_name = {}
     code_to_type = {}
+    legacy_to_current = {}
     for acc in accounts or []:
         code = str(acc.get("code") or "").strip()
         if not code:
@@ -278,6 +339,15 @@ def _build_account_maps(accounts):
             id_to_code[str(acc.get("id"))] = code
         if acc.get("type"):
             code_to_type[code] = acc.get("type")
+        legacy = str(acc.get("legacy_code") or "").strip()
+        if legacy and legacy != code:
+            legacy_to_current[legacy] = code
+    # Stash legacy map in id_to_code under a reserved key for backward compatibility
+    # so callers that only consume id_to_code still get legacy lookups via the same dict.
+    for legacy_code, current_code in legacy_to_current.items():
+        # Only add if not already mapped as an id (avoid collisions)
+        if legacy_code not in id_to_code:
+            id_to_code[legacy_code] = current_code
     return id_to_code, code_to_name, code_to_type
 
 
@@ -292,6 +362,8 @@ def _normalize_line(line, id_to_code, code_to_name):
     if not account_code:
         return None
     account_code = str(account_code)
+    # Map account IDs OR legacy codes to current codes via id_to_code
+    # (legacy codes are injected into id_to_code by _build_account_maps).
     if account_code in id_to_code:
         account_code = id_to_code[account_code]
     account_code = _normalize_account_code(account_code)

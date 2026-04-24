@@ -17,6 +17,28 @@
 
 ## What's Been Implemented
 
+### تحديث الصافي المحاسبي + إخفاء الأكواد القديمة نهائيًا (24 Apr 2026)
+- تم تعديل منطق الصافي في دليل الحسابات ليكون:
+  - `صافي = الإيرادات - (المصروفات + المشتريات)`
+- Backend (`routes_extended.py`):
+  - إضافة `purchase` في summary
+  - تحديث `net_profit` إلى `revenue - (expense + purchase)`
+
+- Backend (`routes_finance.py`):
+  - إيقاف ظهور legacy codes (>=1000) في `GET /api/finance/chart-of-accounts`
+  - تحسين ربط الأكواد القديمة إلى الأكواد الجديدة عبر mapping ومنع حقن أكواد قديمة غير مربوطة.
+
+- Frontend:
+  - `ChartOfAccountsLiquid.jsx`: تحديث بطاقة الملخص لعرض (الإيرادات، المصروفات+المشتريات، الصافي) بصيغة محاسبية صحيحة.
+  - إزالة عرض legacy labels في ملخص البنك/النقد/POS، واعتماد الأكواد الجديدة ديناميكيًا.
+  - `JournalEntries.jsx`: إضافة `resolveCurrentAccountCode` لعرض الأكواد الجديدة بدل legacy أثناء عرض القيود.
+
+### Testing
+- تقرير تحقق شامل: `/app/test_reports/iteration_162.json`
+  - Backend: 12/12 PASS
+  - Frontend: PASS
+  - النتيجة: لا أكواد قديمة ظاهرة، والميزان متزن، والصافي محسوب بالصيغة المطلوبة.
+
 ### إصلاح محاسبي مباشر: إعادة ترحيل البنك + تصحيح عدم التوازن + تثبيت تطابق الأكواد (24 Apr 2026)
 - Backend (`routes_finance.py`):
   - إضافة endpoint جديد:
